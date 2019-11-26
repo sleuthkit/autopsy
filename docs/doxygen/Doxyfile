@@ -772,6 +772,9 @@ INPUT                  = main.dox \
                          regressionTesting.dox \
                          native_libs.dox \
                          modDevPython.dox \
+                         modFileIngestTutorial.dox \
+                         modDSIngestTutorial.dox \
+                         modReportModuleTutorial.dox \
                          debugTsk.dox \
                          ../../Core/src \
                          ../../CoreLibs/src \
@@ -867,7 +870,7 @@ EXAMPLE_RECURSIVE      = NO
 # that contain images that are to be included in the documentation (see the
 # \image command).
 
-IMAGE_PATH             = .
+IMAGE_PATH             =  images/
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
 # invoke to filter for each input file. Doxygen will invoke the filter program

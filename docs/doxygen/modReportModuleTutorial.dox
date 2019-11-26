@@ -1,0 +1,123 @@
+/*! \page mod_python_report_tutorial_page Python Tutorial #3: Writing a Report Module
+
+In our last two tutorials, we built a Python Autopsy \ref mod_python_file_ingest_tutorial_page "file ingest modules" and \ref mod_python_ds_ingest_tutorial_page "data source ingest modules" that analyzed the data sources as they were added to cases. In our third post, we're going to make an entirely different kind of module, a report module.
+
+Report modules are typically run after the user has completed their analysis. Autopsy comes with report modules to generate HTML, Excel, KML, and other types of reports. We're going to make a report module that outputs data in CSV.
+
+Like in the second tutorial, we are going to assume that you've read at least the \ref mod_python_file_ingest_tutorial_page "first tutorial" to know how to get your environment set up. As a reminder, Python modules in Autopsy are written in Jython and have access to all of the Java classes (which is why we have links to Java documentation below).
+
+\section python_tutorial3_report_modules Report Modules
+
+Autopsy report modules are often run after the user has run some ingest modules, reviewed the results, and tagged some files of interest. The user will be given a list of report modules to choose from.
+
+\image html reports_select.png
+
+The main reasons for writing an Autopsy report module are:
+<ul>
+<li>You need the results in a custom output format, such as XML or JSON.</li>
+<li>You want to upload results to a central location.</li>
+<li>You want to perform additional analysis after all ingest modules have run. While the modules have the word "report" in them, there is no actual requirement that they produce a report or export data. The module can simply perform data analysis and post artifacts to the blackboard like ingest modules do.</li>
+</ul>
+
+As we dive into the details, you will notice that the report module API is fairly generic. This is because reports are created at a case level, not a data source level. So, when a user chooses to run a report module, all Autopsy does is tell it to run and gives it a path to a directory to store its results in. The report module can store whatever it wants in the directory.
+
+Note that if you look at the \ref mod_report_page "full developer docs", there are other report module types that are supported in Java. These are not supported though in Python.
+
+\subsection python_tutorial3_getting_content Getting Content
+
+With report modules, it is up to you to find the content that you want to include in your report or analysis. Generally, you will want to access some or all of the files, tagged files, or blackboard artifacts. As you may recall from the previous tutorials, blackboard artifacts are how ingest modules in Autopsy store their results so that they can be shown in the UI, used by other modules, and included in the final report. In this tutorial, we will introduce the <a href="https://sleuthkit.org/sleuthkit/docs/jni-docs/classorg_1_1sleuthkit_1_1datamodel_1_1_sleuthkit_case.html">SleuthkitCase</a> class, which we generally don't introduce to module writers because it has lots of methods, many of which are low-level, and there are other classes, such as FileManager, that are more focused and easier to use.
+
+\subsubsection python_tutorial3_getting_files Getting Files
+
+You have three choices for getting files to report on. You can use the FileManager, which we used in \ref mod_python_ds_ingest_tutorial_page "the last Data Source-level Ingest Module tutorial". The only change is that you will need to call it multiple times, one for each data source in the case. You will have code that looks something like this:
+\verbatim
+dataSources = Case.getCurrentCase().getDataSources()
+fileManager = Case.getCurrentCase().getServices().getFileManager()
+
+for dataSource in dataSources:
+   files = fileManager.findFiles(dataSource, "%.txt")\endverbatim
+   
+Another approach is to use the <a href="https://sleuthkit.org/sleuthkit/docs/jni-docs/classorg_1_1sleuthkit_1_1datamodel_1_1_sleuthkit_case.html#a6b14c6b82bbc1cf71aa108f9e5c5ccc1">SleuthkitCase.findAllFilesWhere()</a> method that allows you to specify a SQL query. To use this method, you must know the schema of the database (which makes this a bit more challenging, but more powerful). The schema is defined on the <a href="https://wiki.sleuthkit.org/index.php?title=SQLite_Database_v3_Schema">wiki</a>.
+
+Usually, you just need to focus on the <a href="https://wiki.sleuthkit.org/index.php?title=SQLite_Database_v3_Schema#tsk_files">tsk_files</a> table. You may run into memory problems and you can also use <a href="https://sleuthkit.org/sleuthkit/docs/jni-docs/classorg_1_1sleuthkit_1_1datamodel_1_1_sleuthkit_case.html#a2faec4e68be17f67db298a4ed3933bc3">SleuthkitCase.findAllFileIdsWhere()</a> to get just the IDs and then call <a href="https://sleuthkit.org/sleuthkit/docs/jni-docs/classorg_1_1sleuthkit_1_1datamodel_1_1_sleuthkit_case.html#a8cdd6582b18e9bfa814cffed8302e4b9">SleuthkitCase.getAbstractFileById()</a> to get files as needed.
+
+A third approach is to call org.sleuthkit.autopsy.casemodule.Case.getDataSources(), and then recursively call getChildren() on each Content object. This will traverse all of the folders and files in the case. This is the most memory efficient, but also more complex to code.
+
+\subsubsection python_tutorial3_getting_artifacts Getting Blackboard Artifacts
+
+The blackboard is where modules store their analysis results. If you want to include them in your report, then there are several methods that you could use. If you want all artifacts of a given type, then you can use <a href="https://sleuthkit.org/sleuthkit/docs/jni-docs/classorg_1_1sleuthkit_1_1datamodel_1_1_sleuthkit_case.html#a0b8396fac6c40d8291cc48732dd15d74">SleuthkitCase.getBlackboardArtifacts()</a>. There are many variations of this method that take different arguments. Look at them to find the one that is most convenient for you.
+
+\subsubsection python_tutorial3_getting_tags Getting Tagged Files or Artifacts
+
+If you want to find files or artifacts that are tagged, then you can use the org.sleuthkit.autopsy.casemodule.services.TagsManager. It has methods to get all tags of a given name, such as org.sleuthkit.autopsy.casemodule.services.TagsManager.getContentTagsByTagName().
+
+\section python_tutorial3_getting_started Getting Started
+
+\subsection python_tutorial3_making_the_folder Making the Folder
+
+We'll start by making our module folder. As we learned in \ref mod_python_file_ingest_tutorial_page "the first tutorial", every Python module in Autopsy gets its own folder. To find out where you should put your Python module, launch Autopsy and choose the Tools->Python Plugins menu item. That will open a subfolder in your AppData folder, such as "C:\Users\JDoe\AppData\Roaming\Autopsy\python_modules".
+
+Make a folder inside of there to store your module. Call it "DemoScript3". Copy the <a href="https://github.com/sleuthkit/autopsy/blob/develop/pythonExamples/reportmodule.py">reportmodule.py</a> sample file into the this new folder and rename it to CSVReport.py.
+
+\subsection python_tutorial3_writing_script Writing the Script
+
+We are going to write a script that makes some basic CSV output: file name and MD5 hash. Open the CSVReport.py file in your favorite Python text editor. The sample Autopsy Python modules all have TODO entries in them to let you know what you should change. The below steps jump from one TODO to the next.
+
+<ol>
+<li>Factory Class Name: The first thing to do is rename the sample class name from "SampleGeneralReportModule" to "CSVReportModule". In the sample module, there are several uses of this class name, so you should search and replace for these strings.</li>
+<li>Name and Description: The next TODO entries are for names and descriptions. These are shown to users. For this example, we'll name it "CSV Hash Report Module". The description can be anything you want. Note that Autopsy requires that modules have unique names, so don't make it too generic.</li>
+<li>Relative File Path: The next step is to specify the filename that your module is going to use for the report. Autopsy will later provide you with a folder name to save your report in. If you have multiple file names, then pick the main one. This path will be shown to the user after the report has been generated so that they can open it. For this example, we'll call it "hashes.csv" in the getRelativeFilePath() method.</li>
+<li>generateReport() Method: This method is what is called when the user wants to run the module. It gets passed in the base directory to store the results in and a progress bar. It is responsible for making the report and calling Case.addReport() so that it will be shown in the tree. We'll cover the details of this method in a later section.</li>
+</ol>
+
+\subsection python_tutorial3_generate_report The generateReport() method
+
+The generateReport() method is where the work is done. The baseReportDir argument is a string for the base directory to store results in. The progressBar argument is a org.sleuthkit.autopsy.report.ReportProgressPanel 
+that shows the user progress while making long reports and to make the progress bar red if an error occurs.
+
+We'll use one of the basic ideas from the sample, so you can copy and paste from that as you see fit to make this method. Our general approach is going to be this:
+<ol>
+<li>Open the CSV file.</li>
+<li>Query for all files.</li>
+<li>Cycle through each of the files and print a line of text.</li>
+<li>Add the report to the Case database.</li>
+</ol>
+
+To focus on the essential code, we'll skip the progress bar details. However, the final solution that we'll link to at the end contains the progress bar code.
+
+To open the report file in the right folder, we'll need a line such as this:
+\verbatim
+fileName = os.path.join(baseReportDir, self.getRelativeFilePath())
+report = open(fileName, 'w')\endverbatim
+
+Next we need to query for the files. In our case, we want all of the files, but can skip the directories. We'll use lines such as this to get the current case and then call the SleuthkitCase.findAllFilesWhere() method.
+\verbatim
+sleuthkitCase = Case.getCurrentCase().getSleuthkitCase()
+files = sleuthkitCase.findAllFilesWhere("NOT meta_type = " +
+   str(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()))\endverbatim
+   
+Now, we want to print a line for each file. To do this, you'll need something like:
+\verbatim
+for file in files:
+   md5 = file.getMd5Hash()
+
+   if md5 is None:
+      md5 = ""
+
+   report.write(file.getParentPath() + file.getName() + "," + md5 + "n")\endverbatim
+   
+Note that the file will only have an MD5 value if the Hash Lookup ingest module was run on the data source.
+
+Lastly, we want to add the report to the case database so that the user can later find it from the tree and we want to report that we completed successfully.
+\verbatim
+Case.getCurrentCase().addReport(fileName, self.moduleName, "Hashes CSV")
+progressBar.complete(ReportStatus.COMPLETE)\endverbatim
+
+That's it. The final code can be found <a href="https://github.com/sleuthkit/autopsy/tree/develop/pythonExamples/Sept2015ReportTutorial_CSV">on github</a>.
+
+\subsection python_tutorial3_conclusions Conclusions
+
+In this tutorial, we made a basic report module that creates a custom CSV file. The most challenging part of writing a report module is knowing how to get all of the data that you need. Hopefully, the \ref python_tutorial3_getting_content section above covered what you need, but if not, then go on the <a href="https://sleuthkit.discourse.group/">Sleuthkit forum</a> and we'll try to point you in the right direction.</p>
+
+
+*/

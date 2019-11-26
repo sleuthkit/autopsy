@@ -129,7 +129,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
 
         thumbnailViewer.resetComponent();
 
-        thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new AttachmentsChildren(artifactList)), tableEM), true, this.getClass().getName()));
+        thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new AttachmentThumbnailsChildren(artifactList)), tableEM), true, this.getClass().getName()));
     }
 
     @Override

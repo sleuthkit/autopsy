@@ -3,19 +3,13 @@ Installer.closing.confirmationDialog.title=Ingest is Running
 # {0} - exception message
 Installer.closing.messageBox.caseCloseExceptionMessage=Error closing case: {0}
 OpenIDE-Module-Display-Category=Infrastructure
-OpenIDE-Module-Long-Description=\
-    This is the core Autopsy module.\n\n\
-    The module contains the core components needed for the bare application to run; the RCP platform, windowing GUI, sleuthkit bindings, datamodel /  storage, explorer, result viewers, content viewers, ingest framework, reporting, and core tools, such as the file search.\n\n\
-    The framework included in the module contains APIs for developing modules for ingest, viewers and reporting.  \
-    The modules can be deployed as Plugins using the Autopsy plugin installer.\n\
-    This module should not be uninstalled - without it, Autopsy will not run.\n\n\
-    For more information, see http://www.sleuthkit.org/autopsy/
+OpenIDE-Module-Long-Description=This is the core Autopsy module.\n\nThe module contains the core components needed for the bare application to run; the RCP platform, windowing GUI, sleuthkit bindings, datamodel /  storage, explorer, result viewers, content viewers, ingest framework, reporting, and core tools, such as the file search.\n\nThe framework included in the module contains APIs for developing modules for ingest, viewers and reporting.  The modules can be deployed as Plugins using the Autopsy plugin installer.\nThis module should not be uninstalled - without it, Autopsy will not run.\n\nFor more information, see http://www.sleuthkit.org/autopsy/
 OpenIDE-Module-Name=Autopsy-Core
 OpenIDE-Module-Short-Description=Autopsy Core Module
 org_sleuthkit_autopsy_core_update_center=http://sleuthkit.org/autopsy/updates.xml
 Services/AutoupdateType/org_sleuthkit_autopsy_core_update_center.settings=Autopsy Update Center
 Installer.errorInitJavafx.msg=Error initializing JavaFX.
-Installer.errorInitJavafx.details=\ Some features will not be available.  Check that you have the right JRE installed (Oracle JRE > 1.7.10).
+Installer.errorInitJavafx.details=\ Some features will not be available.  Check that you have JavaFX installed (OpenJFX 8).
 ServicesMonitor.failedService.notify.title=Service Is Down
 ServicesMonitor.failedService.notify.msg=Connection to {0} is down
 ServicesMonitor.restoredService.notify.title=Service Is Up
