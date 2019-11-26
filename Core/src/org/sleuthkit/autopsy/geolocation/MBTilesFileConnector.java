@@ -161,9 +161,9 @@ final class MBTilesFileConnector {
      */
     private final class ConnectionPool {
 
-        private final int POOL_SIZE = 5;
+        private static final int POOL_SIZE = 5;
 
-        private final List<Connection> connectionPool;
+        private final List<Connection> poolConnections;
         private final List<Connection> usedConnections;
 
         /**
@@ -178,9 +178,9 @@ final class MBTilesFileConnector {
             String path = filePath.replaceAll("\\\\", "/");
             String url = String.format(DB_URL, path);
 
-            connectionPool = new ArrayList<>(POOL_SIZE);
+            poolConnections = new ArrayList<>(POOL_SIZE);
             for (int idx = 0; idx < POOL_SIZE; idx++) {
-                connectionPool.add(DriverManager.getConnection(url));
+                poolConnections.add(DriverManager.getConnection(url));
             }
         }
 
@@ -192,8 +192,8 @@ final class MBTilesFileConnector {
          */
         synchronized Connection getConnection() {
             Connection connection = null;
-            if (!connectionPool.isEmpty()) {
-                connection = connectionPool.remove(connectionPool.size() - 1);
+            if (!poolConnections.isEmpty()) {
+                connection = poolConnections.remove(poolConnections.size() - 1);
                 usedConnections.add(connection);
             }
             return connection;
@@ -211,7 +211,7 @@ final class MBTilesFileConnector {
          */
         synchronized boolean releaseConnection(Connection connection) {
             if (usedConnections.contains(connection)) {
-                connectionPool.add(connection);
+                poolConnections.add(connection);
                 return usedConnections.remove(connection);
             }
 

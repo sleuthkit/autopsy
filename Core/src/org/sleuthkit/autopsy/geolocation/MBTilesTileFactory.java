@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.geolocation;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Comparator;
@@ -52,7 +54,7 @@ final class MBTilesTileFactory extends TileFactory {
     private static final Logger logger = Logger.getLogger(MBTilesTileFactory.class.getName());
 
     private volatile int pendingTiles = 0;
-    private final int threadPoolSize = 4;
+    private static final int THREAD_POOL_SIZE = 4;
     private ExecutorService service;
 
     private final Map<String, Tile> tileMap;
@@ -188,7 +190,7 @@ final class MBTilesTileFactory extends TileFactory {
     synchronized ExecutorService getService() {
         if (service == null) {
             // System.out.println("creating an executor service with a threadpool of size " + threadPoolSize);
-            service = Executors.newFixedThreadPool(threadPoolSize, new ThreadFactory() {
+            service = Executors.newFixedThreadPool(THREAD_POOL_SIZE, new ThreadFactory() {
                 private int count = 0;
 
                 @Override
@@ -294,27 +296,10 @@ final class MBTilesTileFactory extends TileFactory {
                     URI uri = getURI(tile);
                     BufferedImage img = cache.get(uri);
                     if (img == null) {
-                        byte[] bimg = connector.getTileBytes(uri.toString());
-                        if (bimg != null && bimg.length > 0) {
-                            img = ImageIO.read(new ByteArrayInputStream(bimg));
-                            cache.put(uri, bimg, img);
-                            img = cache.get(uri);
-                        }
+                        img = getImage(uri);
                     }
-                    if (img == null) {
-                        logger.log(Level.INFO, String.format("Failed to load: %s", uri));
-                    } else {
-                        final BufferedImage image = img;
-                        SwingUtilities.invokeAndWait(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (tile instanceof MBTilesTile) {
-                                    ((MBTilesTile) tile).setImage(image);
-                                }
-                                pendingTiles--;
-                                fireTileLoadedEvent(tile);
-                            }
-                        });
+                    if (img != null) {
+                        addImageToTile(tile, img);
                     }
                 } catch (OutOfMemoryError memErr) {
                     cache.needMoreMemory();
@@ -328,5 +313,42 @@ final class MBTilesTileFactory extends TileFactory {
             }
             tile.setLoading(false);
         }
+    }
+    
+    /**
+     * 
+     * @param uri
+     * @return
+     * @throws IOException
+     * @throws GeoLocationDataException 
+     */
+    private BufferedImage getImage(URI uri ) throws IOException, GeoLocationDataException{
+        BufferedImage img = null;
+        byte[] bimg = connector.getTileBytes(uri.toString());
+        if (bimg != null && bimg.length > 0) {
+            img = ImageIO.read(new ByteArrayInputStream(bimg));
+            cache.put(uri, bimg, img);
+        }
+        return img;
+    }
+    
+    /**
+     * 
+     * @param tile
+     * @param image
+     * @throws InterruptedException
+     * @throws InvocationTargetException 
+     */
+    private void addImageToTile(Tile tile, BufferedImage image) throws InterruptedException, InvocationTargetException {
+        SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                if (tile instanceof MBTilesTile) {
+                    ((MBTilesTile) tile).setImage(image);
+                }
+                pendingTiles--;
+                fireTileLoadedEvent(tile);
+            }
+        });
     }
 }
