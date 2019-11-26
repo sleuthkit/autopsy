@@ -572,9 +572,9 @@ final public class MapPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 5);
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 5);
         infoPanel.add(cordLabel, gridBagConstraints);
 
         progressBar.setIndeterminate(true);
