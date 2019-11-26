@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
+import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder;
 import org.sleuthkit.autopsy.report.ReportBranding;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -331,11 +332,11 @@ class KMLReport implements GeneralReportModule {
      * @throws IOException
      */
     void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws GeoLocationDataException, IOException {
-        addExifMetadataContent(Waypoint.getEXIFWaypoints(skCase), baseReportDir);
-        addWaypoints(Waypoint.getBookmarkWaypoints(skCase), gpsBookmarksFolder, FeatureColor.BLUE, Bundle.Waypoint_Bookmark_Display_String());
-        addWaypoints(Waypoint.getLastKnownWaypoints(skCase), gpsLastKnownLocationFolder, FeatureColor.PURPLE, Bundle.Waypoint_Last_Known_Display_String());
-        addWaypoints(Waypoint.getSearchWaypoints(skCase), gpsSearchesFolder, FeatureColor.WHITE, Bundle.Waypoint_Search_Display_String());
-        addWaypoints(Waypoint.getTrackpointWaypoints(skCase), gpsTrackpointsFolder, FeatureColor.WHITE, Bundle.Waypoint_Trackpoint_Display_String());
+        addExifMetadataContent(WaypointBuilder.getEXIFWaypoints(skCase), baseReportDir);
+        addWaypoints(WaypointBuilder.getBookmarkWaypoints(skCase), gpsBookmarksFolder, FeatureColor.BLUE, Bundle.Waypoint_Bookmark_Display_String());
+        addWaypoints(WaypointBuilder.getLastKnownWaypoints(skCase), gpsLastKnownLocationFolder, FeatureColor.PURPLE, Bundle.Waypoint_Last_Known_Display_String());
+        addWaypoints(WaypointBuilder.getSearchWaypoints(skCase), gpsSearchesFolder, FeatureColor.WHITE, Bundle.Waypoint_Search_Display_String());
+        addWaypoints(WaypointBuilder.getTrackpointWaypoints(skCase), gpsTrackpointsFolder, FeatureColor.WHITE, Bundle.Waypoint_Trackpoint_Display_String());
     }
     
     /**

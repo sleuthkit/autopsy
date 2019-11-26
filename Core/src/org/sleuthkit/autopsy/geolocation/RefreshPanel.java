@@ -82,13 +82,13 @@ final class RefreshPanel extends JPanel {
         gridBagConstraints.insets = new java.awt.Insets(15, 10, 15, 10);
         add(refreshLabel, gridBagConstraints);
 
-        refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/geolocation/images/arrow-circle-double-135.png"))); // NOI18N
+        refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/arrow-circle-double-135.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(RefreshPanel.class, "RefreshPanel.refreshButton.text")); // NOI18N
         refreshButton.setMargin(new java.awt.Insets(2, 5, 2, 5));
         add(refreshButton, new java.awt.GridBagConstraints());
 
         closeButton.setBackground(new java.awt.Color(0, 0, 0));
-        closeButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/geolocation/images/cross-script.png"))); // NOI18N
+        closeButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/close-icon.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(RefreshPanel.class, "RefreshPanel.closeButton.text")); // NOI18N
         closeButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
         closeButton.setOpaque(false);
