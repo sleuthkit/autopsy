@@ -638,11 +638,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     extractStringsAndIndex(aFile);
                     return;
                 }
-                if (fileType.equals(MimeTypes.PLAIN_TEXT)) {
-                    if (indexTextFile(aFile)) {
-                        return;
-                    }
-                }
                 if (!extractTextAndIndex(aFile)) {
                     // Text extractor not found for file. Extract string only.
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
