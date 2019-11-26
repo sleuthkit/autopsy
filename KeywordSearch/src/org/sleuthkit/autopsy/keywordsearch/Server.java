@@ -626,10 +626,7 @@ public class Server {
             logger.log(Level.INFO, "Stopping Solr server from: {0}", solrFolder.getAbsolutePath()); //NON-NLS
 
             //try graceful shutdown
-// ELTODO Process process = runSolrCommand(new ArrayList<>(Arrays.asList("stop", "-k", KEY, "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
-// ELTODO Process process = runSolrCommand(new ArrayList<>(Arrays.asList("--stop"))); //NON-NLS
-// ELTODO Process process = runSolrCommand(new ArrayList<>(Arrays.asList("--stop", "-k", KEY, "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
-            Process process = runSolrCommand(new ArrayList<>(Arrays.asList("--stop", "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
+            Process process = runSolrCommand(new ArrayList<>(Arrays.asList("stop", "-k", KEY, "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
 
             logger.log(Level.INFO, "Waiting for Solr server to stop"); //NON-NLS
             process.waitFor();
