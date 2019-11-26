@@ -170,6 +170,7 @@ public class PlatformUtil {
             return javaPath;
         }
 
+        // by default, use Java that came with Autopsy
         File jrePath = new File(getInstallPath() + File.separator + "jre");
         if (jrePath.exists() && jrePath.isDirectory()) {
             System.out.println(
@@ -178,11 +179,14 @@ public class PlatformUtil {
                             jrePath.getAbsolutePath()));
             javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java"; //NON-NLS
         } else if (System.getenv("JAVA_HOME") != null && !(System.getenv("JAVA_HOME").isEmpty())) {
+            // if there is environmet variable set for specific installation of Java (e.g. development environment)
             return System.getenv("JAVA_HOME");
+        } else if (System.getProperty("java.home") != null && !(System.getProperty("java.home").isEmpty())) {
+            // if OS knows where Java is located
+            return System.getProperty("java.home");
         } else {
             //else use system installed java in PATH env variable
             javaPath = "java"; //NON-NLS
-
         }
 
         System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.jrePath.usingJavaPath.msg", javaPath));

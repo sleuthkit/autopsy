@@ -257,6 +257,11 @@ public class Server {
         this.localSolrServer = new HttpSolrClient.Builder("http://localhost:" + currentSolrServerPort + "/solr").build(); //NON-NLS
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
+        
+        // Figure out where Java is located. The Java home location 
+        // will be passed as the SOLR_JAVA_HOME environment
+        // variable to the Solr script but it can be overridden by the user in
+        // either autopsy-solr.cmd or autopsy-solr-in.cmd.
         javaPath = PlatformUtil.getJavaPath();
         // This is our customized version of the Solr batch script to start/stop Solr.
         solrCmdPath = Paths.get(solrFolder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
@@ -622,7 +627,9 @@ public class Server {
 
             //try graceful shutdown
 // ELTODO Process process = runSolrCommand(new ArrayList<>(Arrays.asList("stop", "-k", KEY, "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
-            Process process = runSolrCommand(new ArrayList<>(Arrays.asList("--stop"))); //NON-NLS
+// ELTODO Process process = runSolrCommand(new ArrayList<>(Arrays.asList("--stop"))); //NON-NLS
+// ELTODO Process process = runSolrCommand(new ArrayList<>(Arrays.asList("--stop", "-k", KEY, "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
+            Process process = runSolrCommand(new ArrayList<>(Arrays.asList("--stop", "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
 
             logger.log(Level.INFO, "Waiting for Solr server to stop"); //NON-NLS
             process.waitFor();
