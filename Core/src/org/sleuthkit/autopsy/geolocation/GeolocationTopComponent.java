@@ -23,14 +23,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
@@ -270,12 +268,6 @@ public final class GeolocationTopComponent extends TopComponent {
         public void run() {
             Case currentCase = Case.getCurrentCase();
             try {
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-                
                 WaypointBuilder.getAllWaypoints(currentCase.getSleuthkitCase(),
                         filters.getDataSources(),
                         filters.showAllWaypoints(),
