@@ -61,6 +61,7 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
      */
     public void setSelectionInfo(SelectionInfo info) {
         currentSelection = info;
+        tabPane.setSelectedIndex(0);
         ((RelationshipsViewer) tabPane.getSelectedComponent()).setSelectionInfo(info);
     }
 

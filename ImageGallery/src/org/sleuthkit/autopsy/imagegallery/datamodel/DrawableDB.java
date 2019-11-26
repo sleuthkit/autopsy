@@ -82,128 +82,157 @@ import org.sqlite.SQLiteJDBCLoader;
 import java.util.stream.Collectors;
 
 /**
- * Provides access to the drawables database and selected tables in the case
+ * Provides access to the image gallery database and selected tables in the case
  * database.
  */
 public final class DrawableDB {
 
     private static final Logger logger = Logger.getLogger(DrawableDB.class.getName());
 
-    //column name constants//////////////////////
-    private static final String ANALYZED = "analyzed"; //NON-NLS
-
-    private static final String OBJ_ID = "obj_id"; //NON-NLS
-
-    private static final String HASH_SET_NAME = "hash_set_name"; //NON-NLS
-
-    private static final String GROUPS_TABLENAME = "image_gallery_groups"; //NON-NLS
-    private static final String GROUPS_SEEN_TABLENAME = "image_gallery_groups_seen"; //NON-NLS
-
-    private static final String IG_DB_INFO_TABLE = "image_gallery_db_info";
-
+    /*
+     * Schema version management constants.
+     */
+    private static final VersionNumber IG_STARTING_SCHEMA_VERSION = new VersionNumber(1, 0, 0); // Historical - DO NOT CHANGE
+    private static final VersionNumber IG_SCHEMA_VERSION = new VersionNumber(1, 2, 0); // Current schema version
     private static final String IG_SCHEMA_MAJOR_VERSION_KEY = "IG_SCHEMA_MAJOR_VERSION";
     private static final String IG_SCHEMA_MINOR_VERSION_KEY = "IG_SCHEMA_MINOR_VERSION";
     private static final String IG_CREATION_SCHEMA_MAJOR_VERSION_KEY = "IG_CREATION_SCHEMA_MAJOR_VERSION";
     private static final String IG_CREATION_SCHEMA_MINOR_VERSION_KEY = "IG_CREATION_SCHEMA_MINOR_VERSION";
+    private static final String DB_INFO_TABLE_NAME = "image_gallery_db_info";
 
-    private static final VersionNumber IG_STARTING_SCHEMA_VERSION = new VersionNumber(1, 0, 0);    // IG Schema Starting version - DO NOT CHANGE
-    private static final VersionNumber IG_SCHEMA_VERSION = new VersionNumber(1, 2, 0);    // IG Schema Current version
-
-    private PreparedStatement insertHashSetStmt;
-
-    private List<PreparedStatement> preparedStatements = new ArrayList<>();
-
-    private PreparedStatement removeFileStmt;
-
-    private PreparedStatement selectHashSetStmt;
-
-    private PreparedStatement selectHashSetNamesStmt;
-
-    private PreparedStatement insertHashHitStmt;
-
-    private PreparedStatement removeHashHitStmt;
-
-    private PreparedStatement updateDataSourceStmt;
-
-    private PreparedStatement updateFileStmt;
-    private PreparedStatement insertFileStmt;
-
-    private PreparedStatement pathGroupStmt;
-
-    private PreparedStatement nameGroupStmt;
-
-    private PreparedStatement created_timeGroupStmt;
-
-    private PreparedStatement modified_timeGroupStmt;
-
-    private PreparedStatement makeGroupStmt;
-
-    private PreparedStatement modelGroupStmt;
-
-    private PreparedStatement analyzedGroupStmt;
-
-    private PreparedStatement hashSetGroupStmt;
-
-    private PreparedStatement pathGroupFilterByDataSrcStmt;
-
-    private PreparedStatement deleteDataSourceStmt;
-
-    /**
-     * map from {@link DrawableAttribute} to the {@link PreparedStatement} that
-     * is used to select groups for that attribute
+    /*
+     * The image gallery stores data in both the case database and the image
+     * gallery database. The use of image gallery tables in the case database
+     * enables sharing of selected data between users of multi-user cases. This
+     * is necessary because the image gallery database is otherwise private to
+     * one node/machine.
+     *
+     * TODO: Consider refactoring to separate the image gallery database code
+     * from the case database code.
      */
+    private static final String CASE_DB_GROUPS_TABLENAME = "image_gallery_groups"; //NON-NLS
+    private static final String CASE_DB_GROUPS_SEEN_TABLENAME = "image_gallery_groups_seen"; //NON-NLS
+    private final SleuthkitCase caseDb;
+
+    /*
+     * The image gallery database is an SQLite database, so it has a local file
+     * path. For multi-user cases, there is a private image gallery database for
+     * each node/machine.
+     */
+    private final Path dbPath;
+
+    /*
+     * The write lock of a reentrant read-write lock is used to serialize access
+     * to the image gallery database. Empirically, this provides better
+     * performance than relying on internal SQLite locking.
+     */
+    private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
+    private final Lock dbLock = rwLock.writeLock();
+    @GuardedBy("dbLock")
+    private Connection con;
+
+    /*
+     * Prepared statements.
+     */
+    private List<PreparedStatement> preparedStatements = new ArrayList<>();
+    private PreparedStatement selectCountDataSourceIDs;
+    private PreparedStatement insertDataSourceStmt;
+    private PreparedStatement updateDataSourceStmt;
+    private PreparedStatement deleteDataSourceStmt;
+    private PreparedStatement insertFileStmt;
+    private PreparedStatement updateFileStmt;
+    private PreparedStatement deleteFileStmt;
+    private PreparedStatement insertHashSetStmt;
+    private PreparedStatement selectHashSetStmt;
+    private PreparedStatement selectHashSetNamesStmt;
+    private PreparedStatement insertHashHitStmt;
+    private PreparedStatement deleteHashHitStmt;
+    private PreparedStatement pathGroupStmt; // Not unused, used via collections below
+    private PreparedStatement nameGroupStmt; // Not unused, used via collections below
+    private PreparedStatement createdTimeGroupStmt; // Not unused, used via collections below
+    private PreparedStatement modifiedTimeGroupStmt; // Not unused, used via collections below
+    private PreparedStatement makeGroupStmt; // Not unused, used via collections below
+    private PreparedStatement modelGroupStmt; // Not unused, used via collections below
+    private PreparedStatement analyzedGroupStmt; // Not unused, used via collections below
+    private PreparedStatement hashSetGroupStmt; // Not unused, used via collections below
+    private PreparedStatement pathGroupFilterByDataSrcStmt; // Not unused, used via collections below
     private final Map<DrawableAttribute<?>, PreparedStatement> groupStatementMap = new HashMap<>();
     private final Map<DrawableAttribute<?>, PreparedStatement> groupStatementFilterByDataSrcMap = new HashMap<>();
 
+    /*
+     * Various caches are used to reduce the need for database queries.
+     */
+    private final Cache<String, Boolean> groupCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+    private final Cache<GroupKey<?>, Boolean> groupSeenCache = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build();
+    private final Set<Long> hasTagsCache = new HashSet<>(); // Object IDs of files with tags
+    private final Set<Long> hasHashHitsCache = new HashSet<>(); // Object IDs of files with hash set hits
+    private final Set<Long> hasExifDataCache = new HashSet<>(); // Object IDs of files with EXIF data (make/model)
+    private final Object cacheLock = new Object();
+    private boolean areCachesLoaded = false;
+    private int cacheBuildCount = 0; // Number of tasks that requested the caches be built
+
+    /*
+     * This class is coupled to the image gallery controller and group manager.
+     *
+     * TODO: It would be better to reduce the coupling so that the controller
+     * and group manager call this class, but this class does not call them.
+     */
+    private final ImageGalleryController controller;
     private final GroupManager groupManager;
 
-    private final Path dbPath;
-
-    @GuardedBy("DBLock")
-    private Connection con;
-
-    private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
-
-    private final Lock DBLock = rwLock.writeLock(); // Currently serializing everything with one database connection
-
-    // caches to make inserts / updates faster
-    private Cache<String, Boolean> groupCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
-    private final Cache<GroupKey<?>, Boolean> groupSeenCache = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build();
-    private final Object cacheLock = new Object(); // protects access to the below cache-related objects
-    private boolean areCachesLoaded = false; // if true, the below caches contain valid data
-    private Set<Long> hasTagCache = new HashSet<>(); // contains obj id of files with tags
-    private Set<Long> hasHashCache = new HashSet<>(); // obj id of files with hash set hits
-    private Set<Long> hasExifCache = new HashSet<>(); // obj id of files with EXIF (make/model)
-    private int cacheBuildCount = 0; // number of tasks taht requested the caches be built
-
-    static {//make sure sqlite driver is loaded // possibly redundant
+    /*
+     * Make sure the SQLite JDBC driver is loaded.
+     */
+    static {
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException ex) {
             logger.log(Level.SEVERE, "Failed to load sqlite JDBC driver", ex); //NON-NLS
         }
     }
-    private final SleuthkitCase tskCase;
-    private final ImageGalleryController controller;
 
     /**
-     * Enum to track Image gallery db rebuild status for a data source
+     * Enum for tracking the status of the image gallery database with respect
+     * to the data sources in the case.
      *
-     * DO NOT add in the middle.
+     * IMPORTANT: ADD NEW STATUSES TO THE END OF THE LIST
+     *
+     * TODO: I'm (RC) not sure why this is required, it looks like the enum
+     * element names are stored in the image gallery database. Are the raw
+     * cardinal values used somewhere?
      */
     public enum DrawableDbBuildStatusEnum {
-        UNKNOWN, /// no known status - not yet analyzed 
-        IN_PROGRESS, /// ingest or db rebuild is in progress
-        COMPLETE, /// At least one file in the data source had a MIME type.  Ingest filters may have been applied.
-        REBUILT_STALE;        /// data source was rebuilt, but MIME types were missing during rebuild
+        /**
+         * The data source has been added to the database, but no other data
+         * pertaining to it has been added.
+         */
+        UNKNOWN,
+        /**
+         * Analyis (an ingest job or image gallery database rebuild) for the
+         * data source is in progress.
+         */
+        IN_PROGRESS,
+        /**
+         * Analyis (an ingest job or image gallery database rebuild) for the
+         * data source has been completed and at least one file in the data
+         * source has a MIME type (ingest filters may have been applied, so some
+         * files may not have been typed).
+         */
+        COMPLETE,
+        /**
+         * Analyis (an ingest job or image gallery database rebuild) for the
+         * data source has been completed, but the files for the data source
+         * were not assigned a MIME type (file typing was not enabled).
+         */
+        REBUILT_STALE;
     }
 
     private void dbWriteLock() {
-        DBLock.lock();
+        dbLock.lock();
     }
 
     private void dbWriteUnlock() {
-        DBLock.unlock();
+        dbLock.unlock();
     }
 
     /**
@@ -224,7 +253,7 @@ public final class DrawableDB {
     private DrawableDB(Path dbPath, ImageGalleryController controller) throws IOException, SQLException, TskCoreException {
         this.dbPath = dbPath;
         this.controller = controller;
-        tskCase = this.controller.getCaseDatabase();
+        caseDb = this.controller.getCaseDatabase();
         groupManager = this.controller.getGroupManager();
         Files.createDirectories(this.dbPath.getParent());
         dbWriteLock();
@@ -241,32 +270,29 @@ public final class DrawableDB {
 
     private boolean prepareStatements() {
         try {
-            updateFileStmt = prepareStatement(
-                    "INSERT OR REPLACE INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) " //NON-NLS
-                    + "VALUES (?,?,?,?,?,?,?,?,?)"); //NON-NLS
-            insertFileStmt = prepareStatement(
-                    "INSERT OR IGNORE INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) " //NON-NLS
-                    + "VALUES (?,?,?,?,?,?,?,?,?)"); //NON-NLS
-            updateDataSourceStmt = prepareStatement(
-                    "INSERT OR REPLACE INTO datasources (ds_obj_id, drawable_db_build_status) " //NON-NLS
-                    + " VALUES (?,?)"); //NON-NLS
-            removeFileStmt = prepareStatement("DELETE FROM drawable_files WHERE obj_id = ?"); //NON-NLS
+            selectCountDataSourceIDs = prepareStatement("SELECT COUNT(*) FROM datasources WHERE ds_obj_id = ?"); //NON-NLS 
+            insertDataSourceStmt = prepareStatement("INSERT INTO datasources (ds_obj_id, drawable_db_build_status) VALUES (?,?)"); //NON-NLS            
+            updateDataSourceStmt = prepareStatement("UPDATE datasources SET drawable_db_build_status = ? WHERE ds_obj_id = ?"); //NON-NLS
+            deleteDataSourceStmt = prepareStatement("DELETE FROM datasources where ds_obj_id = ?"); //NON-NLS
+            insertFileStmt = prepareStatement("INSERT OR IGNORE INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) VALUES (?,?,?,?,?,?,?,?,?)"); //NON-NLS
+            updateFileStmt = prepareStatement("INSERT OR REPLACE INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) VALUES (?,?,?,?,?,?,?,?,?)"); //NON-NLS
+            deleteFileStmt = prepareStatement("DELETE FROM drawable_files WHERE obj_id = ?"); //NON-NLS
+            insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  VALUES (?)"); //NON-NLS
+            selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?"); //NON-NLS
+            selectHashSetNamesStmt = prepareStatement("SELECT DISTINCT hash_set_name FROM hash_sets"); //NON-NLS
+            insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, obj_id) VALUES (?,?)"); //NON-NLS
+            deleteHashHitStmt = prepareStatement("DELETE FROM hash_set_hits WHERE obj_id = ?"); //NON-NLS
             pathGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE path  = ? ", DrawableAttribute.PATH); //NON-NLS
             nameGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE  name  = ? ", DrawableAttribute.NAME); //NON-NLS
-            created_timeGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE created_time  = ? ", DrawableAttribute.CREATED_TIME); //NON-NLS
-            modified_timeGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE  modified_time  = ? ", DrawableAttribute.MODIFIED_TIME); //NON-NLS
+            createdTimeGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE created_time  = ? ", DrawableAttribute.CREATED_TIME); //NON-NLS
+            modifiedTimeGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE  modified_time  = ? ", DrawableAttribute.MODIFIED_TIME); //NON-NLS
             makeGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE make  = ? ", DrawableAttribute.MAKE); //NON-NLS
             modelGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE model  = ? ", DrawableAttribute.MODEL); //NON-NLS
             analyzedGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE analyzed = ?", DrawableAttribute.ANALYZED); //NON-NLS
             hashSetGroupStmt = prepareStatement("SELECT drawable_files.obj_id AS obj_id, analyzed FROM drawable_files ,  hash_sets , hash_set_hits  WHERE drawable_files.obj_id = hash_set_hits.obj_id AND hash_sets.hash_set_id = hash_set_hits.hash_set_id AND hash_sets.hash_set_name = ?", DrawableAttribute.HASHSET); //NON-NLS
             pathGroupFilterByDataSrcStmt = prepareFilterByDataSrcStatement("SELECT obj_id , analyzed FROM drawable_files WHERE path  = ? AND data_source_obj_id = ?", DrawableAttribute.PATH);
-            selectHashSetNamesStmt = prepareStatement("SELECT DISTINCT hash_set_name FROM hash_sets"); //NON-NLS
-            insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  VALUES (?)"); //NON-NLS
-            selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?"); //NON-NLS
-            insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, obj_id) VALUES (?,?)"); //NON-NLS
-            removeHashHitStmt = prepareStatement("DELETE FROM hash_set_hits WHERE obj_id = ?"); //NON-NLS
-            deleteDataSourceStmt = prepareStatement("DELETE FROM datasources where ds_obj_id = ?"); //NON-NLS
             return true;
+
         } catch (TskCoreException | SQLException ex) {
             logger.log(Level.SEVERE, "Failed to prepare all statements", ex); //NON-NLS
             return false;
@@ -276,7 +302,7 @@ public final class DrawableDB {
     private boolean initializeStandardGroups() {
         CaseDbTransaction caseDbTransaction = null;
         try {
-            caseDbTransaction = tskCase.beginTransaction();
+            caseDbTransaction = caseDb.beginTransaction();
             for (DhsImageCategory cat : DhsImageCategory.values()) {
                 insertGroup(cat.getDisplayName(), DrawableAttribute.CATEGORY, caseDbTransaction);
             }
@@ -385,7 +411,7 @@ public final class DrawableDB {
      */
     private boolean removeDeletedDataSources() {
         dbWriteLock();
-        try (SleuthkitCase.CaseDbQuery caseDbQuery = tskCase.executeQuery("SELECT obj_id FROM data_source_info"); //NON-NLS
+        try (SleuthkitCase.CaseDbQuery caseDbQuery = caseDb.executeQuery("SELECT obj_id FROM data_source_info"); //NON-NLS
                 Statement drawablesDbStmt = con.createStatement()) {
             /*
              * Get the data source object IDs from the case database.
@@ -594,21 +620,21 @@ public final class DrawableDB {
 
                 // Check if the database is new or an existing database
                 drawableDbTablesExist = doesTableExist("drawable_files");
-                if (false == doesTableExist(IG_DB_INFO_TABLE)) {
+                if (false == doesTableExist(DB_INFO_TABLE_NAME)) {
                     try {
                         VersionNumber ig_creation_schema_version = drawableDbTablesExist
                                 ? IG_STARTING_SCHEMA_VERSION
                                 : IG_SCHEMA_VERSION;
 
-                        stmt.execute("CREATE TABLE IF NOT EXISTS " + IG_DB_INFO_TABLE + " (name TEXT PRIMARY KEY, value TEXT NOT NULL)");
+                        stmt.execute("CREATE TABLE IF NOT EXISTS " + DB_INFO_TABLE_NAME + " (name TEXT PRIMARY KEY, value TEXT NOT NULL)");
 
                         // backfill creation schema ver
-                        stmt.execute(String.format("INSERT INTO %s (name, value) VALUES ('%s', '%s')", IG_DB_INFO_TABLE, IG_CREATION_SCHEMA_MAJOR_VERSION_KEY, ig_creation_schema_version.getMajor()));
-                        stmt.execute(String.format("INSERT INTO %s (name, value) VALUES ('%s', '%s')", IG_DB_INFO_TABLE, IG_CREATION_SCHEMA_MINOR_VERSION_KEY, ig_creation_schema_version.getMinor()));
+                        stmt.execute(String.format("INSERT INTO %s (name, value) VALUES ('%s', '%s')", DB_INFO_TABLE_NAME, IG_CREATION_SCHEMA_MAJOR_VERSION_KEY, ig_creation_schema_version.getMajor()));
+                        stmt.execute(String.format("INSERT INTO %s (name, value) VALUES ('%s', '%s')", DB_INFO_TABLE_NAME, IG_CREATION_SCHEMA_MINOR_VERSION_KEY, ig_creation_schema_version.getMinor()));
 
                         // set current schema ver: at DB initialization - current version is same as starting version
-                        stmt.execute(String.format("INSERT INTO %s (name, value) VALUES ('%s', '%s')", IG_DB_INFO_TABLE, IG_SCHEMA_MAJOR_VERSION_KEY, ig_creation_schema_version.getMajor()));
-                        stmt.execute(String.format("INSERT INTO %s (name, value) VALUES ('%s', '%s')", IG_DB_INFO_TABLE, IG_SCHEMA_MINOR_VERSION_KEY, ig_creation_schema_version.getMinor()));
+                        stmt.execute(String.format("INSERT INTO %s (name, value) VALUES ('%s', '%s')", DB_INFO_TABLE_NAME, IG_SCHEMA_MAJOR_VERSION_KEY, ig_creation_schema_version.getMajor()));
+                        stmt.execute(String.format("INSERT INTO %s (name, value) VALUES ('%s', '%s')", DB_INFO_TABLE_NAME, IG_SCHEMA_MINOR_VERSION_KEY, ig_creation_schema_version.getMinor()));
 
                     } catch (SQLException ex) {
                         logger.log(Level.SEVERE, "Failed to create ig_db_info table", ex); //NON-NLS
@@ -709,10 +735,10 @@ public final class DrawableDB {
             /*
              * Create tables in the case database.
              */
-            String autogenKeyType = (DbType.POSTGRESQL == tskCase.getDatabaseType()) ? "BIGSERIAL" : "INTEGER";
+            String autogenKeyType = (DbType.POSTGRESQL == caseDb.getDatabaseType()) ? "BIGSERIAL" : "INTEGER";
 
             try {
-                boolean caseDbTablesExist = tskCase.getCaseDbAccessManager().tableExists(GROUPS_TABLENAME);
+                boolean caseDbTablesExist = caseDb.getCaseDbAccessManager().tableExists(CASE_DB_GROUPS_TABLENAME);
                 VersionNumber ig_creation_schema_version = caseDbTablesExist
                         ? IG_STARTING_SCHEMA_VERSION
                         : IG_SCHEMA_VERSION;
@@ -720,7 +746,7 @@ public final class DrawableDB {
                 String tableSchema = "( id " + autogenKeyType + " PRIMARY KEY, "
                         + " name TEXT UNIQUE NOT NULL,"
                         + " value TEXT NOT NULL )";
-                tskCase.getCaseDbAccessManager().createTable(IG_DB_INFO_TABLE, tableSchema);
+                caseDb.getCaseDbAccessManager().createTable(DB_INFO_TABLE_NAME, tableSchema);
 
                 // backfill creation version
                 String creationMajorVerSQL = String.format(" (name, value) VALUES ('%s', '%s')", IG_CREATION_SCHEMA_MAJOR_VERSION_KEY, ig_creation_schema_version.getMajor());
@@ -730,7 +756,7 @@ public final class DrawableDB {
                 String currentMajorVerSQL = String.format(" (name, value) VALUES ('%s', '%s')", IG_SCHEMA_MAJOR_VERSION_KEY, ig_creation_schema_version.getMajor());
                 String currentMinorVerSQL = String.format(" (name, value) VALUES ('%s', '%s')", IG_SCHEMA_MINOR_VERSION_KEY, ig_creation_schema_version.getMinor());
 
-                if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
+                if (DbType.POSTGRESQL == caseDb.getDatabaseType()) {
                     creationMajorVerSQL += " ON CONFLICT DO NOTHING ";
                     creationMinorVerSQL += " ON CONFLICT DO NOTHING ";
 
@@ -738,11 +764,11 @@ public final class DrawableDB {
                     currentMinorVerSQL += " ON CONFLICT DO NOTHING ";
                 }
 
-                tskCase.getCaseDbAccessManager().insert(IG_DB_INFO_TABLE, creationMajorVerSQL);
-                tskCase.getCaseDbAccessManager().insert(IG_DB_INFO_TABLE, creationMinorVerSQL);
+                caseDb.getCaseDbAccessManager().insert(DB_INFO_TABLE_NAME, creationMajorVerSQL);
+                caseDb.getCaseDbAccessManager().insert(DB_INFO_TABLE_NAME, creationMinorVerSQL);
 
-                tskCase.getCaseDbAccessManager().insert(IG_DB_INFO_TABLE, currentMajorVerSQL);
-                tskCase.getCaseDbAccessManager().insert(IG_DB_INFO_TABLE, currentMinorVerSQL);
+                caseDb.getCaseDbAccessManager().insert(DB_INFO_TABLE_NAME, currentMajorVerSQL);
+                caseDb.getCaseDbAccessManager().insert(DB_INFO_TABLE_NAME, currentMinorVerSQL);
 
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Failed to create ig_db_info table in Case database", ex); //NON-NLS
@@ -758,9 +784,9 @@ public final class DrawableDB {
                         + " is_analyzed integer DEFAULT 0, "
                         + " UNIQUE(data_source_obj_id, value, attribute) )"; //NON-NLS
 
-                tskCase.getCaseDbAccessManager().createTable(GROUPS_TABLENAME, tableSchema);
+                caseDb.getCaseDbAccessManager().createTable(CASE_DB_GROUPS_TABLENAME, tableSchema);
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to create %s table in case database", GROUPS_TABLENAME), ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Failed to create %s table in case database", CASE_DB_GROUPS_TABLENAME), ex); //NON-NLS
                 return false;
             }
             try {
@@ -771,13 +797,13 @@ public final class DrawableDB {
                         + " examiner_id integer not null, " //NON-NLS
                         + " seen integer DEFAULT 0, " //NON-NLS
                         + " UNIQUE(group_id, examiner_id),"
-                        + " FOREIGN KEY(group_id) REFERENCES " + GROUPS_TABLENAME + "(group_id) ON DELETE CASCADE,"
+                        + " FOREIGN KEY(group_id) REFERENCES " + CASE_DB_GROUPS_TABLENAME + "(group_id) ON DELETE CASCADE,"
                         + " FOREIGN KEY(examiner_id) REFERENCES  tsk_examiners(examiner_id)"
                         + " )"; //NON-NLS
 
-                tskCase.getCaseDbAccessManager().createTable(GROUPS_SEEN_TABLENAME, tableSchema);
+                caseDb.getCaseDbAccessManager().createTable(CASE_DB_GROUPS_SEEN_TABLENAME, tableSchema);
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to create %s table in case database", GROUPS_SEEN_TABLENAME), ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Failed to create %s table in case database", CASE_DB_GROUPS_SEEN_TABLENAME), ex); //NON-NLS
                 return false;
             }
 
@@ -804,7 +830,7 @@ public final class DrawableDB {
         try {
             int majorVersion = -1;
             String majorVersionStr = null;
-            resultSet = statement.executeQuery(String.format("SELECT value FROM %s  WHERE name='%s'", IG_DB_INFO_TABLE, IG_SCHEMA_MAJOR_VERSION_KEY));
+            resultSet = statement.executeQuery(String.format("SELECT value FROM %s  WHERE name='%s'", DB_INFO_TABLE_NAME, IG_SCHEMA_MAJOR_VERSION_KEY));
             if (resultSet.next()) {
                 majorVersionStr = resultSet.getString("value");
                 try {
@@ -818,7 +844,7 @@ public final class DrawableDB {
 
             int minorVersion = -1;
             String minorVersionStr = null;
-            resultSet = statement.executeQuery(String.format("SELECT value FROM %s  WHERE name='%s'", IG_DB_INFO_TABLE, IG_SCHEMA_MINOR_VERSION_KEY));
+            resultSet = statement.executeQuery(String.format("SELECT value FROM %s  WHERE name='%s'", DB_INFO_TABLE_NAME, IG_SCHEMA_MINOR_VERSION_KEY));
             if (resultSet.next()) {
                 minorVersionStr = resultSet.getString("value");
                 try {
@@ -883,8 +909,8 @@ public final class DrawableDB {
         GetSchemaVersionQueryResultProcessor minorVersionResultProcessor = new GetSchemaVersionQueryResultProcessor();
 
         String versionQueryTemplate = "value FROM %s WHERE name = \'%s\' ";
-        tskCase.getCaseDbAccessManager().select(String.format(versionQueryTemplate, IG_DB_INFO_TABLE, IG_SCHEMA_MAJOR_VERSION_KEY), majorVersionResultProcessor);
-        tskCase.getCaseDbAccessManager().select(String.format(versionQueryTemplate, IG_DB_INFO_TABLE, IG_SCHEMA_MINOR_VERSION_KEY), minorVersionResultProcessor);
+        caseDb.getCaseDbAccessManager().select(String.format(versionQueryTemplate, DB_INFO_TABLE_NAME, IG_SCHEMA_MAJOR_VERSION_KEY), majorVersionResultProcessor);
+        caseDb.getCaseDbAccessManager().select(String.format(versionQueryTemplate, DB_INFO_TABLE_NAME, IG_SCHEMA_MINOR_VERSION_KEY), minorVersionResultProcessor);
 
         return new VersionNumber(majorVersionResultProcessor.getVersion(), minorVersionResultProcessor.getVersion(), 0);
     }
@@ -908,8 +934,8 @@ public final class DrawableDB {
             Statement statement = con.createStatement();
 
             // update schema version
-            statement.execute(String.format("UPDATE %s  SET value = '%s' WHERE name = '%s'", IG_DB_INFO_TABLE, version.getMajor(), IG_SCHEMA_MAJOR_VERSION_KEY));
-            statement.execute(String.format("UPDATE %s  SET value = '%s' WHERE name = '%s'", IG_DB_INFO_TABLE, version.getMinor(), IG_SCHEMA_MINOR_VERSION_KEY));
+            statement.execute(String.format("UPDATE %s  SET value = '%s' WHERE name = '%s'", DB_INFO_TABLE_NAME, version.getMajor(), IG_SCHEMA_MAJOR_VERSION_KEY));
+            statement.execute(String.format("UPDATE %s  SET value = '%s' WHERE name = '%s'", DB_INFO_TABLE_NAME, version.getMinor(), IG_SCHEMA_MINOR_VERSION_KEY));
 
             statement.close();
         } finally {
@@ -928,8 +954,8 @@ public final class DrawableDB {
     private void updateCaseDbIgSchemaVersion(VersionNumber version, CaseDbTransaction caseDbTransaction) throws TskCoreException {
 
         String updateSQLTemplate = " SET value = %s  WHERE name = '%s' ";
-        tskCase.getCaseDbAccessManager().update(IG_DB_INFO_TABLE, String.format(updateSQLTemplate, version.getMajor(), IG_SCHEMA_MAJOR_VERSION_KEY), caseDbTransaction);
-        tskCase.getCaseDbAccessManager().update(IG_DB_INFO_TABLE, String.format(updateSQLTemplate, version.getMinor(), IG_SCHEMA_MINOR_VERSION_KEY), caseDbTransaction);
+        caseDb.getCaseDbAccessManager().update(DB_INFO_TABLE_NAME, String.format(updateSQLTemplate, version.getMajor(), IG_SCHEMA_MAJOR_VERSION_KEY), caseDbTransaction);
+        caseDb.getCaseDbAccessManager().update(DB_INFO_TABLE_NAME, String.format(updateSQLTemplate, version.getMinor(), IG_SCHEMA_MINOR_VERSION_KEY), caseDbTransaction);
     }
 
     /**
@@ -947,7 +973,7 @@ public final class DrawableDB {
         VersionNumber caseDbIgSchemaVersion = getCaseDbIgSchemaVersion();
 
         // Upgrade Schema in both DrawableDB and CaseDB
-        CaseDbTransaction caseDbTransaction = tskCase.beginTransaction();
+        CaseDbTransaction caseDbTransaction = caseDb.beginTransaction();
         DrawableTransaction transaction = beginTransaction();
 
         try {
@@ -1004,8 +1030,8 @@ public final class DrawableDB {
 
         // Add a 'is_analyzed' column to groups table in CaseDB
         String alterSQL = " ADD COLUMN is_analyzed integer DEFAULT 1 "; //NON-NLS
-        if (false == tskCase.getCaseDbAccessManager().columnExists(GROUPS_TABLENAME, "is_analyzed", caseDbTransaction)) {
-            tskCase.getCaseDbAccessManager().alterTable(GROUPS_TABLENAME, alterSQL, caseDbTransaction);
+        if (false == caseDb.getCaseDbAccessManager().columnExists(CASE_DB_GROUPS_TABLENAME, "is_analyzed", caseDbTransaction)) {
+            caseDb.getCaseDbAccessManager().alterTable(CASE_DB_GROUPS_TABLENAME, alterSQL, caseDbTransaction);
         }
         return new VersionNumber(1, 1, 0);
     }
@@ -1103,7 +1129,7 @@ public final class DrawableDB {
      */
     Set<String> getHashSetsForFile(long fileID) throws TskCoreException {
         Set<String> hashNames = new HashSet<>();
-        ArrayList<BlackboardArtifact> artifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
+        ArrayList<BlackboardArtifact> artifacts = caseDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
 
         for (BlackboardArtifact a : artifacts) {
             BlackboardAttribute attribute = a.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
@@ -1125,7 +1151,7 @@ public final class DrawableDB {
         dbWriteLock();
         try (ResultSet rs = selectHashSetNamesStmt.executeQuery();) {
             while (rs.next()) {
-                names.add(rs.getString(HASH_SET_NAME));
+                names.add(rs.getString("hash_set_name"));
             }
         } catch (SQLException sQLException) {
             logger.log(Level.WARNING, "failed to get hash set names", sQLException); //NON-NLS
@@ -1137,7 +1163,7 @@ public final class DrawableDB {
 
     static private String getGroupIdQuery(GroupKey<?> groupKey) {
         // query to find the group id from attribute/value
-        return String.format(" SELECT group_id FROM " + GROUPS_TABLENAME
+        return String.format(" SELECT group_id FROM " + CASE_DB_GROUPS_TABLENAME
                 + " WHERE attribute = \'%s\' AND value = \'%s\' AND data_source_obj_id = %d",
                 SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
                 SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
@@ -1187,12 +1213,12 @@ public final class DrawableDB {
         GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
 
         try {
-            String groupSeenQueryStmt = "COUNT(*) as count FROM " + GROUPS_SEEN_TABLENAME
+            String groupSeenQueryStmt = "COUNT(*) as count FROM " + CASE_DB_GROUPS_SEEN_TABLENAME
                     + " WHERE seen = 1 "
                     + " AND group_id in ( " + getGroupIdQuery(groupKey) + ")"
                     + (examinerId > 0 ? " AND examiner_id = " + examinerId : "");// query to find the group id from attribute/value 
 
-            tskCase.getCaseDbAccessManager().select(groupSeenQueryStmt, queryResultProcessor);
+            caseDb.getCaseDbAccessManager().select(groupSeenQueryStmt, queryResultProcessor);
             return queryResultProcessor.get();
         } catch (ExecutionException | InterruptedException | TskCoreException ex) {
             String msg = String.format("Failed to get is group seen for group key %s", groupKey.getValueDisplayName()); //NON-NLS
@@ -1223,18 +1249,18 @@ public final class DrawableDB {
         }
 
         // query to find the group id from attribute/value
-        String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME //NON-NLS
+        String innerQuery = String.format("( SELECT group_id FROM " + CASE_DB_GROUPS_TABLENAME//NON-NLS
                 + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d )", //NON-NLS
                 SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
                 SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
                 groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
 
         String insertSQL = String.format(" (group_id, examiner_id, seen) VALUES (%s, %d, %d)", innerQuery, examinerID, 1); //NON-NLS
-        if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
+        if (DbType.POSTGRESQL == caseDb.getDatabaseType()) {
             insertSQL += String.format(" ON CONFLICT (group_id, examiner_id) DO UPDATE SET seen = %d", 1); //NON-NLS
         }
 
-        tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_SEEN_TABLENAME, insertSQL);
+        caseDb.getCaseDbAccessManager().insertOrUpdate(CASE_DB_GROUPS_SEEN_TABLENAME, insertSQL);
 
         groupSeenCache.put(groupKey, true);
     }
@@ -1259,7 +1285,7 @@ public final class DrawableDB {
         }
 
         String updateSQL = String.format(" SET seen = 0 WHERE group_id in ( " + getGroupIdQuery(groupKey) + ")"); //NON-NLS
-        tskCase.getCaseDbAccessManager().update(GROUPS_SEEN_TABLENAME, updateSQL);
+        caseDb.getCaseDbAccessManager().update(CASE_DB_GROUPS_SEEN_TABLENAME, updateSQL);
 
         groupSeenCache.put(groupKey, false);
     }
@@ -1280,7 +1306,7 @@ public final class DrawableDB {
                 SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
                 groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
 
-        tskCase.getCaseDbAccessManager().update(GROUPS_TABLENAME, updateSQL);
+        caseDb.getCaseDbAccessManager().update(CASE_DB_GROUPS_TABLENAME, updateSQL);
     }
 
     /**
@@ -1324,7 +1350,7 @@ public final class DrawableDB {
         CaseDbTransaction caseDbTransaction = null;
         try {
             trans = beginTransaction();
-            caseDbTransaction = tskCase.beginTransaction();
+            caseDbTransaction = caseDb.beginTransaction();
             updateFile(f, trans, caseDbTransaction);
             caseDbTransaction.commit();
             commitTransaction(trans, true);
@@ -1373,11 +1399,11 @@ public final class DrawableDB {
 
             try {
                 // get tags
-                try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM content_tags")) {
+                try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery("SELECT obj_id FROM content_tags")) {
                     ResultSet rs = dbQuery.getResultSet();
                     while (rs.next()) {
                         long id = rs.getLong("obj_id");
-                        hasTagCache.add(id);
+                        hasTagsCache.add(id);
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.SEVERE, "Error getting tags from DB", ex); //NON-NLS
@@ -1388,11 +1414,11 @@ public final class DrawableDB {
 
             try {
                 // hash sets
-                try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM blackboard_artifacts WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())) {
+                try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery("SELECT obj_id FROM blackboard_artifacts WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())) {
                     ResultSet rs = dbQuery.getResultSet();
                     while (rs.next()) {
                         long id = rs.getLong("obj_id");
-                        hasHashCache.add(id);
+                        hasHashHitsCache.add(id);
                     }
 
                 } catch (SQLException ex) {
@@ -1404,11 +1430,11 @@ public final class DrawableDB {
 
             try {
                 // EXIF
-                try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM blackboard_artifacts WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID())) {
+                try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery("SELECT obj_id FROM blackboard_artifacts WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID())) {
                     ResultSet rs = dbQuery.getResultSet();
                     while (rs.next()) {
                         long id = rs.getLong("obj_id");
-                        hasExifCache.add(id);
+                        hasExifDataCache.add(id);
                     }
 
                 } catch (SQLException ex) {
@@ -1433,7 +1459,7 @@ public final class DrawableDB {
             if (cacheBuildCount == 0) {
                 return;
             }
-            hasExifCache.add(objectID);
+            hasExifDataCache.add(objectID);
         }
     }
 
@@ -1448,7 +1474,7 @@ public final class DrawableDB {
             if (cacheBuildCount == 0) {
                 return;
             }
-            hasHashCache.add(objectID);
+            hasHashHitsCache.add(objectID);
         }
     }
 
@@ -1463,7 +1489,7 @@ public final class DrawableDB {
             if (cacheBuildCount == 0) {
                 return;
             }
-            hasTagCache.add(objectID);
+            hasTagsCache.add(objectID);
         }
     }
 
@@ -1478,9 +1504,9 @@ public final class DrawableDB {
             }
 
             areCachesLoaded = false;
-            hasTagCache.clear();
-            hasHashCache.clear();
-            hasExifCache.clear();
+            hasTagsCache.clear();
+            hasHashHitsCache.clear();
+            hasExifDataCache.clear();
         }
     }
 
@@ -1520,9 +1546,9 @@ public final class DrawableDB {
         boolean hasTag = true;
         synchronized (cacheLock) {
             if (areCachesLoaded) {
-                hasExif = hasExifCache.contains(f.getId());
-                hasHashSet = hasHashCache.contains(f.getId());
-                hasTag = hasTagCache.contains(f.getId());
+                hasExif = hasExifDataCache.contains(f.getId());
+                hasHashSet = hasHashHitsCache.contains(f.getId());
+                hasTag = hasTagsCache.contains(f.getId());
             }
         }
 
@@ -1679,24 +1705,33 @@ public final class DrawableDB {
     }
 
     /**
-     * Insert/update given data source object id and it's DB rebuild status in
-     * the datasources table.
+     * Inserts the given data source object ID and its status into the
+     * datasources table. If a record for the data source already exists, an
+     * update of the status is done instead.
      *
-     * If the object id exists in the table already, it updates the status
-     *
-     * @param dsObjectId data source object id to insert
-     * @param status     The db build statsus for datasource.
+     * @param dataSourceObjectID A data source object ID from the case database.
+     * @param status             The status of the data source with respect to
+     *                           populating the image gallery database.
      */
-    public void insertOrUpdateDataSource(long dsObjectId, DrawableDbBuildStatusEnum status) {
+    public void insertOrUpdateDataSource(long dataSourceObjectID, DrawableDbBuildStatusEnum status) throws SQLException {
         dbWriteLock();
         try {
-            // "INSERT OR REPLACE INTO datasources (ds_obj_id, drawable_db_build_status) " //NON-NLS
-            updateDataSourceStmt.setLong(1, dsObjectId);
-            updateDataSourceStmt.setString(2, status.name());
-
-            updateDataSourceStmt.executeUpdate();
-        } catch (SQLException | NullPointerException ex) {
-            logger.log(Level.SEVERE, "failed to insert/update datasources table", ex); //NON-NLS
+            // SELECT COUNT(*) FROM datasources WHERE ds_obj_id = ?
+            selectCountDataSourceIDs.setLong(1, dataSourceObjectID);
+            try (ResultSet resultSet = selectCountDataSourceIDs.executeQuery()) {
+                resultSet.next();
+                if (resultSet.getInt(1) == 0) {
+                    // INSERT INTO datasources (ds_obj_id, drawable_db_build_status) VALUES (?,?)
+                    insertDataSourceStmt.setLong(1, dataSourceObjectID);
+                    insertDataSourceStmt.setString(2, status.name());
+                    insertDataSourceStmt.execute();
+                } else {
+                    // UPDATE datasources SET drawable_db_build_status = ? WHERE ds_obj_id = ?
+                    updateDataSourceStmt.setString(1, status.name());
+                    updateDataSourceStmt.setLong(2, dataSourceObjectID);
+                    updateDataSourceStmt.executeUpdate();
+                }
+            }
         } finally {
             dbWriteUnlock();
         }
@@ -1735,7 +1770,7 @@ public final class DrawableDB {
                 //Can't make this a preprared statement because of the IN ( ... )
                 ResultSet analyzedQuery = stmt.executeQuery("SELECT COUNT(analyzed) AS analyzed FROM drawable_files WHERE analyzed = 1 AND obj_id IN (" + StringUtils.join(fileIds, ", ") + ")"); //NON-NLS
                 while (analyzedQuery.next()) {
-                    return analyzedQuery.getInt(ANALYZED) == fileIds.size();
+                    return analyzedQuery.getInt("analyzed") == fileIds.size();
                 }
                 return false;
             }
@@ -1780,13 +1815,13 @@ public final class DrawableDB {
 
         IsGroupAnalyzedQueryResultProcessor queryResultProcessor = new IsGroupAnalyzedQueryResultProcessor();
         try {
-            String groupAnalyzedQueryStmt = String.format("is_analyzed FROM " + GROUPS_TABLENAME
+            String groupAnalyzedQueryStmt = String.format("is_analyzed FROM " + CASE_DB_GROUPS_TABLENAME
                     + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d ",
                     SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
                     SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
                     groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
 
-            tskCase.getCaseDbAccessManager().select(groupAnalyzedQueryStmt, queryResultProcessor);
+            caseDb.getCaseDbAccessManager().select(groupAnalyzedQueryStmt, queryResultProcessor);
             return queryResultProcessor.getIsAnalyzed();
         } catch (TskCoreException ex) {
             String msg = String.format("Failed to get group is_analyzed for group key %s", groupKey.getValueDisplayName()); //NON-NLS
@@ -1938,7 +1973,7 @@ public final class DrawableDB {
                              * wrong, we know this should be of type A even if
                              * JAVA doesn't
                              */
-                            values.put(tskCase.getDataSource(results.getLong("data_source_obj_id")),
+                            values.put(caseDb.getDataSource(results.getLong("data_source_obj_id")),
                                     (A) results.getObject(groupBy.attrName.toString()));
                         }
                         return values;
@@ -1986,10 +2021,10 @@ public final class DrawableDB {
         int isAnalyzed = (groupBy == DrawableAttribute.PATH) ? 0 : 1;
         String insertSQL = String.format(" (data_source_obj_id, value, attribute, is_analyzed) VALUES (%d, \'%s\', \'%s\', %d)",
                 ds_obj_id, SleuthkitCase.escapeSingleQuotes(value), SleuthkitCase.escapeSingleQuotes(groupBy.attrName.toString()), isAnalyzed);
-        if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
+        if (DbType.POSTGRESQL == caseDb.getDatabaseType()) {
             insertSQL += " ON CONFLICT DO NOTHING";
         }
-        tskCase.getCaseDbAccessManager().insert(GROUPS_TABLENAME, insertSQL, caseDbTransaction);
+        caseDb.getCaseDbAccessManager().insert(CASE_DB_GROUPS_TABLENAME, insertSQL, caseDbTransaction);
         groupCache.put(cacheKey, Boolean.TRUE);
     }
 
@@ -2002,7 +2037,7 @@ public final class DrawableDB {
      *                          {@link SleuthkitCase}
      */
     public DrawableFile getFileFromID(Long id) throws TskCoreException {
-        AbstractFile f = tskCase.getAbstractFileById(id);
+        AbstractFile f = caseDb.getAbstractFileById(id);
         try {
             return DrawableFile.create(f, areFilesAnalyzed(Collections.singleton(id)), isVideoFile(f));
         } catch (SQLException ex) {
@@ -2030,7 +2065,7 @@ public final class DrawableDB {
 
             try (ResultSet valsResults = statement.executeQuery()) {
                 while (valsResults.next()) {
-                    files.add(valsResults.getLong(OBJ_ID));
+                    files.add(valsResults.getLong("obj_id"));
                 }
             }
         } catch (SQLException ex) {
@@ -2071,12 +2106,12 @@ public final class DrawableDB {
             removeImageFileFromList(id);
 
             //"delete from hash_set_hits where (obj_id = " + id + ")"
-            removeHashHitStmt.setLong(1, id);
-            removeHashHitStmt.executeUpdate();
+            deleteHashHitStmt.setLong(1, id);
+            deleteHashHitStmt.executeUpdate();
 
             //"delete from drawable_files where (obj_id = " + id + ")"
-            removeFileStmt.setLong(1, id);
-            removeFileStmt.executeUpdate();
+            deleteFileStmt.setLong(1, id);
+            deleteFileStmt.executeUpdate();
             tr.addRemovedFile(id);
 
         } catch (SQLException ex) {
@@ -2167,7 +2202,7 @@ public final class DrawableDB {
             try (Statement stmt = con.createStatement()) {
                 ResultSet analyzedQuery = stmt.executeQuery("select obj_id from drawable_files");
                 while (analyzedQuery.next()) {
-                    addImageFileToList(analyzedQuery.getLong(OBJ_ID));
+                    addImageFileToList(analyzedQuery.getLong("obj_id"));
                 }
                 return true;
             } catch (SQLException ex) {
@@ -2216,7 +2251,7 @@ public final class DrawableDB {
         try {
             TagName tagName = controller.getTagsManager().getTagName(cat);
             if (nonNull(tagName)) {
-                return tskCase.getContentTagsByTagName(tagName).stream()
+                return caseDb.getContentTagsByTagName(tagName).stream()
                         .map(ContentTag::getContent)
                         .map(Content::getId)
                         .filter(this::isInDB)
@@ -2268,7 +2303,7 @@ public final class DrawableDB {
         String name
                 = "SELECT COUNT(obj_id) as obj_count FROM tsk_files where obj_id IN " + fileIdsList //NON-NLS
                 + " AND obj_id NOT IN (SELECT obj_id FROM content_tags WHERE content_tags.tag_name_id IN " + catTagNameIDs + ")"; //NON-NLS
-        try (SleuthkitCase.CaseDbQuery executeQuery = tskCase.executeQuery(name);
+        try (SleuthkitCase.CaseDbQuery executeQuery = caseDb.executeQuery(name);
                 ResultSet resultSet = executeQuery.getResultSet();) {
             while (resultSet.next()) {
                 return resultSet.getLong("obj_count"); //NON-NLS

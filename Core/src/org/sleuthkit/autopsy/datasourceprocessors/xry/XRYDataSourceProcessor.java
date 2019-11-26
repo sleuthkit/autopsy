@@ -21,13 +21,18 @@ package org.sleuthkit.autopsy.datasourceprocessors.xry;
 import com.google.common.collect.Lists;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
@@ -40,6 +45,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -49,11 +56,14 @@ import org.sleuthkit.datamodel.TskDataException;
  * An XRY Report data source processor.
  */
 @ServiceProviders(value = {
-    @ServiceProvider(service = DataSourceProcessor.class)}
-)
-public class XRYDataSourceProcessor implements DataSourceProcessor {
+    @ServiceProvider(service = DataSourceProcessor.class),
+    @ServiceProvider(service = AutoIngestDataSourceProcessor.class)
+})
+public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
     private final XRYDataSourceProcessorConfigPanel configPanel;
+
+    private static final int XRY_FILES_DEPTH = 1;
 
     //Background processor to relieve the EDT from adding files to the case
     //database and parsing the report files.
@@ -67,7 +77,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
 
     @Override
     @NbBundle.Messages({
-        "XRYDataSourceProcessor.dataSourceType=XRY Logical Report"
+        "XRYDataSourceProcessor.dataSourceType=XRY Text Export"
     })
     public String getDataSourceType() {
         return Bundle.XRYDataSourceProcessor_dataSourceType();
@@ -78,21 +88,29 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
         return configPanel;
     }
 
+    /**
+     * Tests the selected path.
+     *
+     * This functions checks permissions to the path directly and then to each
+     * of its top most children, if it is a folder.
+     */
     @Override
     @NbBundle.Messages({
-        "XRYDataSourceProcessor.noPathSelected=Please select a XRY folder",
-        "XRYDataSourceProcessor.notReadable=Could not read from the selected folder",
-        "XRYDataSourceProcessor.notXRYFolder=Selected folder did not contain any XRY files",
-        "XRYDataSourceProcessor.ioError=I/O error occured trying to test the XRY report folder"
+        "XRYDataSourceProcessor.noPathSelected=Please select a folder containing exported XRY text files",
+        "XRYDataSourceProcessor.notReadable=Selected path is not readable",
+        "XRYDataSourceProcessor.notXRYFolder=Selected folder did not contain any XRY text files",
+        "XRYDataSourceProcessor.ioError=I/O error occured trying to test the selected folder",
+        "XRYDataSourceProcessor.childNotReadable=Top level path [ %s ] is not readable",
+        "XRYDataSourceProcessor.notAFolder=The selected path is not a folder"
     })
     public boolean isPanelValid() {
         configPanel.clearErrorText();
         String selectedFilePath = configPanel.getSelectedFilePath();
-        if(selectedFilePath.isEmpty()) {
+        if (selectedFilePath.isEmpty()) {
             configPanel.setErrorText(Bundle.XRYDataSourceProcessor_noPathSelected());
             return false;
         }
-        
+
         File selectedFile = new File(selectedFilePath);
         Path selectedPath = selectedFile.toPath();
 
@@ -103,12 +121,36 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
         }
 
         try {
+            BasicFileAttributes attr = Files.readAttributes(selectedPath,
+                    BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+
+            if (!attr.isDirectory()) {
+                configPanel.setErrorText(Bundle.XRYDataSourceProcessor_notAFolder());
+                return false;
+            }
+
+            //Ensure all of the XRY_FILES_DEPTH paths are readable.
+            try (Stream<Path> allFiles = Files.walk(selectedPath, XRY_FILES_DEPTH)) {
+                Iterator<Path> allFilesIterator = allFiles.iterator();
+                while (allFilesIterator.hasNext()) {
+                    Path currentPath = allFilesIterator.next();
+                    if (!Files.isReadable(currentPath)) {
+                        Path fileName = currentPath.subpath(currentPath.getNameCount() - 2, 
+                                currentPath.getNameCount());
+                        configPanel.setErrorText(String.format(
+                                Bundle.XRYDataSourceProcessor_childNotReadable(),
+                                fileName.toString()));
+                        return false;
+                    }
+                }
+            }
+
             //Validate the folder.
             if (!XRYFolder.isXRYFolder(selectedPath)) {
                 configPanel.setErrorText(Bundle.XRYDataSourceProcessor_notXRYFolder());
                 return false;
             }
-        } catch (IOException ex) {
+        } catch (IOException | UncheckedIOException ex) {
             configPanel.setErrorText(Bundle.XRYDataSourceProcessor_ioError());
             logger.log(Level.WARNING, "[XRY DSP] I/O exception encountered trying to test the XRY folder.", ex);
             return false;
@@ -118,10 +160,41 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Processes the XRY folder that the examiner selected. The heavy lifting is
-     * done off of the EDT.
+     * Tests if the given path is an XRY Folder.
+     *
+     * This function assumes the calling thread has sufficient privileges to
+     * read the folder and its child content.
+     *
+     * @param dataSourcePath Path to test
+     * @return 100 if the folder passes the XRY Folder check, 0 otherwise.
+     * @throws AutoIngestDataSourceProcessorException if an I/O error occurs
+     * during disk reads.
      */
     @Override
+    public int canProcess(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
+        try {
+            if (XRYFolder.isXRYFolder(dataSourcePath)) {
+                return 100;
+            }
+        } catch (IOException ex) {
+            throw new AutoIngestDataSourceProcessorException("[XRY DSP] encountered I/O error " + ex.getMessage(), ex);
+        }
+        return 0;
+    }
+
+    /**
+     * Processes the XRY folder that the examiner selected. The heavy lifting is
+     * done off of the EDT, so this function will return while the 
+     * path is still being processed.
+     * 
+     * This function assumes the calling thread has sufficient privileges to
+     * read the folder and its child content, which should have been validated 
+     * in isPanelValid().
+     */
+    @Override
+    @NbBundle.Messages({
+        "XRYDataSourceProcessor.noCurrentCase=No case is open."
+    })
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         progressMonitor.setIndeterminate(true);
 
@@ -133,13 +206,49 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
             XRYFolder xryFolder = new XRYFolder(selectedPath);
             FileManager fileManager = Case.getCurrentCaseThrows()
                     .getServices().getFileManager();
-
-            //Move heavy lifting to a backround task.
+            String uniqueUUID = UUID.randomUUID().toString();
+            //Move heavy lifting to a background task.
             swingWorker = new XRYReportProcessorSwingWorker(xryFolder, progressMonitor,
-                    callback, fileManager);
+                    callback, fileManager, uniqueUUID);
             swingWorker.execute();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "[XRY DSP] No case is currently open.", ex);
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS,
+                    Lists.newArrayList(Bundle.XRYDataSourceProcessor_noCurrentCase(),
+                            ex.getMessage()), Lists.newArrayList());
+        }
+    }
+
+    /**
+     * Processes the XRY Folder encountered in an auto-ingest context. The heavy
+     * lifting is done off of the EDT, so this function will return while the 
+     * path is still being processed.
+     * 
+     * This function assumes the calling thread has sufficient privileges to
+     * read the folder and its child content.
+     * 
+     * @param deviceId
+     * @param dataSourcePath
+     * @param progressMonitor
+     * @param callBack
+     */
+    @Override
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        progressMonitor.setIndeterminate(true);
+
+        try {
+            XRYFolder xryFolder = new XRYFolder(dataSourcePath);
+            FileManager fileManager = Case.getCurrentCaseThrows()
+                    .getServices().getFileManager();
+            //Move heavy lifting to a background task.
+            swingWorker = new XRYReportProcessorSwingWorker(xryFolder, progressMonitor,
+                    callBack, fileManager, deviceId);
+            swingWorker.execute();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "[XRY DSP] No case is currently open.", ex);
+            callBack.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS,
+                    Lists.newArrayList(Bundle.XRYDataSourceProcessor_noCurrentCase(),
+                            ex.getMessage()), Lists.newArrayList());
         }
     }
 
@@ -166,13 +275,19 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
         private final DataSourceProcessorCallback callback;
         private final FileManager fileManager;
         private final XRYFolder xryFolder;
+        private final String uniqueUUID;
 
-        public XRYReportProcessorSwingWorker(XRYFolder folder, DataSourceProcessorProgressMonitor progressMonitor,
-                DataSourceProcessorCallback callback, FileManager fileManager) {
+        public XRYReportProcessorSwingWorker(XRYFolder folder,
+                DataSourceProcessorProgressMonitor progressMonitor,
+                DataSourceProcessorCallback callback,
+                FileManager fileManager,
+                String uniqueUUID) {
+
             this.xryFolder = folder;
             this.progressMonitor = progressMonitor;
             this.callback = callback;
             this.fileManager = fileManager;
+            this.uniqueUUID = uniqueUUID;
         }
 
         @Override
@@ -189,10 +304,9 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
                     //Map paths to string representations.
                     .map(Path::toString)
                     .collect(Collectors.toList());
-            String uniqueUUID = UUID.randomUUID().toString();
             LocalFilesDataSource dataSource = fileManager.addLocalFilesDataSource(
                     uniqueUUID,
-                    "XRY Report", //Name
+                    "XRY Text Export", //Name
                     "", //Timezone
                     filePaths,
                     new ProgressMonitorAdapter(progressMonitor));
@@ -215,6 +329,8 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
             } catch (InterruptedException ex) {
                 logger.log(Level.WARNING, "[XRY DSP] Thread was interrupted while processing the XRY report."
                         + " The case may or may not have the complete XRY report.", ex);
+                callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS, 
+                        Lists.newArrayList(), Lists.newArrayList());
             } catch (ExecutionException ex) {
                 logger.log(Level.SEVERE, "[XRY DSP] Unexpected internal error while processing XRY report.", ex);
                 callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS,

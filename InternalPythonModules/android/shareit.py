@@ -43,6 +43,8 @@ from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils import FileAttachment
+from org.sleuthkit.datamodel.blackboardutils import MessageAttachments
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 
@@ -96,6 +98,7 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                         direction = ""
                         fromId = None
                         toId = None
+                        fileAttachments = ArrayList()
                         
                         if (historyResultSet.getInt("history_type") == 1):
                             direction = CommunicationDirection.INCOMING
@@ -104,10 +107,6 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                             direction = CommunicationDirection.OUTGOING
                             toId = historyResultSet.getString("device_id")
                             
-                        msgBody = ""    # there is no body.
-                        attachments = [historyResultSet.getString("file_path")]
-                        msgBody = general.appendAttachmentList(msgBody, attachments)
-                        
                         timeStamp = historyResultSet.getLong("timestamp") / 1000
                         messageArtifact = historyDbHelper.addMessage(
                                                             self._MESSAGE_TYPE,
@@ -117,10 +116,14 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
                                                             None,   # subject
-                                                            msgBody,
+                                                            None,   # message text
                                                             None )  # thread id
                                                                                                 
-                        # TBD: add the file as attachment ??
+                        # add the file as attachment
+                        fileAttachments.add(FileAttachment(current_case.getSleuthkitCase(), historyDb.getDBFile().getDataSource(), historyResultSet.getString("file_path")))
+                        messageAttachments = MessageAttachments(fileAttachments, [])
+                        historyDbHelper.addAttachments(messageArtifact, messageAttachments)
+                        
 
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for ShareIt history.", ex)
