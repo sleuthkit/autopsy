@@ -44,6 +44,8 @@ from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils import FileAttachment
+from org.sleuthkit.datamodel.blackboardutils import MessageAttachments
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 
@@ -93,7 +95,7 @@ class TextNowAnalyzer(general.AndroidComponentAnalyzer):
                          ) 
                 self.parse_contacts(textnow_db, helper) 
                 self.parse_calllogs(textnow_db, helper)
-                self.parse_messages(textnow_db, helper)
+                self.parse_messages(textnow_db, helper, current_case)
         except NoCurrentCaseException as ex:
             self._logger.log(Level.WARNING, "No case currently open.", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())
@@ -159,23 +161,30 @@ class TextNowAnalyzer(general.AndroidComponentAnalyzer):
                     "Error posting TextNow call log artifact to the blackboard", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())
 
-    def parse_messages(self, textnow_db, helper):
+    def parse_messages(self, textnow_db, helper, current_case):
         #Query for messages and iterate row by row adding
         #each message artifact
         try:
             messages_parser = TextNowMessagesParser(textnow_db)
             while messages_parser.next():
-                helper.addMessage(
-                    messages_parser.get_message_type(),
-                    messages_parser.get_message_direction(),
-                    messages_parser.get_phone_number_from(),
-                    messages_parser.get_phone_number_to(),
-                    messages_parser.get_message_date_time(),
-                    messages_parser.get_message_read_status(),
-                    messages_parser.get_message_subject(),
-                    messages_parser.get_message_text(),
-                    messages_parser.get_thread_id()
-                )
+                message_artifact = helper.addMessage(
+                                       messages_parser.get_message_type(),
+                                       messages_parser.get_message_direction(),
+                                       messages_parser.get_phone_number_from(),
+                                       messages_parser.get_phone_number_to(),
+                                       messages_parser.get_message_date_time(),
+                                       messages_parser.get_message_read_status(),
+                                       messages_parser.get_message_subject(),
+                                       messages_parser.get_message_text(),
+                                       messages_parser.get_thread_id()
+                                   )
+                if (len(messages_parser.get_file_attachment()) > 0):
+                    file_attachments = ArrayList()
+                    self._logger.log(Level.INFO, "SHow Attachment ==> " + str(len(messages_parser.get_file_attachment())) + " <> " + str(messages_parser.get_file_attachment()))
+                    file_attachments.add(FileAttachment(current_case.getSleuthkitCase(), textnow_db.getDBFile().getDataSource(), messages_parser.get_file_attachment()))
+                    message_attachments = MessageAttachments(file_attachments, [])
+                    helper.addAttachments(message_artifact, message_attachments)
+
             messages_parser.close()
         except SQLException as ex:
             #Error parsing TextNow db
@@ -364,9 +373,6 @@ class TextNowMessagesParser(TskMessagesParser):
 
     def get_message_text(self):
         text = self.result_set.getString("message_text")
-        attachment = self.result_set.getString("attach")
-        if attachment != "":
-            text = general.appendAttachmentList(text, [attachment]) 
         return text
 
     def get_thread_id(self):
@@ -374,3 +380,9 @@ class TextNowMessagesParser(TskMessagesParser):
         if thread_id is None:
             return super(TextNowMessagesParser, self).get_thread_id()
         return thread_id
+
+    def get_file_attachment(self):
+        attachment = self.result_set.getString("attach")
+        if attachment is None:
+            return None
+        return self.result_set.getString("attach")

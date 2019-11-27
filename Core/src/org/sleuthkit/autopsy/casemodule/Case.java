@@ -2300,7 +2300,6 @@ public class Case {
             } else {
                 throw new CaseActionException(Bundle.Case_open_exception_multiUserCaseNotEnabled());
             }
-            caseDb.registerForEvents(sleuthkitEventListener);
         } catch (TskUnsupportedSchemaVersionException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_unsupportedSchemaVersionMessage(ex.getLocalizedMessage()), ex);
         } catch (UserPreferencesException ex) {
@@ -2321,6 +2320,12 @@ public class Case {
     private void openCaseLevelServices(ProgressIndicator progressIndicator) {
         progressIndicator.progress(Bundle.Case_progressMessage_openingCaseLevelServices());
         this.caseServices = new Services(caseDb);
+        /*
+         * RC Note: JM put this initialization here. I'm not sure why. However,
+         * my attempt to put it in the openCaseDatabase method seems to lead to
+         * intermittent unchecked exceptions concerning a missing subscriber.
+         */
+        caseDb.registerForEvents(sleuthkitEventListener);
     }
 
     /**
