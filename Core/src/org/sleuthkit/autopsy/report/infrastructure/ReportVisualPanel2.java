@@ -206,7 +206,14 @@ final class ReportVisualPanel2 extends JPanel {
             doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getLabel(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getDisplayName())); // output is too unstructured for table review
-
+            doNotReport.add(new BlackboardArtifact.Type(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getLabel(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getDisplayName()));
+            doNotReport.add(new BlackboardArtifact.Type(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT.getTypeID(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT.getLabel(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT.getDisplayName()));
             // get artifact types that exist in the current case
             artifacts = openCase.getSleuthkitCase().getArtifactTypesInUse();
 
