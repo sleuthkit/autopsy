@@ -67,7 +67,7 @@ import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
@@ -126,7 +126,7 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
     final HBox controlsHBox = new HBox(5);
     final HBox infoHBox = new HBox(5, eventTypeImageView, hashIV, tagIV, descrLabel, countLabel, controlsHBox);
     final SleuthkitCase sleuthkitCase;
-    final FilteredEventsModel eventsModel;
+    final EventsModel eventsModel;
     private Timeline timeline;
     private Button pinButton;
     private final Border SELECTION_BORDER;

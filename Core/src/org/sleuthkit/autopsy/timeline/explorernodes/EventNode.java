@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
@@ -262,7 +262,7 @@ public class EventNode extends DisplayableItemNode {
      * @return An EventNode with the content (and possible artifact) backing
      *         this event in its lookup.
      */
-    public static EventNode createEventNode(final Long eventID, FilteredEventsModel eventsModel) throws TskCoreException {
+    public static EventNode createEventNode(final Long eventID, EventsModel eventsModel) throws TskCoreException {
 
         SleuthkitCase sleuthkitCase = eventsModel.getSleuthkitCase();
 
