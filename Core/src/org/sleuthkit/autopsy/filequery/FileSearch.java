@@ -23,7 +23,11 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -37,10 +41,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.imageio.ImageIO;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.tools.ant.util.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -72,6 +82,8 @@ class FileSearch {
 
     private final static Logger logger = Logger.getLogger(FileSearch.class.getName());
     private static final int MAXIMUM_CACHE_SIZE = 10;
+    private static final String THUMBNAIL_FORMAT = "png"; //NON-NLS
+    private static final String VIDEO_THUMBNAIL_DIR = "video-thumbnails"; //NON-NLS
     private static final Cache<SearchKey, Map<GroupKey, List<ResultFile>>> searchCache = CacheBuilder.newBuilder()
             .maximumSize(MAXIMUM_CACHE_SIZE)
             .build();
@@ -369,25 +381,75 @@ class FileSearch {
         "FileSearch.genVideoThumb.progress.text=extracting temporary file {0}"})
     static void getVideoThumbnails(VideoThumbnailsWrapper thumbnailWrapper) {
         AbstractFile file = thumbnailWrapper.getResultFile().getFirstInstance();
-        //Currently this method always creates the thumbnails 
-        java.io.File tempFile;
+        String cacheDirectory;
         try {
-            tempFile = getVideoFileInTempDir(file);
+            cacheDirectory = Case.getCurrentCaseThrows().getCacheDirectory();
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
-            int[] framePositions = new int[]{
-                0,
-                0,
-                0,
-                0};
-            thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
-            return;
+            cacheDirectory = null;
+            logger.log(Level.WARNING, "Unable to get cache directory, video thumbnails will not be saved", ex);
         }
-        if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
-            ProgressHandle progress = ProgressHandle.createHandle(Bundle.FileSearch_genVideoThumb_progress_text(file.getName()));
-            progress.start(100);
+        if (cacheDirectory == null || !Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash()).toFile().exists()) {
+            //Currently this method always creates the thumbnails 
+            java.io.File tempFile;
             try {
-                Files.createParentDirs(tempFile);
+                tempFile = getVideoFileInTempDir(file);
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
+                int[] framePositions = new int[]{
+                    0,
+                    0,
+                    0,
+                    0};
+                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                return;
+            }
+            if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
+                ProgressHandle progress = ProgressHandle.createHandle(Bundle.FileSearch_genVideoThumb_progress_text(file.getName()));
+                progress.start(100);
+                try {
+                    Files.createParentDirs(tempFile);
+                    if (Thread.interrupted()) {
+                        int[] framePositions = new int[]{
+                            0,
+                            0,
+                            0,
+                            0};
+                        thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                        return;
+                    }
+                    ContentUtils.writeToFile(file, tempFile, progress, null, true);
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Error extracting temporary file for " + file.getParentPath() + "/" + file.getName(), ex); //NON-NLS
+                } finally {
+                    progress.finish();
+                }
+            }
+            VideoCapture videoFile = new VideoCapture(); // will contain the video
+            BufferedImage bufferedImage = null;
+
+            try {
+                if (!videoFile.open(tempFile.toString())) {
+                    logger.log(Level.WARNING, "Error opening {0} for preview generation.", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                    int[] framePositions = new int[]{
+                        0,
+                        0,
+                        0,
+                        0};
+                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                    return;
+                }
+                double fps = videoFile.get(5); // gets frame per second
+                double totalFrames = videoFile.get(7); // gets total frames
+                if (fps <= 0 || totalFrames <= 0) {
+                    logger.log(Level.WARNING, "Error getting fps or total frames for {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                    int[] framePositions = new int[]{
+                        0,
+                        0,
+                        0,
+                        0};
+                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                    return;
+                }
                 if (Thread.interrupted()) {
                     int[] framePositions = new int[]{
                         0,
@@ -397,110 +459,134 @@ class FileSearch {
                     thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
                     return;
                 }
-                ContentUtils.writeToFile(file, tempFile, progress, null, true);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error extracting temporary file for " + file.getParentPath() + "/" + file.getName(), ex); //NON-NLS
-            } finally {
-                progress.finish();
-            }
-        }
-        VideoCapture videoFile = new VideoCapture(); // will contain the video
-        BufferedImage bufferedImage = null;
 
-        try {
-            if (!videoFile.open(tempFile.toString())) {
-                logger.log(Level.WARNING, "Error opening {0} for preview generation.", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                double duration = 1000 * (totalFrames / fps); //total milliseconds
+
                 int[] framePositions = new int[]{
-                    0,
-                    0,
-                    0,
-                    0};
-                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
-                return;
-            }
-            double fps = videoFile.get(5); // gets frame per second
-            double totalFrames = videoFile.get(7); // gets total frames
-            if (fps <= 0 || totalFrames <= 0) {
-                logger.log(Level.WARNING, "Error getting fps or total frames for {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
-                int[] framePositions = new int[]{
-                    0,
-                    0,
-                    0,
-                    0};
-                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
-                return;
-            }
-            if (Thread.interrupted()) {
-                int[] framePositions = new int[]{
-                    0,
-                    0,
-                    0,
-                    0};
-                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
-                return;
-            }
+                    (int) (duration * .01),
+                    (int) (duration * .25),
+                    (int) (duration * .5),
+                    (int) (duration * .75),};
 
-            double duration = 1000 * (totalFrames / fps); //total milliseconds
-
-            int[] framePositions = new int[]{
-                (int) (duration * .01),
-                (int) (duration * .25),
-                (int) (duration * .5),
-                (int) (duration * .75),};
-
-            Mat imageMatrix = new Mat();
-            List<Image> videoThumbnails = new ArrayList<>();
-            for (int i = 0; i < framePositions.length; i++) {
-                if (!videoFile.set(0, framePositions[i])) {
-                    logger.log(Level.WARNING, "Error seeking to " + framePositions[i] + "ms in {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
-                    // If we can't set the time, continue to the next frame position and try again.
-
-                    videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                    continue;
+                Mat imageMatrix = new Mat();
+                List<Image> videoThumbnails = new ArrayList<>();
+                try {
+                    FileUtils.forceMkdir(Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash()).toFile());
+                } catch (IOException ex) {
+                    cacheDirectory = null;
+                    logger.log(Level.WARNING, "Unable to make video thumbnails directory, thumbnails will not be saved", ex);
                 }
-                // Read the frame into the image/matrix.
-                if (!videoFile.read(imageMatrix)) {
-                    logger.log(Level.WARNING, "Error reading frame at " + framePositions[i] + "ms from {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
-                    // If the image is bad for some reason, continue to the next frame position and try again.
-                    videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                    continue;
-                }
-                // If the image is empty, return since no buffered image can be created.
-                if (imageMatrix.empty()) {
-                    videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                    continue;
-                }
+                for (int i = 0; i < framePositions.length; i++) {
+                    if (!videoFile.set(0, framePositions[i])) {
+                        logger.log(Level.WARNING, "Error seeking to " + framePositions[i] + "ms in {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                        // If we can't set the time, continue to the next frame position and try again.
 
-                int matrixColumns = imageMatrix.cols();
-                int matrixRows = imageMatrix.rows();
+                        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                        if (cacheDirectory != null) {
+                            try {
+                                ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
+                                        Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
+                            } catch (IOException ex) {
+                                logger.log(Level.WARNING, "Unable to save default video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
+                            }
+                        }
+                        continue;
+                    }
+                    // Read the frame into the image/matrix.
+                    if (!videoFile.read(imageMatrix)) {
+                        logger.log(Level.WARNING, "Error reading frame at " + framePositions[i] + "ms from {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                        // If the image is bad for some reason, continue to the next frame position and try again.
+                        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                        if (cacheDirectory != null) {
+                            try {
+                                ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
+                                        Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
+                            } catch (IOException ex) {
+                                logger.log(Level.WARNING, "Unable to save default video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
+                            }
+                        }
 
-                // Convert the matrix that contains the frame to a buffered image.
-                if (bufferedImage == null) {
-                    bufferedImage = new BufferedImage(matrixColumns, matrixRows, BufferedImage.TYPE_3BYTE_BGR);
-                }
+                        continue;
+                    }
+                    // If the image is empty, return since no buffered image can be created.
+                    if (imageMatrix.empty()) {
+                        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                        if (cacheDirectory != null) {
+                            try {
+                                 ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
+                                        Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
+                            } catch (IOException ex) {
+                                logger.log(Level.WARNING, "Unable to save default video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
+                            }
+                        }
+                        continue;
+                    }
 
-                byte[] data = new byte[matrixRows * matrixColumns * (int) (imageMatrix.elemSize())];
-                imageMatrix.get(0, 0, data); //copy the image to data
+                    int matrixColumns = imageMatrix.cols();
+                    int matrixRows = imageMatrix.rows();
 
-                if (imageMatrix.channels() == 3) {
-                    for (int k = 0; k < data.length; k += 3) {
-                        byte temp = data[k];
-                        data[k] = data[k + 2];
-                        data[k + 2] = temp;
+                    // Convert the matrix that contains the frame to a buffered image.
+                    if (bufferedImage == null) {
+                        bufferedImage = new BufferedImage(matrixColumns, matrixRows, BufferedImage.TYPE_3BYTE_BGR);
+                    }
+
+                    byte[] data = new byte[matrixRows * matrixColumns * (int) (imageMatrix.elemSize())];
+                    imageMatrix.get(0, 0, data); //copy the image to data
+
+                    if (imageMatrix.channels() == 3) {
+                        for (int k = 0; k < data.length; k += 3) {
+                            byte temp = data[k];
+                            data[k] = data[k + 2];
+                            data[k + 2] = temp;
+                        }
+                    }
+
+                    bufferedImage.getRaster().setDataElements(0, 0, matrixColumns, matrixRows, data);
+                    if (Thread.interrupted()) {
+                        thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
+                        try {
+                            FileUtils.forceDelete(Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash()).toFile());
+                        } catch (IOException ex) {
+                            logger.log(Level.WARNING, "Unable to delete directory for cancelled video thumbnail process", ex);
+                        }
+                        return;
+                    }
+                    BufferedImage thumbnail = ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE);
+                    videoThumbnails.add(thumbnail);
+                    try {
+                         ImageIO.write(thumbnail, THUMBNAIL_FORMAT,
+                                Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
+                    } catch (IOException ex) {
+                        logger.log(Level.WARNING, "Unable to save video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
                     }
                 }
-
-                bufferedImage.getRaster().setDataElements(0, 0, matrixColumns, matrixRows, data);
-                if (Thread.interrupted()) {
-                    thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
-                    return;
-                }
-                videoThumbnails.add(ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE));
+                thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
+            } finally {
+                videoFile.release(); // close the file}
             }
-            thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
-        } finally {
-            videoFile.release(); // close the file}
+        } else {
+            loadSavedThumbnails(cacheDirectory, thumbnailWrapper);
         }
+    }
+
+    private static void loadSavedThumbnails(String cacheDirectory, VideoThumbnailsWrapper thumbnailWrapper) {
+        int[] framePositions = new int[4];
+        List<Image> videoThumbnails = new ArrayList<>();
+        int thumbnailNumber = 0;
+        String md5 = thumbnailWrapper.getResultFile().getFirstInstance().getMd5Hash();
+        for (String fileName : Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, md5).toFile().list()) {
+            try {
+                 videoThumbnails.add(ImageIO.read(Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, md5, fileName).toFile()));
+            } catch (IOException ex) {
+                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                logger.log(Level.WARNING, "Unable to read saved video thumbnail " + fileName + " for " + md5, ex);
+            }
+            int framePos = Integer.valueOf(FilenameUtils.getBaseName(fileName).substring(2));
+            framePositions[thumbnailNumber] = framePos;
+            thumbnailNumber++;
+
+        }
+        thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
     }
 
     /**
@@ -623,8 +709,7 @@ class FileSearch {
         FileSizeGroupKey(ResultFile file) {
             if (file.getFileType() == FileType.VIDEO) {
                 fileSize = FileSize.fromVideoSize(file.getFirstInstance().getSize());
-            }
-            else {
+            } else {
                 fileSize = FileSize.fromImageSize(file.getFirstInstance().getSize());
             }
         }
