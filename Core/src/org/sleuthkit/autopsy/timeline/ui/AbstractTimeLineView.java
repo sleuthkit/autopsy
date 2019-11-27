@@ -37,7 +37,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
@@ -75,7 +75,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
     private Task<Boolean> updateTask;
 
     private final TimeLineController controller;
-    private final FilteredEventsModel filteredEvents;
+    private final EventsModel filteredEvents;
 
     /**
      * Constructor
@@ -86,7 +86,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();
         this.filteredEvents.registerForEvents(this);
-        this.filteredEvents.zoomStateProperty().addListener(updateListener);
+        this.filteredEvents.modelParamsProperty().addListener(updateListener);
         TimeLineController.timeZoneProperty().addListener(updateListener);
     }
 
@@ -170,7 +170,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
      *
      * @return The FilteredEventsModel for this view.
      */
-    protected FilteredEventsModel getEventsModel() {
+    protected EventsModel getEventsModel() {
         return filteredEvents;
     }
 
@@ -224,7 +224,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
             updateTask = null;
         }
         //remvoe and gc updateListener
-        this.filteredEvents.zoomStateProperty().removeListener(updateListener);
+        this.filteredEvents.modelParamsProperty().removeListener(updateListener);
         TimeLineController.timeZoneProperty().removeListener(updateListener);
         updateListener = null;
         filteredEvents.unRegisterForEvents(this);
