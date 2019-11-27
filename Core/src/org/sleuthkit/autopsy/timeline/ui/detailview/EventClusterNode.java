@@ -58,7 +58,7 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewE
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.SqlFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
+import org.sleuthkit.autopsy.timeline.zooming.EventsModelParams;
 import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TimelineEventType;
@@ -177,12 +177,12 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
          * to the type and description of this cluster by intersecting a new
          * filter with the existing root filter.
          */
-        RootFilterState subClusterFilter = eventsModel.getFilterState()
+        RootFilterState subClusterFilter = eventsModel.getEventFilterState()
                 .intersect(new SqlFilterState<>(
                         new EventTypeFilter(getEventType()), true));
         final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
         final TimelineEventType.HierarchyLevel eventTypeZoomLevel = eventsModel.getEventTypeZoom();
-        final ZoomState zoom = new ZoomState(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLevel());
+        final EventsModelParams zoom = new EventsModelParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLevel());
 
         DescriptionFilter descriptionFilter = new DescriptionFilter(getEvent().getDescriptionLevel(), getDescription());
         /*

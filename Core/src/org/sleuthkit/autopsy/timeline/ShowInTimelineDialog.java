@@ -195,7 +195,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
 
         //add events to table
         Set<TimelineEvent> events = new HashSet<>();
-        FilteredEventsModel eventsModel = controller.getEventsModel();
+        EventsModel eventsModel = controller.getEventsModel();
         for (Long eventID : eventIDS) {
             try {
                 events.add(eventsModel.getEventById(eventID));
