@@ -291,6 +291,9 @@ public class DataResultFilterNode extends FilterNode {
             for (Action a : ban.getActions(true)) {
                 actionsList.add(a);
             }
+            
+            //Add seperator between the decorated actions and the actions from the node itself.
+            actionsList.add(null);
             BlackboardArtifact ba = ban.getLookup().lookup(BlackboardArtifact.class);
             final int artifactTypeID = ba.getArtifactTypeID();
 
