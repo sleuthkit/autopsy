@@ -50,9 +50,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements PropertyChangeListener {
 
     private UnpackageWorker worker;
-    private final String CASES_OPENED_LOG_FILE = "portable_cases_opened"; //NON-NLS
-    private final String PORTABLE_CASE_NAME = "portable_case_name"; //NON-NLS
-    private final String PORTABLE_CASE_DIR = "portable_case_dir_opened"; //NON-NLS
+    private final static String CASES_OPENED_LOG_FILE = "portable_cases_opened"; //NON-NLS
+    private final static String PORTABLE_CASE_NAME = "portable_case_name"; //NON-NLS
+    private final static String PORTABLE_CASE_DIR = "portable_case_dir_opened"; //NON-NLS
 
     /**
      * Creates new form UnpackagePortableCaseProgressDialog
@@ -163,9 +163,7 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
                     } catch (CaseActionException ex) {
                         throw new TskCoreException("Error opening case after unpacking it.", ex); // NON-NLS
                     }
-
                 }
-
             } else {        // Find 7-Zip
                 File sevenZipExe = locate7ZipExecutable();
                 if (sevenZipExe == null) {
