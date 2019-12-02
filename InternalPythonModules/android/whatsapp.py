@@ -45,6 +45,9 @@ from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
+from org.sleuthkit.datamodel.blackboardutils import FileAttachment
+from org.sleuthkit.datamodel.blackboardutils import URLAttachment
+from org.sleuthkit.datamodel.blackboardutils import MessageAttachments
 from TskMessagesParser import TskMessagesParser
 from TskContactsParser import TskContactsParser
 from TskCallLogsParser import TskCallLogsParser
@@ -151,7 +154,7 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
                         current_case.getSleuthkitCase(), self._PARSER_NAME,
                         calllog_and_message_db.getDBFile(), Account.Type.WHATSAPP)
                 self.parse_calllogs(calllog_and_message_db, helper)
-                self.parse_messages(dataSource, calllog_and_message_db, helper)
+                self.parse_messages(dataSource, calllog_and_message_db, helper, current_case)
 
         except NoCurrentCaseException as ex:
             #If there is no current case, bail out immediately.
@@ -227,24 +230,32 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
                     "Error posting calllog artifact to the blackboard.", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())
 
-    def parse_messages(self, dataSource, messages_db, helper):
+    def parse_messages(self, dataSource, messages_db, helper, current_case):
         try:
             messages_db.attachDatabase(dataSource, "wa.db",
                         messages_db.getDBFile().getParentPath(), "wadb")
 
             messages_parser = WhatsAppMessagesParser(messages_db)
             while messages_parser.next():
-                helper.addMessage(
-                    messages_parser.get_message_type(),
-                    messages_parser.get_message_direction(),
-                    messages_parser.get_phone_number_from(),
-                    messages_parser.get_phone_number_to(),
-                    messages_parser.get_message_date_time(),
-                    messages_parser.get_message_read_status(),
-                    messages_parser.get_message_subject(),
-                    messages_parser.get_message_text(),
-                    messages_parser.get_thread_id()
-                )
+                message_artifact = helper.addMessage(
+                                        messages_parser.get_message_type(),
+                                        messages_parser.get_message_direction(),
+                                        messages_parser.get_phone_number_from(),
+                                        messages_parser.get_phone_number_to(),
+                                        messages_parser.get_message_date_time(),
+                                        messages_parser.get_message_read_status(),
+                                        messages_parser.get_message_subject(),
+                                        messages_parser.get_message_text(),
+                                        messages_parser.get_thread_id()
+                                    )
+
+                # add attachments, if any
+                if (messages_parser.get_url_attachment() is not None):
+                    url_attachments = ArrayList()
+                    url_attachments.add(URLAttachment(messages_parser.get_url_attachment()))
+                    message_attachments = MessageAttachments([], url_attachments)
+                    helper.addAttachments(message_artifact, message_attachments)
+
             messages_parser.close()
         except SQLException as ex:
             self._logger.log(Level.WARNING, "Error querying the whatsapp database for contacts.", ex)
@@ -502,9 +513,6 @@ class WhatsAppMessagesParser(TskMessagesParser):
         message = self.result_set.getString("content") 
         if message is None:
             message = super(WhatsAppMessagesParser, self).get_message_text()
-        attachment = self.result_set.getString("attachment")
-        if attachment is not None:
-            return general.appendAttachmentList(message, [attachment])
         return message
     
     def get_thread_id(self):
@@ -512,3 +520,14 @@ class WhatsAppMessagesParser(TskMessagesParser):
         if group is not None:
             return self.result_set.getString("id")
         return super(WhatsAppMessagesParser, self).get_thread_id()
+
+        
+    def get_url_attachment(self):
+        attachment = self.result_set.getString("attachment") 
+        if (attachment is None):
+            return None
+        elif (str(attachment).startswith("http:") or str(attachment).startswith("https:") ):
+            return attachment
+        else:
+            return None
+    
