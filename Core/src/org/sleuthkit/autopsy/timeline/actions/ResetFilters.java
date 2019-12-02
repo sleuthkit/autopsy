@@ -49,7 +49,7 @@ public class ResetFilters extends Action {
 
             @Override
             protected boolean computeValue() {
-                return eventsModel.modelParamsProperty().getValue().getEventFilterState().equals(eventsModel.getDefaultEventFilter());
+                return eventsModel.modelParamsProperty().getValue().getEventFilterState().equals(eventsModel.getDefaultEventFilterState());
             }
         });
         setEventHandler((ActionEvent t) -> {

@@ -90,7 +90,7 @@ final public class FilterSetPanel extends BorderPane {
     private double dividerPosition;
 
     @NbBundle.Messages({
-        "FilterSetPanel.defaultButton.text=Default",
+        "FilterSetPanel.defaultButton.text=Reset",
         "FilsetSetPanel.hiddenDescriptionsPane.displayName=Hidden Descriptions"})
     @FXML
     void initialize() {

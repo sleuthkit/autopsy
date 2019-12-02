@@ -323,7 +323,7 @@ public class TimeLineController {
     }
 
     public void applyDefaultFilters() {
-        pushFilters(filteredEvents.getDefaultEventFilter());
+        pushFilters(filteredEvents.getDefaultEventFilterState());
     }
 
     public void zoomOutToActivity() throws TskCoreException {
