@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.geolocation;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 
@@ -52,7 +53,11 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      * @param obj         Object that the checkbox represents
      */
     void addElement(String displayName, T obj) {
-        model.addElement(new ObjectCheckBox<>(displayName, true, obj));
+        ObjectCheckBox<T> newCheckBox = new ObjectCheckBox<>(displayName, true, obj);
+        
+        if(!model.contains(newCheckBox)) {
+            model.addElement(newCheckBox);
+        }
     }
     
     /**
@@ -243,6 +248,21 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
         @Override
         public String getDisplayName() {
             return displayName;
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if(obj instanceof ObjectCheckBox) {
+                return object.equals(((ObjectCheckBox)obj).object);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 31 * hash + Objects.hashCode(this.object);
+            return hash;
         }
     }
 

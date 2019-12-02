@@ -65,6 +65,7 @@ public final class GeolocationTopComponent extends TopComponent {
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(DATA_ADDED);
 
     private final PropertyChangeListener ingestListener;
+    private final PropertyChangeListener caseEventListener;
     private final GeoFilterPanel geoFilterPanel;
 
     final RefreshPanel refreshPanel = new RefreshPanel();
@@ -100,6 +101,13 @@ public final class GeolocationTopComponent extends TopComponent {
                 }
             }
         };
+        
+        this.caseEventListener = pce -> {
+            mapPanel.clearWaypoints();
+            if (pce.getNewValue() != null) {
+                updateWaypoints();
+            }
+        };
 
         refreshPanel.addCloseActionListener(new ActionListener() {
             @Override
@@ -111,6 +119,7 @@ public final class GeolocationTopComponent extends TopComponent {
         refreshPanel.addRefreshActionListner(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                geoFilterPanel.updateDataSourceList();
                 mapPanel.clearWaypoints();
                 updateWaypoints();
                 showRefreshPanel(false);
@@ -121,7 +130,7 @@ public final class GeolocationTopComponent extends TopComponent {
         filterPane.setPanel(geoFilterPanel);
         geoFilterPanel.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e) {          
                 updateWaypoints();
             }
         });
@@ -131,26 +140,23 @@ public final class GeolocationTopComponent extends TopComponent {
     public void addNotify() {
         super.addNotify();
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, ingestListener);
-        Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
-            mapPanel.clearWaypoints();
-            if (evt.getNewValue() != null) {
-                updateWaypoints();
-            }
-        });
+        Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), caseEventListener);
     }
 
     @Override
     public void removeNotify() {
         super.removeNotify();
         IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
+        Case.removeEventTypeSubscriber(EnumSet.of(CURRENT_CASE), caseEventListener);
     }
 
     @Override
     public void componentOpened() {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
+        
     }
-    
+  
     @Messages({
         "GeolocationTC_connection_failure_message=Failed to connect to map title source.\nPlease review map source in Options dialog.",
         "GeolocationTC_connection_failure_message_title=Connection Failure"

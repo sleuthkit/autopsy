@@ -25,6 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -312,7 +313,9 @@ final public class MapPanel extends javax.swing.JPanel {
             // it the popup is currently visible
             if (waypoint != null && !waypoint.equals(currentlySelectedWaypoint)) {
                 currentlySelectedWaypoint = waypoint;
-                showDetailsPopup();
+                if(currentPopup != null) {
+                    showDetailsPopup();
+                }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to show popup for waypoint", ex);
@@ -340,7 +343,7 @@ final public class MapPanel extends javax.swing.JPanel {
                 popupMenu.add(new JSeparator());
             }
         }
-        popupMenu.show(this, point.x, point.y);
+        popupMenu.show(mapViewer, point.x, point.y);
     }
 
     /**
@@ -612,8 +615,10 @@ final public class MapPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_mapViewerMouseMoved
 
     private void mapViewerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mapViewerMouseClicked
-        currentlySelectedWaypoint = findClosestWaypoint(evt.getPoint());
-        showDetailsPopup();
+        if(!evt.isPopupTrigger() && (evt.getButton() == MouseEvent.BUTTON1)) {
+            currentlySelectedWaypoint = findClosestWaypoint(evt.getPoint());
+            showDetailsPopup();
+        }
     }//GEN-LAST:event_mapViewerMouseClicked
 
 
