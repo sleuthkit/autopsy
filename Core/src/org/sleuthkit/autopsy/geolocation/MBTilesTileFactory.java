@@ -45,8 +45,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 
 /**
- * This TileFactory class borrows from AbstractTileFactory, changing to support
+ * This TileFactory class borrows from org.jxmapviewer.viewer.AbstractTileFactory, changing to support
  * the getting the tiles from a database instead the web.
+ * 
+ * @see <a href="https://github.com/msteiger/jxmapviewer2/blob/master/jxmapviewer2/src/main/java/org/jxmapviewer/viewer/AbstractTileFactory.java">AbstractTileFactory</a>
  *
  */
 final class MBTilesTileFactory extends TileFactory {
@@ -211,11 +213,6 @@ final class MBTilesTileFactory extends TileFactory {
             service.shutdown();
             service = null;
         }
-
-        if (connector != null) {
-            connector.closeConnection();
-            connector = null;
-        }
     }
 
     @Override
@@ -303,7 +300,7 @@ final class MBTilesTileFactory extends TileFactory {
                     }
                 } catch (OutOfMemoryError memErr) {
                     cache.needMoreMemory();
-                } catch (Exception ex) {
+                } catch (IOException | GeoLocationDataException | InterruptedException | InvocationTargetException | URISyntaxException ex) {
                     if (remainingAttempts == 0) {
                         logger.log(Level.SEVERE, String.format("Failed to load a tile at URL: %s, stopping", tile.getURL()), ex);
                     } else {

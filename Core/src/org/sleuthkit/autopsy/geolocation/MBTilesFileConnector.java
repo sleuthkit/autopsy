@@ -25,11 +25,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.viewer.TileFactoryInfo;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 
 /**
@@ -40,8 +37,8 @@ final class MBTilesFileConnector {
     private final static String DB_URL = "jdbc:sqlite:%s";
     private final static String TILE_QUERY = "SELECT tile_data FROM images WHERE tile_id = '%s'";
     private final static String FORMAT_QUERY = "SELECT value FROM metadata WHERE name='format'";
-    private TileFactoryInfo factoryInfo;
-    private final ConnectionPool pool;
+    private final TileFactoryInfo factoryInfo;
+    private final String connectionString;
 
     /**
      * Returns whether or not the file at the given path is a mbtiles file.
@@ -81,12 +78,9 @@ final class MBTilesFileConnector {
      * @throws GeoLocationDataException
      */
     MBTilesFileConnector(String tileFilePath) throws GeoLocationDataException {
-        try {
-            pool = new ConnectionPool(tileFilePath);
-            factoryInfo = new MBTilesInfo();
-        } catch (SQLException ex) {
-            throw new GeoLocationDataException(String.format("Unable to create sql connection to %s", tileFilePath), ex);
-        }
+       String path = tileFilePath.replaceAll("\\\\", "/");
+       connectionString = String.format(DB_URL, path);
+       factoryInfo = new MBTilesInfo();  
     }
 
     /**
@@ -111,30 +105,16 @@ final class MBTilesFileConnector {
     byte[] getTileBytes(String tileID) throws GeoLocationDataException {
         String query = String.format(TILE_QUERY, tileID);
 
-        Connection connection = pool.getConnection();
-        if (connection != null) {
+        try (Connection connection = DriverManager.getConnection(connectionString)) {
             try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(query)) {
                 if (resultSet.next()) {
                     return resultSet.getBytes(1);
                 }
-            } catch (SQLException ex) {
-                throw new GeoLocationDataException(String.format("Failed to get tile %s", tileID), ex);
-            } finally {
-                pool.releaseConnection(connection);
             }
+        } catch (SQLException ex) {
+            throw new GeoLocationDataException(String.format("Failed to get tile %s", tileID), ex);
         }
         return new byte[0];
-    }
-
-    /**
-     * Close the connection to the MBTile file.
-     */
-    void closeConnection() {
-        try {
-            pool.closeConnections();
-        } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
-        }
     }
 
     /**
@@ -153,84 +133,6 @@ final class MBTilesFileConnector {
             // them.
             int osmZoom = getTotalMapZoom() - zoom;
             return String.format("%d/%d/%d", osmZoom, x, y);
-        }
-    }
-
-    /**
-     * A ConnectionPool to manage the connections to the mbtile\sql file.
-     */
-    private final class ConnectionPool {
-
-        private static final int POOL_SIZE = 5;
-
-        private final List<Connection> poolConnections;
-        private final List<Connection> usedConnections;
-
-        /**
-         * Construct a new ConnectionPool and initialize the connections.
-         * 
-         * @param filePath AbsolutePath to the MBTilesFile.
-         * @throws SQLException 
-         */
-        ConnectionPool(String filePath) throws SQLException {
-            usedConnections = new ArrayList<>();
-
-            String path = filePath.replaceAll("\\\\", "/");
-            String url = String.format(DB_URL, path);
-
-            poolConnections = new ArrayList<>(POOL_SIZE);
-            for (int idx = 0; idx < POOL_SIZE; idx++) {
-                poolConnections.add(DriverManager.getConnection(url));
-            }
-        }
-
-        /**
-         * Returns a connection a to the tile file.
-         * 
-         * @return  A valid connection to the db or null if one is 
-         *          not currently available.
-         */
-        synchronized Connection getConnection() {
-            Connection connection = null;
-            if (!poolConnections.isEmpty()) {
-                connection = poolConnections.remove(poolConnections.size() - 1);
-                usedConnections.add(connection);
-            }
-            return connection;
-        }
-
-        /**
-         * Frees the connection.
-         * 
-         * The connection is removed from the list of used connections and 
-         * returns the connection to the pool.
-         * 
-         * @param connection The connection to be freed.
-         * 
-         * @return True if the connections was freed.
-         */
-        synchronized boolean releaseConnection(Connection connection) {
-            if (usedConnections.contains(connection)) {
-                poolConnections.add(connection);
-                return usedConnections.remove(connection);
-            }
-
-            return false;
-        }
-
-        /**
-         * Closes all the connections to the db.
-         * 
-         * @throws SQLException 
-         */
-        void closeConnections() throws SQLException {
-            for (Connection conn : usedConnections) {
-                conn.close();
-            }
-
-            for (Connection conn : usedConnections) {
-                conn.close();
-            }
         }
     }
 }
