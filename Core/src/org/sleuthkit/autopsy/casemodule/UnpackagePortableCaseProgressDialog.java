@@ -150,7 +150,7 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
             "UnpackageWorker.doInBackground.errorFinding7zip=Could not locate 7-Zip executable",
             "UnpackageWorker.doInBackground.errorCompressingCase=Error unpackaging case",
             "UnpackageWorker.doInBackground.canceled=Unpackaging canceled by user",
-            "UnpackageWorker.doInBackground.previousSeenCase=Case {0} has been previously opened do you want to open it again?"})
+            "UnpackageWorker.doInBackground.previousSeenCase=Case with name {0} has been previously opened do you want to open it again?"})
         @Override
         protected Void doInBackground() throws Exception {
 
