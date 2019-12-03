@@ -46,14 +46,12 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 @ServiceProvider(service = DataContentViewer.class, position = 7)
-@NbBundle.Messages({
-    "ContextViewer.title=Context Viewer",
-    "ContextViewer.toolTip=Displays context for selected file."
-})
 public final class ContextViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ContextViewer.class.getName());
+    private static final int ARTIFACT_STR_MAX_LEN = 1024;
+    private static final int ATTRIBUTE_STR_MAX_LEN = 200;
 
     // defines a list of artifacts that provide context for a file
     private static final List<BlackboardArtifact.ARTIFACT_TYPE> SOURCE_CONTEXT_ARTIFACTS = new ArrayList<>();
@@ -82,7 +80,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private void initComponents() {
 
         jSourceGoToResultButton = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
+        jSourceLabel = new javax.swing.JLabel();
         jSourceNameLabel = new javax.swing.JLabel();
         jSourceTextLabel = new javax.swing.JLabel();
 
@@ -93,8 +91,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             }
         });
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jLabel1.text")); // NOI18N
+        jSourceLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jSourceLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceNameLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceNameLabel.text")); // NOI18N
 
@@ -109,7 +107,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
+                            .addComponent(jSourceLabel)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(6, 6, 6)
                                 .addComponent(jSourceNameLabel)
@@ -124,7 +122,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
+                .addComponent(jSourceLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jSourceNameLabel)
@@ -157,10 +155,15 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         try {
             populateSourceContextData(file);
         } catch (NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Exception displaying context for file {0}", file); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Exception displaying context for file %s", file.getName()), ex); //NON-NLS
         }
     }
 
+    @NbBundle.Messages({
+        "ContextViewer.title=Context Viewer",
+        "ContextViewer.toolTip=Displays context for selected file."
+    })
+    
     @Override
     public String getTitle() {
         return Bundle.ContextViewer_title();
@@ -201,7 +204,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                         return true;
                     }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Exception while looking up context artifacts for file {0}", abstractFile); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Exception while looking up context artifacts for file %s", abstractFile), ex); //NON-NLS
                 }
             }
 
@@ -212,6 +215,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
     @Override
     public int isPreferred(Node node) {
+        // this is a low preference viewer.
         return 1;
     }
 
@@ -232,9 +236,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         boolean foundASource = false;
         for (BlackboardArtifact.ARTIFACT_TYPE artifactType : SOURCE_CONTEXT_ARTIFACTS) {
             List<BlackboardArtifact> artifactsList = tskCase.getBlackboardArtifacts(artifactType, sourceFile.getId());
-            if (!artifactsList.isEmpty()) {
-                foundASource = true;
-            }
+            
+            foundASource = !artifactsList.isEmpty();
             for (BlackboardArtifact contextArtifact : artifactsList) {
                 addSourceEntry(contextArtifact);
             }
@@ -245,10 +248,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         }
     }
 
-    @NbBundle.Messages({
-        "ContextViewer.attachmentSource=Attached to: ",
-        "ContextViewer.downloadSource=Downloaded from: "
-    })
+    
 
     /**
      * Adds a source context entry for the selected file based on the given context
@@ -282,12 +282,16 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      *
      * @throws TskCoreException
      */
+    @NbBundle.Messages({
+        "ContextViewer.attachmentSource=Attached to: ",
+        "ContextViewer.downloadSource=Downloaded from: "
+    })
     private void setSourceFields(BlackboardArtifact associatedArtifact) throws TskCoreException {
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == associatedArtifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == associatedArtifact.getArtifactTypeID()) {
 
             setSourceName(Bundle.ContextViewer_attachmentSource());
-            setSourceText(msgArtifactToAbbreiviatedString(associatedArtifact));
+            setSourceText(msgArtifactToAbbreviatedString(associatedArtifact));
 
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == associatedArtifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == associatedArtifact.getArtifactTypeID()) {
@@ -330,14 +334,18 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      *
      * @throws TskCoreException
      */
+    @NbBundle.Messages({
+        "ContextViewer.downloadURL=URL",
+        "ContextViewer.downloadedOn=On"
+    })
     private String webDownloadArtifactToString(BlackboardArtifact artifact) throws TskCoreException {
-        StringBuilder sb = new StringBuilder(1024);
+        StringBuilder sb = new StringBuilder(ARTIFACT_STR_MAX_LEN);
         Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
 
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == artifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == artifact.getArtifactTypeID()) {
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL, attributesMap, "URL");
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, attributesMap, "On");
+            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL, attributesMap, Bundle.ContextViewer_downloadURL());
+            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, attributesMap, Bundle.ContextViewer_downloadedOn());
         }
         return sb.toString();
     }
@@ -351,21 +359,28 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      *
      * @throws TskCoreException
      */
-    private String msgArtifactToAbbreiviatedString(BlackboardArtifact artifact) throws TskCoreException {
+    @NbBundle.Messages({
+        "ContextViewer.message=Message",
+        "ContextViewer.email=Email",
+        "ContextViewer.messageFrom=From",
+        "ContextViewer.messageTo=From",
+        "ContextViewer.messageOn=On",
+    })
+    private String msgArtifactToAbbreviatedString(BlackboardArtifact artifact) throws TskCoreException {
 
-        StringBuilder sb = new StringBuilder(1024);
+        StringBuilder sb = new StringBuilder(ARTIFACT_STR_MAX_LEN);
         Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
 
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == artifact.getArtifactTypeID()) {
-            sb.append("Message ");
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, attributesMap, "From");
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, attributesMap, "To");
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, attributesMap, "On");
+            sb.append(Bundle.ContextViewer_message()).append(' ');
+            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, attributesMap, Bundle.ContextViewer_messageFrom());
+            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, attributesMap, Bundle.ContextViewer_messageTo());
+            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, attributesMap, Bundle.ContextViewer_messageOn());
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == artifact.getArtifactTypeID()) {
-            sb.append("Email ");
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM, attributesMap, "From");
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO, attributesMap, "To");
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT, attributesMap, "On");
+            sb.append(Bundle.ContextViewer_email()).append(' ');
+            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM, attributesMap, Bundle.ContextViewer_messageFrom());
+            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO, attributesMap, Bundle.ContextViewer_messageTo());
+            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT, attributesMap, Bundle.ContextViewer_messageOn());
         }
         return sb.toString();
     }
@@ -390,7 +405,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                 if (!StringUtils.isEmpty(prependStr)) {
                     sb.append(prependStr).append(' ');
                 }
-                sb.append(StringUtils.abbreviate(attrVal, 200)).append(' ');
+                sb.append(StringUtils.abbreviate(attrVal, ATTRIBUTE_STR_MAX_LEN)).append(' ');
             }
         }
     }
@@ -419,8 +434,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JButton jSourceGoToResultButton;
+    private javax.swing.JLabel jSourceLabel;
     private javax.swing.JLabel jSourceNameLabel;
     private javax.swing.JLabel jSourceTextLabel;
     // End of variables declaration//GEN-END:variables
