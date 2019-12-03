@@ -22,34 +22,103 @@ import javafx.beans.binding.BooleanExpression;
 import javafx.beans.property.BooleanProperty;
 
 /**
- * The state of a filter: selected, disabled, active, etc.
+ * An interface for filter state classes. Filter state classes are wrappers that
+ * adapt a timeline data model filtering object for display by the timeline GUI
+ * by providing selected, disabled, and active properties for the wrapped
+ * filter. A filter that is selected and not disabled is active.
  *
- * @param <FilterType> The type of filter this is the state for.
+ * @param <FilterType> The type of the wrapped filter.
  */
 public interface FilterState<FilterType> {
 
+    /**
+     * Gets the display name that will be used to identify the wrapped filter in
+     * the timeline GUI.
+     *
+     * @return The display name of the wrapped filter.
+     */
     String getDisplayName();
 
+    /**
+     * Gets the wrapped filter.
+     *
+     * @return The wrapped filter.
+     */
     FilterType getFilter();
 
+    /**
+     * Gets the wrapped filter only if it is active. A filter that is selected
+     * and not disabled is active. If the wrapped filter is not active, null is
+     * returned.
+     *
+     * @return The wrapped filter or null.
+     */
     FilterType getActiveFilter();
 
+    /**
+     * Makes a deep copy of this filter state object. // RJCTODO: Is it really a
+     * deep copy?
+     *
+     * @return The copy.
+     */
     FilterState<FilterType> copyOf();
 
+    /**
+     * Gets the active property of this filter state object. A filter that is
+     * selected and not disabled is active.
+     *
+     * @return The active property.
+     */
     BooleanExpression activeProperty();
 
+    /**
+     * Gets the value of the active property of this filter state object. A
+     * filter that is selected and not disabled is active.
+     *
+     * @return True or false.
+     */
     boolean isActive();
 
+    /**
+     * Gets the disabled property of this filter state object.
+     *
+     * @return The disabled property.
+     */
     BooleanProperty disabledProperty();
 
+    /**
+     * Gets the value of the disabled property of this filter state object.
+     *
+     * @return True or false.
+     */
     boolean isDisabled();
 
-    void setDisabled(Boolean act);
+    /**
+     * Sets the value of the disabled property of this filter state object.
+     *
+     * @param value True or false.
+     */
+    void setDisabled(Boolean value);
 
+    /**
+     * Gets the selected property of this filter state object.
+     *
+     * @return The selected property.
+     */
     BooleanProperty selectedProperty();
 
+    /**
+     * Gets the value of the selected property of this filter state object.
+     *
+     * @return True or false.
+     */
     boolean isSelected();
 
-    void setSelected(Boolean act);
+    /**
+     * Sets the value of the selected property of this filter state object.
+     *
+     * True or false.
+     */
+    void setSelected(Boolean value);
 
 }
