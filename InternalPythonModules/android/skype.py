@@ -434,12 +434,6 @@ class SkypeMessagesParser(TskMessagesParser):
         content = self.result_set.getString("content")
 
         if content is not None:
-##            file_path = self.result_set.getString("device_gallery_path")
-##
-##            #if a file name and file path are associated with a message, append it
-##            if file_path is not None:
-##                return general.appendAttachmentList(content, [file_path]) 
-##
             return content
 
         return super(SkypeMessagesParser, self).get_message_text()
