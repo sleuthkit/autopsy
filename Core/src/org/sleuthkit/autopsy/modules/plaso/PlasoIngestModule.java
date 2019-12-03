@@ -132,9 +132,9 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule.psort.cancelled=psort run was canceled",
         "PlasoIngestModule.bad.imageFile=Cannot find image file name and path",
         "PlasoIngestModule.completed=Plaso Processing Completed",
-        "PlasoIngestModule.has.run=Plaso Plugin has been run.",
+        "PlasoIngestModule.has.run=Plaso",
         "PlasoIngestModule.psort.fail=Plaso returned an error when sorting events.  Results are not complete.",
-        "PlasoIngestModule.dataSource.not.an.image=Datasource is not an Image."})
+        "PlasoIngestModule.dataSource.not.an.image=Skipping non-disk image datasource"})
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
 
