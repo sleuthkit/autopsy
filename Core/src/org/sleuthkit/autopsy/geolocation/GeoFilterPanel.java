@@ -74,6 +74,20 @@ class GeoFilterPanel extends javax.swing.JPanel {
         add(checkboxPanel, gridBagConstraints);
     }
     
+    @Override
+    public void setEnabled(boolean enabled) {
+        applyButton.setEnabled(enabled);
+        mostRecentButton.setEnabled(enabled);
+        allButton.setEnabled(enabled);
+        showWaypointsWOTSCheckBox.setEnabled(enabled && mostRecentButton.isSelected());
+        checkboxPanel.setEnabled(enabled);
+        daysLabel.setEnabled(enabled);
+        daysSpinner.setEnabled(enabled);
+    }
+    
+    /**
+     * Update the data source list with the current data sources
+     */
     void updateDataSourceList() {
          try {
             initCheckboxList();
@@ -155,7 +169,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         mostRecentButton = new javax.swing.JRadioButton();
         showWaypointsWOTSCheckBox = new javax.swing.JCheckBox();
         daysSpinner = new javax.swing.JSpinner(numberModel);
-        javax.swing.JLabel daysLabel = new javax.swing.JLabel();
+        daysLabel = new javax.swing.JLabel();
         javax.swing.JPanel buttonPanel = new javax.swing.JPanel();
         applyButton = new javax.swing.JButton();
         javax.swing.JLabel optionsLabel = new javax.swing.JLabel();
@@ -272,6 +286,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allButton;
     private javax.swing.JButton applyButton;
+    private javax.swing.JLabel daysLabel;
     private javax.swing.JSpinner daysSpinner;
     private javax.swing.JRadioButton mostRecentButton;
     private javax.swing.JCheckBox showWaypointsWOTSCheckBox;
