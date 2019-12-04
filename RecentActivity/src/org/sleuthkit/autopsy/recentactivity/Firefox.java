@@ -544,22 +544,25 @@ class Firefox extends Extract {
                             domain)); //NON-NLS
                 }
 
-                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
-                if (bbart != null) {
-                    bbartifacts.add(bbart);
-                }
-                
-                // find the downloaded file and create a TSK_DOWNLOAD_SOURCE for it.
-                 try {
-                    for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(downloadedFilePath), FilenameUtils.getPath(downloadedFilePath))) {
-                        BlackboardArtifact downloadSourceArt =  downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
-                        downloadSourceArt.addAttributes(createDownloadSourceAttributes(source));
-                        bbartifacts.add(downloadSourceArt);
-                        break;
+                BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
+                if (webDownloadArtifact != null) {
+                    bbartifacts.add(webDownloadArtifact);
+
+                    // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
+                    try {
+                        for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(downloadedFilePath), FilenameUtils.getPath(downloadedFilePath))) {
+                            BlackboardArtifact associatedObjectArtifact = downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
+                            associatedObjectArtifact.addAttribute(
+                                    new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
+                                            RecentActivityExtracterModuleFactory.getModuleName(), webDownloadArtifact.getArtifactID()));
+
+                            bbartifacts.add(associatedObjectArtifact);
+                            break;
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, String.format("Error creating associated object artifact for file  '%s'",
+                                downloadedFilePath), ex); //NON-NLS
                     }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error creating download source artifact for file  '%s'",
-                        downloadedFilePath), ex); //NON-NLS
                 }
             }
             if (errors > 0) {
@@ -681,22 +684,24 @@ class Firefox extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain)); //NON-NLS
                 }
 
-                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
-                if (bbart != null) {
-                    bbartifacts.add(bbart);
-                }
+                BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
+                if (webDownloadArtifact != null) {
+                    bbartifacts.add(webDownloadArtifact);
                 
-                // find the downloaded file and create a TSK_DOWNLOAD_SOURCE for it.
-                 try {
-                    for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(downloadedFilePath), FilenameUtils.getPath(downloadedFilePath))) {
-                        BlackboardArtifact downloadSourceArt =  downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
-                        downloadSourceArt.addAttributes(createDownloadSourceAttributes(url));
-                        bbartifacts.add(downloadSourceArt);
-                        break;
+                    // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
+                     try {
+                        for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(downloadedFilePath), FilenameUtils.getPath(downloadedFilePath))) {
+                            BlackboardArtifact associatedObjectArtifact =  downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
+                            associatedObjectArtifact.addAttribute(
+                                    new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
+                                            RecentActivityExtracterModuleFactory.getModuleName(), webDownloadArtifact.getArtifactID()));
+                            bbartifacts.add(associatedObjectArtifact);
+                            break;
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, String.format("Error creating associated object artifact for file  '%s'",
+                            downloadedFilePath), ex); //NON-NLS
                     }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error creating download source artifact for file  '%s'",
-                        downloadedFilePath), ex); //NON-NLS
                 }
             }
             if (errors > 0) {
