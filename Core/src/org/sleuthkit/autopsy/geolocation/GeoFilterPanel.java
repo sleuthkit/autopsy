@@ -135,7 +135,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
     private void initCheckboxList() throws TskCoreException {
         final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
 
-        checkboxPanel.clearList();
+//        checkboxPanel.clearList();
         
         for (DataSource dataSource : sleuthkitCase.getDataSources()) {
             String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();

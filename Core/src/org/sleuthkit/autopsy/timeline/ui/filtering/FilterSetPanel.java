@@ -40,7 +40,7 @@ import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilterState;
@@ -79,7 +79,7 @@ final public class FilterSetPanel extends BorderPane {
     @FXML
     private SplitPane splitPane;
 
-    private final FilteredEventsModel filteredEvents;
+    private final EventsModel filteredEvents;
     private final TimeLineController controller;
 
     /**
@@ -90,7 +90,7 @@ final public class FilterSetPanel extends BorderPane {
     private double dividerPosition;
 
     @NbBundle.Messages({
-        "FilterSetPanel.defaultButton.text=Default",
+        "FilterSetPanel.defaultButton.text=Reset",
         "FilsetSetPanel.hiddenDescriptionsPane.displayName=Hidden Descriptions"})
     @FXML
     void initialize() {
@@ -115,16 +115,16 @@ final public class FilterSetPanel extends BorderPane {
         legendColumn.setCellFactory(col -> new LegendCell(this.controller));
 
         //type is the only filter expanded initialy
-        expansionMap.put(filteredEvents.getFilterState().getFilter(), true);
-        expansionMap.put(filteredEvents.getFilterState().getEventTypeFilterState().getFilter(), true);
+        expansionMap.put(filteredEvents.getEventFilterState().getFilter(), true);
+        expansionMap.put(filteredEvents.getEventFilterState().getEventTypeFilterState().getFilter(), true);
 
         InvalidationListener applyFiltersListener = observable -> applyFilters();
 
-        filteredEvents.eventTypeZoomProperty().addListener(applyFiltersListener);
+        filteredEvents.eventTypesHierarchyLevelProperty().addListener(applyFiltersListener);
         filteredEvents.descriptionLODProperty().addListener(applyFiltersListener);
         filteredEvents.timeRangeProperty().addListener(applyFiltersListener);
 
-        filteredEvents.filterProperty().addListener(observable -> refreshFilterUI());
+        filteredEvents.eventFilterProperty().addListener(observable -> refreshFilterUI());
         refreshFilterUI();
 
         hiddenDescriptionsListView.setItems(controller.getQuickHideFilters());
@@ -164,7 +164,7 @@ final public class FilterSetPanel extends BorderPane {
 
     private void refreshFilterUI() {
         Platform.runLater(()
-                -> filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.filterProperty().get().copyOf(), expansionMap)));
+                -> filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.eventFilterProperty().get().copyOf(), expansionMap)));
     }
 
     private void applyFilters() {

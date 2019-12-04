@@ -36,14 +36,12 @@ import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -55,7 +53,6 @@ import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder.WaypointFilte
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.report.ReportModule;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.report.modules.kml.KMLReport;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -77,6 +74,7 @@ public final class GeolocationTopComponent extends TopComponent {
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(DATA_ADDED);
 
     private final PropertyChangeListener ingestListener;
+    private final PropertyChangeListener caseEventListener;
     private final GeoFilterPanel geoFilterPanel;
 
     final RefreshPanel refreshPanel = new RefreshPanel();
@@ -117,6 +115,13 @@ public final class GeolocationTopComponent extends TopComponent {
                 }
             }
         };
+        
+        this.caseEventListener = pce -> {
+            mapPanel.clearWaypoints();
+            if (pce.getNewValue() != null) {
+                updateWaypoints();
+            }
+        };
 
         refreshPanel.addCloseActionListener(new ActionListener() {
             @Override
@@ -128,6 +133,7 @@ public final class GeolocationTopComponent extends TopComponent {
         refreshPanel.addRefreshActionListner(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                geoFilterPanel.updateDataSourceList();
                 mapPanel.clearWaypoints();
                 updateWaypoints();
                 showRefreshPanel(false);
@@ -138,7 +144,7 @@ public final class GeolocationTopComponent extends TopComponent {
         filterPane.setPanel(geoFilterPanel);
         geoFilterPanel.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e) {          
                 updateWaypoints();
             }
         });
@@ -162,24 +168,21 @@ public final class GeolocationTopComponent extends TopComponent {
     public void addNotify() {
         super.addNotify();
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, ingestListener);
-        Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
-            mapPanel.clearWaypoints();
-            if (evt.getNewValue() != null) {
-                updateWaypoints();
-            }
-        });
+        Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), caseEventListener);
     }
 
     @Override
     public void removeNotify() {
         super.removeNotify();
         IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
+        Case.removeEventTypeSubscriber(EnumSet.of(CURRENT_CASE), caseEventListener);
     }
 
     @Override
     public void componentOpened() {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
+        
     }
 
     @Messages({

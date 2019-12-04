@@ -50,7 +50,7 @@ import org.joda.time.Seconds;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.autopsy.timeline.PromptDialogManager;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
@@ -73,7 +73,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     private ContextMenu chartContextMenu;
 
     private final TimeLineController controller;
-    private final FilteredEventsModel filteredEvents;
+    private final EventsModel filteredEvents;
 
     private IntervalSelector<? extends String> intervalSelector;
 

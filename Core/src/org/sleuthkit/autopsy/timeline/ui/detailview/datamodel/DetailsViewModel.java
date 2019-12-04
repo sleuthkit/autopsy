@@ -45,13 +45,13 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.UIFilter;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
+import org.sleuthkit.autopsy.timeline.zooming.EventsModelParams;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -68,12 +68,12 @@ final public class DetailsViewModel {
 
     private final static Logger logger = Logger.getLogger(DetailsViewModel.class.getName());
 
-    private final FilteredEventsModel eventsModel;
-    private final LoadingCache<ZoomState, List<TimelineEvent>> eventCache;
+    private final EventsModel eventsModel;
+    private final LoadingCache<EventsModelParams, List<TimelineEvent>> eventCache;
     private final TimelineManager eventManager;
     private final SleuthkitCase sleuthkitCase;
 
-    public DetailsViewModel(FilteredEventsModel eventsModel) {
+    public DetailsViewModel(EventsModel eventsModel) {
         this.eventsModel = eventsModel;
         this.eventManager = eventsModel.getEventManager();
         this.sleuthkitCase = eventsModel.getSleuthkitCase();
@@ -86,7 +86,7 @@ final public class DetailsViewModel {
     }
 
     @Subscribe
-    void handleCacheInvalidation(FilteredEventsModel.CacheInvalidatedEvent event) {
+    void handleCacheInvalidation(EventsModel.CacheInvalidatedEvent event) {
         eventCache.invalidateAll();
     }
 
@@ -99,7 +99,7 @@ final public class DetailsViewModel {
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public List<EventStripe> getEventStripes(ZoomState zoom) throws TskCoreException {
+    public List<EventStripe> getEventStripes(EventsModelParams zoom) throws TskCoreException {
         return getEventStripes(UIFilter.getAllPassFilter(), zoom);
     }
 
@@ -113,11 +113,11 @@ final public class DetailsViewModel {
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public List<EventStripe> getEventStripes(UIFilter uiFilter, ZoomState zoom) throws TskCoreException {
+    public List<EventStripe> getEventStripes(UIFilter uiFilter, EventsModelParams zoom) throws TskCoreException {
         DateTimeZone timeZone = TimeLineController.getJodaTimeZone();
         //unpack params
         Interval timeRange = zoom.getTimeRange();
-        TimelineLevelOfDetail descriptionLOD = zoom.getDescriptionLOD();
+        TimelineLevelOfDetail descriptionLOD = zoom.getTimelineLOD();
 
         //intermediate results 
         Map<TimelineEventType, SetMultimap< String, EventCluster>> eventClusters = new HashMap<>();
@@ -156,10 +156,10 @@ final public class DetailsViewModel {
      * @throws org.sleuthkit.datamodel.TskCoreException If there is an error
      *                                                  querying the db.
      */
-    private List<TimelineEvent> getEvents(ZoomState zoom, DateTimeZone timeZone) throws TskCoreException {
+    private List<TimelineEvent> getEvents(EventsModelParams zoom, DateTimeZone timeZone) throws TskCoreException {
         //unpack params
         Interval timeRange = zoom.getTimeRange();
-        TimelineFilter.RootFilter activeFilter = zoom.getFilterState().getActiveFilter();
+        TimelineFilter.RootFilter activeFilter = zoom.getEventFilterState().getActiveFilter();
         return eventManager.getEvents(timeRange, activeFilter);
     }
 
