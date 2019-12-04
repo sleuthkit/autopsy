@@ -27,16 +27,16 @@ import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
- * Class to test the file search API. Allows the user to run searches and see
- * results.
+ * Class to open the File Discovery top component. Allows the user to run
+ * searches and see results.
  */
-@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.newpackage.FileDiscoveryTestAction")
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.newpackage.OpenFileDiscoveryAction")
 @ActionReference(path = "Menu/Tools", position = 1854, separatorBefore = 1853)
-@ActionRegistration(displayName = "#CTL_FileDiscoveryTestAction", lazy = false)
-@NbBundle.Messages({"CTL_FileDiscoveryTestAction=Test file discovery"})
-public final class FileDiscoveryTestAction extends CallableSystemAction {
+@ActionRegistration(displayName = "#CTL_OpenFileDiscoveryAction", lazy = false)
+@NbBundle.Messages({"CTL_OpenFileDiscoveryAction=File discovery"})
+public final class OpenFileDiscoveryAction extends CallableSystemAction {
 
-    private static final String DISPLAY_NAME = "Test file discovery";
+    private static final String DISPLAY_NAME = Bundle.CTL_OpenFileDiscoveryAction();
     private static final long serialVersionUID = 1L;
 
     @Override
