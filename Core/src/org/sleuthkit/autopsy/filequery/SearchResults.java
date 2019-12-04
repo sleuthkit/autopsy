@@ -107,7 +107,7 @@ class SearchResults {
         for (FileGroup group : groupList) {
             result += group.getDisplayName() + "\n";
             
-            for (ResultFile file : group.getResultFiles()) {
+            for (ResultFile file : group.getFiles()) {
                 result += "    " + file.toString() + "\n";
                 count++;
                 if (count > MAX_OUTPUT_FILES) {
@@ -125,29 +125,29 @@ class SearchResults {
      * @return the group names
      */
     List<String> getGroupNamesWithCounts() {
-        return groupList.stream().map(p -> p.getDisplayName() + " (" + p.getResultFiles().size() + ")").collect(Collectors.toList());
+        return groupList.stream().map(p -> p.getDisplayName() + " (" + p.getFiles().size() + ")").collect(Collectors.toList());
     }
     
     /**
-     * Get the abstract files for the selected group
+     * Get the result files for the selected group
      * 
      * @param groupName The name of the group. Can have the size appended.
-     * @return the list of abstract files
+     * @return the list of result files
      */
-    List<ResultFile> getAbstractFilesInGroup(String groupName) {
+    List<ResultFile> getResultFilesInGroup(String groupName) {
         if (groupName != null) {
             final String modifiedGroupName = groupName.replaceAll(" \\([0-9]+\\)$", "");
 
             java.util.Optional<FileGroup> fileGroup = groupList.stream().filter(p -> p.getDisplayName().equals(modifiedGroupName)).findFirst();
             if (fileGroup.isPresent()) {
-                return fileGroup.get().getAbstractFiles();
+                return fileGroup.get().getFiles();
             }
         }
         return new ArrayList<>();       
     }
     
     /**
-     * Transform the results into a LinkedHashMap with abstract files.
+     * Transform the results into a LinkedHashMap with result files.
      * 
      * @return the grouped and sorted results
      */
@@ -159,7 +159,7 @@ class SearchResults {
         
         // groupList is sorted and a LinkedHashMap will preserve that order.
         for (FileGroup group : groupList) {
-            map.put(group.getGroupKey(), group.getAbstractFiles());
+            map.put(group.getGroupKey(), group.getFiles());
         }
         
         return map;

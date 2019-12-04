@@ -114,24 +114,6 @@ FileSearchFiltering.SizeFilter.range=({0} to {1})
 FileSearchFiltering.TagsFilter.desc=Files that have been tagged {0}
 FileSearchFiltering.TagsFilter.or=\ or 
 FileSearchPanel.dialogTitle.text=Test file search
-FileSorter.SortingMethod.datasource.displayName=Data source
-FileSorter.SortingMethod.filename.displayName=File name
-FileSorter.SortingMethod.filesize.displayName=File size
-FileSorter.SortingMethod.filetype.displayName=File type
-FileSorter.SortingMethod.frequency.displayName=Central repo frequency
-FileSorter.SortingMethod.fullPath.displayName=Full path
-FileSorter.SortingMethod.keywordlist.displayName=Keyword list names
-# {0} - numberOfInstances
-ImageThumbnailPanel.countLabel.text=Number of Instances: {0}
-ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
-# {0} - fileSize
-ImageThumbnailPanel.sizeLabel.text=Size: {0} bytes
-ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
-ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
-ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
-ResultFile.score.taggedFile.description=At least one instance of the file has been tagged.
-ResultsDialog.exitButton.text=Exit
-ResultsDialog.searchButton.text=Run another search
 FileSearchPanel.sortingPanel.border.title=Sorting
 FileSearchPanel.searchButton.text=Show
 FileSearchPanel.addButton.text=Add
@@ -166,6 +148,22 @@ FileSearchPanel.scoreCheckbox.text=Has Score:
 FileSearchPanel.exifCheckbox.text=Must contain EXIF data
 FileSearchPanel.notableCheckbox.text=Must have been tagged as notable
 FileSearchPanel.objectsCheckbox.text=Objects:
+FileSorter.SortingMethod.datasource.displayName=Data source
+FileSorter.SortingMethod.filename.displayName=File name
+FileSorter.SortingMethod.filesize.displayName=File size
+FileSorter.SortingMethod.filetype.displayName=File type
+FileSorter.SortingMethod.frequency.displayName=Central repo frequency
+FileSorter.SortingMethod.fullPath.displayName=Full path
+FileSorter.SortingMethod.keywordlist.displayName=Keyword list names
+# {0} - numberOfInstances
+ImageThumbnailPanel.countLabel.text=Number of Instances: {0}
+ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
+# {0} - fileSize
+ImageThumbnailPanel.sizeLabel.text=Size: {0} bytes
+ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
+ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
+ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
+ResultFile.score.taggedFile.description=At least one instance of the file has been tagged.
 # {0} - currentPage
 # {1} - totalPages
 ResultsPanel.currentPage.displayValue=Page: {0} of {1}

@@ -53,10 +53,10 @@ class FileGroup implements Comparable<FileGroup> {
      */
     void addFile(ResultFile file) {
         if (getFiles().contains(file)) {
-            ResultFile existingCopy = getFiles().get(getFiles().indexOf(file)); //get the copy of this which exists in the list
+            ResultFile existingCopy = files.get(files.indexOf(file)); //get the copy of this which exists in the list
             existingCopy.addDuplicate(file.getFirstInstance());
         } else {
-            getFiles().add(file);
+            files.add(file);
         }
     }
 
@@ -79,28 +79,10 @@ class FileGroup implements Comparable<FileGroup> {
     }
 
     /**
-     * Pull the AbstractFile objects out of the ResultFile objects.
-     *
-     * @return List of abstract files
-     */
-    List<ResultFile> getAbstractFiles() {
-        return Collections.unmodifiableList(getFiles());
-    }
-
-    /**
      * Sort all the files in the group
      */
     void sortFiles(FileSorter sorter) {
         Collections.sort(getFiles(), sorter);
-    }
-
-    /**
-     * Get the list of ResultFile objects in the group
-     *
-     * @return List of ResultFile objects
-     */
-    List<ResultFile> getResultFiles() {
-        return Collections.unmodifiableList(getFiles());
     }
 
     /**
@@ -163,7 +145,9 @@ class FileGroup implements Comparable<FileGroup> {
     }
 
     /**
-     * @return the files
+     * Get the list of ResultFile objects in the group
+     *
+     * @return List of ResultFile objects
      */
     List<ResultFile> getFiles() {
         return Collections.unmodifiableList(files);
