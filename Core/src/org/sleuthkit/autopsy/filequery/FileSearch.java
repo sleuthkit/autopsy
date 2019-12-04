@@ -24,14 +24,13 @@ import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,11 +43,9 @@ import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.tools.ant.util.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -389,7 +386,6 @@ class FileSearch {
             logger.log(Level.WARNING, "Unable to get cache directory, video thumbnails will not be saved", ex);
         }
         if (cacheDirectory == null || !Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash()).toFile().exists()) {
-            //Currently this method always creates the thumbnails 
             java.io.File tempFile;
             try {
                 tempFile = getVideoFileInTempDir(file);
@@ -513,7 +509,7 @@ class FileSearch {
                         videoThumbnails.add(ImageUtils.getDefaultThumbnail());
                         if (cacheDirectory != null) {
                             try {
-                                 ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
+                                ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
                                         Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
                             } catch (IOException ex) {
                                 logger.log(Level.WARNING, "Unable to save default video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
@@ -554,7 +550,7 @@ class FileSearch {
                     BufferedImage thumbnail = ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE);
                     videoThumbnails.add(thumbnail);
                     try {
-                         ImageIO.write(thumbnail, THUMBNAIL_FORMAT,
+                        ImageIO.write(thumbnail, THUMBNAIL_FORMAT,
                                 Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
                     } catch (IOException ex) {
                         logger.log(Level.WARNING, "Unable to save video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
@@ -569,6 +565,16 @@ class FileSearch {
         }
     }
 
+    /**
+     * Load the thumbnails that exist in the cache directory for the specified
+     * video file.
+     *
+     * @param cacheDirectory   The directory which exists for the video
+     *                         thumbnails.
+     * @param thumbnailWrapper The VideoThumbnailWrapper object which contains
+     *                         information about the file and the thumbnails
+     *                         associated with it.
+     */
     private static void loadSavedThumbnails(String cacheDirectory, VideoThumbnailsWrapper thumbnailWrapper) {
         int[] framePositions = new int[4];
         List<Image> videoThumbnails = new ArrayList<>();
@@ -576,7 +582,7 @@ class FileSearch {
         String md5 = thumbnailWrapper.getResultFile().getFirstInstance().getMd5Hash();
         for (String fileName : Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, md5).toFile().list()) {
             try {
-                 videoThumbnails.add(ImageIO.read(Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, md5, fileName).toFile()));
+                videoThumbnails.add(ImageIO.read(Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, md5, fileName).toFile()));
             } catch (IOException ex) {
                 videoThumbnails.add(ImageUtils.getDefaultThumbnail());
                 logger.log(Level.WARNING, "Unable to read saved video thumbnail " + fileName + " for " + md5, ex);
@@ -716,14 +722,14 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return fileSize.toString();
+            return getFileSize().toString();
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof FileSizeGroupKey) {
                 FileSizeGroupKey otherFileSizeGroupKey = (FileSizeGroupKey) otherGroupKey;
-                return Integer.compare(fileSize.getRanking(), otherFileSizeGroupKey.fileSize.getRanking());
+                return Integer.compare(getFileSize().getRanking(), otherFileSizeGroupKey.getFileSize().getRanking());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -740,12 +746,19 @@ class FileSearch {
             }
 
             FileSizeGroupKey otherFileSizeGroupKey = (FileSizeGroupKey) otherKey;
-            return fileSize.equals(otherFileSizeGroupKey.fileSize);
+            return getFileSize().equals(otherFileSizeGroupKey.getFileSize());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(fileSize.getRanking());
+            return Objects.hash(getFileSize().getRanking());
+        }
+
+        /**
+         * @return the fileSize
+         */
+        FileSize getFileSize() {
+            return fileSize;
         }
     }
 
@@ -804,16 +817,16 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return parentPath;
+            return getParentPath();
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof ParentPathGroupKey) {
                 ParentPathGroupKey otherParentPathGroupKey = (ParentPathGroupKey) otherGroupKey;
-                int comparisonResult = parentPath.compareTo(otherParentPathGroupKey.parentPath);
+                int comparisonResult = getParentPath().compareTo(otherParentPathGroupKey.getParentPath());
                 if (comparisonResult == 0) {
-                    comparisonResult = parentID.compareTo(otherParentPathGroupKey.parentID);
+                    comparisonResult = getParentID().compareTo(otherParentPathGroupKey.getParentID());
                 }
                 return comparisonResult;
             } else {
@@ -832,15 +845,29 @@ class FileSearch {
             }
 
             ParentPathGroupKey otherParentPathGroupKey = (ParentPathGroupKey) otherKey;
-            return parentPath.equals(otherParentPathGroupKey.parentPath) && parentID.equals(otherParentPathGroupKey.parentID);
+            return getParentPath().equals(otherParentPathGroupKey.getParentPath()) && getParentID().equals(otherParentPathGroupKey.getParentID());
         }
 
         @Override
         public int hashCode() {
             int hashCode = 11;
-            hashCode = 61 * hashCode + Objects.hash(parentPath);
-            hashCode = 61 * hashCode + Objects.hash(parentID);
+            hashCode = 61 * hashCode + Objects.hash(getParentPath());
+            hashCode = 61 * hashCode + Objects.hash(getParentID());
             return hashCode;
+        }
+
+        /**
+         * @return the parentPath
+         */
+        String getParentPath() {
+            return parentPath;
+        }
+
+        /**
+         * @return the parentID
+         */
+        Long getParentID() {
+            return parentID;
         }
     }
 
@@ -891,7 +918,7 @@ class FileSearch {
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof DataSourceGroupKey) {
                 DataSourceGroupKey otherDataSourceGroupKey = (DataSourceGroupKey) otherGroupKey;
-                return Long.compare(dataSourceID, otherDataSourceGroupKey.dataSourceID);
+                return Long.compare(getDataSourceID(), otherDataSourceGroupKey.getDataSourceID());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -908,12 +935,19 @@ class FileSearch {
             }
 
             DataSourceGroupKey otherDataSourceGroupKey = (DataSourceGroupKey) otherKey;
-            return dataSourceID == otherDataSourceGroupKey.dataSourceID;
+            return getDataSourceID() == otherDataSourceGroupKey.getDataSourceID();
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(dataSourceID);
+            return Objects.hash(getDataSourceID());
+        }
+
+        /**
+         * @return the dataSourceID
+         */
+        long getDataSourceID() {
+            return dataSourceID;
         }
     }
 
@@ -951,14 +985,14 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return fileType.toString();
+            return getFileType().toString();
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof FileTypeGroupKey) {
                 FileTypeGroupKey otherFileTypeGroupKey = (FileTypeGroupKey) otherGroupKey;
-                return Integer.compare(fileType.getRanking(), otherFileTypeGroupKey.fileType.getRanking());
+                return Integer.compare(getFileType().getRanking(), otherFileTypeGroupKey.getFileType().getRanking());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -975,12 +1009,19 @@ class FileSearch {
             }
 
             FileTypeGroupKey otherFileTypeGroupKey = (FileTypeGroupKey) otherKey;
-            return fileType.equals(otherFileTypeGroupKey.fileType);
+            return getFileType().equals(otherFileTypeGroupKey.getFileType());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(fileType.getRanking());
+            return Objects.hash(getFileType().getRanking());
+        }
+
+        /**
+         * @return the fileType
+         */
+        FileType getFileType() {
+            return fileType;
         }
     }
 
@@ -1078,7 +1119,7 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return keywordListNamesString;
+            return getKeywordListNamesString();
         }
 
         @Override
@@ -1087,17 +1128,17 @@ class FileSearch {
                 KeywordListGroupKey otherKeywordListNamesGroupKey = (KeywordListGroupKey) otherGroupKey;
 
                 // Put the empty list at the end
-                if (keywordListNames.isEmpty()) {
-                    if (otherKeywordListNamesGroupKey.keywordListNames.isEmpty()) {
+                if (getKeywordListNames().isEmpty()) {
+                    if (otherKeywordListNamesGroupKey.getKeywordListNames().isEmpty()) {
                         return 0;
                     } else {
                         return 1;
                     }
-                } else if (otherKeywordListNamesGroupKey.keywordListNames.isEmpty()) {
+                } else if (otherKeywordListNamesGroupKey.getKeywordListNames().isEmpty()) {
                     return -1;
                 }
 
-                return keywordListNamesString.compareTo(otherKeywordListNamesGroupKey.keywordListNamesString);
+                return getKeywordListNamesString().compareTo(otherKeywordListNamesGroupKey.getKeywordListNamesString());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -1114,12 +1155,26 @@ class FileSearch {
             }
 
             KeywordListGroupKey otherKeywordListGroupKey = (KeywordListGroupKey) otherKey;
-            return keywordListNamesString.equals(otherKeywordListGroupKey.keywordListNamesString);
+            return getKeywordListNamesString().equals(otherKeywordListGroupKey.getKeywordListNamesString());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(keywordListNamesString);
+            return Objects.hash(getKeywordListNamesString());
+        }
+
+        /**
+         * @return the keywordListNames
+         */
+        List<String> getKeywordListNames() {
+            return Collections.unmodifiableList(keywordListNames);
+        }
+
+        /**
+         * @return the keywordListNamesString
+         */
+        String getKeywordListNamesString() {
+            return keywordListNamesString;
         }
     }
 
@@ -1221,14 +1276,14 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return frequency.toString();
+            return getFrequency().toString();
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof FrequencyGroupKey) {
                 FrequencyGroupKey otherFrequencyGroupKey = (FrequencyGroupKey) otherGroupKey;
-                return Integer.compare(frequency.getRanking(), otherFrequencyGroupKey.frequency.getRanking());
+                return Integer.compare(getFrequency().getRanking(), otherFrequencyGroupKey.getFrequency().getRanking());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -1245,12 +1300,19 @@ class FileSearch {
             }
 
             FrequencyGroupKey otherFrequencyGroupKey = (FrequencyGroupKey) otherKey;
-            return frequency.equals(otherFrequencyGroupKey.frequency);
+            return getFrequency().equals(otherFrequencyGroupKey.getFrequency());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(frequency.getRanking());
+            return Objects.hash(getFrequency().getRanking());
+        }
+
+        /**
+         * @return the frequency
+         */
+        Frequency getFrequency() {
+            return frequency;
         }
     }
 
@@ -1347,7 +1409,7 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return hashSetNamesString;
+            return getHashSetNamesString();
         }
 
         @Override
@@ -1356,17 +1418,17 @@ class FileSearch {
                 HashHitsGroupKey otherHashHitsGroupKey = (HashHitsGroupKey) otherGroupKey;
 
                 // Put the empty list at the end
-                if (hashSetNames.isEmpty()) {
-                    if (otherHashHitsGroupKey.hashSetNames.isEmpty()) {
+                if (getHashSetNames().isEmpty()) {
+                    if (otherHashHitsGroupKey.getHashSetNames().isEmpty()) {
                         return 0;
                     } else {
                         return 1;
                     }
-                } else if (otherHashHitsGroupKey.hashSetNames.isEmpty()) {
+                } else if (otherHashHitsGroupKey.getHashSetNames().isEmpty()) {
                     return -1;
                 }
 
-                return hashSetNamesString.compareTo(otherHashHitsGroupKey.hashSetNamesString);
+                return getHashSetNamesString().compareTo(otherHashHitsGroupKey.getHashSetNamesString());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -1383,12 +1445,26 @@ class FileSearch {
             }
 
             HashHitsGroupKey otherHashHitsGroupKey = (HashHitsGroupKey) otherKey;
-            return hashSetNamesString.equals(otherHashHitsGroupKey.hashSetNamesString);
+            return getHashSetNamesString().equals(otherHashHitsGroupKey.getHashSetNamesString());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(hashSetNamesString);
+            return Objects.hash(getHashSetNamesString());
+        }
+
+        /**
+         * @return the hashSetNames
+         */
+        List<String> getHashSetNames() {
+            return Collections.unmodifiableList(hashSetNames);
+        }
+
+        /**
+         * @return the hashSetNamesString
+         */
+        String getHashSetNamesString() {
+            return hashSetNamesString;
         }
     }
 
@@ -1487,7 +1563,7 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return interestingItemSetNamesString;
+            return getInterestingItemSetNamesString();
         }
 
         @Override
@@ -1496,17 +1572,17 @@ class FileSearch {
                 InterestingItemGroupKey otherInterestingItemGroupKey = (InterestingItemGroupKey) otherGroupKey;
 
                 // Put the empty list at the end
-                if (this.interestingItemSetNames.isEmpty()) {
-                    if (otherInterestingItemGroupKey.interestingItemSetNames.isEmpty()) {
+                if (this.getInterestingItemSetNames().isEmpty()) {
+                    if (otherInterestingItemGroupKey.getInterestingItemSetNames().isEmpty()) {
                         return 0;
                     } else {
                         return 1;
                     }
-                } else if (otherInterestingItemGroupKey.interestingItemSetNames.isEmpty()) {
+                } else if (otherInterestingItemGroupKey.getInterestingItemSetNames().isEmpty()) {
                     return -1;
                 }
 
-                return interestingItemSetNamesString.compareTo(otherInterestingItemGroupKey.interestingItemSetNamesString);
+                return getInterestingItemSetNamesString().compareTo(otherInterestingItemGroupKey.getInterestingItemSetNamesString());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -1523,12 +1599,26 @@ class FileSearch {
             }
 
             InterestingItemGroupKey otherInterestingItemGroupKey = (InterestingItemGroupKey) otherKey;
-            return interestingItemSetNamesString.equals(otherInterestingItemGroupKey.interestingItemSetNamesString);
+            return getInterestingItemSetNamesString().equals(otherInterestingItemGroupKey.getInterestingItemSetNamesString());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(interestingItemSetNamesString);
+            return Objects.hash(getInterestingItemSetNamesString());
+        }
+
+        /**
+         * @return the interestingItemSetNames
+         */
+        List<String> getInterestingItemSetNames() {
+            return Collections.unmodifiableList(interestingItemSetNames);
+        }
+
+        /**
+         * @return the interestingItemSetNamesString
+         */
+        String getInterestingItemSetNamesString() {
+            return interestingItemSetNamesString;
         }
     }
 
@@ -1626,7 +1716,7 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return objectDetectedNamesString;
+            return getObjectDetectedNamesString();
         }
 
         @Override
@@ -1635,17 +1725,17 @@ class FileSearch {
                 ObjectDetectedGroupKey otherObjectDetectedGroupKey = (ObjectDetectedGroupKey) otherGroupKey;
 
                 // Put the empty list at the end
-                if (this.objectDetectedNames.isEmpty()) {
-                    if (otherObjectDetectedGroupKey.objectDetectedNames.isEmpty()) {
+                if (this.getObjectDetectedNames().isEmpty()) {
+                    if (otherObjectDetectedGroupKey.getObjectDetectedNames().isEmpty()) {
                         return 0;
                     } else {
                         return 1;
                     }
-                } else if (otherObjectDetectedGroupKey.objectDetectedNames.isEmpty()) {
+                } else if (otherObjectDetectedGroupKey.getObjectDetectedNames().isEmpty()) {
                     return -1;
                 }
 
-                return objectDetectedNamesString.compareTo(otherObjectDetectedGroupKey.objectDetectedNamesString);
+                return getObjectDetectedNamesString().compareTo(otherObjectDetectedGroupKey.getObjectDetectedNamesString());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -1662,12 +1752,26 @@ class FileSearch {
             }
 
             ObjectDetectedGroupKey otherObjectDetectedGroupKey = (ObjectDetectedGroupKey) otherKey;
-            return objectDetectedNamesString.equals(otherObjectDetectedGroupKey.objectDetectedNamesString);
+            return getObjectDetectedNamesString().equals(otherObjectDetectedGroupKey.getObjectDetectedNamesString());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(objectDetectedNamesString);
+            return Objects.hash(getObjectDetectedNamesString());
+        }
+
+        /**
+         * @return the objectDetectedNames
+         */
+        List<String> getObjectDetectedNames() {
+            return Collections.unmodifiableList(objectDetectedNames);
+        }
+
+        /**
+         * @return the objectDetectedNamesString
+         */
+        String getObjectDetectedNamesString() {
+            return objectDetectedNamesString;
         }
     }
 
@@ -1784,7 +1888,7 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return tagNamesString;
+            return getTagNamesString();
         }
 
         @Override
@@ -1793,17 +1897,17 @@ class FileSearch {
                 FileTagGroupKey otherFileTagGroupKey = (FileTagGroupKey) otherGroupKey;
 
                 // Put the empty list at the end
-                if (tagNames.isEmpty()) {
-                    if (otherFileTagGroupKey.tagNames.isEmpty()) {
+                if (getTagNames().isEmpty()) {
+                    if (otherFileTagGroupKey.getTagNames().isEmpty()) {
                         return 0;
                     } else {
                         return 1;
                     }
-                } else if (otherFileTagGroupKey.tagNames.isEmpty()) {
+                } else if (otherFileTagGroupKey.getTagNames().isEmpty()) {
                     return -1;
                 }
 
-                return tagNamesString.compareTo(otherFileTagGroupKey.tagNamesString);
+                return getTagNamesString().compareTo(otherFileTagGroupKey.getTagNamesString());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -1820,12 +1924,26 @@ class FileSearch {
             }
 
             FileTagGroupKey otherFileTagGroupKey = (FileTagGroupKey) otherKey;
-            return tagNamesString.equals(otherFileTagGroupKey.tagNamesString);
+            return getTagNamesString().equals(otherFileTagGroupKey.getTagNamesString());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(tagNamesString);
+            return Objects.hash(getTagNamesString());
+        }
+
+        /**
+         * @return the tagNames
+         */
+        List<String> getTagNames() {
+            return Collections.unmodifiableList(tagNames);
+        }
+
+        /**
+         * @return the tagNamesString
+         */
+        String getTagNamesString() {
+            return tagNamesString;
         }
     }
 
@@ -1872,13 +1990,8 @@ class FileSearch {
             if (otherKey == this) {
                 return true;
             }
-
-            if (!(otherKey instanceof NoGroupingGroupKey)) {
-                return false;
-            }
-
             // As long as the other key is the same type, they are equal
-            return true;
+            return otherKey instanceof NoGroupingGroupKey;
         }
 
         @Override
