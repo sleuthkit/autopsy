@@ -385,7 +385,8 @@ class FileSearch {
             cacheDirectory = null;
             logger.log(Level.WARNING, "Unable to get cache directory, video thumbnails will not be saved", ex);
         }
-        if (cacheDirectory == null || !Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash()).toFile().exists()) {
+
+        if (cacheDirectory == null || file.getMd5Hash() == null || !Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash()).toFile().exists()) {
             java.io.File tempFile;
             try {
                 tempFile = getVideoFileInTempDir(file);
@@ -466,11 +467,15 @@ class FileSearch {
 
                 Mat imageMatrix = new Mat();
                 List<Image> videoThumbnails = new ArrayList<>();
-                try {
-                    FileUtils.forceMkdir(Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash()).toFile());
-                } catch (IOException ex) {
+                if (cacheDirectory == null || file.getMd5Hash() == null) {
                     cacheDirectory = null;
-                    logger.log(Level.WARNING, "Unable to make video thumbnails directory, thumbnails will not be saved", ex);
+                } else {
+                    try {
+                        FileUtils.forceMkdir(Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash()).toFile());
+                    } catch (IOException ex) {
+                        cacheDirectory = null;
+                        logger.log(Level.WARNING, "Unable to make video thumbnails directory, thumbnails will not be saved", ex);
+                    }
                 }
                 for (int i = 0; i < framePositions.length; i++) {
                     if (!videoFile.set(0, framePositions[i])) {
@@ -549,11 +554,13 @@ class FileSearch {
                     }
                     BufferedImage thumbnail = ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE);
                     videoThumbnails.add(thumbnail);
-                    try {
-                        ImageIO.write(thumbnail, THUMBNAIL_FORMAT,
-                                Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Unable to save video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
+                    if (cacheDirectory != null) {
+                        try {
+                            ImageIO.write(thumbnail, THUMBNAIL_FORMAT,
+                                    Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
+                        } catch (IOException ex) {
+                            logger.log(Level.WARNING, "Unable to save video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
+                        }
                     }
                 }
                 thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
