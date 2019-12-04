@@ -31,7 +31,6 @@ import javafx.beans.property.SimpleStringProperty;
  */
 public class TextFilterState extends TimelineFilterState<TimelineFilter.TextFilter> {
 
-    private final TimelineFilter.TextFilter textFilter;
     private final SimpleStringProperty descriptionSubstring;
 
     /**
@@ -46,12 +45,12 @@ public class TextFilterState extends TimelineFilterState<TimelineFilter.TextFilt
      */
     public TextFilterState(TimelineFilter.TextFilter textFilter) {
         super(textFilter);
-        this.textFilter = textFilter;
         this.descriptionSubstring = new SimpleStringProperty(textFilter.getDescriptionSubstring());
     }
 
     @Override
     public TimelineFilter.TextFilter getFilter() {
+        TimelineFilter.TextFilter textFilter = super.getFilter();
         textFilter.setDescriptionSubstring(descriptionSubstringProperty().getValue());
         return textFilter;
     }
@@ -67,5 +66,20 @@ public class TextFilterState extends TimelineFilterState<TimelineFilter.TextFilt
     public Property<String> descriptionSubstringProperty() {
         return descriptionSubstring;
     }
-
+    
+    /**
+     * "Copy constructs" a wrapper for a TimelineFilter.TextFilter object
+     * that allows it to be displayed by the timeline GUI via the filter panel
+     * by providing selected, disabled, and active properties for the
+     * TextFilter.
+     *
+     * @param other A HashHitsFilterState object.
+     */
+    public TextFilterState(TextFilterState other) {
+        super(other.getFilter().copyOf());
+        setSelected(other.isSelected());
+        setDisabled(other.isDisabled());
+        this.descriptionSubstring = new SimpleStringProperty(other.getFilter().getDescriptionSubstring());
+    }    
+    
 }

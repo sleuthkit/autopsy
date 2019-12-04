@@ -263,8 +263,6 @@ public final class EventsModel {
     /**
      * Gets the case database events manager.
      *
-     * RJCTODO: Clients should probably get their own reference.
-     *
      * @return The case database events manager.
      */
     public TimelineManager getEventManager() {
@@ -273,8 +271,6 @@ public final class EventsModel {
 
     /**
      * Gets the case database.
-     *
-     * RJCTODO: Clients should probably get their own reference.
      *
      * @return The case database.
      */
@@ -346,8 +342,6 @@ public final class EventsModel {
     /**
      * Gets the current model parameters.
      *
-     * RJCTODO: This breaks encapsulation. Is it really necessary?
-     *
      * @return The current model parameters.
      */
     synchronized public EventsModelParams getModelParams() {
@@ -356,8 +350,6 @@ public final class EventsModel {
 
     /**
      * Gets the time range model parameter.
-     *
-     * RJCTODO: This breaks encapsulation. Is it really necessary?
      *
      * @return The time range model parameter.
      */
@@ -368,8 +360,6 @@ public final class EventsModel {
     /**
      * Gets the time range model parameter.
      *
-     * RJCTODO: This breaks encapsulation. Is it really necessary?
-     *
      * @return The time range model parameter.
      */
     synchronized public TimelineLevelOfDetail getDescriptionLOD() {
@@ -379,8 +369,6 @@ public final class EventsModel {
     /**
      * Gets the event filter model parameter.
      *
-     * RJCTODO: This breaks encapsulation. Is it really necessary?
-     *
      * @return The event filter model parameter.
      */
     synchronized public RootFilterState getEventFilterState() {
@@ -389,8 +377,6 @@ public final class EventsModel {
 
     /**
      * Gets the event types hierarchy level model model parameter.
-     *
-     * RJCTODO: This breaks encapsulation. Is it really necessary?
      *
      * @return The event types hierarchy level model model parameter.
      */
@@ -406,9 +392,6 @@ public final class EventsModel {
      * @return An instance of the default filter state model parameter.
      */
     public synchronized RootFilterState getDefaultEventFilterState() {
-        // RJCTODO: Move all of this into FilterUtils, or factor FilterUtils 
-        // into this class. The former is probably better, simply passing the 
-        // util a list of data source names.
         /*
          * Construct data source filters for all of the data sources in the data
          * sources cache.
@@ -418,8 +401,8 @@ public final class EventsModel {
                 -> dataSourcesFilter.addSubFilter(newDataSourceFilter(dataSourceEntry)));
 
         /*
-         * Make the rest of the event filters and decorate all of the filters
-         * with filter state objects for the GUI.
+         * Make the rest of the event filters and wrap all of the filters with
+         * filter state objects for the GUI.
          */
         RootFilterState rootFilterState = new RootFilterState(new RootFilter(
                 new HideKnownFilter(),

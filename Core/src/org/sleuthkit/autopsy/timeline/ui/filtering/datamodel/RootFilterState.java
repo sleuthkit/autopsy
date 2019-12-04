@@ -136,9 +136,9 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
         RootFilterState copy = new RootFilterState(getFilter().copyOf(),
                 getEventTypeFilterState().copyOf(),
                 getKnownFilterState().copyOf(),
-                new TextFilterState(getFilter().getTextFilter()),
-                new TagsFilterState(getFilter().getTagsFilter()),
-                new HashHitsFilterState(getFilter().getHashHitsFilter()),
+                new TextFilterState(this.textFilterState),
+                new TagsFilterState(this.tagsFilterState),
+                new HashHitsFilterState(this.hashHitsFilterState),
                 getDataSourcesFilterState().copyOf(),
                 getFileTypesFilterState().copyOf()
         );

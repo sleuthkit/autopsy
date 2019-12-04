@@ -28,18 +28,38 @@ import org.sleuthkit.datamodel.TimelineFilter;
 public class HashHitsFilterState extends TimelineFilterState<TimelineFilter.HashHitsFilter> {
 
     /**
-     * Constructs a wrapper for a TimelineFilter.HashHitsFilter object that allows
-     * it to be displayed by the timeline GUI via the filter panel by providing
-     * selected, disabled, and active properties for the HashHitsFilter.
+     * Constructs a wrapper for a TimelineFilter.HashHitsFilter object that
+     * allows it to be displayed by the timeline GUI via the filter panel by
+     * providing selected, disabled, and active properties for the
+     * HashHitsFilter.
      *
      * @param hashHitsFilter A TimelineFilter.HashHitsFilter object.
      */
     public HashHitsFilterState(TimelineFilter.HashHitsFilter hashHitsFilter) {
         super(hashHitsFilter);
-        /*
-         * Add a listener to the selected property that updates the flag that
-         * turns the underlying hash hits filter on/off.
-         */
+        addSelectionListener();
+    }
+
+    /**
+     * "Copy constructs" a wrapper for a TimelineFilter.HashHitsFilter object
+     * that allows it to be displayed by the timeline GUI via the filter panel
+     * by providing selected, disabled, and active properties for the
+     * HashHitsFilter.
+     *
+     * @param other A HashHitsFilterState object.
+     */
+    public HashHitsFilterState(HashHitsFilterState other) {
+        super(other.getFilter().copyOf());
+        setSelected(other.isSelected());
+        setDisabled(other.isDisabled());
+        addSelectionListener();
+    }
+
+    /*
+     * Add a listener to the selected property that updates the flag that turns
+     * the wrapped hash hits filter on/off.
+     */
+    private void addSelectionListener() {
         selectedProperty().addListener(selectedProperty -> {
             getFilter().setEventSourcesHaveHashSetHits(isSelected());
         });

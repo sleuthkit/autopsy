@@ -36,21 +36,32 @@ public class TagsFilterState extends TimelineFilterState<TimelineFilter.TagsFilt
      */
     public TagsFilterState(TimelineFilter.TagsFilter tagsFilter) {
         super(tagsFilter);
-        /*
-         * Add a listener to the selected property that updates the flag that
-         * turns the wrapped tags filter on/off.
-         */
+        addSelectionListener();
+    }
+
+    /**
+     * "Copy constructs" a wrapper for a TimelineFilter.TagsFilter object
+     * that allows it to be displayed by the timeline GUI via the filter panel
+     * by providing selected, disabled, and active properties for the
+     * TagsFilter.
+     *
+     * @param other A TagsFilterState object.
+     */
+    public TagsFilterState(TagsFilterState other) {
+        super(other.getFilter().copyOf());
+        setSelected(other.isSelected());
+        setDisabled(other.isDisabled());
+        addSelectionListener();
+    }
+
+    /*
+     * Add a listener to the selected property that updates the flag that turns
+     * the wrapped tags filter on/off.
+     */
+    private void addSelectionListener() {
         selectedProperty().addListener(selectedProperty -> {
             getFilter().setEventSourcesAreTagged(isSelected());
         });
     }
 
-    @Override
-    public TimelineFilterState<TimelineFilter.TagsFilter> copyOf() {
-        TimelineFilterState<TimelineFilter.TagsFilter> copy = new TagsFilterState(getFilter().copyOf());
-        copy.setSelected(isSelected());
-        copy.setDisabled(isDisabled());
-        return copy;
-    }    
-    
 }
