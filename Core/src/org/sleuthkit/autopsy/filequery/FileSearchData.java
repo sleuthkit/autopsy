@@ -38,23 +38,18 @@ class FileSearchData {
      */
     @NbBundle.Messages({
         "FileSearchData.Frequency.unique.displayName=Unique (1)",
-        "FileSearchData.Frequency.rare.displayName=Rare (2-5)",
-        "FileSearchData.Frequency.count_10.displayName=6 - 10",
-        "FileSearchData.Frequency.count_20.displayName=11 - 20",
-        "FileSearchData.Frequency.count_50.displayName=21 - 50",
-        "FileSearchData.Frequency.count_100.displayName=51 - 100",
-        "FileSearchData.Frequency.common.displayName=Common",
+        "FileSearchData.Frequency.rare.displayName=Rare (2-10)",
+        "FileSearchData.Frequency.common.displayName=Common (11 - 100)",
+        "FileSearchData.Frequency.verycommon.displayName=Very Common (100+)",
+        "FileSearchData.Frequency.known.displayName=Known (NSRL)",
         "FileSearchData.Frequency.unknown.displayName=Unknown",})
     enum Frequency {
         UNIQUE(0, 1, Bundle.FileSearchData_Frequency_unique_displayName()),
-        RARE(1, 5, Bundle.FileSearchData_Frequency_rare_displayName()),
-        COUNT_10(2, 10, Bundle.FileSearchData_Frequency_count_10_displayName()),
-        COUNT_20(3, 20, Bundle.FileSearchData_Frequency_count_20_displayName()),
-        COUNT_50(4, 50, Bundle.FileSearchData_Frequency_count_50_displayName()),
-        COUNT_100(5, 100, Bundle.FileSearchData_Frequency_count_100_displayName()),
-        COMMON(6, 0, Bundle.FileSearchData_Frequency_common_displayName()),
-        KNOWN(7, 0, "Known (NSRL)"),
-        UNKNOWN(8, 0, Bundle.FileSearchData_Frequency_unknown_displayName());
+        RARE(1, 10, Bundle.FileSearchData_Frequency_rare_displayName()),
+        COMMON(2, 100, Bundle.FileSearchData_Frequency_common_displayName()),
+        VERY_COMMON(3, 0, Bundle.FileSearchData_Frequency_common_displayName()),
+        KNOWN(4, 0, Bundle.FileSearchData_Frequency_known_displayName()),
+        UNKNOWN(5, 0, Bundle.FileSearchData_Frequency_unknown_displayName());
 
         private final int ranking;
         private final String displayName;
@@ -87,16 +82,10 @@ class FileSearchData {
                 return UNIQUE;
             } else if (count <= RARE.getMaxOccur()) {
                 return RARE;
-            } else if (count <= COUNT_10.getMaxOccur()) {
-                return COUNT_10;
-            } else if (count <= COUNT_20.getMaxOccur()) {
-                return COUNT_20;
-            } else if (count <= COUNT_50.getMaxOccur()) {
-                return COUNT_50;
-            } else if (count <= COUNT_100.getMaxOccur()) {
-                return COUNT_100;
-            }
-            return COMMON;
+            } else if (count <= COMMON.getMaxOccur()) {
+                return COMMON;
+            } 
+            return VERY_COMMON;
         }
 
         /**
@@ -106,7 +95,7 @@ class FileSearchData {
          * @return enums that can be used to filter with a CR.
          */
         static List<Frequency> getOptionsForFilteringWithCr() {
-            return Arrays.asList(UNIQUE, RARE, COUNT_10, COUNT_20, COUNT_50, COUNT_100, COMMON, KNOWN);
+            return Arrays.asList(UNIQUE, RARE, COMMON, VERY_COMMON, KNOWN);
         }
 
         /**
