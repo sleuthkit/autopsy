@@ -52,11 +52,11 @@ class FileGroup implements Comparable<FileGroup> {
      * @param file The ResultFile to add to the FileGroup
      */
     void addFile(ResultFile file) {
-        if (files.contains(file)) {
-            ResultFile existingCopy = files.get(files.indexOf(file)); //get the copy of this which exists in the list
+        if (getFiles().contains(file)) {
+            ResultFile existingCopy = getFiles().get(getFiles().indexOf(file)); //get the copy of this which exists in the list
             existingCopy.addDuplicate(file.getFirstInstance());
         } else {
-            files.add(file);
+            getFiles().add(file);
         }
     }
 
@@ -84,14 +84,14 @@ class FileGroup implements Comparable<FileGroup> {
      * @return List of abstract files
      */
     List<ResultFile> getAbstractFiles() {
-        return Collections.unmodifiableList(files);
+        return Collections.unmodifiableList(getFiles());
     }
 
     /**
      * Sort all the files in the group
      */
     void sortFiles(FileSorter sorter) {
-        Collections.sort(files, sorter);
+        Collections.sort(getFiles(), sorter);
     }
 
     /**
@@ -100,7 +100,7 @@ class FileGroup implements Comparable<FileGroup> {
      * @return List of ResultFile objects
      */
     List<ResultFile> getResultFiles() {
-        return Collections.unmodifiableList(files);
+        return Collections.unmodifiableList(getFiles());
     }
 
     /**
@@ -133,7 +133,7 @@ class FileGroup implements Comparable<FileGroup> {
      * @return -1 if group1 should be displayed before group2, 1 otherwise
      */
     private static int compareGroupsByGroupKey(FileGroup group1, FileGroup group2) {
-        return group1.groupKey.compareTo(group2.groupKey);
+        return group1.getGroupKey().compareTo(group2.getGroupKey());
     }
 
     /**
@@ -146,8 +146,8 @@ class FileGroup implements Comparable<FileGroup> {
      * @return -1 if group1 should be displayed before group2, 1 otherwise
      */
     private static int compareGroupsBySize(FileGroup group1, FileGroup group2) {
-        if (group1.files.size() != group2.files.size()) {
-            return -1 * Long.compare(group1.files.size(), group2.files.size()); // High to low
+        if (group1.getFiles().size() != group2.getFiles().size()) {
+            return -1 * Long.compare(group1.getFiles().size(), group2.getFiles().size()); // High to low
         } else {
             // If the groups have the same size, fall through to the BY_GROUP_KEY sorting
             return compareGroupsByGroupKey(group1, group2);
@@ -160,6 +160,13 @@ class FileGroup implements Comparable<FileGroup> {
     enum GroupSortingAlgorithm {
         BY_GROUP_SIZE, // Sort from largest to smallest group
         BY_GROUP_KEY   // Sort using the group key (for example, if grouping by size sort from largest to smallest value)
+    }
+
+    /**
+     * @return the files
+     */
+    List<ResultFile> getFiles() {
+        return Collections.unmodifiableList(files);
     }
 
 }
