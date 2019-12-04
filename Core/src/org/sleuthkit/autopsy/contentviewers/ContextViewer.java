@@ -79,8 +79,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jSourceGoToResultButton = new javax.swing.JButton();
-        jSourceLabel = new javax.swing.JLabel();
+        javax.swing.JButton jSourceGoToResultButton = new javax.swing.JButton();
+        javax.swing.JLabel jSourceLabel = new javax.swing.JLabel();
         jSourceNameLabel = new javax.swing.JLabel();
         jSourceTextLabel = new javax.swing.JLabel();
 
@@ -434,8 +434,6 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jSourceGoToResultButton;
-    private javax.swing.JLabel jSourceLabel;
     private javax.swing.JLabel jSourceNameLabel;
     private javax.swing.JLabel jSourceTextLabel;
     // End of variables declaration//GEN-END:variables
