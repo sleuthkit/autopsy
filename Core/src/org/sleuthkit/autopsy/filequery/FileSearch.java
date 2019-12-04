@@ -1809,7 +1809,7 @@ class FileSearch {
         "FileSearch.GroupingAttributeType.fileType.displayName=File type",
         "FileSearch.GroupingAttributeType.frequency.displayName=Past occurrences",
         "FileSearch.GroupingAttributeType.keywordList.displayName=Keyword list names",
-        "FileSearch.GroupingAttributeType.size.displayName=Size",
+        "FileSearch.GroupingAttributeType.size.displayName=File Size",
         "FileSearch.GroupingAttributeType.datasource.displayName=Data source",
         "FileSearch.GroupingAttributeType.parent.displayName=Parent folder",
         "FileSearch.GroupingAttributeType.hash.displayName=Hash set",
