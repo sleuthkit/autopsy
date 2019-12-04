@@ -95,6 +95,13 @@ class GeoFilterPanel extends javax.swing.JPanel {
             logger.log(Level.WARNING, "Failed to initialize the CheckboxListPane", ex); //NON-NLS
         }
     }
+    
+    /**
+     * Clears the data source list.
+     */
+    void clearDataSourceList() {
+        checkboxPanel.clearList();
+    }
 
     /**
      * Adds an actionListener to listen for the filter apply action
@@ -134,8 +141,6 @@ class GeoFilterPanel extends javax.swing.JPanel {
      */
     private void initCheckboxList() throws TskCoreException {
         final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-
-//        checkboxPanel.clearList();
         
         for (DataSource dataSource : sleuthkitCase.getDataSources()) {
             String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
