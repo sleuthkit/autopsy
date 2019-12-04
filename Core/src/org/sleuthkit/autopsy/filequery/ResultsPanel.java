@@ -208,7 +208,6 @@ public class ResultsPanel extends javax.swing.JPanel {
     synchronized void resetResultViewer() {
         resultsViewerPanel.remove(imageThumbnailViewer);
         resultsViewerPanel.remove(videoThumbnailViewer);
-
         //cancel any unfished thumb workers
         for (SwingWorker<Void, Void> thumbWorker : thumbnailWorkers) {
             if (!thumbWorker.isDone()) {

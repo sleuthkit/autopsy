@@ -72,6 +72,7 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
     void clearViewer() {
         synchronized (this) {
             thumbnailListModel.removeAllElements();
+            thumbnailListScrollPane.getVerticalScrollBar().setValue(0);
         }
     }
 

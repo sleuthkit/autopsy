@@ -132,6 +132,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         imagesButton.setSelected(true);
         imagesButton.setEnabled(false);
         imagesButton.setBackground(SELECTED_COLOR);
+        imagesButton.setForeground(Color.BLACK);
         videosButton.setSelected(false);
         videosButton.setEnabled(true);
         videosButton.setBackground(UNSELECTED_COLOR);
@@ -252,6 +253,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         imagesButton.setSelected(true);
         imagesButton.setEnabled(false);
         imagesButton.setBackground(SELECTED_COLOR);
+        imagesButton.setForeground(Color.BLACK);
         videosButton.setSelected(false);
         videosButton.setEnabled(true);
         videosButton.setBackground(UNSELECTED_COLOR);
@@ -266,6 +268,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         videosButton.setSelected(true);
         videosButton.setEnabled(false);
         videosButton.setBackground(SELECTED_COLOR);
+        videosButton.setForeground(Color.BLACK);
         fileSearchPanel.setSelectedType(FileSearchData.FileType.VIDEO);
     }//GEN-LAST:event_videosButtonActionPerformed
 
