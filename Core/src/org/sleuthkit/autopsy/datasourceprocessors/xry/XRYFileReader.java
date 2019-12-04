@@ -52,11 +52,7 @@ final class XRYFileReader implements AutoCloseable {
     //Assume UTF_16LE
     private static final Charset CHARSET = StandardCharsets.UTF_16LE;
 
-    //Assume the header begins with 'xry export'.
-    private static final String START_OF_HEADER = "xry export";
-
-    //Assume all XRY reports have the type on the 3rd line
-    //relative to the start of the header.
+    //Assume all XRY reports have the type on the 3rd line.
     private static final int LINE_WITH_REPORT_TYPE = 3;
 
     //Assume all headers are 5 lines in length.
@@ -95,12 +91,8 @@ final class XRYFileReader implements AutoCloseable {
         reader = Files.newBufferedReader(xryFile, CHARSET);
         xryFilePath = xryFile;
 
-        //Advance the reader to the start of the header.
-        advanceToHeader(reader);
-
-        //Advance the reader past the header to the start 
-        //of the first XRY entity.
-        for (int i = 1; i < HEADER_LENGTH_IN_LINES; i++) {
+        //Advance the reader to the start of the first XRY entity.
+        for (int i = 0; i < HEADER_LENGTH_IN_LINES; i++) {
             reader.readLine();
         }
 
@@ -306,11 +298,8 @@ final class XRYFileReader implements AutoCloseable {
      */
     private static Optional<String> getType(Path file) throws IOException {
         try (BufferedReader reader = Files.newBufferedReader(file, CHARSET)) {
-            //Header may not start at the beginning of the file.
-            advanceToHeader(reader);
-
             //Advance the reader to the line before the report type.
-            for (int i = 1; i < LINE_WITH_REPORT_TYPE - 1; i++) {
+            for (int i = 0; i < LINE_WITH_REPORT_TYPE - 1; i++) {
                 reader.readLine();
             }
 
@@ -319,53 +308,6 @@ final class XRYFileReader implements AutoCloseable {
                 return Optional.of(reportTypeLine);
             }
             return Optional.empty();
-        }
-    }
-
-    /**
-     * Advances the reader to the start of the header. The XRY Export header may
-     * not be the first n lines of the file. It may be preceded by new lines or
-     * white space.
-     *
-     * This function will consume the first line of the header, which will be
-     * 'XRY Export'.
-     *
-     * @param reader BufferedReader pointing to the xry file
-     * @throws IOException if an I/O error occurs
-     */
-    private static void advanceToHeader(BufferedReader reader) throws IOException {
-        String line;
-        if((line = reader.readLine()) == null) {
-            return;
-        }
-        
-        String normalizedLine = line.trim().toLowerCase();
-        if (normalizedLine.equals(START_OF_HEADER)) {
-            return;
-        }
-
-        /**
-         * The first line may have 0xFFFE BOM prepended to it, which will cause
-         * the equality check to fail. This bit a logic will try to remove those
-         * bytes and attempt another check.
-         */
-        byte[] normalizedBytes = normalizedLine.getBytes(CHARSET);
-        if (normalizedBytes.length > 2) {
-            normalizedLine = new String(normalizedBytes, 2,
-                    normalizedBytes.length - 2, CHARSET);
-            if (normalizedLine.equals(START_OF_HEADER)) {
-                return;
-            }
-        }
-
-        /**
-         * All other lines will need to match completely.
-         */
-        while ((line = reader.readLine()) != null) {
-            normalizedLine = line.trim().toLowerCase();
-            if (normalizedLine.equals(START_OF_HEADER)) {
-                return;
-            }
         }
     }
 }
