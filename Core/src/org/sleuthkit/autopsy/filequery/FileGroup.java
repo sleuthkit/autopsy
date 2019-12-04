@@ -52,7 +52,7 @@ class FileGroup implements Comparable<FileGroup> {
      * @param file The ResultFile to add to the FileGroup
      */
     void addFile(ResultFile file) {
-        if (getFiles().contains(file)) {
+        if (files.contains(file)) {
             ResultFile existingCopy = files.get(files.indexOf(file)); //get the copy of this which exists in the list
             existingCopy.addDuplicate(file.getFirstInstance());
         } else {
@@ -82,7 +82,7 @@ class FileGroup implements Comparable<FileGroup> {
      * Sort all the files in the group
      */
     void sortFiles(FileSorter sorter) {
-        Collections.sort(getFiles(), sorter);
+        Collections.sort(files, sorter);
     }
 
     /**
