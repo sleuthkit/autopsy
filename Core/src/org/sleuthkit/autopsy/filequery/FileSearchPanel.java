@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.filequery.FileGroup.GroupSortingAlgorithm;
 import org.sleuthkit.autopsy.filequery.FileSearch.GroupingAttributeType;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileSize;
@@ -58,7 +59,7 @@ import org.sleuthkit.datamodel.TagName;
 final class FileSearchPanel extends javax.swing.JPanel implements ActionListener {
 
     private static final long serialVersionUID = 1L;
-    private static final String[] DEFAULT_IGNORED_PATHS = {"Windows", "Program Files"};
+    private static final String[] DEFAULT_IGNORED_PATHS = {"/Windows/", "/Program Files/"}; //NON-NLS
     private final static Logger logger = Logger.getLogger(FileSearchPanel.class.getName());
     private FileType fileType = FileType.IMAGE;
     private DefaultListModel<FileSearchFiltering.ParentSearchTerm> parentListModel;
@@ -70,6 +71,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     @NbBundle.Messages({"FileSearchPanel.dialogTitle.text=Test file search"})
     FileSearchPanel() {
         initComponents();
+        for (GroupSortingAlgorithm groupSortAlgorithm : GroupSortingAlgorithm.values()) {
+            groupSortingComboBox.addItem(groupSortAlgorithm);
+        }
         parentListModel = (DefaultListModel<FileSearchFiltering.ParentSearchTerm>) parentList.getModel();
         for (String ignorePath : DEFAULT_IGNORED_PATHS) {
             parentListModel.add(parentListModel.size(), new ParentSearchTerm(ignorePath, false, false));
@@ -79,15 +83,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     /**
      * Setup the data source filter settings.
      *
-     * @param visible          Boolean indicating if the filter should be
-     *                         visible.
-     * @param enabled          Boolean indicating if the filter should be
-     *                         enabled.
-     * @param selected         Boolean indicating if the filter should be
-     *                         selected.
+     * @param visible         Boolean indicating if the filter should be
+     *                        visible.
+     * @param enabled         Boolean indicating if the filter should be
+     *                        enabled.
+     * @param selected        Boolean indicating if the filter should be
+     *                        selected.
      * @param indicesSelected Array of integers indicating which list items are
-     *                         selected, null to indicate leaving selected items
-     *                         unchanged.
+     *                        selected, null to indicate leaving selected items
+     *                        unchanged.
      */
     private void dataSourceFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         dataSourceCheckbox.setVisible(visible);
@@ -110,15 +114,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     /**
      * Setup the file size filter settings.
      *
-     * @param visible          Boolean indicating if the filter should be
-     *                         visible.
-     * @param enabled          Boolean indicating if the filter should be
-     *                         enabled.
-     * @param selected         Boolean indicating if the filter should be
-     *                         selected.
+     * @param visible         Boolean indicating if the filter should be
+     *                        visible.
+     * @param enabled         Boolean indicating if the filter should be
+     *                        enabled.
+     * @param selected        Boolean indicating if the filter should be
+     *                        selected.
      * @param indicesSelected Array of integers indicating which list items are
-     *                         selected, null to indicate leaving selected items
-     *                         unchanged.
+     *                        selected, null to indicate leaving selected items
+     *                        unchanged.
      */
     private void sizeFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         sizeCheckbox.setVisible(visible);
@@ -141,15 +145,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     /**
      * Setup the central repository frequency filter settings.
      *
-     * @param visible          Boolean indicating if the filter should be
-     *                         visible.
-     * @param enabled          Boolean indicating if the filter should be
-     *                         enabled.
-     * @param selected         Boolean indicating if the filter should be
-     *                         selected.
+     * @param visible         Boolean indicating if the filter should be
+     *                        visible.
+     * @param enabled         Boolean indicating if the filter should be
+     *                        enabled.
+     * @param selected        Boolean indicating if the filter should be
+     *                        selected.
      * @param indicesSelected Array of integers indicating which list items are
-     *                         selected, null to indicate leaving selected items
-     *                         unchanged.
+     *                        selected, null to indicate leaving selected items
+     *                        unchanged.
      */
     private void crFrequencyFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         crFrequencyCheckbox.setVisible(visible);
@@ -172,15 +176,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     /**
      * Setup the objects filter settings.
      *
-     * @param visible          Boolean indicating if the filter should be
-     *                         visible.
-     * @param enabled          Boolean indicating if the filter should be
-     *                         enabled.
-     * @param selected         Boolean indicating if the filter should be
-     *                         selected.
+     * @param visible         Boolean indicating if the filter should be
+     *                        visible.
+     * @param enabled         Boolean indicating if the filter should be
+     *                        enabled.
+     * @param selected        Boolean indicating if the filter should be
+     *                        selected.
      * @param indicesSelected Array of integers indicating which list items are
-     *                         selected, null to indicate leaving selected items
-     *                         unchanged.
+     *                        selected, null to indicate leaving selected items
+     *                        unchanged.
      */
     private void objectsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         objectsCheckbox.setVisible(visible);
@@ -203,15 +207,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     /**
      * Setup the hash set filter settings.
      *
-     * @param visible          Boolean indicating if the filter should be
-     *                         visible.
-     * @param enabled          Boolean indicating if the filter should be
-     *                         enabled.
-     * @param selected         Boolean indicating if the filter should be
-     *                         selected.
+     * @param visible         Boolean indicating if the filter should be
+     *                        visible.
+     * @param enabled         Boolean indicating if the filter should be
+     *                        enabled.
+     * @param selected        Boolean indicating if the filter should be
+     *                        selected.
      * @param indicesSelected Array of integers indicating which list items are
-     *                         selected, null to indicate leaving selected items
-     *                         unchanged.
+     *                        selected, null to indicate leaving selected items
+     *                        unchanged.
      */
     private void hashSetFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         hashSetCheckbox.setVisible(visible);
@@ -234,15 +238,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     /**
      * Setup the interesting items filter settings.
      *
-     * @param visible          Boolean indicating if the filter should be
-     *                         visible.
-     * @param enabled          Boolean indicating if the filter should be
-     *                         enabled.
-     * @param selected         Boolean indicating if the filter should be
-     *                         selected.
+     * @param visible         Boolean indicating if the filter should be
+     *                        visible.
+     * @param enabled         Boolean indicating if the filter should be
+     *                        enabled.
+     * @param selected        Boolean indicating if the filter should be
+     *                        selected.
      * @param indicesSelected Array of integers indicating which list items are
-     *                         selected, null to indicate leaving selected items
-     *                         unchanged.
+     *                        selected, null to indicate leaving selected items
+     *                        unchanged.
      */
     private void interestingItemsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         interestingItemsCheckbox.setVisible(visible);
@@ -265,15 +269,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     /**
      * Setup the score filter settings.
      *
-     * @param visible          Boolean indicating if the filter should be
-     *                         visible.
-     * @param enabled          Boolean indicating if the filter should be
-     *                         enabled.
-     * @param selected         Boolean indicating if the filter should be
-     *                         selected.
+     * @param visible         Boolean indicating if the filter should be
+     *                        visible.
+     * @param enabled         Boolean indicating if the filter should be
+     *                        enabled.
+     * @param selected        Boolean indicating if the filter should be
+     *                        selected.
      * @param indicesSelected Array of integers indicating which list items are
-     *                         selected, null to indicate leaving selected items
-     *                         unchanged.
+     *                        selected, null to indicate leaving selected items
+     *                        unchanged.
      */
     private void scoreFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         scoreCheckbox.setVisible(visible);
@@ -296,15 +300,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     /**
      * Setup the parent path filter settings.
      *
-     * @param visible          Boolean indicating if the filter should be
-     *                         visible.
-     * @param enabled          Boolean indicating if the filter should be
-     *                         enabled.
-     * @param selected         Boolean indicating if the filter should be
-     *                         selected.
+     * @param visible         Boolean indicating if the filter should be
+     *                        visible.
+     * @param enabled         Boolean indicating if the filter should be
+     *                        enabled.
+     * @param selected        Boolean indicating if the filter should be
+     *                        selected.
      * @param indicesSelected Array of integers indicating which list items are
-     *                         selected, null to indicate leaving selected items
-     *                         unchanged.
+     *                        selected, null to indicate leaving selected items
+     *                        unchanged.
      */
     private void parentFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         parentCheckbox.setVisible(visible);
@@ -519,10 +523,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         validateFields();
     }
 
-    FileType getSelectedType(){
+    FileType getSelectedType() {
         return fileType;
     }
-    
+
     /**
      * Reset the panel to its initial configuration.
      */
@@ -556,6 +560,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                 orderByCombobox.addItem(method);
             }
         }
+
+        groupSortingComboBox.setSelectedIndex(0);
         setSelectedType(FileType.IMAGE);
         validateFields();
     }
@@ -921,8 +927,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * @return the grouping attribute
      */
     FileSearch.AttributeType getGroupingAttribute() {
-        FileSearch.GroupingAttributeType groupingAttrType = (FileSearch.GroupingAttributeType) groupByCombobox.getSelectedItem();
-        return groupingAttrType.getAttributeType();
+        return groupByCombobox.getItemAt(groupByCombobox.getSelectedIndex()).getAttributeType();
     }
 
     /**
@@ -931,10 +936,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * @return the selected sorting method
      */
     FileGroup.GroupSortingAlgorithm getGroupSortingMethod() {
-        if (attributeRadioButton.isSelected()) {
-            return FileGroup.GroupSortingAlgorithm.BY_GROUP_KEY;
-        }
-        return FileGroup.GroupSortingAlgorithm.BY_GROUP_SIZE;
+        return groupSortingComboBox.getItemAt(groupSortingComboBox.getSelectedIndex());
+
     }
 
     /**
@@ -1064,7 +1067,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         java.awt.GridBagConstraints gridBagConstraints;
 
         javax.swing.ButtonGroup parentPathButtonGroup = new javax.swing.ButtonGroup();
-        orderGroupsByButtonGroup = new javax.swing.ButtonGroup();
         javax.swing.ButtonGroup parentIncludeButtonGroup = new javax.swing.ButtonGroup();
         filtersScrollPane = new javax.swing.JScrollPane();
         filtersPanel = new javax.swing.JPanel();
@@ -1114,10 +1116,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         groupByCombobox = new javax.swing.JComboBox<>();
         orderByCombobox = new javax.swing.JComboBox<>();
         orderGroupsByLabel = new javax.swing.JLabel();
-        attributeRadioButton = new javax.swing.JRadioButton();
-        groupSizeRadioButton = new javax.swing.JRadioButton();
         orderByLabel = new javax.swing.JLabel();
         groupByLabel = new javax.swing.JLabel();
+        groupSortingComboBox = new javax.swing.JComboBox<>();
         errorLabel = new javax.swing.JLabel();
         cancelButton = new javax.swing.JButton();
 
@@ -1561,13 +1562,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         org.openide.awt.Mnemonics.setLocalizedText(orderGroupsByLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.orderGroupsByLabel.text")); // NOI18N
 
-        orderGroupsByButtonGroup.add(attributeRadioButton);
-        attributeRadioButton.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(attributeRadioButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.attributeRadioButton.text")); // NOI18N
-
-        orderGroupsByButtonGroup.add(groupSizeRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(groupSizeRadioButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.groupSizeRadioButton.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(orderByLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.orderByLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(groupByLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.groupByLabel.text")); // NOI18N
@@ -1579,44 +1573,36 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             .addGroup(sortingPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, sortingPanelLayout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                    .addGroup(sortingPanelLayout.createSequentialGroup()
+                        .addComponent(groupByLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(groupByCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, 253, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(sortingPanelLayout.createSequentialGroup()
                         .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(sortingPanelLayout.createSequentialGroup()
-                                .addGap(37, 37, 37)
-                                .addComponent(attributeRadioButton))
-                            .addComponent(groupByLabel)
-                            .addGroup(sortingPanelLayout.createSequentialGroup()
-                                .addGap(17, 17, 17)
-                                .addComponent(orderGroupsByLabel))
-                            .addGroup(sortingPanelLayout.createSequentialGroup()
-                                .addGap(37, 37, 37)
-                                .addComponent(groupSizeRadioButton))
-                            .addGroup(sortingPanelLayout.createSequentialGroup()
-                                .addComponent(orderByLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(orderByCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, 253, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                                .addComponent(orderGroupsByLabel)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(orderByLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(groupSortingComboBox, javax.swing.GroupLayout.Alignment.TRAILING, 0, 253, Short.MAX_VALUE)
+                            .addComponent(orderByCombobox, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
 
-        sortingPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {groupByCombobox, orderByCombobox});
+        sortingPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {groupByCombobox, groupSortingComboBox, orderByCombobox});
 
         sortingPanelLayout.setVerticalGroup(
             sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(sortingPanelLayout.createSequentialGroup()
-                .addGap(8, 8, 8)
+                .addGap(20, 20, 20)
                 .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(groupByCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(groupByLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(orderGroupsByLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(attributeRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(groupSizeRadioButton)
+                .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(groupSortingComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(orderGroupsByLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(orderByCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1662,7 +1648,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(6, 6, 6)
-                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 331, Short.MAX_VALUE)
+                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 360, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sortingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1722,8 +1708,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         cancelButton.setEnabled(!enabled);
         orderByCombobox.setEnabled(enabled);
         groupByCombobox.setEnabled(enabled);
-        attributeRadioButton.setEnabled(enabled);
-        groupSizeRadioButton.setEnabled(enabled);
+        groupSortingComboBox.setEnabled(enabled);
     }
 
     /**
@@ -1832,7 +1817,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
-    private javax.swing.JRadioButton attributeRadioButton;
     private javax.swing.JButton cancelButton;
     private javax.swing.JCheckBox crFrequencyCheckbox;
     private javax.swing.JList<Frequency> crFrequencyList;
@@ -1849,7 +1833,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JRadioButton fullRadioButton;
     private javax.swing.JComboBox<GroupingAttributeType> groupByCombobox;
     private javax.swing.JLabel groupByLabel;
-    private javax.swing.JRadioButton groupSizeRadioButton;
+    private javax.swing.JComboBox<GroupSortingAlgorithm> groupSortingComboBox;
     private javax.swing.JCheckBox hashSetCheckbox;
     private javax.swing.JList<String> hashSetList;
     private javax.swing.JScrollPane hashSetScrollPane;
@@ -1867,7 +1851,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JScrollPane objectsScrollPane;
     private javax.swing.JComboBox<SortingMethod> orderByCombobox;
     private javax.swing.JLabel orderByLabel;
-    private javax.swing.ButtonGroup orderGroupsByButtonGroup;
     private javax.swing.JLabel orderGroupsByLabel;
     private javax.swing.JCheckBox parentCheckbox;
     private javax.swing.JLabel parentLabel;

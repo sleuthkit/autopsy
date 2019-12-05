@@ -240,13 +240,13 @@ class FileSorter implements Comparator<ResultFile> {
      * Enum for selecting the primary method for sorting result files.
      */
     @NbBundle.Messages({
-        "FileSorter.SortingMethod.datasource.displayName=Data source",
-        "FileSorter.SortingMethod.filename.displayName=File name",
-        "FileSorter.SortingMethod.filesize.displayName=File size",
-        "FileSorter.SortingMethod.filetype.displayName=File type",
-        "FileSorter.SortingMethod.frequency.displayName=Central repo frequency",
-        "FileSorter.SortingMethod.keywordlist.displayName=Keyword list names",
-        "FileSorter.SortingMethod.fullPath.displayName=Full path"})
+        "FileSorter.SortingMethod.datasource.displayName=Data Source",
+        "FileSorter.SortingMethod.filename.displayName=File Name",
+        "FileSorter.SortingMethod.filesize.displayName=File Size",
+        "FileSorter.SortingMethod.filetype.displayName=File Type",
+        "FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency",
+        "FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names",
+        "FileSorter.SortingMethod.fullPath.displayName=Full Path"})
     enum SortingMethod {
         BY_FILE_NAME(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_filename_displayName()), // Sort alphabetically by file name

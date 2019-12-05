@@ -59,7 +59,7 @@ class SearchResults {
      * Create an dummy SearchResults object that can be used in the UI before the search is finished.
      */
     SearchResults() {
-        this.groupSortingType = FileGroup.GroupSortingAlgorithm.BY_GROUP_KEY;
+        this.groupSortingType = FileGroup.GroupSortingAlgorithm.BY_GROUP_NAME;
         this.attrType = new FileSearch.FileSizeAttribute();
         this.fileSorter = new FileSorter(FileSorter.SortingMethod.BY_FILE_NAME);
     }   

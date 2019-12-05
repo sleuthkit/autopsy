@@ -1806,16 +1806,16 @@ class FileSearch {
      * Enum for the attribute types that can be used for grouping.
      */
     @NbBundle.Messages({
-        "FileSearch.GroupingAttributeType.fileType.displayName=File type",
-        "FileSearch.GroupingAttributeType.frequency.displayName=Past occurrences",
-        "FileSearch.GroupingAttributeType.keywordList.displayName=Keyword list names",
+        "FileSearch.GroupingAttributeType.fileType.displayName=File Type",
+        "FileSearch.GroupingAttributeType.frequency.displayName=Past Occurrences",
+        "FileSearch.GroupingAttributeType.keywordList.displayName=Keyword",
         "FileSearch.GroupingAttributeType.size.displayName=File Size",
-        "FileSearch.GroupingAttributeType.datasource.displayName=Data source",
-        "FileSearch.GroupingAttributeType.parent.displayName=Parent folder",
-        "FileSearch.GroupingAttributeType.hash.displayName=Hash set",
-        "FileSearch.GroupingAttributeType.interestingItem.displayName=Interesting item set",
-        "FileSearch.GroupingAttributeType.tag.displayName=File tag",
-        "FileSearch.GroupingAttributeType.object.displayName=Object detected",
+        "FileSearch.GroupingAttributeType.datasource.displayName=Data Source",
+        "FileSearch.GroupingAttributeType.parent.displayName=Parent Folder",
+        "FileSearch.GroupingAttributeType.hash.displayName=Hash Set",
+        "FileSearch.GroupingAttributeType.interestingItem.displayName=Interesting Item",
+        "FileSearch.GroupingAttributeType.tag.displayName=Tag",
+        "FileSearch.GroupingAttributeType.object.displayName=Object Detected",
         "FileSearch.GroupingAttributeType.none.displayName=None"})
     enum GroupingAttributeType {
         FILE_SIZE(new FileSizeAttribute(), Bundle.FileSearch_GroupingAttributeType_size_displayName()),

@@ -1,5 +1,7 @@
 CTL_OpenFileDiscoveryAction=File discovery
 DiscoveryTopComponent.name=\ File Discovery
+FileGroup.groupSortingAlgorithm.groupName.text=Group name
+FileGroup.groupSortingAlgorithm.groupSize.text=Group size
 # {0} - Data source name
 # {1} - Data source ID
 FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
@@ -112,7 +114,7 @@ FileSearchFiltering.SizeFilter.range=({0} to {1})
 FileSearchFiltering.TagsFilter.desc=Files that have been tagged {0}
 FileSearchFiltering.TagsFilter.or=\ or 
 FileSearchPanel.dialogTitle.text=Test file search
-FileSearchPanel.sortingPanel.border.title=Sorting
+FileSearchPanel.sortingPanel.border.title=Grouping
 FileSearchPanel.searchButton.text=Show
 FileSearchPanel.addButton.text=Add
 FileSearchPanel.substringRadioButton.text=Substring
@@ -121,9 +123,7 @@ FileSearchPanel.parentCheckbox.text=Parent:
 FileSearchPanel.keywordCheckbox.text=Keyword:
 FileSearchPanel.crFrequencyCheckbox.text=Past Occurrences:
 FileSearchPanel.dataSourceCheckbox.text=Data Source:
-FileSearchPanel.groupSizeRadioButton.text=Group Size
 FileSearchPanel.sizeCheckbox.text=File Size:
-FileSearchPanel.attributeRadioButton.text=Group Name
 FileSearchPanel.orderGroupsByLabel.text=Order Groups By:
 FileSearchPanel.filtersScrollPane.border.title=Filters
 FileSearchPanel.parentLabel.text=(All will be used)
@@ -173,7 +173,7 @@ ResultsPanel.invalidPageNumber.title=Invalid Page Number
 ResultsPanel.openInExternalViewer.name=Open in External Viewer
 ResultsPanel.pageControlsLabel.text=Pages:
 ResultsPanel.gotoPageLabel.text=Go to Page:
-ResultsPanel.pageSizeLabel.text=Page size:
+ResultsPanel.pageSizeLabel.text=Page Size:
 ResultsPanel.instancesList.border.title=Instances
 DiscoveryExtractAction.title.extractFiles.text=Extract File
 FileSearchPanel.includeRadioButton.text=Include
