@@ -41,6 +41,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
 
     private static final int GAP_SIZE = 4;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
+    private static final int BYTE_UNIT_CONVERSION = 1000;
     private static final int ICON_SIZE = 16;
     private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
     private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
@@ -168,14 +169,13 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     private javax.swing.JLabel scoreLabel;
     // End of variables declaration//GEN-END:variables
 
-    @Messages({"# {0} - fileSize",
-        "VideoThumbnailPanel.sizeLabel.text=Size: {0} bytes",
+    @Messages({
         "# {0} - numberOfInstances",
         "VideoThumbnailPanel.countLabel.text=Number of Instances: {0}",
         "VideoThumbnailPanel.deleted.text=All instances of file are deleted."})
     @Override
     public Component getListCellRendererComponent(JList<? extends VideoThumbnailsWrapper> list, VideoThumbnailsWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
-        fileSizeLabel.setText(Bundle.VideoThumbnailPanel_sizeLabel_text(value.getResultFile().getFirstInstance().getSize()));
+        fileSizeLabel.setText(getFileSizeString(value.getResultFile().getFirstInstance().getSize()));
         countLabel.setText(Bundle.VideoThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
         addThumbnails(value);
         imagePanel.setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
@@ -201,6 +201,49 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         scoreLabel.setToolTipText(value.getResultFile().getScoreDescription());
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
         return this;
+    }
+
+    @Messages({"# {0} - fileSize",
+        "# {1} - units",
+        "VideoThumbnailPanel.sizeLabel.text=Size: {0} {1}",
+        "VideoThumbnailPanel.bytes.text=bytes",
+        "VideoThumbnailPanel.kiloBytes.text=KB",
+        "VideoThumbnailPanel.megaBytes.text=MB",
+        "VideoThumbnailPanel.gigaBytes.text=GB",
+        "VideoThumbnailPanel.terraBytes.text=TB"})
+    /**
+     * Convert a size in bytes to a string with representing the size in the
+     * largest units which represent the value as being greater than or equal to
+     * one. Result will be rounded down to the nearest whole number of those
+     * units.
+     *
+     * @param bytes Size in bytes.
+     */
+    private String getFileSizeString(long bytes) {
+        long size = bytes;
+        int unitsSwitchValue = 0;
+        while (bytes > BYTE_UNIT_CONVERSION && unitsSwitchValue < 4) {
+            size /= BYTE_UNIT_CONVERSION;
+            unitsSwitchValue++;
+        }
+        String units;
+        switch (unitsSwitchValue) {
+            case 1:
+                units = Bundle.VideoThumbnailPanel_kiloBytes_text();
+                break;
+            case 2:
+                units = Bundle.VideoThumbnailPanel_megaBytes_text();
+                break;
+            case 3:
+                units = Bundle.VideoThumbnailPanel_gigaBytes_text();
+                break;
+            case 4:
+                units = Bundle.VideoThumbnailPanel_terraBytes_text();
+                break;
+            default:
+                units = Bundle.VideoThumbnailPanel_bytes_text();
+        }
+        return Bundle.VideoThumbnailPanel_sizeLabel_text(size, units);
     }
 
     @Override

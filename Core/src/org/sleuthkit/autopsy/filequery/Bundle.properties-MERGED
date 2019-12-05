@@ -153,11 +153,17 @@ FileSorter.SortingMethod.filetype.displayName=File Type
 FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency
 FileSorter.SortingMethod.fullPath.displayName=Full Path
 FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names
+ImageThumbnailPanel.bytes.text=bytes
 # {0} - numberOfInstances
 ImageThumbnailPanel.countLabel.text=Number of Instances: {0}
+ImageThumbnailPanel.gigaBytes.text=GB
 ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
+ImageThumbnailPanel.kiloBytes.text=KB
+ImageThumbnailPanel.megaBytes.text=MB
 # {0} - fileSize
-ImageThumbnailPanel.sizeLabel.text=Size: {0} bytes
+# {1} - units
+ImageThumbnailPanel.sizeLabel.text=Size: {0} {1}
+ImageThumbnailPanel.terraBytes.text=TB
 ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
 ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
 ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
@@ -185,8 +191,14 @@ DiscoveryTopComponent.imagesButton.text=Images
 DiscoveryTopComponent.videosButton.text=Videos
 ResultsPanel.resultsSplitPane.toolTipText=
 ResultsPanel.viewFileInDir.name=View File in Directory
+VideoThumbnailPanel.bytes.text=bytes
 # {0} - numberOfInstances
 VideoThumbnailPanel.countLabel.text=Number of Instances: {0}
 VideoThumbnailPanel.deleted.text=All instances of file are deleted.
+VideoThumbnailPanel.gigaBytes.text=GB
+VideoThumbnailPanel.kiloBytes.text=KB
+VideoThumbnailPanel.megaBytes.text=MB
 # {0} - fileSize
-VideoThumbnailPanel.sizeLabel.text=Size: {0} bytes
+# {1} - units
+VideoThumbnailPanel.sizeLabel.text=Size: {0} {1}
+VideoThumbnailPanel.terraBytes.text=TB
