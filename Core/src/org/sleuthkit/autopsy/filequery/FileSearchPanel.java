@@ -458,7 +458,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      */
     private void imagesSelected(boolean enabled, boolean resetSelected) {
         dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
-        int[] selectedSizeIndices = {1, 2, 3, 4, 5, 6};
+        int[] selectedSizeIndices = {1, 2, 3, 4, 5};
         sizeFilterSettings(true, enabled, resetSelected || sizeCheckbox.isSelected(), resetSelected == true ? selectedSizeIndices : null);
         int[] selectedFrequencyIndices;
         if (!EamDb.isEnabled()) {
