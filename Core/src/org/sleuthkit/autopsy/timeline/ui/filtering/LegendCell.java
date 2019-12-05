@@ -75,7 +75,6 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
                 Platform.runLater(() -> setGraphic(textField));
                 
             } else if (item.getFilter() instanceof EventTypeFilter) {
-                
                 EventTypeFilter filter = (EventTypeFilter) item.getFilter();
                 Rectangle rect = new Rectangle(20, 20);
 
