@@ -190,8 +190,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         objectsCheckbox.setVisible(visible);
         objectsScrollPane.setVisible(visible);
         objectsList.setVisible(visible);
-        objectsCheckbox.setEnabled(enabled);
-        objectsCheckbox.setSelected(selected);
+        boolean hasObjects = objectsList.getModel().getSize() > 0;
+        objectsCheckbox.setEnabled(enabled && hasObjects);
+        objectsCheckbox.setSelected(selected && hasObjects);
         if (objectsCheckbox.isEnabled() && objectsCheckbox.isSelected()) {
             objectsScrollPane.setEnabled(true);
             objectsList.setEnabled(true);
@@ -221,8 +222,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         hashSetCheckbox.setVisible(visible);
         hashSetScrollPane.setVisible(visible);
         hashSetList.setVisible(visible);
-        hashSetCheckbox.setEnabled(enabled);
-        hashSetCheckbox.setSelected(selected);
+        boolean hasHashSets = hashSetList.getModel().getSize() > 0;
+        hashSetCheckbox.setEnabled(enabled && hasHashSets);
+        hashSetCheckbox.setSelected(selected && hasHashSets);
         if (hashSetCheckbox.isEnabled() && hashSetCheckbox.isSelected()) {
             hashSetScrollPane.setEnabled(true);
             hashSetList.setEnabled(true);
@@ -252,8 +254,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         interestingItemsCheckbox.setVisible(visible);
         interestingItemsScrollPane.setVisible(visible);
         interestingItemsList.setVisible(visible);
-        interestingItemsCheckbox.setEnabled(enabled);
-        interestingItemsCheckbox.setSelected(selected);
+        boolean hasInterestingItems = interestingItemsList.getModel().getSize() > 0;
+        interestingItemsCheckbox.setEnabled(enabled && hasInterestingItems);
+        interestingItemsCheckbox.setSelected(selected && hasInterestingItems);
         if (interestingItemsCheckbox.isEnabled() && interestingItemsCheckbox.isSelected()) {
             interestingItemsScrollPane.setEnabled(true);
             interestingItemsList.setEnabled(true);
@@ -694,18 +697,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             hashListModel.removeAllElements();
             List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT,
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
-            if (setNames.isEmpty()) {
-                hashSetCheckbox.setEnabled(false);
-                hashSetList.setEnabled(false);
-                hashSetScrollPane.setEnabled(false);
-            } else {
-                hashSetCheckbox.setEnabled(true);
-                hashSetList.setEnabled(true);
-                hashSetScrollPane.setEnabled(true);
-                for (String name : setNames) {
-                    hashListModel.add(count, name);
-                    count++;
-                }
+            for (String name : setNames) {
+                hashListModel.add(count, name);
+                count++;
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading hash set names", ex);
@@ -725,18 +719,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             intListModel.removeAllElements();
             List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT,
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
-            if (setNames.isEmpty()) {
-                interestingItemsCheckbox.setEnabled(false);
-                interestingItemsList.setEnabled(false);
-                interestingItemsScrollPane.setEnabled(false);
-            } else {
-                interestingItemsCheckbox.setEnabled(true);
-                interestingItemsList.setEnabled(true);
-                interestingItemsScrollPane.setEnabled(true);
-                for (String name : setNames) {
-                    intListModel.add(count, name);
-                    count++;
-                }
+            for (String name : setNames) {
+                intListModel.add(count, name);
+                count++;
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading interesting file set names", ex);
@@ -800,18 +785,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             DefaultListModel<String> objListModel = (DefaultListModel<String>) objectsList.getModel();
             objListModel.removeAllElements();
             List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION);
-            if (setNames.isEmpty()) {
-                objectsCheckbox.setEnabled(false);
-                objectsList.setEnabled(false);
-                objectsScrollPane.setEnabled(false);
-            } else {
-                objectsCheckbox.setEnabled(true);
-                objectsList.setEnabled(true);
-                objectsScrollPane.setEnabled(true);
-                for (String name : setNames) {
-                    objListModel.add(count, name);
-                    count++;
-                }
+            for (String name : setNames) {
+                objListModel.add(count, name);
+                count++;
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading object detected set names", ex);
