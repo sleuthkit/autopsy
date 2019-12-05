@@ -48,6 +48,11 @@ public final class OpenFileDiscoveryAction extends CallableSystemAction implemen
     private static final long serialVersionUID = 1L;
     private final JButton toolbarButton = new JButton();
 
+    OpenFileDiscoveryAction() {
+        toolbarButton.addActionListener(OpenFileDiscoveryAction.this::actionPerformed);
+        this.setEnabled(false);
+    }
+
     @Override
     public boolean isEnabled() {
         return Case.isCaseOpen();
