@@ -107,6 +107,7 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.filequery.DiscoveryTopComponent;
+import org.sleuthkit.autopsy.filequery.OpenFileDiscoveryAction;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -1119,6 +1120,7 @@ public class Case {
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
                 CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenFileDiscoveryAction.class).setEnabled(true);
 
                 /*
                  * Add the case to the recent cases tracker that supplies a list
@@ -1173,6 +1175,7 @@ public class Case {
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
                 CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenFileDiscoveryAction.class).setEnabled(false);
                 DiscoveryTopComponent discoveryTopComp = DiscoveryTopComponent.getTopComponent();
                 if (discoveryTopComp != null){
                     discoveryTopComp.resetTopComponent();
