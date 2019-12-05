@@ -316,19 +316,29 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                            if (attachment is not None):
                                attachmentDict = json.loads(attachment)[0]
                                if (attachmentDict["mime_type"] == "image/jpeg"):
-                                   urlAttachments = self.getJPGListFromJson(attachmentDict["urls"])
+                                   urls = attachmentDict.get("urls", None)
+                                   if (urls is not None):
+                                       urlAttachments = self.getJPGListFromJson(urls)
 
                                elif (attachmentDict["mime_type"] == "video/mp4"):
                                    # filename does not have an associated path with it so it will be ignored
-                                   urlAttachments = self.getJPGListFromJson(attachmentDict["urls"])
-                                   urlAttachments.add(URLAttachment(attachmentDict["video_data_url"]))
-                                   urlAttachments.add(URLAttachment(attachmentDict["video_data_thumbnail_url"]))
-
+                                   
+                                   urls = attachmentDict.get("urls", None)
+                                   if (urls is not None):
+                                       urlAttachments = self.getJPGListFromJson(urls)
+                                   
+                                   video_data_url = attachmentDict.get("video_data_url", None)
+                                   if (video_data_url is not None):
+                                       urlAttachments.add(URLAttachment(video_data_url))
+                                   video_data_thumbnail_url = attachmentDict.get("video_data_thumbnail_url", None)
+                                   
+                                   if (video_data_thumbnail_url is not None):
+                                       urlAttachments.add(URLAttachment(video_data_thumbnail_url))
                                elif (attachmentDict["mime_type"] == "audio/mpeg"):
-                                   if (attachmentDict["audio_uri"] == ""):
+                                   audioUri = attachmentDict.get("audio_uri", None)
+                                   if (audioUri is None or audioUri == ""):
                                        continue
                                    else:
-                                       audioUri = attachmentDict["audio_uri"]
                                        fileAttachments.add(FileAttachment(currentCase.getSleuthkitCase(), threadsDb.getDBFile().getDataSource(), audioUri.replace("file://","")))
 
                                else:
@@ -336,8 +346,9 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
 
                            if (pendingAttachment is not None):
                                pendingAttachmentDict = json.loads(pendingAttachment)[0]
-                               pendingAttachmentUri = pendingAttachmentDict["uri"]
-                               fileAttachments.add(FileAttachment(currentCase.getSleuthkitCase(), threadsDb.getDBFile().getDataSource(), pendingAttachmentUri.replace("file://","")))
+                               pendingAttachmentUri = pendingAttachmentDict.get("uri", None)
+                               if (pendingAttachmentUri is not None): 
+                                   fileAttachments.add(FileAttachment(currentCase.getSleuthkitCase(), threadsDb.getDBFile().getDataSource(), pendingAttachmentUri.replace("file://","")))
                            
                            messageAttachments = MessageAttachments(fileAttachments, urlAttachments)
                                    
