@@ -457,10 +457,13 @@ public class ResultsPanel extends javax.swing.JPanel {
                 .addGap(4, 4, 4))
         );
 
-        resultsSplitPane.setDividerLocation(250);
+        resultsSplitPane.setDividerLocation(60);
         resultsSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        resultsSplitPane.setResizeWeight(0.9);
+        resultsSplitPane.setResizeWeight(1.0);
+        resultsSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.resultsSplitPane.toolTipText")); // NOI18N
         resultsSplitPane.setPreferredSize(new java.awt.Dimension(777, 125));
+
+        instancesScrollPane.setPreferredSize(new java.awt.Dimension(258, 60));
 
         instancesList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.instancesList.border.title"))); // NOI18N
         instancesList.setModel(instancesListModel);
@@ -474,13 +477,13 @@ public class ResultsPanel extends javax.swing.JPanel {
             instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 775, Short.MAX_VALUE)
             .addGroup(instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 775, Short.MAX_VALUE))
+                .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         instancesPanelLayout.setVerticalGroup(
             instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 52, Short.MAX_VALUE)
+            .addGap(0, 60, Short.MAX_VALUE)
             .addGroup(instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 52, Short.MAX_VALUE))
+                .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         resultsSplitPane.setRightComponent(instancesPanel);
