@@ -1,4 +1,4 @@
-CTL_OpenFileDiscoveryAction=File discovery
+CTL_OpenFileDiscoveryAction=File Discovery
 DiscoveryTopComponent.name=\ File Discovery
 FileGroup.groupSortingAlgorithm.groupName.text=Group Name
 FileGroup.groupSortingAlgorithm.groupSize.text=Group Size

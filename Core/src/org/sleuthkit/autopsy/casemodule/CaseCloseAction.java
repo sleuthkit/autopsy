@@ -50,7 +50,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.CaseCloseAction")
 @ActionRegistration(displayName = "#CTL_CaseCloseAct", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Toolbars/Case", position = 104)})
+    @ActionReference(path = "Toolbars/Case", position = 105)})
 public final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final long serialVersionUID = 1L;

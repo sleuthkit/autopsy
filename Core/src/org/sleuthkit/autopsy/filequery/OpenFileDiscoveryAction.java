@@ -18,12 +18,17 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import java.awt.Component;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
+import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
@@ -31,13 +36,17 @@ import org.sleuthkit.autopsy.casemodule.Case;
  * searches and see results.
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.newpackage.OpenFileDiscoveryAction")
-@ActionReference(path = "Menu/Tools", position = 1854, separatorBefore = 1853)
+@ActionReferences(value = {
+    @ActionReference(path = "Menu/Tools", position = 103)
+    ,
+    @ActionReference(path = "Toolbars/Case", position = 104)})
 @ActionRegistration(displayName = "#CTL_OpenFileDiscoveryAction", lazy = false)
-@NbBundle.Messages({"CTL_OpenFileDiscoveryAction=File discovery"})
-public final class OpenFileDiscoveryAction extends CallableSystemAction {
+@NbBundle.Messages({"CTL_OpenFileDiscoveryAction=File Discovery"})
+public final class OpenFileDiscoveryAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final String DISPLAY_NAME = Bundle.CTL_OpenFileDiscoveryAction();
     private static final long serialVersionUID = 1L;
+    private final JButton toolbarButton = new JButton();
 
     @Override
     public boolean isEnabled() {
@@ -48,6 +57,30 @@ public final class OpenFileDiscoveryAction extends CallableSystemAction {
     @SuppressWarnings("fallthrough")
     public void performAction() {
         DiscoveryTopComponent.openTopComponent();
+    }
+
+    /**
+     * Returns the toolbar component of this action.
+     *
+     * @return The toolbar button
+     */
+    @Override
+    public Component getToolbarPresenter() {
+        ImageIcon icon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/discovery-icon-24.png")); //NON-NLS
+        toolbarButton.setIcon(icon);
+        toolbarButton.setText(this.getName());
+        return toolbarButton;
+    }
+
+    /**
+     * Set this action to be enabled/disabled
+     *
+     * @param value whether to enable this action or not
+     */
+    @Override
+    public void setEnabled(boolean value) {
+        super.setEnabled(value);
+        toolbarButton.setEnabled(value);
     }
 
     @Override
