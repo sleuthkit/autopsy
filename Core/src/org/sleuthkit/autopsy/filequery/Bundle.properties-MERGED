@@ -183,6 +183,7 @@ FileSearchPanel.knownFilesCheckbox.text=Hide known files
 GroupListPanel.groupKeyList.border.title=Groups
 DiscoveryTopComponent.imagesButton.text=Images
 DiscoveryTopComponent.videosButton.text=Videos
+ResultsPanel.resultsSplitPane.toolTipText=
 ResultsPanel.viewFileInDir.name=View File in Directory
 # {0} - numberOfInstances
 VideoThumbnailPanel.countLabel.text=Number of Instances: {0}

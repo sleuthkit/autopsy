@@ -325,6 +325,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             addButton.setEnabled(true);
             deleteButton.setEnabled(!parentListModel.isEmpty());
             parentList.setEnabled(true);
+            parentTextField.setEnabled(true);
             if (indicesSelected != null) {
                 parentList.setSelectedIndices(indicesSelected);
             }
@@ -337,7 +338,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             substringRadioButton.setEnabled(false);
             addButton.setEnabled(false);
             deleteButton.setEnabled(false);
-
+            parentTextField.setEnabled(false);
         }
     }
 
@@ -467,7 +468,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
         interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
-        parentFilterSettings(true, true, false, null);
+        parentFilterSettings(true, enabled, !resetSelected && parentCheckbox.isSelected(), null);
         scoreFilterSettings(false, false, false, null);
         tagsFilterSettings(false, false, false, null);
         keywordFilterSettings(false, false, false, null);
@@ -499,7 +500,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
         interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
-        parentFilterSettings(true, true, false, null);
+        parentFilterSettings(true, enabled, !resetSelected && parentCheckbox.isSelected(), null);
         scoreFilterSettings(false, false, false, null);
         tagsFilterSettings(false, false, false, null);
         keywordFilterSettings(false, false, false, null);
