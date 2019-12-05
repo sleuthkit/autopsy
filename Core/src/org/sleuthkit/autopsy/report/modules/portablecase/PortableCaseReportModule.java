@@ -196,11 +196,7 @@ public class PortableCaseReportModule implements ReportModule {
         "PortableCaseReportModule.generateReport.errorCreatingImageTagTable=Error creating image tags table",
         "# {0} - attribute type name",
         "PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}",
-        "PortableCaseReportModule.generateReport.compressingCase=Compressing case...",
-        "PortableCaseReportModule.generateReport.errorCreatingReportFolder=Could not make report folder",
-        "PortableCaseReportModule.generateReport.errorGeneratingUCOreport=Problem while generating CASE-UCO report",
-        "PortableCaseReportModule.generateReport.startCaseUcoReportGeneration=Creating a CASE-UCO report of the portable case",
-        "PortableCaseReportModule.generateReport.successCaseUcoReportGeneration=Successfully created a CASE-UCO report of the portable case"
+        "PortableCaseReportModule.generateReport.compressingCase=Compressing case..."
     })
 
     public void generateReport(String reportPath, PortableCaseReportModuleSettings options, ReportProgressPanel progressPanel) {
@@ -447,6 +443,12 @@ public class PortableCaseReportModule implements ReportModule {
      * @param setNames SET_NAMEs to include in the report.
      * @param progressPanel ProgressPanel to relay progress messages.
      */
+    @NbBundle.Messages({
+        "PortableCaseReportModule.generateCaseUcoReport.errorCreatingReportFolder=Could not make report folder",
+        "PortableCaseReportModule.generateCaseUcoReport.errorGeneratingCaseUcoReport=Problem while generating CASE-UCO report",
+        "PortableCaseReportModule.generateCaseUcoReport.startCaseUcoReportGeneration=Creating a CASE-UCO report of the portable case",
+        "PortableCaseReportModule.generateCaseUcoReport.successCaseUcoReportGeneration=Successfully created a CASE-UCO report of the portable case"
+    })
     private void generateCaseUcoReport(List<TagName> tagNames, List<String> setNames, ReportProgressPanel progressPanel) {
         //Create the 'Reports' directory to include a CASE-UCO report.
         Path reportsDirectory = Paths.get(caseFolder.toString(), "Reports");
@@ -458,7 +460,7 @@ public class PortableCaseReportModule implements ReportModule {
 
         try {
             //Try to generate case uco output.
-            progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_startCaseUcoReportGeneration());
+            progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateCaseUcoReport_startCaseUcoReportGeneration());
             CaseUcoReportGenerator reportGenerator = new CaseUcoReportGenerator(reportsDirectory, CASE_UCO_FILE_NAME);
             //Acquire references for file discovery
             String caseTempDirectory = currentCase.getTempDirectory();
@@ -532,8 +534,9 @@ public class PortableCaseReportModule implements ReportModule {
         
             //Create the report.
             reportGenerator.generateReport();
-            progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_successCaseUcoReportGeneration());
+            progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateCaseUcoReport_successCaseUcoReportGeneration());
         } catch (IOException | TskCoreException ex) {
+            progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateCaseUcoReport_errorGeneratingCaseUcoReport());
             logger.log(Level.SEVERE, "Error encountered while trying to create "
                     + "CASE-UCO output for portable case.. the portable case will be "
                     + "completed without a CASE-UCO report.", ex);

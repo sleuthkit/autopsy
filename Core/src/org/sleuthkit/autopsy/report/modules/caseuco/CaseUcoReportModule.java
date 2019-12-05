@@ -111,7 +111,7 @@ public final class CaseUcoReportModule implements GeneralReportModule {
         "CaseUcoReportModule.ioError=I/O error encountered while generating report",
         "CaseUcoReportModule.noCaseOpen=No case is currently open",
         "CaseUcoReportModule.tskCoreException=TskCoreException [%s] encountered while generating the report. Please reference the log for more details.",
-        "CaseUcoReportModule.processingDataSource=Processing datasource: ",
+        "CaseUcoReportModule.processingDataSource=Processing datasource: %s",
         "CaseUcoReportModule.ingestWarning=Warning, this report will be created before ingest services completed",
         "CaseUcoReportModule.unableToCreateDirectories=Unable to create directory for CASE-UCO report",
     })
@@ -149,7 +149,7 @@ public final class CaseUcoReportModule implements GeneralReportModule {
             //Then search each data source for file content.
             for(int i = 0; i < dataSources.size(); i++) {
                 Content dataSource = dataSources.get(i);
-                progressPanel.updateStatusLabel(Bundle.CaseUcoReportModule_processingDataSource() + dataSource.getName());
+                progressPanel.updateStatusLabel(String.format(Bundle.CaseUcoReportModule_processingDataSource(), dataSource.getName()));
                 caseUco.addDataSource(dataSource, caseObj);
                 
                 Queue<Content> dataSourceChildrenQueue = new LinkedList<>();
