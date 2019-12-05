@@ -124,7 +124,7 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
      *
      * @param other A RootFilterState object.
      *
-     * @return A new RootFilterState.
+     * @return A new RootFilterState object.
      */
     public RootFilterState intersect(FilterState< ? extends TimelineFilter> other) {
         RootFilterState copyOf = copyOf();
