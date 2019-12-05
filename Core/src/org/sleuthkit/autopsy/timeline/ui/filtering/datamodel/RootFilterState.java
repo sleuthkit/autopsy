@@ -41,9 +41,9 @@ import org.sleuthkit.datamodel.TimelineFilter.TextFilter;
 import org.sleuthkit.datamodel.TimelineFilter.TagsFilter;
 
 /**
- * An implementation of the FilterState interface that decorates a RootFilter
+ * An implementation of the FilterState interface that wraps a RootFilter
  * object for display via the timeline filter panel by providing selected,
- * disabled, and active properties for the object. The underlying root filter is
+ * disabled, and active properties for the object. The wrapped root filter is
  * a compound filter, so additional behavior is provided for the management of
  * child subfilter state objects.
  */
@@ -61,13 +61,13 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     private final Set<FilterState<? extends TimelineFilter>> namedFilterStates = new HashSet<>();
 
     /**
-     * Constructs an implementation of the FilterState interface that decorates
+     * Constructs an implementation of the FilterState interface that wraps
      * a RootFilter object for display via the timeline filter panel by
      * providing selected, disabled, and active properties for the object. The
      * underlying root filter is a compound filter, so additional behavior is
      * provided for the management of child subfilter state objects.
      *
-     * @param rootFilter The TimelineFilter.RootFilter object to be decorated.
+     * @param rootFilter The TimelineFilter.RootFilter object to be wrapped.
      */
     public RootFilterState(RootFilter rootFilter) {
         this(rootFilter,
@@ -82,7 +82,7 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     }
 
     /**
-     * Constructs an implementation of the FilterState interface that decorates
+     * Constructs an implementation of the FilterState interface that wraps
      * a RootFilter object for display via the timeline filter panel by
      * providing selected, disabled, and active properties for the object. The
      * underlying root filter is a compound filter, so additional behavior is
@@ -123,7 +123,7 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
      *
      * @param other A RootFilterState object.
      *
-     * @return The intrsection of the two root filter states.
+     * @return The intersection of the two root filter states.
      */
     public RootFilterState intersect(FilterState< ? extends TimelineFilter> other) {
         RootFilterState copyOf = copyOf();

@@ -116,7 +116,7 @@ public interface FilterState<FilterType> {
     /**
      * Sets the value of the selected property of this filter state object.
      *
-     * True or false.
+     * @param value True or false.
      */
     void setSelected(Boolean value);
 
