@@ -716,7 +716,6 @@ public class PortableCaseReportModule implements ReportModule {
             if (content instanceof AbstractFile) {
                 
                 long newFileId = copyContentToPortableCase(content, progressPanel);
-                //caseUco.addFile((AbstractFile) content, content.getD);
                 
                 // Tag the file
                 if (! oldTagNameToNewTagName.containsKey(tag.getName())) {
