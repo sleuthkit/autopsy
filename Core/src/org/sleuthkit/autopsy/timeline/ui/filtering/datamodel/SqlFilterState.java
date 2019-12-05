@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.TimelineFilter;
  * @param <FilterType> The type of the wrapped filter, required to be a
  *                     TimelineFilter type.
  */
-public class TimelineFilterState<FilterType extends TimelineFilter> extends AbstractFilterState<FilterType> {
+public class SqlFilterState<FilterType extends TimelineFilter> extends AbstractFilterState<FilterType> {
 
     /**
      * Constructs an implementation of the FilterState interface for wrapping
@@ -41,7 +41,7 @@ public class TimelineFilterState<FilterType extends TimelineFilter> extends Abst
      *
      * @param filter The TimelineFilter object to be wrapped.
      */
-    public TimelineFilterState(FilterType filter) {
+    public SqlFilterState(FilterType filter) {
         this(filter, false);
     }
 
@@ -55,7 +55,7 @@ public class TimelineFilterState<FilterType extends TimelineFilter> extends Abst
      * @param filter   The TimelineFilter object to be wrapped.
      * @param selected The initial value for the selected property.
      */
-    public TimelineFilterState(FilterType filter, boolean selected) {
+    public SqlFilterState(FilterType filter, boolean selected) {
         super(filter, selected);
     }
 
@@ -65,9 +65,9 @@ public class TimelineFilterState<FilterType extends TimelineFilter> extends Abst
     }
 
     @Override
-    public TimelineFilterState<FilterType> copyOf() {
+    public SqlFilterState<FilterType> copyOf() {
         @SuppressWarnings("unchecked")
-        TimelineFilterState<FilterType> copy = new TimelineFilterState<>((FilterType) getFilter().copyOf());
+        SqlFilterState<FilterType> copy = new SqlFilterState<>((FilterType) getFilter().copyOf());
         copy.setSelected(isSelected());
         copy.setDisabled(isDisabled());
         return copy;

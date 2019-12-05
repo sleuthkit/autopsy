@@ -52,7 +52,7 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     private final static BooleanProperty ALWAYS_TRUE = new SimpleBooleanProperty(true);
     private final static BooleanProperty ALWAYS_FALSE = new SimpleBooleanProperty(false);
     private final CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState;
-    private final TimelineFilterState<HideKnownFilter> knownFilterState;
+    private final SqlFilterState<HideKnownFilter> knownFilterState;
     private final TextFilterState textFilterState;
     private final TagsFilterState tagsFilterState;
     private final HashHitsFilterState hashHitsFilterState;
@@ -72,7 +72,7 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     public RootFilterState(RootFilter rootFilter) {
         this(rootFilter,
                 new CompoundFilterState<>(rootFilter.getEventTypeFilter()),
-                new TimelineFilterState<>(rootFilter.getKnownFilter()),
+                new SqlFilterState<>(rootFilter.getKnownFilter()),
                 new TextFilterState(rootFilter.getTextFilter()),
                 new TagsFilterState(rootFilter.getTagsFilter()),
                 new HashHitsFilterState(rootFilter.getHashHitsFilter()),
@@ -100,7 +100,7 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
      */
     private RootFilterState(RootFilter rootFilter,
             CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState,
-            TimelineFilterState<HideKnownFilter> knownFilterState,
+            SqlFilterState<HideKnownFilter> knownFilterState,
             TextFilterState textFilterState,
             TagsFilterState tagsFilterState,
             HashHitsFilterState hashHitsFilterState,
@@ -152,19 +152,19 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
         return eventTypeFilterState;
     }
 
-    public TimelineFilterState<HideKnownFilter> getKnownFilterState() {
+    public SqlFilterState<HideKnownFilter> getKnownFilterState() {
         return knownFilterState;
     }
 
-    public TimelineFilterState<TextFilter> getTextFilterState() {
+    public SqlFilterState<TextFilter> getTextFilterState() {
         return textFilterState;
     }
 
-    public TimelineFilterState<TagsFilter> getTagsFilterState() {
+    public SqlFilterState<TagsFilter> getTagsFilterState() {
         return tagsFilterState;
     }
 
-    public TimelineFilterState<HashHitsFilter> getHashHitsFilterState() {
+    public SqlFilterState<HashHitsFilter> getHashHitsFilterState() {
         return hashHitsFilterState;
     }
 

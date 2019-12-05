@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.TimelineFilter;
  * displayed by the timeline GUI via the filter panel by providing selected,
  * disabled, and active properties for the TagsFilter.
  */
-public class TagsFilterState extends TimelineFilterState<TimelineFilter.TagsFilter> {
+public class TagsFilterState extends SqlFilterState<TimelineFilter.TagsFilter> {
 
     /**
      * Constructs a wrapper for a TimelineFilter.TagsFilter object that allows

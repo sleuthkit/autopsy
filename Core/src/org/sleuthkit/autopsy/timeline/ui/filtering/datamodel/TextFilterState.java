@@ -29,7 +29,7 @@ import javafx.beans.property.SimpleStringProperty;
  * of the TextFilter is also exposed as a JFX property so that it can be bound
  * to the text filter text field of the filter panel.
  */
-public class TextFilterState extends TimelineFilterState<TimelineFilter.TextFilter> {
+public class TextFilterState extends SqlFilterState<TimelineFilter.TextFilter> {
 
     private final SimpleStringProperty descriptionSubstring;
 

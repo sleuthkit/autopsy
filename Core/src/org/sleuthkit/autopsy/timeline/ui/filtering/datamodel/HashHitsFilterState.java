@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.TimelineFilter;
  * displayed by the timeline GUI via the filter panel by providing selected,
  * disabled, and active properties for the HashHitsFilter.
  */
-public class HashHitsFilterState extends TimelineFilterState<TimelineFilter.HashHitsFilter> {
+public class HashHitsFilterState extends SqlFilterState<TimelineFilter.HashHitsFilter> {
 
     /**
      * Constructs a wrapper for a TimelineFilter.HashHitsFilter object that

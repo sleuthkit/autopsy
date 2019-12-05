@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TimelineFilter.CompoundFilter;
  *                        CompoundFilter
  * @param <FilterType>    The type of the underlying CompoundFilter
  */
-public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterType extends CompoundFilter<SubFilterType>> extends TimelineFilterState<FilterType> {
+public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterType extends CompoundFilter<SubFilterType>> extends SqlFilterState<FilterType> {
 
     private final ObservableList< FilterState<? extends SubFilterType>> subFilterStates = FXCollections.observableArrayList();
 
@@ -55,7 +55,7 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
                 FilterState<SubFilterType> compoundFilterState = (FilterState<SubFilterType>) new CompoundFilterState<>((CompoundFilter<?>) newSubFilter);
                 addSubFilterStateInternal(compoundFilterState);
             } else {
-                addSubFilterStateInternal(new TimelineFilterState<>(newSubFilter));
+                addSubFilterStateInternal(new SqlFilterState<>(newSubFilter));
             }
         });
 
