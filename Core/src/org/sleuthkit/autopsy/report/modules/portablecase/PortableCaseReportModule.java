@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.report.modules.portablecase;
 
-import com.google.common.collect.Lists;
 import org.sleuthkit.autopsy.report.ReportModule;
 import java.util.logging.Level;
 import java.io.BufferedReader;
@@ -37,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -439,10 +437,15 @@ public class PortableCaseReportModule implements ReportModule {
     }
     
     /**
+     * Generates a CASE-UCO report for all files that have a specified TagName
+     * or TSK_INTERESTING artifacts that are flagged by the specified SET_NAMEs.
      * 
-     * @param tagNames
-     * @param setNames
-     * @param progressPanel 
+     * Only one copy of the file will be saved in the report if it is the source
+     * of more than one of the above.
+     * 
+     * @param tagNames TagNames to included in the report.
+     * @param setNames SET_NAMEs to include in the report.
+     * @param progressPanel ProgressPanel to relay progress messages.
      */
     private void generateCaseUcoReport(List<TagName> tagNames, List<String> setNames, ReportProgressPanel progressPanel) {
         //Create the 'Reports' directory to include a CASE-UCO report.
@@ -470,6 +473,7 @@ public class PortableCaseReportModule implements ReportModule {
 
             reportGenerator.addCase(currentCase);
             
+            //Load all interesting BlackboardArtifacts that belong to the selected SET_NAMEs
             List<BlackboardArtifact> artifactsWithSetName = new ArrayList<>();
             if(!setNames.isEmpty()) {
                 List<BlackboardArtifact> allArtifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
@@ -484,12 +488,15 @@ public class PortableCaseReportModule implements ReportModule {
                 }
             }
             
+            //Search each data source looking for content tags and interesting
+            //items that match the selected tag names and set names.
             for (Content dataSource : currentCase.getDataSources()) {
                 /**
-                 * It is currently believed that all DataSources should
-                 * precede all files in the CASE-UCO report.
+                 * It is currently believed that the DataSource CASE-UCO entity
+                 * should precede all file entities in the report.
                  */
                 boolean dataSourceHasBeenIncluded = false;
+                //Search content tags and artifact tags that match
                 for (TagName tagName : tagNames) {
                     for (ContentTag ct : tagsManager.getContentTagsByTagName(tagName, dataSource.getId())) {
                         if(!dataSourceHasBeenIncluded) {
@@ -508,6 +515,7 @@ public class PortableCaseReportModule implements ReportModule {
                 }
 
                 if (!artifactsWithSetName.isEmpty()) {
+                    //Search artifacts that this data source contains
                     for(BlackboardArtifact bArt : artifactsWithSetName) {
                         if (bArt.getDataSource().getId() != dataSource.getId()) {
                             continue;
@@ -533,14 +541,14 @@ public class PortableCaseReportModule implements ReportModule {
     }
     
     /**
+     * Adds the content if and only if it has not already been seen.
      * 
-     * 
-     * @param content
-     * @param dataSource
-     * @param tmpDir
-     * @param reportGenerator
-     * @throws IOException
-     * @throws TskCoreException 
+     * @param content Content to add to the report.
+     * @param dataSource Parent dataSource of the content instance.
+     * @param tmpDir Path to the tmpDir to enforce uniqueness
+     * @param reportGenerator Report generator instance to add the content to
+     * @throws IOException If an I/O error occurs.
+     * @throws TskCoreException If an internal database error occurs.
      */
     private void addUniqueFile(Content content, Content dataSource, 
             Path tmpDir, CaseUcoReportGenerator reportGenerator) throws IOException, TskCoreException {

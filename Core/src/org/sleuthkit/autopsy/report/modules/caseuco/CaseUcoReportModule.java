@@ -43,8 +43,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * CaseUcoReportModule generates a report in the CASE-UCO format. It saves basic file
- * info like full caseDirPath, name, MIME type, times, and hash.
+ * CaseUcoReportModule generates a report in CASE-UCO format. This module will 
+ * write all files and data sources to the report.
  */
 public final class CaseUcoReportModule implements GeneralReportModule {
 

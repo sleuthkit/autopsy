@@ -37,6 +37,8 @@ PortableCaseReportModule.generateReport.noContentToCopy=No interesting files, re
 PortableCaseReportModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist
 # {0} - output folder
 PortableCaseReportModule.generateReport.outputDirIsNotDir=Output folder {0} is not a folder
+PortableCaseReportModule.generateReport.startCaseUcoReportGeneration=Creating a CASE-UCO report of the portable case
+PortableCaseReportModule.generateReport.successCaseUcoReportGeneration=Successfully created a CASE-UCO report of the portable case
 PortableCaseReportModule.generateReport.verifying=Verifying selected parameters...
 PortableCaseReportModule.getDescription.description=Copies selected items to a new single-user case that can be easily shared
 PortableCaseReportModule.getName.name=Portable Case
