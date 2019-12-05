@@ -174,6 +174,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         javax.swing.JPanel toolBarPanel = new javax.swing.JPanel();
         javax.swing.JToolBar toolBar = new javax.swing.JToolBar();
         imagesButton = new javax.swing.JButton();
+        stepOneLabel = new javax.swing.JLabel();
         videosButton = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(1100, 700));
@@ -211,7 +212,8 @@ public final class DiscoveryTopComponent extends TopComponent {
                 imagesButtonActionPerformed(evt);
             }
         });
-        toolBar.add(imagesButton);
+
+        org.openide.awt.Mnemonics.setLocalizedText(stepOneLabel, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.stepOneLabel.text")); // NOI18N
 
         videosButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/video-icon.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(videosButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.videosButton.text")); // NOI18N
@@ -227,22 +229,34 @@ public final class DiscoveryTopComponent extends TopComponent {
                 videosButtonActionPerformed(evt);
             }
         });
-        toolBar.add(videosButton);
 
         javax.swing.GroupLayout toolBarPanelLayout = new javax.swing.GroupLayout(toolBarPanel);
         toolBarPanel.setLayout(toolBarPanelLayout);
         toolBarPanelLayout.setHorizontalGroup(
             toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(toolBarPanelLayout.createSequentialGroup()
-                .addContainerGap(459, Short.MAX_VALUE)
+                .addContainerGap(400, Short.MAX_VALUE)
+                .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(toolBarPanelLayout.createSequentialGroup()
+                        .addComponent(stepOneLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, 0))
+                    .addGroup(toolBarPanelLayout.createSequentialGroup()
+                        .addComponent(imagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, 0)
+                        .addComponent(videosButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, 0)))
                 .addComponent(toolBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(459, Short.MAX_VALUE))
+                .addContainerGap(400, Short.MAX_VALUE))
         );
         toolBarPanelLayout.setVerticalGroup(
             toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, toolBarPanelLayout.createSequentialGroup()
-                .addComponent(toolBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+            .addComponent(toolBar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(toolBarPanelLayout.createSequentialGroup()
+                .addComponent(stepOneLabel)
+                .addGap(0, 0, 0)
+                .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(imagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(videosButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
         add(toolBarPanel, java.awt.BorderLayout.PAGE_START);
@@ -321,6 +335,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     private javax.swing.JButton imagesButton;
     private javax.swing.JSplitPane leftSplitPane;
     private javax.swing.JSplitPane rightSplitPane;
+    private javax.swing.JLabel stepOneLabel;
     private javax.swing.JButton videosButton;
     // End of variables declaration//GEN-END:variables
 
