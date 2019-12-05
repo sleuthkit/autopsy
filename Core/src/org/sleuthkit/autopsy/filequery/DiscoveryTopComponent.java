@@ -20,20 +20,32 @@ package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.IngestJobInfo;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Create a dialog for displaying the file discovery tool
@@ -45,6 +57,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(DiscoveryTopComponent.class.getName());
     private static final String PREFERRED_ID = "DiscoveryTopComponent"; // NON-NLS
     private static final Color SELECTED_COLOR = new Color(216, 230, 242);
     private static final Color UNSELECTED_COLOR = new Color(240, 240, 240);
@@ -87,6 +100,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         });
     }
 
+    @Messages({"DiscoveryTopComponent.resultsIncomplete.text=Results may be incomplete"})
     /**
      * Open the instance of the DiscoveryTopComponent which exists.
      */
@@ -101,6 +115,28 @@ public final class DiscoveryTopComponent extends TopComponent {
                 }
                 tc.open();
                 tc.updateSearchSettings();
+                //check if modules run and assemble message
+                try {
+                    SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                    Map<Long, DataSourceModulesWrapper> dataSourceIngestModules = new HashMap<>();
+                    for (DataSource dataSource : skCase.getDataSources()) {
+                        dataSourceIngestModules.put(dataSource.getId(), new DataSourceModulesWrapper(dataSource.getName()));
+                    }
+
+                    for (IngestJobInfo jobInfo : skCase.getIngestJobs()) {
+                        dataSourceIngestModules.get(jobInfo.getObjectId()).updateModulesRun(jobInfo);
+                    }
+                    String message = "";
+                    for (DataSourceModulesWrapper dsmodulesWrapper : dataSourceIngestModules.values()) {
+                        message += dsmodulesWrapper.getMessage();
+                    }
+                    if (!message.isEmpty()) {
+                        JOptionPane.showMessageDialog(tc, message, Bundle.DiscoveryTopComponent_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
+                    }
+                } catch (NoCurrentCaseException | TskCoreException ex) {
+                    logger.log(Level.WARNING, "Exception while determining which modules have been run for File Discovery", ex);
+                }
+
             }
             tc.toFront();
 
