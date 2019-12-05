@@ -181,9 +181,6 @@ public final class EventsModel {
         /*
          * Initialize the events filter state model parameter with the default
          * events filter.
-         *
-         * RJCTODO: Why isn't the event filter state of the initialModelParams
-         * used here?
          */
         filterStateProperty.set(getDefaultEventFilterState());
 
@@ -223,12 +220,9 @@ public final class EventsModel {
      * Adds a data source filter for each data source in the data sources cache
      * to a given root filter state object.
      *
-     * RJCTODO: This method should be synchronized! RJCTODO: This seems like an
-     * unusual method.
-     *
      * @param rootFilterState A root filter state object.
      */
-    void addDataSourceFilters(RootFilterState rootFilterState) {
+    synchronized void addDataSourceFilters(RootFilterState rootFilterState) {
         DataSourcesFilter dataSourcesFilter = rootFilterState.getDataSourcesFilterState().getFilter();
         datasourceIDsToNamesMap.entrySet().forEach(entry -> dataSourcesFilter.addSubFilter(newDataSourceFilter(entry)));
     }
@@ -237,9 +231,6 @@ public final class EventsModel {
      * Gets the count of all events that fit the given model parameters. The
      * counts are organized by event type for the given event types hierarchy
      * level.
-     *
-     * RJCTODO: Where does the argument for this method come from when called by
-     * the cache builder?
      *
      * @param modelParams The model parameters.
      *
@@ -786,10 +777,6 @@ public final class EventsModel {
      * invalidated event. Optionally, a collection of event IDs may be supplied,
      * in which case only the corresponding entries in the event IDs cache are
      * invalidated.
-     *
-     * RJCTODO: What is the use case for passing event IDs? The only place this
-     * is currently done is when handling TIMELINE_EVENT_ADDED events, i.e., for
-     * entirely new events. Is this some sort of performance optimization?
      *
      * @param updatedEventIDs Either null or a collection of the event IDs.
      *

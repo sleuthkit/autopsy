@@ -56,8 +56,7 @@ public interface FilterState<FilterType> {
     FilterType getActiveFilter();
 
     /**
-     * Makes a deep copy of this filter state object. // RJCTODO: Is it really a
-     * deep copy?
+     * Makes a deep copy of this filter state object.
      *
      * @return The copy.
      */
