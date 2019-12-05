@@ -550,10 +550,14 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         groupByCombobox.removeAllItems();
         // Set up the grouping attributes
         for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.getOptionsForGrouping()) {
-            if (type != GroupingAttributeType.FREQUENCY || EamDb.isEnabled()) {
+            if ((type != GroupingAttributeType.FREQUENCY || EamDb.isEnabled())
+                    && (type != GroupingAttributeType.OBJECT_DETECTED || objectsList.getModel().getSize() > 0)
+                    && (type != GroupingAttributeType.INTERESTING_ITEM_SET || interestingItemsList.getModel().getSize() > 0)
+                    && (type != GroupingAttributeType.HASH_LIST_NAME || hashSetList.getModel().getSize() > 0)) {
                 groupByCombobox.addItem(type);
             }
         }
+
         orderByCombobox.removeAllItems();
         // Set up the file order list
         for (FileSorter.SortingMethod method : FileSorter.SortingMethod.getOptionsForOrdering()) {
@@ -620,7 +624,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithoutCr()) {
                 frequencyListModel.add(count, freq);
             }
-
         } else {
             for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithCr()) {
                 frequencyListModel.add(count, freq);
@@ -691,9 +694,18 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             hashListModel.removeAllElements();
             List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT,
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
-            for (String name : setNames) {
-                hashListModel.add(count, name);
-                count++;
+            if (setNames.isEmpty()) {
+                hashSetCheckbox.setEnabled(false);
+                hashSetList.setEnabled(false);
+                hashSetScrollPane.setEnabled(false);
+            } else {
+                hashSetCheckbox.setEnabled(true);
+                hashSetList.setEnabled(true);
+                hashSetScrollPane.setEnabled(true);
+                for (String name : setNames) {
+                    hashListModel.add(count, name);
+                    count++;
+                }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading hash set names", ex);
@@ -713,9 +725,18 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             intListModel.removeAllElements();
             List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT,
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
-            for (String name : setNames) {
-                intListModel.add(count, name);
-                count++;
+            if (setNames.isEmpty()) {
+                interestingItemsCheckbox.setEnabled(false);
+                interestingItemsList.setEnabled(false);
+                interestingItemsScrollPane.setEnabled(false);
+            } else {
+                interestingItemsCheckbox.setEnabled(true);
+                interestingItemsList.setEnabled(true);
+                interestingItemsScrollPane.setEnabled(true);
+                for (String name : setNames) {
+                    intListModel.add(count, name);
+                    count++;
+                }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading interesting file set names", ex);
@@ -779,9 +800,18 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             DefaultListModel<String> objListModel = (DefaultListModel<String>) objectsList.getModel();
             objListModel.removeAllElements();
             List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION);
-            for (String name : setNames) {
-                objListModel.add(count, name);
-                count++;
+            if (setNames.isEmpty()) {
+                objectsCheckbox.setEnabled(false);
+                objectsList.setEnabled(false);
+                objectsScrollPane.setEnabled(false);
+            } else {
+                objectsCheckbox.setEnabled(true);
+                objectsList.setEnabled(true);
+                objectsScrollPane.setEnabled(true);
+                for (String name : setNames) {
+                    objListModel.add(count, name);
+                    count++;
+                }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading object detected set names", ex);
