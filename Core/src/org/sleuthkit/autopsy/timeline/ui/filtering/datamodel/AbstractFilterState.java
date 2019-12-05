@@ -40,6 +40,11 @@ abstract class AbstractFilterState<FilterType> implements FilterState<FilterType
     private final BooleanBinding active = Bindings.and(selected, disabled.not());
     private final FilterType filter;
 
+    @Override
+    public FilterType getFilter() {
+        return filter;
+    }
+
     /**
      * Constructs the base class part for implementations of the FilterState
      * interface. Filter state classes are wrappers that adapt a timeline data
@@ -54,13 +59,8 @@ abstract class AbstractFilterState<FilterType> implements FilterState<FilterType
     AbstractFilterState(FilterType filter, Boolean selected) {
         this.filter = filter;
         this.selected.set(selected);
-    }
-
-    @Override
-    public FilterType getFilter() {
-        return filter;
-    }
-
+    }    
+    
     @Override
     public BooleanProperty selectedProperty() {
         return selected;

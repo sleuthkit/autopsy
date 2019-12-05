@@ -89,14 +89,14 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
      * provided for the management of child subfilter state objects.
      *
      * @param rootFilter             The TimelineFilter.RootFilter object to be
-     *                               decorated.
-     * @param eventTypeFilterState   RJCTODO
-     * @param knownFilterState       RJCTODO
-     * @param textFilterState        RJCTODO
-     * @param tagsFilterState        RJCTODO
-     * @param hashHitsFilterState    RJCTODO
-     * @param dataSourcesFilterState RJCTODO
-     * @param fileTypesFilterState   RJCTODO
+     *                               wrapped.
+     * @param eventTypeFilterState   The top-level event types subfilter.
+     * @param knownFilterState       The known state subfilter.
+     * @param textFilterState        The text subfilter.
+     * @param tagsFilterState        The tags subfilter.
+     * @param hashHitsFilterState    The hash set hits subfilter.
+     * @param dataSourcesFilterState The data sources subfilter.
+     * @param fileTypesFilterState   The file types subfilter.
      */
     private RootFilterState(RootFilter rootFilter,
             CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState,
