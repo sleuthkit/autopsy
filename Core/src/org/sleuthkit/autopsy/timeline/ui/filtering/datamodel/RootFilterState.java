@@ -41,11 +41,11 @@ import org.sleuthkit.datamodel.TimelineFilter.TextFilter;
 import org.sleuthkit.datamodel.TimelineFilter.TagsFilter;
 
 /**
- * An implementation of the FilterState interface that wraps a RootFilter
- * object for display via the timeline filter panel by providing selected,
- * disabled, and active properties for the object. The wrapped root filter is
- * a compound filter, so additional behavior is provided for the management of
- * child subfilter state objects.
+ * An implementation of the FilterState interface that wraps a RootFilter object
+ * for display via the timeline filter panel by providing selected, disabled,
+ * and active properties for the object. The wrapped root filter is a compound
+ * filter, so additional behavior is provided for the management of child
+ * subfilter state objects.
  */
 public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFilter> {
 
@@ -61,11 +61,11 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     private final Set<FilterState<? extends TimelineFilter>> namedFilterStates = new HashSet<>();
 
     /**
-     * Constructs an implementation of the FilterState interface that wraps
-     * a RootFilter object for display via the timeline filter panel by
-     * providing selected, disabled, and active properties for the object. The
-     * underlying root filter is a compound filter, so additional behavior is
-     * provided for the management of child subfilter state objects.
+     * Constructs an implementation of the FilterState interface that wraps a
+     * RootFilter object for display via the timeline filter panel by providing
+     * selected, disabled, and active properties for the object. The underlying
+     * root filter is a compound filter, so additional behavior is provided for
+     * the management of child subfilter state objects.
      *
      * @param rootFilter The TimelineFilter.RootFilter object to be wrapped.
      */
@@ -82,11 +82,11 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     }
 
     /**
-     * Constructs an implementation of the FilterState interface that wraps
-     * a RootFilter object for display via the timeline filter panel by
-     * providing selected, disabled, and active properties for the object. The
-     * underlying root filter is a compound filter, so additional behavior is
-     * provided for the management of child subfilter state objects.
+     * Constructs an implementation of the FilterState interface that wraps a
+     * RootFilter object for display via the timeline filter panel by providing
+     * selected, disabled, and active properties for the object. The underlying
+     * root filter is a compound filter, so additional behavior is provided for
+     * the management of child subfilter state objects.
      *
      * @param rootFilter             The TimelineFilter.RootFilter object to be
      *                               wrapped.
@@ -118,12 +118,13 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     }
 
     /**
-     * Get a new root filter state that is the intersects of a given root filter
-     * state with this root filter state.
+     * Gets a new root filter state that contains the intersection of the root
+     * filter of a given root filter state with the root filter of this root
+     * filter state.
      *
      * @param other A RootFilterState object.
      *
-     * @return The intersection of the two root filter states.
+     * @return A new RootFilterState.
      */
     public RootFilterState intersect(FilterState< ? extends TimelineFilter> other) {
         RootFilterState copyOf = copyOf();
