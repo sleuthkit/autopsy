@@ -194,6 +194,7 @@ public final class GeolocationTopComponent extends TopComponent {
     @Override
     public void open() {
         super.open();
+        geoFilterPanel.clearDataSourceList();
         geoFilterPanel.updateDataSourceList();
         try {
             mapPanel.initMap();

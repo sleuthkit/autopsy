@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.recentactivity.BinaryCookieReader.Cookie;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
@@ -637,15 +638,17 @@ final class ExtractSafari extends Extract {
             time = date.getDate().getTime();
         }
 
-        BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
-        bbart.addAttributes(this.createDownloadAttributes(path, pathID, url, time, NetworkUtils.extractDomain(url), getName()));
-        bbartifacts.add(bbart);
+        BlackboardArtifact webDownloadArtifact = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
+        webDownloadArtifact.addAttributes(this.createDownloadAttributes(path, pathID, url, time, NetworkUtils.extractDomain(url), getName()));
+        bbartifacts.add(webDownloadArtifact);
         
-        // find the downloaded file and create a TSK_DOWNLOAD_SOURCE for it.
+        // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
         for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(path), FilenameUtils.getPath(path))) {
-            BlackboardArtifact downloadSourceArt =  downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
-            downloadSourceArt.addAttributes(createDownloadSourceAttributes(url));
-            bbartifacts.add(downloadSourceArt);
+            BlackboardArtifact associatedObjectArtifact = downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
+            associatedObjectArtifact.addAttribute(
+                    new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
+                            RecentActivityExtracterModuleFactory.getModuleName(), webDownloadArtifact.getArtifactID()));
+            bbartifacts.add(associatedObjectArtifact);
             break;
         }
         
