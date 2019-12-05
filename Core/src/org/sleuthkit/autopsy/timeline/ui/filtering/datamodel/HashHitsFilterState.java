@@ -56,7 +56,7 @@ public class HashHitsFilterState extends SqlFilterState<TimelineFilter.HashHitsF
     }
 
     /*
-     * Add a listener to the selected property that updates the flag that turns
+     * Adds a listener to the selected property that updates the flag that turns
      * the wrapped hash hits filter on/off.
      */
     private void addSelectionListener() {

@@ -55,7 +55,7 @@ public class TagsFilterState extends SqlFilterState<TimelineFilter.TagsFilter> {
     }
 
     /*
-     * Add a listener to the selected property that updates the flag that turns
+     * Adds a listener to the selected property that updates the flag that turns
      * the wrapped tags filter on/off.
      */
     private void addSelectionListener() {
