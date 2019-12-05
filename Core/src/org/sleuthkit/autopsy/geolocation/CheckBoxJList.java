@@ -68,7 +68,7 @@ final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JLis
     CheckBoxJList() {
         initalize();
     }
-
+    
     /**
      * Do all of the UI initialization.
      */
@@ -103,6 +103,7 @@ final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JLis
             setBackground(list.getBackground());
             setSelected(value.isChecked());
             setText(value.getDisplayName());
+            setEnabled(list.isEnabled());
             return this;
         }
     }
