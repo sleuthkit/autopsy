@@ -33,7 +33,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -73,7 +72,6 @@ import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.datamodel.TskCoreException;
 import javax.imageio.ImageIO;
 import org.jxmapviewer.viewer.DefaultWaypointRenderer;
-import org.openide.util.Exceptions;
 
 /**
  * The map panel. This panel contains the jxmapviewer MapViewer
