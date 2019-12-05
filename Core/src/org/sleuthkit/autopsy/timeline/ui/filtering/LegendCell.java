@@ -66,6 +66,7 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
                 setBackground(null);
             });
         } else {
+            
             //TODO: make some subclasses rather than use this if else chain.
             if (item instanceof TextFilterState) {
                 TextFilterState filterState = (TextFilterState)item;
