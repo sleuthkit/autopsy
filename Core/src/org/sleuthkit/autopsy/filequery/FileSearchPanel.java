@@ -1296,7 +1296,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         crFrequencyList.setModel(new DefaultListModel<Frequency>());
         crFrequencyList.setEnabled(false);
-        crFrequencyList.setVisibleRowCount(3);
+        crFrequencyList.setVisibleRowCount(5);
         crFrequencyScrollPane.setViewportView(crFrequencyList);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1306,6 +1306,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
+        gridBagConstraints.weighty = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
         filtersPanel.add(crFrequencyScrollPane, gridBagConstraints);
 
@@ -1364,7 +1365,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
         filtersPanel.add(hashSetCheckbox, gridBagConstraints);
@@ -1376,7 +1377,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.gridwidth = 3;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
@@ -1393,7 +1394,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridy = 6;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
         filtersPanel.add(objectsCheckbox, gridBagConstraints);
@@ -1419,7 +1420,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 5;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
         filtersPanel.add(interestingItemsCheckbox, gridBagConstraints);
@@ -1457,17 +1458,16 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         objectsList.setModel(new DefaultListModel<String>());
         objectsList.setEnabled(false);
-        objectsList.setVisibleRowCount(3);
+        objectsList.setVisibleRowCount(2);
         objectsScrollPane.setViewportView(objectsList);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridy = 6;
         gridBagConstraints.gridwidth = 3;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
-        gridBagConstraints.weighty = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
         filtersPanel.add(objectsScrollPane, gridBagConstraints);
 
@@ -1489,17 +1489,16 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         interestingItemsList.setModel(new DefaultListModel<String>());
         interestingItemsList.setEnabled(false);
-        interestingItemsList.setVisibleRowCount(3);
+        interestingItemsList.setVisibleRowCount(2);
         interestingItemsScrollPane.setViewportView(interestingItemsList);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 5;
         gridBagConstraints.gridwidth = 3;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
-        gridBagConstraints.weighty = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
         filtersPanel.add(interestingItemsScrollPane, gridBagConstraints);
 
