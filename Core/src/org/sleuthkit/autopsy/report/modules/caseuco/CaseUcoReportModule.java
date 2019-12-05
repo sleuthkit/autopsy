@@ -25,37 +25,41 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * CaseUcoReport generates a report in the CASE-UCO format. It saves basic file
+ * CaseUcoReportModule generates a report in the CASE-UCO format. It saves basic file
  * info like full caseDirPath, name, MIME type, times, and hash.
  */
 public final class CaseUcoReportModule implements GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(CaseUcoReportModule.class.getName());
-    private static CaseUcoReportModule instance = null;
+    private static final CaseUcoReportModule SINGLE_INSTANCE = new CaseUcoReportModule();
     
+    //Supported types of TSK_FS_FILES
     private static final Set<Short> SUPPORTED_TYPES = new HashSet<Short>() {{
         add(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_UNDEF.getValue());
         add(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue());
         add(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT.getValue());
     }};
 
-    private static final String REPORT_FILE_NAME = "CASE_UCO_output";
+    private static final String REPORT_FILE_NAME = "CASE_UCO_output";    
+    private static final String EXTENSION = "json-ld";
 
     // Hidden constructor for the report
     private CaseUcoReportModule() {
@@ -63,16 +67,12 @@ public final class CaseUcoReportModule implements GeneralReportModule {
 
     // Get the default implementation of this report
     public static synchronized CaseUcoReportModule getDefault() {
-        if (instance == null) {
-            instance = new CaseUcoReportModule();
-        }
-        return instance;
+        return SINGLE_INSTANCE;
     }
 
     @Override
     public String getName() {
-        String name = NbBundle.getMessage(this.getClass(), "CaseUcoReportModule.getName.text");
-        return name;
+        return NbBundle.getMessage(this.getClass(), "CaseUcoReportModule.getName.text");
     }
     
     @Override
@@ -82,13 +82,12 @@ public final class CaseUcoReportModule implements GeneralReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return REPORT_FILE_NAME;
+        return REPORT_FILE_NAME  + "." + EXTENSION;
     }
 
     @Override
     public String getDescription() {
-        String desc = NbBundle.getMessage(this.getClass(), "CaseUcoReportModule.getDesc.text");
-        return desc;
+        return NbBundle.getMessage(this.getClass(), "CaseUcoReportModule.getDesc.text");
     }
 
     /**
@@ -101,64 +100,96 @@ public final class CaseUcoReportModule implements GeneralReportModule {
     }
 
     /**
-     * Generates a CASE-UCO format report.
+     * Generates a CASE-UCO format report for all files in the Case.
      *
      * @param baseReportDir caseDirPath to save the report
      * @param progressPanel panel to update the report's progress
      */
     @NbBundle.Messages({
         "CaseUcoReportModule.notInitialized=CASE-UCO settings panel has not been initialized",
-        "CaseUcoReportModule.noDataSourceSelected=No data source selected for CASE-UCO report"
+        "CaseUcoReportModule.noDataSourceSelected=No data source selected for CASE-UCO report",
+        "CaseUcoReportModule.ioError=I/O error encountered while generating report",
+        "CaseUcoReportModule.noCaseOpen=No case is currently open",
+        "CaseUcoReportModule.tskCoreException=TskCoreException [%s] encountered while generating the report. Please reference the log for more details.",
+        "CaseUcoReportModule.processingDataSource=Processing datasource: ",
+        "CaseUcoReportModule.ingestWarning=Warning, this report will be created before ingest services completed",
+        "CaseUcoReportModule.unableToCreateDirectories=Unable to create directory for CASE-UCO report",
     })
     @Override
     @SuppressWarnings("deprecation")
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         try {
+            // Check if ingest has finished
+            if (IngestManager.getInstance().isIngestRunning()) {
+                progressPanel.updateStatusLabel(Bundle.CaseUcoReportModule_ingestWarning());
+            }
+            
+            //Create report paths if they don't already exist.
             Path reportDirectory = Paths.get(baseReportDir);
-            Files.createDirectories(reportDirectory);
-            progressPanel.setIndeterminate(false);
-            progressPanel.start();
+            try {
+                Files.createDirectories(reportDirectory);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Unable to create directory for CASE-UCO report.", ex);
+                progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, 
+                    Bundle.CaseUcoReportModule_unableToCreateDirectories());
+                return;
+            }
+            
             CaseUcoReportGenerator caseUco = new CaseUcoReportGenerator(reportDirectory, REPORT_FILE_NAME);
+            
+            //First write the Case to the report file.
             Case caseObj = Case.getCurrentCaseThrows();
             caseUco.addCase(caseObj);
-            for(DataSource dataSource : caseObj.getSleuthkitCase().getDataSources()) {
-                progressPanel.updateStatusLabel("Processing datasoure: " + dataSource.getName());
+            
+            List<Content> dataSources = caseObj.getDataSources();
+            progressPanel.setIndeterminate(false);
+            progressPanel.setMaximumProgress(dataSources.size());
+            progressPanel.start();
+            
+            //Then search each data source for file content.
+            for(int i = 0; i < dataSources.size(); i++) {
+                Content dataSource = dataSources.get(i);
+                progressPanel.updateStatusLabel(Bundle.CaseUcoReportModule_processingDataSource() + dataSource.getName());
                 caseUco.addDataSource(dataSource, caseObj);
                 
-                Queue<Content> contentQueue = new LinkedList<>();
-                //Add the dataSource root contents
-                contentQueue.addAll(dataSource.getChildren());
-                //Breadth First Search the DataSource tree.
-                while(!contentQueue.isEmpty()) {
-                    Content current = contentQueue.poll();
-                    if(current instanceof AbstractFile) {
-                        AbstractFile f = (AbstractFile) (current);
+                Queue<Content> dataSourceChildrenQueue = new LinkedList<>();
+                dataSourceChildrenQueue.addAll(dataSource.getChildren());
+                
+                //Breadth First Search the data source tree.
+                while(!dataSourceChildrenQueue.isEmpty()) {
+                    Content currentChild = dataSourceChildrenQueue.poll();
+                    if(currentChild instanceof AbstractFile) {
+                        AbstractFile f = (AbstractFile) (currentChild);
                         if(SUPPORTED_TYPES.contains(f.getMetaType().getValue())) {
                             caseUco.addFile(f, dataSource);   
                         }
                     }
                     
-                    if(current.hasChildren()) {
-                        contentQueue.addAll(current.getChildren());
+                    if(currentChild.hasChildren()) {
+                        dataSourceChildrenQueue.addAll(currentChild.getChildren());
                     }
                 }
+                
+                progressPanel.setProgress(i+1);
             }
             
-            //Report is now done.
+            //Complete the report.
             caseUco.generateReport();
-            //progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
         } catch (IOException ex) {
-            //Log
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, "IO");
+            logger.log(Level.WARNING, "I/O error encountered while generating the report.", ex);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, 
+                    Bundle.CaseUcoReportModule_ioError());
         } catch (NoCurrentCaseException ex) {
-            //Log
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, "NoCase");
+            logger.log(Level.WARNING, "No case open.", ex);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, 
+                    Bundle.CaseUcoReportModule_noCaseOpen());
         } catch (TskCoreException ex) {
-            //Log
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, "TskCore");
+            logger.log(Level.WARNING, "TskCoreException encounted while generating the report.", ex);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, 
+                    String.format(Bundle.CaseUcoReportModule_tskCoreException(), ex.toString()));
         }
         
-        CaseUcoFormatExporter.generateReport(baseReportDir + "Case-previous-output.json-ld", progressPanel);
         progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
     }
 }

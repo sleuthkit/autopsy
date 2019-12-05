@@ -26,7 +26,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -34,34 +33,38 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.google.common.base.Strings;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Writes DataModel objects to Case UCO format.
+ * Writes Autopsy DataModel objects to Case UCO format.
  *
- * Clients are expected to add Case and DataSource before adding any files
- * from that DataSource.
- * 
- * Here is an example, where we choose to add everything:
- * 
- * Path directory = Paths.get("C:", "Reports");
+ * Clients are expected to add the Case first. Then they should add each data
+ * source before adding any files for that data source.
+ *
+ * Here is an example, where we add everything:
+ *
+ * Path directory = Paths.get("C:", "Reports"); 
  * CaseUcoReportGenerator caseUco = new CaseUcoReportGenerator(directory, "my-report");
- * 
- * Case caseObj = Case.getCurrentCase();
+ *
+ * Case caseObj = Case.getCurrentCase(); 
  * caseUco.addCase(caseObj);
- * List<DataSources> dataSources = getDataSourcesInCase(caseObj);
- * for(DataSource dataSource : dataSources) {
+ * List<Content> dataSources = caseObj.getDataSources(); 
+ * for(Content dataSource : dataSources) { 
  *      caseUco.addDataSource(dataSource, caseObj);
  *      List<AbstractFile> files = getAllFilesInDataSource(dataSource);
- *      for(AbstractFile file : files) {
- *          caseUco.addFile(file, dataSource);
- *      }
+ *      for(AbstractFile file : files) { 
+ *          caseUco.addFile(file, dataSource); 
+ *      } 
  * }
- * 
- * //Done. Report at - "C:\Reports\my-report.json-ld"
+ *
  * Path reportOutput = caseUco.generateReport();
+ * //Done. Report at - "C:\Reports\my-report.json-ld" 
  * 
+ * Please note that the life cycle for this class ends with generateReport().
+ * The underlying file handle to 'my-report.json-ld' will be closed.
+ * Any further calls to addX() will result in an IOException.
  */
 public final class CaseUcoReportGenerator {
 
@@ -72,16 +75,17 @@ public final class CaseUcoReportGenerator {
     private final JsonGenerator reportGenerator;
 
     /**
-     * Creates a CaseUCO Report file at the specified directory with the given
-     * name.
+     * Creates a CaseUCO Report Generator that writes a report in the specified
+     * directory.
      *
-     * TimeZone defaults to GMT for formatting file creation time, accessed time
-     * and modified time. You may change this in the setter.
+     * TimeZone is assumed to be GMT+0 for formatting file creation time, accessed
+     * time and modified time.
      *
      * @param directory Directory to write the CaseUCO report file. Assumes the
-     * calling thread has write access to the directory and that the directory exists.
+     * calling thread has write access to the directory and that the directory
+     * exists.
      * @param name Name of the CaseUCO report file.
-     * @throws IOException
+     * @throws IOException If an I/O error occurs
      */
     public CaseUcoReportGenerator(Path directory, String reportName) throws IOException {
         this.reportPath = directory.resolve(reportName + "." + EXTENSION);
@@ -92,33 +96,13 @@ public final class CaseUcoReportGenerator {
         reportGenerator.setPrettyPrinter(new DefaultPrettyPrinter()
                 .withObjectIndenter(new DefaultIndenter("  ", "\n")));
 
-        this.startReport(reportGenerator);
-
-        this.setTimeZone(new SimpleTimeZone(0, "GMT"));
-    }
-
-    /**
-     * Opens the initial JSON structures that will contain the Case UCO entities
-     * to be added.
-     *
-     * @param reportGenerator
-     * @throws IOException
-     */
-    private void startReport(JsonGenerator reportGenerator) throws IOException {
+        //Start report.
         reportGenerator.writeStartObject();
         reportGenerator.writeFieldName("@graph");
         reportGenerator.writeStartArray();
-    }
 
-    /**
-     * Sets the time zone for file creation, accessed and modification dates.
-     *
-     * The default is GMT.
-     *
-     * @param timeZone
-     */
-    public void setTimeZone(TimeZone timeZone) {
-        this.timeZone = timeZone;
+        //Assume GMT+0
+        this.timeZone = new SimpleTimeZone(0, "GMT");
     }
 
     /**
@@ -126,13 +110,16 @@ public final class CaseUcoReportGenerator {
      * a selection of file attributes to a Case UCO entity.
      *
      * Attributes captured: Created time, Accessed time, Modified time,
-     * Extension, Name, Path, is Directory, Size (in bytes), MIME type and MD5 hash.
+     * Extension, Name, Path, is Directory, Size (in bytes), MIME type and MD5
+     * hash.
      *
-     * @param file
-     * @param parentDataSource
-     * @throws IOException
+     * @param file AbstractFile instance to write
+     * @param parentDataSource The parent data source for this abstract file. It 
+     * is assumed that this parent has been written to the report (via addDataSource)
+     * prior to this call. Otherwise, the report may be invalid.
+     * @throws IOException If an I/O error occurs.
      */
-    public void addFile(AbstractFile file, DataSource parentDataSource) throws IOException {
+    public void addFile(AbstractFile file, Content parentDataSource) throws IOException, TskCoreException {
         String fileTraceId = getFileTraceId(file);
 
         // create a "trace" entry for the file
@@ -156,9 +143,7 @@ public final class CaseUcoReportGenerator {
             reportGenerator.writeStringField("extension", file.getNameExtension());
         }
         reportGenerator.writeStringField("fileName", file.getName());
-        if (!Strings.isNullOrEmpty(file.getParentPath()) && !file.getParentPath().equals("/")) {
-            reportGenerator.writeStringField("filePath", file.getParentPath() + file.getName());
-        }
+        reportGenerator.writeStringField("filePath", file.getUniquePath());
         reportGenerator.writeBooleanField("isDirectory", file.isDir());
         reportGenerator.writeStringField("sizeInBytes", Long.toString(file.getSize()));
         reportGenerator.writeEndObject();
@@ -198,11 +183,7 @@ public final class CaseUcoReportGenerator {
         reportGenerator.writeStartArray();
         reportGenerator.writeStartObject();
         reportGenerator.writeStringField("@type", "PathRelation");
-        if (!Strings.isNullOrEmpty(file.getParentPath()) && !file.getParentPath().equals("/")) {
-            reportGenerator.writeStringField("path", file.getParentPath() + file.getName());
-        } else {
-            reportGenerator.writeStringField("path", file.getName());
-        }
+        reportGenerator.writeStringField("path", file.getUniquePath());
         reportGenerator.writeEndObject();
         reportGenerator.writeEndArray();
 
@@ -210,9 +191,9 @@ public final class CaseUcoReportGenerator {
     }
 
     /**
-     * Creates a unique Case UCO trace id.
+     * Creates a unique Case UCO file trace id.
      *
-     * @param file
+     * @param file File to create an id.
      * @return
      */
     private String getFileTraceId(AbstractFile file) {
@@ -220,15 +201,18 @@ public final class CaseUcoReportGenerator {
     }
 
     /**
-     * Adds a DataSource instance to the Case UCO report. This means writing a 
-     * selection of DataSource attributes to a Case UCO entity.
-     * 
-     * Attributes captured: Path, Size (in bytes), 
+     * Adds a Content instance (which is known to be a DataSource) to the Case
+     * UCO report. This means writing a selection of attributes to a Case UCO
+     * entity.
      *
-     * @param dataSource
-     * @param parentCase
+     * Attributes captured: Path, Size (in bytes),
+     *
+     * @param dataSource Datasource content to write
+     * @param parentCase The parent case that this data source belongs in. It is
+     * assumed that this parent has been written to the report (via addCase) 
+     * prior to this call. Otherwise, the report may be invalid.
      */
-    public void addDataSource(DataSource dataSource, Case parentCase) throws IOException, TskCoreException {
+    public void addDataSource(Content dataSource, Case parentCase) throws IOException, TskCoreException {
         String dataSourceTraceId = this.getDataSourceTraceId(dataSource);
         reportGenerator.writeStartObject();
         reportGenerator.writeStringField("@id", dataSourceTraceId);
@@ -241,15 +225,17 @@ public final class CaseUcoReportGenerator {
         reportGenerator.writeStringField("@type", "File");
 
         String dataSourcePath = "";
-        if(dataSource instanceof Image) {
+        if (dataSource instanceof Image) {
             String[] paths = ((Image) dataSource).getPaths();
-            if(paths.length > 0) {
-                dataSourcePath = paths[paths.length - 1];
+            if (paths.length > 0) {
+                //Get the first data source in the path, as this will
+                //be reflected in each file's uniquePath.
+                dataSourcePath = paths[0];
             }
         } else {
             dataSourcePath = dataSource.getName();
         }
-        
+
         dataSourcePath = dataSourcePath.replaceAll("\\\\", "/");
 
         reportGenerator.writeStringField("filePath", dataSourcePath);
@@ -287,12 +273,12 @@ public final class CaseUcoReportGenerator {
     }
 
     /**
-     * Creates a unique Case UCO trace id.
+     * Creates a unique Case UCO trace id for a data source.
      *
      * @param dataSource
      * @return
      */
-    private String getDataSourceTraceId(DataSource dataSource) {
+    private String getDataSourceTraceId(Content dataSource) {
         return "data-source-" + dataSource.getId();
     }
 
@@ -302,10 +288,8 @@ public final class CaseUcoReportGenerator {
      *
      * Attributes captured: Case directory.
      *
-     * Current
-     *
-     * @param caseObj
-     * @throws IOException
+     * @param caseObj Case instance to include in the report.
+     * @throws IOException If an I/O error is encountered.
      */
     public void addCase(Case caseObj) throws IOException {
         SleuthkitCase skCase = caseObj.getSleuthkitCase();
@@ -340,7 +324,7 @@ public final class CaseUcoReportGenerator {
     }
 
     /**
-     * Creates a unique Case UCO trace id.
+     * Creates a unique Case UCO trace id for a Case.
      *
      * @param caseObj
      * @return
@@ -350,27 +334,20 @@ public final class CaseUcoReportGenerator {
     }
 
     /**
-     * Completes the report by closing the JSON structures opened in
-     * startReport().
-     *
-     * @param reportGenerator
-     * @throws IOException
-     */
-    private void completeReport(JsonGenerator reportGenerator) throws IOException {
-        reportGenerator.writeEndArray();
-        reportGenerator.writeEndObject();
-        reportGenerator.close();
-    }
-
-    /**
      * Returns a Path to the completed Case UCO report file.
      *
-     * @return
-     * @throws IOException
+     * This marks the end of the CaseUcoReportGenerator's life cycle. This
+     * function will close an underlying file handles, meaning any subsequent
+     * calls to addX() will result in an IOException.
+     *
+     * @return The Path to the finalized report.
+     * @throws IOException If an I/O error occurs.
      */
     public Path generateReport() throws IOException {
         //Finalize the report.
-        this.completeReport(reportGenerator);
+        reportGenerator.writeEndArray();
+        reportGenerator.writeEndObject();
+        reportGenerator.close();
 
         return reportPath;
     }

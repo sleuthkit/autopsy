@@ -18,12 +18,14 @@
  */
 package org.sleuthkit.autopsy.report.modules.portablecase;
 
+import com.google.common.collect.Lists;
 import org.sleuthkit.autopsy.report.ReportModule;
 import java.util.logging.Level;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
@@ -35,9 +37,11 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -45,7 +49,6 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
-import org.sleuthkit.autopsy.report.modules.caseuco.CaseUcoFormatExporter;
 import org.sleuthkit.autopsy.report.modules.caseuco.CaseUcoReportGenerator;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -54,6 +57,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
@@ -75,6 +79,7 @@ public class PortableCaseReportModule implements ReportModule {
     private static final String UNKNOWN_FILE_TYPE_FOLDER = "Other";  // NON-NLS
     private static final String MAX_ID_TABLE_NAME = "portable_case_max_ids";  // NON-NLS
     private static final String CASE_UCO_FILE_NAME = "portable_CASE_UCO_output";
+    private static final String CASE_UCO_TMP_DIR = "case_uco_tmp";
     private PortableCaseReportModuleSettings settings;
     
     // These are the types for the exported file subfolders
@@ -195,7 +200,9 @@ public class PortableCaseReportModule implements ReportModule {
         "PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}",
         "PortableCaseReportModule.generateReport.compressingCase=Compressing case...",
         "PortableCaseReportModule.generateReport.errorCreatingReportFolder=Could not make report folder",
-        "PortableCaseReportModule.generateReport.errorGeneratingUCOreport=Problem while generating CASE-UCO report"
+        "PortableCaseReportModule.generateReport.errorGeneratingUCOreport=Problem while generating CASE-UCO report",
+        "PortableCaseReportModule.generateReport.startCaseUcoReportGeneration=Creating a CASE-UCO report of the portable case",
+        "PortableCaseReportModule.generateReport.successCaseUcoReportGeneration=Successfully created a CASE-UCO report of the portable case"
     })
 
     public void generateReport(String reportPath, PortableCaseReportModuleSettings options, ReportProgressPanel progressPanel) {
@@ -312,15 +319,7 @@ public class PortableCaseReportModule implements ReportModule {
                         ex, progressPanel); // NON-NLS
             }
         }        
-        
-        Path reportsDirectory = Paths.get(caseFolder.toString(), "Reports");
-        if(!reportsDirectory.toFile().mkdir()) {
-            handleError("Could not make report folder", Bundle.PortableCaseReportModule_generateReport_errorCreatingReportFolder(), null, progressPanel); // NON-NLS
-            return;
-        }
-        
-        CaseUcoReportGenerator caseUco = new CaseUcoReportGenerator(reportsDirectory, CASE_UCO_FILE_NAME);
-        
+                
         // Copy the tagged files
         try {
             for(TagName tagName:tagNames) {
@@ -330,7 +329,7 @@ public class PortableCaseReportModule implements ReportModule {
                     return;
                 }
                 progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_copyingFiles(tagName.getDisplayName()));
-                addFilesToPortableCase(tagName, progressPanel, caseUco);
+                addFilesToPortableCase(tagName, progressPanel);
                 
                 // Check for cancellation 
                 if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
@@ -411,13 +410,9 @@ public class PortableCaseReportModule implements ReportModule {
             return;
         }
         
-        try {
-            CaseUcoFormatExporter.export(tagNames, setNames, reportsFolder, progressPanel);
-        } catch (IOException | SQLException | NoCurrentCaseException | TskCoreException ex) {
-            handleError("Problem while generating CASE-UCO report", 
-                    Bundle.PortableCaseReportModule_generateReport_errorGeneratingUCOreport(), ex, progressPanel); // NON-NLS
-        }
-        
+        //Attempt to generate and included the CASE-UCO report.
+        generateCaseUcoReport(tagNames, setNames, progressPanel);
+
         // Compress the case (if desired)
         if (options.shouldCompress()) {
             progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_compressingCase());
@@ -441,6 +436,121 @@ public class PortableCaseReportModule implements ReportModule {
         
         progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
         
+    }
+    
+    /**
+     * 
+     * @param tagNames
+     * @param setNames
+     * @param progressPanel 
+     */
+    private void generateCaseUcoReport(List<TagName> tagNames, List<String> setNames, ReportProgressPanel progressPanel) {
+        //Create the 'Reports' directory to include a CASE-UCO report.
+        Path reportsDirectory = Paths.get(caseFolder.toString(), "Reports");
+        if(!reportsDirectory.toFile().mkdir()) {
+            logger.log(Level.SEVERE, "Could not make the report folder... skipping "
+                    + "CASE-UCO report generation for the portable case");
+            return;
+        }
+
+        try {
+            //Try to generate case uco output.
+            progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_startCaseUcoReportGeneration());
+            CaseUcoReportGenerator reportGenerator = new CaseUcoReportGenerator(reportsDirectory, CASE_UCO_FILE_NAME);
+            //Acquire references for file discovery
+            String caseTempDirectory = currentCase.getTempDirectory();
+            SleuthkitCase skCase = currentCase.getSleuthkitCase();
+            TagsManager tagsManager = currentCase.getServices().getTagsManager();
+
+            //Create temp directory to filter out duplicate files.
+            //Clear out the old directory if it exists.
+            Path tmpDir = Paths.get(caseTempDirectory, CASE_UCO_TMP_DIR);
+            FileUtils.deleteDirectory(tmpDir.toFile());
+            Files.createDirectory(tmpDir);
+
+            reportGenerator.addCase(currentCase);
+            
+            List<BlackboardArtifact> artifactsWithSetName = new ArrayList<>();
+            if(!setNames.isEmpty()) {
+                List<BlackboardArtifact> allArtifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                allArtifacts.addAll(skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
+                
+                for(BlackboardArtifact bArt : allArtifacts) {
+                    BlackboardAttribute setAttr = bArt.getAttribute(
+                                new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+                    if (setNames.contains(setAttr.getValueString())) {
+                        artifactsWithSetName.add(bArt);
+                    }
+                }
+            }
+            
+            for (Content dataSource : currentCase.getDataSources()) {
+                /**
+                 * It is currently believed that all DataSources should
+                 * precede all files in the CASE-UCO report.
+                 */
+                boolean dataSourceHasBeenIncluded = false;
+                for (TagName tagName : tagNames) {
+                    for (ContentTag ct : tagsManager.getContentTagsByTagName(tagName, dataSource.getId())) {
+                        if(!dataSourceHasBeenIncluded) {
+                            reportGenerator.addDataSource(dataSource, currentCase);
+                            dataSourceHasBeenIncluded = true;
+                        }
+                        addUniqueFile(ct.getContent(), dataSource, tmpDir, reportGenerator);
+                    }
+                    for (BlackboardArtifactTag bat : tagsManager.getBlackboardArtifactTagsByTagName(tagName, dataSource.getId())) {
+                        if(!dataSourceHasBeenIncluded) {
+                            reportGenerator.addDataSource(dataSource, currentCase);
+                            dataSourceHasBeenIncluded = true;
+                        }
+                        addUniqueFile(bat.getContent(), dataSource, tmpDir, reportGenerator);
+                    }
+                }
+
+                if (!artifactsWithSetName.isEmpty()) {
+                    for(BlackboardArtifact bArt : artifactsWithSetName) {
+                        if (bArt.getDataSource().getId() != dataSource.getId()) {
+                            continue;
+                        }
+                        if(!dataSourceHasBeenIncluded) {
+                            reportGenerator.addDataSource(dataSource, currentCase);
+                            dataSourceHasBeenIncluded = true;
+                        }
+                        Content content = skCase.getContentById(bArt.getObjectID());
+                        addUniqueFile(content, dataSource, tmpDir, reportGenerator);
+                    }
+                }
+            }
+        
+            //Create the report.
+            reportGenerator.generateReport();
+            progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_successCaseUcoReportGeneration());
+        } catch (IOException | TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error encountered while trying to create "
+                    + "CASE-UCO output for portable case.. the portable case will be "
+                    + "completed without a CASE-UCO report.", ex);
+        }
+    }
+    
+    /**
+     * 
+     * 
+     * @param content
+     * @param dataSource
+     * @param tmpDir
+     * @param reportGenerator
+     * @throws IOException
+     * @throws TskCoreException 
+     */
+    private void addUniqueFile(Content content, Content dataSource, 
+            Path tmpDir, CaseUcoReportGenerator reportGenerator) throws IOException, TskCoreException {
+        if (content instanceof AbstractFile && !(content instanceof DataSource)) {
+            AbstractFile absFile = (AbstractFile) content;
+            Path filePath = tmpDir.resolve(Long.toString(absFile.getId()));
+            if (!Files.exists(filePath) && !absFile.isDir()) {
+                reportGenerator.addFile(absFile, dataSource);
+            }
+        }
     }
     
     private List<String> getAllInterestingItemsSets() throws NoCurrentCaseException, TskCoreException {
@@ -581,7 +691,7 @@ public class PortableCaseReportModule implements ReportModule {
      * 
      * @throws TskCoreException 
      */
-    private void addFilesToPortableCase(TagName oldTagName, ReportProgressPanel progressPanel, CaseUcoReportGenerator caseUco) throws TskCoreException {
+    private void addFilesToPortableCase(TagName oldTagName, ReportProgressPanel progressPanel) throws TskCoreException {
         
         // Get all the tags in the current case
         List<ContentTag> tags = currentCase.getServices().getTagsManager().getContentTagsByTagName(oldTagName);
@@ -598,7 +708,7 @@ public class PortableCaseReportModule implements ReportModule {
             if (content instanceof AbstractFile) {
                 
                 long newFileId = copyContentToPortableCase(content, progressPanel);
-                caseUco.addFile((AbstractFile) content, content.getD);
+                //caseUco.addFile((AbstractFile) content, content.getD);
                 
                 // Tag the file
                 if (! oldTagNameToNewTagName.containsKey(tag.getName())) {
