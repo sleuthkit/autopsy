@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.geolocation;
 
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -27,9 +28,12 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -47,6 +51,7 @@ import javax.swing.Popup;
 import javax.swing.PopupFactory;
 import javax.swing.Timer;
 import javax.swing.event.MouseInputListener;
+import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.VirtualEarthTileFactoryInfo;
 import org.jxmapviewer.input.CenterMapListener;
@@ -58,6 +63,7 @@ import org.jxmapviewer.viewer.TileFactory;
 import org.jxmapviewer.viewer.TileFactoryInfo;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
+import org.jxmapviewer.viewer.WaypointRenderer;
 import org.jxmapviewer.viewer.util.GeoUtil;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -65,6 +71,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.datamodel.TskCoreException;
+import javax.imageio.ImageIO;
+import org.jxmapviewer.viewer.DefaultWaypointRenderer;
+import org.openide.util.Exceptions;
 
 /**
  * The map panel. This panel contains the jxmapviewer MapViewer
@@ -132,6 +141,11 @@ final public class MapPanel extends javax.swing.JPanel {
         });
     }
 
+    /**
+     * Get a list of the waypoints that are currently visible in the viewport.
+     * 
+     * @return A list of waypoints or empty list if none were found.
+     */
     List<MapWaypoint> getVisibleWaypoints() {
 
         Rectangle viewport = mapViewer.getViewportBounds();
@@ -194,6 +208,13 @@ final public class MapPanel extends javax.swing.JPanel {
                 return set;
             }
         };
+        
+        try {
+            waypointPainter.setRenderer(new MapWaypointRenderer());
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Failed to load waypoint image resource, using DefaultWaypointRenderer", ex);
+            waypointPainter.setRenderer(new DefaultWaypointRenderer());
+        }
 
         mapViewer.setOverlayPainter(waypointPainter);
     }
@@ -322,6 +343,7 @@ final public class MapPanel extends javax.swing.JPanel {
                 if(currentPopup != null) {
                     showDetailsPopup();
                 }
+                mapViewer.repaint();
             }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to show popup for waypoint", ex);
@@ -379,6 +401,8 @@ final public class MapPanel extends javax.swing.JPanel {
 
             currentPopup = popupFactory.getPopup(this, detailPane, popupLocation.x, popupLocation.y);
             currentPopup.show();
+            
+            mapViewer.repaint();
         }
     }
 
@@ -609,4 +633,35 @@ final public class MapPanel extends javax.swing.JPanel {
     private javax.swing.JPanel zoomPanel;
     private javax.swing.JSlider zoomSlider;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Renderer for the map waypoints.
+     */
+    private class MapWaypointRenderer implements WaypointRenderer<Waypoint> {
+        private final BufferedImage defaultWaypointImage;
+        private final BufferedImage selectedWaypointImage;
+        
+        /**
+         * Construct a WaypointRenederer
+         * 
+         * @throws IOException 
+         */
+        MapWaypointRenderer() throws IOException {
+            defaultWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_teal.png"));
+            selectedWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_yellow.png"));
+        }
+        
+        @Override
+        public void paintWaypoint(Graphics2D gd, JXMapViewer jxmv, Waypoint waypoint) {
+            Point2D point = jxmv.getTileFactory().geoToPixel(waypoint.getPosition(), jxmv.getZoom());
+
+            int x = (int)point.getX();
+            int y = (int)point.getY();
+            
+            BufferedImage image = (waypoint == currentlySelectedWaypoint ? selectedWaypointImage: defaultWaypointImage);
+
+            (gd.create()).drawImage(image, x -image.getWidth() / 2, y -image.getHeight(), null);
+        }
+        
+    }
 }
