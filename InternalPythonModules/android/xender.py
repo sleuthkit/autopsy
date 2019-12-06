@@ -98,7 +98,7 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                                             Account.Type.XENDER)
 
                 queryString = """
-                                SELECT f_path, f_display_name, f_size_str, f_create_time, c_direction, c_session_id,
+                                SELECT f_path, f_display_name, f_size_str, c_start_time, c_direction, c_session_id,
                                     s_name, s_device_id, r_name, r_device_id
                                 FROM new_history
                               """
@@ -118,7 +118,7 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                             direction = CommunicationDirection.INCOMING
                             fromId = messagesResultSet.getString("s_device_id")                          
 
-                        timeStamp = messagesResultSet.getLong("f_create_time") / 1000
+                        timeStamp = messagesResultSet.getLong("c_start_time") / 1000
                         messageArtifact = transactionDbHelper.addMessage( 
                                                             self._MESSAGE_TYPE,
                                                             direction,
