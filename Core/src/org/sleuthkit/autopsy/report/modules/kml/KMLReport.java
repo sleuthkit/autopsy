@@ -60,7 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Generates a KML file based on geospatial information from the BlackBoard.
  */
-public class KMLReport implements GeneralReportModule {
+public final class KMLReport implements GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(KMLReport.class.getName());
     private static final String KML_STYLE_FILE = "style.kml";
