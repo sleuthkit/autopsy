@@ -469,4 +469,25 @@
  <signature mimetype="video/x-msvideo">
   <ext>avi</ext>
  </signature>
+ <signature mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+  <ext>docx</ext>
+ </signature>
+ <signature mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.template">
+  <ext>dotx</ext>
+ </signature>
+ <signature mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+  <ext>xlsx</ext>
+ </signature>
+ <signature mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.template">
+  <ext>xltx</ext>
+ </signature>
+ <signature mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation">
+  <ext>pptx</ext>
+ </signature>
+ <signature mimetype="application/vnd.openxmlformats-officedocument.presentationml.template">
+  <ext>potx</ext>
+ </signature>
+<signature mimetype="application/vnd.openxmlformats-officedocument.presentationml.slideshow">
+  <ext>ppsx</ext>
+ </signature>
 </mismatch_config>
