@@ -403,7 +403,7 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         String mbtilePath = mbtileFileField.getText();
         
         if(mbtilePath.isEmpty()) {
-            JOptionPane.showMessageDialog(this, Bundle.GeolocationSettings_path_not_valid_message(), Bundle.GeolocationSettings_path_not_valid__title(), JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Bundle.GeolocationSettings_path_not_valid_message(), Bundle.GeolocationSettings_path_not_valid_title(), JOptionPane.ERROR_MESSAGE);
             return;
         }
         
