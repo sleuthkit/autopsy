@@ -270,12 +270,10 @@ public final class DrawableDB {
 
     private boolean prepareStatements() {
         try {
-            selectCountDataSourceIDs = prepareStatement("SELECT COUNT(*) FROM datasources WHERE ds_obj_id = ?"); //NON-NLS 
-            insertDataSourceStmt = prepareStatement("INSERT INTO datasources (ds_obj_id, drawable_db_build_status) VALUES (?,?)"); //NON-NLS            
-            updateDataSourceStmt = prepareStatement("UPDATE datasources SET drawable_db_build_status = ? WHERE ds_obj_id = ?"); //NON-NLS
+            insertDataSourceStmt = prepareStatement("INSERT INTO datasources (ds_obj_id, drawable_db_build_status) VALUES (?,?) ON CONFLICT (ds_obj_id) DO UPDATE SET drawable_db_build_status = ?"); //NON-NLS            
             deleteDataSourceStmt = prepareStatement("DELETE FROM datasources where ds_obj_id = ?"); //NON-NLS
             insertFileStmt = prepareStatement("INSERT OR IGNORE INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) VALUES (?,?,?,?,?,?,?,?,?)"); //NON-NLS
-            updateFileStmt = prepareStatement("INSERT OR REPLACE INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) VALUES (?,?,?,?,?,?,?,?,?)"); //NON-NLS
+            updateFileStmt = prepareStatement("INSERT INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT (obj_id) DO UPDATE SET data_source_obj_id = ?, path = ?, name = ?, created_time = ?, modified_time = ?, make = ?, model = ?, analyzed = ?"); //NON-NLS
             deleteFileStmt = prepareStatement("DELETE FROM drawable_files WHERE obj_id = ?"); //NON-NLS
             insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  VALUES (?)"); //NON-NLS
             selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?"); //NON-NLS
@@ -1561,21 +1559,50 @@ public final class DrawableDB {
 
         dbWriteLock();
         try {
-            // "INSERT OR IGNORE/ INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed)"
-            stmt.setLong(1, f.getId());
-            stmt.setLong(2, f.getAbstractFile().getDataSourceObjectId());
-            stmt.setString(3, f.getDrawablePath());
-            stmt.setString(4, f.getName());
-            stmt.setLong(5, f.getCrtime());
-            stmt.setLong(6, f.getMtime());
-            if (hasExif) {
-                stmt.setString(7, f.getMake());
-                stmt.setString(8, f.getModel());
+            if (addGroups) {
+                // "INSERT INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT (obj_id) DO UPDATE SET data_source_obj_id = ?, path = ?, name = ?, created_time = ?, modified_time = ?, make = ?, model = ?, analyzed = ?"
+                stmt.setLong(1, f.getId());
+                stmt.setLong(2, f.getAbstractFile().getDataSourceObjectId());
+                stmt.setLong(10, f.getAbstractFile().getDataSourceObjectId());
+                stmt.setString(3, f.getDrawablePath());
+                stmt.setString(11, f.getDrawablePath());
+                stmt.setString(4, f.getName());
+                stmt.setString(12, f.getName());
+                stmt.setLong(5, f.getCrtime());
+                stmt.setLong(13, f.getCrtime());
+                stmt.setLong(6, f.getMtime());
+                stmt.setLong(14, f.getMtime());
+                if (hasExif) {
+                    stmt.setString(7, f.getMake());
+                    stmt.setString(15, f.getMake());
+                    stmt.setString(8, f.getModel());
+                    stmt.setString(16, f.getModel());
+                } else {
+                    stmt.setString(7, "");
+                    stmt.setString(15, "");
+                    stmt.setString(8, "");
+                    stmt.setString(16, "");
+                }
+                stmt.setBoolean(9, f.isAnalyzed());
+                stmt.setBoolean(17, f.isAnalyzed());
             } else {
-                stmt.setString(7, "");
-                stmt.setString(8, "");
+                // "INSERT OR IGNORE/ INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed)"
+                stmt.setLong(1, f.getId());
+                stmt.setLong(2, f.getAbstractFile().getDataSourceObjectId());
+                stmt.setString(3, f.getDrawablePath());
+                stmt.setString(4, f.getName());
+                stmt.setLong(5, f.getCrtime());
+                stmt.setLong(6, f.getMtime());
+                if (hasExif) {
+                    stmt.setString(7, f.getMake());
+                    stmt.setString(8, f.getModel());
+                } else {
+                    stmt.setString(7, "");
+                    stmt.setString(8, "");
+                }
+                stmt.setBoolean(9, f.isAnalyzed());
             }
-            stmt.setBoolean(9, f.isAnalyzed());
+
             stmt.executeUpdate();
 
             // Update the list of file IDs in memory
@@ -1716,22 +1743,11 @@ public final class DrawableDB {
     public void insertOrUpdateDataSource(long dataSourceObjectID, DrawableDbBuildStatusEnum status) throws SQLException {
         dbWriteLock();
         try {
-            // SELECT COUNT(*) FROM datasources WHERE ds_obj_id = ?
-            selectCountDataSourceIDs.setLong(1, dataSourceObjectID);
-            try (ResultSet resultSet = selectCountDataSourceIDs.executeQuery()) {
-                resultSet.next();
-                if (resultSet.getInt(1) == 0) {
-                    // INSERT INTO datasources (ds_obj_id, drawable_db_build_status) VALUES (?,?)
-                    insertDataSourceStmt.setLong(1, dataSourceObjectID);
-                    insertDataSourceStmt.setString(2, status.name());
-                    insertDataSourceStmt.execute();
-                } else {
-                    // UPDATE datasources SET drawable_db_build_status = ? WHERE ds_obj_id = ?
-                    updateDataSourceStmt.setString(1, status.name());
-                    updateDataSourceStmt.setLong(2, dataSourceObjectID);
-                    updateDataSourceStmt.executeUpdate();
-                }
-            }
+            // INSERT INTO datasources (ds_obj_id, drawable_db_build_status) values (?,?) ON CONFLICT(ds_obj_id) DO UPDATE SET drawable_db_build_status = ?;
+            insertDataSourceStmt.setLong(1, dataSourceObjectID);
+            insertDataSourceStmt.setString(2, status.name());
+            insertDataSourceStmt.setString(3, status.name());
+            insertDataSourceStmt.executeUpdate();
         } finally {
             dbWriteUnlock();
         }
@@ -2150,6 +2166,7 @@ public final class DrawableDB {
             throw ex;
         } finally {
             dbWriteUnlock();
+
         }
     }
 
