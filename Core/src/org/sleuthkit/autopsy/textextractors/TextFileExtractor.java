@@ -76,9 +76,10 @@ public final class TextFileExtractor implements TextExtractor {
         this.file = file;
     }
 
+    @Override
     public Reader getReader() {
         Charset encoding = getEncoding(file);
-        if (encoding == UNKNOWN_CHARSET) {
+        if (encoding.equals(UNKNOWN_CHARSET)) {
             encoding = StandardCharsets.UTF_8;
         }
         return getReader(encoding);
@@ -103,40 +104,32 @@ public final class TextFileExtractor implements TextExtractor {
     }
 
     public static Charset getEncoding(Content content) {
-        InputStream stream = new BufferedInputStream(new ReadContentInputStream(content));
-        Charset detectedCharset = UNKNOWN_CHARSET;
-
-        // Tika first
-        CharsetDetector detector = new CharsetDetector();
-        CharsetMatch tikaResult = null;
-        try {
+        try (InputStream stream = new BufferedInputStream(new ReadContentInputStream(content))) {
+            // Tika first
+            CharsetDetector detector = new CharsetDetector();
             detector.setText(stream);
-            tikaResult = detector.detect();
-        } catch (IOException ignored) {
-        }
-        if (tikaResult != null && tikaResult.getConfidence() >= MIN_TIKA_MATCH_CONFIDENCE) {
-            try {
-                Charset tikaCharset = Charset.forName(tikaResult.getName());
-                return tikaCharset;
-            } catch (UnsupportedCharsetException ignored) {
+            CharsetMatch tikaResult = detector.detect();
+            if (tikaResult != null && tikaResult.getConfidence() >= MIN_TIKA_MATCH_CONFIDENCE) {
+                try {
+                    return Charset.forName(tikaResult.getName());
+                } catch (UnsupportedCharsetException ignored) {
+                }
             }
-        }
 
-        // Decodetect if Tika fails or falls below confidence threshold
-        try {
+            // Decodetect if Tika fails or falls below confidence threshold
             int maxBytes = 100000;
             int numBytes = Math.min(stream.available(), maxBytes);
             byte[] targetArray = new byte[numBytes];
             stream.read(targetArray);
             List<DecodetectResult> results = Decodetect.DECODETECT.getResults(targetArray);
-            if (results.size() > 0) {
+            if (!results.isEmpty()) {
                 DecodetectResult topResult = results.get(0);
                 if (topResult.getConfidence() >= MIN_DECODETECT_MATCH_CONFIDENCE) {
-                    detectedCharset = topResult.getEncoding();
+                    return topResult.getEncoding();
                 }
             }
         } catch (IOException ignored) {
         }
-        return detectedCharset;
+        return UNKNOWN_CHARSET;
     }
 }

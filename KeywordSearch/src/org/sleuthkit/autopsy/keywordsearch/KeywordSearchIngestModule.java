@@ -51,7 +51,6 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.autopsy.textextractors.TextFileExtractor;
-import org.sleuthkit.autopsy.textextractors.TextFileExtractor.TextFileExtractorException;
 import org.sleuthkit.autopsy.textextractors.configs.ImageConfig;
 import org.sleuthkit.autopsy.textextractors.configs.StringsConfig;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -682,10 +681,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 if (textReader == null) {
                     logger.log(Level.INFO, "Unable to extract with TextFileExtractor, Reader was null for file: {0}", aFile.getName());
                 } else if (Ingester.getDefault().indexText(textReader, aFile.getId(), aFile.getName(), aFile, context)) {
+                    textReader.close();
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
                     return true;
                 }
-            } catch (IngesterException ex) {
+            } catch (IngesterException | IOException ex) {
                 logger.log(Level.WARNING, "Unable to index " + aFile.getName(), ex);
             }
             return false;
