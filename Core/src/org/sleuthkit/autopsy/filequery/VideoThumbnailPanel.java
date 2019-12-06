@@ -222,7 +222,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     private String getFileSizeString(long bytes) {
         long size = bytes;
         int unitsSwitchValue = 0;
-        while (bytes > BYTE_UNIT_CONVERSION && unitsSwitchValue < 4) {
+        while (size > BYTE_UNIT_CONVERSION && unitsSwitchValue < 4) {
             size /= BYTE_UNIT_CONVERSION;
             unitsSwitchValue++;
         }
