@@ -89,6 +89,7 @@ public class TextExtractorFactory {
      */
     private static List<TextExtractor> getFileExtractors(AbstractFile content, Lookup context) {
         List<TextExtractor> fileExtractors = Arrays.asList(
+                new TextFileExtractor(content),
                 new HtmlTextExtractor(content),
                 new SqliteTextExtractor(content),
                 new TikaTextExtractor(content));
