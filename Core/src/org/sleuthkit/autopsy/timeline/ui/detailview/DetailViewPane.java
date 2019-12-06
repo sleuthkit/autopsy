@@ -53,7 +53,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
@@ -61,7 +61,7 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailsViewModel;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
+import org.sleuthkit.autopsy.timeline.zooming.EventsModelParams;
 import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -99,7 +99,7 @@ final public class DetailViewPane extends AbstractTimelineChart<DateTime, EventS
      * Local copy of the zoomState. Used to backout of a zoomState change
      * without needing to requery/redraw the view.
      */
-    private ZoomState currentZoom;
+    private EventsModelParams currentZoom;
     private final DetailsViewModel detailsViewModel;
 
     /**
@@ -391,8 +391,8 @@ final public class DetailViewPane extends AbstractTimelineChart<DateTime, EventS
             if (isCancelled()) {
                 return null;
             }
-            FilteredEventsModel eventsModel = getEventsModel();
-            ZoomState newZoom = eventsModel.getZoomState();
+            EventsModel eventsModel = getEventsModel();
+            EventsModelParams newZoom = eventsModel.getModelParams();
 
             //If the view doesn't need refreshing or if the ZoomState hasn't actually changed, just bail
             if (needsRefresh() == false && Objects.equals(currentZoom, newZoom)) {

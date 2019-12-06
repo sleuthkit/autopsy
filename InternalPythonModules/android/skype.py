@@ -46,6 +46,8 @@ from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
+from org.sleuthkit.datamodel.blackboardutils import FileAttachment
+from org.sleuthkit.datamodel.blackboardutils import MessageAttachments
 from TskMessagesParser import TskMessagesParser
 from TskContactsParser import TskContactsParser
 from TskCallLogsParser import TskCallLogsParser
@@ -137,7 +139,7 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
                              )
                 self.parse_contacts(skype_db, helper)
                 self.parse_calllogs(skype_db, helper)
-                self.parse_messages(skype_db, helper)
+                self.parse_messages(skype_db, helper, current_case)
         except NoCurrentCaseException as ex:
             self._logger.log(Level.WARNING, "No case currently open.", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())
@@ -209,23 +211,30 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
                     "Failed to post call log artifact to the blackboard", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())
 
-    def parse_messages(self, skype_db, helper):
+    def parse_messages(self, skype_db, helper, current_case):
         #Query for messages and iterate row by row adding
         #each message artifact
         try:
             messages_parser = SkypeMessagesParser(skype_db)
             while messages_parser.next():
-                helper.addMessage(
-                    messages_parser.get_message_type(),
-                    messages_parser.get_message_direction(),
-                    messages_parser.get_phone_number_from(),
-                    messages_parser.get_phone_number_to(),
-                    messages_parser.get_message_date_time(),
-                    messages_parser.get_message_read_status(),
-                    messages_parser.get_message_subject(),
-                    messages_parser.get_message_text(),
-                    messages_parser.get_thread_id()
-                )
+                message_artifact = helper.addMessage(
+                                            messages_parser.get_message_type(),
+                                            messages_parser.get_message_direction(),
+                                            messages_parser.get_phone_number_from(),
+                                            messages_parser.get_phone_number_to(),
+                                            messages_parser.get_message_date_time(),
+                                            messages_parser.get_message_read_status(),
+                                            messages_parser.get_message_subject(),
+                                            messages_parser.get_message_text(),
+                                            messages_parser.get_thread_id()
+                                        )
+                
+                if (messages_parser.get_file_attachment() is not None):
+                    file_attachments = ArrayList()
+                    file_attachments.add(FileAttachment(current_case.getSleuthkitCase(), skype_db.getDBFile().getDataSource(), messages_parser.get_file_attachment()))
+                    message_attachments = MessageAttachments(file_attachments, [])
+                    helper.addAttachments(message_artifact, message_attachments)
+
             messages_parser.close()
         except SQLException as ex:
             #Error parsing Skype db
@@ -425,12 +434,6 @@ class SkypeMessagesParser(TskMessagesParser):
         content = self.result_set.getString("content")
 
         if content is not None:
-            file_path = self.result_set.getString("device_gallery_path")
-
-            #if a file name and file path are associated with a message, append it
-            if file_path is not None:
-                return general.appendAttachmentList(content, [file_path]) 
-
             return content
 
         return super(SkypeMessagesParser, self).get_message_text()
@@ -440,3 +443,11 @@ class SkypeMessagesParser(TskMessagesParser):
         if group_ids is not None:
             return self.result_set.getString("conversation_id")
         return super(SkypeMessagesParser, self).get_thread_id()
+
+
+    def get_file_attachment(self):
+        if (self.result_set.getString("device_gallery_path") is None):
+            return None
+        else:
+            return self.result_set.getString("device_gallery_path")
+   

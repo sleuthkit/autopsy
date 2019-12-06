@@ -77,7 +77,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
 
     @Override
     @NbBundle.Messages({
-        "XRYDataSourceProcessor.dataSourceType=XRY Logical Report"
+        "XRYDataSourceProcessor.dataSourceType=XRY Text Export"
     })
     public String getDataSourceType() {
         return Bundle.XRYDataSourceProcessor_dataSourceType();
@@ -96,10 +96,10 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
      */
     @Override
     @NbBundle.Messages({
-        "XRYDataSourceProcessor.noPathSelected=Please select a XRY folder",
+        "XRYDataSourceProcessor.noPathSelected=Please select a folder containing exported XRY text files",
         "XRYDataSourceProcessor.notReadable=Selected path is not readable",
-        "XRYDataSourceProcessor.notXRYFolder=Selected folder did not contain any XRY files",
-        "XRYDataSourceProcessor.ioError=I/O error occured trying to test the XRY report folder",
+        "XRYDataSourceProcessor.notXRYFolder=Selected folder did not contain any XRY text files",
+        "XRYDataSourceProcessor.ioError=I/O error occured trying to test the selected folder",
         "XRYDataSourceProcessor.childNotReadable=Top level path [ %s ] is not readable",
         "XRYDataSourceProcessor.notAFolder=The selected path is not a folder"
     })
@@ -306,7 +306,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
                     .collect(Collectors.toList());
             LocalFilesDataSource dataSource = fileManager.addLocalFilesDataSource(
                     uniqueUUID,
-                    "XRY Report", //Name
+                    "XRY Text Export", //Name
                     "", //Timezone
                     filePaths,
                     new ProgressMonitorAdapter(progressMonitor));

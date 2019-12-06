@@ -137,7 +137,7 @@ public class SaveSnapshotAsReport extends Action {
             reportMainFilePath = new SnapShotReportWriter(currentCase,
                     reportFolderPath,
                     reportName,
-                    controller.getEventsModel().getZoomState(),
+                    controller.getEventsModel().getModelParams(),
                     generationDate, snapshot).writeReport();
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Error writing report to disk at " + reportFolderPath, ex); //NON_NLS

@@ -43,6 +43,8 @@ from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils import FileAttachment
+from org.sleuthkit.datamodel.blackboardutils import MessageAttachments
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 from TskMessagesParser import TskMessagesParser
@@ -99,7 +101,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                 helper = CommunicationArtifactsHelper(
                         current_case.getSleuthkitCase(), self._PARSER_NAME, 
                         message_db.getDBFile(), Account.Type.VIBER)
-                self.parse_messages(message_db, helper)
+                self.parse_messages(message_db, helper, current_case)
 
         except NoCurrentCaseException as ex:
             self._logger.log(Level.WARNING, "No case currently open.", ex)
@@ -161,21 +163,26 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.WARNING, traceback.format_exc())
 
 
-    def parse_messages(self, messages_db, helper):
+    def parse_messages(self, messages_db, helper, current_case):
         try:
             messages_parser = ViberMessagesParser(messages_db)
             while messages_parser.next():
-                helper.addMessage(
-                    messages_parser.get_message_type(),
-                    messages_parser.get_message_direction(),
-                    messages_parser.get_phone_number_from(),
-                    messages_parser.get_phone_number_to(),
-                    messages_parser.get_message_date_time(),
-                    messages_parser.get_message_read_status(),
-                    messages_parser.get_message_subject(),
-                    messages_parser.get_message_text(),
-                    messages_parser.get_thread_id()
-                )
+                message_artifact = helper.addMessage(
+                                       messages_parser.get_message_type(),
+                                       messages_parser.get_message_direction(),
+                                       messages_parser.get_phone_number_from(),
+                                       messages_parser.get_phone_number_to(),
+                                       messages_parser.get_message_date_time(),
+                                       messages_parser.get_message_read_status(),
+                                       messages_parser.get_message_subject(),
+                                       messages_parser.get_message_text(),
+                                       messages_parser.get_thread_id()
+                                   )
+                if (messages_parser.get_file_attachment() is not None):
+                    file_attachments = ArrayList()
+                    file_attachments.add(FileAttachment(current_case.getSleuthkitCase(), messages_db.getDBFile().getDataSource(), messages_parser.get_file_attachment()))
+                    message_attachments = MessageAttachments(file_attachments, [])
+                    helper.addAttachments(message_artifact, message_attachments)
             messages_parser.close()
         except SQLException as ex:
             self._logger.log(Level.WARNING, "Error querying the viber database for messages.", ex)
@@ -304,7 +311,8 @@ class ViberMessagesParser(TskMessagesParser):
                             M.body                         AS msg_content, 
                             M.send_type                    AS direction, 
                             M.msg_date                     AS msg_date, 
-                            M.unread                       AS read_status 
+                            M.unread                       AS read_status,
+                            M.extra_uri                    AS file_attachment                            
                      FROM   (SELECT *, 
                                     group_concat(TO_RESULT.number) AS recipients 
                              FROM   (SELECT P._id     AS FROM_ID, 
@@ -364,3 +372,11 @@ class ViberMessagesParser(TskMessagesParser):
 
     def get_thread_id(self):
         return str(self.result_set.getInt("thread_id")) 
+        
+    def get_file_attachment(self):
+        if (self.result_set.getString("file_attachment") is None):
+            return None
+        elif ("content:" in self.result_set.getString("file_attachment")):
+            return self.result_set.getString("msg_content").replace("file://", "")
+        else:
+            return self.result_set.getString("file_attachment").replace("file://", "")
