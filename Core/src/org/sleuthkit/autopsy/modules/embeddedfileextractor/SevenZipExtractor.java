@@ -808,7 +808,7 @@ class SevenZipExtractor {
         return unpackSuccessful;
     }
 
-    private Charset detectFilenamesCharset(ArrayList<byte[]> byteDatas) {
+    private Charset detectFilenamesCharset(List<byte[]> byteDatas) {
         Charset detectedCharset = null;
         CharsetDetector charsetDetector = new CharsetDetector();
         int byteSum = 0;
@@ -830,10 +830,8 @@ class SevenZipExtractor {
         }
         charsetDetector.setText(allBytes);
         CharsetMatch cm = charsetDetector.detect();
-        if (cm.getConfidence() >= 90) {
-            if (Charset.isSupported(cm.getName())) {
-                detectedCharset = Charset.forName(cm.getName());
-            }
+        if (cm.getConfidence() >= 90 && Charset.isSupported(cm.getName())) {
+            detectedCharset = Charset.forName(cm.getName());
         }
         return detectedCharset;
     }
