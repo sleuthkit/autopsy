@@ -1,7 +1,7 @@
 cannotBuildXmlParser=Unable to build XML parser: 
 cannotLoadSEUQA=Unable to load Search Engine URL Query Analyzer settings file, SEUQAMappings.xml: 
 cannotParseXml=Unable to parse XML file: 
-ChromeCacheExtract_adding_extracted_files_msg=Adding %d extracted files back for analysis.
+ChromeCacheExtract_adding_extracted_files_msg=Adding %d extracted files for analysis.
 ChromeCacheExtractor.moduleName=ChromeCacheExtractor
 # {0} - module name
 # {1} - row number

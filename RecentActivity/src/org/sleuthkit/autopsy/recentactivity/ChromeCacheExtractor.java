@@ -278,7 +278,7 @@ final class ChromeCacheExtractor {
     }
     
     @Messages({
-        "ChromeCacheExtract_adding_extracted_files_msg=Adding %d extracted files back for analysis."
+        "ChromeCacheExtract_adding_extracted_files_msg=Adding %d extracted files for analysis."
     })
     
     /**
