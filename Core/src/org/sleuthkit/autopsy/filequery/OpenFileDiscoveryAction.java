@@ -19,8 +19,12 @@
 package org.sleuthkit.autopsy.filequery;
 
 import java.awt.Component;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -29,7 +33,15 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
+import org.openide.windows.Mode;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.IngestJobInfo;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Class to open the File Discovery top component. Allows the user to run
@@ -43,6 +55,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 @ActionRegistration(displayName = "#CTL_OpenFileDiscoveryAction", lazy = false)
 @NbBundle.Messages({"CTL_OpenFileDiscoveryAction=File Discovery"})
 public final class OpenFileDiscoveryAction extends CallableSystemAction implements Presenter.Toolbar {
+
+    private static final Logger logger = Logger.getLogger(OpenFileDiscoveryAction.class.getName());
 
     private static final String DISPLAY_NAME = Bundle.CTL_OpenFileDiscoveryAction();
     private static final long serialVersionUID = 1L;
@@ -58,10 +72,46 @@ public final class OpenFileDiscoveryAction extends CallableSystemAction implemen
         return Case.isCaseOpen();
     }
 
+    @NbBundle.Messages({"OpenFileDiscoveryAction.resultsIncomplete.text=Results may be incomplete"})
+
     @Override
     @SuppressWarnings("fallthrough")
     public void performAction() {
-        DiscoveryTopComponent.openTopComponent();
+        final DiscoveryTopComponent tc = DiscoveryTopComponent.getTopComponent();
+        if (tc != null) {
+            if (tc.isOpened() == false) {
+                Mode mode = WindowManager.getDefault().findMode("discovery"); // NON-NLS
+                if (mode != null) {
+                    mode.dockInto(tc);
+                }
+                tc.open();
+                tc.updateSearchSettings();
+                //check if modules run and assemble message
+                try {
+                    SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                    Map<Long, DataSourceModulesWrapper> dataSourceIngestModules = new HashMap<>();
+                    for (DataSource dataSource : skCase.getDataSources()) {
+                        dataSourceIngestModules.put(dataSource.getId(), new DataSourceModulesWrapper(dataSource.getName()));
+                    }
+
+                    for (IngestJobInfo jobInfo : skCase.getIngestJobs()) {
+                        dataSourceIngestModules.get(jobInfo.getObjectId()).updateModulesRun(jobInfo);
+                    }
+                    String message = "";
+                    for (DataSourceModulesWrapper dsmodulesWrapper : dataSourceIngestModules.values()) {
+                        message += dsmodulesWrapper.getMessage();
+                    }
+                    if (!message.isEmpty()) {
+                        JOptionPane.showMessageDialog(tc, message, Bundle.OpenFileDiscoveryAction_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
+                    }
+                } catch (NoCurrentCaseException | TskCoreException ex) {
+                    logger.log(Level.WARNING, "Exception while determining which modules have been run for File Discovery", ex);
+                }
+
+            }
+            tc.toFront();
+
+        }
     }
 
     /**

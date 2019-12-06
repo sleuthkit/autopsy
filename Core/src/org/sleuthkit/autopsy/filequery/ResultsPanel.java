@@ -355,6 +355,8 @@ public class ResultsPanel extends javax.swing.JPanel {
         instancesList = new javax.swing.JList<>();
         resultsViewerPanel = new javax.swing.JPanel();
 
+        setPreferredSize(new java.awt.Dimension(777, 475));
+
         pagingPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         previousPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
@@ -457,18 +459,24 @@ public class ResultsPanel extends javax.swing.JPanel {
                 .addGap(4, 4, 4))
         );
 
-        resultsSplitPane.setDividerLocation(60);
+        resultsSplitPane.setDividerLocation(380);
         resultsSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         resultsSplitPane.setResizeWeight(1.0);
         resultsSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.resultsSplitPane.toolTipText")); // NOI18N
-        resultsSplitPane.setPreferredSize(new java.awt.Dimension(777, 125));
+        resultsSplitPane.setLastDividerLocation(180);
+        resultsSplitPane.setOpaque(false);
+        resultsSplitPane.setPreferredSize(new java.awt.Dimension(777, 440));
 
-        instancesScrollPane.setPreferredSize(new java.awt.Dimension(258, 60));
+        instancesPanel.setPreferredSize(new java.awt.Dimension(775, 68));
+
+        instancesScrollPane.setPreferredSize(new java.awt.Dimension(775, 60));
 
         instancesList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.instancesList.border.title"))); // NOI18N
         instancesList.setModel(instancesListModel);
         instancesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         instancesList.setCellRenderer(new InstancesCellRenderer());
+        instancesList.setPreferredSize(new java.awt.Dimension(0, 50));
+        instancesList.setVisibleRowCount(2);
         instancesScrollPane.setViewportView(instancesList);
 
         javax.swing.GroupLayout instancesPanelLayout = new javax.swing.GroupLayout(instancesPanel);
@@ -481,13 +489,16 @@ public class ResultsPanel extends javax.swing.JPanel {
         );
         instancesPanelLayout.setVerticalGroup(
             instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 60, Short.MAX_VALUE)
+            .addGap(0, 221, Short.MAX_VALUE)
             .addGroup(instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, instancesPanelLayout.createSequentialGroup()
+                    .addGap(0, 0, 0)
+                    .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 221, Short.MAX_VALUE)))
         );
 
         resultsSplitPane.setRightComponent(instancesPanel);
 
+        resultsViewerPanel.setPreferredSize(new java.awt.Dimension(0, 380));
         resultsViewerPanel.setLayout(new java.awt.BorderLayout());
         resultsSplitPane.setLeftComponent(resultsViewerPanel);
 
@@ -503,7 +514,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(pagingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(resultsSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
+                .addComponent(resultsSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents

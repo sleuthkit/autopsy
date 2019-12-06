@@ -20,32 +20,20 @@ package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.IngestJobInfo;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Create a dialog for displaying the file discovery tool
@@ -53,11 +41,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 @TopComponent.Description(preferredID = "DiscoveryTopComponent", persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "discovery", openAtStartup = false)
 @RetainLocation("discovery")
-@NbBundle.Messages("DiscoveryTopComponent.name= File Discovery")
+@NbBundle.Messages("DiscoveryTopComponent.name=File Discovery")
 public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(DiscoveryTopComponent.class.getName());
     private static final String PREFERRED_ID = "DiscoveryTopComponent"; // NON-NLS
     private static final Color SELECTED_COLOR = new Color(216, 230, 242);
     private static final Color UNSELECTED_COLOR = new Color(240, 240, 240);
@@ -98,49 +85,7 @@ public final class DiscoveryTopComponent extends TopComponent {
                 }
             }
         });
-    }
 
-    @Messages({"DiscoveryTopComponent.resultsIncomplete.text=Results may be incomplete"})
-    /**
-     * Open the instance of the DiscoveryTopComponent which exists.
-     */
-    static void openTopComponent() {
-        final DiscoveryTopComponent tc = (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
-        if (tc != null) {
-            WindowManager.getDefault().isTopComponentFloating(tc);
-            if (tc.isOpened() == false) {
-                Mode mode = WindowManager.getDefault().findMode("discovery"); // NON-NLS
-                if (mode != null) {
-                    mode.dockInto(tc);
-                }
-                tc.open();
-                tc.updateSearchSettings();
-                //check if modules run and assemble message
-                try {
-                    SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                    Map<Long, DataSourceModulesWrapper> dataSourceIngestModules = new HashMap<>();
-                    for (DataSource dataSource : skCase.getDataSources()) {
-                        dataSourceIngestModules.put(dataSource.getId(), new DataSourceModulesWrapper(dataSource.getName()));
-                    }
-
-                    for (IngestJobInfo jobInfo : skCase.getIngestJobs()) {
-                        dataSourceIngestModules.get(jobInfo.getObjectId()).updateModulesRun(jobInfo);
-                    }
-                    String message = "";
-                    for (DataSourceModulesWrapper dsmodulesWrapper : dataSourceIngestModules.values()) {
-                        message += dsmodulesWrapper.getMessage();
-                    }
-                    if (!message.isEmpty()) {
-                        JOptionPane.showMessageDialog(tc, message, Bundle.DiscoveryTopComponent_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
-                    }
-                } catch (NoCurrentCaseException | TskCoreException ex) {
-                    logger.log(Level.WARNING, "Exception while determining which modules have been run for File Discovery", ex);
-                }
-
-            }
-            tc.toFront();
-
-        }
     }
 
     /**
@@ -163,7 +108,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     /**
      * Update the search settings to a default state.
      */
-    private void updateSearchSettings() {
+    void updateSearchSettings() {
         fileSearchPanel.resetPanel();
         imagesButton.setSelected(true);
         imagesButton.setEnabled(false);
@@ -214,20 +159,21 @@ public final class DiscoveryTopComponent extends TopComponent {
         videosButton = new javax.swing.JButton();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(62, 0), new java.awt.Dimension(62, 0), new java.awt.Dimension(62, 32767));
 
-        setPreferredSize(new java.awt.Dimension(1100, 700));
+        setPreferredSize(new java.awt.Dimension(1400, 900));
         setLayout(new java.awt.BorderLayout());
 
         mainSplitPane.setDividerLocation(450);
-        mainSplitPane.setResizeWeight(0.2);
+        mainSplitPane.setPreferredSize(new java.awt.Dimension(1400, 828));
 
         leftSplitPane.setDividerLocation(325);
         leftSplitPane.setToolTipText("");
-        leftSplitPane.setPreferredSize(new java.awt.Dimension(530, 25));
+        leftSplitPane.setPreferredSize(new java.awt.Dimension(400, 828));
         mainSplitPane.setLeftComponent(leftSplitPane);
 
-        rightSplitPane.setDividerLocation(400);
+        rightSplitPane.setDividerLocation(475);
         rightSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         rightSplitPane.setResizeWeight(0.5);
+        rightSplitPane.setPreferredSize(new java.awt.Dimension(1000, 828));
         mainSplitPane.setRightComponent(rightSplitPane);
 
         add(mainSplitPane, java.awt.BorderLayout.CENTER);
@@ -271,7 +217,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         toolBarPanelLayout.setHorizontalGroup(
             toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(toolBarPanelLayout.createSequentialGroup()
-                .addContainerGap(436, Short.MAX_VALUE)
+                .addContainerGap(486, Short.MAX_VALUE)
                 .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, toolBarPanelLayout.createSequentialGroup()
                         .addComponent(imagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -283,7 +229,7 @@ public final class DiscoveryTopComponent extends TopComponent {
                         .addComponent(stepOneLabel)
                         .addGap(62, 62, 62)))
                 .addComponent(toolBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(436, Short.MAX_VALUE))
+                .addContainerGap(486, Short.MAX_VALUE))
         );
         toolBarPanelLayout.setVerticalGroup(
             toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
