@@ -64,7 +64,7 @@ public class Installer extends ModuleInstall {
             if (RuntimeProperties.runningWithGUI()) {
                 WindowManager.getDefault().invokeWhenUIReady(() -> {
                     JOptionPane.showMessageDialog(null,
-                            ex.getMessage(),
+                            ex.getUserMessage(),
                             NbBundle.getMessage(this.getClass(),
                                     "Installer.centralRepoUpgradeFailed.title"),
                             JOptionPane.ERROR_MESSAGE);

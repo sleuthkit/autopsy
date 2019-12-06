@@ -24,27 +24,33 @@ import org.sleuthkit.datamodel.TimelineFilter;
  * Default FilterState implementation for individual TimelineFilters.
  *
  * @param <FilterType>
+ *
+ * RJCTODO: We need a better name for this class. Or at least an explanation of
+ * the SQL in the name. The SQL part is not actually enforced or even implied.
+ * IT can only be known by knowledge of the filter hierarchy underlying the
+ * filter states hierarchy.
  */
 public class SqlFilterState<FilterType extends TimelineFilter> extends AbstractFilterState<FilterType> {
+
     /**
      * Selected = false, Disabled = false
      *
      * @param filter
      */
     public SqlFilterState(FilterType filter) {
-        // Setting the intial state to all filters to "selected" except
-        // the "Hide Known Filters", "Tags", "Hashsets" and "Text".
-        // There are better ways to do this, but this works in a pinch
-        this(filter, !(filter instanceof TimelineFilter.HideKnownFilter || filter instanceof TimelineFilter.TagsFilter || filter instanceof TimelineFilter.HashHitsFilter || filter instanceof TimelineFilter.TextFilter));
-        
-         selectedProperty().addListener(selectedProperty -> {
-           if (filter instanceof TimelineFilter.TagsFilter) {
-               ((TimelineFilter.TagsFilter)filter).setEventSourcesAreTagged(isSelected());
-           } else  if (filter instanceof TimelineFilter.HashHitsFilter) {
-               ((TimelineFilter.HashHitsFilter)filter).setEventSourcesHaveHashSetHits(isSelected());
-           }
+        this(filter, false);
+        /*
+         * RJCTODO: This casting is not very nice. We should insert filter state
+         * classes for these two types of filters as subclasses of
+         * SqlFilterState.
+         */
+        selectedProperty().addListener(selectedProperty -> {
+            if (filter instanceof TimelineFilter.TagsFilter) {
+                ((TimelineFilter.TagsFilter) filter).setEventSourcesAreTagged(isSelected());
+            } else if (filter instanceof TimelineFilter.HashHitsFilter) {
+                ((TimelineFilter.HashHitsFilter) filter).setEventSourcesHaveHashSetHits(isSelected());
+            }
         });
-        
     }
 
     /**
@@ -74,9 +80,9 @@ public class SqlFilterState<FilterType extends TimelineFilter> extends AbstractF
     @Override
     public String toString() {
         return "TimelineFilterState{"
-               + " filter=" + getFilter().toString()
-               + ", selected=" + isSelected()
-               + ", disabled=" + isDisabled()
-               + ", activeProp=" + isActive() + '}'; //NON-NLS
+                + " filter=" + getFilter().toString()
+                + ", selected=" + isSelected()
+                + ", disabled=" + isDisabled()
+                + ", activeProp=" + isActive() + '}'; //NON-NLS
     }
 }

@@ -29,7 +29,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import static java.util.stream.Collectors.groupingBy;
 import org.joda.time.Interval;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -44,10 +44,10 @@ import org.sleuthkit.datamodel.TimelineLevelOfDetail;
  */
 public class ListViewModel {
 
-    private final FilteredEventsModel eventsModel;
+    private final EventsModel eventsModel;
     private final TimelineManager eventManager;
 
-    public ListViewModel(FilteredEventsModel eventsModel) {
+    public ListViewModel(EventsModel eventsModel) {
         this.eventsModel = eventsModel;
         this.eventManager = eventsModel.getEventManager();
     }
@@ -63,7 +63,7 @@ public class ListViewModel {
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<CombinedEvent> getCombinedEvents() throws TskCoreException {
-        return getCombinedEvents(eventsModel.getTimeRange(), eventsModel.getFilterState());
+        return getCombinedEvents(eventsModel.getTimeRange(), eventsModel.getEventFilterState());
     }
 
     /**

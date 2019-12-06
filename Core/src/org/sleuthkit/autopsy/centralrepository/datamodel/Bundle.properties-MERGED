@@ -39,6 +39,7 @@ EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade Central Repository.
 EamDbUtil.exclusiveLockAquisitionFailure.message=Unable to acquire exclusive lock for Central Repository.
 PostgresEamDb.centralRepoDisabled.message=Central Repository module is not enabled.
 PostgresEamDb.connectionFailed.message=Error getting connection to database.
+PostgresEamDb.multiUserLockError.message=Error acquiring database lock
 SqliteEamDb.centralRepositoryDisabled.message=Central Repository module is not enabled.
 SqliteEamDb.connectionFailedMessage.message=Error getting connection to database.
 SqliteEamDb.databaseMissing.message=Central repository database missing

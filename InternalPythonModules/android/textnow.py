@@ -44,6 +44,8 @@ from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils import FileAttachment
+from org.sleuthkit.datamodel.blackboardutils import MessageAttachments
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 
@@ -93,7 +95,7 @@ class TextNowAnalyzer(general.AndroidComponentAnalyzer):
                          ) 
                 self.parse_contacts(textnow_db, helper) 
                 self.parse_calllogs(textnow_db, helper)
-                self.parse_messages(textnow_db, helper)
+                self.parse_messages(textnow_db, helper, current_case)
         except NoCurrentCaseException as ex:
             self._logger.log(Level.WARNING, "No case currently open.", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())
@@ -159,23 +161,30 @@ class TextNowAnalyzer(general.AndroidComponentAnalyzer):
                     "Error posting TextNow call log artifact to the blackboard", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())
 
-    def parse_messages(self, textnow_db, helper):
+    def parse_messages(self, textnow_db, helper, current_case):
         #Query for messages and iterate row by row adding
         #each message artifact
         try:
             messages_parser = TextNowMessagesParser(textnow_db)
             while messages_parser.next():
-                helper.addMessage(
-                    messages_parser.get_message_type(),
-                    messages_parser.get_message_direction(),
-                    messages_parser.get_phone_number_from(),
-                    messages_parser.get_phone_number_to(),
-                    messages_parser.get_message_date_time(),
-                    messages_parser.get_message_read_status(),
-                    messages_parser.get_message_subject(),
-                    messages_parser.get_message_text(),
-                    messages_parser.get_thread_id()
-                )
+                message_artifact = helper.addMessage(
+                                       messages_parser.get_message_type(),
+                                       messages_parser.get_message_direction(),
+                                       messages_parser.get_phone_number_from(),
+                                       messages_parser.get_phone_number_to(),
+                                       messages_parser.get_message_date_time(),
+                                       messages_parser.get_message_read_status(),
+                                       messages_parser.get_message_subject(),
+                                       messages_parser.get_message_text(),
+                                       messages_parser.get_thread_id()
+                                   )
+                if (len(messages_parser.get_file_attachment()) > 0):
+                    file_attachments = ArrayList()
+                    self._logger.log(Level.INFO, "SHow Attachment ==> " + str(len(messages_parser.get_file_attachment())) + " <> " + str(messages_parser.get_file_attachment()))
+                    file_attachments.add(FileAttachment(current_case.getSleuthkitCase(), textnow_db.getDBFile().getDataSource(), messages_parser.get_file_attachment()))
+                    message_attachments = MessageAttachments(file_attachments, [])
+                    helper.addAttachments(message_artifact, message_attachments)
+
             messages_parser.close()
         except SQLException as ex:
             #Error parsing TextNow db
@@ -290,53 +299,50 @@ class TextNowMessagesParser(TskMessagesParser):
         """
         super(TextNowMessagesParser, self).__init__(message_db.runQuery(
                  """
-
-                    SELECT CASE
-                             WHEN message_direction == 2 THEN ""
-                             WHEN to_addresses IS NULL THEN M.contact_value
-                             ELSE contact_name
-                           end from_address,
-                           CASE
-                             WHEN message_direction == 1 THEN ""
-                             WHEN to_addresses IS NULL THEN M.contact_value
-                             ELSE to_addresses
-                           end to_address,
-                           message_direction,
-                           message_text,
-                           M.READ,
-                           M.date,
-                           M.attach,
-                           thread_id
-                    FROM   (SELECT group_info.contact_value,
-                                   group_info.to_addresses,
-                                   G.contact_value AS thread_id
-                            FROM   (SELECT GM.contact_value,
-                                           Group_concat(GM.member_contact_value) AS to_addresses
-                                    FROM   group_members AS GM
-                                    GROUP  BY GM.contact_value) AS group_info
-                                   JOIN groups AS G
-                                     ON G.contact_value = group_info.contact_value
-                            UNION
-                            SELECT c.contact_value,
-                                   NULL,
-                                   "-1"
-                            FROM   contacts AS c) AS to_from_map
-                           JOIN messages AS M
-                             ON M.contact_value = to_from_map.contact_value
-                    WHERE  message_type NOT IN ( 102, 100 )
+                    SELECT CASE 
+                             WHEN messages.message_direction == 2 THEN NULL 
+                             WHEN contact_book_w_groups.to_addresses IS NULL THEN 
+                             messages.contact_value 
+                           END from_address, 
+                           CASE 
+                             WHEN messages.message_direction == 1 THEN NULL 
+                             WHEN contact_book_w_groups.to_addresses IS NULL THEN 
+                             messages.contact_value 
+                             ELSE contact_book_w_groups.to_addresses 
+                           END to_address, 
+                           messages.message_direction, 
+                           messages.message_text, 
+                           messages.READ, 
+                           messages.DATE, 
+                           messages.attach, 
+                           thread_id 
+                    FROM   (SELECT GM.contact_value, 
+                                   Group_concat(GM.member_contact_value) AS to_addresses, 
+                                   G.contact_value                       AS thread_id 
+                            FROM   group_members AS GM 
+                                   join GROUPS AS G 
+                                     ON G.contact_value = GM.contact_value 
+                            GROUP  BY GM.contact_value 
+                            UNION 
+                            SELECT contact_value, 
+                                   NULL, 
+                                   NULL 
+                            FROM   contacts) AS contact_book_w_groups 
+                           join messages 
+                             ON messages.contact_value = contact_book_w_groups.contact_value 
+                    WHERE  message_type NOT IN ( 102, 100 ) 
                  """
              )
         )
         self._TEXTNOW_MESSAGE_TYPE = "TextNow Message"
         self._INCOMING_MESSAGE_TYPE = 1
         self._OUTGOING_MESSAGE_TYPE = 2
-        self._UNKNOWN_THREAD_ID = "-1"
 
     def get_message_type(self):
         return self._TEXTNOW_MESSAGE_TYPE 
 
     def get_phone_number_from(self):
-        if self.result_set.getString("from_address") == "":
+        if self.result_set.getString("from_address") is None:
             return super(TextNowMessagesParser, self).get_phone_number_from() 
         return self.result_set.getString("from_address")
 
@@ -347,10 +353,9 @@ class TextNowMessagesParser(TskMessagesParser):
         return self.OUTGOING
     
     def get_phone_number_to(self):
-        if self.result_set.getString("to_address") == "":
+        if self.result_set.getString("to_address") is None:
             return super(TextNowMessagesParser, self).get_phone_number_to() 
-        recipients = self.result_set.getString("to_address").split(",")
-        return recipients            
+        return self.result_set.getString("to_address").split(",")
 
     def get_message_date_time(self):
         #convert ms to s
@@ -359,7 +364,7 @@ class TextNowMessagesParser(TskMessagesParser):
     def get_message_read_status(self):
         read = self.result_set.getBoolean("read")
         if self.get_message_direction() == self.INCOMING:
-            if read == True:
+            if read:
                 return self.READ
             return self.UNREAD
 
@@ -368,13 +373,16 @@ class TextNowMessagesParser(TskMessagesParser):
 
     def get_message_text(self):
         text = self.result_set.getString("message_text")
-        attachment = self.result_set.getString("attach")
-        if attachment != "":
-            text = general.appendAttachmentList(text, [attachment]) 
         return text
 
     def get_thread_id(self):
         thread_id = self.result_set.getString("thread_id")
-        if thread_id == self._UNKNOWN_THREAD_ID:
+        if thread_id is None:
             return super(TextNowMessagesParser, self).get_thread_id()
         return thread_id
+
+    def get_file_attachment(self):
+        attachment = self.result_set.getString("attach")
+        if attachment is None:
+            return None
+        return self.result_set.getString("attach")

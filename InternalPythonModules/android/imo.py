@@ -43,10 +43,14 @@ from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel.blackboardutils import FileAttachment
+from org.sleuthkit.datamodel.blackboardutils import URLAttachment
+from org.sleuthkit.datamodel.blackboardutils import MessageAttachments
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 
+import json
 import traceback
 import general
 
@@ -66,6 +70,8 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                 -- A messages table which stores the message details
                     --- sender/receiver buid, timestamp, message_type (1: incoming, 0: outgoing), message_read...
                     --- 'imdata' column stores a json structure with all the message details, including attachments
+                    ----  attachment file path may be specified in local_path or original_path.  Original path, if available is a better candidate.
+                    ----  For sent files, files seem to get uploaded to IMO Servers.  There is no URL available in the imdata though.
 
     """
     
@@ -156,7 +162,7 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                             msgReadStatus = MessageReadStatus.UNKNOWN
                                                 
                         timeStamp = messagesResultSet.getLong("timestamp") / 1000000000
-
+                        msgBody = messagesResultSet.getString("last_message")
 
                         messageArtifact = friendsDBHelper.addMessage( 
                                                             self._MESSAGE_TYPE,
@@ -166,12 +172,34 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                                                             timeStamp,
                                                             msgReadStatus,
                                                             "",     # subject
-                                                            messagesResultSet.getString("last_message"),
+                                                            msgBody,
                                                             "")   # thread id
-                                                                                                
-                        # TBD: parse the imdata JSON structure to figure out if there is an attachment.
-                        #      If one exists, add the attachment as a derived file and a child of the message artifact.
 
+                                                                           
+                        # Parse the imdata JSON structure to check if there is an attachment.
+                        # If one exists, create an attachment and add to the message.
+                        fileAttachments = ArrayList()
+                        urlAttachments = ArrayList()
+                          
+                        imdataJsonStr = messagesResultSet.getString("imdata")
+                        if imdataJsonStr is not None:
+                            imdata_dict = json.loads(imdataJsonStr)
+                            
+                            # set to none if the key doesn't exist in the dict
+                            attachmentOriginalPath = imdata_dict.get('original_path', None)
+                            attachmentLocalPath = imdata_dict.get('local_path', None)
+                            if attachmentOriginalPath:
+                                attachmentPath = attachmentOriginalPath
+                            else:
+                                attachmentPath = attachmentLocalPath
+                                
+                            if attachmentPath:
+                                # Create a file attachment with given path
+                                fileAttachment = FileAttachment(current_case.getSleuthkitCase(), friendsDb.getDBFile().getDataSource(), attachmentPath)
+                                fileAttachments.add(fileAttachment)
+                                
+                                msgAttachments = MessageAttachments(fileAttachments, [])
+                                attachmentArtifact = friendsDBHelper.addAttachments(messageArtifact, msgAttachments)
                     
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for IMO friends", ex)
