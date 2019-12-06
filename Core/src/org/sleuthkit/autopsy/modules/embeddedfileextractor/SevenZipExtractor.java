@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,12 +38,14 @@ import net.sf.sevenzipjbinding.ExtractAskMode;
 import net.sf.sevenzipjbinding.ExtractOperationResult;
 import net.sf.sevenzipjbinding.IArchiveExtractCallback;
 import net.sf.sevenzipjbinding.ICryptoGetTextPassword;
+import net.sf.sevenzipjbinding.IInArchive;
 import net.sf.sevenzipjbinding.ISequentialOutStream;
-import net.sf.sevenzipjbinding.ISevenZipInArchive;
 import net.sf.sevenzipjbinding.PropID;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
+import org.apache.tika.parser.txt.CharsetDetector;
+import org.apache.tika.parser.txt.CharsetMatch;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -76,6 +79,7 @@ import org.sleuthkit.datamodel.TskData;
 class SevenZipExtractor {
 
     private static final Logger logger = Logger.getLogger(SevenZipExtractor.class.getName());
+
     private static final String MODULE_NAME = EmbeddedFileExtractorModuleFactory.getModuleName();
 
     //encryption type strings
@@ -185,7 +189,7 @@ class SevenZipExtractor {
      *
      * @return true if potential zip bomb, false otherwise
      */
-    private boolean isZipBombArchiveItemCheck(AbstractFile archiveFile, ISevenZipInArchive inArchive, int inArchiveItemIndex, ConcurrentHashMap<Long, Archive> depthMap, String escapedFilePath) {
+    private boolean isZipBombArchiveItemCheck(AbstractFile archiveFile, IInArchive inArchive, int inArchiveItemIndex, ConcurrentHashMap<Long, Archive> depthMap, String escapedFilePath) {
         //If a file is corrupted as a result of reconstructing it from unallocated space, then
         //7zip does a poor job estimating the original uncompressed file size. 
         //As a result, many corrupted files have wonky compression ratios and could flood the UI
@@ -399,18 +403,16 @@ class SevenZipExtractor {
     /**
      * Get the path in the archive of the specified item
      *
-     * @param item        - the item to get the path for
-     * @param itemNumber  - the item number to help provide uniqueness to the
-     *                    path
-     * @param archiveFile - the archive file the item exists in
+     * @param archive            - the archive to get the path for
+     * @param inArchiveItemIndex - the item index to help provide uniqueness to the path
+     * @param archiveFile        - the archive file the item exists in
      *
      * @return a string representing the path to the item in the archive
      *
      * @throws SevenZipException
      */
-    private String getPathInArchive(ISevenZipInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
-        String pathInArchive = (String) archive.getProperty(
-                inArchiveItemIndex, PropID.PATH);
+    private String getPathInArchive(IInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
+        String pathInArchive = (String) archive.getProperty(inArchiveItemIndex, PropID.PATH);
 
         if (pathInArchive == null || pathInArchive.isEmpty()) {
             //some formats (.tar.gz) may not be handled correctly -- file in archive has no name/path
@@ -453,6 +455,10 @@ class SevenZipExtractor {
             logger.log(Level.WARNING, msg);
         }
         return pathInArchive;
+    }
+    
+    private byte[] getPathBytesInArchive(IInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
+        return (byte[]) archive.getProperty(inArchiveItemIndex, PropID.PATH_BYTES);
     }
 
     /*
@@ -505,7 +511,7 @@ class SevenZipExtractor {
         final String escapedArchiveFilePath = FileUtil.escapeFileName(archiveFilePath);
         HashMap<String, ZipFileStatusWrapper> statusMap = new HashMap<>();
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
-        ISevenZipInArchive inArchive = null;
+
         currentArchiveName = archiveFile.getName();
 
         SevenZipContentReadStream stream = null;
@@ -520,7 +526,6 @@ class SevenZipExtractor {
             return unpackSuccessful;
         }
         try {
-
             List<AbstractFile> existingFiles = getAlreadyExtractedFiles(archiveFile, archiveFilePath);
             for (AbstractFile file : existingFiles) {
                 statusMap.put(getKeyAbstractFile(file), new ZipFileStatusWrapper(file, ZipFileStatus.EXISTS));
@@ -553,6 +558,7 @@ class SevenZipExtractor {
                 return unpackSuccessful;
             }
         }
+        IInArchive inArchive = null;
         try {
             stream = new SevenZipContentReadStream(new ReadContentInputStream(archiveFile));
             // for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
@@ -600,7 +606,8 @@ class SevenZipExtractor {
                 }
 
                 String pathInArchive = getPathInArchive(inArchive, inArchiveItemIndex, archiveFile);
-                UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
+                byte[] pathBytesInArchive = getPathBytesInArchive(inArchive, inArchiveItemIndex, archiveFile);
+                UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive, pathBytesInArchive);
 
                 final boolean isEncrypted = (Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.ENCRYPTED);
 
@@ -801,6 +808,34 @@ class SevenZipExtractor {
         return unpackSuccessful;
     }
 
+    private Charset detectFilenamesCharset(List<byte[]> byteDatas) {
+        Charset detectedCharset = null;
+        CharsetDetector charsetDetector = new CharsetDetector();
+        int byteSum = 0;
+        int fileNum = 0;
+        for (byte[] byteData : byteDatas) {
+            fileNum++;
+            byteSum += byteData.length;
+            // Only read ~1000 bytes of filenames in this directory
+            if (byteSum >= 1000) {
+                break;
+            }
+        }
+        byte[] allBytes = new byte[byteSum];
+        int start = 0;
+        for (int i = 0; i < fileNum; i++) {
+            byte[] byteData = byteDatas.get(i);
+            System.arraycopy(byteData, 0, allBytes, start, byteData.length);
+            start += byteData.length;
+        }
+        charsetDetector.setText(allBytes);
+        CharsetMatch cm = charsetDetector.detect();
+        if (cm.getConfidence() >= 90 && Charset.isSupported(cm.getName())) {
+            detectedCharset = Charset.forName(cm.getName());
+        }
+        return detectedCharset;
+    }
+
     /**
      * Produce a list of archive indices needed for the call to extract, which
      * will open the archive and begin unpacking the files.
@@ -906,7 +941,7 @@ class SevenZipExtractor {
             implements IArchiveExtractCallback, ICryptoGetTextPassword {
 
         private final AbstractFile archiveFile;
-        private final ISevenZipInArchive inArchive;
+        private final IInArchive inArchive;
         private UnpackStream unpackStream = null;
         private final Map<Integer, InArchiveItemDetails> archiveDetailsMap;
         private final ProgressHandle progressHandle;
@@ -922,11 +957,10 @@ class SevenZipExtractor {
 
         private boolean unpackSuccessful = true;
 
-        StandardIArchiveExtractCallback(ISevenZipInArchive inArchive,
-                                        AbstractFile archiveFile, ProgressHandle progressHandle,
-                                        Map<Integer, InArchiveItemDetails> archiveDetailsMap,
-                                        String password, long freeDiskSpace) {
-
+        StandardIArchiveExtractCallback(IInArchive inArchive,
+                AbstractFile archiveFile, ProgressHandle progressHandle,
+                Map<Integer, InArchiveItemDetails> archiveDetailsMap,
+                String password, long freeDiskSpace) {
             this.inArchive = inArchive;
             this.progressHandle = progressHandle;
             this.archiveFile = archiveFile;
@@ -998,7 +1032,7 @@ class SevenZipExtractor {
             final Date accessTime = (Date) inArchive.getProperty(
                     inArchiveItemIndex, PropID.LAST_ACCESS_TIME);
             final Date writeTime = (Date) inArchive.getProperty(
-                    inArchiveItemIndex, PropID.LAST_WRITE_TIME);
+                    inArchiveItemIndex, PropID.LAST_MODIFICATION_TIME);
 
             createTimeInSeconds = createTime == null ? 0L
                     : createTime.getTime() / 1000;
@@ -1100,7 +1134,6 @@ class SevenZipExtractor {
          * @param localPathRoot Path in module output folder that files will be
          *                      saved to
          * @param archiveFile   Archive file being extracted
-         * @param fileManager
          */
         UnpackedTree(String localPathRoot, AbstractFile archiveFile) {
             this.rootNode = new UnpackedNode();
@@ -1118,7 +1151,7 @@ class SevenZipExtractor {
          *
          * @return child node for the last file token in the filePath
          */
-        UnpackedNode addNode(String filePath) {
+        UnpackedNode addNode(String filePath, byte[] filePathBytes) {
             String[] toks = filePath.split("[\\/\\\\]");
             List<String> tokens = new ArrayList<>();
             for (int i = 0; i < toks.length; ++i) {
@@ -1126,7 +1159,36 @@ class SevenZipExtractor {
                     tokens.add(toks[i]);
                 }
             }
-            return addNode(rootNode, tokens);
+
+            List<byte[]> byteTokens = null;
+            if (filePathBytes == null) {
+                return addNode(rootNode, tokens, null);
+            } else {
+                byteTokens = new ArrayList<>(tokens.size());
+                int last = 0;
+                for (int i = 0; i < filePathBytes.length; i++) {
+                    if (filePathBytes[i] == '/') {
+                        int len = i - last;
+                        byte[] arr = new byte[len];
+                        System.arraycopy(filePathBytes, last, arr, 0, len);
+                        byteTokens.add(arr);
+                        last = i + 1;
+                    }
+                }
+                int len = filePathBytes.length - last;
+                if (len > 0) {
+                    byte[] arr = new byte[len];
+                    System.arraycopy(filePathBytes, last, arr, 0, len);
+                    byteTokens.add(arr);
+                }
+
+                if (tokens.size() != byteTokens.size()) {
+                    logger.log(Level.WARNING, "Could not map path bytes to path string");
+                    return addNode(rootNode, tokens, null);
+                }
+            }
+            
+            return addNode(rootNode, tokens, byteTokens);
         }
 
         /**
@@ -1137,7 +1199,8 @@ class SevenZipExtractor {
          *
          * @return
          */
-        private UnpackedNode addNode(UnpackedNode parent, List<String> tokenPath) {
+        private UnpackedNode addNode(UnpackedNode parent, 
+                List<String> tokenPath, List<byte[]> tokenPathBytes) {
             // we found all of the tokens
             if (tokenPath.isEmpty()) {
                 return parent;
@@ -1145,15 +1208,20 @@ class SevenZipExtractor {
 
             // get the next name in the path and look it up
             String childName = tokenPath.remove(0);
+            byte[] childNameBytes = null;
+            if (tokenPathBytes != null) {
+                childNameBytes = tokenPathBytes.remove(0);
+            }
             UnpackedNode child = parent.getChild(childName);
             // create new node
             if (child == null) {
                 child = new UnpackedNode(childName, parent);
+                child.setFileNameBytes(childNameBytes);
                 parent.addChild(child);
             }
 
             // go down one more level
-            return addNode(child, tokenPath);
+            return addNode(child, tokenPath, tokenPathBytes);
         }
 
         /**
@@ -1254,6 +1322,32 @@ class SevenZipExtractor {
                         NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackedTree.exception.msg",
                                 node.getFileName()), ex);
             }
+
+            // Determine encoding of children
+            if (node.getChildren().size() > 0) {
+                String names = "";
+                ArrayList<byte[]> byteDatas = new ArrayList<>();
+                for (UnpackedNode child : node.getChildren()) {
+                    byte[] childBytes = child.getFileNameBytes();
+                    if (childBytes != null) {
+                        byteDatas.add(childBytes);
+                    }
+                    names += child.getFileName();
+                }
+                Charset detectedCharset = detectFilenamesCharset(byteDatas);
+
+                // If a charset was detected, transcode filenames accordingly
+                if (detectedCharset != null && detectedCharset.canEncode()) {
+                    for (UnpackedNode child : node.getChildren()) {
+                        byte[] childBytes = child.getFileNameBytes();
+                        if (childBytes != null) {
+                            String decodedName = new String(childBytes, detectedCharset);
+                            child.setFileName(decodedName);
+                        }
+                    }
+                }
+            }
+
             //recurse adding the children if this file was incomplete the children presumably need to be added
             for (UnpackedNode child : node.getChildren()) {
                 updateOrAddFileToCaseRec(child, fileManager, statusMap, getKeyFromUnpackedNode(node, archiveFilePath));
@@ -1266,6 +1360,7 @@ class SevenZipExtractor {
         private class UnpackedNode {
 
             private String fileName;
+            private byte[] fileNameBytes;
             private AbstractFile file;
             private final List<UnpackedNode> children = new ArrayList<>();
             private String localRelPath = "";
@@ -1395,6 +1490,19 @@ class SevenZipExtractor {
 
             boolean isIsFile() {
                 return isFile;
+            }
+
+            void setFileNameBytes(byte[] fileNameBytes) {
+                if (fileNameBytes != null) {
+                    this.fileNameBytes = Arrays.copyOf(fileNameBytes, fileNameBytes.length);
+                }
+            }
+            
+            byte[] getFileNameBytes() {
+                if (fileNameBytes == null) {
+                    return null;
+                }
+                return Arrays.copyOf(fileNameBytes, fileNameBytes.length);
             }
         }
     }

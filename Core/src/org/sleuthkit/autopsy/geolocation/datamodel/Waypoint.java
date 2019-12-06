@@ -50,10 +50,10 @@ public class Waypoint {
     final private List<Waypoint.Property> immutablePropertiesList;
 
     /**
-     * This is a list of attributes that are already being handled by the
-     * by getter functions.
+     * This is a list of attributes that are already being handled by the by
+     * getter functions.
      */
-    static private BlackboardAttribute.ATTRIBUTE_TYPE[] ALREADY_HANDLED_ATTRIBUTES = {
+    static final private BlackboardAttribute.ATTRIBUTE_TYPE[] ALREADY_HANDLED_ATTRIBUTES = {
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE,
@@ -64,19 +64,6 @@ public class Waypoint {
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END,};
-
-    /**
-     * Construct a waypoint with the given artifact.
-     *
-     * @param artifact BlackboardArtifact for this waypoint
-     *
-     * @throws GeoLocationDataException Exception will be thrown if artifact did
-     *                                  not have a valid longitude and latitude.
-     */
-    Waypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
-        this(artifact,
-                getAttributesFromArtifactAsMap(artifact));
-    }
 
     /**
      * Constructor that initializes all of the member variables.
@@ -108,25 +95,6 @@ public class Waypoint {
         this.route = null;
 
         immutablePropertiesList = Collections.unmodifiableList(createGeolocationProperties(attributeMap));
-    }
-
-    /**
-     * Constructs a new ArtifactWaypoint.
-     *
-     * @param artifact     BlackboardArtifact for this waypoint
-     * @param attributeMap A Map of the BlackboardAttributes for the given
-     *                     artifact.
-     *
-     * @throws GeoLocationDataException
-     */
-    private Waypoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
-        this(artifact,
-                getLabelFromArtifact(attributeMap),
-                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME).getValueLong() : null,
-                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE).getValueDouble() : null,
-                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE).getValueDouble() : null,
-                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE).getValueDouble() : null,
-                null, attributeMap, null);
     }
 
     /**
@@ -205,11 +173,12 @@ public class Waypoint {
     public List<Waypoint.Property> getOtherProperties() {
         return immutablePropertiesList;
     }
-    
+
     /**
      * Returns the route that this waypoint is apart of .
-     * 
-     * @return The waypoint route or null if the waypoint is not apart of a route. 
+     *
+     * @return The waypoint route or null if the waypoint is not apart of a
+     *         route.
      */
     public Route getRoute() {
         return route;
