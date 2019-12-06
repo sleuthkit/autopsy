@@ -355,13 +355,35 @@ final class CentralRepoIngestModule implements FileIngestModule {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
                 }
                 // send inbox message
-                sendBadFileInboxMessage(tifArtifact, abstractFile.getName(), abstractFile.getMd5Hash());
+                sendBadFileInboxMessage(tifArtifact, abstractFile.getName(), abstractFile.getMd5Hash(), caseDisplayNames);
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
         } catch (IllegalStateException ex) {
             logger.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
         }
+    }
+    
+    @Messages({
+        "CentralRepoIngestModule_notable_message_header=<html>A file in this data source was previously seen and tagged as Notable.<br>",
+        "CentralRepoIngestModel_name_header=Name:<br>",
+        "CentralRepoIngestModel_previous_case_header=<br>Previous Cases:<br>"
+        
+    })
+    private void sendBadFileInboxMessage(BlackboardArtifact artifact, String name, String md5Hash, List<String> caseDisplayNames) {
+        StringBuilder detailsSb = new StringBuilder();
+        
+        detailsSb.append(Bundle.CentralRepoIngestModule_notable_message_header()).append(Bundle.CentralRepoIngestModel_name_header());
+        detailsSb.append(name).append(Bundle.CentralRepoIngestModel_previous_case_header());
+        for(String str: caseDisplayNames) {
+            detailsSb.append(str).append("<br>");
+        }
+        detailsSb.append("</html>");
+        services.postMessage(IngestMessage.createDataMessage(CentralRepoIngestModuleFactory.getModuleName(),
+                Bundle.CentralRepoIngestModule_postToBB_knownBadMsg(name),
+                detailsSb.toString(),
+                name + md5Hash,
+                artifact));
     }
 
     /**
@@ -379,39 +401,39 @@ final class CentralRepoIngestModule implements FileIngestModule {
         "# {0} - Name of file that is Notable",
         "CentralRepoIngestModule.postToBB.knownBadMsg=Notable: {0}"})
     public void sendBadFileInboxMessage(BlackboardArtifact artifact, String name, String md5Hash) {
-        StringBuilder detailsSb = new StringBuilder();
-        //details
-        detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
-        //hit
-        detailsSb.append("<tr>"); //NON-NLS
-        detailsSb.append("<th>") //NON-NLS
-                .append(Bundle.CentralRepoIngestModule_postToBB_fileName())
-                .append("</th>"); //NON-NLS
-        detailsSb.append("<td>") //NON-NLS
-                .append(name)
-                .append("</td>"); //NON-NLS
-        detailsSb.append("</tr>"); //NON-NLS
-
-        detailsSb.append("<tr>"); //NON-NLS
-        detailsSb.append("<th>") //NON-NLS
-                .append(Bundle.CentralRepoIngestModule_postToBB_md5Hash())
-                .append("</th>"); //NON-NLS
-        detailsSb.append("<td>").append(md5Hash).append("</td>"); //NON-NLS
-        detailsSb.append("</tr>"); //NON-NLS
-
-        detailsSb.append("<tr>"); //NON-NLS
-        detailsSb.append("<th>") //NON-NLS
-                .append(Bundle.CentralRepoIngestModule_postToBB_hashSetSource())
-                .append("</th>"); //NON-NLS
-        detailsSb.append("<td>").append(Bundle.CentralRepoIngestModule_postToBB_eamHit()).append("</td>"); //NON-NLS            
-        detailsSb.append("</tr>"); //NON-NLS
-
-        detailsSb.append("</table>"); //NON-NLS
-
-        services.postMessage(IngestMessage.createDataMessage(CentralRepoIngestModuleFactory.getModuleName(),
-                Bundle.CentralRepoIngestModule_postToBB_knownBadMsg(name),
-                detailsSb.toString(),
-                name + md5Hash,
-                artifact));
+//        StringBuilder detailsSb = new StringBuilder();
+//        //details
+//        detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
+//        //hit
+//        detailsSb.append("<tr>"); //NON-NLS
+//        detailsSb.append("<th>") //NON-NLS
+//                .append(Bundle.CentralRepoIngestModule_postToBB_fileName())
+//                .append("</th>"); //NON-NLS
+//        detailsSb.append("<td>") //NON-NLS
+//                .append(name)
+//                .append("</td>"); //NON-NLS
+//        detailsSb.append("</tr>"); //NON-NLS
+//
+//        detailsSb.append("<tr>"); //NON-NLS
+//        detailsSb.append("<th>") //NON-NLS
+//                .append(Bundle.CentralRepoIngestModule_postToBB_md5Hash())
+//                .append("</th>"); //NON-NLS
+//        detailsSb.append("<td>").append(md5Hash).append("</td>"); //NON-NLS
+//        detailsSb.append("</tr>"); //NON-NLS
+//
+//        detailsSb.append("<tr>"); //NON-NLS
+//        detailsSb.append("<th>") //NON-NLS
+//                .append(Bundle.CentralRepoIngestModule_postToBB_hashSetSource())
+//                .append("</th>"); //NON-NLS
+//        detailsSb.append("<td>").append(Bundle.CentralRepoIngestModule_postToBB_eamHit()).append("</td>"); //NON-NLS            
+//        detailsSb.append("</tr>"); //NON-NLS
+//
+//        detailsSb.append("</table>"); //NON-NLS
+//
+//        services.postMessage(IngestMessage.createDataMessage(CentralRepoIngestModuleFactory.getModuleName(),
+//                Bundle.CentralRepoIngestModule_postToBB_knownBadMsg(name),
+//                detailsSb.toString(),
+//                name + md5Hash,
+//                artifact));
     }
 }
