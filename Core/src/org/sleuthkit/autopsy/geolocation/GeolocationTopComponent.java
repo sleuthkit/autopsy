@@ -21,14 +21,22 @@ package org.sleuthkit.autopsy.geolocation;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
@@ -46,6 +54,8 @@ import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder.WaypointFilte
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.report.ReportProgressPanel;
+import org.sleuthkit.autopsy.report.modules.kml.KMLReport;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -70,6 +80,11 @@ public final class GeolocationTopComponent extends TopComponent {
 
     final RefreshPanel refreshPanel = new RefreshPanel();
 
+    private static final String REPORT_PATH_FMT_STR = "%s" + File.separator + "%s %s %s" + File.separator;
+
+    // This is the hardcoded report name from KMLReport.java
+    private static final String REPORT_KML = "ReportKML.kml";
+
     @Messages({
         "GLTopComponent_name=Geolocation",
         "GLTopComponent_initilzation_error=An error occurred during waypoint initilization.  Geolocation data maybe incomplete."
@@ -81,7 +96,7 @@ public final class GeolocationTopComponent extends TopComponent {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public GeolocationTopComponent() {
         initComponents();
-        
+
         setName(Bundle.GLTopComponent_name());
 
         this.ingestListener = pce -> {
@@ -134,6 +149,20 @@ public final class GeolocationTopComponent extends TopComponent {
                 updateWaypoints();
             }
         });
+
+        mapPanel.addPropertyChangeListener(MapPanel.CURRENT_MOUSE_GEOPOSITION, new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                String label = "";
+                Object newValue = evt.getNewValue();
+                if (newValue != null) {
+                    label = newValue.toString();
+                }
+
+                coordLabel.setText(label);
+            }
+
+        });
     }
 
     @Override
@@ -156,7 +185,7 @@ public final class GeolocationTopComponent extends TopComponent {
         WindowManager.getDefault().setTopComponentFloating(this, true);
         
     }
-  
+
     @Messages({
         "GeolocationTC_connection_failure_message=Failed to connect to map title source.\nPlease review map source in Options dialog.",
         "GeolocationTC_connection_failure_message_title=Connection Failure"
@@ -169,15 +198,15 @@ public final class GeolocationTopComponent extends TopComponent {
         try {
             mapPanel.initMap();
         } catch (GeoLocationDataException ex) {
-           JOptionPane.showMessageDialog(this, 
-                   Bundle.GeolocationTC_connection_failure_message(), 
-                   Bundle.GeolocationTC_connection_failure_message_title(), 
-                   JOptionPane.ERROR_MESSAGE);
-           MessageNotifyUtil.Notify.error(
-                   Bundle.GeolocationTC_connection_failure_message_title(), 
-                   Bundle.GeolocationTC_connection_failure_message());
-           logger.log(Level.SEVERE, ex.getMessage(), ex);
-           return; // Doen't set the waypoints.
+            JOptionPane.showMessageDialog(this,
+                    Bundle.GeolocationTC_connection_failure_message(),
+                    Bundle.GeolocationTC_connection_failure_message_title(),
+                    JOptionPane.ERROR_MESSAGE);
+            MessageNotifyUtil.Notify.error(
+                    Bundle.GeolocationTC_connection_failure_message_title(),
+                    Bundle.GeolocationTC_connection_failure_message());
+            logger.log(Level.SEVERE, ex.getMessage(), ex);
+            return; // Doen't set the waypoints.
         }
         mapPanel.setWaypoints(new ArrayList<>());
         updateWaypoints();
@@ -216,18 +245,56 @@ public final class GeolocationTopComponent extends TopComponent {
         try {
             filters = geoFilterPanel.getFilterState();
         } catch (GeoLocationUIException ex) {
-            JOptionPane.showMessageDialog(this, 
-                                        Bundle.GeoTopComponent_filer_data_invalid_msg(),
-                                        Bundle.GeoTopComponent_filer_data_invalid_Title(),
-                                        JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    Bundle.GeoTopComponent_filer_data_invalid_msg(),
+                    Bundle.GeoTopComponent_filer_data_invalid_Title(),
+                    JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
-        mapPanel.setWaypointLoading(true);
+
+        setWaypointLoading(true);
         geoFilterPanel.setEnabled(false);
-      
+
         Thread thread = new Thread(new WaypointRunner(filters));
         thread.start();
+    }
+
+    /**
+     * Show or hide the waypoint loading progress bar.
+     *
+     * @param loading
+     */
+    void setWaypointLoading(boolean loading) {
+        progressBar.setEnabled(true);
+        progressBar.setVisible(loading);
+        progressBar.setString("Loading Waypoints");
+    }
+
+    /**
+     * Create the directory path for the KML report.
+     *
+     * This is a modified version of the similar private function from
+     * KMLReport.
+     *
+     * @return Path for the report
+     *
+     * @throws IOException
+     */
+    private static String createReportDirectory() throws IOException {
+        Case currentCase = Case.getCurrentCase();
+
+        // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case fileName> <Timestamp>/
+        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss", Locale.US);
+        Date date = new Date();
+        String dateNoTime = dateFormat.format(date);
+        String reportPath = String.format(REPORT_PATH_FMT_STR, currentCase.getReportDirectory(), currentCase.getDisplayName(), "Goggle Earth KML", dateNoTime);
+        // Create the root reports directory.
+        try {
+            FileUtil.createFolder(new File(reportPath));
+        } catch (IOException ex) {
+            throw new IOException("Failed to make report folder, unable to generate reports.", ex);
+        }
+        return reportPath;
     }
 
     /**
@@ -238,23 +305,88 @@ public final class GeolocationTopComponent extends TopComponent {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
-        mapPanel = new org.sleuthkit.autopsy.geolocation.MapPanel();
         filterPane = new org.sleuthkit.autopsy.geolocation.HidingPane();
+        statusBar = new javax.swing.JPanel();
+        reportButton = new javax.swing.JButton();
+        progressBar = new javax.swing.JProgressBar();
+        coordLabel = new javax.swing.JLabel();
+        mapPanel = new org.sleuthkit.autopsy.geolocation.MapPanel();
 
         setLayout(new java.awt.BorderLayout());
+        add(filterPane, java.awt.BorderLayout.WEST);
 
-        mapPanel.add(filterPane, java.awt.BorderLayout.LINE_START);
+        statusBar.setLayout(new java.awt.GridBagLayout());
 
+        org.openide.awt.Mnemonics.setLocalizedText(reportButton, org.openide.util.NbBundle.getMessage(GeolocationTopComponent.class, "GeolocationTopComponent.reportButton.text")); // NOI18N
+        reportButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                reportButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
+        statusBar.add(reportButton, gridBagConstraints);
+
+        progressBar.setIndeterminate(true);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        statusBar.add(progressBar, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(coordLabel, org.openide.util.NbBundle.getMessage(GeolocationTopComponent.class, "GeolocationTopComponent.coordLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 0);
+        statusBar.add(coordLabel, gridBagConstraints);
+
+        add(statusBar, java.awt.BorderLayout.SOUTH);
         add(mapPanel, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
+    @Messages({
+        "GeolocationTC_empty_waypoint_message=Unable to generate KML report due to a lack of waypoints.\nPlease make sure there are waypoints visible before generating the KML report",
+        "GeolocationTC_KML_report_title=KML Report",
+        "GeolocationTC_report_progress_title=KML Report Progress"
+    })
+    private void reportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reportButtonActionPerformed
+        List<MapWaypoint> visiblePoints = mapPanel.getVisibleWaypoints();
+        if (visiblePoints.isEmpty()) {
+            JOptionPane.showConfirmDialog(this, Bundle.GeolocationTC_empty_waypoint_message(), Bundle.GeolocationTC_KML_report_title(), JOptionPane.OK_OPTION, JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        try {
+            ReportProgressPanel progressPanel = new ReportProgressPanel();
+            String reportBaseDir = createReportDirectory();
+
+            progressPanel.setLabels(REPORT_KML, reportBaseDir);
+
+            KMLReport.getDefault().generateReport(reportBaseDir, progressPanel, MapWaypoint.getDataModelWaypoints(visiblePoints));
+            JOptionPane.showConfirmDialog(this, progressPanel, Bundle.GeolocationTC_report_progress_title(), JOptionPane.CLOSED_OPTION, JOptionPane.PLAIN_MESSAGE);
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to create KML report", ex);
+        }
+    }//GEN-LAST:event_reportButtonActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel coordLabel;
     private org.sleuthkit.autopsy.geolocation.HidingPane filterPane;
     private org.sleuthkit.autopsy.geolocation.MapPanel mapPanel;
+    private javax.swing.JProgressBar progressBar;
+    private javax.swing.JButton reportButton;
+    private javax.swing.JPanel statusBar;
     // End of variables declaration//GEN-END:variables
-    
+
     /**
      * A runnable class for getting waypoints based on the current filters.
      */
@@ -264,8 +396,8 @@ public final class GeolocationTopComponent extends TopComponent {
 
         /**
          * Constructs the Waypoint Runner
-         * 
-         * @param filters 
+         *
+         * @param filters
          */
         WaypointRunner(GeoFilter filters) {
             this.filters = filters;
@@ -281,16 +413,16 @@ public final class GeolocationTopComponent extends TopComponent {
                         filters.getMostRecentNumDays(),
                         filters.showWaypointsWithoutTimeStamp(),
                         new WaypointCallBack());
-                
+
             } catch (GeoLocationDataException ex) {
                 logger.log(Level.SEVERE, "Failed to filter waypoints.", ex);
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                    JOptionPane.showMessageDialog(GeolocationTopComponent.this,
-                            Bundle.GeoTopComponent_filter_exception_Title(),
-                            Bundle.GeoTopComponent_filter_exception_msg(),
-                            JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(GeolocationTopComponent.this,
+                                Bundle.GeoTopComponent_filter_exception_Title(),
+                                Bundle.GeoTopComponent_filter_exception_msg(),
+                                JOptionPane.ERROR_MESSAGE);
                     }
                 });
             }
@@ -321,6 +453,7 @@ public final class GeolocationTopComponent extends TopComponent {
                         return;
                     }
                     mapPanel.setWaypoints(MapWaypoint.getWaypoints(waypoints));
+                    setWaypointLoading(false);
                     geoFilterPanel.setEnabled(true);
                 }
             });

@@ -45,7 +45,7 @@ public final class WaypointBuilder {
             = "SELECT artifact_id, artifact_type_id "
             + "FROM blackboard_attributes "
             + "WHERE attribute_type_id IN (%d, %d) ";  //NON-NLS
-    
+
     // SELECT statement to get only artifact_ids
     final static String GEO_ARTIFACT_QUERY_ID_ONLY
             = "SELECT artifact_id "
@@ -70,8 +70,8 @@ public final class WaypointBuilder {
             + " )";
 
     // Returns a list of artifacts with no time stamp
-    final static String SELECT_WO_TIMESTAMP = 
-            "SELECT DISTINCT artifact_id, artifact_type_id "
+    final static String SELECT_WO_TIMESTAMP
+            = "SELECT DISTINCT artifact_id, artifact_type_id "
             + "FROM blackboard_attributes "
             + "WHERE artifact_id NOT IN (%s) "
             + "AND artifact_id IN (%s)"; //NON-NLS
@@ -122,6 +122,25 @@ public final class WaypointBuilder {
     }
 
     /**
+     * Returns a list of routes from the given list of waypoints.
+     *
+     * @param waypoints A list of waypoints
+     *
+     * @return A list of routes or an empty list if none were found.
+     */
+    public static List<Route> getRoutes(List<Waypoint> waypoints) {
+        List<Route> routeList = new ArrayList<>();
+        for (Waypoint point : waypoints) {
+            Route route = point.getRoute();
+            if (route != null && !routeList.contains(route)) {
+                routeList.add(route);
+            }
+        }
+
+        return routeList;
+    }
+
+    /**
      * Gets a list of Waypoints for TSK_GPS_TRACKPOINT artifacts.
      *
      * @param skCase Currently open SleuthkitCase
@@ -148,6 +167,25 @@ public final class WaypointBuilder {
             }
         }
         return points;
+    }
+
+    /**
+     * Returns a list of waypoints that come from TSK_GEO_TRACKPOINT artifacts.
+     *
+     * @param waypoints A list of waypoints
+     *
+     * @return A list of trackpoint waypoints or empty list if none were found.
+     */
+    public static List<Waypoint> getTrackpointWaypoints(List<Waypoint> waypoints) {
+        List<Waypoint> specificPoints = new ArrayList<>();
+
+        for (Waypoint point : waypoints) {
+            if (point instanceof TrackpointWaypoint) {
+                specificPoints.add(point);
+            }
+        }
+
+        return specificPoints;
     }
 
     /**
@@ -184,6 +222,25 @@ public final class WaypointBuilder {
     }
 
     /**
+     * Returns a list of waypoints that come from TSK_METADATA_EXIF artifacts.
+     *
+     * @param waypoints A list of waypoints
+     *
+     * @return A list of trackpoint waypoints or empty list if none were found.
+     */
+    public static List<Waypoint> getEXIFWaypoints(List<Waypoint> waypoints) {
+        List<Waypoint> specificPoints = new ArrayList<>();
+
+        for (Waypoint point : waypoints) {
+            if (point instanceof EXIFWaypoint) {
+                specificPoints.add(point);
+            }
+        }
+
+        return specificPoints;
+    }
+
+    /**
      * Gets a list of Waypoints for TSK_GPS_SEARCH artifacts.
      *
      * @param skCase Currently open SleuthkitCase
@@ -212,6 +269,25 @@ public final class WaypointBuilder {
             }
         }
         return points;
+    }
+
+    /**
+     * Returns a list of waypoints that come from TSK_GPS_SEARCH artifacts.
+     *
+     * @param waypoints A list of waypoints
+     *
+     * @return A list of trackpoint waypoints or empty list if none were found.
+     */
+    public static List<Waypoint> getSearchWaypoints(List<Waypoint> waypoints) {
+        List<Waypoint> specificPoints = new ArrayList<>();
+
+        for (Waypoint point : waypoints) {
+            if (point instanceof SearchWaypoint) {
+                specificPoints.add(point);
+            }
+        }
+
+        return specificPoints;
     }
 
     /**
@@ -246,6 +322,26 @@ public final class WaypointBuilder {
     }
 
     /**
+     * Returns a list of waypoints that come from TSK_GPS_LAST_KNOWN_LOCATION
+     * artifacts.
+     *
+     * @param waypoints A list of waypoints
+     *
+     * @return A list of trackpoint waypoints or empty list if none were found.
+     */
+    public static List<Waypoint> getLastKnownWaypoints(List<Waypoint> waypoints) {
+        List<Waypoint> specificPoints = new ArrayList<>();
+
+        for (Waypoint point : waypoints) {
+            if (point instanceof LastKnownWaypoint) {
+                specificPoints.add(point);
+            }
+        }
+
+        return specificPoints;
+    }
+
+    /**
      * Gets a list of Waypoints for TSK_GPS_BOOKMARK artifacts.
      *
      * @param skCase Currently open SleuthkitCase
@@ -266,7 +362,7 @@ public final class WaypointBuilder {
         if (artifacts != null) {
             for (BlackboardArtifact artifact : artifacts) {
                 try {
-                    Waypoint point = new Waypoint(artifact);
+                    Waypoint point = new BookmarkWaypoint(artifact);
                     points.add(point);
                 } catch (GeoLocationDataException ex) {
                     logger.log(Level.WARNING, String.format("No longitude or latitude available for TSK_GPS_BOOKMARK artifactID: %d", artifact.getArtifactID()), ex);//NON-NLS
@@ -274,6 +370,26 @@ public final class WaypointBuilder {
             }
         }
         return points;
+    }
+
+    /**
+     * Returns a list of waypoints that come from TSK_GPS_LAST_KNOWN_LOCATION
+     * artifacts.
+     *
+     * @param waypoints A list of waypoints
+     *
+     * @return A list of trackpoint waypoints or empty list if none were found.
+     */
+    public static List<Waypoint> getBookmarkWaypoints(List<Waypoint> waypoints) {
+        List<Waypoint> specificPoints = new ArrayList<>();
+
+        for (Waypoint point : waypoints) {
+            if (point instanceof BookmarkWaypoint) {
+                specificPoints.add(point);
+            }
+        }
+
+        return specificPoints;
     }
 
     /**
@@ -386,7 +502,7 @@ public final class WaypointBuilder {
         String mostRecentQuery = "";
 
         if (!showAll && cntDaysFromRecent > 0) {
-            mostRecentQuery = String.format("AND value_int64 > (%s)",  //NON-NLS
+            mostRecentQuery = String.format("AND value_int64 > (%s)", //NON-NLS
                     String.format(MOST_RECENT_TIME,
                             cntDaysFromRecent,
                             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
@@ -464,7 +580,7 @@ public final class WaypointBuilder {
                 waypoints.add(new EXIFWaypoint(artifact));
                 break;
             case TSK_GPS_BOOKMARK:
-                waypoints.add(new Waypoint(artifact));
+                waypoints.add(new BookmarkWaypoint(artifact));
                 break;
             case TSK_GPS_TRACKPOINT:
                 waypoints.add(new TrackpointWaypoint(artifact));
@@ -477,8 +593,7 @@ public final class WaypointBuilder {
                 waypoints.addAll(route.getRoute());
                 break;
             default:
-                waypoints.add(new Waypoint(artifact));
-                break;
+                throw new GeoLocationDataException(String.format("Unable to create waypoint for artifact of type %s", type.toString()));
         }
 
         return waypoints;
