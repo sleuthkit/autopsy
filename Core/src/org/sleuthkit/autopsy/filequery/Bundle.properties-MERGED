@@ -1,5 +1,12 @@
 CTL_OpenFileDiscoveryAction=File Discovery
+# {0} - dataSourceName
+DataSourceModuleWrapper.exifModule.text=Exif Parser module was not run on data source: {0}\n
+# {0} - dataSourceName
+DataSourceModuleWrapper.fileTypeModule.text=File Type Identification module was not run on data source: {0}\n
+# {0} - dataSourceName
+DataSourceModuleWrapper.hashModule.text=Hash Lookup module was not run on data source: {0}\n
 DiscoveryTopComponent.name=\ File Discovery
+DiscoveryTopComponent.resultsIncomplete.text=Results may be incomplete
 FileGroup.groupSortingAlgorithm.groupName.text=Group Name
 FileGroup.groupSortingAlgorithm.groupSize.text=Group Size
 # {0} - Data source name
@@ -154,6 +161,8 @@ FileSorter.SortingMethod.filetype.displayName=File Type
 FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency
 FileSorter.SortingMethod.fullPath.displayName=Full Path
 FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names
+GroupsListPanel.noResults.message.text=No results were found for the selected filters.
+GroupsListPanel.noResults.title.text=No results found
 ImageThumbnailPanel.bytes.text=bytes
 # {0} - numberOfInstances
 ImageThumbnailPanel.countLabel.text=Number of Instances: {0}

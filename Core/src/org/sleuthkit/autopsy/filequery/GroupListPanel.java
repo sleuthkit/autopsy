@@ -24,6 +24,8 @@ import java.util.Map;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 
@@ -59,11 +61,13 @@ class GroupListPanel extends javax.swing.JPanel {
         groupKeyList.setListData(new GroupKey[0]);
     }
 
+    @Messages({"GroupsListPanel.noResults.message.text=No results were found for the selected filters.",
+        "GroupsListPanel.noResults.title.text=No results found"})
     /**
      * Subscribe to and update list of groups in response to
      * SearchCompleteEvents
      *
-     * @param searchCompleteEvent the SearchCompleteEvent which was recieved
+     * @param searchCompleteEvent the SearchCompleteEvent which was received
      */
     @Subscribe
     void handleSearchCompleteEvent(DiscoveryEvents.SearchCompleteEvent searchCompleteEvent) {
@@ -75,6 +79,11 @@ class GroupListPanel extends javax.swing.JPanel {
         groupKeyList.setListData(groupMap.keySet().toArray(new GroupKey[groupMap.keySet().size()]));
         if (groupKeyList.getModel().getSize() > 0) {
             groupKeyList.setSelectedIndex(0);
+        } else {
+            JOptionPane.showMessageDialog(DiscoveryTopComponent.getTopComponent(),
+                    Bundle.GroupsListPanel_noResults_message_text(),
+                    Bundle.GroupsListPanel_noResults_title_text(),
+                    JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
