@@ -20,7 +20,9 @@ package org.sleuthkit.autopsy.geolocation;
 
 import java.awt.Color;
 import java.io.File;
+import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.apache.commons.validator.routines.UrlValidator;
@@ -32,6 +34,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A panel to allow the user to set the custom properties of the geolocation
@@ -41,6 +44,8 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 final class GeolocationSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;
+    
+    private static final Logger logger = Logger.getLogger(GeolocationSettingsPanel.class.getName());
 
     /**
      * Creates new GeolocationSettingsPanel
@@ -92,6 +97,7 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         zipFileBrowseBnt.setEnabled(zipFileRBnt.isSelected());
         mbtileFileField.setEnabled(mbtilesRBtn.isSelected());
         mbtilesBrowseBtn.setEnabled(mbtilesRBtn.isSelected());
+        mbtileTestBtn.setEnabled(mbtilesRBtn.isSelected());
     }
 
     /**
@@ -154,6 +160,7 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         mbtilesRBtn = new javax.swing.JRadioButton();
         mbtileFileField = new javax.swing.JTextField();
         mbtilesBrowseBtn = new javax.swing.JButton();
+        mbtileTestBtn = new javax.swing.JButton();
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -171,7 +178,7 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.gridwidth = 4;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(9, 0, 9, 0);
@@ -230,7 +237,6 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(0, 9, 9, 9);
         tilePane.add(zipFileBrowseBnt, gridBagConstraints);
 
@@ -283,6 +289,20 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 9, 9, 9);
         tilePane.add(mbtilesBrowseBtn, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(mbtileTestBtn, org.openide.util.NbBundle.getMessage(GeolocationSettingsPanel.class, "GeolocationSettingsPanel.mbtileTestBtn.text")); // NOI18N
+        mbtileTestBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mbtileTestBtnActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.ipadx = 20;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        tilePane.add(mbtileTestBtn, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
@@ -369,10 +389,49 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         }
     }//GEN-LAST:event_mbtilesBrowseBtnActionPerformed
 
+    @Messages({
+        "GeolocationSettings_mbtile_does_not_exist_message=The file supplied does not exist.\nPlease verify that the file exists and try again.",
+        "GeolocationSettings_mbtile_does_not_exist_title=File Not Found",
+        "GeolocationSettings_mbtile_not_valid_message=The supplied file is not a raster tile file.",
+        "GeolocationSettings_mbtile_not_valid_title=File Not Valid",
+        "GeolocationSettings_path_not_valid_message=The supplied file path is empty.\nPlease supply a valid file path.",
+        "GeolocationSettings_path_not_valid_title=File Not Valid",
+        "GeolocationSettings_mbtile_test_success_message=The supplied file is a valid mbtile raster file.",
+        "GeolocationSettings_mbtile_test_success_title=Success",
+    })
+    private void mbtileTestBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mbtileTestBtnActionPerformed
+        String mbtilePath = mbtileFileField.getText();
+        
+        if(mbtilePath.isEmpty()) {
+            JOptionPane.showMessageDialog(this, Bundle.GeolocationSettings_path_not_valid_message(), Bundle.GeolocationSettings_path_not_valid__title(), JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        File file = new File(mbtilePath);
+        if(!file.exists()) {
+            JOptionPane.showMessageDialog(this, Bundle.GeolocationSettings_mbtile_does_not_exist_message(), Bundle.GeolocationSettings_mbtile_does_not_exist_title(), JOptionPane.ERROR_MESSAGE);
+            return;
+        } 
+        
+        try {
+            if(!MBTilesFileConnector.isValidMBTileRasterFile(mbtilePath)) {
+                JOptionPane.showMessageDialog(this, Bundle.GeolocationSettings_mbtile_not_valid_message(), Bundle.GeolocationSettings_mbtile_not_valid_title(), JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, Bundle.GeolocationSettings_mbtile_not_valid_message(), Bundle.GeolocationSettings_mbtile_not_valid_title(), JOptionPane.ERROR_MESSAGE);
+            logger.log(Level.WARNING, String.format("Exception thrown while testing mbtile file %s", mbtilePath), ex);
+            return;
+        }
+        
+        JOptionPane.showMessageDialog(this, Bundle.GeolocationSettings_mbtile_test_success_message(), Bundle.GeolocationSettings_mbtile_test_success_title(), JOptionPane.INFORMATION_MESSAGE);
+    }//GEN-LAST:event_mbtileTestBtnActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton defaultDataSource;
     private javax.swing.JTextField mbtileFileField;
+    private javax.swing.JButton mbtileTestBtn;
     private javax.swing.JButton mbtilesBrowseBtn;
     private javax.swing.JRadioButton mbtilesRBtn;
     private javax.swing.JTextField osmServerAddressField;
