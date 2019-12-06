@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
@@ -369,8 +370,15 @@ public final class GeolocationTopComponent extends TopComponent {
             String reportBaseDir = createReportDirectory();
 
             progressPanel.setLabels(REPORT_KML, reportBaseDir);
-
-            KMLReport.getDefault().generateReport(reportBaseDir, progressPanel, MapWaypoint.getDataModelWaypoints(visiblePoints));
+            
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    KMLReport.getDefault().generateReport(reportBaseDir, progressPanel, MapWaypoint.getDataModelWaypoints(visiblePoints));
+                    return null;
+                }
+            };
+            worker.execute();
             JOptionPane.showConfirmDialog(this, progressPanel, Bundle.GeolocationTC_report_progress_title(), JOptionPane.CLOSED_OPTION, JOptionPane.PLAIN_MESSAGE);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to create KML report", ex);
