@@ -43,6 +43,8 @@ from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils import FileAttachment
+from org.sleuthkit.datamodel.blackboardutils import MessageAttachments
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 from TskContactsParser import TskContactsParser
@@ -117,7 +119,7 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
                             current_case.getSleuthkitCase(), self._PARSER_NAME, 
                             contact_and_message_db.getDBFile(), Account.Type.LINE) 
                 self.parse_contacts(contact_and_message_db, helper)
-                self.parse_messages(contact_and_message_db, helper)
+                self.parse_messages(contact_and_message_db, helper, current_case)
 
             for calllog_db in calllog_dbs:
                 current_case = Case.getCurrentCaseThrows()
@@ -195,22 +197,28 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
                     "Error posting Line calllog artifacts to blackboard.", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())   
     
-    def parse_messages(self, messages_db, helper):
+    def parse_messages(self, messages_db, helper, current_case):
         try:
            
             messages_parser = LineMessagesParser(messages_db)
             while messages_parser.next():
-                helper.addMessage(
-                    messages_parser.get_message_type(),
-                    messages_parser.get_message_direction(),
-                    messages_parser.get_phone_number_from(),
-                    messages_parser.get_phone_number_to(),
-                    messages_parser.get_message_date_time(),
-                    messages_parser.get_message_read_status(),
-                    messages_parser.get_message_subject(),
-                    messages_parser.get_message_text(),
-                    messages_parser.get_thread_id() 
-                )
+                message_artifact = helper.addMessage(
+                                       messages_parser.get_message_type(),
+                                       messages_parser.get_message_direction(),
+                                       messages_parser.get_phone_number_from(),
+                                       messages_parser.get_phone_number_to(),
+                                       messages_parser.get_message_date_time(),
+                                       messages_parser.get_message_read_status(),
+                                       messages_parser.get_message_subject(),
+                                       messages_parser.get_message_text(),
+                                       messages_parser.get_thread_id() 
+                                   )
+                if (messages_parser.get_file_attachment() is not None):
+                    file_attachments = ArrayList()
+                    file_attachments.add(FileAttachment(current_case.getSleuthkitCase(), messages_db.getDBFile().getDataSource(), messages_parser.get_file_attachment()))
+                    message_attachments = MessageAttachments(file_attachments, [])
+                    helper.addAttachments(message_artifact, message_attachments)
+
             messages_parser.close()
         except SQLException as ex:
             self._logger.log(Level.WARNING, "Error parsing the Line App Database for messages.", ex)
@@ -236,28 +244,23 @@ class LineCallLogsParser(TskCallLogsParser):
     def __init__(self, calllog_db):
         super(LineCallLogsParser, self).__init__(calllog_db.runQuery(
                  """
-                    SELECT Substr(CH.call_type, -1)               AS direction, 
-                           CH.start_time                          AS start_time, 
-                           CH.end_time                            AS end_time, 
-                           contacts_list_with_groups.members      AS group_members, 
-                           contacts_list_with_groups.member_names AS names, 
-                           CH.caller_mid, 
-                           CH.voip_type                           AS call_type, 
-                           CH.voip_gc_media_type                  AS group_call_type 
+                    SELECT Substr(calls.call_type, -1)   AS direction, 
+                           calls.start_time              AS start_time, 
+                           calls.end_time                AS end_time, 
+                           contact_book_w_groups.members AS group_members, 
+                           calls.caller_mid, 
+                           calls.voip_type               AS call_type, 
+                           calls.voip_gc_media_type      AS group_call_type 
                     FROM   (SELECT id, 
-                                   Group_concat(M.m_id)                          AS members, 
-                                   Group_concat(Replace(C.server_name, ",", "")) AS member_names 
+                                   Group_concat(M.m_id) AS members 
                             FROM   membership AS M 
-                                   JOIN naver.contacts AS C 
-                                     ON M.m_id = C.m_id 
                             GROUP  BY id 
                             UNION 
                             SELECT m_id, 
-                                   NULL, 
-                                   server_name 
-                            FROM   naver.contacts) AS contacts_list_with_groups 
-                           JOIN call_history AS CH 
-                             ON CH.caller_mid = contacts_list_with_groups.id
+                                   NULL 
+                            FROM   naver.contacts) AS contact_book_w_groups 
+                           JOIN call_history AS calls 
+                             ON calls.caller_mid = contact_book_w_groups.id
                  """
               )
         )
@@ -355,43 +358,25 @@ class LineMessagesParser(TskMessagesParser):
     def __init__(self, message_db):
         super(LineMessagesParser, self).__init__(message_db.runQuery(
                 """
-                    SELECT contact_list_with_groups.name,
-                           contact_list_with_groups.id,
-                           contact_list_with_groups.members,
-                           contact_list_with_groups.member_names,
-                           CH.from_mid,
-                           C.server_name AS from_name,
-                           CH.content,
-                           CH.created_time,
-                           CH.attachement_type,
-                           CH.attachement_local_uri,
-                           CH.status
-                    FROM   (SELECT G.name,
-                                   group_members.id,
-                                   group_members.members,
-                                   group_members.member_names
-                            FROM   (SELECT id,
-                                           group_concat(M.m_id) AS members,
-                                           group_concat(replace(C.server_name, 
-                                                                ",", 
-                                                                "")) as member_names
-                                    FROM   membership AS M
-                                           JOIN contacts as C
-                                             ON M.m_id = C.m_id
-                                    GROUP  BY id) AS group_members
-                                   JOIN groups AS G
-                                     ON G.id = group_members.id
-                            UNION
-                            SELECT server_name,
-                                   m_id,
-                                   NULL,
-                                   NULL
-                            FROM   contacts) AS contact_list_with_groups
-                           JOIN chat_history AS CH
-                             ON CH.chat_id = contact_list_with_groups.id
-                           LEFT JOIN contacts as C
-                             ON C.m_id = CH.from_mid
-                    WHERE attachement_type != 6
+                    SELECT contact_book_w_groups.id, 
+                           contact_book_w_groups.members, 
+                           messages.from_mid, 
+                           messages.content, 
+                           messages.created_time, 
+                           messages.attachement_type, 
+                           messages.attachement_local_uri, 
+                           messages.status                           
+                    FROM   (SELECT id, 
+                                   Group_concat(M.m_id) AS members 
+                            FROM   membership AS M 
+                            GROUP  BY id 
+                            UNION 
+                            SELECT m_id, 
+                                   NULL 
+                            FROM   contacts) AS contact_book_w_groups 
+                           JOIN chat_history AS messages 
+                             ON messages.chat_id = contact_book_w_groups.id 
+                    WHERE  attachement_type != 6
                 """
              )
         )
@@ -414,11 +399,6 @@ class LineMessagesParser(TskMessagesParser):
 
     def get_message_text(self):
         content = self.result_set.getString("content") 
-        attachment_uri = self.result_set.getString("attachement_local_uri")
-        if attachment_uri is not None and content is not None:
-            return general.appendAttachmentList(content, [attachment_uri])
-        elif attachment_uri is not None and content is None:
-            return general.appendAttachmentList("", [attachment_uri])
         return content
 
     def get_message_direction(self):  
@@ -449,3 +429,14 @@ class LineMessagesParser(TskMessagesParser):
         if members is not None:
             return self.result_set.getString("id")
         return super(LineMessagesParser, self).get_thread_id()
+
+    def get_file_attachment(self):
+        if (self.result_set.getString("attachement_local_uri") is None):
+            return None
+        # If "content:" in the beginning of the string we cannot determine at this point where a file resides. Ignoring for
+        # now unless data can be obtained to determine where the file may reside.
+        elif ("content:" in self.result_set.getString("attachement_local_uri")):
+            return None
+        else:
+            return self.result_set.getString("attachement_local_uri")
+    

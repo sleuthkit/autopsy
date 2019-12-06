@@ -78,6 +78,9 @@ public final class UserPreferences {
     public static final String EXTERNAL_HEX_EDITOR_PATH = "ExternalHexEditorPath";
     public static final String SOLR_MAX_JVM_SIZE = "SolrMaxJVMSize";
     public static final String RESULTS_TABLE_PAGE_SIZE = "ResultsTablePageSize";
+    private static final String GEO_TILE_OPTION = "GeolocationTileOption";
+    private static final String GEO_OSM_TILE_ZIP_PATH = "GeolocationOsmZipPath";
+    private static final String GEO_OSM_SERVER_ADDRESS = "GeolocationOsmServerAddress";
 
     // Prevent instantiation.
     private UserPreferences() {
@@ -533,5 +536,60 @@ public final class UserPreferences {
      */
     public static String getExternalHexEditorPath() {
         return preferences.get(EXTERNAL_HEX_EDITOR_PATH, Paths.get("C:", "Program Files", "HxD", "HxD.exe").toString());
+    }
+    
+    /**
+     * Set the geolocation tile server option.
+     * 
+     * @param option 
+     */
+    public static void setGeolocationTileOption(int option) {
+        preferences.putInt(GEO_TILE_OPTION, option);
+    }
+
+    /**
+     * Retrieves the Geolocation tile option.  If not found, the value will
+     * default to 0.
+     * @return 
+     */
+    public static int getGeolocationtTileOption() {
+        return preferences.getInt(GEO_TILE_OPTION, 0);
+    }
+
+    /**
+     * Sets the path to the OSM tile zip file.
+     * 
+     * @param absolutePath 
+     */
+    public static void setGeolocationOsmZipPath(String absolutePath) {
+        preferences.put(GEO_OSM_TILE_ZIP_PATH, absolutePath);
+    }
+
+    /**
+     * Retrieves the path for the OSM tile zip file or returns empty string if
+     * none was found.
+     * 
+     * @return Path to zip file
+     */
+    public static String getGeolocationOsmZipPath() {
+        return preferences.get(GEO_OSM_TILE_ZIP_PATH, "");
+    }
+
+    /**
+     * Sets the address of the OSM tile server.
+     * 
+     * @param address 
+     */
+    public static void setGeolocationOsmServerAddress(String address) {
+        preferences.put(GEO_OSM_SERVER_ADDRESS, address);
+    }
+
+    /**
+     * Retrieves the address to the OSM server or null if one was not found.
+     * 
+     * @return Address of OSM server
+     */
+    public static String getGeolocationOsmServerAddress() {
+        return preferences.get(GEO_OSM_SERVER_ADDRESS, "");
     }
 }
