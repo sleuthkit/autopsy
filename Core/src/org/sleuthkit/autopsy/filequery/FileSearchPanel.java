@@ -1084,9 +1084,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         parentCheckbox = new javax.swing.JCheckBox();
         dataSourceScrollPane = new javax.swing.JScrollPane();
         dataSourceList = new javax.swing.JList<>();
-        fullRadioButton = new javax.swing.JRadioButton();
         substringRadioButton = new javax.swing.JRadioButton();
-        parentTextField = new javax.swing.JTextField();
         addButton = new javax.swing.JButton();
         deleteButton = new javax.swing.JButton();
         sizeScrollPane = new javax.swing.JScrollPane();
@@ -1115,9 +1113,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         interestingItemsList = new javax.swing.JList<>();
         scoreScrollPane = new javax.swing.JScrollPane();
         scoreList = new javax.swing.JList<>();
-        includeRadioButton = new javax.swing.JRadioButton();
         excludeRadioButton = new javax.swing.JRadioButton();
         knownFilesCheckbox = new javax.swing.JCheckBox();
+        jPanel1 = new javax.swing.JPanel();
+        fullRadioButton = new javax.swing.JRadioButton();
+        jPanel2 = new javax.swing.JPanel();
+        filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767));
+        includeRadioButton = new javax.swing.JRadioButton();
+        jPanel3 = new javax.swing.JPanel();
+        parentTextField = new javax.swing.JTextField();
         searchButton = new javax.swing.JButton();
         sortingPanel = new javax.swing.JPanel();
         groupByCombobox = new javax.swing.JComboBox<>();
@@ -1131,12 +1135,14 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         stepTwoLabel = new javax.swing.JLabel();
         stepThreeLabel = new javax.swing.JLabel();
 
-        setMinimumSize(new java.awt.Dimension(424, 0));
-        setPreferredSize(new java.awt.Dimension(424, 533));
+        setMinimumSize(new java.awt.Dimension(10, 0));
+        setPreferredSize(new java.awt.Dimension(321, 400));
 
         filtersScrollPane.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.filtersScrollPane.border.title"))); // NOI18N
-        filtersScrollPane.setPreferredSize(new java.awt.Dimension(416, 338));
+        filtersScrollPane.setPreferredSize(new java.awt.Dimension(309, 400));
 
+        filtersPanel.setMinimumSize(new java.awt.Dimension(280, 500));
+        filtersPanel.setPreferredSize(new java.awt.Dimension(280, 540));
         filtersPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(sizeCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.sizeCheckbox.text")); // NOI18N
@@ -1220,17 +1226,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
         filtersPanel.add(dataSourceScrollPane, gridBagConstraints);
 
-        parentPathButtonGroup.add(fullRadioButton);
-        fullRadioButton.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(fullRadioButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.fullRadioButton.text")); // NOI18N
-        fullRadioButton.setEnabled(false);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 9;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 0);
-        filtersPanel.add(fullRadioButton, gridBagConstraints);
-
         parentPathButtonGroup.add(substringRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(substringRadioButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.substringRadioButton.text")); // NOI18N
         substringRadioButton.setEnabled(false);
@@ -1238,20 +1233,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 9;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.5;
+        gridBagConstraints.weightx = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 0);
         filtersPanel.add(substringRadioButton, gridBagConstraints);
-
-        parentTextField.setEnabled(false);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 11;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.5;
-        gridBagConstraints.insets = new java.awt.Insets(0, 4, 6, 0);
-        filtersPanel.add(parentTextField, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(addButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.addButton.text")); // NOI18N
         addButton.setEnabled(false);
@@ -1299,6 +1283,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
+        gridBagConstraints.weighty = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(6, 4, 4, 6);
         filtersPanel.add(sizeScrollPane, gridBagConstraints);
 
@@ -1330,7 +1315,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
-        gridBagConstraints.weighty = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
         filtersPanel.add(keywordScrollPane, gridBagConstraints);
 
@@ -1339,13 +1323,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 8;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weighty = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
         filtersPanel.add(parentLabel, gridBagConstraints);
 
         parentList.setModel(new DefaultListModel<ParentSearchTerm>());
         parentList.setEnabled(false);
-        parentList.setVisibleRowCount(3);
+        parentList.setMaximumSize(null);
+        parentList.setMinimumSize(new java.awt.Dimension(0, 30));
+        parentList.setPreferredSize(new java.awt.Dimension(0, 30));
+        parentList.setVisibleRowCount(4);
         parentList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 parentListValueChanged(evt);
@@ -1361,7 +1347,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
-        gridBagConstraints.weighty = 0.1;
+        gridBagConstraints.weighty = 0.05;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
         filtersPanel.add(parentScrollPane, gridBagConstraints);
 
@@ -1380,6 +1366,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         hashSetList.setModel(new DefaultListModel<String>());
         hashSetList.setEnabled(false);
+        hashSetList.setMinimumSize(new java.awt.Dimension(0, 30));
+        hashSetList.setPreferredSize(new java.awt.Dimension(0, 30));
         hashSetList.setVisibleRowCount(3);
         hashSetScrollPane.setViewportView(hashSetList);
 
@@ -1390,7 +1378,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
-        gridBagConstraints.weighty = 0.1;
+        gridBagConstraints.weighty = 0.05;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
         filtersPanel.add(hashSetScrollPane, gridBagConstraints);
 
@@ -1466,6 +1454,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         objectsList.setModel(new DefaultListModel<String>());
         objectsList.setEnabled(false);
+        objectsList.setMinimumSize(new java.awt.Dimension(0, 30));
+        objectsList.setPreferredSize(new java.awt.Dimension(0, 30));
         objectsList.setVisibleRowCount(2);
         objectsScrollPane.setViewportView(objectsList);
 
@@ -1476,6 +1466,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
+        gridBagConstraints.weighty = 0.05;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
         filtersPanel.add(objectsScrollPane, gridBagConstraints);
 
@@ -1491,12 +1482,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
-        gridBagConstraints.weighty = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
         filtersPanel.add(tagsScrollPane, gridBagConstraints);
 
         interestingItemsList.setModel(new DefaultListModel<String>());
         interestingItemsList.setEnabled(false);
+        interestingItemsList.setMinimumSize(new java.awt.Dimension(0, 30));
+        interestingItemsList.setPreferredSize(new java.awt.Dimension(0, 30));
         interestingItemsList.setVisibleRowCount(2);
         interestingItemsScrollPane.setViewportView(interestingItemsList);
 
@@ -1507,6 +1499,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
+        gridBagConstraints.weighty = 0.05;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
         filtersPanel.add(interestingItemsScrollPane, gridBagConstraints);
 
@@ -1525,17 +1518,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
         filtersPanel.add(scoreScrollPane, gridBagConstraints);
 
-        parentIncludeButtonGroup.add(includeRadioButton);
-        includeRadioButton.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(includeRadioButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.includeRadioButton.text")); // NOI18N
-        includeRadioButton.setEnabled(false);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 10;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 0);
-        filtersPanel.add(includeRadioButton, gridBagConstraints);
-
         parentIncludeButtonGroup.add(excludeRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(excludeRadioButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.excludeRadioButton.text")); // NOI18N
         excludeRadioButton.setEnabled(false);
@@ -1543,7 +1525,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 10;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.5;
+        gridBagConstraints.weightx = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 0);
         filtersPanel.add(excludeRadioButton, gridBagConstraints);
 
@@ -1557,6 +1539,87 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 6);
         filtersPanel.add(knownFilesCheckbox, gridBagConstraints);
 
+        parentPathButtonGroup.add(fullRadioButton);
+        fullRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(fullRadioButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.fullRadioButton.text")); // NOI18N
+        fullRadioButton.setEnabled(false);
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap(58, Short.MAX_VALUE)
+                .addComponent(fullRadioButton)
+                .addGap(20, 20, 20))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addComponent(fullRadioButton)
+                .addGap(0, 4, Short.MAX_VALUE))
+        );
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 9;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1.0;
+        filtersPanel.add(jPanel1, gridBagConstraints);
+
+        parentIncludeButtonGroup.add(includeRadioButton);
+        includeRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(includeRadioButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.includeRadioButton.text")); // NOI18N
+        includeRadioButton.setEnabled(false);
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 58, Short.MAX_VALUE)
+                .addComponent(includeRadioButton))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(includeRadioButton)
+        );
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1.0;
+        filtersPanel.add(jPanel2, gridBagConstraints);
+
+        parentTextField.setEnabled(false);
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(parentTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 71, Short.MAX_VALUE))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(parentTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+        );
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 11;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.5;
+        gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 0);
+        filtersPanel.add(jPanel3, gridBagConstraints);
+
         filtersScrollPane.setViewportView(filtersPanel);
 
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.searchButton.text")); // NOI18N
@@ -1567,6 +1630,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         });
 
         sortingPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.sortingPanel.border.title"))); // NOI18N
+        sortingPanel.setPreferredSize(new java.awt.Dimension(345, 112));
 
         org.openide.awt.Mnemonics.setLocalizedText(orderGroupsByLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.orderGroupsByLabel.text")); // NOI18N
 
@@ -1581,25 +1645,18 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             .addGroup(sortingPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(sortingPanelLayout.createSequentialGroup()
-                        .addComponent(groupByLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(groupByCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, 253, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(orderGroupsByLabel)
                     .addGroup(sortingPanelLayout.createSequentialGroup()
                         .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(sortingPanelLayout.createSequentialGroup()
-                                .addComponent(orderGroupsByLabel)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(orderByLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(groupSortingComboBox, javax.swing.GroupLayout.Alignment.TRAILING, 0, 253, Short.MAX_VALUE)
-                            .addComponent(orderByCombobox, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(groupByLabel)
+                            .addComponent(orderByLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(groupSortingComboBox, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(orderByCombobox, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(groupByCombobox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
-
-        sortingPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {groupByCombobox, groupSortingComboBox, orderByCombobox});
-
         sortingPanelLayout.setVerticalGroup(
             sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(sortingPanelLayout.createSequentialGroup()
@@ -1644,7 +1701,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                         .addContainerGap())
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(filtersScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1652,7 +1708,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(searchButton))
                             .addComponent(stepThreeLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(sortingPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGap(0, 0, 0))
+                            .addComponent(sortingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 309, Short.MAX_VALUE))
                         .addGap(6, 6, 6))))
         );
 
@@ -1664,7 +1723,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                 .addGap(6, 6, 6)
                 .addComponent(stepTwoLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 334, Short.MAX_VALUE)
+                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 201, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(stepThreeLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1846,6 +1905,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JLabel errorLabel;
     private javax.swing.JRadioButton excludeRadioButton;
     private javax.swing.JCheckBox exifCheckbox;
+    private javax.swing.Box.Filler filler2;
     private javax.swing.JPanel filtersPanel;
     private javax.swing.JScrollPane filtersScrollPane;
     private javax.swing.JRadioButton fullRadioButton;
@@ -1859,6 +1919,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JCheckBox interestingItemsCheckbox;
     private javax.swing.JList<String> interestingItemsList;
     private javax.swing.JScrollPane interestingItemsScrollPane;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JCheckBox keywordCheckbox;
     private javax.swing.JList<String> keywordList;
     private javax.swing.JScrollPane keywordScrollPane;

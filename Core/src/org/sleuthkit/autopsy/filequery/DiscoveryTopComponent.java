@@ -217,12 +217,11 @@ public final class DiscoveryTopComponent extends TopComponent {
         setPreferredSize(new java.awt.Dimension(1100, 700));
         setLayout(new java.awt.BorderLayout());
 
-        mainSplitPane.setDividerLocation(550);
+        mainSplitPane.setDividerLocation(450);
         mainSplitPane.setResizeWeight(0.2);
 
-        leftSplitPane.setDividerLocation(430);
+        leftSplitPane.setDividerLocation(325);
         leftSplitPane.setToolTipText("");
-        leftSplitPane.setLastDividerLocation(430);
         leftSplitPane.setPreferredSize(new java.awt.Dimension(530, 25));
         mainSplitPane.setLeftComponent(leftSplitPane);
 
