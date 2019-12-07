@@ -33,8 +33,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
-import org.openide.windows.Mode;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -80,10 +78,6 @@ public final class OpenFileDiscoveryAction extends CallableSystemAction implemen
         final DiscoveryTopComponent tc = DiscoveryTopComponent.getTopComponent();
         if (tc != null) {
             if (tc.isOpened() == false) {
-                Mode mode = WindowManager.getDefault().findMode("discovery"); // NON-NLS
-                if (mode != null) {
-                    mode.dockInto(tc);
-                }
                 tc.open();
                 tc.updateSearchSettings();
                 //check if modules run and assemble message
@@ -110,6 +104,7 @@ public final class OpenFileDiscoveryAction extends CallableSystemAction implemen
 
             }
             tc.toFront();
+            tc.requestActive();
 
         }
     }

@@ -5,7 +5,7 @@ DataSourceModuleWrapper.exifModule.text=Exif Parser module was not run on data s
 DataSourceModuleWrapper.fileTypeModule.text=File Type Identification module was not run on data source: {0}\n
 # {0} - dataSourceName
 DataSourceModuleWrapper.hashModule.text=Hash Lookup module was not run on data source: {0}\n
-DiscoveryTopComponent.name=File Discovery
+DiscoveryTopComponent.name=\ File Discovery
 FileGroup.groupSortingAlgorithm.groupName.text=Group Name
 FileGroup.groupSortingAlgorithm.groupSize.text=Group Size
 # {0} - Data source name

@@ -20,11 +20,13 @@ package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
+import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -41,7 +43,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 @TopComponent.Description(preferredID = "DiscoveryTopComponent", persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "discovery", openAtStartup = false)
 @RetainLocation("discovery")
-@NbBundle.Messages("DiscoveryTopComponent.name=File Discovery")
+@NbBundle.Messages("DiscoveryTopComponent.name= File Discovery")
 public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
@@ -57,7 +59,7 @@ public final class DiscoveryTopComponent extends TopComponent {
      * Creates new form FileDiscoveryDialog
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    DiscoveryTopComponent() {
+    public DiscoveryTopComponent() {
         initComponents();
         setName(Bundle.DiscoveryTopComponent_name());
         fileSearchPanel = new FileSearchPanel();
@@ -304,7 +306,17 @@ public final class DiscoveryTopComponent extends TopComponent {
             }
         });
     }
-
+    
+    @Override
+    public List<Mode> availableModes(List<Mode> modes) {
+        /*
+         * This looks like the right thing to do, but online discussions seems
+         * to indicate this method is effectively deprecated. A break point
+         * placed here was never hit.
+         */
+        return modes.stream().filter(mode -> mode.getName().equals("discovery"))
+                .collect(Collectors.toList());
+    }
     /**
      * Update the user interface in response to a search being started.
      *
