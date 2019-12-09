@@ -198,7 +198,7 @@ final public class MapPanel extends javax.swing.JPanel {
             @Override
             public Set<Waypoint> getWaypoints() {
                 //To assure that the currentlySelectedWaypoint is visible it needs
-                // to be pained last. LinkedHashSet has a predicable ordering.
+                // to be painted last. LinkedHashSet has a predicable ordering.
                 Set<Waypoint> set = new LinkedHashSet<>();
                 if (waypointTree != null) {
                     Iterator<MapWaypoint> iterator = waypointTree.iterator();
