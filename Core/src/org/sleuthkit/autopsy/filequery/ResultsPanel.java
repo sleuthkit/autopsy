@@ -75,6 +75,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private PageWorker pageWorker;
     private final List<SwingWorker<Void, Void>> thumbnailWorkers = new ArrayList<>();
     private final DefaultListModel<AbstractFile> instancesListModel = new DefaultListModel<>();
+    private ListSelectionListener listener = null;
 
     /**
      * Creates new form ResultsPanel.
@@ -88,11 +89,15 @@ public class ResultsPanel extends javax.swing.JPanel {
         videoThumbnailViewer.addListSelectionListener((e) -> {
             if (!e.getValueIsAdjusting()) {
                 populateInstancesList();
+            } else {
+                instancesList.clearSelection();
             }
         });
         imageThumbnailViewer.addListSelectionListener((e) -> {
             if (!e.getValueIsAdjusting()) {
                 populateInstancesList();
+            } else {
+                instancesList.clearSelection();
             }
         });
         //Add the context menu when right clicking
@@ -127,7 +132,9 @@ public class ResultsPanel extends javax.swing.JPanel {
      *
      * @param listener The ListSelectionListener to add to the instances list.
      */
-    void addListSelectionListener(ListSelectionListener listener) {
+    void addListSelectionListener(ListSelectionListener newListener) {
+        instancesList.removeListSelectionListener(listener);
+        listener = newListener;
         instancesList.addListSelectionListener(listener);
     }
 
@@ -136,10 +143,12 @@ public class ResultsPanel extends javax.swing.JPanel {
      */
     synchronized void populateInstancesList() {
         SwingUtilities.invokeLater(() -> {
+            instancesList.removeListSelectionListener(listener);
             instancesListModel.removeAllElements();
             for (AbstractFile file : getInstancesForSelected()) {
                 instancesListModel.addElement(file);
             }
+            instancesList.addListSelectionListener(listener);
             if (!instancesListModel.isEmpty()) {
                 instancesList.setSelectedIndex(0);
             }
