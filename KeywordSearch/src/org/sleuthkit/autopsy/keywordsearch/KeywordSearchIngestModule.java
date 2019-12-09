@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.apache.tika.mime.MimeTypes;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -44,12 +45,12 @@ import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
-import org.sleuthkit.autopsy.keywordsearch.TextFileExtractor.TextFileExtractorException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
+import org.sleuthkit.autopsy.textextractors.TextFileExtractor;
 import org.sleuthkit.autopsy.textextractors.configs.ImageConfig;
 import org.sleuthkit.autopsy.textextractors.configs.StringsConfig;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -632,7 +633,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 if (context.fileIngestIsCancelled()) {
                     return;
                 }
-                if (fileType.equals("application/octet-stream")) {
+                if (fileType.equals(MimeTypes.OCTET_STREAM)) {
                     extractStringsAndIndex(aFile);
                     return;
                 }
@@ -657,26 +658,37 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if ((wasTextAdded == false) && (aFile.getNameExtension().equalsIgnoreCase("txt") && !(aFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED)))) {
                 //Carved Files should be the only type of unallocated files capable of a txt extension and 
                 //should be ignored by the TextFileExtractor because they may contain more than one text encoding
-                try {
-                    TextFileExtractor textFileExtractor = new TextFileExtractor();
-                    Reader textReader = textFileExtractor.getReader(aFile);
-                    if (textReader == null) {
-                        logger.log(Level.INFO, "Unable to extract with TextFileExtractor, Reader was null for file: {0}", aFile.getName());
-                    } else if (Ingester.getDefault().indexText(textReader, aFile.getId(), aFile.getName(), aFile, context)) {
-                        putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
-                        wasTextAdded = true;
-                    }
-                } catch (IngesterException ex) {
-                    logger.log(Level.WARNING, "Unable to index as unicode", ex);
-                } catch (TextFileExtractorException ex) {
-                    logger.log(Level.INFO, "Could not extract text with TextFileExtractor", ex);
-                }
+                wasTextAdded = indexTextFile(aFile);
             }
 
             // if it wasn't supported or had an error, default to strings
             if (wasTextAdded == false) {
                 extractStringsAndIndex(aFile);
             }
+        }
+
+        /**
+         * Adds the text file to the index given an encoding.
+         * Returns true if indexing was successful and false otherwise.
+         *
+         * @param aFile Text file to analyze
+         * @param detectedCharset the encoding of the file
+         */
+        private boolean indexTextFile(AbstractFile aFile) {
+            try {
+                TextFileExtractor textFileExtractor = new TextFileExtractor(aFile);
+                Reader textReader = textFileExtractor.getReader();
+                if (textReader == null) {
+                    logger.log(Level.INFO, "Unable to extract with TextFileExtractor, Reader was null for file: {0}", aFile.getName());
+                } else if (Ingester.getDefault().indexText(textReader, aFile.getId(), aFile.getName(), aFile, context)) {
+                    textReader.close();
+                    putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
+                    return true;
+                }
+            } catch (IngesterException | IOException ex) {
+                logger.log(Level.WARNING, "Unable to index " + aFile.getName(), ex);
+            }
+            return false;
         }
     }
 }
