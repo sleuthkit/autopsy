@@ -23,11 +23,14 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -37,10 +40,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.imageio.ImageIO;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -72,6 +79,8 @@ class FileSearch {
 
     private final static Logger logger = Logger.getLogger(FileSearch.class.getName());
     private static final int MAXIMUM_CACHE_SIZE = 10;
+    private static final String THUMBNAIL_FORMAT = "png"; //NON-NLS
+    private static final String VIDEO_THUMBNAIL_DIR = "video-thumbnails"; //NON-NLS
     private static final Cache<SearchKey, Map<GroupKey, List<ResultFile>>> searchCache = CacheBuilder.newBuilder()
             .maximumSize(MAXIMUM_CACHE_SIZE)
             .build();
@@ -369,25 +378,75 @@ class FileSearch {
         "FileSearch.genVideoThumb.progress.text=extracting temporary file {0}"})
     static void getVideoThumbnails(VideoThumbnailsWrapper thumbnailWrapper) {
         AbstractFile file = thumbnailWrapper.getResultFile().getFirstInstance();
-        //Currently this method always creates the thumbnails 
-        java.io.File tempFile;
+        String cacheDirectory;
         try {
-            tempFile = getVideoFileInTempDir(file);
+            cacheDirectory = Case.getCurrentCaseThrows().getCacheDirectory();
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
-            int[] framePositions = new int[]{
-                0,
-                0,
-                0,
-                0};
-            thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
-            return;
+            cacheDirectory = null;
+            logger.log(Level.WARNING, "Unable to get cache directory, video thumbnails will not be saved", ex);
         }
-        if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
-            ProgressHandle progress = ProgressHandle.createHandle(Bundle.FileSearch_genVideoThumb_progress_text(file.getName()));
-            progress.start(100);
+
+        if (cacheDirectory == null || file.getMd5Hash() == null || !Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash()).toFile().exists()) {
+            java.io.File tempFile;
             try {
-                Files.createParentDirs(tempFile);
+                tempFile = getVideoFileInTempDir(file);
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
+                int[] framePositions = new int[]{
+                    0,
+                    0,
+                    0,
+                    0};
+                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                return;
+            }
+            if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
+                ProgressHandle progress = ProgressHandle.createHandle(Bundle.FileSearch_genVideoThumb_progress_text(file.getName()));
+                progress.start(100);
+                try {
+                    Files.createParentDirs(tempFile);
+                    if (Thread.interrupted()) {
+                        int[] framePositions = new int[]{
+                            0,
+                            0,
+                            0,
+                            0};
+                        thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                        return;
+                    }
+                    ContentUtils.writeToFile(file, tempFile, progress, null, true);
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Error extracting temporary file for " + file.getParentPath() + "/" + file.getName(), ex); //NON-NLS
+                } finally {
+                    progress.finish();
+                }
+            }
+            VideoCapture videoFile = new VideoCapture(); // will contain the video
+            BufferedImage bufferedImage = null;
+
+            try {
+                if (!videoFile.open(tempFile.toString())) {
+                    logger.log(Level.WARNING, "Error opening {0} for preview generation.", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                    int[] framePositions = new int[]{
+                        0,
+                        0,
+                        0,
+                        0};
+                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                    return;
+                }
+                double fps = videoFile.get(5); // gets frame per second
+                double totalFrames = videoFile.get(7); // gets total frames
+                if (fps <= 0 || totalFrames <= 0) {
+                    logger.log(Level.WARNING, "Error getting fps or total frames for {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                    int[] framePositions = new int[]{
+                        0,
+                        0,
+                        0,
+                        0};
+                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                    return;
+                }
                 if (Thread.interrupted()) {
                     int[] framePositions = new int[]{
                         0,
@@ -397,110 +456,150 @@ class FileSearch {
                     thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
                     return;
                 }
-                ContentUtils.writeToFile(file, tempFile, progress, null, true);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error extracting temporary file for " + file.getParentPath() + "/" + file.getName(), ex); //NON-NLS
-            } finally {
-                progress.finish();
-            }
-        }
-        VideoCapture videoFile = new VideoCapture(); // will contain the video
-        BufferedImage bufferedImage = null;
 
-        try {
-            if (!videoFile.open(tempFile.toString())) {
-                logger.log(Level.WARNING, "Error opening {0} for preview generation.", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                double duration = 1000 * (totalFrames / fps); //total milliseconds
+
                 int[] framePositions = new int[]{
-                    0,
-                    0,
-                    0,
-                    0};
-                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
-                return;
-            }
-            double fps = videoFile.get(5); // gets frame per second
-            double totalFrames = videoFile.get(7); // gets total frames
-            if (fps <= 0 || totalFrames <= 0) {
-                logger.log(Level.WARNING, "Error getting fps or total frames for {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
-                int[] framePositions = new int[]{
-                    0,
-                    0,
-                    0,
-                    0};
-                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
-                return;
-            }
-            if (Thread.interrupted()) {
-                int[] framePositions = new int[]{
-                    0,
-                    0,
-                    0,
-                    0};
-                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
-                return;
-            }
+                    (int) (duration * .01),
+                    (int) (duration * .25),
+                    (int) (duration * .5),
+                    (int) (duration * .75),};
 
-            double duration = 1000 * (totalFrames / fps); //total milliseconds
-
-            int[] framePositions = new int[]{
-                (int) (duration * .01),
-                (int) (duration * .25),
-                (int) (duration * .5),
-                (int) (duration * .75),};
-
-            Mat imageMatrix = new Mat();
-            List<Image> videoThumbnails = new ArrayList<>();
-            for (int i = 0; i < framePositions.length; i++) {
-                if (!videoFile.set(0, framePositions[i])) {
-                    logger.log(Level.WARNING, "Error seeking to " + framePositions[i] + "ms in {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
-                    // If we can't set the time, continue to the next frame position and try again.
-
-                    videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                    continue;
-                }
-                // Read the frame into the image/matrix.
-                if (!videoFile.read(imageMatrix)) {
-                    logger.log(Level.WARNING, "Error reading frame at " + framePositions[i] + "ms from {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
-                    // If the image is bad for some reason, continue to the next frame position and try again.
-                    videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                    continue;
-                }
-                // If the image is empty, return since no buffered image can be created.
-                if (imageMatrix.empty()) {
-                    videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                    continue;
-                }
-
-                int matrixColumns = imageMatrix.cols();
-                int matrixRows = imageMatrix.rows();
-
-                // Convert the matrix that contains the frame to a buffered image.
-                if (bufferedImage == null) {
-                    bufferedImage = new BufferedImage(matrixColumns, matrixRows, BufferedImage.TYPE_3BYTE_BGR);
-                }
-
-                byte[] data = new byte[matrixRows * matrixColumns * (int) (imageMatrix.elemSize())];
-                imageMatrix.get(0, 0, data); //copy the image to data
-
-                if (imageMatrix.channels() == 3) {
-                    for (int k = 0; k < data.length; k += 3) {
-                        byte temp = data[k];
-                        data[k] = data[k + 2];
-                        data[k + 2] = temp;
+                Mat imageMatrix = new Mat();
+                List<Image> videoThumbnails = new ArrayList<>();
+                if (cacheDirectory == null || file.getMd5Hash() == null) {
+                    cacheDirectory = null;
+                } else {
+                    try {
+                        FileUtils.forceMkdir(Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash()).toFile());
+                    } catch (IOException ex) {
+                        cacheDirectory = null;
+                        logger.log(Level.WARNING, "Unable to make video thumbnails directory, thumbnails will not be saved", ex);
                     }
                 }
+                for (int i = 0; i < framePositions.length; i++) {
+                    if (!videoFile.set(0, framePositions[i])) {
+                        logger.log(Level.WARNING, "Error seeking to " + framePositions[i] + "ms in {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                        // If we can't set the time, continue to the next frame position and try again.
 
-                bufferedImage.getRaster().setDataElements(0, 0, matrixColumns, matrixRows, data);
-                if (Thread.interrupted()) {
-                    thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
-                    return;
+                        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                        if (cacheDirectory != null) {
+                            try {
+                                ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
+                                        Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
+                            } catch (IOException ex) {
+                                logger.log(Level.WARNING, "Unable to save default video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
+                            }
+                        }
+                        continue;
+                    }
+                    // Read the frame into the image/matrix.
+                    if (!videoFile.read(imageMatrix)) {
+                        logger.log(Level.WARNING, "Error reading frame at " + framePositions[i] + "ms from {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                        // If the image is bad for some reason, continue to the next frame position and try again.
+                        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                        if (cacheDirectory != null) {
+                            try {
+                                ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
+                                        Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
+                            } catch (IOException ex) {
+                                logger.log(Level.WARNING, "Unable to save default video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
+                            }
+                        }
+
+                        continue;
+                    }
+                    // If the image is empty, return since no buffered image can be created.
+                    if (imageMatrix.empty()) {
+                        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                        if (cacheDirectory != null) {
+                            try {
+                                ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
+                                        Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
+                            } catch (IOException ex) {
+                                logger.log(Level.WARNING, "Unable to save default video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
+                            }
+                        }
+                        continue;
+                    }
+
+                    int matrixColumns = imageMatrix.cols();
+                    int matrixRows = imageMatrix.rows();
+
+                    // Convert the matrix that contains the frame to a buffered image.
+                    if (bufferedImage == null) {
+                        bufferedImage = new BufferedImage(matrixColumns, matrixRows, BufferedImage.TYPE_3BYTE_BGR);
+                    }
+
+                    byte[] data = new byte[matrixRows * matrixColumns * (int) (imageMatrix.elemSize())];
+                    imageMatrix.get(0, 0, data); //copy the image to data
+
+                    if (imageMatrix.channels() == 3) {
+                        for (int k = 0; k < data.length; k += 3) {
+                            byte temp = data[k];
+                            data[k] = data[k + 2];
+                            data[k + 2] = temp;
+                        }
+                    }
+
+                    bufferedImage.getRaster().setDataElements(0, 0, matrixColumns, matrixRows, data);
+                    if (Thread.interrupted()) {
+                        thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
+                        try {
+                            FileUtils.forceDelete(Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash()).toFile());
+                        } catch (IOException ex) {
+                            logger.log(Level.WARNING, "Unable to delete directory for cancelled video thumbnail process", ex);
+                        }
+                        return;
+                    }
+                    BufferedImage thumbnail = ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE);
+                    videoThumbnails.add(thumbnail);
+                    if (cacheDirectory != null) {
+                        try {
+                            ImageIO.write(thumbnail, THUMBNAIL_FORMAT,
+                                    Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
+                        } catch (IOException ex) {
+                            logger.log(Level.WARNING, "Unable to save video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
+                        }
+                    }
                 }
-                videoThumbnails.add(ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE));
+                thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
+            } finally {
+                videoFile.release(); // close the file}
             }
-            thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
-        } finally {
-            videoFile.release(); // close the file}
+        } else {
+            loadSavedThumbnails(cacheDirectory, thumbnailWrapper);
         }
+    }
+
+    /**
+     * Load the thumbnails that exist in the cache directory for the specified
+     * video file.
+     *
+     * @param cacheDirectory   The directory which exists for the video
+     *                         thumbnails.
+     * @param thumbnailWrapper The VideoThumbnailWrapper object which contains
+     *                         information about the file and the thumbnails
+     *                         associated with it.
+     */
+    private static void loadSavedThumbnails(String cacheDirectory, VideoThumbnailsWrapper thumbnailWrapper) {
+        int[] framePositions = new int[4];
+        List<Image> videoThumbnails = new ArrayList<>();
+        int thumbnailNumber = 0;
+        String md5 = thumbnailWrapper.getResultFile().getFirstInstance().getMd5Hash();
+        for (String fileName : Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, md5).toFile().list()) {
+            try {
+                videoThumbnails.add(ImageIO.read(Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, md5, fileName).toFile()));
+            } catch (IOException ex) {
+                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                logger.log(Level.WARNING, "Unable to read saved video thumbnail " + fileName + " for " + md5, ex);
+            }
+            int framePos = Integer.valueOf(FilenameUtils.getBaseName(fileName).substring(2));
+            framePositions[thumbnailNumber] = framePos;
+            thumbnailNumber++;
+
+        }
+        thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
     }
 
     /**
@@ -623,22 +722,21 @@ class FileSearch {
         FileSizeGroupKey(ResultFile file) {
             if (file.getFileType() == FileType.VIDEO) {
                 fileSize = FileSize.fromVideoSize(file.getFirstInstance().getSize());
-            }
-            else {
+            } else {
                 fileSize = FileSize.fromImageSize(file.getFirstInstance().getSize());
             }
         }
 
         @Override
         String getDisplayName() {
-            return fileSize.toString();
+            return getFileSize().toString();
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof FileSizeGroupKey) {
                 FileSizeGroupKey otherFileSizeGroupKey = (FileSizeGroupKey) otherGroupKey;
-                return Integer.compare(fileSize.getRanking(), otherFileSizeGroupKey.fileSize.getRanking());
+                return Integer.compare(getFileSize().getRanking(), otherFileSizeGroupKey.getFileSize().getRanking());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -655,12 +753,19 @@ class FileSearch {
             }
 
             FileSizeGroupKey otherFileSizeGroupKey = (FileSizeGroupKey) otherKey;
-            return fileSize.equals(otherFileSizeGroupKey.fileSize);
+            return getFileSize().equals(otherFileSizeGroupKey.getFileSize());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(fileSize.getRanking());
+            return Objects.hash(getFileSize().getRanking());
+        }
+
+        /**
+         * @return the fileSize
+         */
+        FileSize getFileSize() {
+            return fileSize;
         }
     }
 
@@ -719,16 +824,16 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return parentPath;
+            return getParentPath();
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof ParentPathGroupKey) {
                 ParentPathGroupKey otherParentPathGroupKey = (ParentPathGroupKey) otherGroupKey;
-                int comparisonResult = parentPath.compareTo(otherParentPathGroupKey.parentPath);
+                int comparisonResult = getParentPath().compareTo(otherParentPathGroupKey.getParentPath());
                 if (comparisonResult == 0) {
-                    comparisonResult = parentID.compareTo(otherParentPathGroupKey.parentID);
+                    comparisonResult = getParentID().compareTo(otherParentPathGroupKey.getParentID());
                 }
                 return comparisonResult;
             } else {
@@ -747,15 +852,29 @@ class FileSearch {
             }
 
             ParentPathGroupKey otherParentPathGroupKey = (ParentPathGroupKey) otherKey;
-            return parentPath.equals(otherParentPathGroupKey.parentPath) && parentID.equals(otherParentPathGroupKey.parentID);
+            return getParentPath().equals(otherParentPathGroupKey.getParentPath()) && getParentID().equals(otherParentPathGroupKey.getParentID());
         }
 
         @Override
         public int hashCode() {
             int hashCode = 11;
-            hashCode = 61 * hashCode + Objects.hash(parentPath);
-            hashCode = 61 * hashCode + Objects.hash(parentID);
+            hashCode = 61 * hashCode + Objects.hash(getParentPath());
+            hashCode = 61 * hashCode + Objects.hash(getParentID());
             return hashCode;
+        }
+
+        /**
+         * @return the parentPath
+         */
+        String getParentPath() {
+            return parentPath;
+        }
+
+        /**
+         * @return the parentID
+         */
+        Long getParentID() {
+            return parentID;
         }
     }
 
@@ -806,7 +925,7 @@ class FileSearch {
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof DataSourceGroupKey) {
                 DataSourceGroupKey otherDataSourceGroupKey = (DataSourceGroupKey) otherGroupKey;
-                return Long.compare(dataSourceID, otherDataSourceGroupKey.dataSourceID);
+                return Long.compare(getDataSourceID(), otherDataSourceGroupKey.getDataSourceID());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -823,12 +942,19 @@ class FileSearch {
             }
 
             DataSourceGroupKey otherDataSourceGroupKey = (DataSourceGroupKey) otherKey;
-            return dataSourceID == otherDataSourceGroupKey.dataSourceID;
+            return getDataSourceID() == otherDataSourceGroupKey.getDataSourceID();
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(dataSourceID);
+            return Objects.hash(getDataSourceID());
+        }
+
+        /**
+         * @return the dataSourceID
+         */
+        long getDataSourceID() {
+            return dataSourceID;
         }
     }
 
@@ -866,14 +992,14 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return fileType.toString();
+            return getFileType().toString();
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof FileTypeGroupKey) {
                 FileTypeGroupKey otherFileTypeGroupKey = (FileTypeGroupKey) otherGroupKey;
-                return Integer.compare(fileType.getRanking(), otherFileTypeGroupKey.fileType.getRanking());
+                return Integer.compare(getFileType().getRanking(), otherFileTypeGroupKey.getFileType().getRanking());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -890,12 +1016,19 @@ class FileSearch {
             }
 
             FileTypeGroupKey otherFileTypeGroupKey = (FileTypeGroupKey) otherKey;
-            return fileType.equals(otherFileTypeGroupKey.fileType);
+            return getFileType().equals(otherFileTypeGroupKey.getFileType());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(fileType.getRanking());
+            return Objects.hash(getFileType().getRanking());
+        }
+
+        /**
+         * @return the fileType
+         */
+        FileType getFileType() {
+            return fileType;
         }
     }
 
@@ -993,7 +1126,7 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return keywordListNamesString;
+            return getKeywordListNamesString();
         }
 
         @Override
@@ -1002,17 +1135,17 @@ class FileSearch {
                 KeywordListGroupKey otherKeywordListNamesGroupKey = (KeywordListGroupKey) otherGroupKey;
 
                 // Put the empty list at the end
-                if (keywordListNames.isEmpty()) {
-                    if (otherKeywordListNamesGroupKey.keywordListNames.isEmpty()) {
+                if (getKeywordListNames().isEmpty()) {
+                    if (otherKeywordListNamesGroupKey.getKeywordListNames().isEmpty()) {
                         return 0;
                     } else {
                         return 1;
                     }
-                } else if (otherKeywordListNamesGroupKey.keywordListNames.isEmpty()) {
+                } else if (otherKeywordListNamesGroupKey.getKeywordListNames().isEmpty()) {
                     return -1;
                 }
 
-                return keywordListNamesString.compareTo(otherKeywordListNamesGroupKey.keywordListNamesString);
+                return getKeywordListNamesString().compareTo(otherKeywordListNamesGroupKey.getKeywordListNamesString());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -1029,12 +1162,26 @@ class FileSearch {
             }
 
             KeywordListGroupKey otherKeywordListGroupKey = (KeywordListGroupKey) otherKey;
-            return keywordListNamesString.equals(otherKeywordListGroupKey.keywordListNamesString);
+            return getKeywordListNamesString().equals(otherKeywordListGroupKey.getKeywordListNamesString());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(keywordListNamesString);
+            return Objects.hash(getKeywordListNamesString());
+        }
+
+        /**
+         * @return the keywordListNames
+         */
+        List<String> getKeywordListNames() {
+            return Collections.unmodifiableList(keywordListNames);
+        }
+
+        /**
+         * @return the keywordListNamesString
+         */
+        String getKeywordListNamesString() {
+            return keywordListNamesString;
         }
     }
 
@@ -1136,14 +1283,14 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return frequency.toString();
+            return getFrequency().toString();
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof FrequencyGroupKey) {
                 FrequencyGroupKey otherFrequencyGroupKey = (FrequencyGroupKey) otherGroupKey;
-                return Integer.compare(frequency.getRanking(), otherFrequencyGroupKey.frequency.getRanking());
+                return Integer.compare(getFrequency().getRanking(), otherFrequencyGroupKey.getFrequency().getRanking());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -1160,12 +1307,19 @@ class FileSearch {
             }
 
             FrequencyGroupKey otherFrequencyGroupKey = (FrequencyGroupKey) otherKey;
-            return frequency.equals(otherFrequencyGroupKey.frequency);
+            return getFrequency().equals(otherFrequencyGroupKey.getFrequency());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(frequency.getRanking());
+            return Objects.hash(getFrequency().getRanking());
+        }
+
+        /**
+         * @return the frequency
+         */
+        Frequency getFrequency() {
+            return frequency;
         }
     }
 
@@ -1262,7 +1416,7 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return hashSetNamesString;
+            return getHashSetNamesString();
         }
 
         @Override
@@ -1271,17 +1425,17 @@ class FileSearch {
                 HashHitsGroupKey otherHashHitsGroupKey = (HashHitsGroupKey) otherGroupKey;
 
                 // Put the empty list at the end
-                if (hashSetNames.isEmpty()) {
-                    if (otherHashHitsGroupKey.hashSetNames.isEmpty()) {
+                if (getHashSetNames().isEmpty()) {
+                    if (otherHashHitsGroupKey.getHashSetNames().isEmpty()) {
                         return 0;
                     } else {
                         return 1;
                     }
-                } else if (otherHashHitsGroupKey.hashSetNames.isEmpty()) {
+                } else if (otherHashHitsGroupKey.getHashSetNames().isEmpty()) {
                     return -1;
                 }
 
-                return hashSetNamesString.compareTo(otherHashHitsGroupKey.hashSetNamesString);
+                return getHashSetNamesString().compareTo(otherHashHitsGroupKey.getHashSetNamesString());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -1298,12 +1452,26 @@ class FileSearch {
             }
 
             HashHitsGroupKey otherHashHitsGroupKey = (HashHitsGroupKey) otherKey;
-            return hashSetNamesString.equals(otherHashHitsGroupKey.hashSetNamesString);
+            return getHashSetNamesString().equals(otherHashHitsGroupKey.getHashSetNamesString());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(hashSetNamesString);
+            return Objects.hash(getHashSetNamesString());
+        }
+
+        /**
+         * @return the hashSetNames
+         */
+        List<String> getHashSetNames() {
+            return Collections.unmodifiableList(hashSetNames);
+        }
+
+        /**
+         * @return the hashSetNamesString
+         */
+        String getHashSetNamesString() {
+            return hashSetNamesString;
         }
     }
 
@@ -1402,7 +1570,7 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return interestingItemSetNamesString;
+            return getInterestingItemSetNamesString();
         }
 
         @Override
@@ -1411,17 +1579,17 @@ class FileSearch {
                 InterestingItemGroupKey otherInterestingItemGroupKey = (InterestingItemGroupKey) otherGroupKey;
 
                 // Put the empty list at the end
-                if (this.interestingItemSetNames.isEmpty()) {
-                    if (otherInterestingItemGroupKey.interestingItemSetNames.isEmpty()) {
+                if (this.getInterestingItemSetNames().isEmpty()) {
+                    if (otherInterestingItemGroupKey.getInterestingItemSetNames().isEmpty()) {
                         return 0;
                     } else {
                         return 1;
                     }
-                } else if (otherInterestingItemGroupKey.interestingItemSetNames.isEmpty()) {
+                } else if (otherInterestingItemGroupKey.getInterestingItemSetNames().isEmpty()) {
                     return -1;
                 }
 
-                return interestingItemSetNamesString.compareTo(otherInterestingItemGroupKey.interestingItemSetNamesString);
+                return getInterestingItemSetNamesString().compareTo(otherInterestingItemGroupKey.getInterestingItemSetNamesString());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -1438,12 +1606,26 @@ class FileSearch {
             }
 
             InterestingItemGroupKey otherInterestingItemGroupKey = (InterestingItemGroupKey) otherKey;
-            return interestingItemSetNamesString.equals(otherInterestingItemGroupKey.interestingItemSetNamesString);
+            return getInterestingItemSetNamesString().equals(otherInterestingItemGroupKey.getInterestingItemSetNamesString());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(interestingItemSetNamesString);
+            return Objects.hash(getInterestingItemSetNamesString());
+        }
+
+        /**
+         * @return the interestingItemSetNames
+         */
+        List<String> getInterestingItemSetNames() {
+            return Collections.unmodifiableList(interestingItemSetNames);
+        }
+
+        /**
+         * @return the interestingItemSetNamesString
+         */
+        String getInterestingItemSetNamesString() {
+            return interestingItemSetNamesString;
         }
     }
 
@@ -1541,7 +1723,7 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return objectDetectedNamesString;
+            return getObjectDetectedNamesString();
         }
 
         @Override
@@ -1550,17 +1732,17 @@ class FileSearch {
                 ObjectDetectedGroupKey otherObjectDetectedGroupKey = (ObjectDetectedGroupKey) otherGroupKey;
 
                 // Put the empty list at the end
-                if (this.objectDetectedNames.isEmpty()) {
-                    if (otherObjectDetectedGroupKey.objectDetectedNames.isEmpty()) {
+                if (this.getObjectDetectedNames().isEmpty()) {
+                    if (otherObjectDetectedGroupKey.getObjectDetectedNames().isEmpty()) {
                         return 0;
                     } else {
                         return 1;
                     }
-                } else if (otherObjectDetectedGroupKey.objectDetectedNames.isEmpty()) {
+                } else if (otherObjectDetectedGroupKey.getObjectDetectedNames().isEmpty()) {
                     return -1;
                 }
 
-                return objectDetectedNamesString.compareTo(otherObjectDetectedGroupKey.objectDetectedNamesString);
+                return getObjectDetectedNamesString().compareTo(otherObjectDetectedGroupKey.getObjectDetectedNamesString());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -1577,12 +1759,26 @@ class FileSearch {
             }
 
             ObjectDetectedGroupKey otherObjectDetectedGroupKey = (ObjectDetectedGroupKey) otherKey;
-            return objectDetectedNamesString.equals(otherObjectDetectedGroupKey.objectDetectedNamesString);
+            return getObjectDetectedNamesString().equals(otherObjectDetectedGroupKey.getObjectDetectedNamesString());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(objectDetectedNamesString);
+            return Objects.hash(getObjectDetectedNamesString());
+        }
+
+        /**
+         * @return the objectDetectedNames
+         */
+        List<String> getObjectDetectedNames() {
+            return Collections.unmodifiableList(objectDetectedNames);
+        }
+
+        /**
+         * @return the objectDetectedNamesString
+         */
+        String getObjectDetectedNamesString() {
+            return objectDetectedNamesString;
         }
     }
 
@@ -1699,7 +1895,7 @@ class FileSearch {
 
         @Override
         String getDisplayName() {
-            return tagNamesString;
+            return getTagNamesString();
         }
 
         @Override
@@ -1708,17 +1904,17 @@ class FileSearch {
                 FileTagGroupKey otherFileTagGroupKey = (FileTagGroupKey) otherGroupKey;
 
                 // Put the empty list at the end
-                if (tagNames.isEmpty()) {
-                    if (otherFileTagGroupKey.tagNames.isEmpty()) {
+                if (getTagNames().isEmpty()) {
+                    if (otherFileTagGroupKey.getTagNames().isEmpty()) {
                         return 0;
                     } else {
                         return 1;
                     }
-                } else if (otherFileTagGroupKey.tagNames.isEmpty()) {
+                } else if (otherFileTagGroupKey.getTagNames().isEmpty()) {
                     return -1;
                 }
 
-                return tagNamesString.compareTo(otherFileTagGroupKey.tagNamesString);
+                return getTagNamesString().compareTo(otherFileTagGroupKey.getTagNamesString());
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -1735,12 +1931,26 @@ class FileSearch {
             }
 
             FileTagGroupKey otherFileTagGroupKey = (FileTagGroupKey) otherKey;
-            return tagNamesString.equals(otherFileTagGroupKey.tagNamesString);
+            return getTagNamesString().equals(otherFileTagGroupKey.getTagNamesString());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(tagNamesString);
+            return Objects.hash(getTagNamesString());
+        }
+
+        /**
+         * @return the tagNames
+         */
+        List<String> getTagNames() {
+            return Collections.unmodifiableList(tagNames);
+        }
+
+        /**
+         * @return the tagNamesString
+         */
+        String getTagNamesString() {
+            return tagNamesString;
         }
     }
 
@@ -1787,13 +1997,8 @@ class FileSearch {
             if (otherKey == this) {
                 return true;
             }
-
-            if (!(otherKey instanceof NoGroupingGroupKey)) {
-                return false;
-            }
-
             // As long as the other key is the same type, they are equal
-            return true;
+            return otherKey instanceof NoGroupingGroupKey;
         }
 
         @Override

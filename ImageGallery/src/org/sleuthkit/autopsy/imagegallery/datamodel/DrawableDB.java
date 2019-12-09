@@ -135,6 +135,8 @@ public final class DrawableDB {
      * Prepared statements.
      */
     private List<PreparedStatement> preparedStatements = new ArrayList<>();
+    private PreparedStatement selectCountDataSourceIDs;
+    private PreparedStatement insertDataSourceStmt;
     private PreparedStatement updateDataSourceStmt;
     private PreparedStatement deleteDataSourceStmt;
     private PreparedStatement insertFileStmt;
@@ -193,8 +195,11 @@ public final class DrawableDB {
      * Enum for tracking the status of the image gallery database with respect
      * to the data sources in the case.
      *
-     * IMPORTANT: ADD NEW STATUSES TO THE END OF THE LIST, THE CARDNIAL VALUES
-     * OF THE ENUM ARE STORED IN THE IMAGE GAL:LERY DATABASE AS INTEGERS.
+     * IMPORTANT: ADD NEW STATUSES TO THE END OF THE LIST
+     *
+     * TODO: I'm (RC) not sure why this is required, it looks like the enum
+     * element names are stored in the image gallery database. Are the raw
+     * cardinal values used somewhere?
      */
     public enum DrawableDbBuildStatusEnum {
         /**
@@ -265,7 +270,9 @@ public final class DrawableDB {
 
     private boolean prepareStatements() {
         try {
-            updateDataSourceStmt = prepareStatement("INSERT OR REPLACE INTO datasources (ds_obj_id, drawable_db_build_status) VALUES (?,?)"); //NON-NLS
+            selectCountDataSourceIDs = prepareStatement("SELECT COUNT(*) FROM datasources WHERE ds_obj_id = ?"); //NON-NLS 
+            insertDataSourceStmt = prepareStatement("INSERT INTO datasources (ds_obj_id, drawable_db_build_status) VALUES (?,?)"); //NON-NLS            
+            updateDataSourceStmt = prepareStatement("UPDATE datasources SET drawable_db_build_status = ? WHERE ds_obj_id = ?"); //NON-NLS
             deleteDataSourceStmt = prepareStatement("DELETE FROM datasources where ds_obj_id = ?"); //NON-NLS
             insertFileStmt = prepareStatement("INSERT OR IGNORE INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) VALUES (?,?,?,?,?,?,?,?,?)"); //NON-NLS
             updateFileStmt = prepareStatement("INSERT OR REPLACE INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) VALUES (?,?,?,?,?,?,?,?,?)"); //NON-NLS
@@ -1698,24 +1705,33 @@ public final class DrawableDB {
     }
 
     /**
-     * Insert/update given data source object id and it's DB rebuild status in
-     * the datasources table.
+     * Inserts the given data source object ID and its status into the
+     * datasources table. If a record for the data source already exists, an
+     * update of the status is done instead.
      *
-     * If the object id exists in the table already, it updates the status
-     *
-     * @param dsObjectId data source object id to insert
-     * @param status     The db build statsus for datasource.
+     * @param dataSourceObjectID A data source object ID from the case database.
+     * @param status             The status of the data source with respect to
+     *                           populating the image gallery database.
      */
-    public void insertOrUpdateDataSource(long dsObjectId, DrawableDbBuildStatusEnum status) {
+    public void insertOrUpdateDataSource(long dataSourceObjectID, DrawableDbBuildStatusEnum status) throws SQLException {
         dbWriteLock();
         try {
-            // "INSERT OR REPLACE INTO datasources (ds_obj_id, drawable_db_build_status) " //NON-NLS
-            updateDataSourceStmt.setLong(1, dsObjectId);
-            updateDataSourceStmt.setString(2, status.name());
-
-            updateDataSourceStmt.executeUpdate();
-        } catch (SQLException | NullPointerException ex) {
-            logger.log(Level.SEVERE, "failed to insert/update datasources table", ex); //NON-NLS
+            // SELECT COUNT(*) FROM datasources WHERE ds_obj_id = ?
+            selectCountDataSourceIDs.setLong(1, dataSourceObjectID);
+            try (ResultSet resultSet = selectCountDataSourceIDs.executeQuery()) {
+                resultSet.next();
+                if (resultSet.getInt(1) == 0) {
+                    // INSERT INTO datasources (ds_obj_id, drawable_db_build_status) VALUES (?,?)
+                    insertDataSourceStmt.setLong(1, dataSourceObjectID);
+                    insertDataSourceStmt.setString(2, status.name());
+                    insertDataSourceStmt.execute();
+                } else {
+                    // UPDATE datasources SET drawable_db_build_status = ? WHERE ds_obj_id = ?
+                    updateDataSourceStmt.setString(1, status.name());
+                    updateDataSourceStmt.setLong(2, dataSourceObjectID);
+                    updateDataSourceStmt.executeUpdate();
+                }
+            }
         } finally {
             dbWriteUnlock();
         }
