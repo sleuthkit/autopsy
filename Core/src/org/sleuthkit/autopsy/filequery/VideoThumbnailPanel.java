@@ -1,0 +1,280 @@
+/*
+ * Autopsy
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.filequery;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.GridBagConstraints;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
+import java.util.concurrent.TimeUnit;
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import org.openide.util.ImageUtilities;
+import org.openide.util.NbBundle.Messages;
+
+/**
+ * Class which displays thumbnails and information for a video file.
+ */
+final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRenderer<VideoThumbnailsWrapper> {
+
+    private static final int GAP_SIZE = 4;
+    private static final Color SELECTION_COLOR = new Color(0, 120, 215);
+    private static final int BYTE_UNIT_CONVERSION = 1000;
+    private static final int ICON_SIZE = 16;
+    private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
+    private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
+    private static final String DELETE_ICON_PATH = "/org/sleuthkit/autopsy/images/file-icon-deleted.png";
+    private static final ImageIcon INTERESTING_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(YELLOW_CIRCLE_ICON_PATH, false));
+    private static final ImageIcon NOTABLE_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(RED_CIRCLE_ICON_PATH, false));
+    private static final ImageIcon DELETED_ICON = new ImageIcon(ImageUtilities.loadImage(DELETE_ICON_PATH, false));
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Creates new form VideoThumbnailPanel
+     */
+    VideoThumbnailPanel() {
+        initComponents();
+        this.setFocusable(true);
+    }
+
+    /**
+     * Add the thumbnails to the panel.
+     *
+     * @param thumbnailWrapper
+     */
+    private void addThumbnails(VideoThumbnailsWrapper thumbnailWrapper) {
+        imagePanel.removeAll();
+        GridBagConstraints gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = GridBagConstraints.LINE_START;
+        imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 32767)), gridBagConstraints);
+        gridBagConstraints.gridy = 1;
+        imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 32767)), gridBagConstraints);
+        gridBagConstraints.gridx++;
+        int timeIndex = 0;
+        int[] timeStamps = thumbnailWrapper.getTimeStamps();
+        for (Image image : thumbnailWrapper.getThumbnails()) {
+            gridBagConstraints.gridy = 0;
+            imagePanel.add(new JLabel(new ImageIcon(image)), gridBagConstraints);
+            gridBagConstraints.gridy = 1;
+            long millis = timeStamps[timeIndex];
+            long hours = TimeUnit.MILLISECONDS.toHours(millis);
+            millis -= TimeUnit.HOURS.toMillis(hours);
+            long minutes = TimeUnit.MILLISECONDS.toMinutes(millis);
+            millis -= TimeUnit.MINUTES.toMillis(minutes);
+            long seconds = TimeUnit.MILLISECONDS.toSeconds(millis);
+            imagePanel.add(new JLabel(String.format("%01d:%02d:%02d", hours, minutes, seconds)), gridBagConstraints);
+            gridBagConstraints.gridx++;
+            gridBagConstraints.gridy = 0;
+            imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 32767)), gridBagConstraints);
+            gridBagConstraints.gridy = 1;
+            imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 32767)), gridBagConstraints);
+            gridBagConstraints.gridx++;
+            timeIndex++;
+        }
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        imagePanel = new javax.swing.JPanel();
+        fileSizeLabel = new javax.swing.JLabel();
+        countLabel = new javax.swing.JLabel();
+        scoreLabel = new javax.swing.JLabel();
+        deletedLabel = new javax.swing.JLabel();
+
+        setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
+        imagePanel.setLayout(new java.awt.GridBagLayout());
+
+        scoreLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/red-circle-exclamation.png"))); // NOI18N
+        scoreLabel.setMaximumSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        scoreLabel.setMinimumSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        scoreLabel.setPreferredSize(new Dimension(ICON_SIZE,ICON_SIZE));
+
+        deletedLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/file-icon-deleted.png"))); // NOI18N
+        deletedLabel.setMaximumSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        deletedLabel.setMinimumSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        deletedLabel.setPreferredSize(new Dimension(ICON_SIZE,ICON_SIZE));
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(imagePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 776, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(fileSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(countLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(deletedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(scoreLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(imagePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(fileSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(deletedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(scoreLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(countLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel countLabel;
+    private javax.swing.JLabel deletedLabel;
+    private javax.swing.JLabel fileSizeLabel;
+    private javax.swing.JPanel imagePanel;
+    private javax.swing.JLabel scoreLabel;
+    // End of variables declaration//GEN-END:variables
+
+    @Messages({
+        "# {0} - numberOfInstances",
+        "VideoThumbnailPanel.countLabel.text=Number of Instances: {0}",
+        "VideoThumbnailPanel.deleted.text=All instances of file are deleted."})
+    @Override
+    public Component getListCellRendererComponent(JList<? extends VideoThumbnailsWrapper> list, VideoThumbnailsWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
+        fileSizeLabel.setText(getFileSizeString(value.getResultFile().getFirstInstance().getSize()));
+        countLabel.setText(Bundle.VideoThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
+        addThumbnails(value);
+        imagePanel.setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
+        if (value.getResultFile().isDeleted()) {
+            deletedLabel.setIcon(DELETED_ICON);
+            deletedLabel.setToolTipText(Bundle.VideoThumbnailPanel_deleted_text());
+        } else {
+            deletedLabel.setIcon(null);
+            deletedLabel.setToolTipText("");
+        }
+        switch (value.getResultFile().getScore()) {
+            case NOTABLE_SCORE:
+                scoreLabel.setIcon(NOTABLE_SCORE_ICON);
+                break;
+            case INTERESTING_SCORE:
+                scoreLabel.setIcon(INTERESTING_SCORE_ICON);
+                break;
+            case NO_SCORE: // empty case - this is interpreted as an intentional fall-through
+            default:
+                scoreLabel.setIcon(null);
+                break;
+        }
+        scoreLabel.setToolTipText(value.getResultFile().getScoreDescription());
+        setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
+        return this;
+    }
+
+    @Messages({"# {0} - fileSize",
+        "# {1} - units",
+        "VideoThumbnailPanel.sizeLabel.text=Size: {0} {1}",
+        "VideoThumbnailPanel.bytes.text=bytes",
+        "VideoThumbnailPanel.kiloBytes.text=KB",
+        "VideoThumbnailPanel.megaBytes.text=MB",
+        "VideoThumbnailPanel.gigaBytes.text=GB",
+        "VideoThumbnailPanel.terraBytes.text=TB"})
+    /**
+     * Convert a size in bytes to a string with representing the size in the
+     * largest units which represent the value as being greater than or equal to
+     * one. Result will be rounded down to the nearest whole number of those
+     * units.
+     *
+     * @param bytes Size in bytes.
+     */
+    private String getFileSizeString(long bytes) {
+        long size = bytes;
+        int unitsSwitchValue = 0;
+        while (size > BYTE_UNIT_CONVERSION && unitsSwitchValue < 4) {
+            size /= BYTE_UNIT_CONVERSION;
+            unitsSwitchValue++;
+        }
+        String units;
+        switch (unitsSwitchValue) {
+            case 1:
+                units = Bundle.VideoThumbnailPanel_kiloBytes_text();
+                break;
+            case 2:
+                units = Bundle.VideoThumbnailPanel_megaBytes_text();
+                break;
+            case 3:
+                units = Bundle.VideoThumbnailPanel_gigaBytes_text();
+                break;
+            case 4:
+                units = Bundle.VideoThumbnailPanel_terraBytes_text();
+                break;
+            default:
+                units = Bundle.VideoThumbnailPanel_bytes_text();
+                break;
+        }
+        return Bundle.VideoThumbnailPanel_sizeLabel_text(size, units);
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+        if (event != null) {
+            //gets tooltip of internal panel item mouse is over
+            Point point = event.getPoint();
+            for (Component comp : getComponents()) {
+                if (isPointOnIcon(comp, point)) {
+                    String toolTip = ((JComponent) comp).getToolTipText();
+                    if (toolTip == null || toolTip.isEmpty()) {
+                        return null;
+                    } else {
+                        return toolTip;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Helper method to see if point is on the icon.
+     *
+     * @param comp  The component to check if the cursor is over the icon of
+     * @param point The point the cursor is at.
+     *
+     * @return True if the point is over the icon, false otherwise.
+     */
+    private boolean isPointOnIcon(Component comp, Point point) {
+        return comp instanceof JComponent && point.x >= comp.getX() && point.x <= comp.getX() + ICON_SIZE && point.y >= comp.getY() && point.y <= comp.getY() + ICON_SIZE;
+    }
+}

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,26 +16,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.filesearch;
-
-import java.util.List;
-import org.openide.nodes.AbstractNode;
-import org.openide.util.NbBundle;
-import org.sleuthkit.datamodel.AbstractFile;
+package org.sleuthkit.autopsy.filequery;
 
 /**
- *
- * @author jantonius
+ * Exception type used for FileSearch
  */
-class SearchNode extends AbstractNode {
-
-    SearchNode(List<AbstractFile> keys) {
-        super(new SearchChildren(true, keys));
+public class FileSearchException extends Exception {
+    private static final long serialVersionUID = 1L;
+    
+    /**
+     * Create exception from a string
+     * 
+     * @param message 
+     */
+    public FileSearchException(String message) {
+        super(message);
     }
-
-    @NbBundle.Messages({"SearchNode.getName.text=Search Result"})
-    @Override
-    public String getName() {
-        return NbBundle.getMessage(this.getClass(), "SearchNode.getName.text");
+    
+    /**
+     * Create exception for a string and cause
+     * 
+     * @param message
+     * @param cause 
+     */
+    public FileSearchException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
