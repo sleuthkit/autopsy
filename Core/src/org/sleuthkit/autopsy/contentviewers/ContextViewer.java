@@ -84,6 +84,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         jSourceNameLabel = new javax.swing.JLabel();
         jSourceTextLabel = new javax.swing.JLabel();
 
+        setBackground(new java.awt.Color(255, 255, 255));
+
         org.openide.awt.Mnemonics.setLocalizedText(jSourceGoToResultButton, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceGoToResultButton.text")); // NOI18N
         jSourceGoToResultButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -160,7 +162,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     }
 
     @NbBundle.Messages({
-        "ContextViewer.title=Context Viewer",
+        "ContextViewer.title=Context",
         "ContextViewer.toolTip=Displays context for selected file."
     })
     
@@ -363,7 +365,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         "ContextViewer.message=Message",
         "ContextViewer.email=Email",
         "ContextViewer.messageFrom=From",
-        "ContextViewer.messageTo=From",
+        "ContextViewer.messageTo=To",
         "ContextViewer.messageOn=On",
     })
     private String msgArtifactToAbbreviatedString(BlackboardArtifact artifact) throws TskCoreException {
