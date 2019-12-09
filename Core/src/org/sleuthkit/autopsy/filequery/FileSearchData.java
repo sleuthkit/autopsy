@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 /**
  * Utility enums for FileSearch
  */
-class FileSearchData {
+final class FileSearchData {
 
     private final static long BYTES_PER_MB = 1000000;
 
@@ -38,23 +38,18 @@ class FileSearchData {
      */
     @NbBundle.Messages({
         "FileSearchData.Frequency.unique.displayName=Unique (1)",
-        "FileSearchData.Frequency.rare.displayName=Rare (2-5)",
-        "FileSearchData.Frequency.count_10.displayName=6 - 10",
-        "FileSearchData.Frequency.count_20.displayName=11 - 20",
-        "FileSearchData.Frequency.count_50.displayName=21 - 50",
-        "FileSearchData.Frequency.count_100.displayName=51 - 100",
-        "FileSearchData.Frequency.common.displayName=Common",
+        "FileSearchData.Frequency.rare.displayName=Rare (2-10)",
+        "FileSearchData.Frequency.common.displayName=Common (11 - 100)",
+        "FileSearchData.Frequency.verycommon.displayName=Very Common (100+)",
+        "FileSearchData.Frequency.known.displayName=Known (NSRL)",
         "FileSearchData.Frequency.unknown.displayName=Unknown",})
     enum Frequency {
         UNIQUE(0, 1, Bundle.FileSearchData_Frequency_unique_displayName()),
-        RARE(1, 5, Bundle.FileSearchData_Frequency_rare_displayName()),
-        COUNT_10(2, 10, Bundle.FileSearchData_Frequency_count_10_displayName()),
-        COUNT_20(3, 20, Bundle.FileSearchData_Frequency_count_20_displayName()),
-        COUNT_50(4, 50, Bundle.FileSearchData_Frequency_count_50_displayName()),
-        COUNT_100(5, 100, Bundle.FileSearchData_Frequency_count_100_displayName()),
-        COMMON(6, 0, Bundle.FileSearchData_Frequency_common_displayName()),
-        KNOWN(7, 0, "Known (NSRL)"),
-        UNKNOWN(8, 0, Bundle.FileSearchData_Frequency_unknown_displayName());
+        RARE(1, 10, Bundle.FileSearchData_Frequency_rare_displayName()),
+        COMMON(2, 100, Bundle.FileSearchData_Frequency_common_displayName()),
+        VERY_COMMON(3, 0, Bundle.FileSearchData_Frequency_common_displayName()),
+        KNOWN(4, 0, Bundle.FileSearchData_Frequency_known_displayName()),
+        UNKNOWN(5, 0, Bundle.FileSearchData_Frequency_unknown_displayName());
 
         private final int ranking;
         private final String displayName;
@@ -87,16 +82,10 @@ class FileSearchData {
                 return UNIQUE;
             } else if (count <= RARE.getMaxOccur()) {
                 return RARE;
-            } else if (count <= COUNT_10.getMaxOccur()) {
-                return COUNT_10;
-            } else if (count <= COUNT_20.getMaxOccur()) {
-                return COUNT_20;
-            } else if (count <= COUNT_50.getMaxOccur()) {
-                return COUNT_50;
-            } else if (count <= COUNT_100.getMaxOccur()) {
-                return COUNT_100;
+            } else if (count <= COMMON.getMaxOccur()) {
+                return COMMON;
             }
-            return COMMON;
+            return VERY_COMMON;
         }
 
         /**
@@ -106,7 +95,7 @@ class FileSearchData {
          * @return enums that can be used to filter with a CR.
          */
         static List<Frequency> getOptionsForFilteringWithCr() {
-            return Arrays.asList(UNIQUE, RARE, COUNT_10, COUNT_20, COUNT_50, COUNT_100, COMMON, KNOWN);
+            return Arrays.asList(UNIQUE, RARE, COMMON, VERY_COMMON, KNOWN);
         }
 
         /**
@@ -136,29 +125,31 @@ class FileSearchData {
      * Enum representing the file size
      */
     @NbBundle.Messages({
-        "FileSearchData.FileSize.OVER_10GB.displayName=10 GB+",
-        "FileSearchData.FileSize.OVER_5GB.displayName=5 - 10 GB",
-        "FileSearchData.FileSize.OVER_1GB_VIDEO.displayName=1 - 5 GB",
-        "FileSearchData.FileSize.OVER_1GB_IMAGE.displayName=1 GB+",
-        "FileSearchData.FileSize.OVER_200MB.displayName=200 MB - 1 GB",
-        "FileSearchData.FileSize.OVER_50MB.displayName=50 - 200 MB",
-        "FileSearchData.FileSize.OVER_1MB.displayName=1 - 50 MB",
-        "FileSearchData.FileSize.OVER_100KB.displayName=100 KB - 1 MB",
-        "FileSearchData.FileSize.UNDER_100KB.displayName=Under 100 KB",
-        "FileSearchData.FileSize.OVER_16KB.displayName=16 KB - 100 KB",
-        "FileSearchData.FileSize.UNDER_16KB.displayName=Under 16 KB",})
+        "FileSearchData.FileSize.XXLARGE_IMAGE.displayName=XXLarge: 200MB+",
+        "FileSearchData.FileSize.XLARGE_IMAGE.displayName=XLarge: 50-200MB",
+        "FileSearchData.FileSize.LARGE_IMAGE.displayName=Large: 1-50MB",
+        "FileSearchData.FileSize.MEDIUM_IMAGE.displayName=Medium: 100KB-1MB",
+        "FileSearchData.FileSize.SMALL_IMAGE.displayName=Small: 16-100KB",
+        "FileSearchData.FileSize.XSMALL_IMAGE.displayName=XSmall: 0-16KB",
+        "FileSearchData.FileSize.XXLARGE_VIDEO.displayName=XXLarge: 10GB+",
+        "FileSearchData.FileSize.XLARGE_VIDEO.displayName=XLarge: 5-10GB",
+        "FileSearchData.FileSize.LARGE_VIDEO.displayName=Large: 1-5GB",
+        "FileSearchData.FileSize.MEDIUM_VIDEO.displayName=Medium: 100MB-1GB",
+        "FileSearchData.FileSize.SMALL_VIDEO.displayName=Small: 500KB-100MB",
+        "FileSearchData.FileSize.XSMALL_VIDEO.displayName=XSmall: 0-500KB",})
     enum FileSize {
-        OVER_10GB(0, 10000 * BYTES_PER_MB, -1, Bundle.FileSearchData_FileSize_OVER_10GB_displayName()),
-        OVER_5GB(1, 5000 * BYTES_PER_MB, 10000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_OVER_5GB_displayName()),
-        OVER_1GB_VIDEO(2, 1000 * BYTES_PER_MB, -1, Bundle.FileSearchData_FileSize_OVER_1GB_VIDEO_displayName()),
-        OVER_1GB_IMAGE(3, 1000 * BYTES_PER_MB, -1, Bundle.FileSearchData_FileSize_OVER_1GB_IMAGE_displayName()),
-        OVER_200MB(4, 200 * BYTES_PER_MB, 1000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_OVER_200MB_displayName()),
-        OVER_50MB(5, 50 * BYTES_PER_MB, 200 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_OVER_50MB_displayName()),
-        OVER_1MB(6, 1 * BYTES_PER_MB, 50 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_OVER_1MB_displayName()),
-        OVER_100KB(7, 100000, 1 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_OVER_100KB_displayName()),
-        UNDER_100KB(8, 0, 1 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_UNDER_100KB_displayName()),
-        OVER_16KB(9, 16000, 100000, Bundle.FileSearchData_FileSize_OVER_16KB_displayName()),
-        UNDER_16KB(10, 0, 16000, Bundle.FileSearchData_FileSize_UNDER_16KB_displayName());
+        XXLARGE_VIDEO(0, 10000 * BYTES_PER_MB, -1, Bundle.FileSearchData_FileSize_XXLARGE_VIDEO_displayName()),
+        XLARGE_VIDEO(1, 5000 * BYTES_PER_MB, 10000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_XLARGE_VIDEO_displayName()),
+        LARGE_VIDEO(2, 1000 * BYTES_PER_MB, 5000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_LARGE_VIDEO_displayName()),
+        MEDIUM_VIDEO(3, 100 * BYTES_PER_MB, 1000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_MEDIUM_VIDEO_displayName()),
+        SMALL_VIDEO(4, 500000, 100 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_SMALL_VIDEO_displayName()),
+        XSMALL_VIDEO(5, 0, 500000, Bundle.FileSearchData_FileSize_XSMALL_VIDEO_displayName()),
+        XXLARGE_IMAGE(6, 200 * BYTES_PER_MB, -1, Bundle.FileSearchData_FileSize_XXLARGE_IMAGE_displayName()),
+        XLARGE_IMAGE(7, 50 * BYTES_PER_MB, 200 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_XLARGE_IMAGE_displayName()),
+        LARGE_IMAGE(8, 1 * BYTES_PER_MB, 50 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_LARGE_IMAGE_displayName()),
+        MEDIUM_IMAGE(9, 100000, 1 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_MEDIUM_IMAGE_displayName()),
+        SMALL_IMAGE(10, 16000, 100000, Bundle.FileSearchData_FileSize_SMALL_IMAGE_displayName()),
+        XSMALL_IMAGE(11, 0, 16000, Bundle.FileSearchData_FileSize_XSMALL_IMAGE_displayName());
 
         private final int ranking;   // Must be unique for each value
         private final long minBytes; // Note that the size must be strictly greater than this to match
@@ -186,20 +177,18 @@ class FileSearchData {
          * @return the enum whose range contains the file size
          */
         static FileSize fromImageSize(long size) {
-            if (size > OVER_1GB_IMAGE.getMinBytes()) {
-                return OVER_1GB_IMAGE;
-            } else if (size > OVER_200MB.getMinBytes()) {
-                return OVER_200MB;
-            } else if (size > OVER_50MB.getMinBytes()) {
-                return OVER_50MB;
-            } else if (size > OVER_1MB.getMinBytes()) {
-                return OVER_1MB;
-            } else if (size > OVER_100KB.getMinBytes()) {
-                return OVER_100KB;
-            } else if (size > OVER_16KB.getMinBytes()) {
-                return OVER_16KB;
+            if (size > XXLARGE_IMAGE.getMinBytes()) {
+                return XXLARGE_IMAGE;
+            } else if (size > XLARGE_IMAGE.getMinBytes()) {
+                return XLARGE_IMAGE;
+            } else if (size > LARGE_IMAGE.getMinBytes()) {
+                return LARGE_IMAGE;
+            } else if (size > MEDIUM_IMAGE.getMinBytes()) {
+                return MEDIUM_IMAGE;
+            } else if (size > SMALL_IMAGE.getMinBytes()) {
+                return SMALL_IMAGE;
             } else {
-                return UNDER_16KB;
+                return XSMALL_IMAGE;
             }
         }
 
@@ -212,22 +201,18 @@ class FileSearchData {
          * @return the enum whose range contains the file size
          */
         static FileSize fromVideoSize(long size) {
-            if (size > OVER_10GB.getMinBytes()) {
-                return OVER_10GB;
-            } else if (size > OVER_5GB.getMinBytes()) {
-                return OVER_5GB;
-            } else if (size > OVER_1GB_VIDEO.getMinBytes()) {
-                return OVER_1GB_VIDEO;
-            } else if (size > OVER_200MB.getMinBytes()) {
-                return OVER_200MB;
-            } else if (size > OVER_50MB.getMinBytes()) {
-                return OVER_50MB;
-            } else if (size > OVER_1MB.getMinBytes()) {
-                return OVER_1MB;
-            } else if (size > OVER_100KB.getMinBytes()) {
-                return OVER_100KB;
+            if (size > XXLARGE_VIDEO.getMinBytes()) {
+                return XXLARGE_VIDEO;
+            } else if (size > XLARGE_VIDEO.getMinBytes()) {
+                return XLARGE_VIDEO;
+            } else if (size > LARGE_VIDEO.getMinBytes()) {
+                return LARGE_VIDEO;
+            } else if (size > MEDIUM_VIDEO.getMinBytes()) {
+                return MEDIUM_VIDEO;
+            } else if (size > SMALL_VIDEO.getMinBytes()) {
+                return SMALL_VIDEO;
             } else {
-                return UNDER_100KB;
+                return XSMALL_VIDEO;
             }
         }
 
@@ -269,7 +254,7 @@ class FileSearchData {
          * @return enums that can be used to filter images by size.
          */
         static List<FileSize> getOptionsForImages() {
-            return Arrays.asList(OVER_1GB_IMAGE, OVER_200MB, OVER_50MB, OVER_1MB, OVER_100KB, OVER_16KB, UNDER_16KB);
+            return Arrays.asList(XXLARGE_IMAGE, XLARGE_IMAGE, LARGE_IMAGE, MEDIUM_IMAGE, SMALL_IMAGE, XSMALL_IMAGE);
         }
 
         /**
@@ -278,7 +263,7 @@ class FileSearchData {
          * @return enums that can be used to filter videos by size.
          */
         static List<FileSize> getOptionsForVideos() {
-            return Arrays.asList(OVER_10GB, OVER_5GB, OVER_1GB_VIDEO, OVER_200MB, OVER_50MB, OVER_1MB, OVER_100KB, UNDER_100KB);
+            return Arrays.asList(XXLARGE_VIDEO, XLARGE_VIDEO, LARGE_VIDEO, MEDIUM_VIDEO, SMALL_VIDEO, XSMALL_VIDEO);
         }
     }
 
@@ -308,7 +293,7 @@ class FileSearchData {
         private final String displayName;
         private final Collection<String> mediaTypes;
 
-        private FileType(int value, String displayName, Collection<String> mediaTypes) {
+        FileType(int value, String displayName, Collection<String> mediaTypes) {
             this.ranking = value;
             this.displayName = displayName;
             this.mediaTypes = mediaTypes;

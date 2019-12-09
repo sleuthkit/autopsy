@@ -37,6 +37,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
 
     private static final long serialVersionUID = 1L;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
+    private static final int BYTE_UNIT_CONVERSION = 1000;
     private static final int ICON_SIZE = 16;
     private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
     private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
@@ -136,14 +137,13 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
     private javax.swing.JLabel thumbnailLabel;
     // End of variables declaration//GEN-END:variables
 
-    @NbBundle.Messages({"# {0} - fileSize",
-        "ImageThumbnailPanel.sizeLabel.text=Size: {0} bytes",
+    @NbBundle.Messages({
         "# {0} - numberOfInstances",
         "ImageThumbnailPanel.countLabel.text=Number of Instances: {0}",
         "ImageThumbnailPanel.isDeleted.text=All instances of file are deleted."})
     @Override
     public Component getListCellRendererComponent(JList<? extends ImageThumbnailWrapper> list, ImageThumbnailWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
-        fileSizeLabel.setText(Bundle.ImageThumbnailPanel_sizeLabel_text(value.getResultFile().getFirstInstance().getSize()));
+        fileSizeLabel.setText(getFileSizeString(value.getResultFile().getFirstInstance().getSize()));
         countLabel.setText(Bundle.ImageThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
         thumbnailLabel.setIcon(new ImageIcon(value.getThumbnail()));
         if (value.getResultFile().isDeleted()) {
@@ -160,7 +160,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
             case INTERESTING_SCORE:
                 scoreLabel.setIcon(INTERESTING_SCORE_ICON);
                 break;
-            case NO_SCORE:
+            case NO_SCORE:  // empty case - this is interpreted as an intentional fall-through
             default:
                 scoreLabel.setIcon(null);
                 break;
@@ -169,6 +169,50 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
 
         return this;
+    }
+
+    @NbBundle.Messages({"# {0} - fileSize",
+        "# {1} - units",
+        "ImageThumbnailPanel.sizeLabel.text=Size: {0} {1}",
+        "ImageThumbnailPanel.bytes.text=bytes",
+        "ImageThumbnailPanel.kiloBytes.text=KB",
+        "ImageThumbnailPanel.megaBytes.text=MB",
+        "ImageThumbnailPanel.gigaBytes.text=GB",
+        "ImageThumbnailPanel.terraBytes.text=TB"})
+    /**
+     * Convert a size in bytes to a string with representing the size in the
+     * largest units which represent the value as being greater than or equal to
+     * one. Result will be rounded down to the nearest whole number of those
+     * units.
+     *
+     * @param bytes Size in bytes.
+     */
+    private String getFileSizeString(long bytes) {
+        long size = bytes;
+        int unitsSwitchValue = 0;
+        while (size > BYTE_UNIT_CONVERSION && unitsSwitchValue < 4) {
+            size /= BYTE_UNIT_CONVERSION;
+            unitsSwitchValue++;
+        }
+        String units;
+        switch (unitsSwitchValue) {
+            case 1:
+                units = Bundle.ImageThumbnailPanel_kiloBytes_text();
+                break;
+            case 2:
+                units = Bundle.ImageThumbnailPanel_megaBytes_text();
+                break;
+            case 3:
+                units = Bundle.ImageThumbnailPanel_gigaBytes_text();
+                break;
+            case 4:
+                units = Bundle.ImageThumbnailPanel_terraBytes_text();
+                break;
+            default:
+                units = Bundle.ImageThumbnailPanel_bytes_text();
+                break;
+        }
+        return Bundle.ImageThumbnailPanel_sizeLabel_text(size, units);
     }
 
     @Override
