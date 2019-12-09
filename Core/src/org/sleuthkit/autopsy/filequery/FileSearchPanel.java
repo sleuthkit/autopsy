@@ -1115,12 +1115,12 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         scoreList = new javax.swing.JList<>();
         excludeRadioButton = new javax.swing.JRadioButton();
         knownFilesCheckbox = new javax.swing.JCheckBox();
-        jPanel1 = new javax.swing.JPanel();
+        fullRadioPanel = new javax.swing.JPanel();
         fullRadioButton = new javax.swing.JRadioButton();
-        jPanel2 = new javax.swing.JPanel();
+        includeRadioPanel = new javax.swing.JPanel();
         filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767));
         includeRadioButton = new javax.swing.JRadioButton();
-        jPanel3 = new javax.swing.JPanel();
+        parentTextPanel = new javax.swing.JPanel();
         parentTextField = new javax.swing.JTextField();
         searchButton = new javax.swing.JButton();
         sortingPanel = new javax.swing.JPanel();
@@ -1544,18 +1544,18 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         org.openide.awt.Mnemonics.setLocalizedText(fullRadioButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.fullRadioButton.text")); // NOI18N
         fullRadioButton.setEnabled(false);
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+        javax.swing.GroupLayout fullRadioPanelLayout = new javax.swing.GroupLayout(fullRadioPanel);
+        fullRadioPanel.setLayout(fullRadioPanelLayout);
+        fullRadioPanelLayout.setHorizontalGroup(
+            fullRadioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, fullRadioPanelLayout.createSequentialGroup()
                 .addContainerGap(58, Short.MAX_VALUE)
                 .addComponent(fullRadioButton)
                 .addGap(20, 20, 20))
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        fullRadioPanelLayout.setVerticalGroup(
+            fullRadioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(fullRadioPanelLayout.createSequentialGroup()
                 .addComponent(fullRadioButton)
                 .addGap(0, 4, Short.MAX_VALUE))
         );
@@ -1566,24 +1566,24 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 1.0;
-        filtersPanel.add(jPanel1, gridBagConstraints);
+        filtersPanel.add(fullRadioPanel, gridBagConstraints);
 
         parentIncludeButtonGroup.add(includeRadioButton);
         includeRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(includeRadioButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.includeRadioButton.text")); // NOI18N
         includeRadioButton.setEnabled(false);
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
+        javax.swing.GroupLayout includeRadioPanelLayout = new javax.swing.GroupLayout(includeRadioPanel);
+        includeRadioPanel.setLayout(includeRadioPanelLayout);
+        includeRadioPanelLayout.setHorizontalGroup(
+            includeRadioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(includeRadioPanelLayout.createSequentialGroup()
                 .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 58, Short.MAX_VALUE)
                 .addComponent(includeRadioButton))
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        includeRadioPanelLayout.setVerticalGroup(
+            includeRadioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addComponent(includeRadioButton)
         );
@@ -1594,20 +1594,20 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 1.0;
-        filtersPanel.add(jPanel2, gridBagConstraints);
+        filtersPanel.add(includeRadioPanel, gridBagConstraints);
 
         parentTextField.setEnabled(false);
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+        javax.swing.GroupLayout parentTextPanelLayout = new javax.swing.GroupLayout(parentTextPanel);
+        parentTextPanel.setLayout(parentTextPanelLayout);
+        parentTextPanelLayout.setHorizontalGroup(
+            parentTextPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, parentTextPanelLayout.createSequentialGroup()
                 .addGap(0, 0, 0)
                 .addComponent(parentTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 71, Short.MAX_VALUE))
         );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        parentTextPanelLayout.setVerticalGroup(
+            parentTextPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(parentTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
@@ -1618,7 +1618,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.weightx = 1.5;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 0);
-        filtersPanel.add(jPanel3, gridBagConstraints);
+        filtersPanel.add(parentTextPanel, gridBagConstraints);
 
         filtersScrollPane.setViewportView(filtersPanel);
 
@@ -1708,9 +1708,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(searchButton))
                             .addComponent(stepThreeLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGap(0, 0, 0))
+                            .addComponent(filtersScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(sortingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 309, Short.MAX_VALUE))
                         .addGap(6, 6, 6))))
         );
@@ -1909,6 +1907,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JPanel filtersPanel;
     private javax.swing.JScrollPane filtersScrollPane;
     private javax.swing.JRadioButton fullRadioButton;
+    private javax.swing.JPanel fullRadioPanel;
     private javax.swing.JComboBox<GroupingAttributeType> groupByCombobox;
     private javax.swing.JLabel groupByLabel;
     private javax.swing.JComboBox<GroupSortingAlgorithm> groupSortingComboBox;
@@ -1916,12 +1915,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JList<String> hashSetList;
     private javax.swing.JScrollPane hashSetScrollPane;
     private javax.swing.JRadioButton includeRadioButton;
+    private javax.swing.JPanel includeRadioPanel;
     private javax.swing.JCheckBox interestingItemsCheckbox;
     private javax.swing.JList<String> interestingItemsList;
     private javax.swing.JScrollPane interestingItemsScrollPane;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
     private javax.swing.JCheckBox keywordCheckbox;
     private javax.swing.JList<String> keywordList;
     private javax.swing.JScrollPane keywordScrollPane;
@@ -1938,6 +1935,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JList<ParentSearchTerm> parentList;
     private javax.swing.JScrollPane parentScrollPane;
     private javax.swing.JTextField parentTextField;
+    private javax.swing.JPanel parentTextPanel;
     private javax.swing.JCheckBox scoreCheckbox;
     private javax.swing.JList<Score> scoreList;
     private javax.swing.JScrollPane scoreScrollPane;

@@ -31,42 +31,45 @@ import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
  * Class to hold the results of the filtering/grouping/sorting operations
  */
 class SearchResults {
-    
+
     private final FileGroup.GroupSortingAlgorithm groupSortingType;
     private final FileSearch.AttributeType attrType;
     private final FileSorter fileSorter;
-    
+
     private final Map<FileSearch.GroupKey, FileGroup> groupMap = new HashMap<>();
     private List<FileGroup> groupList = new ArrayList<>();
-    
+
     private final long MAX_OUTPUT_FILES = 2000; // For debug UI - maximum number of lines to print
-    
+
     /**
      * Create an empty SearchResults object
-     * 
-     * @param groupSortingType  The method that should be used to sortGroupsAndFiles the groups
+     *
+     * @param groupSortingType  The method that should be used to
+     *                          sortGroupsAndFiles the groups
      * @param attrType          The attribute type to use for grouping
-     * @param fileSortingMethod The method that should be used to sortGroupsAndFiles the files in each group
+     * @param fileSortingMethod The method that should be used to
+     *                          sortGroupsAndFiles the files in each group
      */
-    SearchResults(FileGroup.GroupSortingAlgorithm groupSortingType, FileSearch.AttributeType attrType, 
+    SearchResults(FileGroup.GroupSortingAlgorithm groupSortingType, FileSearch.AttributeType attrType,
             FileSorter.SortingMethod fileSortingMethod) {
         this.groupSortingType = groupSortingType;
         this.attrType = attrType;
         this.fileSorter = new FileSorter(fileSortingMethod);
     }
-    
+
     /**
-     * Create an dummy SearchResults object that can be used in the UI before the search is finished.
+     * Create an dummy SearchResults object that can be used in the UI before
+     * the search is finished.
      */
     SearchResults() {
         this.groupSortingType = FileGroup.GroupSortingAlgorithm.BY_GROUP_NAME;
         this.attrType = new FileSearch.FileSizeAttribute();
         this.fileSorter = new FileSorter(FileSorter.SortingMethod.BY_FILE_NAME);
-    }   
-    
+    }
+
     /**
      * Add a list of ResultFile to the results
-     * 
+     *
      * @param files the ResultFiles
      */
     void add(List<ResultFile> files) {
@@ -74,39 +77,40 @@ class SearchResults {
             // Add the file to the appropriate group, creating it if necessary
             FileSearch.GroupKey groupKey = attrType.getGroupKey(file);
 
-            if ( ! groupMap.containsKey(groupKey)) {
-                groupMap.put(groupKey, new FileGroup(groupSortingType, groupKey));            
+            if (!groupMap.containsKey(groupKey)) {
+                groupMap.put(groupKey, new FileGroup(groupSortingType, groupKey));
             }
             groupMap.get(groupKey).addFile(file);
         }
     }
-    
+
     /**
-     * Run after all files have been added to sortGroupsAndFiles the groups and files.
+     * Run after all files have been added to sortGroupsAndFiles the groups and
+     * files.
      */
     void sortGroupsAndFiles() {
-        
+
         // First sortGroupsAndFiles the files
         for (FileGroup group : groupMap.values()) {
             group.sortFiles(fileSorter);
         }
-        
+
         // Now put the groups in a list and sortGroupsAndFiles them
         groupList = new ArrayList<>(groupMap.values());
         Collections.sort(groupList);
     }
-    
+
     @Override
     public String toString() {
         String result = "";
         if (groupList == null) {
             return result;
         }
-        
+
         long count = 0;
         for (FileGroup group : groupList) {
             result += group.getDisplayName() + "\n";
-            
+
             for (ResultFile file : group.getFiles()) {
                 result += "    " + file.toString() + "\n";
                 count++;
@@ -118,20 +122,21 @@ class SearchResults {
         }
         return result;
     }
-    
+
     /**
      * Get the names of the groups with counts
-     * 
+     *
      * @return the group names
      */
     List<String> getGroupNamesWithCounts() {
         return groupList.stream().map(p -> p.getDisplayName() + " (" + p.getFiles().size() + ")").collect(Collectors.toList());
     }
-    
+
     /**
      * Get the result files for the selected group
-     * 
+     *
      * @param groupName The name of the group. Can have the size appended.
+     *
      * @return the list of result files
      */
     List<ResultFile> getResultFilesInGroup(String groupName) {
@@ -143,25 +148,25 @@ class SearchResults {
                 return fileGroup.get().getFiles();
             }
         }
-        return new ArrayList<>();       
+        return new ArrayList<>();
     }
-    
+
     /**
      * Transform the results into a LinkedHashMap with result files.
-     * 
+     *
      * @return the grouped and sorted results
      */
     Map<GroupKey, List<ResultFile>> toLinkedHashMap() throws FileSearchException {
         Map<GroupKey, List<ResultFile>> map = new LinkedHashMap<>();
-        
+
         // Sort the groups and files
         sortGroupsAndFiles();
-        
+
         // groupList is sorted and a LinkedHashMap will preserve that order.
         for (FileGroup group : groupList) {
             map.put(group.getGroupKey(), group.getFiles());
         }
-        
+
         return map;
     }
 }

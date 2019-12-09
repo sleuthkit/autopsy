@@ -53,8 +53,8 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
      * Get the list of AbstractFiles which are represented by the selected Video
      * thumbnails.
      *
-     * @return The list of AbstractFiles which are represented by the selected Video
-     * thumbnails.
+     * @return The list of AbstractFiles which are represented by the selected
+     *         Video thumbnails.
      */
     List<AbstractFile> getInstancesForSelected() {
         synchronized (this) {

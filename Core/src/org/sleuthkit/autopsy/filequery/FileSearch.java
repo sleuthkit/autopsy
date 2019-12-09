@@ -623,8 +623,7 @@ class FileSearch {
         FileSizeGroupKey(ResultFile file) {
             if (file.getFileType() == FileType.VIDEO) {
                 fileSize = FileSize.fromVideoSize(file.getFirstInstance().getSize());
-            }
-            else {
+            } else {
                 fileSize = FileSize.fromImageSize(file.getFirstInstance().getSize());
             }
         }
