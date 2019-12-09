@@ -35,8 +35,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -150,7 +150,7 @@ final public class MapPanel extends javax.swing.JPanel {
 
         Rectangle viewport = mapViewer.getViewportBounds();
         List<MapWaypoint> waypoints = new ArrayList<>();
-
+        
         Iterator<MapWaypoint> iterator = waypointTree.iterator();
         while (iterator.hasNext()) {
             MapWaypoint waypoint = iterator.next();
@@ -197,11 +197,21 @@ final public class MapPanel extends javax.swing.JPanel {
         WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<Waypoint>() {
             @Override
             public Set<Waypoint> getWaypoints() {
-                Set<Waypoint> set = new HashSet<>();
+                //To assure that the currentlySelectedWaypoint is visible it needs
+                // to be painted last. LinkedHashSet has a predicable ordering.
+                Set<Waypoint> set = new LinkedHashSet<>();
                 if (waypointTree != null) {
                     Iterator<MapWaypoint> iterator = waypointTree.iterator();
                     while (iterator.hasNext()) {
-                        set.add(iterator.next());
+                        MapWaypoint point = iterator.next();
+                        if (point != currentlySelectedWaypoint) {
+                            set.add(point);
+                        }
+                    }
+                    // Add the currentlySelectedWaypoint to the end so that
+                    // it will be painted last.
+                    if (currentlySelectedWaypoint != null) {
+                        set.add(currentlySelectedWaypoint);
                     }
                 }
                 return set;
