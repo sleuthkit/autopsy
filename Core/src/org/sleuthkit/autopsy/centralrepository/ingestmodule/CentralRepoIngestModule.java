@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.centralrepository.ingestmodule;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -54,7 +53,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import org.sleuthkit.datamodel.HashUtility;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -276,7 +274,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
 
         // Don't allow sqlite central repo databases to be used for multi user cases
         if ((autopsyCase.getCaseType() == Case.CaseType.MULTI_USER_CASE)
-            && (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.SQLITE)) {
+                && (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.SQLITE)) {
             logger.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite central repository.");
             throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }
@@ -302,7 +300,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
         } catch (EamDbException ex) {
             throw new IngestModuleException("Unable to get case from central repository database ", ex);
         }
-      
+
         try {
             eamDataSource = CorrelationDataSource.fromTSKDataSource(eamCase, context.getDataSource());
         } catch (EamDbException ex) {
@@ -313,7 +311,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
         // if we are the first thread / module for this job, then make sure the case
         // and image exist in the DB before we associate artifacts with it.
         if (refCounter.incrementAndGet(jobId)
-            == 1) {
+                == 1) {
             // ensure we have this data source in the EAM DB
             try {
                 if (null == centralRepoDb.getDataSource(eamCase, eamDataSource.getDataSourceObjectID())) {
@@ -355,7 +353,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
                 }
                 // send inbox message
-                sendBadFileInboxMessage(tifArtifact, abstractFile.getName(), abstractFile.getMd5Hash());
+                sendBadFileInboxMessage(tifArtifact, abstractFile.getName(), abstractFile.getMd5Hash(), caseDisplayNames);
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
@@ -364,50 +362,31 @@ final class CentralRepoIngestModule implements FileIngestModule {
         }
     }
 
+    @Messages({
+        "CentralRepoIngestModule_notable_message_header=<html>A file in this data source was previously seen and tagged as Notable.<br>",
+        "CentralRepoIngestModel_name_header=Name:<br>",
+        "CentralRepoIngestModel_previous_case_header=<br>Previous Cases:<br>"
+
+    })
+
     /**
      * Post a message to the ingest inbox alerting the user that a bad file was
      * found.
      *
-     * @param artifact badFile Blackboard Artifact
-     * @param name     badFile's name
-     * @param md5Hash  badFile's md5 hash
+     * @param artifact         badFile Blackboard Artifact
+     * @param name             badFile's name
+     * @param md5Hash          badFile's md5 hash
+     * @param caseDisplayNames List of cases that the artifact appears in.
      */
-    @Messages({"CentralRepoIngestModule.postToBB.fileName=File Name",
-        "CentralRepoIngestModule.postToBB.md5Hash=MD5 Hash",
-        "CentralRepoIngestModule.postToBB.hashSetSource=Source of Hash",
-        "CentralRepoIngestModule.postToBB.eamHit=Central Repository",
-        "# {0} - Name of file that is Notable",
-        "CentralRepoIngestModule.postToBB.knownBadMsg=Notable: {0}"})
-    public void sendBadFileInboxMessage(BlackboardArtifact artifact, String name, String md5Hash) {
-        StringBuilder detailsSb = new StringBuilder();
-        //details
-        detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
-        //hit
-        detailsSb.append("<tr>"); //NON-NLS
-        detailsSb.append("<th>") //NON-NLS
-                .append(Bundle.CentralRepoIngestModule_postToBB_fileName())
-                .append("</th>"); //NON-NLS
-        detailsSb.append("<td>") //NON-NLS
-                .append(name)
-                .append("</td>"); //NON-NLS
-        detailsSb.append("</tr>"); //NON-NLS
+    private void sendBadFileInboxMessage(BlackboardArtifact artifact, String name, String md5Hash, List<String> caseDisplayNames) {
+        StringBuilder detailsSb = new StringBuilder(1024);
 
-        detailsSb.append("<tr>"); //NON-NLS
-        detailsSb.append("<th>") //NON-NLS
-                .append(Bundle.CentralRepoIngestModule_postToBB_md5Hash())
-                .append("</th>"); //NON-NLS
-        detailsSb.append("<td>").append(md5Hash).append("</td>"); //NON-NLS
-        detailsSb.append("</tr>"); //NON-NLS
-
-        detailsSb.append("<tr>"); //NON-NLS
-        detailsSb.append("<th>") //NON-NLS
-                .append(Bundle.CentralRepoIngestModule_postToBB_hashSetSource())
-                .append("</th>"); //NON-NLS
-        detailsSb.append("<td>").append(Bundle.CentralRepoIngestModule_postToBB_eamHit()).append("</td>"); //NON-NLS            
-        detailsSb.append("</tr>"); //NON-NLS
-
-        detailsSb.append("</table>"); //NON-NLS
-
+        detailsSb.append(Bundle.CentralRepoIngestModule_notable_message_header()).append(Bundle.CentralRepoIngestModel_name_header());
+        detailsSb.append(name).append(Bundle.CentralRepoIngestModel_previous_case_header());
+        for (String str : caseDisplayNames) {
+            detailsSb.append(str).append("<br>");
+        }
+        detailsSb.append("</html>");
         services.postMessage(IngestMessage.createDataMessage(CentralRepoIngestModuleFactory.getModuleName(),
                 Bundle.CentralRepoIngestModule_postToBB_knownBadMsg(name),
                 detailsSb.toString(),
