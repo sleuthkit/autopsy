@@ -803,6 +803,16 @@ class FileSearch {
                     parent = null;
                 }
             }
+            setParentPathAndID(parent, file);
+        }
+
+        /**
+         * Helper method to set the parent path and parent ID.
+         *
+         * @param parent The parent content object.
+         * @param file   The ResultFile object.
+         */
+        private void setParentPathAndID(Content parent, ResultFile file) {
             if (parent != null) {
                 try {
                     parentPath = parent.getUniquePath();
@@ -1207,28 +1217,40 @@ class FileSearch {
                     }
                 }
             } else {
-                // Set frequency in batches
-                List<ResultFile> currentFiles = new ArrayList<>();
-                Set<String> hashesToLookUp = new HashSet<>();
-                for (ResultFile file : files) {
-                    if (file.getFirstInstance().getKnown() == TskData.FileKnown.KNOWN) {
-                        file.setFrequency(Frequency.KNOWN);
-                    }
-                    if (file.getFrequency() == Frequency.UNKNOWN
-                            && file.getFirstInstance().getMd5Hash() != null
-                            && !file.getFirstInstance().getMd5Hash().isEmpty()) {
-                        hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
-                        currentFiles.add(file);
-                    }
-                    if (hashesToLookUp.size() >= BATCH_SIZE) {
-                        computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
-
-                        hashesToLookUp.clear();
-                        currentFiles.clear();
-                    }
-                }
-                computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
+                processResultFilesForCR(files, centralRepoDb);
             }
+        }
+
+        /**
+         * Private helper method for adding Frequency attribute when CR is
+         * enabled.
+         *
+         * @param files         The list of ResultFiles to caluclate frequency
+         *                      for.
+         * @param centralRepoDb The central repository currently in use.
+         */
+        private void processResultFilesForCR(List<ResultFile> files,
+                EamDb centralRepoDb) {
+            List<ResultFile> currentFiles = new ArrayList<>();
+            Set<String> hashesToLookUp = new HashSet<>();
+            for (ResultFile file : files) {
+                if (file.getFirstInstance().getKnown() == TskData.FileKnown.KNOWN) {
+                    file.setFrequency(Frequency.KNOWN);
+                }
+                if (file.getFrequency() == Frequency.UNKNOWN
+                        && file.getFirstInstance().getMd5Hash() != null
+                        && !file.getFirstInstance().getMd5Hash().isEmpty()) {
+                    hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
+                    currentFiles.add(file);
+                }
+                if (hashesToLookUp.size() >= BATCH_SIZE) {
+                    computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
+
+                    hashesToLookUp.clear();
+                    currentFiles.clear();
+                }
+            }
+            computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
         }
     }
 
@@ -2011,16 +2033,16 @@ class FileSearch {
      * Enum for the attribute types that can be used for grouping.
      */
     @NbBundle.Messages({
-        "FileSearch.GroupingAttributeType.fileType.displayName=File type",
-        "FileSearch.GroupingAttributeType.frequency.displayName=Past occurrences",
-        "FileSearch.GroupingAttributeType.keywordList.displayName=Keyword list names",
-        "FileSearch.GroupingAttributeType.size.displayName=Size",
-        "FileSearch.GroupingAttributeType.datasource.displayName=Data source",
-        "FileSearch.GroupingAttributeType.parent.displayName=Parent folder",
-        "FileSearch.GroupingAttributeType.hash.displayName=Hash set",
-        "FileSearch.GroupingAttributeType.interestingItem.displayName=Interesting item set",
-        "FileSearch.GroupingAttributeType.tag.displayName=File tag",
-        "FileSearch.GroupingAttributeType.object.displayName=Object detected",
+        "FileSearch.GroupingAttributeType.fileType.displayName=File Type",
+        "FileSearch.GroupingAttributeType.frequency.displayName=Past Occurrences",
+        "FileSearch.GroupingAttributeType.keywordList.displayName=Keyword",
+        "FileSearch.GroupingAttributeType.size.displayName=File Size",
+        "FileSearch.GroupingAttributeType.datasource.displayName=Data Source",
+        "FileSearch.GroupingAttributeType.parent.displayName=Parent Folder",
+        "FileSearch.GroupingAttributeType.hash.displayName=Hash Set",
+        "FileSearch.GroupingAttributeType.interestingItem.displayName=Interesting Item",
+        "FileSearch.GroupingAttributeType.tag.displayName=Tag",
+        "FileSearch.GroupingAttributeType.object.displayName=Object Detected",
         "FileSearch.GroupingAttributeType.none.displayName=None"})
     enum GroupingAttributeType {
         FILE_SIZE(new FileSizeAttribute(), Bundle.FileSearch_GroupingAttributeType_size_displayName()),

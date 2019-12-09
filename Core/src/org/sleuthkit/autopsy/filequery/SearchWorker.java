@@ -78,9 +78,9 @@ final class SearchWorker extends SwingWorker<Void, Void> {
     @Override
     protected void done() {
         if (isCancelled()) {
-            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchCancelledEvent());
+            DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.SearchCancelledEvent());
         } else {
-            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchCompleteEvent(results, filters, groupingAttr, groupSortAlgorithm, fileSort));
+            DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.SearchCompleteEvent(results, filters, groupingAttr, groupSortAlgorithm, fileSort));
         }
     }
 }

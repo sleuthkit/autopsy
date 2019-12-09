@@ -96,7 +96,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
     protected void done() {
         if (!isCancelled()) {
             int currentPage = startingEntry / pageSize; //integer division should round down to get page number correctly
-            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.PageRetrievedEvent(resultType, currentPage, results));
+            DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PageRetrievedEvent(resultType, currentPage, results));
         }
     }
 

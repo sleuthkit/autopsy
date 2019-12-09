@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.filequery;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.awt.Image;
+import java.awt.event.ItemEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -28,12 +29,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
-import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionListener;
@@ -123,8 +124,6 @@ public class ResultsPanel extends javax.swing.JPanel {
             }
         });
 
-        // Disable manual editing of page size spinner
-        ((JSpinner.DefaultEditor) pageSizeSpinner.getEditor()).getTextField().setEditable(false);
     }
 
     /**
@@ -191,7 +190,7 @@ public class ResultsPanel extends javax.swing.JPanel {
      * @param pageRetrievedEvent The PageRetrievedEvent received.
      */
     @Subscribe
-    void handlePageRetrievedEvent(DiscoveryEvents.PageRetrievedEvent pageRetrievedEvent) {
+    void handlePageRetrievedEvent(DiscoveryEventUtils.PageRetrievedEvent pageRetrievedEvent) {
         SwingUtilities.invokeLater(() -> {
             populateInstancesList();
             currentPage = pageRetrievedEvent.getPageNumber();
@@ -217,7 +216,6 @@ public class ResultsPanel extends javax.swing.JPanel {
     synchronized void resetResultViewer() {
         resultsViewerPanel.remove(imageThumbnailViewer);
         resultsViewerPanel.remove(videoThumbnailViewer);
-
         //cancel any unfished thumb workers
         for (SwingWorker<Void, Void> thumbWorker : thumbnailWorkers) {
             if (!thumbWorker.isDone()) {
@@ -266,7 +264,7 @@ public class ResultsPanel extends javax.swing.JPanel {
      * @param groupSelectedEvent The GroupSelectedEvent received.
      */
     @Subscribe
-    void handleGroupSelectedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
+    void handleGroupSelectedEvent(DiscoveryEventUtils.GroupSelectedEvent groupSelectedEvent) {
         SwingUtilities.invokeLater(() -> {
             searchFilters = groupSelectedEvent.getFilters();
             groupingAttribute = groupSelectedEvent.getGroupingAttr();
@@ -286,7 +284,7 @@ public class ResultsPanel extends javax.swing.JPanel {
      * @param noResultsEvent the NoResultsEvent received.
      */
     @Subscribe
-    void handleNoResultsEvent(DiscoveryEvents.NoResultsEvent noResultsEvent) {
+    void handleNoResultsEvent(DiscoveryEventUtils.NoResultsEvent noResultsEvent) {
         SwingUtilities.invokeLater(() -> {
             groupSize = 0;
             currentPage = 0;
@@ -305,7 +303,7 @@ public class ResultsPanel extends javax.swing.JPanel {
      *                      in this page.
      */
     private synchronized void setPage(int startingEntry) {
-        int pageSize = (int) pageSizeSpinner.getValue();
+        int pageSize = pageSizeComboBox.getItemAt(pageSizeComboBox.getSelectedIndex());
         synchronized (this) {
             if (pageWorker != null && !pageWorker.isDone()) {
                 pageWorker.cancel(true);
@@ -331,15 +329,15 @@ public class ResultsPanel extends javax.swing.JPanel {
         "# {1} - totalPages",
         "ResultsPanel.currentPage.displayValue=Page: {0} of {1}"})
     private void updateControls() {
-        previousPageSize = (int) pageSizeSpinner.getValue();
-        int pageSize = (int) pageSizeSpinner.getValue();
+        previousPageSize = pageSizeComboBox.getItemAt(pageSizeComboBox.getSelectedIndex());
+        int pageSize = pageSizeComboBox.getItemAt(pageSizeComboBox.getSelectedIndex());
         //handle edge case where group size is 0 and we want the empty results to be labeled paged 1 of 1 not page 1 of 0
         double maxPageDouble = groupSize == 0 ? 1 : Math.ceil((double) groupSize / pageSize);
         currentPageLabel.setText(Bundle.ResultsPanel_currentPage_displayValue(currentPage + 1, maxPageDouble));
         previousPageButton.setEnabled(currentPage != 0);
         nextPageButton.setEnabled(groupSize > ((currentPage + 1) * pageSize));
         gotoPageField.setEnabled(groupSize > pageSize);
-        pageSizeSpinner.setEnabled(true);
+        pageSizeComboBox.setEnabled(true);
     }
 
     /**
@@ -351,20 +349,22 @@ public class ResultsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pagingPanel = new javax.swing.JPanel();
+        javax.swing.JPanel pagingPanel = new javax.swing.JPanel();
         previousPageButton = new javax.swing.JButton();
         currentPageLabel = new javax.swing.JLabel();
         nextPageButton = new javax.swing.JButton();
-        pageSizeSpinner = new javax.swing.JSpinner();
         javax.swing.JLabel pageControlsLabel = new javax.swing.JLabel();
         javax.swing.JLabel gotoPageLabel = new javax.swing.JLabel();
         gotoPageField = new javax.swing.JTextField();
         javax.swing.JLabel pageSizeLabel = new javax.swing.JLabel();
+        pageSizeComboBox = new javax.swing.JComboBox<>();
         javax.swing.JSplitPane resultsSplitPane = new javax.swing.JSplitPane();
         javax.swing.JPanel instancesPanel = new javax.swing.JPanel();
         javax.swing.JScrollPane instancesScrollPane = new javax.swing.JScrollPane();
         instancesList = new javax.swing.JList<>();
         resultsViewerPanel = new javax.swing.JPanel();
+
+        setPreferredSize(new java.awt.Dimension(777, 475));
 
         pagingPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -397,11 +397,6 @@ public class ResultsPanel extends javax.swing.JPanel {
             }
         });
 
-        pageSizeSpinner.setModel(new javax.swing.SpinnerNumberModel(10, 10, 200, 10));
-        pageSizeSpinner.setEditor(new javax.swing.JSpinner.NumberEditor(pageSizeSpinner, ""));
-        pageSizeSpinner.setEnabled(false);
-        pageSizeSpinner.setFocusable(false);
-
         org.openide.awt.Mnemonics.setLocalizedText(pageControlsLabel, org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.pageControlsLabel.text")); // NOI18N
         pageControlsLabel.setMaximumSize(new java.awt.Dimension(33, 23));
         pageControlsLabel.setMinimumSize(new java.awt.Dimension(33, 23));
@@ -424,6 +419,14 @@ public class ResultsPanel extends javax.swing.JPanel {
         pageSizeLabel.setMinimumSize(new java.awt.Dimension(60, 23));
         pageSizeLabel.setPreferredSize(new java.awt.Dimension(60, 23));
 
+        pageSizeComboBox.setModel(new DefaultComboBoxModel<Integer>(new Integer[] {25,50,75,100,125,150,175,200}));
+        pageSizeComboBox.setSelectedIndex(3);
+        pageSizeComboBox.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                pageSizeChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout pagingPanelLayout = new javax.swing.GroupLayout(pagingPanel);
         pagingPanel.setLayout(pagingPanelLayout);
         pagingPanelLayout.setHorizontalGroup(
@@ -443,8 +446,8 @@ public class ResultsPanel extends javax.swing.JPanel {
                 .addComponent(gotoPageField, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(pageSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(pageSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pageSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         pagingPanelLayout.setVerticalGroup(
@@ -458,22 +461,31 @@ public class ResultsPanel extends javax.swing.JPanel {
                         .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(pageControlsLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pagingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(pageSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(gotoPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(gotoPageField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(pageSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(pageSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(pageSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(4, 4, 4))
         );
 
-        resultsSplitPane.setDividerLocation(250);
+        resultsSplitPane.setDividerLocation(380);
         resultsSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        resultsSplitPane.setResizeWeight(0.9);
-        resultsSplitPane.setPreferredSize(new java.awt.Dimension(777, 125));
+        resultsSplitPane.setResizeWeight(1.0);
+        resultsSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.resultsSplitPane.toolTipText")); // NOI18N
+        resultsSplitPane.setLastDividerLocation(180);
+        resultsSplitPane.setOpaque(false);
+        resultsSplitPane.setPreferredSize(new java.awt.Dimension(777, 440));
+
+        instancesPanel.setPreferredSize(new java.awt.Dimension(775, 68));
+
+        instancesScrollPane.setPreferredSize(new java.awt.Dimension(775, 60));
 
         instancesList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.instancesList.border.title"))); // NOI18N
         instancesList.setModel(instancesListModel);
         instancesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         instancesList.setCellRenderer(new InstancesCellRenderer());
+        instancesList.setPreferredSize(new java.awt.Dimension(0, 50));
+        instancesList.setVisibleRowCount(2);
         instancesScrollPane.setViewportView(instancesList);
 
         javax.swing.GroupLayout instancesPanelLayout = new javax.swing.GroupLayout(instancesPanel);
@@ -482,17 +494,20 @@ public class ResultsPanel extends javax.swing.JPanel {
             instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 775, Short.MAX_VALUE)
             .addGroup(instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 775, Short.MAX_VALUE))
+                .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         instancesPanelLayout.setVerticalGroup(
             instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 52, Short.MAX_VALUE)
+            .addGap(0, 221, Short.MAX_VALUE)
             .addGroup(instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 52, Short.MAX_VALUE))
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, instancesPanelLayout.createSequentialGroup()
+                    .addGap(0, 0, 0)
+                    .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 221, Short.MAX_VALUE)))
         );
 
         resultsSplitPane.setRightComponent(instancesPanel);
 
+        resultsViewerPanel.setPreferredSize(new java.awt.Dimension(0, 380));
         resultsViewerPanel.setLayout(new java.awt.BorderLayout());
         resultsSplitPane.setLeftComponent(resultsViewerPanel);
 
@@ -508,7 +523,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(pagingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(resultsSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
+                .addComponent(resultsSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -522,10 +537,7 @@ public class ResultsPanel extends javax.swing.JPanel {
         if (currentPage > 0) {
             disablePagingControls();
             int previousPage = currentPage - 1;
-            int pageSize = (int) pageSizeSpinner.getValue();
-            if (previousPageSize != pageSize) {
-                previousPage = 0;
-            }
+            int pageSize = pageSizeComboBox.getItemAt(pageSizeComboBox.getSelectedIndex());
             setPage(previousPage * pageSize);
         }
     }//GEN-LAST:event_previousPageButtonActionPerformed
@@ -538,10 +550,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
         disablePagingControls();
         int nextPage = currentPage + 1;
-        int pageSize = (int) pageSizeSpinner.getValue();
-        if (previousPageSize != pageSize) {
-            nextPage = 0;
-        }
+        int pageSize = pageSizeComboBox.getItemAt(pageSizeComboBox.getSelectedIndex());
         setPage(nextPage * pageSize);
     }//GEN-LAST:event_nextPageButtonActionPerformed
 
@@ -562,7 +571,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             //ignore input
             return;
         }
-        int pageSize = (int) pageSizeSpinner.getValue();
+        int pageSize = pageSizeComboBox.getItemAt(pageSizeComboBox.getSelectedIndex());
         if ((newPage - 1) < 0 || groupSize <= ((newPage - 1) * pageSize)) {
             JOptionPane.showMessageDialog(this,
                     Bundle.ResultsPanel_invalidPageNumber_message(newPage, Math.ceil((double) groupSize / pageSize)),
@@ -574,6 +583,18 @@ public class ResultsPanel extends javax.swing.JPanel {
         setPage((newPage - 1) * pageSize);
     }//GEN-LAST:event_gotoPageFieldActionPerformed
 
+    private void pageSizeChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_pageSizeChanged
+        if (evt.getStateChange() == ItemEvent.SELECTED) {
+            disablePagingControls();
+            int previousPage = currentPage - 1;
+            int pageSize = pageSizeComboBox.getItemAt(pageSizeComboBox.getSelectedIndex());
+            if (previousPageSize != pageSize) {
+                previousPage = 0;
+            }
+            setPage(previousPage * pageSize);
+        }
+    }//GEN-LAST:event_pageSizeChanged
+
     /**
      * Disable all the paging controls.
      */
@@ -581,7 +602,7 @@ public class ResultsPanel extends javax.swing.JPanel {
         nextPageButton.setEnabled(false);
         previousPageButton.setEnabled(false);
         gotoPageField.setEnabled(false);
-        pageSizeSpinner.setEnabled(false);
+        pageSizeComboBox.setEnabled(false);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -589,8 +610,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private javax.swing.JTextField gotoPageField;
     private javax.swing.JList<AbstractFile> instancesList;
     private javax.swing.JButton nextPageButton;
-    private javax.swing.JSpinner pageSizeSpinner;
-    private javax.swing.JPanel pagingPanel;
+    private javax.swing.JComboBox<Integer> pageSizeComboBox;
     private javax.swing.JButton previousPageButton;
     private javax.swing.JPanel resultsViewerPanel;
     // End of variables declaration//GEN-END:variables

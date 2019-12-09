@@ -28,13 +28,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.datamodel.TimelineEventType;
-import org.sleuthkit.datamodel.TimelineFilter.TextFilter;
 import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.TextFilterState;
 
 /**
  * A TreeTableCell that shows an icon and color corresponding to the represented
@@ -46,7 +46,7 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
 
     private final TimeLineController controller;
 
-    private final FilteredEventsModel filteredEvents;
+    private final EventsModel filteredEvents;
 
     //We need a controller so we can listen to changes in EventTypeZoom to show/hide legends
     LegendCell(TimeLineController controller) {
@@ -65,9 +65,16 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
                 setBackground(null);
             });
         } else {
-
+            
             //TODO: make some subclasses rather than use this if else chain.
-            if (item.getFilter() instanceof EventTypeFilter) {
+            if (item instanceof TextFilterState) {
+                TextFilterState filterState = (TextFilterState)item;
+                TextField textField = new TextField();
+                textField.setPromptText(Bundle.Timeline_ui_filtering_promptText());
+                textField.textProperty().bindBidirectional(filterState.descriptionSubstringProperty());
+                Platform.runLater(() -> setGraphic(textField));
+                
+            } else if (item.getFilter() instanceof EventTypeFilter) {
                 EventTypeFilter filter = (EventTypeFilter) item.getFilter();
                 Rectangle rect = new Rectangle(20, 20);
 
@@ -75,7 +82,7 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
                 rect.setArcWidth(5);
                 rect.setStrokeWidth(3);
                 setLegendColor(filter, rect, this.filteredEvents.getEventTypeZoom());
-                this.filteredEvents.eventTypeZoomProperty().addListener((obs, oldZoomLevel, newZoomLevel) -> {
+                this.filteredEvents.eventTypesHierarchyLevelProperty().addListener((obs, oldZoomLevel, newZoomLevel) -> {
                     setLegendColor(filter, rect, newZoomLevel);
                 });
 
@@ -87,13 +94,6 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
                     setGraphic(hBox);
                     setContentDisplay(ContentDisplay.CENTER);
                 });
-
-            } else if (item.getFilter() instanceof TextFilter) {
-                TextFilter filter = (TextFilter) item.getFilter();
-                TextField textField = new TextField();
-                textField.setPromptText(Bundle.Timeline_ui_filtering_promptText());
-                textField.textProperty().bindBidirectional(filter.substringProperty());
-                Platform.runLater(() -> setGraphic(textField));
 
             } else {
                 Platform.runLater(() -> {

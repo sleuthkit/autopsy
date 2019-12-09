@@ -34,7 +34,7 @@ import org.controlsfx.control.Notifications;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
@@ -72,7 +72,7 @@ public class ZoomSettingsPane extends TitledPane {
     private Slider timeUnitSlider;
 
     private final TimeLineController controller;
-    private final FilteredEventsModel filteredEvents;
+    private final EventsModel filteredEvents;
 
     /**
      * Constructor
@@ -97,7 +97,7 @@ public class ZoomSettingsPane extends TitledPane {
         typeZoomSlider.setMax(TimelineEventType.HierarchyLevel.values().length - 1);
         configureSliderListeners(typeZoomSlider,
                 controller::pushEventTypeZoom,
-                filteredEvents.eventTypeZoomProperty(),
+                filteredEvents.eventTypesHierarchyLevelProperty(),
                 TimelineEventType.HierarchyLevel.class,
                 TimelineEventType.HierarchyLevel::ordinal,
                 Function.identity());

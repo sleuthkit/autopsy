@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.filequery;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
 
 /**
@@ -79,28 +80,10 @@ class FileGroup implements Comparable<FileGroup> {
     }
 
     /**
-     * Pull the AbstractFile objects out of the ResultFile objects.
-     *
-     * @return List of abstract files
-     */
-    List<ResultFile> getAbstractFiles() {
-        return Collections.unmodifiableList(files);
-    }
-
-    /**
      * Sort all the files in the group
      */
     void sortFiles(FileSorter sorter) {
         Collections.sort(files, sorter);
-    }
-
-    /**
-     * Get the list of ResultFile objects in the group
-     *
-     * @return List of ResultFile objects
-     */
-    List<ResultFile> getResultFiles() {
-        return Collections.unmodifiableList(files);
     }
 
     /**
@@ -118,7 +101,7 @@ class FileGroup implements Comparable<FileGroup> {
         switch (groupSortingType) {
             case BY_GROUP_SIZE:
                 return compareGroupsBySize(this, otherGroup);
-            case BY_GROUP_KEY:
+            case BY_GROUP_NAME:
             default:
                 return compareGroupsByGroupKey(this, otherGroup);
         }
@@ -133,7 +116,7 @@ class FileGroup implements Comparable<FileGroup> {
      * @return -1 if group1 should be displayed before group2, 1 otherwise
      */
     private static int compareGroupsByGroupKey(FileGroup group1, FileGroup group2) {
-        return group1.groupKey.compareTo(group2.groupKey);
+        return group1.getGroupKey().compareTo(group2.getGroupKey());
     }
 
     /**
@@ -146,10 +129,10 @@ class FileGroup implements Comparable<FileGroup> {
      * @return -1 if group1 should be displayed before group2, 1 otherwise
      */
     private static int compareGroupsBySize(FileGroup group1, FileGroup group2) {
-        if (group1.files.size() != group2.files.size()) {
-            return -1 * Long.compare(group1.files.size(), group2.files.size()); // High to low
+        if (group1.getFiles().size() != group2.getFiles().size()) {
+            return -1 * Long.compare(group1.getFiles().size(), group2.getFiles().size()); // High to low
         } else {
-            // If the groups have the same size, fall through to the BY_GROUP_KEY sorting
+            // If the groups have the same size, fall through to the BY_GROUP_NAME sorting
             return compareGroupsByGroupKey(group1, group2);
         }
     }
@@ -157,9 +140,37 @@ class FileGroup implements Comparable<FileGroup> {
     /**
      * Enum to specify how to sort the group.
      */
+    @Messages({"FileGroup.groupSortingAlgorithm.groupSize.text=Group Size",
+        "FileGroup.groupSortingAlgorithm.groupName.text=Group Name"})
     enum GroupSortingAlgorithm {
-        BY_GROUP_SIZE, // Sort from largest to smallest group
-        BY_GROUP_KEY   // Sort using the group key (for example, if grouping by size sort from largest to smallest value)
+        BY_GROUP_NAME(Bundle.FileGroup_groupSortingAlgorithm_groupName_text()), // Sort using the group key (for example, if grouping by size sort from largest to smallest value)
+        BY_GROUP_SIZE(Bundle.FileGroup_groupSortingAlgorithm_groupSize_text());  // Sort from largest to smallest group
+
+        private final String displayName;
+
+        /**
+         * Construct a GroupSortingAlgorithm enum value.
+         *
+         * @param name The name to display to the user for the enum value.
+         */
+        GroupSortingAlgorithm(String name) {
+            displayName = name;
+        }
+
+        @Override
+        public String toString() {
+            return displayName;
+        }
+
+    }
+
+    /**
+     * Get the list of ResultFile objects in the group
+     *
+     * @return List of ResultFile objects
+     */
+    List<ResultFile> getFiles() {
+        return Collections.unmodifiableList(files);
     }
 
 }

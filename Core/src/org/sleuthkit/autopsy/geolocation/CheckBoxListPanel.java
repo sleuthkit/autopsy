@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.geolocation;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 
@@ -52,7 +53,11 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      * @param obj         Object that the checkbox represents
      */
     void addElement(String displayName, T obj) {
-        model.addElement(new ObjectCheckBox<>(displayName, true, obj));
+        ObjectCheckBox<T> newCheckBox = new ObjectCheckBox<>(displayName, true, obj);
+        
+        if(!model.contains(newCheckBox)) {
+            model.addElement(newCheckBox);
+        }
     }
     
     /**
@@ -60,6 +65,14 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      */
     void clearList() {
         model.removeAllElements();
+    }
+    
+    @Override
+    public void setEnabled(boolean enabled) {
+        checkboxList.setEnabled(enabled);
+        checkButton.setEnabled(enabled);
+        uncheckButton.setEnabled(enabled);
+        checkboxList.setEnabled(enabled);
     }
 
     /**
@@ -126,8 +139,8 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
         java.awt.GridBagConstraints gridBagConstraints;
 
         titleLabel = new javax.swing.JLabel();
-        javax.swing.JButton uncheckButton = new javax.swing.JButton();
-        javax.swing.JButton checkButton = new javax.swing.JButton();
+        uncheckButton = new javax.swing.JButton();
+        checkButton = new javax.swing.JButton();
         scrollPane = new javax.swing.JScrollPane();
 
         setLayout(new java.awt.GridBagLayout());
@@ -186,8 +199,10 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton checkButton;
     private javax.swing.JScrollPane scrollPane;
     private javax.swing.JLabel titleLabel;
+    private javax.swing.JButton uncheckButton;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -233,6 +248,21 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
         @Override
         public String getDisplayName() {
             return displayName;
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if(obj instanceof ObjectCheckBox) {
+                return object.equals(((ObjectCheckBox)obj).object);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 31 * hash + Objects.hashCode(this.object);
+            return hash;
         }
     }
 

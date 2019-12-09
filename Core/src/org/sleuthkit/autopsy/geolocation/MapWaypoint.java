@@ -95,27 +95,48 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
 
         return mapPoints;
     }
-    
+
     /**
-     * Returns a list of of MapWaypoint objects for the given list of 
+     * Returns a list of of MapWaypoint objects for the given list of
      * datamodel.Waypoint objects.
-     * 
+     *
      * @param dmWaypoints
-     * 
-     * @return List of MapWaypoint objects.  List will be empty if dmWaypoints was
-     * empty or null.
+     *
+     * @return List of MapWaypoint objects. List will be empty if dmWaypoints
+     *         was empty or null.
      */
     static List<MapWaypoint> getWaypoints(List<Waypoint> dmWaypoints) {
         List<MapWaypoint> mapPoints = new ArrayList<>();
 
         if (dmWaypoints != null) {
-        
+
             for (Waypoint point : dmWaypoints) {
                 mapPoints.add(new MapWaypoint(point));
             }
         }
 
         return mapPoints;
+    }
+
+    /**
+     * Helper function to get a list of data model waypoints from a list of
+     * MapWaypoints.
+     *
+     * @param mapWaypoints
+     *
+     * @return A list of Waypoint objects, or empty list if mapWaypoints was
+     *         null or empty.
+     */
+    static List<Waypoint> getDataModelWaypoints(List<MapWaypoint> mapWaypoints) {
+        List<Waypoint> waypoints = new ArrayList<>();
+
+        if (mapWaypoints != null) {
+            for (MapWaypoint point : mapWaypoints) {
+                waypoints.add(point.dataModelWaypoint);
+            }
+        }
+
+        return waypoints;
     }
 
     /**
@@ -271,20 +292,20 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         }
         return menuItems;
     }
-    
-     /**
+
+    /**
      * Get the nicely formatted details for the given waypoint.
-     * 
-     * @param point Waypoint object
+     *
+     * @param point  Waypoint object
      * @param header String details header
-     * 
-     * @return HTML formatted String of details for given waypoint 
+     *
+     * @return HTML formatted String of details for given waypoint
      */
     private String getFormattedDetails(Waypoint point) {
         StringBuilder result = new StringBuilder(); //NON-NLS
-        
+
         result.append("<html>").append(formatAttribute("Name", point.getLabel()));
-       
+
         Long timestamp = point.getTimestamp();
         if (timestamp != null) {
             result.append(formatAttribute("Timestamp", getTimeStamp(timestamp)));
@@ -292,19 +313,19 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
 
         result.append(formatAttribute("Latitude", point.getLatitude().toString()))
                 .append(formatAttribute("Longitude", point.getLongitude().toString()));
-       
+
         if (point.getAltitude() != null) {
             result.append(formatAttribute("Altitude", point.getAltitude().toString()));
         }
 
         List<Waypoint.Property> list = point.getOtherProperties();
-        for(Waypoint.Property prop: list) {
+        for (Waypoint.Property prop : list) {
             String value = prop.getValue();
-            if(value != null && !value.isEmpty()) {
+            if (value != null && !value.isEmpty()) {
                 result.append(formatAttribute(prop.getDisplayName(), value));
             }
         }
-        
+
         result.append("</html>");
 
         return result.toString();
@@ -312,16 +333,16 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
 
     /**
      * Format a title value pair.
-     * 
+     *
      * @param title Title of the property
      * @param value Value of the property
-     * 
-     * @return Formatted string with the title and value 
+     *
+     * @return Formatted string with the title and value
      */
     private String formatAttribute(String title, String value) {
         return String.format(HTML_PROP_FORMAT, title, value);
     }
-    
+
     /**
      * Format a point time stamp (in seconds) to the report format.
      *
@@ -332,7 +353,6 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
     private String getTimeStamp(long timeStamp) {
         return DATE_FORMAT.format(new java.util.Date(timeStamp * 1000));
     }
-
 
     /**
      * An action class for Extracting artifact files.

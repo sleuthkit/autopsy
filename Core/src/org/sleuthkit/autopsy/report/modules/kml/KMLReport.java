@@ -33,6 +33,7 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.jdom2.Document;
@@ -59,7 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Generates a KML file based on geospatial information from the BlackBoard.
  */
-class KMLReport implements GeneralReportModule {
+public final class KMLReport implements GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(KMLReport.class.getName());
     private static final String KML_STYLE_FILE = "style.kml";
@@ -78,6 +79,8 @@ class KMLReport implements GeneralReportModule {
     private Element gpsRouteFolder;
     private Element gpsSearchesFolder;
     private Element gpsTrackpointsFolder;
+
+    private List<Waypoint> waypointList = null;
 
     private enum FeatureColor {
         RED("style.kml#redFeature"),
@@ -140,6 +143,11 @@ class KMLReport implements GeneralReportModule {
         "Waypoint_Trackpoint_Display_String=GPS Trackpoint",
         "Route_Details_Header=GPS Route"
     })
+
+    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel, List<Waypoint> waypointList) {
+        this.waypointList = waypointList;
+        generateReport(baseReportDir, progressPanel);
+    }
 
     @Override
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
@@ -298,7 +306,7 @@ class KMLReport implements GeneralReportModule {
      * @throws IOException
      */
     void addExifMetadataContent(List<Waypoint> points, String baseReportDirectory) throws IOException {
-        for(Waypoint point: points) {
+        for (Waypoint point : points) {
             Element mapPoint = makePoint(point);
             if (mapPoint == null) {
                 return;
@@ -332,41 +340,49 @@ class KMLReport implements GeneralReportModule {
      * @throws IOException
      */
     void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws GeoLocationDataException, IOException {
-        addExifMetadataContent(WaypointBuilder.getEXIFWaypoints(skCase), baseReportDir);
-        addWaypoints(WaypointBuilder.getBookmarkWaypoints(skCase), gpsBookmarksFolder, FeatureColor.BLUE, Bundle.Waypoint_Bookmark_Display_String());
-        addWaypoints(WaypointBuilder.getLastKnownWaypoints(skCase), gpsLastKnownLocationFolder, FeatureColor.PURPLE, Bundle.Waypoint_Last_Known_Display_String());
-        addWaypoints(WaypointBuilder.getSearchWaypoints(skCase), gpsSearchesFolder, FeatureColor.WHITE, Bundle.Waypoint_Search_Display_String());
-        addWaypoints(WaypointBuilder.getTrackpointWaypoints(skCase), gpsTrackpointsFolder, FeatureColor.WHITE, Bundle.Waypoint_Trackpoint_Display_String());
+        if (waypointList == null) {
+            addExifMetadataContent(WaypointBuilder.getEXIFWaypoints(skCase), baseReportDir);
+            addWaypoints(WaypointBuilder.getBookmarkWaypoints(skCase), gpsBookmarksFolder, FeatureColor.BLUE, Bundle.Waypoint_Bookmark_Display_String());
+            addWaypoints(WaypointBuilder.getLastKnownWaypoints(skCase), gpsLastKnownLocationFolder, FeatureColor.PURPLE, Bundle.Waypoint_Last_Known_Display_String());
+            addWaypoints(WaypointBuilder.getSearchWaypoints(skCase), gpsSearchesFolder, FeatureColor.WHITE, Bundle.Waypoint_Search_Display_String());
+            addWaypoints(WaypointBuilder.getTrackpointWaypoints(skCase), gpsTrackpointsFolder, FeatureColor.WHITE, Bundle.Waypoint_Trackpoint_Display_String());
+        } else {
+            addExifMetadataContent(WaypointBuilder.getEXIFWaypoints(waypointList), baseReportDir);
+            addWaypoints(WaypointBuilder.getBookmarkWaypoints(waypointList), gpsBookmarksFolder, FeatureColor.BLUE, Bundle.Waypoint_Bookmark_Display_String());
+            addWaypoints(WaypointBuilder.getLastKnownWaypoints(waypointList), gpsLastKnownLocationFolder, FeatureColor.PURPLE, Bundle.Waypoint_Last_Known_Display_String());
+            addWaypoints(WaypointBuilder.getSearchWaypoints(waypointList), gpsSearchesFolder, FeatureColor.WHITE, Bundle.Waypoint_Search_Display_String());
+            addWaypoints(WaypointBuilder.getTrackpointWaypoints(waypointList), gpsTrackpointsFolder, FeatureColor.WHITE, Bundle.Waypoint_Trackpoint_Display_String());
+        }
     }
-    
+
     /**
-     * For each point in the waypoint list an Element to represent the given waypoint
-     * is created and added it to the given Element folder.
-     * 
-     * @param points List of waypoints to add to the report
-     * @param folder The Element folder to add the points to
+     * For each point in the waypoint list an Element to represent the given
+     * waypoint is created and added it to the given Element folder.
+     *
+     * @param points        List of waypoints to add to the report
+     * @param folder        The Element folder to add the points to
      * @param waypointColor The color the waypoint should appear in the report
      */
     void addWaypoints(List<Waypoint> points, Element folder, FeatureColor waypointColor, String headerLabel) {
-        for(Waypoint point: points) {
+        for (Waypoint point : points) {
             addContent(folder, point.getLabel(), waypointColor, getFormattedDetails(point, headerLabel), point.getTimestamp(), makePoint(point), point.getLatitude(), point.getLongitude());
         }
     }
-    
+
     /**
      * Adds the waypoint Element with details to the report in the given folder.
-     * 
-     * @param folder Element folder to add the waypoint to
-     * @param waypointLabel String waypoint Label
-     * @param waypointColor FeatureColor for the waypoint
+     *
+     * @param folder           Element folder to add the waypoint to
+     * @param waypointLabel    String waypoint Label
+     * @param waypointColor    FeatureColor for the waypoint
      * @param formattedDetails String HTML formatted waypoint details
-     * @param timestamp Long timestamp (unix\jave epoch seconds)
-     * @param point Element point object
-     * @param latitude Double latitude value
-     * @param longitude Double longitude value
+     * @param timestamp        Long timestamp (unix\jave epoch seconds)
+     * @param point            Element point object
+     * @param latitude         Double latitude value
+     * @param longitude        Double longitude value
      */
     void addContent(Element folder, String waypointLabel, FeatureColor waypointColor, String formattedDetails, Long timestamp, Element point, Double latitude, Double longitude) {
-        if(folder != null && point != null) {
+        if (folder != null && point != null) {
             String formattedCords = formattedCoordinates(latitude, longitude);
             folder.addContent(makePlacemark(waypointLabel, waypointColor, formattedDetails, timestamp, point, formattedCords));
         }
@@ -380,17 +396,19 @@ class KMLReport implements GeneralReportModule {
      * @throws TskCoreException
      */
     void makeRoutes(SleuthkitCase skCase) throws GeoLocationDataException {
-        List<Route> routes = Route.getRoutes(skCase);
-        
-        if(routes == null) {
-            return;
+        List<Route> routes = null;
+
+        if (waypointList == null) {
+            routes = Route.getRoutes(skCase);
+        } else {
+            routes = new ArrayList<>();
         }
 
         for (Route route : routes) {
             addRouteToReport(route);
         }
     }
-    
+
     void addRouteToReport(Route route) {
         List<Waypoint> routePoints = route.getRoute();
         Waypoint start = null;
@@ -423,15 +441,15 @@ class KMLReport implements GeneralReportModule {
         }
 
         if (startingPoint != null) {
-            gpsRouteFolder.addContent(makePlacemark(start.getLabel(), 
-                    FeatureColor.GREEN, getFormattedDetails(start, Bundle.Waypoint_Route_Point_Display_String()), 
+            gpsRouteFolder.addContent(makePlacemark(start.getLabel(),
+                    FeatureColor.GREEN, getFormattedDetails(start, Bundle.Waypoint_Route_Point_Display_String()),
                     start.getTimestamp(), startingPoint, formattedStart)); //NON-NLS
         }
 
         if (endingPoint != null) {
-            gpsRouteFolder.addContent(makePlacemark(end.getLabel(), 
-                    FeatureColor.GREEN, 
-                   getFormattedDetails(end, Bundle.Waypoint_Route_Point_Display_String()),
+            gpsRouteFolder.addContent(makePlacemark(end.getLabel(),
+                    FeatureColor.GREEN,
+                    getFormattedDetails(end, Bundle.Waypoint_Route_Point_Display_String()),
                     end.getTimestamp(), endingPoint, formattedEnd)); //NON-NLS
         }
     }
@@ -688,11 +706,11 @@ class KMLReport implements GeneralReportModule {
 
     /**
      * Get the nicely formatted details for the given waypoint.
-     * 
-     * @param point Waypoint object
+     *
+     * @param point  Waypoint object
      * @param header String details header
-     * 
-     * @return HTML formatted String of details for given waypoint 
+     *
+     * @return HTML formatted String of details for given waypoint
      */
     private String getFormattedDetails(Waypoint point, String header) {
         StringBuilder result = new StringBuilder(); //NON-NLS
@@ -706,15 +724,15 @@ class KMLReport implements GeneralReportModule {
 
         result.append(formatAttribute("Latitude", point.getLatitude().toString()))
                 .append(formatAttribute("Longitude", point.getLongitude().toString()));
-       
+
         if (point.getAltitude() != null) {
             result.append(formatAttribute("Altitude", point.getAltitude().toString()));
         }
 
         List<Waypoint.Property> list = point.getOtherProperties();
-        for(Waypoint.Property prop: list) {
+        for (Waypoint.Property prop : list) {
             String value = prop.getValue();
-            if(value != null && !value.isEmpty()) {
+            if (value != null && !value.isEmpty()) {
                 result.append(formatAttribute(prop.getDisplayName(), value));
             }
         }
@@ -733,8 +751,7 @@ class KMLReport implements GeneralReportModule {
      *
      * @return A HTML formatted list of the Route attributes
      */
-
-     private String getFormattedDetails(Route route) {
+    private String getFormattedDetails(Route route) {
         List<Waypoint> points = route.getRoute();
         StringBuilder result = new StringBuilder(); //NON-NLS
 
@@ -752,38 +769,38 @@ class KMLReport implements GeneralReportModule {
 
             result.append(formatAttribute("Start Latitude", start.getLatitude().toString()))
                     .append(formatAttribute("Start Longitude", start.getLongitude().toString()));
-            
+
             Double altitude = start.getAltitude();
-            if(altitude != null) {
+            if (altitude != null) {
                 result.append(formatAttribute("Start Altitude", altitude.toString()));
             }
-            
+
             result.append(formatAttribute("End Latitude", end.getLatitude().toString()))
                     .append(formatAttribute("End Longitude", end.getLongitude().toString()));
-            
+
             altitude = end.getAltitude();
-            if(altitude != null) {
+            if (altitude != null) {
                 result.append(formatAttribute("End Altitude", altitude.toString()));
             }
         }
 
         List<Waypoint.Property> list = route.getOtherProperties();
-        for(Waypoint.Property prop: list) {
+        for (Waypoint.Property prop : list) {
             String value = prop.getValue();
-            if(value != null && !value.isEmpty()) {
+            if (value != null && !value.isEmpty()) {
                 result.append(formatAttribute(prop.getDisplayName(), value));
             }
         }
 
         return result.toString();
     }
-    
+
     /**
      * Helper functions for consistently formatting longitude and latitude.
-     * 
-     * @param latitude Double latitude value
+     *
+     * @param latitude  Double latitude value
      * @param longitude Double longitude value
-     * 
+     *
      * @return String Nicely formatted double values separated by a comma
      */
     private String formattedCoordinates(Double latitude, Double longitude) {

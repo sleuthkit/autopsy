@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 /**
  * Class to handle event bus and events for file discovery tool.
  */
-final class DiscoveryEvents {
+final class DiscoveryEventUtils {
 
     private final static EventBus discoveryEventBus = new EventBus();
 
@@ -41,7 +41,7 @@ final class DiscoveryEvents {
         return discoveryEventBus;
     }
 
-    private DiscoveryEvents() {
+    private DiscoveryEventUtils() {
     }
 
     /**
