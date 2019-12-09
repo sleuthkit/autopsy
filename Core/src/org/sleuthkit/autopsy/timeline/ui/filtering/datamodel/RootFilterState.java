@@ -40,45 +40,73 @@ import org.sleuthkit.datamodel.TimelineFilter.RootFilter;
 import org.sleuthkit.datamodel.TimelineFilter.TextFilter;
 import org.sleuthkit.datamodel.TimelineFilter.TagsFilter;
 
-/** A FilterState for RootFilters. Provides named access to the sub
- * filter states.
+/**
+ * An implementation of the FilterState interface that wraps a RootFilter object
+ * for display via the timeline filter panel by providing selected, disabled,
+ * and active properties for the object. The wrapped root filter is a compound
+ * filter, so additional behavior is provided for the management of child
+ * subfilter state objects.
  */
 public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFilter> {
 
+    private final static BooleanProperty ALWAYS_TRUE = new SimpleBooleanProperty(true);
+    private final static BooleanProperty ALWAYS_FALSE = new SimpleBooleanProperty(false);
     private final CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState;
     private final SqlFilterState<HideKnownFilter> knownFilterState;
-    private final SqlFilterState<TextFilter> textFilterState;
-    private final SqlFilterState<TagsFilter> tagsFilterState;
-    private final SqlFilterState<HashHitsFilter> hashHitsFilterState;
+    private final TextFilterState textFilterState;
+    private final TagsFilterState tagsFilterState;
+    private final HashHitsFilterState hashHitsFilterState;
     private final CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState;
     private final CompoundFilterState<TimelineFilter.FileTypeFilter, TimelineFilter.FileTypesFilter> fileTypesFilterState;
-
-    private static final BooleanProperty ALWAYS_TRUE = new SimpleBooleanProperty(true);
-    private final static BooleanProperty ALWAYS_FALSE = new SimpleBooleanProperty(false);
-
     private final Set<FilterState<? extends TimelineFilter>> namedFilterStates = new HashSet<>();
 
-    public RootFilterState(RootFilter delegate) {
-        this(delegate,
-                new CompoundFilterState<>(delegate.getEventTypeFilter()),
-                new SqlFilterState<>(delegate.getKnownFilter()),
-                new SqlFilterState<>(delegate.getTextFilter()),
-                new SqlFilterState<>(delegate.getTagsFilter()),
-                new SqlFilterState<>(delegate.getHashHitsFilter()),
-                new CompoundFilterState<>(delegate.getDataSourcesFilter()),
-                new CompoundFilterState<>(delegate.getFileTypesFilter())
+    /**
+     * Constructs an implementation of the FilterState interface that wraps a
+     * RootFilter object for display via the timeline filter panel by providing
+     * selected, disabled, and active properties for the object. The underlying
+     * root filter is a compound filter, so additional behavior is provided for
+     * the management of child subfilter state objects.
+     *
+     * @param rootFilter The TimelineFilter.RootFilter object to be wrapped.
+     */
+    public RootFilterState(RootFilter rootFilter) {
+        this(rootFilter,
+                new CompoundFilterState<>(rootFilter.getEventTypeFilter()),
+                new SqlFilterState<>(rootFilter.getKnownFilter()),
+                new TextFilterState(rootFilter.getTextFilter()),
+                new TagsFilterState(rootFilter.getTagsFilter()),
+                new HashHitsFilterState(rootFilter.getHashHitsFilter()),
+                new CompoundFilterState<>(rootFilter.getDataSourcesFilter()),
+                new CompoundFilterState<>(rootFilter.getFileTypesFilter())
         );
     }
 
-    private RootFilterState(RootFilter filter,
-                            CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState,
-                            SqlFilterState<HideKnownFilter> knownFilterState,
-                            SqlFilterState<TextFilter> textFilterState,
-                            SqlFilterState<TagsFilter> tagsFilterState,
-                            SqlFilterState<HashHitsFilter> hashHitsFilterState,
-                            CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState,
-                            CompoundFilterState<FileTypeFilter, FileTypesFilter> fileTypesFilterState) {
-        super(filter, Arrays.asList(eventTypeFilterState, knownFilterState, textFilterState, tagsFilterState, hashHitsFilterState, dataSourcesFilterState, fileTypesFilterState));
+    /**
+     * Constructs an implementation of the FilterState interface that wraps a
+     * RootFilter object for display via the timeline filter panel by providing
+     * selected, disabled, and active properties for the object. The underlying
+     * root filter is a compound filter, so additional behavior is provided for
+     * the management of child subfilter state objects.
+     *
+     * @param rootFilter             The TimelineFilter.RootFilter object to be
+     *                               wrapped.
+     * @param eventTypeFilterState   The top-level event types subfilter.
+     * @param knownFilterState       The known state subfilter.
+     * @param textFilterState        The text subfilter.
+     * @param tagsFilterState        The tags subfilter.
+     * @param hashHitsFilterState    The hash set hits subfilter.
+     * @param dataSourcesFilterState The data sources subfilter.
+     * @param fileTypesFilterState   The file types subfilter.
+     */
+    private RootFilterState(RootFilter rootFilter,
+            CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState,
+            SqlFilterState<HideKnownFilter> knownFilterState,
+            TextFilterState textFilterState,
+            TagsFilterState tagsFilterState,
+            HashHitsFilterState hashHitsFilterState,
+            CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState,
+            CompoundFilterState<FileTypeFilter, FileTypesFilter> fileTypesFilterState) {
+        super(rootFilter, Arrays.asList(eventTypeFilterState, knownFilterState, textFilterState, tagsFilterState, hashHitsFilterState, dataSourcesFilterState, fileTypesFilterState));
         this.eventTypeFilterState = eventTypeFilterState;
         this.knownFilterState = knownFilterState;
         this.textFilterState = textFilterState;
@@ -86,21 +114,21 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
         this.hashHitsFilterState = hashHitsFilterState;
         this.dataSourcesFilterState = dataSourcesFilterState;
         this.fileTypesFilterState = fileTypesFilterState;
-
         namedFilterStates.addAll(Arrays.asList(eventTypeFilterState, knownFilterState, textFilterState, tagsFilterState, hashHitsFilterState, dataSourcesFilterState, fileTypesFilterState));
     }
 
     /**
-     * Get a new root filter that intersects the given filter with this one.
+     * Gets a new root filter state that contains the intersection of the root
+     * filter of a given root filter state with the root filter of this root
+     * filter state.
      *
-     * @param otherFilter
+     * @param other A RootFilterState object.
      *
-     * @return A new RootFilter model that intersects the given filter with this
-     *         one.
+     * @return A new RootFilterState object.
      */
-    public RootFilterState intersect(FilterState< ? extends TimelineFilter> otherFilter) {
+    public RootFilterState intersect(FilterState< ? extends TimelineFilter> other) {
         RootFilterState copyOf = copyOf();
-        copyOf.addSubFilterState(otherFilter);
+        copyOf.addSubFilterState(other);
         return copyOf;
     }
 
@@ -109,9 +137,9 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
         RootFilterState copy = new RootFilterState(getFilter().copyOf(),
                 getEventTypeFilterState().copyOf(),
                 getKnownFilterState().copyOf(),
-                getTextFilterState().copyOf(),
-                getTagsFilterState().copyOf(),
-                getHashHitsFilterState().copyOf(),
+                new TextFilterState(this.textFilterState),
+                new TagsFilterState(this.tagsFilterState),
+                new HashHitsFilterState(this.hashHitsFilterState),
                 getDataSourcesFilterState().copyOf(),
                 getFileTypesFilterState().copyOf()
         );
@@ -191,7 +219,7 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
         }
 
         final RootFilterState other = (RootFilterState) obj;
-      
+
         if (false == Objects.equals(this.getFilter(), other.getFilter())) {
             return false;
         }
@@ -259,15 +287,15 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     @Override
     public String toString() {
         return "RootFilterState{"
-               + "\neventTypeFilterState=" + eventTypeFilterState + ","
-               + "\nknownFilterState=" + knownFilterState + ","
-               + "\ntextFilterState=" + textFilterState + ","
-               + "\ntagsFilterState=" + tagsFilterState + ","
-               + "\nhashHitsFilterState=" + hashHitsFilterState + ","
-               + "\ndataSourcesFilterState=" + dataSourcesFilterState + ","
-               + "\nfileTypesFilterState=" + fileTypesFilterState + ","
-               + "\nsubFilterStates=" + getSubFilterStates() + ","
-               + "\nnamedFilterStates=" + namedFilterStates + ","
-               + "\ndelegate=" + getFilter() + '}'; //NON-NLS
+                + "\neventTypeFilterState=" + eventTypeFilterState + ","
+                + "\nknownFilterState=" + knownFilterState + ","
+                + "\ntextFilterState=" + textFilterState + ","
+                + "\ntagsFilterState=" + tagsFilterState + ","
+                + "\nhashHitsFilterState=" + hashHitsFilterState + ","
+                + "\ndataSourcesFilterState=" + dataSourcesFilterState + ","
+                + "\nfileTypesFilterState=" + fileTypesFilterState + ","
+                + "\nsubFilterStates=" + getSubFilterStates() + ","
+                + "\nnamedFilterStates=" + namedFilterStates + ","
+                + "\ndelegate=" + getFilter() + '}'; //NON-NLS
     }
 }
