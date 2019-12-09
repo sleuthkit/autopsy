@@ -185,7 +185,7 @@ public final class EventsModel {
          * RJCTODO: Why isn't the event filter state of the initialModelParams
          * used here?
          */
-        filterStateProperty.set(getDefaultEventFilter());
+        filterStateProperty.set(getDefaultEventFilterState());
 
         /*
          * Add a listener to the model parameters property that updates the
@@ -405,11 +405,24 @@ public final class EventsModel {
      *
      * @return An instance of the default filter state model parameter.
      */
-    public synchronized RootFilterState getDefaultEventFilter() {
+    public synchronized RootFilterState getDefaultEventFilterState() {
+        // RJCTODO: Move all of this into FilterUtils, or factor FilterUtils 
+        // into this class. The former is probably better, simply passing the 
+        // util a list of data source names.
+        /*
+         * Construct data source filters for all of the data sources in the data
+         * sources cache.
+         */
         DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
         datasourceIDsToNamesMap.entrySet().forEach(dataSourceEntry
                 -> dataSourcesFilter.addSubFilter(newDataSourceFilter(dataSourceEntry)));
-        return new RootFilterState(new RootFilter(new HideKnownFilter(),
+
+        /*
+         * Make the rest of the event filters and decorate all of the filters
+         * with filter state objects for the GUI.
+         */
+        RootFilterState rootFilterState = new RootFilterState(new RootFilter(
+                new HideKnownFilter(),
                 new TagsFilter(),
                 new HashHitsFilter(),
                 new TextFilter(),
@@ -417,6 +430,8 @@ public final class EventsModel {
                 dataSourcesFilter,
                 FilterUtils.createDefaultFileTypesFilter(),
                 Collections.emptySet()));
+
+        return rootFilterState;
     }
 
     /**

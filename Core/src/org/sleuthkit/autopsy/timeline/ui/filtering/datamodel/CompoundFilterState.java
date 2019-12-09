@@ -150,7 +150,7 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
         if (subFilterStates.contains(newSubFilterState) == false) {
             subFilterStates.add(newSubFilterState);
             newSubFilterState.selectedProperty().addListener(selectedProperty -> {
-                //set this compound filter state selected af any of the subfilters are selected.
+                //set this compound filter state selected if any of the subfilters are selected.
                 setSelected(subFilterStates.stream().anyMatch(FilterState::isSelected));
             });
             newSubFilterState.setDisabled(isActive() == false);

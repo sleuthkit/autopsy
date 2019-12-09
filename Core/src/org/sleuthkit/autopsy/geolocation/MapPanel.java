@@ -19,16 +19,21 @@
 package org.sleuthkit.autopsy.geolocation;
 
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,6 +50,7 @@ import javax.swing.Popup;
 import javax.swing.PopupFactory;
 import javax.swing.Timer;
 import javax.swing.event.MouseInputListener;
+import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.VirtualEarthTileFactoryInfo;
 import org.jxmapviewer.input.CenterMapListener;
@@ -56,19 +62,22 @@ import org.jxmapviewer.viewer.TileFactory;
 import org.jxmapviewer.viewer.TileFactoryInfo;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
-import org.jxmapviewer.viewer.util.GeoUtil;
+import org.jxmapviewer.viewer.WaypointRenderer;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.datamodel.TskCoreException;
+import javax.imageio.ImageIO;
+import org.jxmapviewer.viewer.DefaultWaypointRenderer;
 
 /**
  * The map panel. This panel contains the jxmapviewer MapViewer
  */
 final public class MapPanel extends javax.swing.JPanel {
 
+    static final String CURRENT_MOUSE_GEOPOSITION = "CURRENT_MOUSE_GEOPOSITION";
     private static final Logger logger = Logger.getLogger(MapPanel.class.getName());
 
     private static final long serialVersionUID = 1L;
@@ -113,7 +122,10 @@ final public class MapPanel extends javax.swing.JPanel {
             @Override
             public void preferenceChange(PreferenceChangeEvent evt) {
                 try {
-                    mapViewer.setTileFactory(new DefaultTileFactory(getTileFactoryInfo()));
+                    // Tell the old factory to cleanup
+                    mapViewer.getTileFactory().dispose();
+                    
+                    mapViewer.setTileFactory(getTileFactory());
                     initializeZoomSlider();
                 } catch (GeoLocationDataException ex) {
                     logger.log(Level.SEVERE, "Failed to connect to new geolocation tile server.", ex); //NON-NLS
@@ -122,11 +134,32 @@ final public class MapPanel extends javax.swing.JPanel {
                             Bundle.MapPanel_connection_failure_message_title(),
                             JOptionPane.ERROR_MESSAGE);
                     MessageNotifyUtil.Notify.error(
-                        Bundle.MapPanel_connection_failure_message_title(), 
-                        Bundle.MapPanel_connection_failure_message());
+                            Bundle.MapPanel_connection_failure_message_title(),
+                            Bundle.MapPanel_connection_failure_message());
                 }
             }
         });
+    }
+
+    /**
+     * Get a list of the waypoints that are currently visible in the viewport.
+     * 
+     * @return A list of waypoints or empty list if none were found.
+     */
+    List<MapWaypoint> getVisibleWaypoints() {
+
+        Rectangle viewport = mapViewer.getViewportBounds();
+        List<MapWaypoint> waypoints = new ArrayList<>();
+
+        Iterator<MapWaypoint> iterator = waypointTree.iterator();
+        while (iterator.hasNext()) {
+            MapWaypoint waypoint = iterator.next();
+            if (viewport.contains(mapViewer.getTileFactory().geoToPixel(waypoint.getPosition(), mapViewer.getZoom()))) {
+                waypoints.add(waypoint);
+            }
+        }
+
+        return waypoints;
     }
 
     /**
@@ -134,8 +167,7 @@ final public class MapPanel extends javax.swing.JPanel {
      */
     void initMap() throws GeoLocationDataException {
 
-        TileFactoryInfo info = getTileFactoryInfo();
-        DefaultTileFactory tileFactory = new DefaultTileFactory(info);
+        TileFactory tileFactory = getTileFactory();
         mapViewer.setTileFactory(tileFactory);
 
         // Add Mouse interactions
@@ -158,8 +190,8 @@ final public class MapPanel extends javax.swing.JPanel {
         zoomSlider.setMaximum(tileFactory.getInfo().getMaximumZoomLevel());
 
         setZoom(tileFactory.getInfo().getMaximumZoomLevel() - 1);
-        
-        mapViewer.setCenterPosition(new GeoPosition(0,0));
+
+        mapViewer.setCenterPosition(new GeoPosition(0, 0));
 
         // Basic painters for the way points. 
         WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<Waypoint>() {
@@ -175,6 +207,13 @@ final public class MapPanel extends javax.swing.JPanel {
                 return set;
             }
         };
+        
+        try {
+            waypointPainter.setRenderer(new MapWaypointRenderer());
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Failed to load waypoint image resource, using DefaultWaypointRenderer", ex);
+            waypointPainter.setRenderer(new DefaultWaypointRenderer());
+        }
 
         mapViewer.setOverlayPainter(waypointPainter);
     }
@@ -192,50 +231,49 @@ final public class MapPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Create the TileFactoryInfo object based on the user preference.
+     * Create the TileFactory object based on the user preference.
      *
      * @return
      */
-    TileFactoryInfo getTileFactoryInfo() throws GeoLocationDataException {
-        switch (GeolocationSettingsPanel.GeolocationTileOption.getOptionForValue(UserPreferences.getGeolocationtTileOption())) {
+    private TileFactory getTileFactory() throws GeoLocationDataException {
+        switch (GeolocationSettingsPanel.GeolocationDataSourceType.getOptionForValue(UserPreferences.getGeolocationtTileOption())) {
             case ONLINE_USER_DEFINED_OSM_SERVER:
-                return createOnlineOSMFactory(UserPreferences.getGeolocationOsmServerAddress());
+                return new DefaultTileFactory(createOnlineOSMFactory(UserPreferences.getGeolocationOsmServerAddress()));
             case OFFLINE_OSM_ZIP:
-                return createOSMZipFactory(UserPreferences.getGeolocationOsmZipPath());
+                return new DefaultTileFactory(createOSMZipFactory(UserPreferences.getGeolocationOsmZipPath()));
+            case OFFILE_MBTILES_FILE:
+                return new MBTilesTileFactory(UserPreferences.getGeolocationMBTilesFilePath());
             default:
-                return new VirtualEarthTileFactoryInfo(VirtualEarthTileFactoryInfo.MAP);
+                return new DefaultTileFactory(new VirtualEarthTileFactoryInfo(VirtualEarthTileFactoryInfo.MAP));
         }
     }
-    
+
     /**
      * Create the TileFactoryInfo for an online OSM tile server.
-     * 
-     * @param address Tile server address 
-     * 
+     *
+     * @param address Tile server address
+     *
      * @return TileFactoryInfo object for server address.
-     * 
-     * @throws GeoLocationDataException 
+     *
+     * @throws GeoLocationDataException
      */
     private TileFactoryInfo createOnlineOSMFactory(String address) throws GeoLocationDataException {
         if (address.isEmpty()) {
             throw new GeoLocationDataException("Invalid user preference for OSM user define tile server. Address is an empty string.");
         } else {
             TileFactoryInfo info = new OSMTileFactoryInfo("User Defined Server", address);
-            if (!GeoUtil.isValidTile(1, 1, 1, info)) {
-                throw new GeoLocationDataException(String.format("Invalid OSM user define tile server: %s", address));
-            }
             return info;
         }
     }
-    
+
     /**
      * Create the TileFactoryInfo for OSM zip File
-     * 
+     *
      * @param zipPath Path to zip file.
-     * 
+     *
      * @return TileFactoryInfo for zip file.
-     * 
-     * @throws GeoLocationDataException 
+     *
+     * @throws GeoLocationDataException
      */
     private TileFactoryInfo createOSMZipFactory(String path) throws GeoLocationDataException {
         if (path.isEmpty()) {
@@ -300,7 +338,10 @@ final public class MapPanel extends javax.swing.JPanel {
             // it the popup is currently visible
             if (waypoint != null && !waypoint.equals(currentlySelectedWaypoint)) {
                 currentlySelectedWaypoint = waypoint;
-                showDetailsPopup();
+                if(currentPopup != null) {
+                    showDetailsPopup();
+                }
+                mapViewer.repaint();
             }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to show popup for waypoint", ex);
@@ -328,7 +369,7 @@ final public class MapPanel extends javax.swing.JPanel {
                 popupMenu.add(new JSeparator());
             }
         }
-        popupMenu.show(this, point.x, point.y);
+        popupMenu.show(mapViewer, point.x, point.y);
     }
 
     /**
@@ -358,6 +399,8 @@ final public class MapPanel extends javax.swing.JPanel {
 
             currentPopup = popupFactory.getPopup(this, detailPane, popupLocation.x, popupLocation.y);
             currentPopup.show();
+            
+            mapViewer.repaint();
         }
     }
 
@@ -484,8 +527,6 @@ final public class MapPanel extends javax.swing.JPanel {
         mapViewer = new org.jxmapviewer.JXMapViewer();
         zoomPanel = new javax.swing.JPanel();
         zoomSlider = new javax.swing.JSlider();
-        infoPanel = new javax.swing.JPanel();
-        cordLabel = new javax.swing.JLabel();
 
         setFocusable(false);
         setLayout(new java.awt.BorderLayout());
@@ -552,13 +593,6 @@ final public class MapPanel extends javax.swing.JPanel {
         mapViewer.add(zoomPanel, gridBagConstraints);
 
         add(mapViewer, java.awt.BorderLayout.CENTER);
-
-        infoPanel.setLayout(new java.awt.BorderLayout());
-
-        org.openide.awt.Mnemonics.setLocalizedText(cordLabel, org.openide.util.NbBundle.getMessage(MapPanel.class, "MapPanel.cordLabel.text")); // NOI18N
-        infoPanel.add(cordLabel, java.awt.BorderLayout.EAST);
-
-        add(infoPanel, java.awt.BorderLayout.SOUTH);
     }// </editor-fold>//GEN-END:initComponents
 
     private void zoomSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zoomSliderStateChanged
@@ -581,20 +615,51 @@ final public class MapPanel extends javax.swing.JPanel {
 
     private void mapViewerMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mapViewerMouseMoved
         GeoPosition geopos = mapViewer.getTileFactory().pixelToGeo(evt.getPoint(), mapViewer.getZoom());
-        cordLabel.setText(geopos.toString());
+        firePropertyChange(CURRENT_MOUSE_GEOPOSITION, null, geopos);
     }//GEN-LAST:event_mapViewerMouseMoved
 
     private void mapViewerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mapViewerMouseClicked
-        currentlySelectedWaypoint = findClosestWaypoint(evt.getPoint());
-        showDetailsPopup();
+        if(!evt.isPopupTrigger() && (evt.getButton() == MouseEvent.BUTTON1)) {
+            currentlySelectedWaypoint = findClosestWaypoint(evt.getPoint());
+            showDetailsPopup();
+        }
     }//GEN-LAST:event_mapViewerMouseClicked
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel cordLabel;
-    private javax.swing.JPanel infoPanel;
     private org.jxmapviewer.JXMapViewer mapViewer;
     private javax.swing.JPanel zoomPanel;
     private javax.swing.JSlider zoomSlider;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Renderer for the map waypoints.
+     */
+    private class MapWaypointRenderer implements WaypointRenderer<Waypoint> {
+        private final BufferedImage defaultWaypointImage;
+        private final BufferedImage selectedWaypointImage;
+        
+        /**
+         * Construct a WaypointRenederer
+         * 
+         * @throws IOException 
+         */
+        MapWaypointRenderer() throws IOException {
+            defaultWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_teal.png"));
+            selectedWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_yellow.png"));
+        }
+        
+        @Override
+        public void paintWaypoint(Graphics2D gd, JXMapViewer jxmv, Waypoint waypoint) {
+            Point2D point = jxmv.getTileFactory().geoToPixel(waypoint.getPosition(), jxmv.getZoom());
+
+            int x = (int)point.getX();
+            int y = (int)point.getY();
+            
+            BufferedImage image = (waypoint == currentlySelectedWaypoint ? selectedWaypointImage: defaultWaypointImage);
+
+            (gd.create()).drawImage(image, x -image.getWidth() / 2, y -image.getHeight(), null);
+        }
+        
+    }
 }

@@ -81,6 +81,7 @@ public final class UserPreferences {
     private static final String GEO_TILE_OPTION = "GeolocationTileOption";
     private static final String GEO_OSM_TILE_ZIP_PATH = "GeolocationOsmZipPath";
     private static final String GEO_OSM_SERVER_ADDRESS = "GeolocationOsmServerAddress";
+    private static final String GEO_MBTILES_FILE_PATH = "GeolcoationMBTilesFilePath";
 
     // Prevent instantiation.
     private UserPreferences() {
@@ -576,7 +577,7 @@ public final class UserPreferences {
     }
 
     /**
-     * Sets the address of the OSM tile server.
+     * Sets the address of geolocation window user defined OSM server data source.
      * 
      * @param address 
      */
@@ -591,5 +592,23 @@ public final class UserPreferences {
      */
     public static String getGeolocationOsmServerAddress() {
         return preferences.get(GEO_OSM_SERVER_ADDRESS, "");
+    }
+    
+    /**
+     * Sets the path for Geolocation MBTiles data source file.
+     * 
+     * @param absolutePath 
+     */
+    public static void setGeolocationMBTilesFilePath(String absolutePath) {
+        preferences.put(GEO_MBTILES_FILE_PATH, absolutePath);
+    }
+    
+    /**
+     * Retrieves the path for the Geolocation MBTiles data source file.
+     * 
+     * @return Absolute path to  MBTiles file or empty string if none was found.
+     */
+    public static String getGeolocationMBTilesFilePath() {
+        return preferences.get(GEO_MBTILES_FILE_PATH, "");
     }
 }

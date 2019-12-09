@@ -554,22 +554,24 @@ class Chrome extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
 
-                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
-                if (bbart != null) {
-                    bbartifacts.add(bbart);
-                }
-                
-                // find the downloaded file and create a TSK_DOWNLOAD_SOURCE for it..
-                try {
-                    for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(fullPath), FilenameUtils.getPath(fullPath))) {
-                        BlackboardArtifact downloadSourceArt =  downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
-                        downloadSourceArt.addAttributes(createDownloadSourceAttributes(result.get("url").toString()));
-                     
-                        bbartifacts.add(downloadSourceArt);
-                        break;   
+                BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
+                if (webDownloadArtifact != null) {
+                    bbartifacts.add(webDownloadArtifact);
+
+                    // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
+                    try {
+                        for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(fullPath), FilenameUtils.getPath(fullPath))) {
+                            BlackboardArtifact associatedObjectArtifact = downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
+                            associatedObjectArtifact.addAttribute(
+                                    new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
+                                            RecentActivityExtracterModuleFactory.getModuleName(), webDownloadArtifact.getArtifactID()));
+
+                            bbartifacts.add(associatedObjectArtifact);
+                            break;
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, String.format("Error creating associated object artifact for file  '%s'", fullPath), ex); //NON-NLS
                     }
-                } catch (TskCoreException ex) {
-                     logger.log(Level.SEVERE, String.format("Error creating download source artifact for file  '%s'", fullPath), ex); //NON-NLS
                 }
             }
 

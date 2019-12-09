@@ -42,6 +42,9 @@
 
         <dependency conf="core->default" org="com.google.cloud" name="google-cloud-translate" rev="1.70.0"/>
         <dependency conf="core->default" org="org.apache.opennlp" name="opennlp-tools" rev="1.9.1"/>
+
+        <dependency conf="core->default" org="com.ethteck.decodetect" name="decodetect-core" rev="0.3"/>
+        <dependency conf="core->default" org="com.beetstra.jutf7" name="jutf7" rev="1.0.0"/>
         
         <dependency org="org.sejda.webp-imageio" name="webp-imageio-sejda" rev="0.1.0"/>
         <dependency org="com.googlecode.libphonenumber" name="libphonenumber" rev="3.5" />
@@ -54,6 +57,6 @@
         
         <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
         <dependency org="javax.ws.rs" name="javax.ws.rs-api" rev="2.0"/>
-        <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>     
+        <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>
     </dependencies>
 </ivy-module>
