@@ -156,17 +156,15 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
 
             // Check to see if this case has been already opened before
             String caseUnpackedBefore = getCaseIfUnpackedBefore(packagedCase);
-            if (!caseUnpackedBefore.isEmpty()) {
-                if (MessageNotifyUtil.Message.confirm(Bundle.UnpackageWorker_doInBackground_previousSeenCase(packagedCase))) {
+            if ((!caseUnpackedBefore.isEmpty()) 
+                && (MessageNotifyUtil.Message.confirm(Bundle.UnpackageWorker_doInBackground_previousSeenCase(packagedCase)))) {
                     try {
                         Case.openAsCurrentCase(caseUnpackedBefore);
-                    } catch (CaseActionException ex) {
-                        throw new TskCoreException("Error opening case after unpacking it.", ex); // NON-NLS
-                    } finally {
                         success.set(true);
                         return null;
+                    } catch (CaseActionException ex) {
+                        throw new TskCoreException("Error opening case after unpacking it.", ex); // NON-NLS
                     }
-                }
             }
             // Find 7-Zip
             File sevenZipExe = locate7ZipExecutable();
