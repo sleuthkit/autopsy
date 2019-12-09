@@ -111,6 +111,7 @@ public final class DiscoveryTopComponent extends TopComponent {
      * Update the search settings to a default state.
      */
     void updateSearchSettings() {
+        resetTopComponent();
         fileSearchPanel.resetPanel();
         imagesButton.setSelected(true);
         imagesButton.setEnabled(false);
@@ -306,7 +307,7 @@ public final class DiscoveryTopComponent extends TopComponent {
             }
         });
     }
-    
+
     @Override
     public List<Mode> availableModes(List<Mode> modes) {
         /*
@@ -317,6 +318,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         return modes.stream().filter(mode -> mode.getName().equals("discovery"))
                 .collect(Collectors.toList());
     }
+
     /**
      * Update the user interface in response to a search being started.
      *
