@@ -88,40 +88,55 @@ class FileSearchFiltering {
             // The file search filter is required, so this should never be empty.
             throw new FileSearchException("Selected filters do not include a case database query");
         }
-
         try {
-            // Get all matching abstract files
-            List<ResultFile> resultList = new ArrayList<>();
-
-            logger.log(Level.INFO, "Running SQL query: {0}", combinedQuery);
-            List<AbstractFile> sqlResults = caseDb.findAllFilesWhere(combinedQuery);
-
-            // If there are no results, return now
-            if (sqlResults.isEmpty()) {
-                return resultList;
-            }
-
-            // Wrap each result in a ResultFile
-            for (AbstractFile abstractFile : sqlResults) {
-                resultList.add(new ResultFile(abstractFile));
-            }
-
-            // Now run any non-SQL filters. 
-            for (FileFilter filter : filters) {
-                if (filter.useAlternateFilter()) {
-                    resultList = filter.applyAlternateFilter(resultList, caseDb, centralRepoDb);
-                }
-
-                // There are no matches for the filters run so far, so return
-                if (resultList.isEmpty()) {
-                    return resultList;
-                }
-            }
-
-            return resultList;
+            return getResultList(filters, combinedQuery, caseDb, centralRepoDb);
         } catch (TskCoreException ex) {
             throw new FileSearchException("Error querying case database", ex); // NON-NLS
         }
+    }
+
+    /**
+     * Private helper method for runQueries method to get the ResultFile list.
+     *
+     * @param filters       The filters to run.
+     * @param combinedQuery The query to get results files for.
+     * @param caseDb        The case database.
+     * @param crDb          The central repo. Can be null as long as no filters
+     *                      need it.
+     *
+     * @return An ArrayList of ResultFiles returned by the query.
+     *
+     * @throws TskCoreException
+     * @throws FileSearchException
+     */
+    private static List<ResultFile> getResultList(List<FileFilter> filters, String combinedQuery, SleuthkitCase caseDb, EamDb centralRepoDb) throws TskCoreException, FileSearchException {
+        // Get all matching abstract files
+        List<ResultFile> resultList = new ArrayList<>();
+
+        logger.log(Level.INFO, "Running SQL query: {0}", combinedQuery);
+        List<AbstractFile> sqlResults = caseDb.findAllFilesWhere(combinedQuery);
+
+        // If there are no results, return now
+        if (sqlResults.isEmpty()) {
+            return resultList;
+        }
+
+        // Wrap each result in a ResultFile
+        for (AbstractFile abstractFile : sqlResults) {
+            resultList.add(new ResultFile(abstractFile));
+        }
+
+        // Now run any non-SQL filters. 
+        for (FileFilter filter : filters) {
+            if (filter.useAlternateFilter()) {
+                resultList = filter.applyAlternateFilter(resultList, caseDb, centralRepoDb);
+            }
+            // There are no matches for the filters run so far, so return
+            if (resultList.isEmpty()) {
+                return resultList;
+            }
+        }
+        return resultList;
     }
 
     /**
@@ -857,11 +872,9 @@ class FileSearchFiltering {
 
         @Override
         String getWhereClause() {
-            String queryStr = "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN "
+            return "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN "
                     + "(SELECT artifact_id FROM blackboard_attributes WHERE artifact_type_id = "
                     + BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID() + ")))";
-
-            return queryStr;
         }
 
         @NbBundle.Messages({

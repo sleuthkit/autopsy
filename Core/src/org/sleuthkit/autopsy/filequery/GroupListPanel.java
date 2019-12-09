@@ -56,7 +56,7 @@ class GroupListPanel extends javax.swing.JPanel {
      * @param searchStartedEvent the SearchStartedEvent which was received
      */
     @Subscribe
-    void handleSearchStartedEvent(DiscoveryEvents.SearchStartedEvent searchStartedEvent) {
+    void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
         resultType = searchStartedEvent.getType();
         groupKeyList.setListData(new GroupKey[0]);
     }
@@ -70,7 +70,7 @@ class GroupListPanel extends javax.swing.JPanel {
      * @param searchCompleteEvent the SearchCompleteEvent which was received
      */
     @Subscribe
-    void handleSearchCompleteEvent(DiscoveryEvents.SearchCompleteEvent searchCompleteEvent) {
+    void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
         groupMap = searchCompleteEvent.getGroupMap();
         searchfilters = searchCompleteEvent.getFilters();
         groupingAttribute = searchCompleteEvent.getGroupingAttr();
@@ -96,7 +96,7 @@ class GroupListPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        groupListScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JScrollPane groupListScrollPane = new javax.swing.JScrollPane();
         groupKeyList = new javax.swing.JList<>();
 
         groupKeyList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(GroupListPanel.class, "GroupListPanel.groupKeyList.border.title"))); // NOI18N
@@ -145,20 +145,19 @@ class GroupListPanel extends javax.swing.JPanel {
                 for (GroupKey groupKey : groupMap.keySet()) {
                     if (selectedGroup.equals(groupKey)) {
                         selectedGroupKey = groupKey;
-                        DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(
+                        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.GroupSelectedEvent(
                                 searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, groupMap.get(selectedGroupKey), resultType));
                         break;
                     }
                 }
             } else {
-                DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.NoResultsEvent());
+                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.NoResultsEvent());
             }
         }
     }//GEN-LAST:event_groupSelected
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JList<GroupKey> groupKeyList;
-    private javax.swing.JScrollPane groupListScrollPane;
     // End of variables declaration//GEN-END:variables
 
     /**

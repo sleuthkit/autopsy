@@ -1075,8 +1075,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         javax.swing.ButtonGroup parentPathButtonGroup = new javax.swing.ButtonGroup();
         javax.swing.ButtonGroup parentIncludeButtonGroup = new javax.swing.ButtonGroup();
-        filtersScrollPane = new javax.swing.JScrollPane();
-        filtersPanel = new javax.swing.JPanel();
+        javax.swing.JScrollPane filtersScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JPanel filtersPanel = new javax.swing.JPanel();
         sizeCheckbox = new javax.swing.JCheckBox();
         dataSourceCheckbox = new javax.swing.JCheckBox();
         crFrequencyCheckbox = new javax.swing.JCheckBox();
@@ -1093,7 +1093,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         crFrequencyList = new javax.swing.JList<>();
         keywordScrollPane = new javax.swing.JScrollPane();
         keywordList = new javax.swing.JList<>();
-        parentLabel = new javax.swing.JLabel();
+        javax.swing.JLabel parentLabel = new javax.swing.JLabel();
         parentScrollPane = new javax.swing.JScrollPane();
         parentList = new javax.swing.JList<>();
         hashSetCheckbox = new javax.swing.JCheckBox();
@@ -1115,25 +1115,25 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         scoreList = new javax.swing.JList<>();
         excludeRadioButton = new javax.swing.JRadioButton();
         knownFilesCheckbox = new javax.swing.JCheckBox();
-        fullRadioPanel = new javax.swing.JPanel();
+        javax.swing.JPanel fullRadioPanel = new javax.swing.JPanel();
         fullRadioButton = new javax.swing.JRadioButton();
-        includeRadioPanel = new javax.swing.JPanel();
-        filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767));
+        javax.swing.JPanel includeRadioPanel = new javax.swing.JPanel();
+        javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767));
         includeRadioButton = new javax.swing.JRadioButton();
-        parentTextPanel = new javax.swing.JPanel();
+        javax.swing.JPanel parentTextPanel = new javax.swing.JPanel();
         parentTextField = new javax.swing.JTextField();
         searchButton = new javax.swing.JButton();
-        sortingPanel = new javax.swing.JPanel();
+        javax.swing.JPanel sortingPanel = new javax.swing.JPanel();
         groupByCombobox = new javax.swing.JComboBox<>();
         orderByCombobox = new javax.swing.JComboBox<>();
-        orderGroupsByLabel = new javax.swing.JLabel();
-        orderByLabel = new javax.swing.JLabel();
-        groupByLabel = new javax.swing.JLabel();
+        javax.swing.JLabel orderGroupsByLabel = new javax.swing.JLabel();
+        javax.swing.JLabel orderByLabel = new javax.swing.JLabel();
+        javax.swing.JLabel groupByLabel = new javax.swing.JLabel();
         groupSortingComboBox = new javax.swing.JComboBox<>();
         errorLabel = new javax.swing.JLabel();
         cancelButton = new javax.swing.JButton();
-        stepTwoLabel = new javax.swing.JLabel();
-        stepThreeLabel = new javax.swing.JLabel();
+        javax.swing.JLabel stepTwoLabel = new javax.swing.JLabel();
+        javax.swing.JLabel stepThreeLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(10, 0));
         setPreferredSize(new java.awt.Dimension(321, 400));
@@ -1740,7 +1740,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         // Get the selected filters
         List<FileSearchFiltering.FileFilter> filters = getFilters();
         enableSearch(false);
-        DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchStartedEvent(fileType));
+        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.SearchStartedEvent(fileType));
 
         // Get the grouping attribute and group sorting method
         FileSearch.AttributeType groupingAttr = getGroupingAttribute();
@@ -1792,7 +1792,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * @param searchCancelledEvent The SearchCancelledEvent which was received.
      */
     @Subscribe
-    void handleSearchCancelledEvent(DiscoveryEvents.SearchCancelledEvent searchCancelledEvent) {
+    void handleSearchCancelledEvent(DiscoveryEventUtils.SearchCancelledEvent searchCancelledEvent) {
         SwingUtilities.invokeLater(() -> {
             enableSearch(true);
         });
@@ -1804,7 +1804,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * @param searchCompleteEvent The SearchCompleteEvent which was received.
      */
     @Subscribe
-    void handleSearchCompleteEvent(DiscoveryEvents.SearchCompleteEvent searchCompleteEvent) {
+    void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
         SwingUtilities.invokeLater(() -> {
             enableSearch(true);
         });
@@ -1903,19 +1903,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JLabel errorLabel;
     private javax.swing.JRadioButton excludeRadioButton;
     private javax.swing.JCheckBox exifCheckbox;
-    private javax.swing.Box.Filler filler2;
-    private javax.swing.JPanel filtersPanel;
-    private javax.swing.JScrollPane filtersScrollPane;
     private javax.swing.JRadioButton fullRadioButton;
-    private javax.swing.JPanel fullRadioPanel;
     private javax.swing.JComboBox<GroupingAttributeType> groupByCombobox;
-    private javax.swing.JLabel groupByLabel;
     private javax.swing.JComboBox<GroupSortingAlgorithm> groupSortingComboBox;
     private javax.swing.JCheckBox hashSetCheckbox;
     private javax.swing.JList<String> hashSetList;
     private javax.swing.JScrollPane hashSetScrollPane;
     private javax.swing.JRadioButton includeRadioButton;
-    private javax.swing.JPanel includeRadioPanel;
     private javax.swing.JCheckBox interestingItemsCheckbox;
     private javax.swing.JList<String> interestingItemsList;
     private javax.swing.JScrollPane interestingItemsScrollPane;
@@ -1928,14 +1922,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JList<String> objectsList;
     private javax.swing.JScrollPane objectsScrollPane;
     private javax.swing.JComboBox<SortingMethod> orderByCombobox;
-    private javax.swing.JLabel orderByLabel;
-    private javax.swing.JLabel orderGroupsByLabel;
     private javax.swing.JCheckBox parentCheckbox;
-    private javax.swing.JLabel parentLabel;
     private javax.swing.JList<ParentSearchTerm> parentList;
     private javax.swing.JScrollPane parentScrollPane;
     private javax.swing.JTextField parentTextField;
-    private javax.swing.JPanel parentTextPanel;
     private javax.swing.JCheckBox scoreCheckbox;
     private javax.swing.JList<Score> scoreList;
     private javax.swing.JScrollPane scoreScrollPane;
@@ -1943,9 +1933,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JCheckBox sizeCheckbox;
     private javax.swing.JList<FileSize> sizeList;
     private javax.swing.JScrollPane sizeScrollPane;
-    private javax.swing.JPanel sortingPanel;
-    private javax.swing.JLabel stepThreeLabel;
-    private javax.swing.JLabel stepTwoLabel;
     private javax.swing.JRadioButton substringRadioButton;
     private javax.swing.JCheckBox tagsCheckbox;
     private javax.swing.JList<TagName> tagsList;

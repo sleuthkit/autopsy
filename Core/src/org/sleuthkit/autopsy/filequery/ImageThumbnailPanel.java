@@ -160,7 +160,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
             case INTERESTING_SCORE:
                 scoreLabel.setIcon(INTERESTING_SCORE_ICON);
                 break;
-            case NO_SCORE:
+            case NO_SCORE:  // empty case - this is interpreted as an intentional fall-through
             default:
                 scoreLabel.setIcon(null);
                 break;
@@ -210,6 +210,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
                 break;
             default:
                 units = Bundle.ImageThumbnailPanel_bytes_text();
+                break;
         }
         return Bundle.ImageThumbnailPanel_sizeLabel_text(size, units);
     }

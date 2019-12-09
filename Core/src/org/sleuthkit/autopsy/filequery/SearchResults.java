@@ -39,7 +39,7 @@ class SearchResults {
     private final Map<FileSearch.GroupKey, FileGroup> groupMap = new HashMap<>();
     private List<FileGroup> groupList = new ArrayList<>();
 
-    private final long MAX_OUTPUT_FILES = 2000; // For debug UI - maximum number of lines to print
+    private static final long MAX_OUTPUT_FILES = 2000; // For debug UI - maximum number of lines to print
 
     /**
      * Create an empty SearchResults object

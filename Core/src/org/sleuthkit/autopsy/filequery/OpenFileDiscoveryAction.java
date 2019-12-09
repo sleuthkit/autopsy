@@ -80,32 +80,41 @@ public final class OpenFileDiscoveryAction extends CallableSystemAction implemen
             if (tc.isOpened() == false) {
                 tc.open();
                 tc.updateSearchSettings();
-                //check if modules run and assemble message
-                try {
-                    SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                    Map<Long, DataSourceModulesWrapper> dataSourceIngestModules = new HashMap<>();
-                    for (DataSource dataSource : skCase.getDataSources()) {
-                        dataSourceIngestModules.put(dataSource.getId(), new DataSourceModulesWrapper(dataSource.getName()));
-                    }
-
-                    for (IngestJobInfo jobInfo : skCase.getIngestJobs()) {
-                        dataSourceIngestModules.get(jobInfo.getObjectId()).updateModulesRun(jobInfo);
-                    }
-                    String message = "";
-                    for (DataSourceModulesWrapper dsmodulesWrapper : dataSourceIngestModules.values()) {
-                        message += dsmodulesWrapper.getMessage();
-                    }
-                    if (!message.isEmpty()) {
-                        JOptionPane.showMessageDialog(tc, message, Bundle.OpenFileDiscoveryAction_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
-                    }
-                } catch (NoCurrentCaseException | TskCoreException ex) {
-                    logger.log(Level.WARNING, "Exception while determining which modules have been run for File Discovery", ex);
-                }
-
+                displayErrorMessage(tc);
             }
             tc.toFront();
             tc.requestActive();
 
+        }
+    }
+
+    /**
+     * Private helper method to display an error message when the results of the
+     * File Discovery Top component may be incomplete.
+     *
+     * @param tc The File Discovery Top component.
+     */
+    private void displayErrorMessage(DiscoveryTopComponent tc) {
+        //check if modules run and assemble message
+        try {
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            Map<Long, DataSourceModulesWrapper> dataSourceIngestModules = new HashMap<>();
+            for (DataSource dataSource : skCase.getDataSources()) {
+                dataSourceIngestModules.put(dataSource.getId(), new DataSourceModulesWrapper(dataSource.getName()));
+            }
+
+            for (IngestJobInfo jobInfo : skCase.getIngestJobs()) {
+                dataSourceIngestModules.get(jobInfo.getObjectId()).updateModulesRun(jobInfo);
+            }
+            String message = "";
+            for (DataSourceModulesWrapper dsmodulesWrapper : dataSourceIngestModules.values()) {
+                message += dsmodulesWrapper.getMessage();
+            }
+            if (!message.isEmpty()) {
+                JOptionPane.showMessageDialog(tc, message, Bundle.OpenFileDiscoveryAction_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.WARNING, "Exception while determining which modules have been run for File Discovery", ex);
         }
     }
 

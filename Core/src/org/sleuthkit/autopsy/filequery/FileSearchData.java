@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 /**
  * Utility enums for FileSearch
  */
-class FileSearchData {
+final class FileSearchData {
 
     private final static long BYTES_PER_MB = 1000000;
 
@@ -293,7 +293,7 @@ class FileSearchData {
         private final String displayName;
         private final Collection<String> mediaTypes;
 
-        private FileType(int value, String displayName, Collection<String> mediaTypes) {
+        FileType(int value, String displayName, Collection<String> mediaTypes) {
             this.ranking = value;
             this.displayName = displayName;
             this.mediaTypes = mediaTypes;

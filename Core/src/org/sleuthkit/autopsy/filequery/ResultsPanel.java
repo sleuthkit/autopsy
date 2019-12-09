@@ -190,7 +190,7 @@ public class ResultsPanel extends javax.swing.JPanel {
      * @param pageRetrievedEvent The PageRetrievedEvent received.
      */
     @Subscribe
-    void handlePageRetrievedEvent(DiscoveryEvents.PageRetrievedEvent pageRetrievedEvent) {
+    void handlePageRetrievedEvent(DiscoveryEventUtils.PageRetrievedEvent pageRetrievedEvent) {
         SwingUtilities.invokeLater(() -> {
             populateInstancesList();
             currentPage = pageRetrievedEvent.getPageNumber();
@@ -264,7 +264,7 @@ public class ResultsPanel extends javax.swing.JPanel {
      * @param groupSelectedEvent The GroupSelectedEvent received.
      */
     @Subscribe
-    void handleGroupSelectedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
+    void handleGroupSelectedEvent(DiscoveryEventUtils.GroupSelectedEvent groupSelectedEvent) {
         SwingUtilities.invokeLater(() -> {
             searchFilters = groupSelectedEvent.getFilters();
             groupingAttribute = groupSelectedEvent.getGroupingAttr();
@@ -284,7 +284,7 @@ public class ResultsPanel extends javax.swing.JPanel {
      * @param noResultsEvent the NoResultsEvent received.
      */
     @Subscribe
-    void handleNoResultsEvent(DiscoveryEvents.NoResultsEvent noResultsEvent) {
+    void handleNoResultsEvent(DiscoveryEventUtils.NoResultsEvent noResultsEvent) {
         SwingUtilities.invokeLater(() -> {
             groupSize = 0;
             currentPage = 0;
@@ -349,7 +349,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pagingPanel = new javax.swing.JPanel();
+        javax.swing.JPanel pagingPanel = new javax.swing.JPanel();
         previousPageButton = new javax.swing.JButton();
         currentPageLabel = new javax.swing.JLabel();
         nextPageButton = new javax.swing.JButton();
@@ -611,7 +611,6 @@ public class ResultsPanel extends javax.swing.JPanel {
     private javax.swing.JList<AbstractFile> instancesList;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JComboBox<Integer> pageSizeComboBox;
-    private javax.swing.JPanel pagingPanel;
     private javax.swing.JButton previousPageButton;
     private javax.swing.JPanel resultsViewerPanel;
     // End of variables declaration//GEN-END:variables

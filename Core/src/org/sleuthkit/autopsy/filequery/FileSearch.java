@@ -803,6 +803,16 @@ class FileSearch {
                     parent = null;
                 }
             }
+            setParentPathAndID(parent, file);
+        }
+
+        /**
+         * Helper method to set the parent path and parent ID.
+         *
+         * @param parent The parent content object.
+         * @param file   The ResultFile object.
+         */
+        private void setParentPathAndID(Content parent, ResultFile file) {
             if (parent != null) {
                 try {
                     parentPath = parent.getUniquePath();
@@ -1207,28 +1217,40 @@ class FileSearch {
                     }
                 }
             } else {
-                // Set frequency in batches
-                List<ResultFile> currentFiles = new ArrayList<>();
-                Set<String> hashesToLookUp = new HashSet<>();
-                for (ResultFile file : files) {
-                    if (file.getFirstInstance().getKnown() == TskData.FileKnown.KNOWN) {
-                        file.setFrequency(Frequency.KNOWN);
-                    }
-                    if (file.getFrequency() == Frequency.UNKNOWN
-                            && file.getFirstInstance().getMd5Hash() != null
-                            && !file.getFirstInstance().getMd5Hash().isEmpty()) {
-                        hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
-                        currentFiles.add(file);
-                    }
-                    if (hashesToLookUp.size() >= BATCH_SIZE) {
-                        computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
-
-                        hashesToLookUp.clear();
-                        currentFiles.clear();
-                    }
-                }
-                computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
+                processResultFilesForCR(files, centralRepoDb);
             }
+        }
+
+        /**
+         * Private helper method for adding Frequency attribute when CR is
+         * enabled.
+         *
+         * @param files         The list of ResultFiles to caluclate frequency
+         *                      for.
+         * @param centralRepoDb The central repository currently in use.
+         */
+        private void processResultFilesForCR(List<ResultFile> files,
+                EamDb centralRepoDb) {
+            List<ResultFile> currentFiles = new ArrayList<>();
+            Set<String> hashesToLookUp = new HashSet<>();
+            for (ResultFile file : files) {
+                if (file.getFirstInstance().getKnown() == TskData.FileKnown.KNOWN) {
+                    file.setFrequency(Frequency.KNOWN);
+                }
+                if (file.getFrequency() == Frequency.UNKNOWN
+                        && file.getFirstInstance().getMd5Hash() != null
+                        && !file.getFirstInstance().getMd5Hash().isEmpty()) {
+                    hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
+                    currentFiles.add(file);
+                }
+                if (hashesToLookUp.size() >= BATCH_SIZE) {
+                    computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
+
+                    hashesToLookUp.clear();
+                    currentFiles.clear();
+                }
+            }
+            computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
         }
     }
 

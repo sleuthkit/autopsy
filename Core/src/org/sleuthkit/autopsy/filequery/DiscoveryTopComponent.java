@@ -127,19 +127,19 @@ public final class DiscoveryTopComponent extends TopComponent {
     public void componentOpened() {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
-        DiscoveryEvents.getDiscoveryEventBus().register(this);
-        DiscoveryEvents.getDiscoveryEventBus().register(resultsPanel);
-        DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
-        DiscoveryEvents.getDiscoveryEventBus().register(fileSearchPanel);
+        DiscoveryEventUtils.getDiscoveryEventBus().register(this);
+        DiscoveryEventUtils.getDiscoveryEventBus().register(resultsPanel);
+        DiscoveryEventUtils.getDiscoveryEventBus().register(groupListPanel);
+        DiscoveryEventUtils.getDiscoveryEventBus().register(fileSearchPanel);
     }
 
     @Override
     protected void componentClosed() {
         fileSearchPanel.cancelSearch();
-        DiscoveryEvents.getDiscoveryEventBus().unregister(this);
-        DiscoveryEvents.getDiscoveryEventBus().unregister(fileSearchPanel);
-        DiscoveryEvents.getDiscoveryEventBus().unregister(groupListPanel);
-        DiscoveryEvents.getDiscoveryEventBus().unregister(resultsPanel);
+        DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
+        DiscoveryEventUtils.getDiscoveryEventBus().unregister(fileSearchPanel);
+        DiscoveryEventUtils.getDiscoveryEventBus().unregister(groupListPanel);
+        DiscoveryEventUtils.getDiscoveryEventBus().unregister(resultsPanel);
         super.componentClosed();
     }
 
@@ -158,9 +158,9 @@ public final class DiscoveryTopComponent extends TopComponent {
         javax.swing.JPanel toolBarPanel = new javax.swing.JPanel();
         javax.swing.JToolBar toolBar = new javax.swing.JToolBar();
         imagesButton = new javax.swing.JButton();
-        stepOneLabel = new javax.swing.JLabel();
+        javax.swing.JLabel stepOneLabel = new javax.swing.JLabel();
         videosButton = new javax.swing.JButton();
-        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(62, 0), new java.awt.Dimension(62, 0), new java.awt.Dimension(62, 32767));
+        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(62, 0), new java.awt.Dimension(62, 0), new java.awt.Dimension(62, 32767));
 
         setPreferredSize(new java.awt.Dimension(1400, 900));
         setLayout(new java.awt.BorderLayout());
@@ -282,7 +282,7 @@ public final class DiscoveryTopComponent extends TopComponent {
      * @param searchCancelledEvent The SearchCancelledEvent received.
      */
     @Subscribe
-    void handleSearchCancelledEvent(DiscoveryEvents.SearchCancelledEvent searchCancelledEvent) {
+    void handleSearchCancelledEvent(DiscoveryEventUtils.SearchCancelledEvent searchCancelledEvent) {
         SwingUtilities.invokeLater(() -> {
             if (fileSearchPanel.getSelectedType() == FileType.VIDEO) {
                 imagesButton.setEnabled(true);
@@ -298,7 +298,7 @@ public final class DiscoveryTopComponent extends TopComponent {
      * @param searchCompletedEvent The SearchCompletedEvent received.
      */
     @Subscribe
-    void handleSearchCompletedEvent(DiscoveryEvents.SearchCompleteEvent searchCompletedEvent) {
+    void handleSearchCompletedEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompletedEvent) {
         SwingUtilities.invokeLater(() -> {
             if (fileSearchPanel.getSelectedType() == FileType.VIDEO) {
                 imagesButton.setEnabled(true);
@@ -325,7 +325,7 @@ public final class DiscoveryTopComponent extends TopComponent {
      * @param searchStartedEvent The SearchStartedEvent received.
      */
     @Subscribe
-    void handleSearchStartedEvent(DiscoveryEvents.SearchStartedEvent searchStartedEvent) {
+    void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
         SwingUtilities.invokeLater(() -> {
             imagesButton.setEnabled(false);
             videosButton.setEnabled(false);
@@ -333,11 +333,9 @@ public final class DiscoveryTopComponent extends TopComponent {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.Box.Filler filler1;
     private javax.swing.JButton imagesButton;
     private javax.swing.JSplitPane leftSplitPane;
     private javax.swing.JSplitPane rightSplitPane;
-    private javax.swing.JLabel stepOneLabel;
     private javax.swing.JButton videosButton;
     // End of variables declaration//GEN-END:variables
 

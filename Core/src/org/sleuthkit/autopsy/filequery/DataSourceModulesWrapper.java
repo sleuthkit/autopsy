@@ -81,13 +81,45 @@ class DataSourceModulesWrapper {
             if (hashModuleRun && fileTypeModuleRun && exifModuleRun) {
                 return;
             }
-            if (!hashModuleRun && moduleInfo.getDisplayName().equals(HashLookupModuleFactory.getModuleName())) {
-                hashModuleRun = true;
-            } else if (!fileTypeModuleRun && moduleInfo.getDisplayName().equals(FileTypeIdModuleFactory.getModuleName())) {
-                fileTypeModuleRun = true;
-            } else if (!exifModuleRun && moduleInfo.getDisplayName().equals(ExifParserModuleFactory.getModuleName())) {
-                exifModuleRun = true;
-            }
+            updateHashModuleStatus(moduleInfo);
+            updateFileTypeStatus(moduleInfo);
+            updateExifStatus(moduleInfo);
+        }
+    }
+
+    /**
+     * Update whether the Hash Lookup module was run for this data source.
+     *
+     * @param moduleInfo Information regarding a module which was run on this
+     *                   data source.
+     */
+    private void updateHashModuleStatus(IngestModuleInfo moduleInfo) {
+        if (!hashModuleRun && moduleInfo.getDisplayName().equals(HashLookupModuleFactory.getModuleName())) {
+            hashModuleRun = true;
+        }
+    }
+
+    /**
+     * Update whether the File Type ID module was run for this data source.
+     *
+     * @param moduleInfo Information regarding a module which was run on this
+     *                   data source.
+     */
+    private void updateFileTypeStatus(IngestModuleInfo moduleInfo) {
+        if (!fileTypeModuleRun && moduleInfo.getDisplayName().equals(FileTypeIdModuleFactory.getModuleName())) {
+            fileTypeModuleRun = true;
+        }
+    }
+
+    /**
+     * Update whether the Exif module was run for this data source.
+     *
+     * @param moduleInfo Information regarding a module which was run on this
+     *                   data source.
+     */
+    private void updateExifStatus(IngestModuleInfo moduleInfo) {
+        if (!exifModuleRun && moduleInfo.getDisplayName().equals(ExifParserModuleFactory.getModuleName())) {
+            exifModuleRun = true;
         }
     }
 }

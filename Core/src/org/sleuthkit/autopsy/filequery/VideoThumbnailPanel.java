@@ -193,7 +193,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
             case INTERESTING_SCORE:
                 scoreLabel.setIcon(INTERESTING_SCORE_ICON);
                 break;
-            case NO_SCORE:
+            case NO_SCORE: // empty case - this is interpreted as an intentional fall-through
             default:
                 scoreLabel.setIcon(null);
                 break;
@@ -242,6 +242,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
                 break;
             default:
                 units = Bundle.VideoThumbnailPanel_bytes_text();
+                break;
         }
         return Bundle.VideoThumbnailPanel_sizeLabel_text(size, units);
     }
