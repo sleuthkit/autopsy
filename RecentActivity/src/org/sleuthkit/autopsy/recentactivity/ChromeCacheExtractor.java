@@ -39,6 +39,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -276,6 +277,10 @@ final class ChromeCacheExtractor {
         } 
     }
     
+    @Messages({
+        "ChromeCacheExtract_adding_extracted_files_msg=Adding %d extracted files for analysis."
+    })
+    
     /**
      * Processes a user's cache and creates corresponding artifacts and derived files. 
      * 
@@ -355,6 +360,8 @@ final class ChromeCacheExtractor {
             cleanup();
             return;
         }
+        
+        progressBar.progress(String.format(Bundle.ChromeCacheExtract_adding_extracted_files_msg(), derivedFiles.size()));
 
         derivedFiles.forEach((derived) -> {
             services.fireModuleContentEvent(new ModuleContentEvent(derived));
