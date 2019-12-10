@@ -141,7 +141,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
          * @param xryNamespace
          * @return 
          */
-        public static XryNamespace fromName(String xryNamespace) {
+        public static XryNamespace fromDisplayName(String xryNamespace) {
             String normalizedNamespace = xryNamespace.trim().toLowerCase();
             for(XryNamespace keyChoice : XryNamespace.values()) {
                 if(normalizedNamespace.equals(keyChoice.name)) {
@@ -169,7 +169,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
         XryKey xryKey = XryKey.fromDisplayName(key);
         XryNamespace xryNamespace = XryNamespace.NONE;
         if(XryNamespace.contains(nameSpace)) {
-            xryNamespace = XryNamespace.fromName(nameSpace);
+            xryNamespace = XryNamespace.fromDisplayName(nameSpace);
         }
 
         switch (xryKey) {
