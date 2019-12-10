@@ -644,8 +644,10 @@ final class XRYMessagesFileParser implements XRYFileParser {
          * In our current version of Java (openjdk-1.8.0.222), there is
          * a bug with having the timezone offset (UTC+4 or GMT-7) at the 
          * end of the date time input. This is fixed in later versions
-         * of the JDK (9 and beyond). Rather than update the JDK to
-         * accommodate this, the components of the date time string are reversed:
+         * of the JDK (9 and beyond). 
+         * https://bugs.openjdk.java.net/browse/JDK-8154050
+         * Rather than update the JDK to accommodate this, the components of 
+         * the date time string are reversed:
          * 
          *      UTC+4 AM 1:23:54 1/3/1990
          * 
