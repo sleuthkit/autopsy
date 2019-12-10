@@ -83,8 +83,8 @@ final class XRYContactsFileParser extends AbstractSingleKeyValueParser {
             return Optional.empty();
         }
         
-        throw new IllegalArgumentException(String.format("Key [ %s ] passed the isKey() test"
-                + " but was not matched. There is likely a typo in the  code.", key));
+        throw new IllegalArgumentException(String.format("Key [ %s ] passed the "
+                + "isKey() test but was not matched.", key));
     }
     
     @Override

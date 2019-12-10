@@ -228,8 +228,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
                 return Optional.empty();
             default:
                 throw new IllegalArgumentException(String.format("Key [ %s ] "
-                        + "passed the isKey() test but was not matched. There is"
-                        + " likely a typo in the  code.", key));
+                        + "passed the isKey() test but was not matched.", key));
         }
     }
 
