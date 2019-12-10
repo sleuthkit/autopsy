@@ -365,8 +365,9 @@ final class CentralRepoIngestModule implements FileIngestModule {
     @Messages({
         "CentralRepoIngestModule_notable_message_header=<html>A file in this data source was previously seen and tagged as Notable.<br>",
         "CentralRepoIngestModel_name_header=Name:<br>",
-        "CentralRepoIngestModel_previous_case_header=<br>Previous Cases:<br>"
-
+        "CentralRepoIngestModel_previous_case_header=<br>Previous Cases:<br>",
+        "# {0} - Name of file that is Notable",
+        "CentralRepoIngestModule_postToBB_knownBadMsg=Notable: {0}"
     })
 
     /**
