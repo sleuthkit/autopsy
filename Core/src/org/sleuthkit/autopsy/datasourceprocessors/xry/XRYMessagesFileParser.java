@@ -79,6 +79,12 @@ final class XRYMessagesFileParser implements XRYFileParser {
             this.name = name;
         }
         
+        /**
+         * Indicates if the XRY key is a recognized type.
+         * 
+         * @param xryKey
+         * @return 
+         */
         public static boolean contains(String xryKey) {
             String normalizedKey = xryKey.trim().toLowerCase();
             for(XRY_KEY keyChoice : XRY_KEY.values()) {
@@ -90,6 +96,16 @@ final class XRYMessagesFileParser implements XRYFileParser {
             return false;
         }
         
+        /**
+         * Fetches the enum type for the given XRY key.
+         * 
+         * It is assumed that XRY key string is recognized. Otherwise,
+         * an IllegalArgumentException is thrown. Test all membership
+         * with contains() before hand.
+         * 
+         * @param xryKey
+         * @return 
+         */
         public static XRY_KEY fromName(String xryKey) {
             String normalizedKey = xryKey.trim().toLowerCase();
             for(XRY_KEY keyChoice : XRY_KEY.values()) {
@@ -118,6 +134,12 @@ final class XRYMessagesFileParser implements XRYFileParser {
             this.name = name;
         }
         
+        /**
+         * Indicates if the XRY namespace is a recognized type.
+         * 
+         * @param xryNamespace
+         * @return 
+         */
         public static boolean contains(String xryNamespace) {
             String normalizedNamespace = xryNamespace.trim().toLowerCase();
             for(XRY_NAMESPACE keyChoice : XRY_NAMESPACE.values()) {
@@ -129,6 +151,16 @@ final class XRYMessagesFileParser implements XRYFileParser {
             return false;
         }
         
+        /**
+         * Fetches the enum type for the given XRY namespace.
+         * 
+         * It is assumed that XRY namespace string is recognized. Otherwise,
+         * an IllegalArgumentException is thrown. Test all membership
+         * with contains() before hand.
+         * 
+         * @param xryNamespace
+         * @return 
+         */
         public static XRY_NAMESPACE fromName(String xryNamespace) {
             String normalizedNamespace = xryNamespace.trim().toLowerCase();
             for(XRY_NAMESPACE keyChoice : XRY_NAMESPACE.values()) {
@@ -156,6 +188,12 @@ final class XRYMessagesFileParser implements XRYFileParser {
             this.name = name;
         }
         
+        /**
+         * Indicates if the XRY meta key is a recognized type.
+         * 
+         * @param xryMetaKey
+         * @return 
+         */
         public static boolean contains(String xryMetaKey) {
             String normalizedMetaKey = xryMetaKey.trim().toLowerCase();
             for(XRY_META_KEY keyChoice : XRY_META_KEY.values()) {
@@ -167,6 +205,16 @@ final class XRYMessagesFileParser implements XRYFileParser {
             return false;
         }
         
+        /**
+         * Fetches the enum type for the given XRY meta key.
+         * 
+         * It is assumed that XRY meta key string is recognized. Otherwise,
+         * an IllegalArgumentException is thrown. Test all membership
+         * with contains() before hand.
+         * 
+         * @param xryMetaKey
+         * @return 
+         */
         public static XRY_META_KEY fromName(String xryMetaKey) {
             String normalizedMetaKey = xryMetaKey.trim().toLowerCase();
             for(XRY_META_KEY keyChoice : XRY_META_KEY.values()) {
