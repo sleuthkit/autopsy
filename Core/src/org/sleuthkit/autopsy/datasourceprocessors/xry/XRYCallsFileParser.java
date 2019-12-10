@@ -44,7 +44,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
     /**
      * All of the known XRY keys for call reports.
      */
-    private static enum XRY_KEY {
+    private enum XryKey {
         TEL("tel"),
         NAME_MATCHED("name (matched)"),
         TIME("time"),
@@ -57,19 +57,19 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
         NUMBER("number");
         
         private final String name;
-        XRY_KEY(String name) {
+        XryKey(String name) {
             this.name = name;
         }
         
         /**
-         * Indicates if the XRY key is a recognized type.
+         * Indicates if the display name of the XRY key is a recognized type.
          * 
          * @param xryKey
          * @return 
          */
         public static boolean contains(String xryKey) {
             String normalizedKey = xryKey.trim().toLowerCase();
-            for(XRY_KEY keyChoice : XRY_KEY.values()) {
+            for(XryKey keyChoice : XryKey.values()) {
                 if(keyChoice.name.equals(normalizedKey)) {
                     return true;
                 }
@@ -79,7 +79,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
         }
         
         /**
-         * Fetches the enum type for the given XRY key.
+         * Matches the display name of the xry key to the appropriate enum type.
          * 
          * It is assumed that XRY key string is recognized. Otherwise,
          * an IllegalArgumentException is thrown. Test all membership
@@ -88,9 +88,9 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
          * @param xryKey
          * @return 
          */
-        public static XRY_KEY fromName(String xryKey) {
+        public static XryKey fromDisplayName(String xryKey) {
             String normalizedKey = xryKey.trim().toLowerCase();
-            for(XRY_KEY keyChoice : XRY_KEY.values()) {
+            for(XryKey keyChoice : XryKey.values()) {
                 if(keyChoice.name.equals(normalizedKey)) {
                     return keyChoice;
                 }
@@ -104,25 +104,25 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
     /**
      * All known XRY namespaces for call reports.
      */
-    private static enum XRY_NAMESPACE {
+    private enum XryNamespace {
         TO("to"),
         FROM("from"),
         NONE(null);
         
         private final String name;
-        XRY_NAMESPACE(String name) {
+        XryNamespace(String name) {
             this.name = name;
         }
         
         /**
-         * Indicates if the XRY namespace is a recognized type.
+         * Indicates if the display name of the XRY namespace is a recognized type.
          * 
          * @param xryNamespace
          * @return 
          */
         public static boolean contains(String xryNamespace) {
             String normalizedNamespace = xryNamespace.trim().toLowerCase();
-            for(XRY_NAMESPACE keyChoice : XRY_NAMESPACE.values()) {
+            for(XryNamespace keyChoice : XryNamespace.values()) {
                 if(normalizedNamespace.equals(keyChoice.name)) {
                     return true;
                 }
@@ -132,7 +132,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
         }
         
         /**
-         * Fetches the enum type for the given XRY namespace.
+         * Matches the display name of the xry namespace to the appropriate enum type.
          * 
          * It is assumed that XRY namespace string is recognized. Otherwise,
          * an IllegalArgumentException is thrown. Test all membership
@@ -141,9 +141,9 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
          * @param xryNamespace
          * @return 
          */
-        public static XRY_NAMESPACE fromName(String xryNamespace) {
+        public static XryNamespace fromName(String xryNamespace) {
             String normalizedNamespace = xryNamespace.trim().toLowerCase();
-            for(XRY_NAMESPACE keyChoice : XRY_NAMESPACE.values()) {
+            for(XryNamespace keyChoice : XryNamespace.values()) {
                 if(normalizedNamespace.equals(keyChoice.name)) {
                     return keyChoice;
                 }
@@ -156,20 +156,20 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
 
     @Override
     boolean isKey(String key) {
-        return XRY_KEY.contains(key);
+        return XryKey.contains(key);
     }
 
     @Override
     boolean isNamespace(String nameSpace) {
-        return XRY_NAMESPACE.contains(nameSpace);
+        return XryNamespace.contains(nameSpace);
     }
 
     @Override
     Optional<BlackboardAttribute> makeAttribute(String nameSpace, String key, String value) {
-        XRY_KEY xryKey = XRY_KEY.fromName(key);
-        XRY_NAMESPACE xryNamespace = XRY_NAMESPACE.NONE;
-        if(XRY_NAMESPACE.contains(nameSpace)) {
-            xryNamespace = XRY_NAMESPACE.fromName(nameSpace);
+        XryKey xryKey = XryKey.fromDisplayName(key);
+        XryNamespace xryNamespace = XryNamespace.NONE;
+        if(XryNamespace.contains(nameSpace)) {
+            xryNamespace = XryNamespace.fromName(nameSpace);
         }
 
         switch (xryKey) {
@@ -283,7 +283,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
         String reversedDateTime = reverseOrderOfDateTimeComponents(dateTimeWithoutLocale);
         /**
          * Furthermore, the DateTimeFormatter's timezone offset letter ('O') does
-         * not recognized UTC but recognizes GMT. According to 
+         * not recognize UTC but recognizes GMT. According to 
          * https://en.wikipedia.org/wiki/Coordinated_Universal_Time,
          * GMT only differs from UTC by at most 1 second and so substitution
          * will only introduce a trivial amount of error.

@@ -116,7 +116,8 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
     }
 
     /**
-     * Parses the XRY entity and extracts all BlackboardAttributes that are 
+     * Parses the XRY entity, extracts key value pairs and creates blackboard
+     * attributes from these key value pairs.
      * 
      * @param xryEntity
      * @return A collection of attributes from the XRY entity.
@@ -191,11 +192,11 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
     }
 
     /**
-     * Creates the appropriate BlackboardAttribute given the XRY Key Value pair.
-     * If the attribute value is recognized but has no corresponding Blackboard
+     * Creates the appropriate blackboard attribute given the XRY Key Value pair.
+     * If the value is recognized but has no corresponding Blackboard
      * attribute type, the Optional will be empty.
      *
-     * An INFO message will be logged for all recognized values that don't have
+     * A WARNING message will be logged for all recognized values that don't have
      * a type. More data is needed to make a decision about the appropriate type.
      *
      * @param normalizedAttributeValue Normalized (trimmed and lowercased)
