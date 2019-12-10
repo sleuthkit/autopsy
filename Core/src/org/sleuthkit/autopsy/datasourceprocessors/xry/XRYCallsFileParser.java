@@ -18,13 +18,11 @@
  */
 package org.sleuthkit.autopsy.datasourceprocessors.xry;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -39,101 +37,199 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
 
     private static final Logger logger = Logger.getLogger(XRYCallsFileParser.class.getName());
 
+    //Pattern is in reverse due to a Java 8 bug, see calculateSecondsSinceEpoch()
+    //function for more details.
     private static final DateTimeFormatter DATE_TIME_PARSER
-            = DateTimeFormatter.ofPattern("M/d/y h:m:s [a][ z]");
-
-    private static final String INCOMING = "Incoming";
-
-    //All known XRY keys for call reports.
-    private static final Set<String> XRY_KEYS = new HashSet<String>() {
-        {
-            add("tel");
-            add("number");
-            add("call type");
-            add("name (matched)");
-            add("time");
-            add("duration");
-            add("storage");
-            add("index");
+            = DateTimeFormatter.ofPattern("O a h:m:s M/d/y");
+    /**
+     * All of the known XRY keys for call reports.
+     */
+    private static enum XRY_KEY {
+        TEL("tel"),
+        NAME_MATCHED("name (matched)"),
+        TIME("time"),
+        DIRECTION("direction"),
+        CALL_TYPE("call type"),
+        DURATION("duration"),
+        STORAGE("storage"),
+        INDEX("index"),
+        NAME("name"),
+        NUMBER("number");
+        
+        private final String name;
+        XRY_KEY(String name) {
+            this.name = name;
         }
-    };
-
-    //All known XRY namespaces for call reports.
-    private static final Set<String> XRY_NAMESPACES = new HashSet<String>() {
-        {
-            add("to");
-            add("from");
+        
+        /**
+         * Indicates if the XRY key is a recognized type.
+         * 
+         * @param xryKey
+         * @return 
+         */
+        public static boolean contains(String xryKey) {
+            String normalizedKey = xryKey.trim().toLowerCase();
+            for(XRY_KEY keyChoice : XRY_KEY.values()) {
+                if(keyChoice.name.equals(normalizedKey)) {
+                    return true;
+                }
+            }
+            
+            return false;
         }
-    };
+        
+        /**
+         * Fetches the enum type for the given XRY key.
+         * 
+         * It is assumed that XRY key string is recognized. Otherwise,
+         * an IllegalArgumentException is thrown. Test all membership
+         * with contains() before hand.
+         * 
+         * @param xryKey
+         * @return 
+         */
+        public static XRY_KEY fromName(String xryKey) {
+            String normalizedKey = xryKey.trim().toLowerCase();
+            for(XRY_KEY keyChoice : XRY_KEY.values()) {
+                if(keyChoice.name.equals(normalizedKey)) {
+                    return keyChoice;
+                }
+            }
+            
+            throw new IllegalArgumentException(String.format("Key [%s] was not found."
+                    + " All keys should be tested with contains.", xryKey));
+        }
+    }
+
+    /**
+     * All known XRY namespaces for call reports.
+     */
+    private static enum XRY_NAMESPACE {
+        TO("to"),
+        FROM("from"),
+        NONE(null);
+        
+        private final String name;
+        XRY_NAMESPACE(String name) {
+            this.name = name;
+        }
+        
+        /**
+         * Indicates if the XRY namespace is a recognized type.
+         * 
+         * @param xryNamespace
+         * @return 
+         */
+        public static boolean contains(String xryNamespace) {
+            String normalizedNamespace = xryNamespace.trim().toLowerCase();
+            for(XRY_NAMESPACE keyChoice : XRY_NAMESPACE.values()) {
+                if(normalizedNamespace.equals(keyChoice.name)) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        /**
+         * Fetches the enum type for the given XRY namespace.
+         * 
+         * It is assumed that XRY namespace string is recognized. Otherwise,
+         * an IllegalArgumentException is thrown. Test all membership
+         * with contains() before hand.
+         * 
+         * @param xryNamespace
+         * @return 
+         */
+        public static XRY_NAMESPACE fromName(String xryNamespace) {
+            String normalizedNamespace = xryNamespace.trim().toLowerCase();
+            for(XRY_NAMESPACE keyChoice : XRY_NAMESPACE.values()) {
+                if(normalizedNamespace.equals(keyChoice.name)) {
+                    return keyChoice;
+                }
+            }
+            
+            throw new IllegalArgumentException(String.format("Key [%s] was not found."
+                    + " All keys should be tested with contains.", xryNamespace));
+        }
+    }
 
     @Override
     boolean isKey(String key) {
-        String normalizedKey = key.toLowerCase();
-        return XRY_KEYS.contains(normalizedKey);
+        return XRY_KEY.contains(key);
     }
 
     @Override
     boolean isNamespace(String nameSpace) {
-        String normalizedNamespace = nameSpace.toLowerCase();
-        return XRY_NAMESPACES.contains(normalizedNamespace);
+        return XRY_NAMESPACE.contains(nameSpace);
     }
 
     @Override
-    BlackboardAttribute makeAttribute(String nameSpace, String key, String value) {
-        String normalizedKey = key.toLowerCase();
-        String normalizedNamespace = nameSpace.toLowerCase();
+    Optional<BlackboardAttribute> makeAttribute(String nameSpace, String key, String value) {
+        XRY_KEY xryKey = XRY_KEY.fromName(key);
+        XRY_NAMESPACE xryNamespace = XRY_NAMESPACE.NONE;
+        if(XRY_NAMESPACE.contains(nameSpace)) {
+            xryNamespace = XRY_NAMESPACE.fromName(nameSpace);
+        }
 
-        switch (normalizedKey) {
-            case "time":
-                //Tranform value to epoch ms
-                try {
-                    String dateTime = removeDateTimeLocale(value);
-                    String normalizedDateTime = dateTime.trim();
-                    long dateTimeInEpoch = calculateSecondsSinceEpoch(normalizedDateTime);
-                    return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START, PARSER_NAME, dateTimeInEpoch);
-                } catch (DateTimeParseException ex) {
-                    logger.log(Level.SEVERE, String.format("[XRY DSP] Assumption about the date time "
-                            + "formatting of call logs is not right. Here is the value [ %s ]", value), ex);
-                    return null;
-                }
-            case "duration":
-                //Ignore for now.
-                return null;
-            case "storage":
-                //Ignore for now.
-                return null;
-            case "index":
-                //Ignore for now.
-                return null;
-            case "tel":
+        switch (xryKey) {
+            case DIRECTION:
+                return Optional.of(new BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, 
+                        PARSER_NAME, value));
+            case NAME_MATCHED:
+                return Optional.of(new BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, 
+                        PARSER_NAME, value));
+            case NUMBER:
+                return Optional.of(new BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, 
+                        PARSER_NAME, value));
+            case TEL:
                 //Apply the namespace
-                if(normalizedNamespace.equals("from")) {
-                    return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, PARSER_NAME, value);
-                } else {
-                    return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, PARSER_NAME, value);
-                }
-            case "call type":
-                String normalizedValue = value.toLowerCase();
-                switch (normalizedValue) {
-                    case "missed":
-                    case "received":
-                        return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, PARSER_NAME, INCOMING);
-                    case "dialed":
-                        //Ignore for now.
-                        return null;
-                    case "last dialed":
-                        //Ignore for now.
-                        return null;
+                switch (xryNamespace) {
+                    case FROM:
+                        return Optional.of(new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM,
+                                PARSER_NAME, value));
+                    case TO:
+                        return Optional.of(new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO,
+                                PARSER_NAME, value));
                     default:
-                        logger.log(Level.SEVERE, String.format("Call type (in brackets) [ %s ] not recognized.", value));
-                        return null;
+                        return Optional.of(new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
+                                PARSER_NAME, value));
                 }
-            case "number":
-                return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, PARSER_NAME, value);
-            case "name (matched)":
-                return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, PARSER_NAME, value);
+            case TIME:
+                try {
+                    //Tranform value to seconds since epoch
+                    long dateTimeSinceEpoch = calculateSecondsSinceEpoch(value);
+                    return Optional.of(new BlackboardAttribute(
+                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START, 
+                            PARSER_NAME, dateTimeSinceEpoch));
+                } catch (DateTimeParseException ex) {
+                    logger.log(Level.WARNING, String.format("[XRY DSP] Assumption"
+                            + " about the date time formatting of call logs is "
+                            + "not right. Here is the value [ %s ]", value), ex);
+                    return Optional.empty();
+                }
+            case DURATION:
+            case STORAGE:
+            case INDEX:
+            case CALL_TYPE:
+                //Ignore for now, don't need more data.
+                return Optional.empty();
+            case NAME:
+                logger.log(Level.WARNING, String.format("[XRY DSP] Key [%s] was "
+                    + "recognized but more examples of its values are needed "
+                    + "to make a decision on an appropriate TSK attribute. "
+                        + "Here is the value [%s].", key, value));
+                return Optional.empty();
             default:
-                throw new IllegalArgumentException(String.format("key [ %s ] was not recognized.", key));
+                throw new IllegalArgumentException(String.format("Key [ %s ] "
+                        + "passed the isKey() test but was not matched. There is"
+                        + " likely a typo in the  code.", key));
         }
     }
 
@@ -161,15 +257,58 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
     }
 
     /**
-     * Parses the date time value and calculates ms since epoch. The time zone is
-     * assumed to be UTC.
+     * Parses the date time value and calculates seconds since epoch.
      *
      * @param dateTime
      * @return
      */
     private long calculateSecondsSinceEpoch(String dateTime) {
-        LocalDateTime localDateTime = LocalDateTime.parse(dateTime, DATE_TIME_PARSER);
-        //Assume dates have no offset.
-        return localDateTime.toInstant(ZoneOffset.UTC).getEpochSecond();
+        String dateTimeWithoutLocale = removeDateTimeLocale(dateTime).trim();
+        /**
+         * The format of time in XRY Messages reports is of the form:
+         * 
+         *      1/3/1990 1:23:54 AM UTC+4
+         * 
+         * In our current version of Java (openjdk-1.8.0.222), there is
+         * a bug with having the timezone offset (UTC+4 or GMT-7) at the 
+         * end of the date time input. This is fixed in later versions
+         * of the JDK (9 and beyond). Rather than update the JDK to
+         * accommodate this, the components of the date time string are reversed:
+         * 
+         *      UTC+4 AM 1:23:54 1/3/1990
+         * 
+         * The java time package will correctly parse this date time format.
+         */
+        String reversedDateTime = reverseOrderOfDateTimeComponents(dateTimeWithoutLocale);
+        /**
+         * Furthermore, the DateTimeFormatter's timezone offset letter ('O') does
+         * not recognized UTC but recognizes GMT. According to 
+         * https://en.wikipedia.org/wiki/Coordinated_Universal_Time,
+         * GMT only differs from UTC by at most 1 second and so substitution
+         * will only introduce a trivial amount of error.
+         */
+        String reversedDateTimeWithGMT = reversedDateTime.replace("UTC", "GMT");
+        ZonedDateTime zonedDateTime = ZonedDateTime.parse(reversedDateTimeWithGMT, DATE_TIME_PARSER);
+        return zonedDateTime.toEpochSecond();
+    }
+    
+    /**
+     * Reverses the order of the date time components.
+     * 
+     * Example: 
+     *  1/3/1990 1:23:54 AM UTC+4 
+     * becomes
+     *  UTC+4 AM 1:23:54 1/3/1990
+     * 
+     * @param dateTime
+     * @return
+     */
+    private String reverseOrderOfDateTimeComponents(String dateTime) {
+        StringBuilder reversedDateTime = new StringBuilder(dateTime.length());
+        String[] dateTimeComponents = dateTime.split(" ");
+        for (String component : dateTimeComponents) {
+            reversedDateTime.insert(0, " ").insert(0, component);
+        }
+        return reversedDateTime.toString().trim();
     }
 }

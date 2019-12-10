@@ -20,13 +20,13 @@ package org.sleuthkit.autopsy.datasourceprocessors.xry;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -45,56 +45,140 @@ final class XRYMessagesFileParser implements XRYFileParser {
     
     private static final String PARSER_NAME = "XRY DSP";
     private static final char KEY_VALUE_DELIMITER = ':';
+    
+    //Pattern is in reverse due to a Java 8 bug, see calculateSecondsSinceEpoch()
+    //function for more details.
     private static final DateTimeFormatter DATE_TIME_PARSER
-            = DateTimeFormatter.ofPattern("M/d/y h:m:s [a][ z]");
-
-    //Meta keys. These describe how the XRY message entites are split 
-    //up in the report file.
-    private static final String SEGMENT_COUNT = "segments";
-    private static final String SEGMENT_NUMBER = "segment number";
-    private static final String REFERENCE_NUMBER = "reference number";
+            = DateTimeFormatter.ofPattern("O a h:m:s M/d/y");
 
     //A more readable version of these values. Referring to if the user
     //has read the message.
     private static final int READ = 1;
     private static final int UNREAD = 0;
-
-    private static final String TEXT_KEY = "text";
-
-    //All known XRY keys for message reports.
-    private static final Set<String> XRY_KEYS = new HashSet<String>() {
-        {
-            add(TEXT_KEY);
-            add("direction");
-            add("time");
-            add("status");
-            add("tel");
-            add("storage");
-            add("index");
-            add("folder");
-            add("service center");
-            add("type");
-            add("name");
+    
+    /**
+     * All of the known XRY keys for message reports.
+     */
+    private static enum XRY_KEY {
+        TEXT("text"),
+        DIRECTION("direction"),
+        TIME("time"),
+        STATUS("status"),
+        TEL("tel"),
+        STORAGE("storage"),
+        INDEX("index"),
+        FOLDER("folder"),
+        SERVICE_CENTER("service center"),
+        TYPE("type"),
+        NAME("name"),
+        NAME_MATCHED("name (matched)");
+        
+        private final String name;
+        
+        XRY_KEY(String name) {
+            this.name = name;
         }
-    };
-
-    //All known XRY namespaces for message reports.
-    private static final Set<String> XRY_NAMESPACES = new HashSet<String>() {
-        {
-            add("to");
-            add("from");
-            add("participant");
+        
+        public static boolean contains(String xryKey) {
+            String normalizedKey = xryKey.trim().toLowerCase();
+            for(XRY_KEY keyChoice : XRY_KEY.values()) {
+                if(keyChoice.name.equals(normalizedKey)) {
+                    return true;
+                }
+            }
+            
+            return false;
         }
-    };
-
-    //All known meta keys.
-    private static final Set<String> XRY_META_KEYS = new HashSet<String>() {
-        {
-            add(REFERENCE_NUMBER);
-            add(SEGMENT_NUMBER);
-            add(SEGMENT_COUNT);
+        
+        public static XRY_KEY fromName(String xryKey) {
+            String normalizedKey = xryKey.trim().toLowerCase();
+            for(XRY_KEY keyChoice : XRY_KEY.values()) {
+                if(keyChoice.name.equals(normalizedKey)) {
+                    return keyChoice;
+                }
+            }
+            
+            throw new IllegalArgumentException(String.format("Key [%s] was not found."
+                    + " All keys should be tested with contains.", xryKey));
         }
-    };
+    }
+    
+    /**
+     * All of the known XRY namespaces for message reports.
+     */
+    private static enum XRY_NAMESPACE {
+        TO("to"),
+        FROM("from"),
+        PARTICIPANT("participant"),
+        NONE(null);
+        
+        private final String name;
+        
+        XRY_NAMESPACE(String name) {
+            this.name = name;
+        }
+        
+        public static boolean contains(String xryNamespace) {
+            String normalizedNamespace = xryNamespace.trim().toLowerCase();
+            for(XRY_NAMESPACE keyChoice : XRY_NAMESPACE.values()) {
+                if(normalizedNamespace.equals(keyChoice.name)) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        public static XRY_NAMESPACE fromName(String xryNamespace) {
+            String normalizedNamespace = xryNamespace.trim().toLowerCase();
+            for(XRY_NAMESPACE keyChoice : XRY_NAMESPACE.values()) {
+                if(normalizedNamespace.equals(keyChoice.name)) {
+                    return keyChoice;
+                }
+            }
+            
+            throw new IllegalArgumentException(String.format("Namespace [%s] was not found."
+                    + " All namespaces should be tested with contains.", xryNamespace));
+        }
+    }
+    
+    /**
+     * All known XRY meta keys for message reports.
+     */
+    private static enum XRY_META_KEY {
+        REFERENCE_NUMBER("reference number"),
+        SEGMENT_NUMBER("segment number"),
+        SEGMENT_COUNT("segments");
+        
+        private final String name;
+        
+        XRY_META_KEY(String name) {
+            this.name = name;
+        }
+        
+        public static boolean contains(String xryMetaKey) {
+            String normalizedMetaKey = xryMetaKey.trim().toLowerCase();
+            for(XRY_META_KEY keyChoice : XRY_META_KEY.values()) {
+                if(keyChoice.name.equals(normalizedMetaKey)) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        public static XRY_META_KEY fromName(String xryMetaKey) {
+            String normalizedMetaKey = xryMetaKey.trim().toLowerCase();
+            for(XRY_META_KEY keyChoice : XRY_META_KEY.values()) {
+                if(keyChoice.name.equals(normalizedMetaKey)) {
+                    return keyChoice;
+                }
+            }
+            
+            throw new IllegalArgumentException(String.format("Meta key [%s] was not found."
+                    + " All meta keys should be tested with contains.", xryMetaKey));
+        }
+    }
 
     /**
      * Message-SMS report artifacts can span multiple XRY entities and their
@@ -118,7 +202,8 @@ final class XRYMessagesFileParser implements XRYFileParser {
     @Override
     public void parse(XRYFileReader reader, Content parent) throws IOException, TskCoreException {
         Path reportPath = reader.getReportPath();
-        logger.log(Level.INFO, String.format("[XRY DSP] Processing report at [ %s ]", reportPath.toString()));
+        logger.log(Level.INFO, String.format("[XRY DSP] Processing report at"
+                + " [ %s ]", reportPath.toString()));
 
         //Keep track of the reference numbers that have been parsed.
         Set<Integer> referenceNumbersSeen = new HashSet<>();
@@ -127,20 +212,17 @@ final class XRYMessagesFileParser implements XRYFileParser {
             String xryEntity = reader.nextEntity();
             String[] xryLines = xryEntity.split("\n");
 
-            //First line of the entity is the title.
-            if (xryLines.length > 0) {
-                logger.log(Level.INFO, String.format("[XRY DSP] Processing [ %s ]", xryLines[0]));
-            }
+            //First line of the entity is the title, each XRY entity is non-empty.
+            logger.log(Level.INFO, String.format("[XRY DSP] Processing [ %s ]", xryLines[0]));
 
             List<BlackboardAttribute> attributes = new ArrayList<>();
 
-            String namespace = "";
+            XRY_NAMESPACE namespace = XRY_NAMESPACE.NONE;
             for (int i = 1; i < xryLines.length; i++) {
                 String xryLine = xryLines[i];
-                String candidateNamespace = xryLine.trim().toLowerCase();
 
-                if (XRY_NAMESPACES.contains(candidateNamespace)) {
-                    namespace = xryLine.trim();
+                if (XRY_NAMESPACE.contains(xryLine)) {
+                    namespace = XRY_NAMESPACE.fromName(xryLine);
                     continue;
                 }
 
@@ -156,17 +238,15 @@ final class XRYMessagesFileParser implements XRYFileParser {
                 }
 
                 //Extract the key value pair
-                String key = xryLine.substring(0, keyDelimiter).trim();
+                String key = xryLine.substring(0, keyDelimiter);
                 String value = xryLine.substring(keyDelimiter + 1).trim();
 
-                String normalizedKey = key.toLowerCase();
-
-                if (XRY_META_KEYS.contains(normalizedKey)) {
-                    //Skip meta keys, they are being dealt with seperately.
+                if (XRY_META_KEY.contains(key)) {
+                    //Skip meta keys, they are being handled seperately.
                     continue;
                 }
 
-                if (!XRY_KEYS.contains(normalizedKey)) {
+                if (!XRY_KEY.contains(key)) {
                     logger.log(Level.SEVERE, String.format("[XRY DSP] The following key, "
                             + "value pair (in brackets, respectively) [ %s ], [ %s ] "
                             + "was not recognized. Discarding... Here is the previous line "
@@ -182,9 +262,11 @@ final class XRYMessagesFileParser implements XRYFileParser {
                             + "What does an empty key mean?", key, xryLines[i - 1]));
                     continue;
                 }
+                
+                XRY_KEY xryKey = XRY_KEY.fromName(key);
 
                 //Assume text is the only field that can span multiple lines.
-                if (normalizedKey.equals(TEXT_KEY)) {
+                if (xryKey.equals(XRY_KEY.TEXT)) {
                     //Build up multiple lines.
                     for (; (i + 1) < xryLines.length
                             && !hasKey(xryLines[i + 1])
@@ -194,36 +276,41 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         value = value + " " + continuedValue;
                     }
 
-                    int referenceNumber = getMetaInfo(xryLines, REFERENCE_NUMBER);
-                    //Check if there is any segmented text. Min val is used to 
-                    //signify that no reference number was found.
-                    if (referenceNumber != Integer.MIN_VALUE) {
+                    Optional<Integer> referenceNumber = getMetaInfo(xryLines, XRY_META_KEY.REFERENCE_NUMBER);
+                    //Check if there is any segmented text.
+                    if (referenceNumber.isPresent()) {
                         logger.log(Level.INFO, String.format("[XRY DSP] Message entity "
-                                + "appears to be segmented with reference number [ %d ]", referenceNumber));
+                                + "appears to be segmented with reference number [ %d ]", referenceNumber.get()));
 
-                        if (referenceNumbersSeen.contains(referenceNumber)) {
+                        if (referenceNumbersSeen.contains(referenceNumber.get())) {
                             logger.log(Level.SEVERE, String.format("[XRY DSP] This reference [ %d ] has already "
                                     + "been seen. This means that the segments are not "
                                     + "contiguous. Any segments contiguous with this "
                                     + "one will be aggregated and another "
-                                    + "(otherwise duplicate) artifact will be created.", referenceNumber));
+                                    + "(otherwise duplicate) artifact will be created.", referenceNumber.get()));
                         }
 
-                        referenceNumbersSeen.add(referenceNumber);
+                        referenceNumbersSeen.add(referenceNumber.get());
 
-                        int segmentNumber = getMetaInfo(xryLines, SEGMENT_NUMBER);
-
-                        //Unify segmented text, if there is any.
-                        String segmentedText = getSegmentedText(referenceNumber,
-                                segmentNumber, reader);
-                        //Assume it was segmented by word.
-                        value = value + " " + segmentedText;
+                        Optional<Integer> segmentNumber = getMetaInfo(xryLines, XRY_META_KEY.SEGMENT_NUMBER);
+                        if(segmentNumber.isPresent()) {
+                            //Unify segmented text
+                            String segmentedText = getSegmentedText(referenceNumber.get(),
+                                    segmentNumber.get(), reader);
+                            //Assume it was segmented by word.
+                            value = value + " " + segmentedText;
+                        } else {
+                            logger.log(Level.SEVERE, String.format("No segment "
+                                    + "number was found on the message entity"
+                                    + "with reference number [%d]", referenceNumber.get()));
+                        }
                     }
                 }
 
-                BlackboardAttribute attribute = makeAttribute(namespace, key, value);
-                if (attribute != null) {
-                    attributes.add(attribute);
+                //Get the corresponding blackboard attribute, if any.
+                Optional<BlackboardAttribute> attribute = makeAttribute(namespace, xryKey, value);
+                if (attribute.isPresent()) {
+                    attributes.add(attribute.get());
                 }
             }
 
@@ -253,31 +340,27 @@ final class XRYMessagesFileParser implements XRYFileParser {
             //Peek at the next to see if it has the same reference number.
             String nextEntity = reader.peek();
             String[] nextEntityLines = nextEntity.split("\n");
-            int nextReferenceNumber = getMetaInfo(nextEntityLines, REFERENCE_NUMBER);
+            Optional<Integer> nextReferenceNumber = getMetaInfo(nextEntityLines, XRY_META_KEY.REFERENCE_NUMBER);
 
-            if (nextReferenceNumber != referenceNumber) {
+            if (!nextReferenceNumber.isPresent() || nextReferenceNumber.get() != referenceNumber) {
                 //Don't consume the next entity. It is not related
                 //to the current message thread.
                 break;
             }
 
-            //Consume the entity.
+            //Consume the entity, it is a part of the message thread.
             reader.nextEntity();
 
-            int nextSegmentNumber = getMetaInfo(nextEntityLines, SEGMENT_NUMBER);
+            Optional<Integer> nextSegmentNumber = getMetaInfo(nextEntityLines, XRY_META_KEY.SEGMENT_NUMBER);
 
-            //Extract the text key from the entity, which is potentially
-            //multi-lined.
-            if (nextEntityLines.length > 0) {
-                logger.log(Level.INFO, String.format("[XRY DSP] Processing [ %s ] "
-                        + "segment with reference number [ %d ]", nextEntityLines[0], referenceNumber));
-            }
+            logger.log(Level.INFO, String.format("[XRY DSP] Processing [ %s ] "
+                    + "segment with reference number [ %d ]", nextEntityLines[0], referenceNumber));
 
-            if(nextSegmentNumber == Integer.MIN_VALUE) {
+            if(!nextSegmentNumber.isPresent()) {
                 logger.log(Level.SEVERE, String.format("[XRY DSP] Segment with reference"
                         + " number [ %d ] did not have a segment number associated with it."
                         + " It cannot be determined if the reconstructed text will be in order.", referenceNumber));
-            } else if (nextSegmentNumber != currentSegmentNumber + 1) {
+            } else if (nextSegmentNumber.get() != currentSegmentNumber + 1) {
                 logger.log(Level.SEVERE, String.format("[XRY DSP] Contiguous "
                         + "segments are not ascending incrementally. Encountered "
                         + "segment [ %d ] after segment [ %d ]. This means the reconstructed "
@@ -293,9 +376,9 @@ final class XRYMessagesFileParser implements XRYFileParser {
                     continue;
                 }
 
+                //Extract the text key from the entity
                 String key = xryLine.substring(0, keyDelimiter);
-                String normalizedKey = key.trim().toLowerCase();
-                if (normalizedKey.equals(TEXT_KEY)) {
+                if(XRY_KEY.contains(key) && XRY_KEY.fromName(key).equals(XRY_KEY.TEXT)) {
                     String value = xryLine.substring(keyDelimiter + 1).trim();
                     segmentedText.append(value).append(' ');
 
@@ -309,7 +392,9 @@ final class XRYMessagesFileParser implements XRYFileParser {
                 }
             }
 
-            currentSegmentNumber = nextSegmentNumber;
+            if(nextSegmentNumber.isPresent()) {
+                currentSegmentNumber = nextSegmentNumber.get();
+            }
         }
 
         //Remove the trailing space.
@@ -327,13 +412,12 @@ final class XRYMessagesFileParser implements XRYFileParser {
      */
     private boolean hasKey(String xryLine) {
         int delimiter = xryLine.indexOf(':');
-        if (delimiter != -1) {
-            String key = xryLine.substring(0, delimiter);
-            String normalizedKey = key.trim().toLowerCase();
-            return XRY_KEYS.contains(normalizedKey);
-        } else {
+        if(delimiter == -1) {
             return false;
         }
+        
+        String key = xryLine.substring(0, delimiter);
+        return XRY_KEY.contains(key);
     }
 
     /**
@@ -343,31 +427,34 @@ final class XRYMessagesFileParser implements XRYFileParser {
      * @return
      */
     private boolean hasNamespace(String xryLine) {
-        String normalizedLine = xryLine.trim().toLowerCase();
-        return XRY_NAMESPACES.contains(normalizedLine);
+        return XRY_NAMESPACE.contains(xryLine);
     }
 
     /**
      * Extracts meta keys from the XRY entity. All of the known meta
-     * keys are integers and describe the message segments.
+     * keys are assumed integers and part of the XRY_META_KEY enum.
      * 
      * @param xryLines Current XRY entity
      * @param expectedKey The meta key to search for
      * @return The interpreted integer value or Integer.MIN_VALUE if 
      * no meta key was found.
      */
-    private int getMetaInfo(String[] xryLines, String metaKey) {
+    private Optional<Integer> getMetaInfo(String[] xryLines, XRY_META_KEY metaKey) {
         for (int i = 0; i < xryLines.length; i++) {
             String xryLine = xryLines[i];
 
-            String normalizedXryLine = xryLine.trim().toLowerCase();
-            int firstDelimiter = normalizedXryLine.indexOf(KEY_VALUE_DELIMITER);
+            int firstDelimiter = xryLine.indexOf(KEY_VALUE_DELIMITER);
             if (firstDelimiter != -1) {
-                String key = normalizedXryLine.substring(0, firstDelimiter);
-                if (key.equals(metaKey)) {
-                    String value = normalizedXryLine.substring(firstDelimiter + 1).trim();
+                String key = xryLine.substring(0, firstDelimiter);
+                if(!XRY_META_KEY.contains(key)) {
+                    continue;
+                }
+                
+                XRY_META_KEY currentMetaKey = XRY_META_KEY.fromName(key);
+                if (currentMetaKey.equals(metaKey)) {
+                    String value = xryLine.substring(firstDelimiter + 1).trim();
                     try {
-                        return Integer.parseInt(value);
+                        return Optional.of(Integer.parseInt(value));
                     } catch (NumberFormatException ex) {
                         logger.log(Level.SEVERE, String.format("[XRY DSP] Value [ %s ] for "
                                 + "meta key [ %s ] was not an integer.", value, metaKey), ex);
@@ -376,102 +463,104 @@ final class XRYMessagesFileParser implements XRYFileParser {
             }
         }
 
-        return Integer.MIN_VALUE;
+        return Optional.empty();
     }
 
     /**
      * Creates an attribute from the extracted key value pair.
      * 
      * @param nameSpace The namespace of this key value pair.
-     * It will have been verified beforehand, otherwise it will be empty.
-     * @param key The key that was verified beforehand
+     * It will have been verified beforehand, otherwise it will be NONE.
+     * @param key The recognized XRY key.
      * @param value The value associated with that key.
-     * @return 
+     * @return Corresponding blackboard attribute, if any.
      */
-    private BlackboardAttribute makeAttribute(String namespace, String key, String value) {
-        String normalizedKey = key.toLowerCase();
-        String normalizedNamespace = namespace.toLowerCase();
-        String normalizedValue = value.toLowerCase();
-
-        switch (normalizedKey) {
-            case "time":
-                //Tranform value to epoch ms
+    private Optional<BlackboardAttribute> makeAttribute(XRY_NAMESPACE namespace, XRY_KEY key, String value) {
+        String normalizedValue = value.toLowerCase().trim();
+        switch (key) {
+            case DIRECTION:
+                return Optional.of(new BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, 
+                        PARSER_NAME, value));
+            case NAME_MATCHED: 
+                return Optional.of(new BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON, 
+                        PARSER_NAME, value));
+            case TEL:
+                if(namespace.equals(XRY_NAMESPACE.FROM)) {
+                    return Optional.of(new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM,
+                                PARSER_NAME, value));
+                } else {
+                    //Assume TO and PARTICIPANT are TSK_PHONE_NUMBER_TOs
+                    return Optional.of(new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO,
+                                PARSER_NAME, value));
+                }
+            case TEXT:
+                return Optional.of(new BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, 
+                        PARSER_NAME, value));
+            case TIME:
                 try {
-                    String dateTime = removeDateTimeLocale(value);
-                    String normalizedDateTime = dateTime.trim();
-                    long dateTimeInEpoch = calculateSecondsSinceEpoch(normalizedDateTime);
-                    return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, PARSER_NAME, dateTimeInEpoch);
+                    //Tranform value to seconds since epoch
+                    long dateTimeSinceInEpoch = calculateSecondsSinceEpoch(value);
+                    return Optional.of(new BlackboardAttribute(
+                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START, 
+                            PARSER_NAME, dateTimeSinceInEpoch));
                 } catch (DateTimeParseException ex) {
-                    logger.log(Level.SEVERE, String.format("[XRY DSP] Assumption "
-                            + "about the date time formatting of messages is not "
-                            + "right. Here is the value [ %s ].", value), ex);
-                    return null;
+                    logger.log(Level.WARNING, String.format("[XRY DSP] Assumption"
+                            + " about the date time formatting of messages is "
+                            + "not right. Here is the value [ %s ]", value), ex);
+                    return Optional.empty();
                 }
-            case "direction":
-                return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, PARSER_NAME, value);
-            case "text":
-                return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, PARSER_NAME, value);
-            case "status":
-                switch (normalizedValue) {
-                    case "read":
-                        return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS, PARSER_NAME, READ);
-                    case "unread":
-                        return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS, PARSER_NAME, UNREAD);
-                    case "sending failed":
-                        //Ignore for now.
-                        return null;
-                    case "deleted":
-                        //Ignore for now.
-                        return null;
-                    case "unsent":
-                        //Ignore for now.
-                        return null;
-                    default:
-                        logger.log(Level.SEVERE, String.format("[XRY DSP] Unrecognized "
-                                + "status value [ %s ].", value));
-                        return null;
-                }
-            case "type":
+            case TYPE:
                 switch (normalizedValue) {
                     case "deliver":
-                        //Ignore for now.
-                        return null;
                     case "submit":
-                        //Ignore for now.
-                        return null;
                     case "status report":
                         //Ignore for now.
-                        return null;
+                        break;
                     default:
-                        logger.log(Level.SEVERE, String.format("[XRY DSP] Unrecognized "
+                        logger.log(Level.WARNING, String.format("[XRY DSP] Unrecognized "
                                 + "type value [ %s ]", value));
-                        return null;
                 }
-            case "storage":
-                //Ignore for now.
-                return null;
-            case "index":
-                //Ignore for now.
-                return null;
-            case "folder":
-                //Ignore for now.
-                return null;
-            case "name":
-                //Ignore for now.
-                return null;
-            case "service center":
-                //Ignore for now.
-                return null;
-            case "tel":
-                //Apply the namespace
-                if (normalizedNamespace.equals("from")) {
-                    return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, PARSER_NAME, value);
-                } else {
-                    //Assume to and participant are both equivalent to TSK_PHONE_NUMBER_TO
-                    return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, PARSER_NAME, value);
+                return Optional.empty();
+            case SERVICE_CENTER:
+                return Optional.of(new BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, 
+                        PARSER_NAME, value));
+            case STATUS:
+                switch (normalizedValue) {
+                    case "read":
+                        return Optional.of(new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS, 
+                                PARSER_NAME, READ));
+                    case "unread":
+                        return Optional.of(new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS, 
+                                PARSER_NAME, UNREAD));
+                    case "sending failed":
+                    case "deleted":
+                    case "unsent":
+                    case "sent":
+                        //Ignore for now.
+                        break;
+                    default:
+                        logger.log(Level.WARNING, String.format("[XRY DSP] Unrecognized "
+                                + "status value [ %s ].", value));
                 }
+                return Optional.empty();
+            case STORAGE:
+            case INDEX:
+            case FOLDER:
+            case NAME:
+                //Ignore for now.
+                return Optional.empty();
             default:
-                throw new IllegalArgumentException(String.format("key [ %s ] was not recognized.", key));
+                throw new IllegalArgumentException(String.format("Key [ %s ] "
+                        + "passed the isKey() test but was not matched. There is"
+                        + " likely a typo in the  code.", key));
         }
     }
 
@@ -493,15 +582,58 @@ final class XRYMessagesFileParser implements XRYFileParser {
     }
 
     /**
-     * Parses the date time value and calculates ms since epoch. The time zone is
-     * assumed to be UTC.
+     * Parses the date time value and calculates seconds since epoch.
      *
      * @param dateTime
      * @return
      */
     private long calculateSecondsSinceEpoch(String dateTime) {
-        LocalDateTime localDateTime = LocalDateTime.parse(dateTime, DATE_TIME_PARSER);
-        //Assume dates have no offset.
-        return localDateTime.toInstant(ZoneOffset.UTC).getEpochSecond();
+        String dateTimeWithoutLocale = removeDateTimeLocale(dateTime).trim();
+        /**
+         * The format of time in XRY Messages reports is of the form:
+         * 
+         *      1/3/1990 1:23:54 AM UTC+4
+         * 
+         * In our current version of Java (openjdk-1.8.0.222), there is
+         * a bug with having the timezone offset (UTC+4 or GMT-7) at the 
+         * end of the date time input. This is fixed in later versions
+         * of the JDK (9 and beyond). Rather than update the JDK to
+         * accommodate this, the components of the date time string are reversed:
+         * 
+         *      UTC+4 AM 1:23:54 1/3/1990
+         * 
+         * The java time package will correctly parse this date time format.
+         */
+        String reversedDateTime = reverseOrderOfDateTimeComponents(dateTimeWithoutLocale);
+        /**
+         * Furthermore, the DateTimeFormatter's timezone offset letter ('O') does
+         * not recognized UTC but recognizes GMT. According to 
+         * https://en.wikipedia.org/wiki/Coordinated_Universal_Time,
+         * GMT only differs from UTC by at most 1 second and so substitution
+         * will only introduce a trivial amount of error.
+         */
+        String reversedDateTimeWithGMT = reversedDateTime.replace("UTC", "GMT");
+        ZonedDateTime zonedDateTime = ZonedDateTime.parse(reversedDateTimeWithGMT, DATE_TIME_PARSER);
+        return zonedDateTime.toEpochSecond();
+    }
+    
+    /**
+     * Reverses the order of the date time components.
+     * 
+     * Example: 
+     *  1/3/1990 1:23:54 AM UTC+4 
+     * becomes
+     *  UTC+4 AM 1:23:54 1/3/1990
+     * 
+     * @param dateTime
+     * @return
+     */
+    private String reverseOrderOfDateTimeComponents(String dateTime) {
+        StringBuilder reversedDateTime = new StringBuilder(dateTime.length());
+        String[] dateTimeComponents = dateTime.split(" ");
+        for (String component : dateTimeComponents) {
+            reversedDateTime.insert(0, " ").insert(0, component);
+        }
+        return reversedDateTime.toString().trim();
     }
 }
