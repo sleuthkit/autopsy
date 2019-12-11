@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -58,6 +59,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper;
+import org.sleuthkit.datamodel.blackboardutils.FileAttachment;
+import org.sleuthkit.datamodel.blackboardutils.MessageAttachments;
 
 /**
  * File-level ingest module that detects MBOX, PST, and vCard files based on
@@ -70,6 +74,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private FileManager fileManager;
     private IngestJobContext context;
     private Blackboard blackboard;
+    private CommunicationArtifactsHelper communicationArtifactsHelper;
     
     private Case currentCase;
 
@@ -129,6 +134,15 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             logger.log(Level.WARNING, null, ex);
         }
 
+        try {
+            communicationArtifactsHelper = new CommunicationArtifactsHelper(currentCase.getSleuthkitCase(),
+                    EmailParserModuleFactory.getModuleName(), abstractFile, Account.Type.EMAIL);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Failed to create CommunicationArtifactsHelper for file %s", abstractFile.getName()), ex);
+            return ProcessResult.ERROR;
+        }
+
+       
         if (isMbox) {
             return processMBox(abstractFile);
         }
@@ -267,7 +281,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         } else if (mboxParentDir.contains("/ImapMail/")) { //NON-NLS
             emailFolder = mboxParentDir.substring(mboxParentDir.indexOf("/ImapMail/") + 9); //NON-NLS
         }
-        emailFolder = emailFolder + mboxFileName;
+        emailFolder += mboxFileName;
         emailFolder = emailFolder.replaceAll(".sbd", ""); //NON-NLS
 
         String fileName;
@@ -487,8 +501,12 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      *
      * @return List of attachments
      */
+    @NbBundle.Messages({
+    "ThunderbirdMboxFileIngestModule.handleAttch.addAttachmentsErrorMsg=Failed to add attachments to email message."
+})
     private List<AbstractFile> handleAttachments(List<EmailMessage.Attachment> attachments, AbstractFile abstractFile, BlackboardArtifact messageArtifact) {
         List<AbstractFile> files = new ArrayList<>();
+        List<FileAttachment> fileAttachments = new ArrayList<>();
         for (EmailMessage.Attachment attach : attachments) {
             String filename = attach.getName();
             long crTime = attach.getCrTime();
@@ -501,12 +519,14 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
             try {
                 DerivedFile df = fileManager.addDerivedFile(filename, relPath,
-                        size, cTime, crTime, aTime, mTime, true, messageArtifact, "",
+                        size, cTime, crTime, aTime, mTime, true, abstractFile, "",
                         EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleVersion(), "", encodingType);
                 
                 associateAttachmentWithMesssge(messageArtifact, df);
                 
                 files.add(df);
+                
+                fileAttachments.add(new FileAttachment(df));
             } catch (TskCoreException ex) {
                 postErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.handleAttch.errMsg",
@@ -516,6 +536,17 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 logger.log(Level.INFO, "", ex);
             }
         }
+        
+       
+        try {
+            communicationArtifactsHelper.addAttachments(messageArtifact, new MessageAttachments(fileAttachments, Collections.emptyList()));
+        } catch (TskCoreException ex) {
+             postErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.handleAttch.addAttachmentsErrorMsg"),
+                        "");
+                logger.log(Level.INFO, "Failed to add attachments to email message.", ex);
+        }
+       
         return files;
     }
 
