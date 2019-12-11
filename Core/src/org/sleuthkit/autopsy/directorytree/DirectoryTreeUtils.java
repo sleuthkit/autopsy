@@ -30,7 +30,13 @@ final class DirectoryTreeUtils {
     
     private static final int ATTACHMENT_CHILDOF_MSG_MAX_DB_MAJOR_VER = 8;
     private static final int ATTACHMENT_CHILDOF_MSG_MAX_DB_MINOR_VER = 4;
-     
+    
+    /**
+     * Empty private constructor
+     */
+    private DirectoryTreeUtils() {
+        
+    }
     
      /**
      * Prior to schema version 8.4, attachments were children of messages and

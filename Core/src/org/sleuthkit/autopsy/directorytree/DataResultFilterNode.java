@@ -261,15 +261,14 @@ public class DataResultFilterNode extends FilterNode {
             // filter out artifacts
             // unless there are message artifacts with attachments as children
             BlackboardArtifact art = key.getLookup().lookup(BlackboardArtifact.class);
-            if (art != null && filterArtifacts) {
+            if (art != null && filterArtifacts
+                    && ((DirectoryTreeUtils.showMessagesInDirTree() == false)
+                         || (DirectoryTreeUtils.showMessagesInDirTree()
+                                && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
+                                && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()))) {
+                return new Node[]{};
+            }
                 
-                if ((DirectoryTreeUtils.showMessagesInDirTree() == false)  || 
-                    (DirectoryTreeUtils.showMessagesInDirTree() &&
-                        art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() &&
-                        art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) ) {
-                             return new Node[]{};
-                        }
-                }
              return new Node[]{new DataResultFilterNode(key, sourceEm)};
         }
     }
