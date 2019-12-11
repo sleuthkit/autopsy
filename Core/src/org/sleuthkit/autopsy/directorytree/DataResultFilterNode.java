@@ -136,11 +136,12 @@ public class DataResultFilterNode extends FilterNode {
     public Action[] getActions(boolean popup) {
 
         List<Action> actions = new ArrayList<>();
-
-        final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
-        List<Action> accept = originalNode.accept(getActionsDIV);
-        if (accept != null) {
-            actions.addAll(accept);
+        if (this.getOriginal() instanceof DisplayableItemNode) {
+            final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
+            List<Action> accept = originalNode.accept(getActionsDIV);
+            if (accept != null) {
+                actions.addAll(accept);
+            }
         }
 
         //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
