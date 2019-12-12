@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
  * Utility class for Directory tree.
  * 
  */
-final class DirectoryTreeUtils {
+final class FilterNodeUtils {
     
     private static final int ATTACHMENT_CHILDOF_MSG_MAX_DB_MAJOR_VER = 8;
     private static final int ATTACHMENT_CHILDOF_MSG_MAX_DB_MINOR_VER = 4;
@@ -34,7 +34,7 @@ final class DirectoryTreeUtils {
     /**
      * Empty private constructor
      */
-    private DirectoryTreeUtils() {
+    private FilterNodeUtils() {
         
     }
     
@@ -43,8 +43,8 @@ final class DirectoryTreeUtils {
      * hence messages with any attachment children are shown in the directory
      * tree.
      *
-     * At 8.4, attachments are tracked as an attribute, and the message artifact
-     * don't need to be shown in the directory tree.
+     * At 8.4 and later, attachments are tracked as an attribute, and the message 
+     * artifacts don't need to be shown in the directory tree.
      *
      * This method may be used to check the schema version and behave
      * accordingly, in order to maintain backward compatibility.
@@ -52,15 +52,15 @@ final class DirectoryTreeUtils {
      * @return True if messages with attachment children should be shown in
      * directory tree.
      */
-    static boolean showMessagesInDirTree() {
-        boolean showMessagesInDirTree = true;
+    static boolean showMessagesInDatasourceTree() {
+        boolean showMessagesInDatasourceTree = true;
         if (Case.isCaseOpen()) {
             CaseDbSchemaVersionNumber version = Case.getCurrentCase().getSleuthkitCase().getDBSchemaCreationVersion();
-            showMessagesInDirTree
+            showMessagesInDatasourceTree
                     = ((version.getMajor() < ATTACHMENT_CHILDOF_MSG_MAX_DB_MAJOR_VER)
                     || (version.getMajor() == ATTACHMENT_CHILDOF_MSG_MAX_DB_MAJOR_VER && version.getMinor() < ATTACHMENT_CHILDOF_MSG_MAX_DB_MINOR_VER));
         }
-        return showMessagesInDirTree;
+        return showMessagesInDatasourceTree;
     }
     
 }

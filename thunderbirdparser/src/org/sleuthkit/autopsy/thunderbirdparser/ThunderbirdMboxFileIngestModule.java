@@ -138,7 +138,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             communicationArtifactsHelper = new CommunicationArtifactsHelper(currentCase.getSleuthkitCase(),
                     EmailParserModuleFactory.getModuleName(), abstractFile, Account.Type.EMAIL);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to create CommunicationArtifactsHelper for file %s", abstractFile.getName()), ex);
+            logger.log(Level.SEVERE, String.format("Failed to create CommunicationArtifactsHelper for file with object id = %d", abstractFile.getId()), ex);
             return ProcessResult.ERROR;
         }
 

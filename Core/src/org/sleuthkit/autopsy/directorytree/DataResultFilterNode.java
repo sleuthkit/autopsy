@@ -259,17 +259,19 @@ public class DataResultFilterNode extends FilterNode {
         protected Node[] createNodes(Node key) {
             // if displaying the results from the Data Source tree
             // filter out artifacts
-            // unless there are message artifacts with attachments as children
+          
+            // In older versions of Autopsy,  attachments were children of email/message artifacts
+            // and hence email/messages with attachments are shown in the tree data source tree,
             BlackboardArtifact art = key.getLookup().lookup(BlackboardArtifact.class);
             if (art != null && filterArtifacts
-                    && ((DirectoryTreeUtils.showMessagesInDirTree() == false)
-                         || (DirectoryTreeUtils.showMessagesInDirTree()
+                    && ((FilterNodeUtils.showMessagesInDatasourceTree() == false)
+                         || (FilterNodeUtils.showMessagesInDatasourceTree()
                                 && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
                                 && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()))) {
                 return new Node[]{};
             }
                 
-             return new Node[]{new DataResultFilterNode(key, sourceEm)};
+            return new Node[]{new DataResultFilterNode(key, sourceEm)};
         }
     }
 

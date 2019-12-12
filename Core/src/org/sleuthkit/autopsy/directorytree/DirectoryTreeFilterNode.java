@@ -132,7 +132,7 @@ class DirectoryTreeFilterNode extends FilterNode {
                     }
                 } else if (child instanceof BlackboardArtifact) {
                     
-                    if (DirectoryTreeUtils.showMessagesInDirTree()) {
+                    if (FilterNodeUtils.showMessagesInDatasourceTree()) {
                         // In older versions of Autopsy,  attachments were children of email/message artifacts
                         // and hence email/messages with attachments are shown in the directory tree.
                         BlackboardArtifact bba = (BlackboardArtifact) child;
