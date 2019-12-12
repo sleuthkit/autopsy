@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -53,10 +54,8 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
 
             List<BlackboardAttribute> attributes = new ArrayList<>();
 
-            //First line of the entity is the title.
-            if (xryLines.length > 0) {
-                logger.log(Level.INFO, String.format("[XRY DSP] Processing [ %s ]", xryLines[0]));
-            }
+            //First line of the entity is the title, the entity will always be non-empty.
+            logger.log(Level.INFO, String.format("[XRY DSP] Processing [ %s ]", xryLines[0]));
 
             String namespace = "";
             //Process each line, searching for a key value pair or a namespace.
@@ -76,7 +75,7 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
                 //the start of the line and the first delimiter.
                 int keyDelimiter = xryLine.indexOf(KEY_VALUE_DELIMITER);
                 if (keyDelimiter == -1) {
-                    logger.log(Level.SEVERE, String.format("[XRY DSP] Expected a key value "
+                    logger.log(Level.WARNING, String.format("[XRY DSP] Expected a key value "
                             + "pair on this line (in brackets) [ %s ], but one was not detected."
                             + " Here is the previous line [ %s ]. What does this mean?", xryLine, xryLines[i - 1]));
                     continue;
@@ -85,24 +84,23 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
                 String value = xryLine.substring(keyDelimiter + 1).trim();
 
                 if (!isKey(key)) {
-                    logger.log(Level.SEVERE, String.format("[XRY DSP] The following key, "
+                    logger.log(Level.WARNING, String.format("[XRY DSP] The following key, "
                             + "value pair (in brackets, respectively) [ %s ], [ %s ] was not recognized. Discarding..."
                             + " Here is the previous line [ %s ] for context. What does this key mean?", key, value, xryLines[i - 1]));
                     continue;
                 }
 
                 if (value.isEmpty()) {
-                    logger.log(Level.SEVERE, String.format("[XRY DSP] The following key "
+                    logger.log(Level.WARNING, String.format("[XRY DSP] The following key "
                             + "(in brackets) [ %s ] was recognized, but the value was empty. Discarding..."
                             + " Here is the previous line for context [ %s ]. What does this mean?", key, xryLines[i - 1]));
                     continue;
                 }
 
-                BlackboardAttribute attribute = makeAttribute(namespace, key, value);
-                //Temporarily allowing null to be valid return type until a decision
-                //is made about how to handle keys we are choosing to ignore.
-                if (attribute != null) {
-                    attributes.add(makeAttribute(namespace, key, value));
+                //Create the attribute, if any.
+                Optional<BlackboardAttribute> attribute = makeAttribute(namespace, key, value);
+                if(attribute.isPresent()) {
+                    attributes.add(attribute.get());
                 }
             }
 
@@ -152,9 +150,9 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
      * It will have been verified with isNamespace, otherwise it will be empty.
      * @param key The key that was verified with isKey.
      * @param value The value associated with that key.
-     * @return
+     * @return The corresponding blackboard attribute, if any.
      */
-    abstract BlackboardAttribute makeAttribute(String nameSpace, String key, String value);
+    abstract Optional<BlackboardAttribute> makeAttribute(String nameSpace, String key, String value);
 
     /**
      * Makes an artifact from the parsed attributes.

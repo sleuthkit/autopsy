@@ -2269,6 +2269,45 @@ abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeConnection(conn);
         }
     }
+    
+    /**
+     * Process a SELECT query
+     *
+     * @param selectClause          query string to execute
+     * @param instanceTableCallback callback to process the instance
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws EamDbException {
+
+        if (instanceTableCallback == null) {
+            throw new EamDbException("Callback interface is null");
+        }
+
+        if (selectClause == null) {
+            throw new EamDbException("Select clause is null");
+        }
+
+        Connection conn = connect();
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        StringBuilder sql = new StringBuilder(300);
+        sql.append("select ")
+                .append(selectClause);
+
+        try {
+            preparedStatement = conn.prepareStatement(sql.toString());
+            resultSet = preparedStatement.executeQuery();
+            instanceTableCallback.process(resultSet);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error running query", ex);
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+    }        
 
     @Override
     public EamOrganization newOrganization(EamOrganization eamOrg) throws EamDbException {

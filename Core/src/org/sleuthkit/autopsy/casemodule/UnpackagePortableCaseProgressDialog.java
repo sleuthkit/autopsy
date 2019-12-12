@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import javax.swing.JFrame;
@@ -36,7 +37,10 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -46,6 +50,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements PropertyChangeListener {
 
     private UnpackageWorker worker;
+    private final static String CASES_OPENED_LOG_FILE = "portable_cases_opened"; //NON-NLS
+    private final static String PORTABLE_CASE_NAME = "portable_case_name"; //NON-NLS
+    private final static String PORTABLE_CASE_DIR = "portable_case_dir_opened"; //NON-NLS
 
     /**
      * Creates new form UnpackagePortableCaseProgressDialog
@@ -142,10 +149,23 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
         @NbBundle.Messages({
             "UnpackageWorker.doInBackground.errorFinding7zip=Could not locate 7-Zip executable",
             "UnpackageWorker.doInBackground.errorCompressingCase=Error unpackaging case",
-            "UnpackageWorker.doInBackground.canceled=Unpackaging canceled by user",})
+            "UnpackageWorker.doInBackground.canceled=Unpackaging canceled by user",
+            "UnpackageWorker.doInBackground.previousSeenCase=Case with name {0} has been previously opened do you want to open it again?"})
         @Override
         protected Void doInBackground() throws Exception {
 
+            // Check to see if this case has been already opened before
+            String caseUnpackedBefore = getCaseIfUnpackedBefore(packagedCase);
+            if ((!caseUnpackedBefore.isEmpty()) 
+                && (MessageNotifyUtil.Message.confirm(Bundle.UnpackageWorker_doInBackground_previousSeenCase(packagedCase)))) {
+                    try {
+                        Case.openAsCurrentCase(caseUnpackedBefore);
+                        success.set(true);
+                        return null;
+                    } catch (CaseActionException ex) {
+                        throw new TskCoreException("Error opening case after unpacking it.", ex); // NON-NLS
+                    }
+            }
             // Find 7-Zip
             File sevenZipExe = locate7ZipExecutable();
             if (sevenZipExe == null) {
@@ -191,16 +211,27 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
                 setDisplayError(Bundle.UnpackageWorker_doInBackground_errorCompressingCase());
                 throw new TskCoreException("Error unpackaging case", ex); // NON-NLS
             }
-            
+
             try {
                 String caseFileDirectory = FilenameUtils.getBaseName(packagedCase);
                 String caseDirectory = StringUtils.substringBefore(caseFileDirectory, ".zip");
-                Case.openAsCurrentCase(outputFolder + File.separator + caseDirectory + File.separator + caseDirectory + ".aut"); // NON-NLS
+                String caseFileToOpen = outputFolder + File.separator + caseDirectory + File.separator + caseDirectory + ".aut";
+                Case.openAsCurrentCase(caseFileToOpen); // NON-NLS
+                String timestampFileOpened = TimeStampUtils.createTimeStamp();
+                if (ModuleSettings.configExists(CASES_OPENED_LOG_FILE)) {
+                    ModuleSettings.setConfigSetting(CASES_OPENED_LOG_FILE, timestampFileOpened + "-" + PORTABLE_CASE_NAME, packagedCase);
+                    ModuleSettings.setConfigSetting(CASES_OPENED_LOG_FILE, timestampFileOpened + "-" + PORTABLE_CASE_DIR, caseFileToOpen);
+                } else {
+                    ModuleSettings.makeConfigFile(CASES_OPENED_LOG_FILE);
+                    ModuleSettings.setConfigSetting(CASES_OPENED_LOG_FILE, timestampFileOpened + "-" + PORTABLE_CASE_NAME, packagedCase);
+                    ModuleSettings.setConfigSetting(CASES_OPENED_LOG_FILE, timestampFileOpened + "-" + PORTABLE_CASE_DIR, caseFileToOpen);
+                }
             } catch (CaseActionException ex) {
                 throw new TskCoreException("Error opening case after unpacking it.", ex); // NON-NLS
             }
-            
+
             success.set(true);
+
             return null;
         }
 
@@ -261,6 +292,33 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
 
             return exeFile;
         }
+
+        /**
+         * Check to see if the case has been unpacked before
+         */
+        private String getCaseIfUnpackedBefore(String packedCaseName) {
+            if (!ModuleSettings.configExists(CASES_OPENED_LOG_FILE)) {
+                return "";
+            }
+
+            Map<String, String> configEntries = ModuleSettings.getConfigSettings(CASES_OPENED_LOG_FILE);
+
+            for (Map.Entry<String, String> entries : configEntries.entrySet()) {
+                if (entries.getValue().contains(packedCaseName)) {
+                    String entryFound = entries.getKey().substring(0, entries.getKey().indexOf('-'));
+                    String caseFileName = ModuleSettings.getConfigSetting(CASES_OPENED_LOG_FILE, entryFound + "-" + PORTABLE_CASE_DIR);
+                    File caseFile = new File(caseFileName);
+                    if (caseFile.exists()) {
+                        return caseFileName;
+                    } else {
+                        return "";
+                    }
+                }
+            }
+
+            return "";
+        }
+
     }
 
     /**

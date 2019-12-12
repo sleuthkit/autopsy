@@ -24,9 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.TimelineFilter;
 import org.sleuthkit.datamodel.TimelineFilter.CompoundFilter;
 
@@ -81,30 +79,6 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
     }
 
     private void configureListeners() {
-        try {
-            //Add a new subfilterstate whenever the underlying subfilters change.
-            getFilter().getSubFilters().addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
-                while (change.next()) {
-                    change.getAddedSubList().forEach((SubFilterType newSubFilter) -> {
-                        //if there is not already a state for this filter
-                        if (getSubFilterStates().stream().map(FilterState::getFilter).noneMatch(newSubFilter::equals)) {
-                            //add the appropriate filter type: default or compound
-                            if (newSubFilter instanceof CompoundFilter<?>) {
-                                @SuppressWarnings("unchecked")
-                                FilterState<SubFilterType> compoundFilterState = (FilterState<SubFilterType>) new CompoundFilterState<>((CompoundFilter<?>) newSubFilter);
-                                addSubFilterStateInternal(compoundFilterState);
-
-                            } else {
-                                addSubFilterStateInternal(new SqlFilterState<>(newSubFilter));
-                            }
-
-                        }
-                    });
-                }
-            });
-        } catch (Exception e) {
-            Exceptions.printStackTrace(e);
-        }
         activeProperty().addListener(activeProperty -> disableSubFiltersIfNotActive());
         disableSubFiltersIfNotActive();
 

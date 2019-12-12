@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2014-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -181,9 +181,6 @@ public final class EventsModel {
         /*
          * Initialize the events filter state model parameter with the default
          * events filter.
-         *
-         * RJCTODO: Why isn't the event filter state of the initialModelParams
-         * used here?
          */
         filterStateProperty.set(getDefaultEventFilterState());
 
@@ -223,12 +220,9 @@ public final class EventsModel {
      * Adds a data source filter for each data source in the data sources cache
      * to a given root filter state object.
      *
-     * RJCTODO: This method should be synchronized! RJCTODO: This seems like an
-     * unusual method.
-     *
      * @param rootFilterState A root filter state object.
      */
-    void addDataSourceFilters(RootFilterState rootFilterState) {
+    synchronized void addDataSourceFilters(RootFilterState rootFilterState) {
         DataSourcesFilter dataSourcesFilter = rootFilterState.getDataSourcesFilterState().getFilter();
         datasourceIDsToNamesMap.entrySet().forEach(entry -> dataSourcesFilter.addSubFilter(newDataSourceFilter(entry)));
     }
@@ -237,9 +231,6 @@ public final class EventsModel {
      * Gets the count of all events that fit the given model parameters. The
      * counts are organized by event type for the given event types hierarchy
      * level.
-     *
-     * RJCTODO: Where does the argument for this method come from when called by
-     * the cache builder?
      *
      * @param modelParams The model parameters.
      *
@@ -263,8 +254,6 @@ public final class EventsModel {
     /**
      * Gets the case database events manager.
      *
-     * RJCTODO: Clients should probably get their own reference.
-     *
      * @return The case database events manager.
      */
     public TimelineManager getEventManager() {
@@ -273,8 +262,6 @@ public final class EventsModel {
 
     /**
      * Gets the case database.
-     *
-     * RJCTODO: Clients should probably get their own reference.
      *
      * @return The case database.
      */
@@ -346,8 +333,6 @@ public final class EventsModel {
     /**
      * Gets the current model parameters.
      *
-     * RJCTODO: This breaks encapsulation. Is it really necessary?
-     *
      * @return The current model parameters.
      */
     synchronized public EventsModelParams getModelParams() {
@@ -356,8 +341,6 @@ public final class EventsModel {
 
     /**
      * Gets the time range model parameter.
-     *
-     * RJCTODO: This breaks encapsulation. Is it really necessary?
      *
      * @return The time range model parameter.
      */
@@ -368,8 +351,6 @@ public final class EventsModel {
     /**
      * Gets the time range model parameter.
      *
-     * RJCTODO: This breaks encapsulation. Is it really necessary?
-     *
      * @return The time range model parameter.
      */
     synchronized public TimelineLevelOfDetail getDescriptionLOD() {
@@ -379,8 +360,6 @@ public final class EventsModel {
     /**
      * Gets the event filter model parameter.
      *
-     * RJCTODO: This breaks encapsulation. Is it really necessary?
-     *
      * @return The event filter model parameter.
      */
     synchronized public RootFilterState getEventFilterState() {
@@ -389,8 +368,6 @@ public final class EventsModel {
 
     /**
      * Gets the event types hierarchy level model model parameter.
-     *
-     * RJCTODO: This breaks encapsulation. Is it really necessary?
      *
      * @return The event types hierarchy level model model parameter.
      */
@@ -406,9 +383,6 @@ public final class EventsModel {
      * @return An instance of the default filter state model parameter.
      */
     public synchronized RootFilterState getDefaultEventFilterState() {
-        // RJCTODO: Move all of this into FilterUtils, or factor FilterUtils 
-        // into this class. The former is probably better, simply passing the 
-        // util a list of data source names.
         /*
          * Construct data source filters for all of the data sources in the data
          * sources cache.
@@ -418,8 +392,8 @@ public final class EventsModel {
                 -> dataSourcesFilter.addSubFilter(newDataSourceFilter(dataSourceEntry)));
 
         /*
-         * Make the rest of the event filters and decorate all of the filters
-         * with filter state objects for the GUI.
+         * Make the rest of the event filters and wrap all of the filters with
+         * filter state objects for the GUI.
          */
         RootFilterState rootFilterState = new RootFilterState(new RootFilter(
                 new HideKnownFilter(),
@@ -803,10 +777,6 @@ public final class EventsModel {
      * invalidated event. Optionally, a collection of event IDs may be supplied,
      * in which case only the corresponding entries in the event IDs cache are
      * invalidated.
-     *
-     * RJCTODO: What is the use case for passing event IDs? The only place this
-     * is currently done is when handling TIMELINE_EVENT_ADDED events, i.e., for
-     * entirely new events. Is this some sort of performance optimization?
      *
      * @param updatedEventIDs Either null or a collection of the event IDs.
      *

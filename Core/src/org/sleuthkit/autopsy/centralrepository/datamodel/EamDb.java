@@ -794,4 +794,13 @@ public interface EamDb {
      */
     void processInstanceTableWhere(CorrelationAttributeInstance.Type type, String whereClause, InstanceTableCallback instanceTableCallback) throws EamDbException;
 
+    /**
+     * Process a SELECT query
+     *
+     * @param selectClause          query string to execute
+     * @param instanceTableCallback callback to process the instance
+     *
+     * @throws EamDbException
+     */
+    public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws EamDbException;      
 }

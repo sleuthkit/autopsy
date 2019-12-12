@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datasourceprocessors.xry;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -53,9 +54,11 @@ final class XRYWebBookmarksFileParser extends AbstractSingleKeyValueParser {
     }
 
     @Override
-    BlackboardAttribute makeAttribute(String nameSpace, String key, String value) {
+    Optional<BlackboardAttribute> makeAttribute(String nameSpace, String key, String value) {
         String normalizedKey = key.toLowerCase();
-        return new BlackboardAttribute(KEY_TO_TYPE.get(normalizedKey), PARSER_NAME, value);
+        return Optional.of(new BlackboardAttribute(
+                KEY_TO_TYPE.get(normalizedKey), 
+                PARSER_NAME, value));
     }
     
     @Override
