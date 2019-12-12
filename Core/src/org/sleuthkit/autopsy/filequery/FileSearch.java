@@ -977,16 +977,6 @@ class FileSearch {
         GroupKey getGroupKey(ResultFile file) {
             return new FileTypeGroupKey(file);
         }
-
-        @Override
-        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
-            for (ResultFile file : files) {
-                if (file.getFileType().equals(FileType.OTHER)) {
-                    file.setFileType(FileType.fromMIMEtype(file.getFirstInstance().getMIMEType()));
-                }
-            }
-        }
     }
 
     /**
