@@ -161,6 +161,9 @@ public final class DiscoveryTopComponent extends TopComponent {
         javax.swing.JLabel stepOneLabel = new javax.swing.JLabel();
         videosButton = new javax.swing.JButton();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(62, 0), new java.awt.Dimension(62, 0), new java.awt.Dimension(62, 32767));
+        manageSavedFiltersLabel = new javax.swing.JLabel();
+        loadSavedFiltersButton = new javax.swing.JButton();
+        saveCurrentFiltersButton = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(1400, 900));
         setLayout(new java.awt.BorderLayout());
@@ -181,6 +184,8 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         add(mainSplitPane, java.awt.BorderLayout.CENTER);
 
+        toolBarPanel.setPreferredSize(new java.awt.Dimension(1400, 72));
+
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
 
@@ -189,9 +194,9 @@ public final class DiscoveryTopComponent extends TopComponent {
         imagesButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/pictures-icon.png"))); // NOI18N
         imagesButton.setFocusable(false);
         imagesButton.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        imagesButton.setMaximumSize(new java.awt.Dimension(90, 43));
-        imagesButton.setMinimumSize(new java.awt.Dimension(90, 43));
-        imagesButton.setPreferredSize(new java.awt.Dimension(90, 43));
+        imagesButton.setMaximumSize(new java.awt.Dimension(110, 43));
+        imagesButton.setMinimumSize(new java.awt.Dimension(110, 43));
+        imagesButton.setPreferredSize(new java.awt.Dimension(110, 43));
         imagesButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 imagesButtonActionPerformed(evt);
@@ -206,12 +211,31 @@ public final class DiscoveryTopComponent extends TopComponent {
         videosButton.setDisabledSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/video-icon.png"))); // NOI18N
         videosButton.setFocusable(false);
         videosButton.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        videosButton.setMaximumSize(new java.awt.Dimension(90, 43));
-        videosButton.setMinimumSize(new java.awt.Dimension(90, 43));
-        videosButton.setPreferredSize(new java.awt.Dimension(90, 43));
+        videosButton.setMaximumSize(new java.awt.Dimension(110, 43));
+        videosButton.setMinimumSize(new java.awt.Dimension(110, 43));
+        videosButton.setPreferredSize(new java.awt.Dimension(110, 43));
         videosButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 videosButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(manageSavedFiltersLabel, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.manageSavedFiltersLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(loadSavedFiltersButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.loadSavedFiltersButton.text")); // NOI18N
+        loadSavedFiltersButton.setMaximumSize(new java.awt.Dimension(97, 23));
+        loadSavedFiltersButton.setMinimumSize(new java.awt.Dimension(97, 23));
+        loadSavedFiltersButton.setPreferredSize(new java.awt.Dimension(97, 23));
+        loadSavedFiltersButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loadSavedFiltersButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(saveCurrentFiltersButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.saveCurrentFiltersButton.text")); // NOI18N
+        saveCurrentFiltersButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveCurrentFiltersButtonActionPerformed(evt);
             }
         });
 
@@ -220,20 +244,30 @@ public final class DiscoveryTopComponent extends TopComponent {
         toolBarPanelLayout.setHorizontalGroup(
             toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(toolBarPanelLayout.createSequentialGroup()
-                .addContainerGap(486, Short.MAX_VALUE)
+                .addContainerGap()
+                .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(manageSavedFiltersLabel)
+                    .addGroup(toolBarPanelLayout.createSequentialGroup()
+                        .addComponent(loadSavedFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(saveCurrentFiltersButton)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 375, Short.MAX_VALUE)
                 .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, toolBarPanelLayout.createSequentialGroup()
-                        .addComponent(imagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(imagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(videosButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(videosButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, toolBarPanelLayout.createSequentialGroup()
                         .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, 0)
                         .addComponent(stepOneLabel)
                         .addGap(62, 62, 62)))
                 .addComponent(toolBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(486, Short.MAX_VALUE))
+                .addContainerGap(587, Short.MAX_VALUE))
         );
+
+        toolBarPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {loadSavedFiltersButton, saveCurrentFiltersButton});
+
         toolBarPanelLayout.setVerticalGroup(
             toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(toolBar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -247,7 +281,17 @@ public final class DiscoveryTopComponent extends TopComponent {
                     .addComponent(videosButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(imagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(5, 5, 5))
+            .addGroup(toolBarPanelLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(manageSavedFiltersLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(loadSavedFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(saveCurrentFiltersButton))
+                .addContainerGap())
         );
+
+        toolBarPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {loadSavedFiltersButton, saveCurrentFiltersButton});
 
         add(toolBarPanel, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
@@ -275,6 +319,14 @@ public final class DiscoveryTopComponent extends TopComponent {
         videosButton.setForeground(Color.BLACK);
         fileSearchPanel.setSelectedType(FileSearchData.FileType.VIDEO);
     }//GEN-LAST:event_videosButtonActionPerformed
+
+    private void loadSavedFiltersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadSavedFiltersButtonActionPerformed
+        new LoadSearchDialog().display();      
+    }//GEN-LAST:event_loadSavedFiltersButtonActionPerformed
+
+    private void saveCurrentFiltersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveCurrentFiltersButtonActionPerformed
+        new SaveSearchDialog().display();
+    }//GEN-LAST:event_saveCurrentFiltersButtonActionPerformed
 
     /**
      * Update the user interface in response to a search being cancelled.
@@ -335,7 +387,10 @@ public final class DiscoveryTopComponent extends TopComponent {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton imagesButton;
     private javax.swing.JSplitPane leftSplitPane;
+    private javax.swing.JButton loadSavedFiltersButton;
+    private javax.swing.JLabel manageSavedFiltersLabel;
     private javax.swing.JSplitPane rightSplitPane;
+    private javax.swing.JButton saveCurrentFiltersButton;
     private javax.swing.JButton videosButton;
     // End of variables declaration//GEN-END:variables
 
