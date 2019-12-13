@@ -24,13 +24,13 @@ import org.openide.windows.WindowManager;
 final class SaveSearchDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
-
+    private final SearchFilterSave searchFilters;
     /**
      * Creates new form SaveSearchDialog
      */
-    SaveSearchDialog() {
+    SaveSearchDialog(SearchFilterSave search) {
         super((JFrame) null, "Title here", true);
-
+        searchFilters = search;
         initComponents();
         setResizable(false);
     }
@@ -106,7 +106,9 @@ final class SaveSearchDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-
+        //get name
+        //get description 
+        //serialize name description and filters
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -114,7 +116,7 @@ final class SaveSearchDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
-     * Display the Search Other Cases dialog.
+     * Display the SearchFilterSave Other Cases dialog.
      */
     void display() {
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());

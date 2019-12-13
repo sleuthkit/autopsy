@@ -1045,7 +1045,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     /**
-     * The settings are valid so enable the Search button
+     * The settings are valid so enable the SearchFilterSave button
      */
     private void setValid() {
         errorLabel.setText("");
@@ -1786,93 +1786,104 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         groupSortingComboBox.setEnabled(enabled);
     }
 
-        void saveSearch() {
-        orderByCombobox.getSelectedIndex();
-        groupByCombobox.getSelectedIndex();
-        groupSortingComboBox.getSelectedIndex();
+    SearchFilterSave getCurrentFilters() {
+
+        SearchFilterSave search = new SearchFilterSave(fileType.getRanking(), orderByCombobox.getSelectedIndex(), groupByCombobox.getSelectedIndex(), groupSortingComboBox.getSelectedIndex());
         if (sizeCheckbox.isSelected()) {
-            sizeList.getSelectedIndices();
+            search.setSizeFilter(true, sizeList.getSelectedIndices());
         }
 //        if (dataSourceCheckbox.isSelected()) {  Different for every case doesn't really make sense to save
 //            dataSourceList.getSelectedIndices();
 //        }
         if (crFrequencyCheckbox.isSelected()) {
-            crFrequencyList.getSelectedIndices();
+            search.setCrFrequencyFilter(true, crFrequencyList.getSelectedIndices());
         }
         if (keywordCheckbox.isSelected()) {
-            keywordList.getSelectedIndices();
+            search.setKeywordFilter(true, keywordList.getSelectedIndices());
         }
         if (hashSetCheckbox.isSelected()) {
-            hashSetList.getSelectedIndices();
+            search.setHashSetFilter(true, hashSetList.getSelectedIndices());
         }
         if (objectsCheckbox.isSelected()) {
-            objectsList.getSelectedIndices();
+            search.setObjectsFilter(true, objectsList.getSelectedIndices());
         }
         if (tagsCheckbox.isSelected()) {
-            tagsList.getSelectedIndices();
+            search.setTagsFilter(true, tagsList.getSelectedIndices());
         }
         if (interestingItemsCheckbox.isSelected()) {
-            interestingItemsList.getSelectedIndices();
+            search.setInterestingItemsFilter(true, interestingItemsList.getSelectedIndices());
         }
         if (scoreCheckbox.isSelected()) {
-            scoreList.getSelectedIndices();
+            search.setScoreFilter(true, scoreList.getSelectedIndices());
         }
-        exifCheckbox.isSelected();
-        notableCheckbox.isSelected();
-        knownFilesCheckbox.isSelected();
+        search.setDeviceOriginalFilterEnabled(exifCheckbox.isSelected());
+        search.setNotableFilesFilterEnabled(notableCheckbox.isSelected());
+        search.setKnownFilesFilterEnabled(knownFilesCheckbox.isSelected());
         if (parentCheckbox.isSelected()) {
-            parentList.getSelectedValuesList();
+            List<ParentSearchTerm> parentTerms = new ArrayList<>();
+            for (int i = 0; i < parentList.getModel().getSize(); i++) {
+                parentTerms.add(parentList.getModel().getElementAt(i));
+            }
+            search.setParentFilter(true, parentTerms);
         }
-
+        return search;
     }
 
-    void loadSearch() {
-        orderByCombobox.setSelectedIndex(0);
-        groupByCombobox.setSelectedIndex(0);
-        groupSortingComboBox.setSelectedIndex(0);
+    void loadSearch(SearchFilterSave search) {
+        fileType = FileType.fromRanking(search.getSelectedFileType());
+        orderByCombobox.setSelectedIndex(search.getOrderByIndex());
+        groupByCombobox.setSelectedIndex(search.getGroupByIndex());
+        groupSortingComboBox.setSelectedIndex(search.getOrderGroupsBy());
+        
+        sizeCheckbox.setSelected(search.isScoreFilterEnabled());
+        if (sizeCheckbox.isSelected()) {
+            sizeList.setSelectedIndices(search.getSizeFilters());
+        }
 
-//        sizeCheckbox.setSelected(true);
-//        if (sizeCheckbox.isSelected()) {
-//            sizeList.setSelectedIndices(indices);
+        //        if (dataSourceCheckbox.isSelected()) {  Different for every case doesn't really make sense to save
+//            dataSourceList.getSelectedIndices();
 //        }
-//
-//        //        if (dataSourceCheckbox.isSelected()) {  Different for every case doesn't really make sense to save
-////            dataSourceList.getSelectedIndices();
-////        }
-//        crFrequencyCheckbox.setSelected(true);
-//        if (crFrequencyCheckbox.isSelected()) {
-//            crFrequencyList.setSelectedIndices(indices);
-//        }
-//        if (keywordCheckbox.isSelected()) {
-//            keywordList.setSelectedIndices(indices);
-//        }
-//        if (hashSetCheckbox.isSelected()) {
-//            hashSetList.setSelectedIndices(indices);
-//        }
-//        if (objectsCheckbox.isSelected()) {
-//            objectsList.setSelectedIndices(indices);
-//        }
-//        if (tagsCheckbox.isSelected()) {
-//            tagsList.setSelectedIndices(indices);
-//        }
-//        if (interestingItemsCheckbox.isSelected()) {
-//            interestingItemsList.setSelectedIndices(indices);
-//        }
-//        if (scoreCheckbox.isSelected()) {
-//            scoreList.setSelectedIndices(indices);
-//        }
-//        exifCheckbox.isSelected();
-//        notableCheckbox.isSelected();
-//        knownFilesCheckbox.isSelected();
-//        if (parentCheckbox.isSelected()) {
-//            for (ParentSearchTerm term : parentSearchTermList){
-//                parentListModel.addElement(term);
-//            }
-//        }
+        crFrequencyCheckbox.setSelected(search.isCrFrequencyFilterEnabled());
+        if (crFrequencyCheckbox.isSelected()) {
+            crFrequencyList.setSelectedIndices(search.getCrFrequencyFilters());
+        }
+        keywordCheckbox.setSelected(search.isKeywordFilterEnabled());
+        if (keywordCheckbox.isSelected()) {
+            keywordList.setSelectedIndices(search.getKeywordFilters());
+        }
+        hashSetCheckbox.setSelected(search.isHashSetFilterEnabled());
+        if (hashSetCheckbox.isSelected()) {
+            hashSetList.setSelectedIndices(search.getHashSetFilters());
+        }
+        objectsCheckbox.setSelected(search.isObjectsFilterEnabled());
+        if (objectsCheckbox.isSelected()) {
+            objectsList.setSelectedIndices(search.getObjectsFilters());
+        }
+        tagsCheckbox.setSelected(search.isTagsFilterEnabled());
+        if (tagsCheckbox.isSelected()) {
+            tagsList.setSelectedIndices(search.getTagsFilters());
+        }
+        interestingItemsCheckbox.setSelected(search.isInterestingItemsFilterEnabled());
+        if (interestingItemsCheckbox.isSelected()) {
+            interestingItemsList.setSelectedIndices(search.getInterestingItemsFilters());
+        }
+        scoreCheckbox.setSelected(search.isScoreFilterEnabled());
+        if (scoreCheckbox.isSelected()) {
+            scoreList.setSelectedIndices(search.getScoreFilters());
+        }
+        exifCheckbox.setSelected(search.isDeviceOriginalFilterEnabled());
+        notableCheckbox.setSelected(search.isNotableFilesFilterEnabled());
+        knownFilesCheckbox.setSelected(search.isKnownFilesFilterEnabled());
+        parentCheckbox.setSelected(search.isParentFilterEnabled());
+        if (parentCheckbox.isSelected()) {
+            parentListModel.clear();
+            for (ParentSearchTerm term : search.getParentFilters()){
+                parentListModel.addElement(term);
+            }
+        }
         validateFields();
     }
 
-    
     /**
      * Update the user interface when a search has been cancelled.
      *

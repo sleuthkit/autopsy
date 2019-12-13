@@ -5,7 +5,11 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-public class Search {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class SearchFilterSave {
 
     private final int fileTypeIndex;
     private final int orderByIndex;
@@ -25,8 +29,17 @@ public class Search {
     private int[] objectsFilterIndices;
     private boolean tagsFilterEnabled = false;
     private int[] tagsFilterIndices;
+    private boolean interestingItemsFilterEnabled = false;
+    private int[] interestingItemsFilterIndices;
+    private boolean scoreFilterEnabled = false;
+    private int[] scoreFilterIndices;
+    private boolean deviceOriginalFilterEnabled = false;
+    private boolean notableFilesFilterEnabled = false;
+    private boolean knownFilesFilterEnabled = false;
+    private boolean parentFilterEnabled = false;
+    private List<FileSearchFiltering.ParentSearchTerm> parentFilters = new ArrayList<>();
 
-    Search(int fileTypeIndex, int orderByIndex, int groupByIndex, int orderGroupsBy) {
+    SearchFilterSave(int fileTypeIndex, int orderByIndex, int groupByIndex, int orderGroupsBy) {
         this.fileTypeIndex = fileTypeIndex;
         this.orderByIndex = orderByIndex;
         this.groupByIndex = groupByIndex;
@@ -138,5 +151,99 @@ public class Search {
 
     int[] getTagsFilters() {
         return tagsFilterIndices.clone();
+    }
+
+    void setInterestingItemsFilter(boolean enabled, int[] indices) {
+        interestingItemsFilterEnabled = enabled;
+        interestingItemsFilterIndices = indices.clone();
+    }
+
+    boolean isInterestingItemsFilterEnabled() {
+        return interestingItemsFilterEnabled;
+    }
+
+    int[] getInterestingItemsFilters() {
+        return interestingItemsFilterIndices.clone();
+    }
+
+    void setScoreFilter(boolean enabled, int[] indices) {
+        scoreFilterEnabled = enabled;
+        scoreFilterIndices = indices.clone();
+    }
+
+    /**
+     * @return the scoreFilterEnabled
+     */
+    boolean isScoreFilterEnabled() {
+        return scoreFilterEnabled;
+    }
+
+    /**
+     * @return the scoreFilterIndices
+     */
+    int[] getScoreFilters() {
+        return scoreFilterIndices.clone();
+    }
+
+    /**
+     * @return the deviceOriginalFilterEnabled
+     */
+    boolean isDeviceOriginalFilterEnabled() {
+        return deviceOriginalFilterEnabled;
+    }
+
+    /**
+     * @param deviceOriginalFilterEnabled the deviceOriginalFilterEnabled to set
+     */
+    void setDeviceOriginalFilterEnabled(boolean enabled) {
+        this.deviceOriginalFilterEnabled = enabled;
+    }
+
+    /**
+     * @return the notableFilesFilterEnabled
+     */
+    boolean isNotableFilesFilterEnabled() {
+        return notableFilesFilterEnabled;
+    }
+
+    /**
+     * @param notableFilesFilterEnabled the notableFilesFilterEnabled to set
+     */
+    void setNotableFilesFilterEnabled(boolean enabled) {
+        this.notableFilesFilterEnabled = enabled;
+    }
+
+    /**
+     * @return the knownFilesFilterEnabled
+     */
+    boolean isKnownFilesFilterEnabled() {
+        return knownFilesFilterEnabled;
+    }
+
+    /**
+     * @param knownFilesFilterEnabled the knownFilesFilterEnabled to set
+     */
+    void setKnownFilesFilterEnabled(boolean enabled) {
+        this.knownFilesFilterEnabled = enabled;
+    }
+
+    void setParentFilter(boolean enabled, List<FileSearchFiltering.ParentSearchTerm> parentTerms) {
+        parentFilterEnabled = enabled;
+        getParentFilters().clear();
+        getParentFilters().addAll(parentTerms);
+    }
+
+    /**
+     * @return the parentFilterEnabled
+     */
+    boolean isParentFilterEnabled() {
+        return parentFilterEnabled;
+    }
+
+    /**
+     * @return the parentFilters
+     */
+    List<FileSearchFiltering.ParentSearchTerm> getParentFilters() {
+        return Collections.unmodifiableList(parentFilters);
     }
 }

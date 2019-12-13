@@ -321,11 +321,13 @@ public final class DiscoveryTopComponent extends TopComponent {
     }//GEN-LAST:event_videosButtonActionPerformed
 
     private void loadSavedFiltersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadSavedFiltersButtonActionPerformed
-        new LoadSearchDialog().display();      
+        new LoadSearchDialog().display();
     }//GEN-LAST:event_loadSavedFiltersButtonActionPerformed
 
     private void saveCurrentFiltersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveCurrentFiltersButtonActionPerformed
-        new SaveSearchDialog().display();
+
+        fileSearchPanel.getCurrentFilters();
+        new SaveSearchDialog(fileSearchPanel.getCurrentFilters()).display();
     }//GEN-LAST:event_saveCurrentFiltersButtonActionPerformed
 
     /**

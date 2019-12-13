@@ -338,6 +338,9 @@ final class FileSearchData {
             return OTHER;
         }
 
+        static FileType fromRanking(int ranking){
+            return FileType.values()[ranking];
+        }
         /**
          * Get the list of enums that are valid for filtering.
          *
