@@ -150,9 +150,7 @@ final class LoadSearchDialog extends javax.swing.JDialog {
         String fileName = "testSave.json";
         try (FileInputStream is = new FileInputStream(fileName); InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
             GsonBuilder gsonBuilder = new GsonBuilder()
-                    .setPrettyPrinting()
-                    .excludeFieldsWithoutExposeAnnotation()
-                    .disableHtmlEscaping();
+                    .setPrettyPrinting();
             Gson gson = gsonBuilder.create();
             return gson.fromJson(reader, SearchFilterSave.class);
         }

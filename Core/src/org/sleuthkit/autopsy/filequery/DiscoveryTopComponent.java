@@ -326,7 +326,8 @@ public final class DiscoveryTopComponent extends TopComponent {
         LoadSearchDialog loadSearchDialog = new LoadSearchDialog();
         loadSearchDialog.display();
         try {
-            fileSearchPanel.loadSearch(loadSearchDialog.getSearch());
+            SearchFilterSave save = loadSearchDialog.getSearch();
+            fileSearchPanel.loadSearch(save);
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }

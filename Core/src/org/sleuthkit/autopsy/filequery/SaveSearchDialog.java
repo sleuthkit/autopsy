@@ -117,9 +117,7 @@ final class SaveSearchDialog extends javax.swing.JDialog {
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         String fileName = fileNameTextField.getText();
         GsonBuilder gsonBuilder = new GsonBuilder()
-                .setPrettyPrinting()
-                .excludeFieldsWithoutExposeAnnotation()
-                .disableHtmlEscaping();
+                .setPrettyPrinting();
         Gson gson = gsonBuilder.create();
         String toJson = gson.toJson(searchFilters);
         List<String> lines = Arrays.asList(toJson.split("\\n"));
