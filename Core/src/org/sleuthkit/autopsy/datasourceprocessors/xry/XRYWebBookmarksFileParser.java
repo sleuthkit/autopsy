@@ -42,8 +42,8 @@ final class XRYWebBookmarksFileParser extends AbstractSingleKeyValueParser {
     };
 
     @Override
-    boolean isKey(String key) {
-        String normalizedKey = key.toLowerCase();
+    boolean canProcess(XRYKeyValuePair pair) {
+        String normalizedKey = pair.getKey().toLowerCase();
         return KEY_TO_TYPE.containsKey(normalizedKey);
     }
 
@@ -54,11 +54,11 @@ final class XRYWebBookmarksFileParser extends AbstractSingleKeyValueParser {
     }
 
     @Override
-    Optional<BlackboardAttribute> makeAttribute(String nameSpace, String key, String value) {
-        String normalizedKey = key.toLowerCase();
+    Optional<BlackboardAttribute> getBlackboardAttribute(String nameSpace, XRYKeyValuePair pair) {
+        String normalizedKey = pair.getKey().toLowerCase();
         return Optional.of(new BlackboardAttribute(
                 KEY_TO_TYPE.get(normalizedKey), 
-                PARSER_NAME, value));
+                PARSER_NAME, pair.getValue()));
     }
     
     @Override

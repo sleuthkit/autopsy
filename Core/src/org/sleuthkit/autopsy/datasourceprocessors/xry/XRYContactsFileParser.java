@@ -54,10 +54,10 @@ final class XRYContactsFileParser extends AbstractSingleKeyValueParser {
         put("account name", null);
         
     }};
-
+    
     @Override
-    boolean isKey(String key) {
-        String normalizedKey = key.toLowerCase();
+    boolean canProcess(XRYKeyValuePair pair) {
+        String normalizedKey = pair.getKey().toLowerCase();
         return XRY_KEYS.containsKey(normalizedKey);
     }
 
@@ -68,23 +68,23 @@ final class XRYContactsFileParser extends AbstractSingleKeyValueParser {
     }
 
     @Override
-    Optional<BlackboardAttribute> makeAttribute(String nameSpace, String key, String value) {
-        String normalizedKey = key.toLowerCase();
+    Optional<BlackboardAttribute> getBlackboardAttribute(String nameSpace, XRYKeyValuePair pair) {
+        String normalizedKey = pair.getKey().toLowerCase();
         if(XRY_KEYS.containsKey(normalizedKey)) {
             BlackboardAttribute.ATTRIBUTE_TYPE attrType = XRY_KEYS.get(normalizedKey);
             if(attrType != null) {
-                return Optional.of(new BlackboardAttribute(attrType, PARSER_NAME, value));
+                return Optional.of(new BlackboardAttribute(attrType, PARSER_NAME, pair.getValue()));
             }
             
-            logger.log(Level.WARNING, String.format("[XRY DSP] Key [%s] was "
-                    + "recognized but more examples of its values are needed "
-                    + "to make a decision on an appropriate TSK attribute. "
-                        + "Here is the value [%s].", key, value));
+             logger.log(Level.WARNING, String.format("[XRY DSP] Key value pair "
+                    + "(in brackets) [ %s ] was recognized but we need "
+                    + "more data or time to finish implementation. Discarding... ", 
+                    pair));
             return Optional.empty();
         }
         
         throw new IllegalArgumentException(String.format("Key [ %s ] passed the "
-                + "isKey() test but was not matched.", key));
+                + "isKey() test but was not matched.", pair.getKey()));
     }
     
     @Override

@@ -38,8 +38,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 abstract class AbstractSingleKeyValueParser implements XRYFileParser {
     
     private static final Logger logger = Logger.getLogger(AbstractSingleKeyValueParser.class.getName());
-
-    private static final char KEY_VALUE_DELIMITER = ':';
     
     protected static final String PARSER_NAME = "XRY DSP";
 
@@ -73,32 +71,31 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
 
                 //Find the XRY key on this line. Assume key is the value between
                 //the start of the line and the first delimiter.
-                int keyDelimiter = xryLine.indexOf(KEY_VALUE_DELIMITER);
-                if (keyDelimiter == -1) {
+                if(!XRYKeyValuePair.isPair(xryLine)) {
                     logger.log(Level.WARNING, String.format("[XRY DSP] Expected a key value "
-                            + "pair on this line (in brackets) [ %s ], but one was not detected."
-                            + " Here is the previous line [ %s ]. What does this mean?", xryLine, xryLines[i - 1]));
+                            + "pair on this line (in brackets) [ %s ], but one was not detected.", 
+                            xryLine));
                     continue;
                 }
-                String key = xryLine.substring(0, keyDelimiter).trim();
-                String value = xryLine.substring(keyDelimiter + 1).trim();
+                
+                XRYKeyValuePair pair = XRYKeyValuePair.from(xryLine, namespace);
 
-                if (!isKey(key)) {
+                if (!canProcess(pair)) {
                     logger.log(Level.WARNING, String.format("[XRY DSP] The following key, "
-                            + "value pair (in brackets, respectively) [ %s ], [ %s ] was not recognized. Discarding..."
-                            + " Here is the previous line [ %s ] for context. What does this key mean?", key, value, xryLines[i - 1]));
+                            + "value pair (in brackets) [ %s ] was not recognized. Discarding...",
+                            pair));
                     continue;
                 }
 
-                if (value.isEmpty()) {
-                    logger.log(Level.WARNING, String.format("[XRY DSP] The following key "
-                            + "(in brackets) [ %s ] was recognized, but the value was empty. Discarding..."
-                            + " Here is the previous line for context [ %s ]. What does this mean?", key, xryLines[i - 1]));
+                if (pair.getValue().isEmpty()) {
+                    logger.log(Level.WARNING, String.format("[XRY DSP] The following key value pair"
+                            + "(in brackets) [ %s ] was recognized, but the value was empty. Discarding...", 
+                            pair));
                     continue;
                 }
 
                 //Create the attribute, if any.
-                Optional<BlackboardAttribute> attribute = makeAttribute(namespace, key, value);
+                Optional<BlackboardAttribute> attribute = getBlackboardAttribute(namespace, pair);
                 if(attribute.isPresent()) {
                     attributes.add(attribute.get());
                 }
@@ -112,19 +109,13 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
     }
 
     /**
-     * Determines if the key candidate is a known key. A key candidate is a
-     * string literal that begins a line and is terminated by a semi-colon.
-     *
-     * Ex:
-     *
-     * Call Type : Missed
-     *
-     * "Call Type" would be the key candidate that was extracted.
-     *
-     * @param key Key to test. These keys are trimmed of whitespace only.
-     * @return Indication if this key can be processed.
+     * Determines if the XRY key value pair can be processed by the 
+     * XRY report parser.
+     * 
+     * @param pair
+     * @return 
      */
-    abstract boolean isKey(String key);
+    abstract boolean canProcess(XRYKeyValuePair pair);
 
     /**
      * Determines if the namespace candidate is a known namespace. A namespace
@@ -148,11 +139,10 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
      * 
      * @param nameSpace The namespace of this key value pair.
      * It will have been verified with isNamespace, otherwise it will be empty.
-     * @param key The key that was verified with isKey.
-     * @param value The value associated with that key.
+     * @param pair The XRYKeyValuePair to process
      * @return The corresponding blackboard attribute, if any.
      */
-    abstract Optional<BlackboardAttribute> makeAttribute(String nameSpace, String key, String value);
+    abstract Optional<BlackboardAttribute> getBlackboardAttribute(String nameSpace, XRYKeyValuePair pair);
 
     /**
      * Makes an artifact from the parsed attributes.
