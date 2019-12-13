@@ -137,7 +137,9 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
         //need two XRY Key Value pairs per blackboard attribute.
         for (int i = 1; i < xryLines.length; i += 2) {
             if (!XRYKeyValuePair.isPair(xryLines[i])) {
-                //log
+                logger.log(Level.WARNING, String.format("[XRY DSP] Expected a key value "
+                        + "pair on this line (in brackets) [ %s ], but one was not detected."
+                        + " Discarding...", xryLines[i]));
                 continue;
             }
 
@@ -149,7 +151,9 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
                 XRYKeyValuePair secondPair = XRYKeyValuePair.from(xryLines[i + 1]);
                 attribute = getBlackboardAttribute(firstPair, secondPair);
             } else {
-                //log
+                logger.log(Level.WARNING, String.format("[XRY DSP] Expected a key value "
+                        + "pair on this line (in brackets) [ %s ], but one was not detected."
+                        + " Discarding...", xryLines[i+1]));
             }
 
             if (attribute.isPresent()) {

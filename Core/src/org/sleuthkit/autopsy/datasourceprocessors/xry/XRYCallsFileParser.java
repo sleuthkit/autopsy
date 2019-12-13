@@ -85,9 +85,9 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
          * @param xryKey
          * @return
          */
-        public static boolean contains(XRYKeyValuePair pair) {
+        public static boolean contains(String key) {
             try {
-                XryKey.fromPair(pair);
+                XryKey.fromDisplayName(key);
                 return true;
             } catch (IllegalArgumentException ex) {
                 return false;
@@ -104,15 +104,15 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
          * @param xryKey
          * @return
          */
-        public static XryKey fromPair(XRYKeyValuePair pair) {
+        public static XryKey fromDisplayName(String key) {
             for (XryKey keyChoice : XryKey.values()) {
-                if (pair.hasKey(keyChoice.name)) {
+                if (key.equals(keyChoice.name)) {
                     return keyChoice;
                 }
             }
 
             throw new IllegalArgumentException(String.format("Key [%s] was not found."
-                    + " All keys should be tested with contains.", pair.getKey()));
+                    + " All keys should be tested with contains.", key));
         }
     }
 
@@ -174,7 +174,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
 
     @Override
     boolean canProcess(XRYKeyValuePair pair) {
-        return XryKey.contains(pair);
+        return XryKey.contains(pair.getKey());
     }
 
     @Override
@@ -184,7 +184,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
 
     @Override
     Optional<BlackboardAttribute> getBlackboardAttribute(String nameSpace, XRYKeyValuePair pair) {
-        XryKey xryKey = XryKey.fromPair(pair);
+        XryKey xryKey = XryKey.fromDisplayName(pair.getKey());
         XryNamespace xryNamespace = XryNamespace.NONE;
         if (XryNamespace.contains(nameSpace)) {
             xryNamespace = XryNamespace.fromDisplayName(nameSpace);

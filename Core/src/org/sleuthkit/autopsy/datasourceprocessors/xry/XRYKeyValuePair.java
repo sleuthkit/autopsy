@@ -19,7 +19,13 @@
 package org.sleuthkit.autopsy.datasourceprocessors.xry;
 
 /**
- * A XRY Key Value pair.
+ * A XRY Key Value pair. XRY Key Value pairs make up the body of XRY entities.
+ * 
+ * Example:
+ * 
+ * Attribute:	Device Name
+ * Time:			3/20/2012 12:06:30 AM
+ * Status:			Read
  */
 class XRYKeyValuePair {
   
