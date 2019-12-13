@@ -162,7 +162,7 @@ public class Case {
     private volatile ExecutorService caseActionExecutor;
     private CoordinationService.Lock caseLock;
     private SleuthkitCase caseDb;
-    private final SleuthkitEventListener sleuthkitEventListener;
+    //private final SleuthkitEventListener sleuthkitEventListener;
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
 
@@ -1769,7 +1769,7 @@ public class Case {
      */
     private Case(CaseMetadata caseMetaData) {
         metadata = caseMetaData;
-        sleuthkitEventListener = new SleuthkitEventListener();
+        //sleuthkitEventListener = new SleuthkitEventListener();
     }
 
     /**
@@ -2328,7 +2328,7 @@ public class Case {
          * my attempt to put it in the openCaseDatabase method seems to lead to
          * intermittent unchecked exceptions concerning a missing subscriber.
          */
-        caseDb.registerForEvents(sleuthkitEventListener);
+        //caseDb.registerForEvents(sleuthkitEventListener);
     }
 
     /**
@@ -2589,7 +2589,7 @@ public class Case {
          */
         if (null != caseDb) {
             progressIndicator.progress(Bundle.Case_progressMessage_closingCaseDatabase());
-            caseDb.unregisterForEvents(sleuthkitEventListener);
+            //caseDb.unregisterForEvents(sleuthkitEventListener);
             caseDb.close();
         }
 

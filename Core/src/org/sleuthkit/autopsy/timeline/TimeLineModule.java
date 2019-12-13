@@ -74,9 +74,9 @@ public class TimeLineModule {
     static void onStart() {
         Platform.setImplicitExit(false);
         logger.info("Setting up TimeLine listeners"); //NON-NLS
-
-        IngestManager.getInstance().addIngestModuleEventListener(new IngestModuleEventListener());
-        Case.addPropertyChangeListener(new CaseEventListener());
+// RC: Disable creation of TimelineController for an auto ingest test
+//        IngestManager.getInstance().addIngestModuleEventListener(new IngestModuleEventListener());
+//        Case.addPropertyChangeListener(new CaseEventListener());
     }
 
     /**

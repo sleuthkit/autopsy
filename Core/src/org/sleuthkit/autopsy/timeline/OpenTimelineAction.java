@@ -104,18 +104,18 @@ public final class OpenTimelineAction extends CallableSystemAction {
         "OpenTimelineAction.settingsErrorMessage=Failed to initialize timeline settings.",
         "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
     synchronized private void showTimeline(AbstractFile file, BlackboardArtifact artifact) throws TskCoreException {
-        try {
-            Case currentCase = Case.getCurrentCaseThrows();
-            if (currentCase.hasData() == false) {
-                MessageNotifyUtil.Message.info(Bundle.OpenTimeLineAction_msgdlg_text());
-                logger.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
-                return;
-            }
-            TimeLineController controller = TimeLineModule.getController();
-            controller.showTimeLine(file, artifact);
-        } catch (NoCurrentCaseException e) {
-            //there is no case...   Do nothing.
-        }
+//        try {
+//            Case currentCase = Case.getCurrentCaseThrows();
+//            if (currentCase.hasData() == false) {
+//                MessageNotifyUtil.Message.info(Bundle.OpenTimeLineAction_msgdlg_text());
+//                logger.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
+//                return;
+//            }
+//            TimeLineController controller = TimeLineModule.getController();
+//            controller.showTimeLine(file, artifact);
+//        } catch (NoCurrentCaseException e) {
+//            //there is no case...   Do nothing.
+//        }
     }
 
     /**
