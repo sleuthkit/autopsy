@@ -42,9 +42,11 @@ final class XRYContactsFileParser extends AbstractSingleKeyValueParser {
         put("name", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
         put("tel", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER);
         put("mobile", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE);
+        put("home", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME);
         put("related application", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
         put("address home", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION);
         put("email home", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_HOME);
+        put("deleted", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ISDELETED);
         
         //Ignoring or need more information to decide.
         put("storage", null);

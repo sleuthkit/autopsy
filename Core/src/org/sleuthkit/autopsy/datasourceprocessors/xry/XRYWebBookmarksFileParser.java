@@ -38,6 +38,7 @@ final class XRYWebBookmarksFileParser extends AbstractSingleKeyValueParser {
         {
             put("web address", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL);
             put("domain", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN);
+            put("application", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
         }
     };
 

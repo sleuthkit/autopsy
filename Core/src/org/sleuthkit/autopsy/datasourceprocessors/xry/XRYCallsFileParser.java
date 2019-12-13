@@ -56,16 +56,20 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
      * blackboard attribute types, if any.
      */
     private enum XryKey {
-        NUMBER("number", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER),
         NAME_MATCHED("name (matched)", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME),
         TIME("time", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME),
         DIRECTION("direction", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION),
         CALL_TYPE("call type", null),
+        NUMBER("number", null),
         TEL("tel", null),
+        TO("to", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO),
+        FROM("from", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM),
+        DELETED("deleted", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ISDELETED),
         DURATION("duration", null),
         STORAGE("storage", null),
         INDEX("index", null),
-        NAME("name", null);
+        TYPE("type", null),
+        NAME("name", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
 
         private final String name;
         private final BlackboardAttribute.ATTRIBUTE_TYPE type;
@@ -105,8 +109,9 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
          * @return
          */
         public static XryKey fromDisplayName(String key) {
+            String normalizedKey = key.trim().toLowerCase();
             for (XryKey keyChoice : XryKey.values()) {
-                if (key.equals(keyChoice.name)) {
+                if (normalizedKey.equals(keyChoice.name)) {
                     return keyChoice;
                 }
             }
@@ -138,14 +143,12 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
          * @return
          */
         public static boolean contains(String xryNamespace) {
-            String normalizedNamespace = xryNamespace.trim().toLowerCase();
-            for (XryNamespace keyChoice : XryNamespace.values()) {
-                if (normalizedNamespace.equals(keyChoice.name)) {
-                    return true;
-                }
+            try {
+                XryNamespace.fromDisplayName(xryNamespace);
+                return true;
+            } catch (IllegalArgumentException ex) {
+                return false;
             }
-
-            return false;
         }
 
         /**
@@ -192,6 +195,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
 
         switch (xryKey) {
             case TEL:
+            case NUMBER:
                 //Apply the namespace
                 switch (xryNamespace) {
                     case FROM:
