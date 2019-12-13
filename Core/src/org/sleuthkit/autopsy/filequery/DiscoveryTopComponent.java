@@ -20,11 +20,13 @@ package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
@@ -321,11 +323,16 @@ public final class DiscoveryTopComponent extends TopComponent {
     }//GEN-LAST:event_videosButtonActionPerformed
 
     private void loadSavedFiltersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadSavedFiltersButtonActionPerformed
-        new LoadSearchDialog().display();
+        LoadSearchDialog loadSearchDialog = new LoadSearchDialog();
+        loadSearchDialog.display();
+        try {
+            fileSearchPanel.loadSearch(loadSearchDialog.getSearch());
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }//GEN-LAST:event_loadSavedFiltersButtonActionPerformed
 
     private void saveCurrentFiltersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveCurrentFiltersButtonActionPerformed
-
         fileSearchPanel.getCurrentFilters();
         new SaveSearchDialog(fileSearchPanel.getCurrentFilters()).display();
     }//GEN-LAST:event_saveCurrentFiltersButtonActionPerformed

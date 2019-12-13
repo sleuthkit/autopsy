@@ -18,6 +18,14 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import javax.swing.JFrame;
 import org.openide.windows.WindowManager;
 
@@ -136,7 +144,20 @@ final class LoadSearchDialog extends javax.swing.JDialog {
         pack();
         setVisible(true);
     }
-    
+
+    SearchFilterSave getSearch() throws FileNotFoundException, IOException {
+        //get name of selected search
+        String fileName = "testSave.json";
+        try (FileInputStream is = new FileInputStream(fileName); InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
+            GsonBuilder gsonBuilder = new GsonBuilder()
+                    .setPrettyPrinting()
+                    .excludeFieldsWithoutExposeAnnotation()
+                    .disableHtmlEscaping();
+            Gson gson = gsonBuilder.create();
+            return gson.fromJson(reader, SearchFilterSave.class);
+        }
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;

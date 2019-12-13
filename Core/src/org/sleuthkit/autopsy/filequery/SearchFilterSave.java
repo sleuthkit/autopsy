@@ -5,6 +5,7 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,13 +38,20 @@ public class SearchFilterSave {
     private boolean notableFilesFilterEnabled = false;
     private boolean knownFilesFilterEnabled = false;
     private boolean parentFilterEnabled = false;
-    private List<FileSearchFiltering.ParentSearchTerm> parentFilters = new ArrayList<>();
+    private final List<FileSearchFiltering.ParentSearchTerm> parentFilters = new ArrayList<>();
 
     SearchFilterSave(int fileTypeIndex, int orderByIndex, int groupByIndex, int orderGroupsBy) {
         this.fileTypeIndex = fileTypeIndex;
         this.orderByIndex = orderByIndex;
         this.groupByIndex = groupByIndex;
         this.orderGroupsBy = orderGroupsBy;
+    }
+
+     SearchFilterSave(File searchSaveFile) {
+        this.fileTypeIndex = 0;
+        this.orderByIndex = 0;
+        this.groupByIndex = 0;
+        this.orderGroupsBy = 0;
     }
 
     int getSelectedFileType() {
