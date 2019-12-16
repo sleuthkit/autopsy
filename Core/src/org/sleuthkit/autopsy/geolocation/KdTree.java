@@ -417,8 +417,6 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
         }
         Double nodeDistance = node.id.euclideanDistance(value);
         if (nodeDistance.compareTo(lastDistance) < 0) {
-            if (results.size() == K && lastNode != null)
-                results.remove(lastNode);
             results.add(node);
         } else if (nodeDistance.equals(lastDistance)) {
             results.add(node);
