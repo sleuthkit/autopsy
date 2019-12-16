@@ -27,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQueries;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -39,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Parses XRY Calls files and creates artifacts.
  */
-final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
+final class XRYCallsFileParser extends AbstractSingleEntityParser {
 
     private static final Logger logger = Logger.getLogger(XRYCallsFileParser.class.getName());
 
@@ -186,11 +187,25 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
     }
 
     @Override
-    Optional<BlackboardAttribute> getBlackboardAttribute(String nameSpace, XRYKeyValuePair pair) {
+    void makeArtifact(List<XRYKeyValuePair> keyValuePairs, Content parent) throws TskCoreException {
+        List<BlackboardAttribute> attributes = new ArrayList<>();
+        for(XRYKeyValuePair pair : keyValuePairs) {
+            Optional<BlackboardAttribute> attribute = getBlackboardAttribute(pair);
+            if(attribute.isPresent()) {
+                attributes.add(attribute.get());
+            }
+        }
+        if(!attributes.isEmpty()) {
+            BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG);
+            artifact.addAttributes(attributes);
+        }
+    }
+    
+    Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
         XryKey xryKey = XryKey.fromDisplayName(pair.getKey());
         XryNamespace xryNamespace = XryNamespace.NONE;
-        if (XryNamespace.contains(nameSpace)) {
-            xryNamespace = XryNamespace.fromDisplayName(nameSpace);
+        if (XryNamespace.contains(pair.getNamespace())) {
+            xryNamespace = XryNamespace.fromDisplayName(pair.getNamespace());
         }
 
         switch (xryKey) {
@@ -237,12 +252,6 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
                         pair));
                 return Optional.empty();
         }
-    }
-
-    @Override
-    void makeArtifact(List<BlackboardAttribute> attributes, Content parent) throws TskCoreException {
-        BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG);
-        artifact.addAttributes(attributes);
     }
 
     /**

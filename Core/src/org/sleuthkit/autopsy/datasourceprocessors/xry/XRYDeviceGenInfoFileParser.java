@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.datasourceprocessors.xry;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,12 +33,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Parses XRY Device-General Information files and creates artifacts.
  */
-final class XRYDeviceGenInfoFileParser implements XRYFileParser {
+final class XRYDeviceGenInfoFileParser extends AbstractSingleEntityParser {
 
     private static final Logger logger = Logger.getLogger(XRYDeviceGenInfoFileParser.class.getName());
-
-    //Human readable name of this parser.
-    private static final String PARSER_NAME = "XRY DSP";
 
     //All known XRY keys for Device Gen Info reports.
     private static final String ATTRIBUTE_KEY = "attribute";
@@ -77,102 +72,45 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
             put("revision", null);
         }
     };
-
-    /**
-     * Device-General Information reports generally have 2 key value pairs for
-     * every blackboard attribute. The two only known keys are "Data" and
-     * "Attribute", where data is some generic information that the Attribute
-     * key describes.
-     *
-     * Example:
-     *
-     * Data:            Nokia XYZ 
-     * Attribute:	Device Name
-     *
-     * This parse implementation assumes that the data field does not span
-     * multiple lines. If the data does span multiple lines, then on the next
-     * iteration it will log an exception proclaiming a failed attempt to make a
-     * 'Data' and 'Attribute' pair.
-     *
-     * @param reader The XRYFileReader that reads XRY entities from the
-     * Device-General Information report.
-     * @param parent The parent Content to create artifacts from.
-     * @throws IOException If an I/O error is encountered during report reading
-     * @throws TskCoreException If an error during artifact creation is
-     * encountered.
-     */
+    
+    
     @Override
-    public void parse(XRYFileReader reader, Content parent) throws IOException, TskCoreException {
-        Path reportPath = reader.getReportPath();
-        logger.log(Level.INFO, String.format("[XRY DSP] Processing report at [ %s ]", reportPath.toString()));
-
-        while (reader.hasNextEntity()) {
-            String xryEntity = reader.nextEntity();
-            //Extract attributes from this entity.
-            List<BlackboardAttribute> attributes = getBlackboardAttributes(xryEntity);
-            if (!attributes.isEmpty()) {
-                //Save the artifact.
-                BlackboardArtifact artifact = parent.newArtifact(
-                        BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO);
-                artifact.addAttributes(attributes);
-            }
-        }
+    boolean canProcess(XRYKeyValuePair pair) {
+        String key = pair.getKey().trim().toLowerCase();
+        return key.equals(DATA_KEY) || key.equals(ATTRIBUTE_KEY);
     }
 
-    /**
-     * Parses the XRY entity, extracts key value pairs and creates blackboard
-     * attributes from these key value pairs.
-     *
-     * @param xryEntity XRY entity to parse
-     * @return A collection of attributes from the XRY entity.
-     */
-    private List<BlackboardAttribute> getBlackboardAttributes(String xryEntity) {
-        String[] xryLines = xryEntity.split("\n");
-
-        //First line of the entity is the title, the entity will always be non-empty.
-        logger.log(Level.INFO, String.format("[XRY DSP] Processing [ %s ]", xryLines[0]));
+    @Override
+    boolean isNamespace(String nameSpace) {
+        //No known namespaces
+        return false;
+    }
+    
+    @Override
+    void makeArtifact(List<XRYKeyValuePair> keyValuePairs, Content parent) throws TskCoreException {
         List<BlackboardAttribute> attributes = new ArrayList<>();
-
-        //Iterate two lines at a time. For Device-General Information, we generally 
-        //need two XRY Key Value pairs per blackboard attribute.
-        for (int i = 1; i < xryLines.length; i += 2) {
-            if (!XRYKeyValuePair.isPair(xryLines[i])) {
-                logger.log(Level.WARNING, String.format("[XRY DSP] Expected a key value "
-                        + "pair on this line (in brackets) [ %s ], but one was not detected."
-                        + " Discarding...", xryLines[i]));
-                continue;
-            }
-
-            XRYKeyValuePair firstPair = XRYKeyValuePair.from(xryLines[i]);
-            Optional<BlackboardAttribute> attribute = Optional.empty();
-            if (i + 1 == xryLines.length) {
-                attribute = getBlackboardAttribute(firstPair);
-            } else if (XRYKeyValuePair.isPair(xryLines[i + 1])) {
-                XRYKeyValuePair secondPair = XRYKeyValuePair.from(xryLines[i + 1]);
-                attribute = getBlackboardAttribute(firstPair, secondPair);
+        for(int i = 0; i < keyValuePairs.size(); i++) {
+            Optional<BlackboardAttribute> attribute;
+            if(i + 1 == keyValuePairs.size()) {
+                attribute = getBlackboardAttribute(keyValuePairs.get(i));
             } else {
-                logger.log(Level.WARNING, String.format("[XRY DSP] Expected a key value "
-                        + "pair on this line (in brackets) [ %s ], but one was not detected."
-                        + " Discarding...", xryLines[i+1]));
+                attribute = getBlackboardAttribute(keyValuePairs.get(i), keyValuePairs.get(i+1));
             }
-
-            if (attribute.isPresent()) {
+            if(attribute.isPresent()) {
                 attributes.add(attribute.get());
             }
         }
-        return attributes;
+        if(!attributes.isEmpty()) {
+            BlackboardArtifact artifact = parent.newArtifact(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO);
+            artifact.addAttributes(attributes);
+        }
     }
 
     /**
      * Creates the appropriate blackboard attribute given a single XRY Key Value
-     * pair. It is assumed that the only 'Data' keys can appear by themselves in
-     * Device-Gen Info reports. If a Data key is by itself, then it's assumed to
-     * be a TSK_PATH attribute.
-     * 
-     * A WARNING will be logged if this input is not a Data key.
-     *
-     * @param pair KeyValuePair to 
-     * @return
+     * pair. It is assumed that only 'Data' keys can appear by themselves.
+     * If a Data key is by itself, its value most closely resembles a TSK_PATH attribute.
      */
     private Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
         if (pair.hasKey(DATA_KEY)) {
@@ -188,17 +126,10 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
     }
 
     /**
-     * Creates the appropriate blackboard attribute given the XRY Key Value
-     * pairs. If the attribute value is recognized but has no corresponding
+     * Creates the appropriate blackboard attribute given two XRY Key Value
+     * pairs. The expectation is that one pair is the 'Data' key and the other is
+     * an 'Attribute' key. If the attribute value is recognized but has no corresponding
      * Blackboard attribute type, the Optional will be empty.
-     *
-     * A WARNING message will be logged for all recognized attribute values that
-     * don't have a type. More data is needed to make a decision about the
-     * appropriate type.
-     * 
-     * @param firstPair
-     * @param secondPair
-     * @return 
      */
     private Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair firstPair, XRYKeyValuePair secondPair) {
         String attributeValue;

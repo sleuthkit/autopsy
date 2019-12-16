@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourceprocessors.xry;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Parses XRY Contacts-Contacts files and creates artifacts.
  */
-final class XRYContactsFileParser extends AbstractSingleKeyValueParser {
+final class XRYContactsFileParser extends AbstractSingleEntityParser {
     
     private static final Logger logger = Logger.getLogger(XRYContactsFileParser.class.getName());
 
@@ -69,29 +70,32 @@ final class XRYContactsFileParser extends AbstractSingleKeyValueParser {
         return false;
     }
 
-    @Override
-    Optional<BlackboardAttribute> getBlackboardAttribute(String nameSpace, XRYKeyValuePair pair) {
+    Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
         String normalizedKey = pair.getKey().toLowerCase();
-        if(XRY_KEYS.containsKey(normalizedKey)) {
-            BlackboardAttribute.ATTRIBUTE_TYPE attrType = XRY_KEYS.get(normalizedKey);
-            if(attrType != null) {
-                return Optional.of(new BlackboardAttribute(attrType, PARSER_NAME, pair.getValue()));
-            }
-            
-             logger.log(Level.WARNING, String.format("[XRY DSP] Key value pair "
-                    + "(in brackets) [ %s ] was recognized but we need "
-                    + "more data or time to finish implementation. Discarding... ", 
-                    pair));
-            return Optional.empty();
+        BlackboardAttribute.ATTRIBUTE_TYPE attrType = XRY_KEYS.get(normalizedKey);
+        if(attrType != null) {
+            return Optional.of(new BlackboardAttribute(attrType, PARSER_NAME, pair.getValue()));
         }
-        
-        throw new IllegalArgumentException(String.format("Key [ %s ] passed the "
-                + "isKey() test but was not matched.", pair.getKey()));
+
+        logger.log(Level.WARNING, String.format("[XRY DSP] Key value pair "
+               + "(in brackets) [ %s ] was recognized but we need "
+               + "more data or time to finish implementation. Discarding... ", 
+               pair));
+        return Optional.empty();
     }
     
     @Override
-    void makeArtifact(List<BlackboardAttribute> attributes, Content parent) throws TskCoreException {
-        BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
-        artifact.addAttributes(attributes);
+    void makeArtifact(List<XRYKeyValuePair> keyValuePairs, Content parent) throws TskCoreException {
+        List<BlackboardAttribute> attributes = new ArrayList<>();
+        for(XRYKeyValuePair pair : keyValuePairs) {
+            Optional<BlackboardAttribute> attribute = getBlackboardAttribute(pair);
+            if(attribute.isPresent()) {
+                attributes.add(attribute.get());
+            }
+        }
+        if(!attributes.isEmpty()) {
+            BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
+            artifact.addAttributes(attributes);
+        }
     }
 }

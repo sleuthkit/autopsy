@@ -22,23 +22,19 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Template parse method for reports that make blackboard attributes from a
- * single key value pair.
- *
- * This parse implementation will create 1 artifact per XRY entity.
+ * Template parse method for reports that make artifacts from a single XRY
+ * Entity.
  */
-abstract class AbstractSingleKeyValueParser implements XRYFileParser {
+abstract class AbstractSingleEntityParser implements XRYFileParser {
     
-    private static final Logger logger = Logger.getLogger(AbstractSingleKeyValueParser.class.getName());
-    
+    private static final Logger logger = Logger.getLogger(AbstractSingleEntityParser.class.getName());
+
     protected static final String PARSER_NAME = "XRY DSP";
 
     @Override
@@ -50,14 +46,13 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
             String xryEntity = reader.nextEntity();
             String[] xryLines = xryEntity.split("\n");
 
-            List<BlackboardAttribute> attributes = new ArrayList<>();
+            List<XRYKeyValuePair> keyValuePairs = new ArrayList<>();
 
             //First line of the entity is the title, the entity will always be non-empty.
             logger.log(Level.INFO, String.format("[XRY DSP] Processing [ %s ]", xryLines[0]));
 
             String namespace = "";
             //Process each line, searching for a key value pair or a namespace.
-            //If neither are found, an error message is logged.
             for (int i = 1; i < xryLines.length; i++) {
                 String xryLine = xryLines[i];
 
@@ -69,8 +64,7 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
                     continue;
                 }
 
-                //Find the XRY key on this line. Assume key is the value between
-                //the start of the line and the first delimiter.
+                //Check if this line resembles a Key Value pair.
                 if(!XRYKeyValuePair.isPair(xryLine)) {
                     logger.log(Level.WARNING, String.format("[XRY DSP] Expected a key value "
                             + "pair on this line (in brackets) [ %s ], but one was not detected.", 
@@ -80,6 +74,7 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
                 
                 XRYKeyValuePair pair = XRYKeyValuePair.from(xryLine, namespace);
 
+                //Verify the implementation recognizes the key.
                 if (!canProcess(pair)) {
                     logger.log(Level.WARNING, String.format("[XRY DSP] The following key, "
                             + "value pair (in brackets) [ %s ] was not recognized. Discarding...",
@@ -93,27 +88,19 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
                             pair));
                     continue;
                 }
-
-                //Create the attribute, if any.
-                Optional<BlackboardAttribute> attribute = getBlackboardAttribute(namespace, pair);
-                if(attribute.isPresent()) {
-                    attributes.add(attribute.get());
-                }
+                
+                keyValuePairs.add(pair);
             }
-
-            //Only create artifacts with non-empty attributes.
-            if (!attributes.isEmpty()) {
-                makeArtifact(attributes, parent);
+            
+            if(!keyValuePairs.isEmpty()) {
+                makeArtifact(keyValuePairs, parent);
             }
         }
     }
 
     /**
      * Determines if the XRY key value pair can be processed by the 
-     * XRY report parser.
-     * 
-     * @param pair
-     * @return 
+     * implementation.
      */
     abstract boolean canProcess(XRYKeyValuePair pair);
 
@@ -135,18 +122,8 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
     abstract boolean isNamespace(String nameSpace);
 
     /**
-     * Creates an attribute from the extracted key value pair.
-     * 
-     * @param nameSpace The namespace of this key value pair.
-     * It will have been verified with isNamespace, otherwise it will be empty.
-     * @param pair The XRYKeyValuePair to process
-     * @return The corresponding blackboard attribute, if any.
+     * Makes an artifact from the parsed key value pairs.
      */
-    abstract Optional<BlackboardAttribute> getBlackboardAttribute(String nameSpace, XRYKeyValuePair pair);
-
-    /**
-     * Makes an artifact from the parsed attributes.
-     */
-    abstract void makeArtifact(List<BlackboardAttribute> attributes, Content parent) throws TskCoreException;
+    abstract void makeArtifact(List<XRYKeyValuePair> keyValuePairs, Content parent) throws TskCoreException;
 
 }

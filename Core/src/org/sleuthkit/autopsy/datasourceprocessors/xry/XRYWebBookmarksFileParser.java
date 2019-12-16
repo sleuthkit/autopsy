@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourceprocessors.xry;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +31,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Parses XRY Web-Bookmark files and creates artifacts.
  */
-final class XRYWebBookmarksFileParser extends AbstractSingleKeyValueParser {
+final class XRYWebBookmarksFileParser extends AbstractSingleEntityParser {
 
     //All known XRY keys for web bookmarks.
     private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> KEY_TO_TYPE
@@ -54,8 +55,7 @@ final class XRYWebBookmarksFileParser extends AbstractSingleKeyValueParser {
         return false;
     }
 
-    @Override
-    Optional<BlackboardAttribute> getBlackboardAttribute(String nameSpace, XRYKeyValuePair pair) {
+    Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
         String normalizedKey = pair.getKey().toLowerCase();
         return Optional.of(new BlackboardAttribute(
                 KEY_TO_TYPE.get(normalizedKey), 
@@ -63,8 +63,17 @@ final class XRYWebBookmarksFileParser extends AbstractSingleKeyValueParser {
     }
     
     @Override
-    void makeArtifact(List<BlackboardAttribute> attributes, Content parent) throws TskCoreException {
-        BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-        artifact.addAttributes(attributes);
+    void makeArtifact(List<XRYKeyValuePair> keyValuePairs, Content parent) throws TskCoreException {
+        List<BlackboardAttribute> attributes = new ArrayList<>();
+        for(XRYKeyValuePair pair : keyValuePairs) {
+            Optional<BlackboardAttribute> attribute = getBlackboardAttribute(pair);
+            if(attribute.isPresent()) {
+                attributes.add(attribute.get());
+            }
+        }
+        if(!attributes.isEmpty()) {
+            BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
+            artifact.addAttributes(attributes);
+        }
     }
 }
