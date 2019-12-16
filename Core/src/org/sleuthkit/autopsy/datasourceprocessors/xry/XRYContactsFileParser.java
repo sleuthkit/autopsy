@@ -70,6 +70,10 @@ final class XRYContactsFileParser extends AbstractSingleEntityParser {
         return false;
     }
 
+    /**
+     * Creates the appropriate blackboard attribute given a single XRY Key Value
+     * pair. 
+     */
     private Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
         String normalizedKey = pair.getKey().toLowerCase();
         BlackboardAttribute.ATTRIBUTE_TYPE attrType = XRY_KEYS.get(normalizedKey);

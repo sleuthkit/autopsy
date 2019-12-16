@@ -189,6 +189,10 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
         }
     }
     
+    /**
+     * Creates the appropriate blackboard attribute given a single XRY Key Value
+     * pair, if any. Most XRY keys are mapped to an attribute type in the enum above.
+     */
     private Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
         XryKey xryKey = XryKey.fromDisplayName(pair.getKey());
         XryNamespace xryNamespace = XryNamespace.NONE;

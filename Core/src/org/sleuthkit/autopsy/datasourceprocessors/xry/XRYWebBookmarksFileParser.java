@@ -55,6 +55,10 @@ final class XRYWebBookmarksFileParser extends AbstractSingleEntityParser {
         return false;
     }
 
+    /**
+     * Creates the appropriate blackboard attribute given a single XRY Key Value
+     * pair.
+     */
     private Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
         String normalizedKey = pair.getKey().toLowerCase();
         return Optional.of(new BlackboardAttribute(
