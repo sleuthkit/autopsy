@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.casemodule.datasourcesummary.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
@@ -37,7 +38,7 @@ import org.sleuthkit.datamodel.SpecialDirectory;
  * Parent class for special directory types (Local and Virtual)
  */
 public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<SpecialDirectory> {
-    
+
     public SpecialDirectoryNode(SpecialDirectory sd) {
         super(sd);
     }
@@ -71,6 +72,7 @@ public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<Spec
         } else {
             actions.add(new RunIngestModulesAction(content));
         }
+        actions.add(new DeleteDataSourceAction(content.getId()));
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions.toArray(new Action[0]);
     }
