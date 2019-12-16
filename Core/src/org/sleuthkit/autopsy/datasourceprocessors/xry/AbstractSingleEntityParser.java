@@ -82,6 +82,7 @@ abstract class AbstractSingleEntityParser implements XRYFileParser {
                     continue;
                 }
 
+                //Empty values are meaningless for blackboard attributes.
                 if (pair.getValue().isEmpty()) {
                     logger.log(Level.WARNING, String.format("[XRY DSP] The following key value pair"
                             + "(in brackets) [ %s ] was recognized, but the value was empty. Discarding...", 

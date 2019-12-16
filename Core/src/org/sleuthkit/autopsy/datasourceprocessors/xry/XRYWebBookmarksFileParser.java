@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class XRYWebBookmarksFileParser extends AbstractSingleEntityParser {
 
     //All known XRY keys for web bookmarks.
-    private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> KEY_TO_TYPE
+    private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> XRY_KEYS
             = new HashMap<String, BlackboardAttribute.ATTRIBUTE_TYPE>() {
         {
             put("web address", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL);
@@ -46,7 +46,7 @@ final class XRYWebBookmarksFileParser extends AbstractSingleEntityParser {
     @Override
     boolean canProcess(XRYKeyValuePair pair) {
         String normalizedKey = pair.getKey().toLowerCase();
-        return KEY_TO_TYPE.containsKey(normalizedKey);
+        return XRY_KEYS.containsKey(normalizedKey);
     }
 
     @Override
@@ -55,10 +55,10 @@ final class XRYWebBookmarksFileParser extends AbstractSingleEntityParser {
         return false;
     }
 
-    Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
+    private Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
         String normalizedKey = pair.getKey().toLowerCase();
         return Optional.of(new BlackboardAttribute(
-                KEY_TO_TYPE.get(normalizedKey), 
+                XRY_KEYS.get(normalizedKey), 
                 PARSER_NAME, pair.getValue()));
     }
     

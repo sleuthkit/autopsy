@@ -70,14 +70,14 @@ final class XRYContactsFileParser extends AbstractSingleEntityParser {
         return false;
     }
 
-    Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
+    private Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
         String normalizedKey = pair.getKey().toLowerCase();
         BlackboardAttribute.ATTRIBUTE_TYPE attrType = XRY_KEYS.get(normalizedKey);
         if(attrType != null) {
             return Optional.of(new BlackboardAttribute(attrType, PARSER_NAME, pair.getValue()));
         }
 
-        logger.log(Level.WARNING, String.format("[XRY DSP] Key value pair "
+        logger.log(Level.INFO, String.format("[XRY DSP] Key value pair "
                + "(in brackets) [ %s ] was recognized but we need "
                + "more data or time to finish implementation. Discarding... ", 
                pair));

@@ -86,9 +86,6 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
 
         /**
          * Indicates if the display name of the XRY key is a recognized type.
-         *
-         * @param xryKey
-         * @return
          */
         public static boolean contains(String key) {
             try {
@@ -105,9 +102,6 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
          * It is assumed that XRY key string is recognized. Otherwise, an
          * IllegalArgumentException is thrown. Test all membership with
          * contains() before hand.
-         *
-         * @param xryKey
-         * @return
          */
         public static XryKey fromDisplayName(String key) {
             String normalizedKey = key.trim().toLowerCase();
@@ -139,9 +133,6 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
         /**
          * Indicates if the display name of the XRY namespace is a recognized
          * type.
-         *
-         * @param xryNamespace
-         * @return
          */
         public static boolean contains(String xryNamespace) {
             try {
@@ -159,9 +150,6 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
          * It is assumed that XRY namespace string is recognized. Otherwise, an
          * IllegalArgumentException is thrown. Test all membership with
          * contains() before hand.
-         *
-         * @param xryNamespace
-         * @return
          */
         public static XryNamespace fromDisplayName(String xryNamespace) {
             String normalizedNamespace = xryNamespace.trim().toLowerCase();
@@ -201,7 +189,7 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
         }
     }
     
-    Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
+    private Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
         XryKey xryKey = XryKey.fromDisplayName(pair.getKey());
         XryNamespace xryNamespace = XryNamespace.NONE;
         if (XryNamespace.contains(pair.getNamespace())) {
@@ -246,7 +234,7 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
                             PARSER_NAME, pair.getValue()));
                 }
 
-                logger.log(Level.WARNING, String.format("[XRY DSP] Key value pair "
+                logger.log(Level.INFO, String.format("[XRY DSP] Key value pair "
                         + "(in brackets) [ %s ] was recognized but "
                         + "more data or time is needed to finish implementation. Discarding... ",
                         pair));

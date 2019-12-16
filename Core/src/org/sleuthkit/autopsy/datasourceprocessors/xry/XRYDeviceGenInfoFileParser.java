@@ -42,9 +42,11 @@ final class XRYDeviceGenInfoFileParser extends AbstractSingleEntityParser {
     private static final String DATA_KEY = "data";
 
     //All of the known XRY Attribute values for device gen info. The value of the
-    //attribute keys are actionable for this parser. See parse() header for more
-    //details.
-    private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> KEY_TO_TYPE
+    //attribute keys are actionable for this parser.
+    //Ex:
+    // Data:        Nokia
+    // Attribute:   Device Type
+    private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> XRY_ATTRIBUTE_VALUES
             = new HashMap<String, BlackboardAttribute.ATTRIBUTE_TYPE>() {
         {
             put("device name", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_NAME);
@@ -148,14 +150,14 @@ final class XRYDeviceGenInfoFileParser extends AbstractSingleEntityParser {
         }
 
         String normalizedAttributeValue = attributeValue.toLowerCase();
-        if (!KEY_TO_TYPE.containsKey(normalizedAttributeValue)) {
+        if (!XRY_ATTRIBUTE_VALUES.containsKey(normalizedAttributeValue)) {
             logger.log(Level.WARNING, String.format("[XRY DSP] Key value pair "
                     + "(in brackets) [ %s : %s ] was not recognized. Discarding... ", 
                     attributeValue, dataValue));
             return Optional.empty();
         }
 
-        BlackboardAttribute.ATTRIBUTE_TYPE attrType = KEY_TO_TYPE.get(normalizedAttributeValue);
+        BlackboardAttribute.ATTRIBUTE_TYPE attrType = XRY_ATTRIBUTE_VALUES.get(normalizedAttributeValue);
         if (attrType == null) {
             logger.log(Level.WARNING, String.format("[XRY DSP] Key value pair "
                     + "(in brackets) [ %s : %s ] was recognized but we need "

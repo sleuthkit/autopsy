@@ -23,7 +23,7 @@ package org.sleuthkit.autopsy.datasourceprocessors.xry;
  * 
  * Example:
  * 
- * Attribute:	Device Name
+ * Attribute:                   Device Name
  * Time:			3/20/2012 12:06:30 AM
  * Status:			Read
  */

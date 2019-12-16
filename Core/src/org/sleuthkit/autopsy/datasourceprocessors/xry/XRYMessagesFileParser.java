@@ -626,7 +626,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
                             PARSER_NAME, pair.getValue()));
                 }
 
-                logger.log(Level.WARNING, String.format("[XRY DSP] Key value pair "
+                logger.log(Level.INFO, String.format("[XRY DSP] Key value pair "
                         + "(in brackets) [ %s ] was recognized but "
                         + "more data or time is needed to finish implementation. Discarding... ", pair));
 
