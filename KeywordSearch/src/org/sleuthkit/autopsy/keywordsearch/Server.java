@@ -54,6 +54,7 @@ import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
+import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import java.util.Properties;
 import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -919,6 +920,25 @@ public class Server {
                 if (!collectionExists(collectionName)) {
                     throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
                 }
+            } else {
+                if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
+                    // for single user cases, we unload the core when we close the case. So we have to load the core again. 
+
+                    // core name is (collectionName + "_shard1_replica_n1")
+                    String coreName = collectionName + "_shard1_replica_n1";
+
+                    CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
+                    createCoreRequest.setDataDir(dataDir.getAbsolutePath());
+                    createCoreRequest.setCoreName(coreName);
+                    createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
+                    createCoreRequest.setIsLoadOnStartup(false);
+                    createCoreRequest.setIsTransient(true);
+                    currentSolrServer.request(createCoreRequest);
+                    
+                    if (!coreIndexFolderExists(coreName)) {
+                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+                    }
+                }
             }
             
             // ELTODO do we need to verify that the index directory exists?
@@ -929,6 +949,28 @@ public class Server {
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         }
     }
+    
+    /**
+     * Determines whether or not the index files folder for a Solr core
+     * exists.
+     *
+     * @param coreName the name of the core.
+     *
+     * @return true or false
+     *
+     * @throws SolrServerException
+     * @throws IOException
+     */
+    private boolean coreIndexFolderExists(String coreName) throws SolrServerException, IOException {
+        CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, currentSolrServer);
+        Object dataDirPath = response.getCoreStatus(coreName).get("dataDir"); //NON-NLS
+        if (null != dataDirPath) {
+            File indexDir = Paths.get((String) dataDirPath, "index").toFile();  //NON-NLS
+            return indexDir.exists();
+        } else {
+            return false;
+        }
+    }    
 
     /**
      * Get the host and port for a multiuser case. If the file solrserver.txt
