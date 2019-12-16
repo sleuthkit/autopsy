@@ -88,17 +88,21 @@ public class ResultsPanel extends javax.swing.JPanel {
         imageThumbnailViewer = new ImageThumbnailViewer();
         videoThumbnailViewer = new VideoThumbnailViewer();
         videoThumbnailViewer.addListSelectionListener((e) -> {
-            if (!e.getValueIsAdjusting()) {
-                populateInstancesList();
-            } else {
-                instancesList.clearSelection();
+            if (resultType == FileSearchData.FileType.VIDEO) {
+                if (!e.getValueIsAdjusting()) {
+                    populateInstancesList();
+                } else {
+                    instancesList.clearSelection();
+                }
             }
         });
         imageThumbnailViewer.addListSelectionListener((e) -> {
-            if (!e.getValueIsAdjusting()) {
-                populateInstancesList();
-            } else {
-                instancesList.clearSelection();
+            if (resultType == FileSearchData.FileType.IMAGE) {
+                if (!e.getValueIsAdjusting()) {
+                    populateInstancesList();
+                } else {
+                    instancesList.clearSelection();
+                }
             }
         });
         //Add the context menu when right clicking

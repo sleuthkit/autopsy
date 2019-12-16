@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Create a node containing the children for the to display in the
+ * Create a node containing the children to display in the
  * DataResultViewerThumbnail
  */
 class DiscoveryThumbnailChildren extends Children.Keys<AbstractFile> {

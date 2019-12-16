@@ -159,6 +159,7 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         serverTestBtn = new javax.swing.JButton();
         mbtilesRBtn = new javax.swing.JRadioButton();
         mbtileFileField = new javax.swing.JTextField();
+        javax.swing.JPanel MBTilesBtnPanel = new javax.swing.JPanel();
         mbtilesBrowseBtn = new javax.swing.JButton();
         mbtileTestBtn = new javax.swing.JButton();
 
@@ -236,7 +237,7 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 9, 9, 9);
         tilePane.add(zipFileBrowseBnt, gridBagConstraints);
 
@@ -249,8 +250,8 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.ipadx = 20;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 9, 9, 9);
         tilePane.add(serverTestBtn, gridBagConstraints);
 
@@ -277,18 +278,15 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 9, 0);
         tilePane.add(mbtileFileField, gridBagConstraints);
 
+        MBTilesBtnPanel.setLayout(new java.awt.GridLayout(1, 0, 5, 0));
+
         org.openide.awt.Mnemonics.setLocalizedText(mbtilesBrowseBtn, org.openide.util.NbBundle.getMessage(GeolocationSettingsPanel.class, "GeolocationSettingsPanel.mbtilesBrowseBtn.text")); // NOI18N
         mbtilesBrowseBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mbtilesBrowseBtnActionPerformed(evt);
             }
         });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 9, 9, 9);
-        tilePane.add(mbtilesBrowseBtn, gridBagConstraints);
+        MBTilesBtnPanel.add(mbtilesBrowseBtn);
 
         org.openide.awt.Mnemonics.setLocalizedText(mbtileTestBtn, org.openide.util.NbBundle.getMessage(GeolocationSettingsPanel.class, "GeolocationSettingsPanel.mbtileTestBtn.text")); // NOI18N
         mbtileTestBtn.addActionListener(new java.awt.event.ActionListener() {
@@ -296,13 +294,15 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
                 mbtileTestBtnActionPerformed(evt);
             }
         });
+        MBTilesBtnPanel.add(mbtileTestBtn);
+
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 3;
-        gridBagConstraints.ipadx = 20;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        tilePane.add(mbtileTestBtn, gridBagConstraints);
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 9, 9, 9);
+        tilePane.add(MBTilesBtnPanel, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;

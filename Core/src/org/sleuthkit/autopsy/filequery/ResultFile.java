@@ -72,7 +72,7 @@ class ResultFile {
         tagNames = new ArrayList<>();
         interestingSetNames = new ArrayList<>();
         objectDetectedNames = new ArrayList<>();
-        fileType = FileType.OTHER;
+        fileType = FileType.fromMIMEtype(abstractFile.getMIMEType());
     }
 
     /**
@@ -102,6 +102,9 @@ class ResultFile {
     void addDuplicate(AbstractFile duplicate) {
         if (deleted && !duplicate.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             deleted = false;
+        }
+        if (fileType == FileType.OTHER) {
+            fileType = FileType.fromMIMEtype(duplicate.getMIMEType());
         }
         updateScoreAndDescription(duplicate);
         instances.add(duplicate);
@@ -154,15 +157,6 @@ class ResultFile {
      */
     FileType getFileType() {
         return fileType;
-    }
-
-    /**
-     * Set the file type
-     *
-     * @param fileType the type
-     */
-    void setFileType(FileType fileType) {
-        this.fileType = fileType;
     }
 
     /**
