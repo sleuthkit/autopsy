@@ -53,6 +53,7 @@ import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
+import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import java.util.Properties;
 import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -1636,16 +1637,19 @@ public class Server {
             /* NOTE: there is no way to unload collections. Only cores can be unloaded.
             Since we set "transient=true" and "loadOnStartup=false" on all cores that 
             we create, we shouldn't need to explicitly unload cores. Leaving the core below
-            for reference. 
+            for reference. */
+            
+            // core name is (collectionName + "_shard1_replica_n1")
+            String coreName = this.name + "_shard1_replica_n1";
             try {
-                CoreAdminRequest.unloadCore(this.name, currentSolrServer);
+                CoreAdminRequest.unloadCore(coreName, currentSolrServer);
             } catch (SolrServerException ex) {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.close.exception.msg"), ex);
             } catch (IOException ex) {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.close.exception.msg2"), ex);
-            }*/
+            }
         }
 
         /**
