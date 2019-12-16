@@ -681,10 +681,6 @@ final public class MapPanel extends javax.swing.JPanel {
             int y = (int)point.getY();
             
             BufferedImage image = (waypoint == currentlySelectedWaypoint ? selectedWaypointImage: defaultWaypointImage);
-            
-            if(waypoint == currentlySelectedWaypoint) {
-                System.out.println("Paint selected waypoint");
-            }
 
             (gd.create()).drawImage(image, x -image.getWidth() / 2, y -image.getHeight(), null);
         }
