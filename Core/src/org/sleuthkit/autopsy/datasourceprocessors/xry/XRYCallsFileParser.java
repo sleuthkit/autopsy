@@ -18,9 +18,16 @@
  */
 package org.sleuthkit.autopsy.datasourceprocessors.xry;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalQueries;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -33,71 +40,79 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Parses XRY Calls files and creates artifacts.
  */
-final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
+final class XRYCallsFileParser extends AbstractSingleEntityParser {
 
     private static final Logger logger = Logger.getLogger(XRYCallsFileParser.class.getName());
 
     //Pattern is in reverse due to a Java 8 bug, see calculateSecondsSinceEpoch()
     //function for more details.
     private static final DateTimeFormatter DATE_TIME_PARSER
-            = DateTimeFormatter.ofPattern("O a h:m:s M/d/y");
+            = DateTimeFormatter.ofPattern("[(XXX) ][O ][(O) ]a h:m:s M/d/y");
+
+    private static final String DEVICE_LOCALE = "(device)";
+    private static final String NETWORK_LOCALE = "(network)";
+
     /**
-     * All of the known XRY keys for call reports.
+     * All of the known XRY keys for call reports and their corresponding
+     * blackboard attribute types, if any.
      */
     private enum XryKey {
-        TEL("tel"),
-        NAME_MATCHED("name (matched)"),
-        TIME("time"),
-        DIRECTION("direction"),
-        CALL_TYPE("call type"),
-        DURATION("duration"),
-        STORAGE("storage"),
-        INDEX("index"),
-        NAME("name"),
-        NUMBER("number");
-        
+        NAME_MATCHED("name (matched)", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME),
+        TIME("time", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME),
+        DIRECTION("direction", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION),
+        CALL_TYPE("call type", null),
+        NUMBER("number", null),
+        TEL("tel", null),
+        TO("to", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO),
+        FROM("from", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM),
+        DELETED("deleted", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ISDELETED),
+        DURATION("duration", null),
+        STORAGE("storage", null),
+        INDEX("index", null),
+        TYPE("type", null),
+        NAME("name", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
+
         private final String name;
-        XryKey(String name) {
+        private final BlackboardAttribute.ATTRIBUTE_TYPE type;
+
+        XryKey(String name, BlackboardAttribute.ATTRIBUTE_TYPE type) {
             this.name = name;
+            this.type = type;
         }
-        
+
+        public BlackboardAttribute.ATTRIBUTE_TYPE getType() {
+            return type;
+        }
+
         /**
          * Indicates if the display name of the XRY key is a recognized type.
-         * 
-         * @param xryKey
-         * @return 
          */
-        public static boolean contains(String xryKey) {
-            String normalizedKey = xryKey.trim().toLowerCase();
-            for(XryKey keyChoice : XryKey.values()) {
-                if(keyChoice.name.equals(normalizedKey)) {
-                    return true;
-                }
+        public static boolean contains(String key) {
+            try {
+                XryKey.fromDisplayName(key);
+                return true;
+            } catch (IllegalArgumentException ex) {
+                return false;
             }
-            
-            return false;
         }
-        
+
         /**
          * Matches the display name of the xry key to the appropriate enum type.
-         * 
-         * It is assumed that XRY key string is recognized. Otherwise,
-         * an IllegalArgumentException is thrown. Test all membership
-         * with contains() before hand.
-         * 
-         * @param xryKey
-         * @return 
+         *
+         * It is assumed that XRY key string is recognized. Otherwise, an
+         * IllegalArgumentException is thrown. Test all membership with
+         * contains() before hand.
          */
-        public static XryKey fromDisplayName(String xryKey) {
-            String normalizedKey = xryKey.trim().toLowerCase();
-            for(XryKey keyChoice : XryKey.values()) {
-                if(keyChoice.name.equals(normalizedKey)) {
+        public static XryKey fromDisplayName(String key) {
+            String normalizedKey = key.trim().toLowerCase();
+            for (XryKey keyChoice : XryKey.values()) {
+                if (normalizedKey.equals(keyChoice.name)) {
                     return keyChoice;
                 }
             }
-            
+
             throw new IllegalArgumentException(String.format("Key [%s] was not found."
-                    + " All keys should be tested with contains.", xryKey));
+                    + " All keys should be tested with contains.", key));
         }
     }
 
@@ -108,55 +123,50 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
         TO("to"),
         FROM("from"),
         NONE(null);
-        
+
         private final String name;
+
         XryNamespace(String name) {
             this.name = name;
         }
-        
+
         /**
-         * Indicates if the display name of the XRY namespace is a recognized type.
-         * 
-         * @param xryNamespace
-         * @return 
+         * Indicates if the display name of the XRY namespace is a recognized
+         * type.
          */
         public static boolean contains(String xryNamespace) {
-            String normalizedNamespace = xryNamespace.trim().toLowerCase();
-            for(XryNamespace keyChoice : XryNamespace.values()) {
-                if(normalizedNamespace.equals(keyChoice.name)) {
-                    return true;
-                }
+            try {
+                XryNamespace.fromDisplayName(xryNamespace);
+                return true;
+            } catch (IllegalArgumentException ex) {
+                return false;
             }
-            
-            return false;
         }
-        
+
         /**
-         * Matches the display name of the xry namespace to the appropriate enum type.
-         * 
-         * It is assumed that XRY namespace string is recognized. Otherwise,
-         * an IllegalArgumentException is thrown. Test all membership
-         * with contains() before hand.
-         * 
-         * @param xryNamespace
-         * @return 
+         * Matches the display name of the xry namespace to the appropriate enum
+         * type.
+         *
+         * It is assumed that XRY namespace string is recognized. Otherwise, an
+         * IllegalArgumentException is thrown. Test all membership with
+         * contains() before hand.
          */
         public static XryNamespace fromDisplayName(String xryNamespace) {
             String normalizedNamespace = xryNamespace.trim().toLowerCase();
-            for(XryNamespace keyChoice : XryNamespace.values()) {
-                if(normalizedNamespace.equals(keyChoice.name)) {
+            for (XryNamespace keyChoice : XryNamespace.values()) {
+                if (normalizedNamespace.equals(keyChoice.name)) {
                     return keyChoice;
                 }
             }
-            
+
             throw new IllegalArgumentException(String.format("Key [%s] was not found."
                     + " All keys should be tested with contains.", xryNamespace));
         }
     }
 
     @Override
-    boolean isKey(String key) {
-        return XryKey.contains(key);
+    boolean canProcess(XRYKeyValuePair pair) {
+        return XryKey.contains(pair.getKey());
     }
 
     @Override
@@ -165,77 +175,75 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
     }
 
     @Override
-    Optional<BlackboardAttribute> makeAttribute(String nameSpace, String key, String value) {
-        XryKey xryKey = XryKey.fromDisplayName(key);
+    void makeArtifact(List<XRYKeyValuePair> keyValuePairs, Content parent) throws TskCoreException {
+        List<BlackboardAttribute> attributes = new ArrayList<>();
+        for(XRYKeyValuePair pair : keyValuePairs) {
+            Optional<BlackboardAttribute> attribute = getBlackboardAttribute(pair);
+            if(attribute.isPresent()) {
+                attributes.add(attribute.get());
+            }
+        }
+        if(!attributes.isEmpty()) {
+            BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG);
+            artifact.addAttributes(attributes);
+        }
+    }
+    
+    /**
+     * Creates the appropriate blackboard attribute given a single XRY Key Value
+     * pair, if any. Most XRY keys are mapped to an attribute type in the enum above.
+     */
+    private Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
+        XryKey xryKey = XryKey.fromDisplayName(pair.getKey());
         XryNamespace xryNamespace = XryNamespace.NONE;
-        if(XryNamespace.contains(nameSpace)) {
-            xryNamespace = XryNamespace.fromDisplayName(nameSpace);
+        if (XryNamespace.contains(pair.getNamespace())) {
+            xryNamespace = XryNamespace.fromDisplayName(pair.getNamespace());
         }
 
         switch (xryKey) {
-            case DIRECTION:
-                return Optional.of(new BlackboardAttribute(
-                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, 
-                        PARSER_NAME, value));
-            case NAME_MATCHED:
-                return Optional.of(new BlackboardAttribute(
-                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, 
-                        PARSER_NAME, value));
-            case NUMBER:
-                return Optional.of(new BlackboardAttribute(
-                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, 
-                        PARSER_NAME, value));
             case TEL:
+            case NUMBER:
                 //Apply the namespace
                 switch (xryNamespace) {
                     case FROM:
                         return Optional.of(new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM,
-                                PARSER_NAME, value));
+                                PARSER_NAME, pair.getValue()));
                     case TO:
                         return Optional.of(new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO,
-                                PARSER_NAME, value));
+                                PARSER_NAME, pair.getValue()));
                     default:
                         return Optional.of(new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
-                                PARSER_NAME, value));
+                                PARSER_NAME, pair.getValue()));
                 }
             case TIME:
                 try {
                     //Tranform value to seconds since epoch
-                    long dateTimeSinceEpoch = calculateSecondsSinceEpoch(value);
-                    return Optional.of(new BlackboardAttribute(
-                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START, 
+                    long dateTimeSinceEpoch = calculateSecondsSinceEpoch(pair.getValue());
+                    return Optional.of(new BlackboardAttribute(xryKey.getType(),
                             PARSER_NAME, dateTimeSinceEpoch));
                 } catch (DateTimeParseException ex) {
                     logger.log(Level.WARNING, String.format("[XRY DSP] Assumption"
                             + " about the date time formatting of call logs is "
-                            + "not right. Here is the value [ %s ]", value), ex);
+                            + "not right. Here is the value [ %s ]", pair.getValue()), ex);
                     return Optional.empty();
                 }
-            case DURATION:
-            case STORAGE:
-            case INDEX:
-            case CALL_TYPE:
-                //Ignore for now, don't need more data.
-                return Optional.empty();
-            case NAME:
-                logger.log(Level.WARNING, String.format("[XRY DSP] Key [%s] was "
-                    + "recognized but more examples of its values are needed "
-                    + "to make a decision on an appropriate TSK attribute. "
-                        + "Here is the value [%s].", key, value));
-                return Optional.empty();
             default:
-                throw new IllegalArgumentException(String.format("Key [ %s ] "
-                        + "passed the isKey() test but was not matched.", key));
-        }
-    }
+                //Otherwise, the XryKey enum contains the correct BlackboardAttribute
+                //type.
+                if (xryKey.getType() != null) {
+                    return Optional.of(new BlackboardAttribute(xryKey.getType(),
+                            PARSER_NAME, pair.getValue()));
+                }
 
-    @Override
-    void makeArtifact(List<BlackboardAttribute> attributes, Content parent) throws TskCoreException {
-        BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG);
-        artifact.addAttributes(attributes);
+                logger.log(Level.INFO, String.format("[XRY DSP] Key value pair "
+                        + "(in brackets) [ %s ] was recognized but "
+                        + "more data or time is needed to finish implementation. Discarding... ",
+                        pair));
+                return Optional.empty();
+        }
     }
 
     /**
@@ -247,12 +255,16 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
      * @return A purer date time value.
      */
     private String removeDateTimeLocale(String dateTime) {
-        int index = dateTime.indexOf('(');
-        if (index == -1) {
-            return dateTime;
+        String result = dateTime;
+        int deviceIndex = result.toLowerCase().indexOf(DEVICE_LOCALE);
+        if (deviceIndex != -1) {
+            result = result.substring(0, deviceIndex);
         }
-
-        return dateTime.substring(0, index);
+        int networkIndex = result.toLowerCase().indexOf(NETWORK_LOCALE);
+        if (networkIndex != -1) {
+            result = result.substring(0, networkIndex);
+        }
+        return result;
     }
 
     /**
@@ -265,42 +277,48 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
         String dateTimeWithoutLocale = removeDateTimeLocale(dateTime).trim();
         /**
          * The format of time in XRY Messages reports is of the form:
-         * 
-         *      1/3/1990 1:23:54 AM UTC+4
-         * 
-         * In our current version of Java (openjdk-1.8.0.222), there is
-         * a bug with having the timezone offset (UTC+4 or GMT-7) at the 
-         * end of the date time input. This is fixed in later versions
-         * of the JDK (9 and beyond). 
-         * https://bugs.openjdk.java.net/browse/JDK-8154050
-         * Rather than update the JDK to accommodate this, the components of 
-         * the date time string are reversed:
-         * 
-         *      UTC+4 AM 1:23:54 1/3/1990
-         * 
+         *
+         * 1/3/1990 1:23:54 AM UTC+4
+         *
+         * In our current version of Java (openjdk-1.8.0.222), there is a bug
+         * with having the timezone offset (UTC+4 or GMT-7) at the end of the
+         * date time input. This is fixed in later versions of the JDK (9 and
+         * beyond). https://bugs.openjdk.java.net/browse/JDK-8154050 Rather than
+         * update the JDK to accommodate this, the components of the date time
+         * string are reversed:
+         *
+         * UTC+4 AM 1:23:54 1/3/1990
+         *
          * The java time package will correctly parse this date time format.
          */
         String reversedDateTime = reverseOrderOfDateTimeComponents(dateTimeWithoutLocale);
         /**
-         * Furthermore, the DateTimeFormatter's timezone offset letter ('O') does
-         * not recognize UTC but recognizes GMT. According to 
-         * https://en.wikipedia.org/wiki/Coordinated_Universal_Time,
-         * GMT only differs from UTC by at most 1 second and so substitution
-         * will only introduce a trivial amount of error.
+         * Furthermore, the DateTimeFormatter's timezone offset letter ('O')
+         * does not recognize UTC but recognizes GMT. According to
+         * https://en.wikipedia.org/wiki/Coordinated_Universal_Time, GMT only
+         * differs from UTC by at most 1 second and so substitution will only
+         * introduce a trivial amount of error.
          */
         String reversedDateTimeWithGMT = reversedDateTime.replace("UTC", "GMT");
-        ZonedDateTime zonedDateTime = ZonedDateTime.parse(reversedDateTimeWithGMT, DATE_TIME_PARSER);
-        return zonedDateTime.toEpochSecond();
+        TemporalAccessor result = DATE_TIME_PARSER.parseBest(reversedDateTimeWithGMT,
+                ZonedDateTime::from,
+                LocalDateTime::from,
+                OffsetDateTime::from);
+        //Query for the ZoneID
+        if (result.query(TemporalQueries.zoneId()) == null) {
+            //If none, assumed GMT+0.
+            return ZonedDateTime.of(LocalDateTime.from(result),
+                    ZoneId.of("GMT")).toEpochSecond();
+        } else {
+            return Instant.from(result).getEpochSecond();
+        }
     }
-    
+
     /**
      * Reverses the order of the date time components.
-     * 
-     * Example: 
-     *  1/3/1990 1:23:54 AM UTC+4 
-     * becomes
-     *  UTC+4 AM 1:23:54 1/3/1990
-     * 
+     *
+     * Example: 1/3/1990 1:23:54 AM UTC+4 becomes UTC+4 AM 1:23:54 1/3/1990
+     *
      * @param dateTime
      * @return
      */
