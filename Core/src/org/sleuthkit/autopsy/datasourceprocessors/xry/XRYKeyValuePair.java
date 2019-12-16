@@ -35,7 +35,7 @@ class XRYKeyValuePair {
     private final String value;
     private final String namespace;
 
-    public XRYKeyValuePair(String key, String value, String namespace) {
+    XRYKeyValuePair(String key, String value, String namespace) {
         this.key = key.trim();
         this.value = value.trim();
         this.namespace = namespace.trim();
@@ -49,7 +49,7 @@ class XRYKeyValuePair {
      *
      * @param targetKey Key name to test.
      */
-    public boolean hasKey(String targetKey) {
+    boolean hasKey(String targetKey) {
         String normalizedKey = key.toLowerCase();
         String normalizedTargetKey = targetKey.trim().toLowerCase();
         return normalizedKey.equals(normalizedTargetKey);
@@ -58,21 +58,21 @@ class XRYKeyValuePair {
     /**
      * Retrieves the value contained within this pair.
      */
-    public String getValue() {
+    String getValue() {
         return value;
     }
     
     /**
      * Retrieves the key contained within this pair.
      */
-    public String getKey() {
+    String getKey() {
         return key;
     }
     
     /**
      * Retrieves the namespace contained within this pair.
      */
-    public String getNamespace() {
+    String getNamespace() {
         return namespace;
     }
     

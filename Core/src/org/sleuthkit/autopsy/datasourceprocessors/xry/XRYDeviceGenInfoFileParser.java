@@ -89,7 +89,7 @@ final class XRYDeviceGenInfoFileParser extends AbstractSingleEntityParser {
     @Override
     void makeArtifact(List<XRYKeyValuePair> keyValuePairs, Content parent) throws TskCoreException {
         List<BlackboardAttribute> attributes = new ArrayList<>();
-        for(int i = 0; i < keyValuePairs.size(); i++) {
+        for(int i = 0; i < keyValuePairs.size(); i+=2) {
             Optional<BlackboardAttribute> attribute;
             if(i + 1 == keyValuePairs.size()) {
                 attribute = getBlackboardAttribute(keyValuePairs.get(i));
