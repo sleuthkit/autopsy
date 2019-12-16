@@ -131,6 +131,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         return processFile(content);
     }
 
+    @Messages({"ExifParserFileIngestModule.deviceOriginal.description=EXIF metadata exists for this file."})
     private ProcessResult processFile(AbstractFile file) {
 
         try (BufferedInputStream bin = new BufferedInputStream(new ReadContentInputStream(file));) {
@@ -196,7 +197,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                     BlackboardArtifact bba = file.newArtifact(TSK_METADATA_EXIF);
                     BlackboardArtifact bba2 = file.newArtifact(TSK_DEVICE_ORIGINAL_SUSPECTED);
                     bba.addAttributes(attributes);
-
+                    bba2.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION, MODULE_NAME, Bundle.ExifParserFileIngestModule_deviceOriginal_description()));
                     try {
                         // index the artifact for keyword search
                         blackboard.postArtifact(bba, MODULE_NAME);
