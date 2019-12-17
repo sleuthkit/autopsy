@@ -69,10 +69,10 @@ public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<Spec
         if (content.isDataSource()) {
             actions.add(new ViewSummaryInformationAction(content.getId()));
             actions.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
+            actions.add(new DeleteDataSourceAction(content.getId()));
         } else {
             actions.add(new RunIngestModulesAction(content));
         }
-        actions.add(new DeleteDataSourceAction(content.getId()));
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions.toArray(new Action[0]);
     }
