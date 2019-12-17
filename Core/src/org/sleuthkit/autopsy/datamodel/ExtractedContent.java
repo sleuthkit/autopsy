@@ -227,6 +227,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
         // maps the artifact type to its child node 
         private final HashMap<BlackboardArtifact.Type, TypeNode> typeNodeList = new HashMap<>();
 
+        @SuppressWarnings("deprecation")
         TypeFactory() {
             super();
 

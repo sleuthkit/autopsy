@@ -431,6 +431,8 @@ public final class GeolocationTopComponent extends TopComponent {
                                 Bundle.GeoTopComponent_filter_exception_Title(),
                                 Bundle.GeoTopComponent_filter_exception_msg(),
                                 JOptionPane.ERROR_MESSAGE);
+                        
+                        setWaypointLoading(false);
                     }
                 });
             }
@@ -444,7 +446,7 @@ public final class GeolocationTopComponent extends TopComponent {
     private class WaypointCallBack implements WaypointFilterQueryCallBack {
 
         @Override
-        public void process(List<Waypoint> waypoints) {
+        public void process(final List<Waypoint> waypoints) {
             // Make sure that the waypoints are added to the map panel in
             // the correct thread.
             SwingUtilities.invokeLater(new Runnable() {
@@ -453,13 +455,16 @@ public final class GeolocationTopComponent extends TopComponent {
                     // If the list is empty, tell the user and do not change 
                     // the visible waypoints.
                     if (waypoints == null || waypoints.isEmpty()) {
+                        mapPanel.clearWaypoints();
                         JOptionPane.showMessageDialog(GeolocationTopComponent.this,
                                 Bundle.GeoTopComponent_no_waypoints_returned_Title(),
                                 Bundle.GeoTopComponent_no_waypoints_returned_mgs(),
                                 JOptionPane.INFORMATION_MESSAGE);
-
+                        setWaypointLoading(false);
+                        geoFilterPanel.setEnabled(true);
                         return;
                     }
+                    mapPanel.clearWaypoints();
                     mapPanel.setWaypoints(MapWaypoint.getWaypoints(waypoints));
                     setWaypointLoading(false);
                     geoFilterPanel.setEnabled(true);

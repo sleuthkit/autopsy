@@ -21,9 +21,15 @@ package org.sleuthkit.autopsy.datasourceprocessors.xry;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * Allows an examiner to configure the XRY Data source processor.
@@ -32,10 +38,15 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 final class XRYDataSourceProcessorConfigPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
+    
+    private static final String PROP_LAST_USED_PATH = "LAST_USED_PATH";
+    private static final String SETTINGS_CONTEXT = "XRYDataSourceProcessorConfigPanel_Settings";
+    
     private static final XRYDataSourceProcessorConfigPanel INSTANCE = 
             new XRYDataSourceProcessorConfigPanel();
     
-    //Communicates 
+    //Used to communicate with the DSP infrastructure. This config
+    //panel will indicate when it is ready for an update.
     private final PropertyChangeSupport pcs;
     
     /**
@@ -45,6 +56,31 @@ final class XRYDataSourceProcessorConfigPanel extends JPanel {
     private XRYDataSourceProcessorConfigPanel() {
         initComponents();
         pcs = new PropertyChangeSupport(this);
+    }
+    
+    /**
+     * Persists the last used path between application runs.
+     */
+    private void setLastUsedPath(Path selection) {
+        Path parent = selection.getParent();
+        ModuleSettings.setConfigSetting(SETTINGS_CONTEXT, 
+                PROP_LAST_USED_PATH, parent.toString());
+    }
+
+    /**
+     * Retrieves the last used path, if any. This path will be saved across 
+     * application runs.
+     */
+    private Optional<Path> getLastUsedPath() {
+        String lastFolderPath = ModuleSettings.getConfigSetting(
+                SETTINGS_CONTEXT, PROP_LAST_USED_PATH);
+        if (StringUtils.isNotBlank(lastFolderPath)) {
+            Path lastPath = Paths.get(lastFolderPath);
+            if (Files.exists(lastPath)) {
+                return Optional.of(lastPath);
+            }
+        }
+        return Optional.empty();
     }
     
     /**
@@ -158,9 +194,14 @@ final class XRYDataSourceProcessorConfigPanel extends JPanel {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setMultiSelectionEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        Optional<Path> lastUsedPath = getLastUsedPath();
+        if(lastUsedPath.isPresent()) {
+            fileChooser.setCurrentDirectory(lastUsedPath.get().toFile());
+        }
         int returnVal = fileChooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File selection = fileChooser.getSelectedFile();
+            setLastUsedPath(selection.toPath());
             filePathTextField.setText(selection.getAbsolutePath());
             
             //This will notify the wizard to revalidate the data source processor.

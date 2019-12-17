@@ -205,9 +205,7 @@ final public class MapPanel extends javax.swing.JPanel {
                     Iterator<MapWaypoint> iterator = waypointTree.iterator();
                     while (iterator.hasNext()) {
                         MapWaypoint point = iterator.next();
-//                        if (point != currentlySelectedWaypoint) {
-                            set.add(point);
-//                        }
+                        set.add(point);
                     }
                     // Add the currentlySelectedWaypoint to the end so that
                     // it will be painted last.
@@ -334,6 +332,11 @@ final public class MapPanel extends javax.swing.JPanel {
      */
     void clearWaypoints() {
         waypointTree = null;
+        currentlySelectedWaypoint = null;
+        if (currentPopup != null) {
+            currentPopup.hide();
+        }
+        mapViewer.repaint();
     }
 
     /**
