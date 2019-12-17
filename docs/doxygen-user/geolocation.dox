@@ -24,7 +24,7 @@ While this is an image with GPS coordinates found by the \ref EXIF_parser_page :
 
 \subsection geo_filter Filtering
 
-The filters are displayed on the left side of the screen. The top filter lets you filter the waypoints by only showing the most recent ones. When using this filter you can also choose whether you want to see waypoints with no timestamp. The second filter allows you to show waypoints only for the selected data sources.
+The filters are displayed on the left side of the screen. The top filter lets you filter the waypoints based on timestamp. If enabled, you will only see waypoints with a timestamp within X days of the most recent waypoint (not the current date). When using this filter you can also choose whether you want to see waypoints with no timestamp. The second filter allows you to show waypoints only for the selected data sources.
 
 \image html geo_filter_panel.png
 
