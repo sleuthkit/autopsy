@@ -315,7 +315,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     /**
      * Sets the source text string.
      *
-     * @param nameLabel String value for source text.
+     * @param text String value for source text.
      */
     private void setSourceText(String text) {
         jSourceTextLabel.setText(text);
