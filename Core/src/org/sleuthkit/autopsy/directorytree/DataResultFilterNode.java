@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
@@ -259,15 +258,20 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         protected Node[] createNodes(Node key) {
-            // filter out all non-message artifacts, if displaying the results from the Data Source tree
+            // if displaying the results from the Data Source tree
+            // filter out artifacts
+          
+            // In older versions of Autopsy,  attachments were children of email/message artifacts
+            // and hence email/messages with attachments are shown in the tree data source tree,
             BlackboardArtifact art = key.getLookup().lookup(BlackboardArtifact.class);
-            if (art != null
-                    && filterArtifacts
-                    && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
-                    && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
+            if (art != null && filterArtifacts
+                    && ((FilterNodeUtils.showMessagesInDatasourceTree() == false)
+                         || (FilterNodeUtils.showMessagesInDatasourceTree()
+                                && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
+                                && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()))) {
                 return new Node[]{};
             }
-
+                
             return new Node[]{new DataResultFilterNode(key, sourceEm)};
         }
     }
