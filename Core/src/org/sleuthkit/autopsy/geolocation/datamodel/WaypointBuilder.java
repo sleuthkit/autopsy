@@ -56,7 +56,8 @@ public final class WaypointBuilder {
     final static String GEO_ARTIFACT_WITH_DATA_SOURCES_QUERY
             = "SELECT blackboard_attributes.artifact_id "
             + "FROM blackboard_attributes, blackboard_artifacts "
-            + "WHERE blackboard_attributes.attribute_type_id IN(%d, %d) "
+            + "WHERE blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id "
+            + "AND blackboard_attributes.attribute_type_id IN(%d, %d) "
             + "AND data_source_obj_id IN (%s)"; //NON-NLS
 
     // Select will return the "most recent" timestamp from all waypoings
@@ -469,6 +470,18 @@ public final class WaypointBuilder {
      * @return SQL SELECT statement
      */
     static private String buildQueryForWaypointsWOTimeStamps(List<DataSource> dataSources) {
+        
+//      SELECT_WO_TIMESTAMP
+//          SELECT DISTINCT artifact_id, artifact_type_id
+//          FROM blackboard_attributes
+//          WHERE artifact_id NOT IN (%s)
+//          AND artifact_id IN (%s)
+        
+//        GEO_ARTIFACT_QUERY_ID_ONLY
+//            SELECT artifact_id
+//            FROM blackboard_attributes
+//            WHERE attribute_type_id IN (%d, %d)
+        
         return String.format(SELECT_WO_TIMESTAMP,
                 String.format(GEO_ARTIFACT_QUERY_ID_ONLY,
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
@@ -502,16 +515,26 @@ public final class WaypointBuilder {
         String mostRecentQuery = "";
 
         if (!showAll && cntDaysFromRecent > 0) {
-            mostRecentQuery = String.format("AND value_int64 > (%s)", //NON-NLS
-                    String.format(MOST_RECENT_TIME,
-                            cntDaysFromRecent,
-                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
-                            getWaypointListQuery(dataSources)
-                    ));
+//          MOST_RECENT_TIME
+//              SELECT MAX(value_int64) - (%d * 86400)
+//              FROM blackboard_attributes
+//              WHERE attribute_type_id IN(%d, %d)
+//              AND artifact_id
+//              IN ( %s )
+//       
+            mostRecentQuery = String.format("AND value_int64 > (%s)", //NON-NLS           
+            String.format(MOST_RECENT_TIME,
+                    cntDaysFromRecent,
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+                    getWaypointListQuery(dataSources)
+            ));
         }
 
-        // This givens us all artifact_ID that have time stamp
+//      GEO_ARTIFACT_QUERY
+//          SELECT artifact_id, artifact_type_id
+//          FROM blackboard_attributes
+//          WHERE attribute_type_id IN (%d, %d)
         String query = String.format(GEO_ARTIFACT_QUERY,
                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID());
@@ -542,6 +565,10 @@ public final class WaypointBuilder {
     static private String getWaypointListQuery(List<DataSource> dataSources) {
 
         if (dataSources == null || dataSources.isEmpty()) {
+//      GEO_ARTIFACT_QUERY
+//          SELECT artifact_id, artifact_type_id
+//          FROM blackboard_attributes
+//          WHERE attribute_type_id IN (%d, %d)
             return String.format(GEO_ARTIFACT_QUERY,
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(),
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID());
