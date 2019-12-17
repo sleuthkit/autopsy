@@ -32,7 +32,11 @@ If desired, the filter panel can be hidden by clicking on the vertical "Filters"
 
 \subsection geo_report Generating a Report
 
+You can generate a KML report using the "KML Report" button in the bottom left. The report will include only the currently visible waypoints and can be found in the "Reports" folder of your case.
 
+\image html geo_report.png
+
+Note that you can also use the \ref report_kml report module to generate a report containing all GPS data in the case.
 
 \section geo_map_options Map Tile Options
 
