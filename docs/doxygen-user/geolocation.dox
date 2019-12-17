@@ -12,16 +12,23 @@ To open the geolocation window, go to "Tools" and then select "Geolocation".
 
 \subsection geo_navigation General Usage
 
-You can move the map by clicking and dragging, and zoom using either the mouse wheel or the slider in the bottom left. If a map tile is not available the tile will appear grey but the waypoints will still be displayed. 
+You can move the map by clicking and dragging, and zoom using either the mouse wheel or the slider in the bottom left. If a map tile is not available the tile will appear grey but the waypoints will still be displayed. This is more likely to happen when changing the default \ref geo_map_options .
 
-You can left click on a waypoint to highlight that waypoint and show a details pop-up in the upper right corner of the map. The details pop-up will be updated as you click on different waypoints. The data displayed will vary depending on the type of waypoint - 
+You can left click on a waypoint to highlight that waypoint and show a details pop-up in the upper right corner of the map. The details pop-up will be updated as you click on different waypoints. The data displayed will vary depending on the type of waypoint. For example, this is the endpoint of a GPS Route:
 
+\image html geo_details_route.png
+
+While this is an image with GPS coordinates found by the \ref EXIF_parser_page :
+
+\image html geo_details.png
 
 \subsection geo_filter Filtering
 
 The filters are displayed on the left side of the screen. The top filter lets you filter the waypoints by only showing the most recent ones. When using this filter you can also choose whether you want to see waypoints with no timestamp. The second filter allows you to show waypoints only for the selected data sources.
 
-If desired, the filter panel can be hidden by clicking on the vertical "Filters" tab. Clicking on that tab a second time will restore the filters panel.
+\image html geo_filter_panel.png
+
+If desired, the filter panel can be hidden by clicking on the vertical "Filters" tab in the top right of the filter panel. Clicking on that tab a second time will restore the filters panel.
 
 \subsection geo_report Generating a Report
 
