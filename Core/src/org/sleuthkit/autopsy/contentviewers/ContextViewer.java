@@ -80,7 +80,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private void initComponents() {
 
         jSourceGoToResultButton = new javax.swing.JButton();
-        javax.swing.JLabel jSourceLabel = new javax.swing.JLabel();
+        jSourceLabel = new javax.swing.JLabel();
         jSourceNameLabel = new javax.swing.JLabel();
         jSourceTextLabel = new javax.swing.JLabel();
 
@@ -320,12 +320,13 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      */
     private void setSourceText(String text) {
         jSourceTextLabel.setText(text);
-        showSourceText(true);
+        showSourceText(!text.isEmpty());
     }
 
     private void showSourceText(boolean show) {
         jSourceTextLabel.setVisible(show);
         jSourceGoToResultButton.setEnabled(show);
+        jSourceLabel.setVisible(show);
     }
 
     /**
@@ -438,6 +439,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jSourceGoToResultButton;
+    private javax.swing.JLabel jSourceLabel;
     private javax.swing.JLabel jSourceNameLabel;
     private javax.swing.JLabel jSourceTextLabel;
     // End of variables declaration//GEN-END:variables
