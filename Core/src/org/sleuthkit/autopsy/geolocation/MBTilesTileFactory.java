@@ -256,7 +256,7 @@ final class MBTilesTileFactory extends TileFactory {
 
     /**
      * An inner class which actually loads the tiles. Used by the thread queue.
-     * Subclasses can override this via {@link #createTileRunner(Tile)} if
+     * Subclasses can override this via createTileRunner(Tile) if
      * necessary.
      */
     private class TileRunner implements Runnable {
