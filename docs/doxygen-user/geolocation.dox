@@ -2,6 +2,26 @@
 
 \section geo_overview Overview
 
+The Geolocation window shows artifacts that have longitude and latitude attributes as waypoints on a map.  In the field when access to online map tile servers may not be available, the Geolocation window provides support for offline map tile data sources.
+
+\image html geo_main.png
+
+\section geo_usage Usage
+
+\subsection geo_navigation General Usage
+
+
+
+\subsection geo_filter Filtering
+
+The filters are displayed on the left side of the screen. The top filter lets you filter the waypoints by only showing the most recent ones. When using this filter you can also choose whether you want to see waypoints with no timestamp. The second filter allows you to show waypoints only for the selected data sources.
+
+If desired, the filter panel can be hidden by clicking on the vertical "Filters" tab. Clicking on that tab a second time will restore the filters panel.
+
+\subsection geo_report Generating a Report
+
+
+
 \section geo_map_options Map Tile Options
 
 <p>The Autopsy Geolocation window supports several map tile data source options. The map tile data source can be changed 
