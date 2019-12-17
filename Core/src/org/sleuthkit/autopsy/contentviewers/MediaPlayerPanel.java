@@ -750,7 +750,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
             @Override
             public void mousePressed(MouseEvent e) {
-                if (!slider.isEnabled()) {
+                if (!slider.isEnabled() || !SwingUtilities.isLeftMouseButton(e)) {
                     return;
                 }
                 //Snap the thumb to position of the mouse
@@ -765,7 +765,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (!slider.isEnabled()) {
+                if (!slider.isEnabled() || !SwingUtilities.isLeftMouseButton(e)) {
                     return;
                 }
 
