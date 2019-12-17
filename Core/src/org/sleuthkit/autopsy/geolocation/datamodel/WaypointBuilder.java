@@ -592,8 +592,11 @@ public final class WaypointBuilder {
                 Route route = new Route(artifact);
                 waypoints.addAll(route.getRoute());
                 break;
+            case TSK_GPS_LAST_KNOWN_LOCATION:
+                waypoints.add(new LastKnownWaypoint(artifact));
+                break;
             default:
-                throw new GeoLocationDataException(String.format("Unable to create waypoint for artifact of type %s", type.toString()));
+                 waypoints.add(new CustomArtifactWaypoint(artifact));
         }
 
         return waypoints;

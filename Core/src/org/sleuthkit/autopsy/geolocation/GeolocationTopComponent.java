@@ -431,6 +431,8 @@ public final class GeolocationTopComponent extends TopComponent {
                                 Bundle.GeoTopComponent_filter_exception_Title(),
                                 Bundle.GeoTopComponent_filter_exception_msg(),
                                 JOptionPane.ERROR_MESSAGE);
+                        
+                        setWaypointLoading(false);
                     }
                 });
             }
