@@ -578,8 +578,16 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
 
-            // unallocated and unused blocks can only have strings extracted from them. 
-            if ((aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) || aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
+            /**
+             * Extract unicode strings from unallocated and unused blocks and
+             * carved text files. The reason for performing string extraction
+             * on these is because they all may contain multiple encodings which
+             * can cause text to be missed by the more specialized text extractors
+             * used below.
+             */
+            if ((aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                    || aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))
+                    || (aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED) && aFile.getNameExtension().equalsIgnoreCase("txt"))) {
                 if (context.fileIngestIsCancelled()) {
                     return;
                 }
@@ -672,7 +680,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * Returns true if indexing was successful and false otherwise.
          *
          * @param aFile Text file to analyze
-         * @param detectedCharset the encoding of the file
          */
         private boolean indexTextFile(AbstractFile aFile) {
             try {

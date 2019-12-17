@@ -209,7 +209,6 @@ public final class EventsModel {
      * data source data in the case database.
      */
     synchronized private void populateDataSourcesCache() throws TskCoreException {
-        datasourceIDsToNamesMap.clear();
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         for (DataSource ds : skCase.getDataSources()) {
             datasourceIDsToNamesMap.putIfAbsent(ds.getId(), ds.getName());

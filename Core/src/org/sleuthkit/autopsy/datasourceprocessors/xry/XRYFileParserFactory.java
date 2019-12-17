@@ -46,6 +46,7 @@ final class XRYFileParserFactory {
             case "calls":
                 return new XRYCallsFileParser();
             case "contacts/contacts":
+            case "contacts":
                 return new XRYContactsFileParser();
             case "device/general information":
                 return new XRYDeviceGenInfoFileParser();

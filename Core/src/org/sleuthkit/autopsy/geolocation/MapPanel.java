@@ -26,7 +26,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
@@ -54,7 +53,6 @@ import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.VirtualEarthTileFactoryInfo;
 import org.jxmapviewer.input.CenterMapListener;
-import org.jxmapviewer.input.PanMouseInputListener;
 import org.jxmapviewer.input.ZoomMouseWheelListenerCursor;
 import org.jxmapviewer.viewer.DefaultTileFactory;
 import org.jxmapviewer.viewer.GeoPosition;
@@ -70,6 +68,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.datamodel.TskCoreException;
 import javax.imageio.ImageIO;
+import javax.swing.SwingUtilities;
 import org.jxmapviewer.viewer.DefaultWaypointRenderer;
 
 /**
@@ -139,6 +138,8 @@ final public class MapPanel extends javax.swing.JPanel {
                 }
             }
         });
+        
+       
     }
 
     /**
@@ -171,7 +172,7 @@ final public class MapPanel extends javax.swing.JPanel {
         mapViewer.setTileFactory(tileFactory);
 
         // Add Mouse interactions
-        MouseInputListener mia = new PanMouseInputListener(mapViewer);
+        MouseInputListener mia = new MapPanMouseInputListener(mapViewer);
         mapViewer.addMouseListener(mia);
         mapViewer.addMouseMotionListener(mia);
 
@@ -204,13 +205,12 @@ final public class MapPanel extends javax.swing.JPanel {
                     Iterator<MapWaypoint> iterator = waypointTree.iterator();
                     while (iterator.hasNext()) {
                         MapWaypoint point = iterator.next();
-                        if (point != currentlySelectedWaypoint) {
-                            set.add(point);
-                        }
+                        set.add(point);
                     }
                     // Add the currentlySelectedWaypoint to the end so that
                     // it will be painted last.
                     if (currentlySelectedWaypoint != null) {
+                        set.remove(currentlySelectedWaypoint);
                         set.add(currentlySelectedWaypoint);
                     }
                 }
@@ -279,7 +279,7 @@ final public class MapPanel extends javax.swing.JPanel {
     /**
      * Create the TileFactoryInfo for OSM zip File
      *
-     * @param zipPath Path to zip file.
+     * @param path Path to zip file.
      *
      * @return TileFactoryInfo for zip file.
      *
@@ -332,6 +332,11 @@ final public class MapPanel extends javax.swing.JPanel {
      */
     void clearWaypoints() {
         waypointTree = null;
+        currentlySelectedWaypoint = null;
+        if (currentPopup != null) {
+            currentPopup.hide();
+        }
+        mapViewer.repaint();
     }
 
     /**
@@ -342,7 +347,11 @@ final public class MapPanel extends javax.swing.JPanel {
      */
     private void showPopupMenu(Point point) {
         try {
-            MapWaypoint waypoint = findClosestWaypoint(point);
+            List<MapWaypoint> waypoints = findClosestWaypoint(point);
+            MapWaypoint waypoint = null;
+            if(waypoints.size() > 0) {
+                waypoint = waypoints.get(0);
+            }
             showPopupMenu(waypoint, point);
             // Change the details popup to the currently selected point only if 
             // it the popup is currently visible
@@ -410,6 +419,7 @@ final public class MapPanel extends javax.swing.JPanel {
             currentPopup = popupFactory.getPopup(this, detailPane, popupLocation.x, popupLocation.y);
             currentPopup.show();
             
+            mapViewer.revalidate();
             mapViewer.repaint();
         }
     }
@@ -437,7 +447,7 @@ final public class MapPanel extends javax.swing.JPanel {
      * @return A waypoint that is within 10 pixels of the given point, or null
      *         if none was found.
      */
-    private MapWaypoint findClosestWaypoint(Point mouseClickPoint) {
+    private List<MapWaypoint> findClosestWaypoint(Point mouseClickPoint) {
         if (waypointTree == null) {
             return null;
         }
@@ -446,7 +456,7 @@ final public class MapPanel extends javax.swing.JPanel {
         GeoPosition geopos = mapViewer.getTileFactory().pixelToGeo(mouseClickPoint, mapViewer.getZoom());
 
         // Get the 5 nearest neightbors to the point
-        Collection<MapWaypoint> waypoints = waypointTree.nearestNeighbourSearch(20, MapWaypoint.getDummyWaypoint(geopos));
+        Collection<MapWaypoint> waypoints = waypointTree.nearestNeighbourSearch(10, MapWaypoint.getDummyWaypoint(geopos));
 
         if (waypoints == null || waypoints.isEmpty()) {
             return null;
@@ -456,6 +466,7 @@ final public class MapPanel extends javax.swing.JPanel {
 
         // These maybe the points closest to lat/log was clicked but 
         // that doesn't mean they are close in terms of pixles.
+        List<MapWaypoint> closestPoints = new ArrayList<>();
         while (iterator.hasNext()) {
             MapWaypoint nextWaypoint = iterator.next();
 
@@ -466,11 +477,11 @@ final public class MapPanel extends javax.swing.JPanel {
                     (int) point.getY() - rect.y);
 
             if (converted_gp_pt.distance(mouseClickPoint) < 10) {
-                return nextWaypoint;
+                closestPoints.add(nextWaypoint);
             }
         }
 
-        return null;
+        return closestPoints;
     }
 
     /**
@@ -519,7 +530,7 @@ final public class MapPanel extends javax.swing.JPanel {
         }
 
         /**
-         * Called when the resize event has completed\timed out
+         * Called when the resize event has completed or timed out
          */
         public abstract void resizeTimedOut();
     }
@@ -629,8 +640,14 @@ final public class MapPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_mapViewerMouseMoved
 
     private void mapViewerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mapViewerMouseClicked
-        if(!evt.isPopupTrigger() && (evt.getButton() == MouseEvent.BUTTON1)) {
-            currentlySelectedWaypoint = findClosestWaypoint(evt.getPoint());
+        if(!evt.isPopupTrigger() && SwingUtilities.isLeftMouseButton(evt)) {
+            List<MapWaypoint> waypoints = findClosestWaypoint(evt.getPoint());
+            if(waypoints.size() > 0) {
+                currentlySelectedWaypoint = waypoints.get(0);
+            } 
+            
+            
+//            currentlySelectedWaypoint = findClosestWaypoint(evt.getPoint());
             showDetailsPopup();
         }
     }//GEN-LAST:event_mapViewerMouseClicked

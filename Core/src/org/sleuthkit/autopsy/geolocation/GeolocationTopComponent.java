@@ -194,6 +194,7 @@ public final class GeolocationTopComponent extends TopComponent {
     @Override
     public void open() {
         super.open();
+        mapPanel.clearWaypoints();
         geoFilterPanel.clearDataSourceList();
         geoFilterPanel.updateDataSourceList();
         try {
@@ -288,7 +289,7 @@ public final class GeolocationTopComponent extends TopComponent {
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss", Locale.US);
         Date date = new Date();
         String dateNoTime = dateFormat.format(date);
-        String reportPath = String.format(REPORT_PATH_FMT_STR, currentCase.getReportDirectory(), currentCase.getDisplayName(), "Goggle Earth KML", dateNoTime);
+        String reportPath = String.format(REPORT_PATH_FMT_STR, currentCase.getReportDirectory(), currentCase.getDisplayName(), "Google Earth KML", dateNoTime);
         // Create the root reports directory.
         try {
             FileUtil.createFolder(new File(reportPath));
@@ -431,6 +432,8 @@ public final class GeolocationTopComponent extends TopComponent {
                                 Bundle.GeoTopComponent_filter_exception_Title(),
                                 Bundle.GeoTopComponent_filter_exception_msg(),
                                 JOptionPane.ERROR_MESSAGE);
+                        
+                        setWaypointLoading(false);
                     }
                 });
             }
@@ -444,7 +447,7 @@ public final class GeolocationTopComponent extends TopComponent {
     private class WaypointCallBack implements WaypointFilterQueryCallBack {
 
         @Override
-        public void process(List<Waypoint> waypoints) {
+        public void process(final List<Waypoint> waypoints) {
             // Make sure that the waypoints are added to the map panel in
             // the correct thread.
             SwingUtilities.invokeLater(new Runnable() {
@@ -453,13 +456,16 @@ public final class GeolocationTopComponent extends TopComponent {
                     // If the list is empty, tell the user and do not change 
                     // the visible waypoints.
                     if (waypoints == null || waypoints.isEmpty()) {
+                        mapPanel.clearWaypoints();
                         JOptionPane.showMessageDialog(GeolocationTopComponent.this,
                                 Bundle.GeoTopComponent_no_waypoints_returned_Title(),
                                 Bundle.GeoTopComponent_no_waypoints_returned_mgs(),
                                 JOptionPane.INFORMATION_MESSAGE);
-
+                        setWaypointLoading(false);
+                        geoFilterPanel.setEnabled(true);
                         return;
                     }
+                    mapPanel.clearWaypoints();
                     mapPanel.setWaypoints(MapWaypoint.getWaypoints(waypoints));
                     setWaypointLoading(false);
                     geoFilterPanel.setEnabled(true);
