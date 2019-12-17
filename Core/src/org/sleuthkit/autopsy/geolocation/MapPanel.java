@@ -279,7 +279,7 @@ final public class MapPanel extends javax.swing.JPanel {
     /**
      * Create the TileFactoryInfo for OSM zip File
      *
-     * @param zipPath Path to zip file.
+     * @param path Path to zip file.
      *
      * @return TileFactoryInfo for zip file.
      *
@@ -530,7 +530,7 @@ final public class MapPanel extends javax.swing.JPanel {
         }
 
         /**
-         * Called when the resize event has completed\timed out
+         * Called when the resize event has completed or timed out
          */
         public abstract void resizeTimedOut();
     }

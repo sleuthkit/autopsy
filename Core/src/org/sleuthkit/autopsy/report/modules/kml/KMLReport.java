@@ -117,6 +117,7 @@ public final class KMLReport implements GeneralReportModule {
      *
      * @param baseReportDir path to save the report
      * @param progressPanel panel to update the report's progress
+     * @param waypointList
      */
     @Messages({
         "KMLReport.unableToExtractPhotos=Could not extract photo information.",
@@ -524,10 +525,8 @@ public final class KMLReport implements GeneralReportModule {
      *
      * @param startLatitude  Starting latitude
      * @param startLongitude Starting longitude
-     * @param startAltitude  Starting altitude. Currently ignored.
      * @param stopLatitude   Ending latitude
      * @param stopLongitude  Ending longitude
-     * @param stopAltitude   Ending altitude. Currently ignored.
      *
      * @return the Line as an Element
      */
