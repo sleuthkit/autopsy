@@ -332,6 +332,11 @@ final public class MapPanel extends javax.swing.JPanel {
      */
     void clearWaypoints() {
         waypointTree = null;
+        currentlySelectedWaypoint = null;
+        if (currentPopup != null) {
+            currentPopup.hide();
+        }
+        mapViewer.repaint();
     }
 
     /**
