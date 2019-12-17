@@ -8,8 +8,13 @@ The Geolocation window shows artifacts that have longitude and latitude attribut
 
 \section geo_usage Usage
 
+To open the geolocation window, go to "Tools" and then select "Geolocation".
+
 \subsection geo_navigation General Usage
 
+You can move the map by clicking and dragging, and zoom using either the mouse wheel or the slider in the bottom left. If a map tile is not available the tile will appear grey but the waypoints will still be displayed. 
+
+You can left click on a waypoint to highlight that waypoint and show a details pop-up in the upper right corner of the map. The details pop-up will be updated as you click on different waypoints. The data displayed will vary depending on the type of waypoint - 
 
 
 \subsection geo_filter Filtering
