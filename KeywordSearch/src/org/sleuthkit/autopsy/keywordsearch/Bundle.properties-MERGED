@@ -36,7 +36,7 @@ KeywordSearchResultFactory.createNodeForKey.noResultsFound.text=No results found
 KeywordSearchResultFactory.query.exception.msg=Could not perform the query 
 OpenIDE-Module-Display-Category=Ingest Module
 
-OpenIDE-Module-Long-Description=Keyword Search ingest module.\n\nThe module indexes files found in the disk image at ingest time.\nIt then periodically runs the search on the indexed files using one or more keyword lists (containing pure words and/or regular expressions) and posts results.\n\nThe module also contains additional tools integrated in the main GUI, such as keyword list configuration, keyword search bar in the top-right corner, extracted text viewer and search results viewer showing highlighted keywords found.
+OpenIDE-Module-Long-Description=Keyword Search ingest module.\n\nThe module indexes files found in the disk image at ingest time.\nIt then periodically runs the search on the indexed files using one or more keyword lists (containing pure words and/or regular expressions) and posts results.\n\n\The module also contains additional tools integrated in the main GUI, such as keyword list configuration, keyword search bar in the top-right corner, extracted text viewer and search results viewer showing highlighted keywords found.
 OpenIDE-Module-Name=KeywordSearch
 OptionsCategory_Name_KeywordSearchOptions=Keyword Search
 OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search
