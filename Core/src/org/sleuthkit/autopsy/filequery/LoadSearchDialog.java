@@ -32,6 +32,7 @@ import org.openide.windows.WindowManager;
 final class LoadSearchDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
+    private String fileName = null;
 
     /**
      * Creates new form SaveSearchDialog
@@ -40,6 +41,9 @@ final class LoadSearchDialog extends javax.swing.JDialog {
         super((JFrame) null, "Title here", true);
         initComponents();
         setResizable(false);
+        //get files in directory
+        //add strings for file names to list
+       
     }
 
     /**
@@ -129,7 +133,8 @@ final class LoadSearchDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        // TODO add your handling code here:
+        fileName = "testSave.json";
+        dispose();        // TODO add your handling code here:
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -147,13 +152,15 @@ final class LoadSearchDialog extends javax.swing.JDialog {
 
     SearchFilterSave getSearch() throws FileNotFoundException, IOException {
         //get name of selected search
-        String fileName = "testSave.json";
-        try (FileInputStream is = new FileInputStream(fileName); InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
-            GsonBuilder gsonBuilder = new GsonBuilder()
-                    .setPrettyPrinting();
-            Gson gson = gsonBuilder.create();
-            return gson.fromJson(reader, SearchFilterSave.class);
+        if (fileName != null) {
+            try (FileInputStream is = new FileInputStream(fileName); InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
+                GsonBuilder gsonBuilder = new GsonBuilder()
+                        .setPrettyPrinting();
+                Gson gson = gsonBuilder.create();
+                return gson.fromJson(reader, SearchFilterSave.class);
+            }
         }
+        return null;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

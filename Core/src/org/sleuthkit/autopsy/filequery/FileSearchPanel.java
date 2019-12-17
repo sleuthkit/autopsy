@@ -1829,13 +1829,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         return search;
     }
 
-    void loadSearch(SearchFilterSave search) {
+    void loadSearch(SearchFilterSave search) throws IllegalArgumentException {
         fileType = FileType.fromRanking(search.getSelectedFileType());
         orderByCombobox.setSelectedIndex(search.getOrderByIndex());
         groupByCombobox.setSelectedIndex(search.getGroupByIndex());
         groupSortingComboBox.setSelectedIndex(search.getOrderGroupsBy());
         
-        sizeCheckbox.setSelected(search.isScoreFilterEnabled());
+        sizeCheckbox.setSelected(search.isSizeFilterEnabled());
         if (sizeCheckbox.isSelected()) {
             sizeList.setSelectedIndices(search.getSizeFilters());
         }

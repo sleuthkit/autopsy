@@ -22,6 +22,7 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
@@ -34,6 +35,7 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
@@ -49,6 +51,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
+    private final static Logger logger = Logger.getLogger(DiscoveryTopComponent.class.getName());
     private static final String PREFERRED_ID = "DiscoveryTopComponent"; // NON-NLS
     private static final Color SELECTED_COLOR = new Color(216, 230, 242);
     private static final Color UNSELECTED_COLOR = new Color(240, 240, 240);
@@ -115,14 +118,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     void updateSearchSettings() {
         resetTopComponent();
         fileSearchPanel.resetPanel();
-        imagesButton.setSelected(true);
-        imagesButton.setEnabled(false);
-        imagesButton.setBackground(SELECTED_COLOR);
-        imagesButton.setForeground(Color.BLACK);
-        videosButton.setSelected(false);
-        videosButton.setEnabled(true);
-        videosButton.setBackground(UNSELECTED_COLOR);
-        fileSearchPanel.setSelectedType(FileSearchData.FileType.IMAGE);
+        selectType(FileType.IMAGE.getRanking());
     }
 
     @Override
@@ -300,36 +296,51 @@ public final class DiscoveryTopComponent extends TopComponent {
 
     private void imagesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imagesButtonActionPerformed
         resetTopComponent();
-        imagesButton.setSelected(true);
-        imagesButton.setEnabled(false);
-        imagesButton.setBackground(SELECTED_COLOR);
-        imagesButton.setForeground(Color.BLACK);
-        videosButton.setSelected(false);
-        videosButton.setEnabled(true);
-        videosButton.setBackground(UNSELECTED_COLOR);
-        fileSearchPanel.setSelectedType(FileSearchData.FileType.IMAGE);
+        selectType(FileType.IMAGE.getRanking());
     }//GEN-LAST:event_imagesButtonActionPerformed
 
     private void videosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_videosButtonActionPerformed
         resetTopComponent();
-        imagesButton.setSelected(false);
-        imagesButton.setEnabled(true);
-        imagesButton.setBackground(UNSELECTED_COLOR);
-        videosButton.setSelected(true);
-        videosButton.setEnabled(false);
-        videosButton.setBackground(SELECTED_COLOR);
-        videosButton.setForeground(Color.BLACK);
-        fileSearchPanel.setSelectedType(FileSearchData.FileType.VIDEO);
+        selectType(FileType.VIDEO.getRanking());
     }//GEN-LAST:event_videosButtonActionPerformed
+
+    private void selectType(int selectedTypeRanking) {
+        if (selectedTypeRanking == FileType.IMAGE.getRanking()) {
+            imagesButton.setSelected(true);
+            imagesButton.setEnabled(false);
+            imagesButton.setBackground(SELECTED_COLOR);
+            imagesButton.setForeground(Color.BLACK);
+            videosButton.setSelected(false);
+            videosButton.setEnabled(true);
+            videosButton.setBackground(UNSELECTED_COLOR);
+            fileSearchPanel.setSelectedType(FileSearchData.FileType.IMAGE);
+        } else if (selectedTypeRanking == FileType.VIDEO.getRanking()) {
+            imagesButton.setSelected(false);
+            imagesButton.setEnabled(true);
+            imagesButton.setBackground(UNSELECTED_COLOR);
+            videosButton.setSelected(true);
+            videosButton.setEnabled(false);
+            videosButton.setBackground(SELECTED_COLOR);
+            videosButton.setForeground(Color.BLACK);
+            fileSearchPanel.setSelectedType(FileSearchData.FileType.VIDEO);
+        }
+    }
 
     private void loadSavedFiltersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadSavedFiltersButtonActionPerformed
         LoadSearchDialog loadSearchDialog = new LoadSearchDialog();
         loadSearchDialog.display();
         try {
             SearchFilterSave save = loadSearchDialog.getSearch();
-            fileSearchPanel.loadSearch(save);
+            if (save != null) {
+                selectType(save.getSelectedFileType());
+                try {
+                    fileSearchPanel.loadSearch(save);
+                } catch (IllegalArgumentException ex) {
+                    logger.log(Level.WARNING, "Saved Search filters unable to be loaded, value which existed previously likely does not currently exist", ex);
+                }
+            }
         } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Unable to get saved search from loadsearch dialog", ex);
         }
     }//GEN-LAST:event_loadSavedFiltersButtonActionPerformed
 
