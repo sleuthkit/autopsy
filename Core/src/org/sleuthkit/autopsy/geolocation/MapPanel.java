@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -71,6 +72,7 @@ import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.datamodel.TskCoreException;
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
+import javax.swing.event.MouseInputAdapter;
 import org.jxmapviewer.viewer.DefaultWaypointRenderer;
 
 /**
@@ -140,6 +142,8 @@ final public class MapPanel extends javax.swing.JPanel {
                 }
             }
         });
+        
+       
     }
 
     /**
@@ -172,7 +176,8 @@ final public class MapPanel extends javax.swing.JPanel {
         mapViewer.setTileFactory(tileFactory);
 
         // Add Mouse interactions
-        MouseInputListener mia = new PanMouseInputListener(mapViewer);
+//        MouseInputListener mia = new PanMouseInputListener(mapViewer);
+        MouseInputListener mia = new MapPanMouseInputListener(mapViewer);
         mapViewer.addMouseListener(mia);
         mapViewer.addMouseMotionListener(mia);
 
