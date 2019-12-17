@@ -194,6 +194,7 @@ public final class GeolocationTopComponent extends TopComponent {
     @Override
     public void open() {
         super.open();
+        mapPanel.clearWaypoints();
         geoFilterPanel.clearDataSourceList();
         geoFilterPanel.updateDataSourceList();
         try {
@@ -288,7 +289,7 @@ public final class GeolocationTopComponent extends TopComponent {
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss", Locale.US);
         Date date = new Date();
         String dateNoTime = dateFormat.format(date);
-        String reportPath = String.format(REPORT_PATH_FMT_STR, currentCase.getReportDirectory(), currentCase.getDisplayName(), "Goggle Earth KML", dateNoTime);
+        String reportPath = String.format(REPORT_PATH_FMT_STR, currentCase.getReportDirectory(), currentCase.getDisplayName(), "Google Earth KML", dateNoTime);
         // Create the root reports directory.
         try {
             FileUtil.createFolder(new File(reportPath));
