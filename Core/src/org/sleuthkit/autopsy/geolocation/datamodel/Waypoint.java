@@ -187,7 +187,7 @@ public class Waypoint {
     /**
      * Gets the label for this waypoint.
      *
-     * @param artifact BlackboardArtifact for waypoint
+     * @param attributeMap Attributes for waypoint
      *
      * @return Returns a label for the waypoint, or empty string if no label was
      *         found.
@@ -232,7 +232,7 @@ public class Waypoint {
      * will not include attributes that the Waypoint interfact has get functions
      * for.
      *
-     * @param artifact Blackboard artifact to get attributes\properties from
+     * @param attributeMap Attributes for the given artifact
      *
      * @return A List of Waypoint.Property objects
      *

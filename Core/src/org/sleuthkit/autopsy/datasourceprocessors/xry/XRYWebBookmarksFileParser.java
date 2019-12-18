@@ -18,9 +18,11 @@
  */
 package org.sleuthkit.autopsy.datasourceprocessors.xry;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -29,21 +31,22 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Parses XRY Web-Bookmark files and creates artifacts.
  */
-final class XRYWebBookmarksFileParser extends AbstractSingleKeyValueParser {
+final class XRYWebBookmarksFileParser extends AbstractSingleEntityParser {
 
     //All known XRY keys for web bookmarks.
-    private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> KEY_TO_TYPE
+    private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> XRY_KEYS
             = new HashMap<String, BlackboardAttribute.ATTRIBUTE_TYPE>() {
         {
             put("web address", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL);
             put("domain", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN);
+            put("application", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
         }
     };
 
     @Override
-    boolean isKey(String key) {
-        String normalizedKey = key.toLowerCase();
-        return KEY_TO_TYPE.containsKey(normalizedKey);
+    boolean canProcess(XRYKeyValuePair pair) {
+        String normalizedKey = pair.getKey().toLowerCase();
+        return XRY_KEYS.containsKey(normalizedKey);
     }
 
     @Override
@@ -52,15 +55,29 @@ final class XRYWebBookmarksFileParser extends AbstractSingleKeyValueParser {
         return false;
     }
 
-    @Override
-    BlackboardAttribute makeAttribute(String nameSpace, String key, String value) {
-        String normalizedKey = key.toLowerCase();
-        return new BlackboardAttribute(KEY_TO_TYPE.get(normalizedKey), PARSER_NAME, value);
+    /**
+     * Creates the appropriate blackboard attribute given a single XRY Key Value
+     * pair.
+     */
+    private Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
+        String normalizedKey = pair.getKey().toLowerCase();
+        return Optional.of(new BlackboardAttribute(
+                XRY_KEYS.get(normalizedKey), 
+                PARSER_NAME, pair.getValue()));
     }
     
     @Override
-    void makeArtifact(List<BlackboardAttribute> attributes, Content parent) throws TskCoreException {
-        BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-        artifact.addAttributes(attributes);
+    void makeArtifact(List<XRYKeyValuePair> keyValuePairs, Content parent) throws TskCoreException {
+        List<BlackboardAttribute> attributes = new ArrayList<>();
+        for(XRYKeyValuePair pair : keyValuePairs) {
+            Optional<BlackboardAttribute> attribute = getBlackboardAttribute(pair);
+            if(attribute.isPresent()) {
+                attributes.add(attribute.get());
+            }
+        }
+        if(!attributes.isEmpty()) {
+            BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
+            artifact.addAttributes(attributes);
+        }
     }
 }

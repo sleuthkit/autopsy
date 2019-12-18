@@ -18,9 +18,13 @@
  */
 package org.sleuthkit.autopsy.datasourceprocessors.xry;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.Optional;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -29,19 +33,35 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Parses XRY Contacts-Contacts files and creates artifacts.
  */
-final class XRYContactsFileParser extends AbstractSingleKeyValueParser {
+final class XRYContactsFileParser extends AbstractSingleEntityParser {
+    
+    private static final Logger logger = Logger.getLogger(XRYContactsFileParser.class.getName());
 
     //All of the known XRY keys for contacts.
-    private static final Set<String> XRY_KEYS = new HashSet<String>() {{
-        add("name");
-        add("tel");
-        add("storage");
+    private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> XRY_KEYS = 
+            new HashMap<String, BlackboardAttribute.ATTRIBUTE_TYPE>() {{
+        put("name", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
+        put("tel", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER);
+        put("mobile", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE);
+        put("home", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME);
+        put("related application", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
+        put("address home", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION);
+        put("email home", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_HOME);
+        put("deleted", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ISDELETED);
+        
+        //Ignoring or need more information to decide.
+        put("storage", null);
+        put("other", null);
+        put("picture", null);
+        put("index", null);
+        put("account name", null);
+        
     }};
-
+    
     @Override
-    boolean isKey(String key) {
-        String normalizedKey = key.toLowerCase();
-        return XRY_KEYS.contains(normalizedKey);
+    boolean canProcess(XRYKeyValuePair pair) {
+        String normalizedKey = pair.getKey().toLowerCase();
+        return XRY_KEYS.containsKey(normalizedKey);
     }
 
     @Override
@@ -50,25 +70,36 @@ final class XRYContactsFileParser extends AbstractSingleKeyValueParser {
         return false;
     }
 
-    @Override
-    BlackboardAttribute makeAttribute(String nameSpace, String key, String value) {
-        String normalizedKey = key.toLowerCase();
-        switch(normalizedKey) {
-            case "name":
-                return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, PARSER_NAME, value);
-            case "tel":
-                return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, PARSER_NAME, value);
-            case "storage":
-                //Ignore for now.
-                return null;
-            default:
-                throw new IllegalArgumentException(String.format("Key [ %s ] was not recognized", key));
+    /**
+     * Creates the appropriate blackboard attribute given a single XRY Key Value
+     * pair. 
+     */
+    private Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
+        String normalizedKey = pair.getKey().toLowerCase();
+        BlackboardAttribute.ATTRIBUTE_TYPE attrType = XRY_KEYS.get(normalizedKey);
+        if(attrType != null) {
+            return Optional.of(new BlackboardAttribute(attrType, PARSER_NAME, pair.getValue()));
         }
+
+        logger.log(Level.INFO, String.format("[XRY DSP] Key value pair "
+               + "(in brackets) [ %s ] was recognized but we need "
+               + "more data or time to finish implementation. Discarding... ", 
+               pair));
+        return Optional.empty();
     }
     
     @Override
-    void makeArtifact(List<BlackboardAttribute> attributes, Content parent) throws TskCoreException {
-        BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
-        artifact.addAttributes(attributes);
+    void makeArtifact(List<XRYKeyValuePair> keyValuePairs, Content parent) throws TskCoreException {
+        List<BlackboardAttribute> attributes = new ArrayList<>();
+        for(XRYKeyValuePair pair : keyValuePairs) {
+            Optional<BlackboardAttribute> attribute = getBlackboardAttribute(pair);
+            if(attribute.isPresent()) {
+                attributes.add(attribute.get());
+            }
+        }
+        if(!attributes.isEmpty()) {
+            BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
+            artifact.addAttributes(attributes);
+        }
     }
 }

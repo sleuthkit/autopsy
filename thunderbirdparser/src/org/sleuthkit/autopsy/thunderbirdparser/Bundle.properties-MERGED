@@ -15,6 +15,7 @@ ThunderbirdMboxFileIngestModule.addArtifact.indexError.message=Failed to index e
 # {0} - file name
 # {1} - file ID
 ThunderbirdMboxFileIngestModule.errorMessage.outOfDiskSpace=Out of disk space. Cannot copy '{0}' (id={1}) to parse.
+ThunderbirdMboxFileIngestModule.handleAttch.addAttachmentsErrorMsg=Failed to add attachments to email message.
 ThunderbirdMboxFileIngestModule.moduleName=Email Parser
 ThunderbirdMboxFileIngestModule.noOpenCase.errMsg=Exception while getting open case.
 ThunderbirdMboxFileIngestModule.processPst.errMsg.outOfDiskSpace=Out of disk space. Cannot copy {0} to parse.

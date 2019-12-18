@@ -85,6 +85,8 @@ public final class GeolocationTopComponent extends TopComponent {
 
     // This is the hardcoded report name from KMLReport.java
     private static final String REPORT_KML = "ReportKML.kml";
+    
+    private boolean mapInitalized = false;
 
     @Messages({
         "GLTopComponent_name=Geolocation",
@@ -194,20 +196,26 @@ public final class GeolocationTopComponent extends TopComponent {
     @Override
     public void open() {
         super.open();
+        mapPanel.clearWaypoints();
         geoFilterPanel.clearDataSourceList();
         geoFilterPanel.updateDataSourceList();
-        try {
-            mapPanel.initMap();
-        } catch (GeoLocationDataException ex) {
-            JOptionPane.showMessageDialog(this,
-                    Bundle.GeolocationTC_connection_failure_message(),
-                    Bundle.GeolocationTC_connection_failure_message_title(),
-                    JOptionPane.ERROR_MESSAGE);
-            MessageNotifyUtil.Notify.error(
-                    Bundle.GeolocationTC_connection_failure_message_title(),
-                    Bundle.GeolocationTC_connection_failure_message());
-            logger.log(Level.SEVERE, ex.getMessage(), ex);
-            return; // Doen't set the waypoints.
+        
+        // Let's make sure we only do this on the first open
+        if (!mapInitalized) {
+            try {
+                mapPanel.initMap();
+                mapInitalized = true;
+            } catch (GeoLocationDataException ex) {
+                JOptionPane.showMessageDialog(this,
+                        Bundle.GeolocationTC_connection_failure_message(),
+                        Bundle.GeolocationTC_connection_failure_message_title(),
+                        JOptionPane.ERROR_MESSAGE);
+                MessageNotifyUtil.Notify.error(
+                        Bundle.GeolocationTC_connection_failure_message_title(),
+                        Bundle.GeolocationTC_connection_failure_message());
+                logger.log(Level.SEVERE, ex.getMessage(), ex);
+                return; // Doen't set the waypoints.
+            }
         }
         mapPanel.setWaypoints(new ArrayList<>());
         updateWaypoints();
@@ -288,7 +296,7 @@ public final class GeolocationTopComponent extends TopComponent {
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss", Locale.US);
         Date date = new Date();
         String dateNoTime = dateFormat.format(date);
-        String reportPath = String.format(REPORT_PATH_FMT_STR, currentCase.getReportDirectory(), currentCase.getDisplayName(), "Goggle Earth KML", dateNoTime);
+        String reportPath = String.format(REPORT_PATH_FMT_STR, currentCase.getReportDirectory(), currentCase.getDisplayName(), "Google Earth KML", dateNoTime);
         // Create the root reports directory.
         try {
             FileUtil.createFolder(new File(reportPath));
@@ -431,6 +439,8 @@ public final class GeolocationTopComponent extends TopComponent {
                                 Bundle.GeoTopComponent_filter_exception_Title(),
                                 Bundle.GeoTopComponent_filter_exception_msg(),
                                 JOptionPane.ERROR_MESSAGE);
+                        
+                        setWaypointLoading(false);
                     }
                 });
             }
@@ -444,7 +454,7 @@ public final class GeolocationTopComponent extends TopComponent {
     private class WaypointCallBack implements WaypointFilterQueryCallBack {
 
         @Override
-        public void process(List<Waypoint> waypoints) {
+        public void process(final List<Waypoint> waypoints) {
             // Make sure that the waypoints are added to the map panel in
             // the correct thread.
             SwingUtilities.invokeLater(new Runnable() {
@@ -453,13 +463,16 @@ public final class GeolocationTopComponent extends TopComponent {
                     // If the list is empty, tell the user and do not change 
                     // the visible waypoints.
                     if (waypoints == null || waypoints.isEmpty()) {
+                        mapPanel.clearWaypoints();
                         JOptionPane.showMessageDialog(GeolocationTopComponent.this,
                                 Bundle.GeoTopComponent_no_waypoints_returned_Title(),
                                 Bundle.GeoTopComponent_no_waypoints_returned_mgs(),
                                 JOptionPane.INFORMATION_MESSAGE);
-
+                        setWaypointLoading(false);
+                        geoFilterPanel.setEnabled(true);
                         return;
                     }
+                    mapPanel.clearWaypoints();
                     mapPanel.setWaypoints(MapWaypoint.getWaypoints(waypoints));
                     setWaypointLoading(false);
                     geoFilterPanel.setEnabled(true);

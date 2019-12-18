@@ -125,6 +125,7 @@ public final class Route {
     /**
      * Get the route start point.
      *
+     * @param artifact
      * @param attributeMap Map of artifact attributes for this waypoint.
      * 
      * An exception will be thrown if longitude or latitude is null.
