@@ -146,14 +146,22 @@ public class ResultsPanel extends javax.swing.JPanel {
      */
     synchronized void populateInstancesList() {
         SwingUtilities.invokeLater(() -> {
-            instancesList.removeListSelectionListener(listener);
-            instancesListModel.removeAllElements();
-            for (AbstractFile file : getInstancesForSelected()) {
-                instancesListModel.addElement(file);
-            }
-            instancesList.addListSelectionListener(listener);
-            if (!instancesListModel.isEmpty()) {
-                instancesList.setSelectedIndex(0);
+            List<AbstractFile> files = getInstancesForSelected();
+            if (files.isEmpty()) {
+                //if there are no files currently remove the current items without removing listener to cause content viewer to reset
+                instancesListModel.removeAllElements();
+            } else {
+                //remove listener so content viewer node is not set multiple times
+                instancesList.removeListSelectionListener(listener);
+                instancesListModel.removeAllElements();
+                for (AbstractFile file : files) {
+                    instancesListModel.addElement(file);
+                }
+                //add listener back to allow selection of first index to cause content viewer node to be set
+                instancesList.addListSelectionListener(listener);
+                if (!instancesListModel.isEmpty()) {
+                    instancesList.setSelectedIndex(0);
+                }
             }
         });
     }

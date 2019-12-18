@@ -49,6 +49,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_USER_CONTENT_SUSPECTED;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE;
@@ -130,6 +131,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         return processFile(content);
     }
 
+    @Messages({"ExifParserFileIngestModule.userContent.description=EXIF metadata exists for this file."})
     private ProcessResult processFile(AbstractFile file) {
 
         try (BufferedInputStream bin = new BufferedInputStream(new ReadContentInputStream(file));) {
@@ -193,11 +195,13 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 // Create artifact if it doesn't already exist.
                 if (!blackboard.artifactExists(file, TSK_METADATA_EXIF, attributes)) {
                     BlackboardArtifact bba = file.newArtifact(TSK_METADATA_EXIF);
+                    BlackboardArtifact bba2 = file.newArtifact(TSK_USER_CONTENT_SUSPECTED);
                     bba.addAttributes(attributes);
-
+                    bba2.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION, MODULE_NAME, Bundle.ExifParserFileIngestModule_userContent_description()));
                     try {
                         // index the artifact for keyword search
                         blackboard.postArtifact(bba, MODULE_NAME);
+                        blackboard.postArtifact(bba2, MODULE_NAME);
                     } catch (Blackboard.BlackboardException ex) {
                         logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(
