@@ -514,7 +514,8 @@ public class Server {
         if (isPortAvailable(currentSolrServerPort)) {
             logger.log(Level.INFO, "Port [{0}] available, starting Solr", currentSolrServerPort); //NON-NLS
             try {
-                curSolrProcess = runSolrCommand(new ArrayList<>(Arrays.asList("start", "-c", "-p", //NON-NLS
+                //curSolrProcess = runSolrCommand(new ArrayList<>(Arrays.asList("start", "-c", "-p", //NON-NLS
+                curSolrProcess = runSolrCommand(new ArrayList<>(Arrays.asList("start", "-p", //NON-NLS
 								Integer.toString(currentSolrServerPort),
                         		"-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
                                 "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
@@ -676,7 +677,7 @@ public class Server {
             // making a statusRequest request here instead of just doing solrServer.ping(), because
             // that doesn't work when there are no cores
             //TODO handle timeout in cases when some other type of server on that port
-            connectToSolrServer(localSolrServer);
+            connectToEbmeddedSolrServer(localSolrServer);
 
             logger.log(Level.INFO, "Solr server is running"); //NON-NLS
         } catch (SolrServerException ex) {
@@ -854,15 +855,21 @@ public class Server {
                 // check if the embedded Solr server is running
                 if (!this.isEmbeddedSolrRunning()) {
                     logger.log(Level.SEVERE, "Core create/open requested, but server not yet running"); //NON-NLS
-                    throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
+                    throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg")); 
                 }
+                
+                TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
+                connectToEbmeddedSolrServer(currentSolrServer);
+                HealthMonitor.submitTimingMetric(metric);
+                
             } else {
                 IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
                 currentSolrServer = new HttpSolrClient.Builder("http://" + properties.getHost() + ":" + properties.getPort() + "/solr").build(); //NON-NLS
+                TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
+                connectToSolrServer(currentSolrServer);
+                HealthMonitor.submitTimingMetric(metric);
             }
-            TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
-            connectToSolrServer(currentSolrServer);
-            HealthMonitor.submitTimingMetric(metric);
+
 
         } catch (SolrServerException | IOException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
@@ -875,12 +882,41 @@ public class Server {
             }
 
             String collectionName = index.getIndexName();
-            if (!collectionExists(collectionName)) {
-                /*
+            if (theCase.getCaseType() == CaseType.MULTI_USER_CASE) {
+                if (!collectionExists(collectionName)) {
+                    /*
                  * The core either does not exist or it is not loaded. Make a
                  * request that will cause the core to be created if it does not
                  * exist or loaded if it already exists.
-                 */
+                     */
+
+                    Properties properties = new Properties();
+                    properties.setProperty("dataDir", dataDir.getAbsolutePath());
+                    properties.setProperty("transient", "true");
+                    properties.setProperty("loadOnStartup", "false");
+
+                    Integer numShards = 1;
+                    Integer numNrtReplicas = 1;
+                    Integer numTlogReplicas = 0;
+                    Integer numPullReplicas = 0;
+                    CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas)
+                            .setProperties(properties);
+                    CollectionAdminResponse createResponse = createCollectionRequest.process(currentSolrServer);
+                    if (createResponse.isSuccess()) {
+                        logger.log(Level.INFO, "Collection {} successfully created.", collectionName);
+                    } else {
+                        // ELTODO use different error string
+                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+                    }
+
+                    /* If we need core name:
+                Map<String, NamedList<Integer>> status = createResponse.getCollectionCoresStatus();
+                existingCoreName = status.keySet().iterator().next();*/
+                    if (!collectionExists(collectionName)) {
+                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+                    }
+                }
+            } else {
 
                 // In single user mode, if there is a core.properties file already,
                 // we've hit a solr bug. Compensate by deleting it.
@@ -894,50 +930,21 @@ public class Server {
                         }
                     }
                 }
+                // for single user cases, we unload the core when we close the case. So we have to load the core again. 
 
-                Properties properties = new Properties();
-                properties.setProperty("dataDir", dataDir.getAbsolutePath());
-                properties.setProperty("transient", "true");
-                properties.setProperty("loadOnStartup", "false");                
+                // core name is (collectionName + "_shard1_replica_n1")
+                //String coreName = collectionName + "_shard1_replica_n1";
 
-                Integer numShards = 1;
-                Integer numNrtReplicas = 1;
-                Integer numTlogReplicas = 0;
-                Integer numPullReplicas = 0;
-                CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas)
-                        .setProperties(properties);
-                CollectionAdminResponse createResponse = createCollectionRequest.process(currentSolrServer);
-                if (createResponse.isSuccess()) {
-                    logger.log(Level.INFO, "Collection {} successfully created.", collectionName);
-                } else {
-                    // ELTODO use different error string
+                CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
+                createCoreRequest.setDataDir(dataDir.getAbsolutePath());
+                createCoreRequest.setCoreName(collectionName);
+                createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
+                createCoreRequest.setIsLoadOnStartup(false);
+                createCoreRequest.setIsTransient(true);
+                currentSolrServer.request(createCoreRequest);
+
+                if (!coreIndexFolderExists(collectionName)) {
                     throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
-                }
-
-                /* If we need core name:
-                Map<String, NamedList<Integer>> status = createResponse.getCollectionCoresStatus();
-                existingCoreName = status.keySet().iterator().next();*/
-                if (!collectionExists(collectionName)) {
-                    throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
-                }
-            } else {
-                if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
-                    // for single user cases, we unload the core when we close the case. So we have to load the core again. 
-
-                    // core name is (collectionName + "_shard1_replica_n1")
-                    String coreName = collectionName + "_shard1_replica_n1";
-
-                    CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
-                    createCoreRequest.setDataDir(dataDir.getAbsolutePath());
-                    createCoreRequest.setCoreName(coreName);
-                    createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
-                    createCoreRequest.setIsLoadOnStartup(false);
-                    createCoreRequest.setIsTransient(true);
-                    currentSolrServer.request(createCoreRequest);
-                    
-                    if (!coreIndexFolderExists(coreName)) {
-                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
-                    }
                 }
             }
             
@@ -1468,9 +1475,22 @@ public class Server {
     public static String getChunkIdString(long parentID, int childID) {
         return Long.toString(parentID) + Server.CHUNK_ID_SEPARATOR + Integer.toString(childID);
     }
+    
+    /**
+     * Attempts to connect to the embedded Solr server, which is NOT running in SolrCloud mode.
+     *
+     * @param solrServer
+     *
+     * @throws SolrServerException
+     * @throws IOException
+     */
+    void connectToEbmeddedSolrServer(HttpSolrClient solrServer) throws SolrServerException, IOException {
+        CoreAdminRequest.getStatus(null, solrServer);
+    }
 
     /**
-     * Attempts to connect to the given Solr server.
+     * Attempts to connect to the given Solr server, which is running in SoulrCloud mode. This API does not work
+     * for the embedded Solr which is NOT running in SolrCloud mode.
      *
      * @param solrServer
      *
@@ -1682,9 +1702,9 @@ public class Server {
             for reference. */
             
             // core name is (collectionName + "_shard1_replica_n1")
-            String coreName = this.name + "_shard1_replica_n1";
+            //String coreName = this.name + "_shard1_replica_n1";
             try {
-                CoreAdminRequest.unloadCore(coreName, currentSolrServer);
+                CoreAdminRequest.unloadCore(this.name, currentSolrServer);
             } catch (SolrServerException ex) {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.close.exception.msg"), ex);
