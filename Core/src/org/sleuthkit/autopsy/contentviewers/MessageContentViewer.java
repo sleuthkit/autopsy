@@ -520,14 +520,16 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             try {
                 SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                 AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-                List<BlackboardArtifact> artifactsList = tskCase.getBlackboardArtifacts(TSK_ASSOCIATED_OBJECT, file.getId());
+                if (file != null) {
+                    List<BlackboardArtifact> artifactsList = tskCase.getBlackboardArtifacts(TSK_ASSOCIATED_OBJECT, file.getId());
 
-                for (BlackboardArtifact fileArtifact : artifactsList) {
-                    BlackboardAttribute associatedArtifactAttribute = fileArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
-                    if (associatedArtifactAttribute != null) {
-                        BlackboardArtifact associatedArtifact = fileArtifact.getSleuthkitCase().getBlackboardArtifact(associatedArtifactAttribute.getValueLong());
-                        if (isMessageArtifact(associatedArtifact)) {
-                            nodeArtifact = associatedArtifact;
+                    for (BlackboardArtifact fileArtifact : artifactsList) {
+                        BlackboardAttribute associatedArtifactAttribute = fileArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                        if (associatedArtifactAttribute != null) {
+                            BlackboardArtifact associatedArtifact = fileArtifact.getSleuthkitCase().getBlackboardArtifact(associatedArtifactAttribute.getValueLong());
+                            if (isMessageArtifact(associatedArtifact)) {
+                                nodeArtifact = associatedArtifact;
+                            }
                         }
                     }
                 }
