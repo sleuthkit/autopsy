@@ -79,8 +79,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        javax.swing.JButton jSourceGoToResultButton = new javax.swing.JButton();
-        javax.swing.JLabel jSourceLabel = new javax.swing.JLabel();
+        jSourceGoToResultButton = new javax.swing.JButton();
+        jSourceLabel = new javax.swing.JLabel();
         jSourceNameLabel = new javax.swing.JLabel();
         jSourceTextLabel = new javax.swing.JLabel();
 
@@ -165,7 +165,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         "ContextViewer.title=Context",
         "ContextViewer.toolTip=Displays context for selected file."
     })
-    
+
     @Override
     public String getTitle() {
         return Bundle.ContextViewer_title();
@@ -188,6 +188,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
     @Override
     public void resetComponent() {
+        jSourceGoToResultButton.setVisible(false);
         setSourceName("");
         setSourceText("");
     }
@@ -238,23 +239,23 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         boolean foundASource = false;
         for (BlackboardArtifact.ARTIFACT_TYPE artifactType : SOURCE_CONTEXT_ARTIFACTS) {
             List<BlackboardArtifact> artifactsList = tskCase.getBlackboardArtifacts(artifactType, sourceFile.getId());
-            
+
             foundASource = !artifactsList.isEmpty();
             for (BlackboardArtifact contextArtifact : artifactsList) {
                 addSourceEntry(contextArtifact);
             }
         }
+        jSourceGoToResultButton.setVisible(true);
         if (foundASource == false) {
             setSourceName("Unknown");
             showSourceText(false);
         }
+
     }
 
-    
-
     /**
-     * Adds a source context entry for the selected file based on the given context
-     * providing artifact.
+     * Adds a source context entry for the selected file based on the given
+     * context providing artifact.
      *
      * @param artifact Artifact that may provide context.
      *
@@ -315,15 +316,17 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     /**
      * Sets the source text string.
      *
-     * @param nameLabel String value for source text.
+     * @param text String value for source text.
      */
     private void setSourceText(String text) {
         jSourceTextLabel.setText(text);
-        showSourceText(true);
+        showSourceText(!text.isEmpty());
     }
 
-    private void showSourceText(boolean isVisible) {
-        jSourceTextLabel.setVisible(isVisible);
+    private void showSourceText(boolean show) {
+        jSourceTextLabel.setVisible(show);
+        jSourceGoToResultButton.setEnabled(show);
+        jSourceLabel.setVisible(show);
     }
 
     /**
@@ -366,8 +369,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         "ContextViewer.email=Email",
         "ContextViewer.messageFrom=From",
         "ContextViewer.messageTo=To",
-        "ContextViewer.messageOn=On",
-    })
+        "ContextViewer.messageOn=On",})
     private String msgArtifactToAbbreviatedString(BlackboardArtifact artifact) throws TskCoreException {
 
         StringBuilder sb = new StringBuilder(ARTIFACT_STR_MAX_LEN);
@@ -391,11 +393,11 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      * Looks up specified attribute in the given map and, if found, appends its
      * value to the given string builder.
      *
-     * @param sb String builder to append to.
-     * @param attribType Attribute type to look for.
+     * @param sb            String builder to append to.
+     * @param attribType    Attribute type to look for.
      * @param attributesMap Attributes map.
-     * @param prependStr Optional string that is prepended before the attribute
-     * value.
+     * @param prependStr    Optional string that is prepended before the
+     *                      attribute value.
      */
     private void appendAttributeString(StringBuilder sb, BlackboardAttribute.ATTRIBUTE_TYPE attribType,
             Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap, String prependStr) {
@@ -436,6 +438,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jSourceGoToResultButton;
+    private javax.swing.JLabel jSourceLabel;
     private javax.swing.JLabel jSourceNameLabel;
     private javax.swing.JLabel jSourceTextLabel;
     // End of variables declaration//GEN-END:variables

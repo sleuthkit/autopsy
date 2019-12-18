@@ -610,7 +610,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
          * display string.
          *
          * @param element JSON element to convert
-         * @param indentStr Starting indentation for the element.
+         * @param startIndent Starting indentation for the element.
          *
          * @return A multi-line display string.
          */
@@ -634,7 +634,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         /**
          * Converts the given JSON element into string and appends to the given string builder.
          * 
-         * @param entry JSON entry to parse
+         * @param jsonKey
+         * @param jsonElement
          * @param startIndent Starting indentation for the element.
          * @param sb String builder to append to.
          */
