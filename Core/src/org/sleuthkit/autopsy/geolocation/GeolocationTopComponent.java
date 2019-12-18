@@ -85,6 +85,8 @@ public final class GeolocationTopComponent extends TopComponent {
 
     // This is the hardcoded report name from KMLReport.java
     private static final String REPORT_KML = "ReportKML.kml";
+    
+    private boolean mapInitalized = false;
 
     @Messages({
         "GLTopComponent_name=Geolocation",
@@ -197,18 +199,23 @@ public final class GeolocationTopComponent extends TopComponent {
         mapPanel.clearWaypoints();
         geoFilterPanel.clearDataSourceList();
         geoFilterPanel.updateDataSourceList();
-        try {
-            mapPanel.initMap();
-        } catch (GeoLocationDataException ex) {
-            JOptionPane.showMessageDialog(this,
-                    Bundle.GeolocationTC_connection_failure_message(),
-                    Bundle.GeolocationTC_connection_failure_message_title(),
-                    JOptionPane.ERROR_MESSAGE);
-            MessageNotifyUtil.Notify.error(
-                    Bundle.GeolocationTC_connection_failure_message_title(),
-                    Bundle.GeolocationTC_connection_failure_message());
-            logger.log(Level.SEVERE, ex.getMessage(), ex);
-            return; // Doen't set the waypoints.
+        
+        // Let's make sure we only do this on the first open
+        if (!mapInitalized) {
+            try {
+                mapPanel.initMap();
+                mapInitalized = true;
+            } catch (GeoLocationDataException ex) {
+                JOptionPane.showMessageDialog(this,
+                        Bundle.GeolocationTC_connection_failure_message(),
+                        Bundle.GeolocationTC_connection_failure_message_title(),
+                        JOptionPane.ERROR_MESSAGE);
+                MessageNotifyUtil.Notify.error(
+                        Bundle.GeolocationTC_connection_failure_message_title(),
+                        Bundle.GeolocationTC_connection_failure_message());
+                logger.log(Level.SEVERE, ex.getMessage(), ex);
+                return; // Doen't set the waypoints.
+            }
         }
         mapPanel.setWaypoints(new ArrayList<>());
         updateWaypoints();
