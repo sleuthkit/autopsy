@@ -39,6 +39,8 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -47,6 +49,7 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
@@ -67,6 +70,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHO
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.blackboardutils.FileAttachment;
 import org.sleuthkit.datamodel.blackboardutils.MessageAttachments;
@@ -370,7 +374,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             return;
         }
 
-        artifact = node.getLookup().lookup(BlackboardArtifact.class);
+        artifact = getNodeArtifact(node);
         if (artifact == null) {
             resetComponent();
             return;
@@ -465,7 +469,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
     @Override
     public boolean isSupported(Node node) {
-        BlackboardArtifact nodeArtifact = node.getLookup().lookup(BlackboardArtifact.class);
+        BlackboardArtifact nodeArtifact = getNodeArtifact(node);
 
         if (nodeArtifact == null) {
             return false;
@@ -498,10 +502,54 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 || artifactTypeID == TSK_MESSAGE.getTypeID();
     }
 
+    /**
+     * Returns the artifact represented by node.
+     *
+     * If the node lookup has an artifact, that artifact is returned. However,
+     * if the node lookup is a file, then we look for a TSK_ASSOCIATED_OBJECT
+     * artifact on the file, and if a message artifact is found associated with
+     * the file, that artifact is returned.
+     *
+     * @param node Node to check.
+     * @return Blackboard artifact for the node, null if there isn't any.
+     */
+    private BlackboardArtifact getNodeArtifact(Node node) {
+        BlackboardArtifact nodeArtifact = node.getLookup().lookup(BlackboardArtifact.class);
+
+        if (nodeArtifact == null) {
+            try {
+                SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+                List<BlackboardArtifact> artifactsList = tskCase.getBlackboardArtifacts(TSK_ASSOCIATED_OBJECT, file.getId());
+
+                for (BlackboardArtifact fileArtifact : artifactsList) {
+                    BlackboardAttribute associatedArtifactAttribute = fileArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                    if (associatedArtifactAttribute != null) {
+                        BlackboardArtifact associatedArtifact = fileArtifact.getSleuthkitCase().getBlackboardArtifact(associatedArtifactAttribute.getValueLong());
+                        if (isMessageArtifact(associatedArtifact)) {
+                            nodeArtifact = associatedArtifact;
+                        }
+                    }
+                }
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get file for selected node.", ex); //NON-NLS
+            }
+        }
+
+        return nodeArtifact;
+    }
+    
     @Override
     public int isPreferred(Node node) {
+        // For message artifacts this is a high priority viewer, 
+        // but for attachment files, this a lower priority vewer.
         if (isSupported(node)) {
-            return 7;
+            BlackboardArtifact nodeArtifact = node.getLookup().lookup(BlackboardArtifact.class);
+            if (nodeArtifact != null) { 
+                return 7;
+            } else {
+                return 1;
+            }
         }
         return 0;
     }
