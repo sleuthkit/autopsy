@@ -49,7 +49,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
-// ELTODO figure out how to use this instead: import org.apache.solr.client.solrj.impl.CloudSolrClient;
+// ELTODO see if this is better: import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
@@ -244,7 +244,7 @@ public class Server {
     private final ReentrantReadWriteLock currentCoreLock;
 
     private final File solrFolder;
-	private Path solrCmdPath;
+    private Path solrCmdPath;
     private Path solrHome;
     private final ServerAction serverAction;
     private InputStreamPrinterThread errorRedirectThread;
@@ -405,17 +405,7 @@ public class Server {
         final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + UserPreferences.getMaxSolrVMSize() + "m"; //NON-NLS
 
         List<String> commandLine = new ArrayList<>();
-		commandLine.add(solrCmdPath.toString());
-
-		/* ELTODO
-        commandLine.add(javaPath);
-        commandLine.add(MAX_SOLR_MEM_MB_PAR);
-        commandLine.add("-DSTOP.PORT=" + currentSolrStopPort); //NON-NLS
-        commandLine.add("-Djetty.port=" + currentSolrServerPort); //NON-NLS
-        commandLine.add("-DSTOP.KEY=" + KEY); //NON-NLS
-        commandLine.add("-jar"); //NON-NLS
-        commandLine.add("start.jar"); //NON-NLS */
-
+	commandLine.add(solrCmdPath.toString());
         commandLine.addAll(solrArguments);
 
         ProcessBuilder solrProcessBuilder = new ProcessBuilder(commandLine);
@@ -427,10 +417,11 @@ public class Server {
 
         Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr"); //NON-NLS
         solrProcessBuilder.redirectError(solrStderrPath.toFile());
-
+        
         solrProcessBuilder.environment().put("SOLR_JAVA_HOME", javaPath); // NON-NLS
         solrProcessBuilder.environment().put("SOLR_HOME", solrHome.toString()); // NON-NLS
-        solrProcessBuilder.environment().put("STOP_KEY", KEY); // NON-NLS
+        solrProcessBuilder.environment().put("STOP_KEY", KEY); // NON-NLS 
+        solrProcessBuilder.environment().put("SOLR_JAVA_MEM", MAX_SOLR_MEM_MB_PAR); // NON-NLS 
         logger.log(Level.INFO, "Running Solr command: {0}", solrProcessBuilder.command()); //NON-NLS
         Process process = solrProcessBuilder.start();
         logger.log(Level.INFO, "Finished running Solr command"); //NON-NLS
@@ -514,11 +505,10 @@ public class Server {
         if (isPortAvailable(currentSolrServerPort)) {
             logger.log(Level.INFO, "Port [{0}] available, starting Solr", currentSolrServerPort); //NON-NLS
             try {
-                //curSolrProcess = runSolrCommand(new ArrayList<>(Arrays.asList("start", "-c", "-p", //NON-NLS
                 curSolrProcess = runSolrCommand(new ArrayList<>(Arrays.asList("start", "-p", //NON-NLS
-								Integer.toString(currentSolrServerPort),
+					Integer.toString(currentSolrServerPort),
                         		"-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
-                                "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
+                                        "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
 
                 // Wait for the Solr server to start and respond to a statusRequest request.
                 for (int numRetries = 0; numRetries < 6; numRetries++) {
@@ -669,9 +659,7 @@ public class Server {
         try {
 
             if (isPortAvailable(currentSolrServerPort)) {
-                // ELTODO WHY FALSE?? return false;
                 return false;
-                //return true;
             }
 
             // making a statusRequest request here instead of just doing solrServer.ping(), because
@@ -846,6 +834,9 @@ public class Server {
      * @throws KeywordSearchModuleException If an error occurs while
      * creating/opening the core.
      */
+    @NbBundle.Messages({
+        "Server.exceptionMessage.unableToCreateCollection=Unable to create Solr collection",
+    })
     private Collection openCore(Case theCase, Index index) throws KeywordSearchModuleException {
 
         try {
@@ -854,23 +845,16 @@ public class Server {
 
                 // check if the embedded Solr server is running
                 if (!this.isEmbeddedSolrRunning()) {
-                    logger.log(Level.SEVERE, "Core create/open requested, but server not yet running"); //NON-NLS
+                    logger.log(Level.SEVERE, "Embedded Solr server is not running"); //NON-NLS
                     throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg")); 
                 }
                 
-                TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
-                connectToEbmeddedSolrServer(currentSolrServer);
-                HealthMonitor.submitTimingMetric(metric);
-                
+                connectToEbmeddedSolrServer(currentSolrServer);                
             } else {
                 IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
                 currentSolrServer = new HttpSolrClient.Builder("http://" + properties.getHost() + ":" + properties.getPort() + "/solr").build(); //NON-NLS
-                TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
                 connectToSolrServer(currentSolrServer);
-                HealthMonitor.submitTimingMetric(metric);
             }
-
-
         } catch (SolrServerException | IOException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
         }
@@ -885,10 +869,10 @@ public class Server {
             if (theCase.getCaseType() == CaseType.MULTI_USER_CASE) {
                 if (!collectionExists(collectionName)) {
                     /*
-                 * The core either does not exist or it is not loaded. Make a
-                 * request that will cause the core to be created if it does not
-                 * exist or loaded if it already exists.
-                     */
+                    * The core either does not exist or it is not loaded. Make a
+                    * request that will cause the core to be created if it does not
+                    * exist or loaded if it already exists.
+                    */
 
                     Properties properties = new Properties();
                     properties.setProperty("dataDir", dataDir.getAbsolutePath());
@@ -903,21 +887,22 @@ public class Server {
                             .setProperties(properties);
                     CollectionAdminResponse createResponse = createCollectionRequest.process(currentSolrServer);
                     if (createResponse.isSuccess()) {
-                        logger.log(Level.INFO, "Collection {} successfully created.", collectionName);
+                        logger.log(Level.INFO, "Collection {0} successfully created.", collectionName);
                     } else {
-                        // ELTODO use different error string
-                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+                        logger.log(Level.SEVERE, "Unable to create Solr collection {0}", collectionName); //NON-NLS
+                        throw new KeywordSearchModuleException(Bundle.Server_exceptionMessage_unableToCreateCollection());
                     }
 
                     /* If we need core name:
-                Map<String, NamedList<Integer>> status = createResponse.getCollectionCoresStatus();
-                existingCoreName = status.keySet().iterator().next();*/
+                    Map<String, NamedList<Integer>> status = createResponse.getCollectionCoresStatus();
+                    existingCoreName = status.keySet().iterator().next();*/
                     if (!collectionExists(collectionName)) {
                         throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
                     }
                 }
             } else {
-
+                // for single user cases, we unload the core when we close the case. So we have to load the core again. 
+                
                 // In single user mode, if there is a core.properties file already,
                 // we've hit a solr bug. Compensate by deleting it.
                 if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
@@ -930,10 +915,6 @@ public class Server {
                         }
                     }
                 }
-                // for single user cases, we unload the core when we close the case. So we have to load the core again. 
-
-                // core name is (collectionName + "_shard1_replica_n1")
-                //String coreName = collectionName + "_shard1_replica_n1";
 
                 CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
                 createCoreRequest.setDataDir(dataDir.getAbsolutePath());
@@ -947,10 +928,8 @@ public class Server {
                     throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
                 }
             }
-            
-            // ELTODO do we need to verify that the index directory exists?
 
-            return new Collection(collectionName/*existingCoreName*/, theCase.getCaseType(), index);
+            return new Collection(collectionName, theCase.getCaseType(), index);
 
         } catch (Exception ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
@@ -1485,7 +1464,9 @@ public class Server {
      * @throws IOException
      */
     void connectToEbmeddedSolrServer(HttpSolrClient solrServer) throws SolrServerException, IOException {
+        TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
         CoreAdminRequest.getStatus(null, solrServer);
+        HealthMonitor.submitTimingMetric(metric);
     }
 
     /**
@@ -1569,8 +1550,6 @@ public class Server {
 
             //TODO test these settings
             //solrCore.setConnectionTimeout(1000);
-            // ELTODO solrClient.setDefaultMaxConnectionsPerHost(32);
-            // ELTODO solrClient.setMaxTotalConnections(32);
             solrClient.setFollowRedirects(false);  // defaults to false
 
             solrClient.setParser(new XMLResponseParser()); // binary parser is used by default
