@@ -8,11 +8,11 @@ The Geolocation window shows artifacts that have longitude and latitude attribut
 
 \section geo_usage Usage
 
-To open the geolocation window, go to "Tools" and then select "Geolocation".
+To open the Geolocation window, go to "Tools" and then select "Geolocation".
 
 \subsection geo_navigation General Usage
 
-You can move the map by clicking and dragging, and zoom using either the mouse wheel or the slider in the bottom left. If a map tile is not available the tile will appear grey but the waypoints will still be displayed. This is more likely to happen when changing the default \ref geo_map_options.
+You can move the map by clicking and dragging, and zoom using either the mouse wheel or the slider in the bottom left of the map. If a map tile is not available the tile will appear grey but the waypoints will still be displayed. This is more likely to happen when changing the default \ref geo_map_options.
 
 You can left click on a waypoint to highlight that waypoint and show a details pop-up in the upper right corner of the map. The details pop-up will be updated as you click on different waypoints. The data displayed will vary depending on the type of waypoint. For example, this is the endpoint of a GPS Route:
 
@@ -28,24 +28,24 @@ You can also right click on a waypoint to bring up a similar menu to what you'd 
 
 \subsection geo_filter Filtering
 
-The filters are displayed on the left side of the screen. The top filter lets you filter the waypoints based on timestamp. If enabled, you will only see waypoints with a timestamp within X days of the most recent waypoint (not the current date). When using this filter you can also choose whether you want to see waypoints with no timestamp. The second filter allows you to show waypoints only for the selected data sources.
+The filters are displayed on the left side of the screen. The top filter lets you filter the waypoints based on timestamp. If enabled, you will only see waypoints with a timestamp within N days of the most recent waypoint (not the current date). When using this filter you can also choose whether you want to see waypoints with no timestamp. The second filter allows you to show waypoints only for the selected data sources.
 
 \image html geo_filter_panel.png
 
-If desired, the filter panel can be hidden by clicking on the vertical "Filters" tab in the top right of the filter panel. Clicking on that tab a second time will restore the filters panel.
+If desired, the filter panel can be hidden by clicking on the vertical "Filters" tab on the top right edge of the filter panel. Clicking on that tab a second time will restore the filters panel.
 
 \subsection geo_report Generating a Report
 
-You can generate a KML report using the "KML Report" button in the bottom left. The report will include only the currently visible waypoints and can be found in the "Reports" folder of your case.
+You can generate a KML report using the "KML Report" button in the bottom right corner of the window. The report will include only the currently visible waypoints and can be found in the "Reports" folder of your case. 
 
 \image html geo_report.png
 
-Note that you can also use the \ref report_kml report module to generate a report containing all GPS data in the case.
+As with other \ref reporting_page "report modules", the generated report will appear under "Reports" in the \ref tree_viewer_page. Note that you can also use the \ref report_kml report module to generate a report containing all geolocation data in the case.
 
 \section geo_map_options Map Tile Options
 
 <p>The Autopsy Geolocation window supports several map tile data source options. The map tile data source can be changed 
-on the Geolocation panel in the Options dialog. There are four options for Geolocation tile data, two of which can be used offline.
+on the Geolocation panel in the Options dialog. There are four options for geolocation tile data, two of which can be used offline.
 <ul>
 <li><b>Default online tile server</b>
 <ul>
@@ -84,8 +84,8 @@ By default Maperative uses an online tile server to generate the map.  For offli
 \subsubsection geo_generate_tile_image Generating tile image zip files using any map data source:
 <ol>
 <li>Download and run Maperative.
-<li>Center and Zoom in on area of interest.  The larger the area the more tiles that will be generated.  Tiles will be generated for the area visible in the map panel.
-<li>Choose whether you want to use the default zoom levels or custom ones. Zoom levels in Mapertive start at 1.  As the zoom level increases so will the quantity of tiles generated as well as the detail of each tile. Generating tiles, especially for heavily populated areas may take time, please be patient with either method.
+<li>Center and zoom in on area of interest.  The larger the area, the more tiles that will be generated.  Tiles will be generated for the area visible in the map panel.
+<li>Choose whether you want to use the default zoom levels or custom ones. Zoom levels in Mapertive start at 1.  As the zoom level increases so will the quantity of tiles generated as well as the detail of each tile. Generating tiles, especially for heavily populated areas, may take time, please be patient with either method.
 <ul>
 <li>To generate tiles using the default zoom levels, select Tools->Generate Tiles
 
@@ -93,7 +93,7 @@ By default Maperative uses an online tile server to generate the map.  For offli
 
 Maperative will generate tiles for zoom levels depending on the area of interest and the zoom level. For example, if you start all the way zoomed out, you will likely see levels 1 through 10 generated. If you start zoomed in, you might see levels 10 through 14.
 
-<li>Maperative provides a command interface which allows you to generate tiles for specific zoom levels. Commands can be run in the Command prompt text field at the bottom of the Maperative window. For a full list of commands see the Maperative documentation or http://maperitive.net/docs/ The <tt>generate-tiles</tt> command can be used to generate tiles for the area visible in the map panel area.  For full details on generate-tiles see the documentation included with Maperative or http://maperitive.net/docs/Commands/GenerateTiles.html The following is a sample command to generate tiles for zoom level 2 to 3 into the folder Tiles: 
+<li>Maperative provides a command interface which allows you to generate tiles for specific zoom levels. Commands can be run in the Command prompt text field at the bottom of the Maperative window. For a full list of commands see the Maperative documentation or <a href="http://maperitive.net/docs/">http://maperitive.net/docs/</a>. The <tt>generate-tiles</tt> command can be used to generate tiles for the area visible in the map panel area.  For full details on generate-tiles see the documentation included with Maperative or <a href="http://maperitive.net/docs/Commands/GenerateTiles.html">http://maperitive.net/docs/Commands/GenerateTiles.html</a>. The following is a sample command to generate tiles for zoom level 2 to 3 into the folder Tiles: 
 \verbatim generate-tiles minzoom=2 maxzoom=3 tilesdir=C:\Tiles \endverbatim
 
 \image html geo_command_line.png
