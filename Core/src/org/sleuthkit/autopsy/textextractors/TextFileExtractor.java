@@ -94,15 +94,6 @@ public final class TextFileExtractor implements TextExtractor {
         return file.getMIMEType().equals("text/plain");
     }
 
-    public class TextFileExtractorException extends Exception {
-        public TextFileExtractorException(String msg, Throwable ex) {
-            super(msg, ex);
-        }
-        public TextFileExtractorException(String msg) {
-            super(msg);
-        }
-    }
-
     public static Charset getEncoding(Content content) {
         try (InputStream stream = new BufferedInputStream(new ReadContentInputStream(content))) {
             // Tika first
