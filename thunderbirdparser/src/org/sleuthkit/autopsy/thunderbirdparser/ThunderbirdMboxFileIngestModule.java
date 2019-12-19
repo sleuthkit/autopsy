@@ -133,16 +133,20 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         } catch (TskException ex) {
             logger.log(Level.WARNING, null, ex);
         }
-
-        try {
-            communicationArtifactsHelper = new CommunicationArtifactsHelper(currentCase.getSleuthkitCase(),
-                    EmailParserModuleFactory.getModuleName(), abstractFile, Account.Type.EMAIL);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to create CommunicationArtifactsHelper for file with object id = %d", abstractFile.getId()), ex);
-            return ProcessResult.ERROR;
+        
+        boolean isPstFile = PstParser.isPstFile(abstractFile);
+        boolean isVcardFile = VcardParser.isVcardFile(abstractFile);
+        
+        if (isMbox || isEMLFile || isPstFile || isVcardFile  ) {
+            try {
+                communicationArtifactsHelper = new CommunicationArtifactsHelper(currentCase.getSleuthkitCase(),
+                        EmailParserModuleFactory.getModuleName(), abstractFile, Account.Type.EMAIL);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to create CommunicationArtifactsHelper for file with object id = %d", abstractFile.getId()), ex);
+                return ProcessResult.ERROR;
+            }
         }
-
-       
+        
         if (isMbox) {
             return processMBox(abstractFile);
         }
@@ -151,11 +155,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             return processEMLFile(abstractFile);
         }
 
-        if (PstParser.isPstFile(abstractFile)) {
+        if (isPstFile) {
             return processPst(abstractFile);
         }
         
-        if (VcardParser.isVcardFile(abstractFile)) {
+        if (isVcardFile) {
             return processVcard(abstractFile);
         }
 
