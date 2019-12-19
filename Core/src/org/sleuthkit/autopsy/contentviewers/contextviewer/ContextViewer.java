@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers;
+package org.sleuthkit.autopsy.contentviewers.contextviewer;
 
 import java.awt.Component;
 import java.util.ArrayList;
