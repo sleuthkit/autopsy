@@ -680,7 +680,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * Returns true if indexing was successful and false otherwise.
          *
          * @param aFile Text file to analyze
-         * @param detectedCharset the encoding of the file
          */
         private boolean indexTextFile(AbstractFile aFile) {
             try {

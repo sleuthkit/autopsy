@@ -102,15 +102,6 @@ public final class TextFileExtractor implements TextExtractor {
         return file.getMIMEType().equals("text/plain");
     }
 
-    public class TextFileExtractorException extends Exception {
-        public TextFileExtractorException(String msg, Throwable ex) {
-            super(msg, ex);
-        }
-        public TextFileExtractorException(String msg) {
-            super(msg);
-        }
-    }
-
     /**
      * Return the encoding of the file
      * @return Detected encoding or UNKNOWN_CHARSET 

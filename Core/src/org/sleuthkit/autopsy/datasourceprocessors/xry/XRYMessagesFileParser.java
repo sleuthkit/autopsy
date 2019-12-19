@@ -106,7 +106,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
         /**
          * Indicates if the display name of the XRY key is a recognized type.
          *
-         * @param xryKey
+         * @param name
          * @return
          */
         public static boolean contains(String name) {
@@ -125,7 +125,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
          * IllegalArgumentException is thrown. Test all membership with
          * contains() before hand.
          *
-         * @param xryKey
+         * @param name
          * @return
          */
         public static XryKey fromDisplayName(String name) {
@@ -217,7 +217,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
         /**
          * Indicates if the display name of the XRY key is a recognized type.
          *
-         * @param xryKey
+         * @param name
          * @return
          */
         public static boolean contains(String name) {
@@ -236,7 +236,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
          * IllegalArgumentException is thrown. Test all membership with
          * contains() before hand.
          *
-         * @param xryKey
+         * @param name
          * @return
          */
         public static XryMetaKey fromDisplayName(String name) {
