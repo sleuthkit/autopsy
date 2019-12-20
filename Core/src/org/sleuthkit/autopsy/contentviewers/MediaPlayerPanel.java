@@ -72,6 +72,7 @@ import org.freedesktop.gstreamer.Format;
 import org.freedesktop.gstreamer.GstException;
 import org.freedesktop.gstreamer.event.SeekFlags;
 import org.freedesktop.gstreamer.event.SeekType;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * This is a video player that is part of the Media View layered pane. It uses
@@ -216,6 +217,14 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         //True for fairness. In other words,
         //acquire() calls are processed in order of invocation.
         sliderLock = new Semaphore(1, true);
+        
+        /**
+         * See JIRA-5888 for details. Initializing gstreamer here is more stable
+         * on Windows.
+         */
+        if(PlatformUtil.isWindowsOS()) {
+            Gst.init();
+        }
     }
 
     private void customizeComponents() {
@@ -504,8 +513,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
                 // Initialize Gstreamer. It is safe to call this for every file.
                 // It was moved here from the constructor because having it happen
-                // earlier resulted in conflicts on Linux.
-                Gst.init();
+                // earlier resulted in conflicts on Linux. See JIRA-5888.
+                if(!PlatformUtil.isWindowsOS()) {
+                    Gst.init();
+                }
 
                 //Video is ready for playback. Create new components
                 gstPlayBin = new PlayBin("VideoPlayer", tempFile.toURI());
