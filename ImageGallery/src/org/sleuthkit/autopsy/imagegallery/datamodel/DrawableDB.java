@@ -2156,7 +2156,9 @@ public final class DrawableDB {
             trans = beginTransaction();
             deleteDataSourceStmt.setLong(1, dataSourceID);
             deleteDataSourceStmt.executeUpdate();
-            caseDb.getCaseDbAccessManager().delete(tableName, whereClause);
+            if (caseDb.getCaseDbAccessManager().tableExists(tableName)) {
+                caseDb.getCaseDbAccessManager().delete(tableName, whereClause);
+            }
             commitTransaction(trans, true);
         } catch (SQLException | TskCoreException ex) {
             if (null != trans) {
