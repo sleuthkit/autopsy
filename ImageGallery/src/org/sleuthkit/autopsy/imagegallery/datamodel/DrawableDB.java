@@ -2150,10 +2150,13 @@ public final class DrawableDB {
     public void deleteDataSource(long dataSourceID) throws SQLException, TskCoreException {
         dbWriteLock();
         DrawableTransaction trans = null;
+        String whereClause = "WHERE data_source_obj_id = " + dataSourceID;
+        String tableName = "image_gallery_groups";
         try {
             trans = beginTransaction();
             deleteDataSourceStmt.setLong(1, dataSourceID);
             deleteDataSourceStmt.executeUpdate();
+            caseDb.getCaseDbAccessManager().delete(tableName, whereClause);
             commitTransaction(trans, true);
         } catch (SQLException | TskCoreException ex) {
             if (null != trans) {
