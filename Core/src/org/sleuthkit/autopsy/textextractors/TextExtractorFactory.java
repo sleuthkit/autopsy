@@ -85,14 +85,14 @@ public class TextExtractorFactory {
      * @param content AbstractFile content
      * @param context Lookup containing extractor configurations
      *
-     * @return
+     * @return List of all extractors in priority order. Not all will support the passed in content.   @@@ PERHAPS ONLY SUPPORTED SHOULD BE RETURNED
      */
     private static List<TextExtractor> getFileExtractors(AbstractFile content, Lookup context) {
         List<TextExtractor> fileExtractors = Arrays.asList(
                 new TextFileExtractor(content),
                 new HtmlTextExtractor(content),
                 new SqliteTextExtractor(content),
-                new TikaTextExtractor(content));
+                new TikaTextExtractor(content));   /// This should go last to ensure the more specific ones are picked first. 
 
         fileExtractors.forEach((fileExtractor) -> {
             fileExtractor.setExtractionSettings(context);
