@@ -158,7 +158,6 @@ final class CallLogAnalyzer {
                     attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START, moduleName, date)); // RC: Should be long!
                     attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END, moduleName, duration + date)); // RC: Should be long!
                     attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName, type));
-                    attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, moduleName, name));
 
                     bba.addAttributes(attributes);
                     try {
