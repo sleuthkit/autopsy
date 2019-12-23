@@ -254,10 +254,10 @@ public class FileTypeDetector {
                 } else {
                     /*
                      * If the file was marked as an octet stream and the extension is .txt, try to detect a text
-                     * encoding with Decodetect.
+                     * encoding 
                      */
                     if (file.getNameExtension().equals("txt")) {
-                        Charset detectedCharset = TextFileExtractor.getEncoding(file);
+                        Charset detectedCharset = new TextFileExtractor(file).getEncoding();
                         if (detectedCharset != TextFileExtractor.UNKNOWN_CHARSET) {
                             mimeType = MimeTypes.PLAIN_TEXT;
                         }

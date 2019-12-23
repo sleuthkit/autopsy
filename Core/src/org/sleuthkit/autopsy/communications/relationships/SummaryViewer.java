@@ -29,7 +29,6 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.datamodel.Account;
-import org.sleuthkit.autopsy.coreutils.PhoneNumUtil;
 
 /**
  * Account Summary View Panel. This panel shows a list of various counts related
