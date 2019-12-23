@@ -36,15 +36,19 @@ import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Extract text from text files
+ * A TextExtractor that is used to extract text from a text file.
  */
 public final class TextFileExtractor implements TextExtractor {
-    public static Charset UNKNOWN_CHARSET = new Charset("unknown", null) {
+
+    /*
+     * The char set returned if a text file extractor fails to detect the
+     * encoding of the file from which it is extracting text.
+     */
+    public static final Charset UNKNOWN_CHARSET = new Charset("unknown", null) {
         @Override
         public boolean contains(Charset cs) {
             return false;
@@ -65,21 +69,27 @@ public final class TextFileExtractor implements TextExtractor {
     // detection library to use. If CharsetDetector's own confidence is at least
     // MIN_MATCH_CONFIDENCE, CharsetDetector's result will be used for decoding.
     // Otherwise, Decodetect will be used.
-    // - We had 35, but it was causing some Chrome Cache files to get flagged as UTF-16 with confidence 40. 
-    //    They had a small amount of binary data and then ASCII. 
+    // NOte: We initially used a confidence of 35, but it was causing some 
+    // Chrome Cache files to get flagged as UTF-16 with confidence 40. 
+    // These files had a small amount of binary data and then ASCII. 
     static final private int MIN_CHARSETDETECT_MATCH_CONFIDENCE = 41;
 
     // This value determines whether we will consider Decodetect's top-scoring
-    // result a legitimate match or if we will disregard its findings
+    // result a legitimate match or if we will disregard its findings.
     //
-    // Possible values are 0 to 1, inclusive
+    // Possible values are 0 to 1, inclusive.
     static final private double MIN_DECODETECT_MATCH_CONFIDENCE = 0.4;
 
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
     private final AbstractFile file;
-    
+
     private Charset encoding = null;
 
+    /**
+     * Constructs a TextExtractor that is used to extract text from a text file.
+     *
+     * @param file The file.
+     */
     public TextFileExtractor(AbstractFile file) {
         this.file = file;
     }
@@ -103,17 +113,18 @@ public final class TextFileExtractor implements TextExtractor {
     }
 
     /**
-     * Return the encoding of the file
-     * @return Detected encoding or UNKNOWN_CHARSET 
+     * Returns the encoding of the file.
+     *
+     * @return Detected encoding or UNKNOWN_CHARSET.
      */
     public Charset getEncoding() {
-        if (encoding != null)
+        if (encoding != null) {
             return encoding;
-        
+        }
+
         // Encoding detection is hard. We use several libraries since the data passed in is often messy.
-        
-        // First try CharsetDetector (from Tika / ICU4J)
-        // It is a rule-baesd detection approach
+        // First try CharsetDetector (from Tika / ICU4J).
+        // It is a rule-baesd detection approach.
         try (InputStream stream = new BufferedInputStream(new ReadContentInputStream(file))) {
             CharsetDetector detector = new CharsetDetector();
             detector.setText(stream);
@@ -123,11 +134,11 @@ public final class TextFileExtractor implements TextExtractor {
                     encoding = Charset.forName(tikaResult.getName());
                     return encoding;
                 } catch (UnsupportedCharsetException ex) {
-                    logger.log(Level.WARNING, "Error converting CharsetDetector Result", ex);
+                    logger.log(Level.WARNING, String.format("Error converting CharsetDetector result for %s (objID=%d)", file.getName(), file.getId()), ex);
                 }
             }
-        } catch (IOException ignored) {
-            // IGNORE READ ERRORS HERE - Assume they were logged elsewhere
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, String.format("Error setting CharsetDetector stream for %s (objID=%d)", file.getName(), file.getId()), ex);
         }
 
         // If that did not work, then use DecoDetect, which is stastical 
@@ -139,7 +150,7 @@ public final class TextFileExtractor implements TextExtractor {
             if (file.getSize() < maxBytes) {
                 numBytes = (int) file.getSize();
             }
-            
+
             byte[] targetArray = new byte[numBytes];
             file.read(targetArray, 0, numBytes);
             List<DecodetectResult> results = Decodetect.DECODETECT.getResults(targetArray);
@@ -151,9 +162,9 @@ public final class TextFileExtractor implements TextExtractor {
                 }
             }
         } catch (TskCoreException ex) {
-            // IGNORE READ ERRORS HERE - Assume they were logged elsewhere
+            logger.log(Level.WARNING, String.format("Error reading content from %s (objID=%d)", file.getName(), file.getId()), ex);
         }
-        
+
         encoding = UNKNOWN_CHARSET;
         return encoding;
     }
