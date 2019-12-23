@@ -69,7 +69,8 @@ public final class TextFileExtractor implements TextExtractor {
     // detection library to use. If CharsetDetector's own confidence is at least
     // MIN_MATCH_CONFIDENCE, CharsetDetector's result will be used for decoding.
     // Otherwise, Decodetect will be used.
-    // NOte: We initially used a confidence of 35, but it was causing some 
+    // 
+    // Note: We initially used a confidence of 35, but it was causing some 
     // Chrome Cache files to get flagged as UTF-16 with confidence 40. 
     // These files had a small amount of binary data and then ASCII. 
     static final private int MIN_CHARSETDETECT_MATCH_CONFIDENCE = 41;
@@ -124,7 +125,7 @@ public final class TextFileExtractor implements TextExtractor {
 
         // Encoding detection is hard. We use several libraries since the data passed in is often messy.
         // First try CharsetDetector (from Tika / ICU4J).
-        // It is a rule-baesd detection approach.
+        // It is a rule-based detection approach.
         try (InputStream stream = new BufferedInputStream(new ReadContentInputStream(file))) {
             CharsetDetector detector = new CharsetDetector();
             detector.setText(stream);
