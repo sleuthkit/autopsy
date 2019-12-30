@@ -82,6 +82,12 @@ The File Metadata tab displays basic information about the file, such as type, s
 
 \image html content_viewer_metadata.png
 
+\section cv_context Context
+
+The Context tab shows the the source of attached files and allows you to view the original result. In the image below you can see the context for an image that was sent as an email attachment.
+
+\image html content_viewer_context.png
+
 \section cv_results Results
 
 The Results tab is active when selecting items with associated results such as keyword hits, call logs, and messages. The exact fields displayed depend on the type of result. The two images below show the Results tab for a call log and a web bookmark.
