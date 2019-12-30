@@ -28,11 +28,13 @@ import javax.swing.JFrame;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 final class SaveSearchDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
     private final SearchFilterSave searchFilters;
+    private static final String SAVE_DIR = PlatformUtil.getUserDirectory() + File.separator + "discoveryFilterSaves";
 
     /**
      * Creates new form SaveSearchDialog
@@ -115,17 +117,19 @@ final class SaveSearchDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        String fileName = fileNameTextField.getText();
+        String fileName = fileNameTextField.getText() + ".dsf";
+
         GsonBuilder gsonBuilder = new GsonBuilder()
                 .setPrettyPrinting();
         Gson gson = gsonBuilder.create();
         String toJson = gson.toJson(searchFilters);
         List<String> lines = Arrays.asList(toJson.split("\\n"));
         try {
-            FileUtils.writeLines(new File(fileName), "UTF-8", lines, System.getProperty("line.separator")); // NON-NLS
+            FileUtils.writeLines(new File(SAVE_DIR + File.separator + fileName), "UTF-8", lines, System.getProperty("line.separator")); // NON-NLS
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+        dispose();
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed

@@ -21,18 +21,26 @@ package org.sleuthkit.autopsy.filequery;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.List;
 import javax.swing.JFrame;
+import javax.swing.table.DefaultTableModel;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.tools.ant.util.FileUtils;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 final class LoadSearchDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
     private String fileName = null;
+    private static final String SAVE_DIR = PlatformUtil.getUserDirectory() + File.separator + "discoveryFilterSaves";
 
     /**
      * Creates new form SaveSearchDialog
@@ -41,9 +49,19 @@ final class LoadSearchDialog extends javax.swing.JDialog {
         super((JFrame) null, "Title here", true);
         initComponents();
         setResizable(false);
-        //get files in directory
-        //add strings for file names to list
-       
+        File folder = new File(SAVE_DIR);
+        File[] files = folder.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                return FilenameUtils.getExtension(pathname.getName()).equalsIgnoreCase("dsf");
+            }
+        });
+        if (files != null) {
+            DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+            for (final File savedSettings : files) {
+                model.addRow(new Object[]{FilenameUtils.getBaseName(savedSettings.getName()), new Date(savedSettings.lastModified()).toString()});
+            }
+        }
     }
 
     /**
@@ -65,24 +83,21 @@ final class LoadSearchDialog extends javax.swing.JDialog {
         setResizable(false);
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
+            new String [][] {
 
             },
             new String [] {
                 "Search Name", "Date Saved"
             }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-        });
+        ));
         jScrollPane1.setViewportView(jTable1);
 
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(LoadSearchDialog.class, "LoadSearchDialog.jButton1.text")); // NOI18N
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(jButton2, org.openide.util.NbBundle.getMessage(LoadSearchDialog.class, "LoadSearchDialog.jButton2.text")); // NOI18N
         jButton2.addActionListener(new java.awt.event.ActionListener() {
@@ -133,13 +148,23 @@ final class LoadSearchDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        fileName = "testSave.json";
+        fileName = jTable1.getValueAt(jTable1.getSelectedRow(), 0) + ".dsf";
         dispose();        // TODO add your handling code here:
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         dispose();
     }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        int selectedRow = jTable1.getSelectedRow();
+        fileName = jTable1.getValueAt(selectedRow, 0) + ".dsf";
+        if (fileName != null) {
+            FileUtils.delete(new File(SAVE_DIR + File.separator + fileName));
+        }
+        ((DefaultTableModel)jTable1.getModel()).removeRow(jTable1.convertRowIndexToModel(selectedRow));
+        jTable1.repaint();
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * Display the Search Other Cases dialog.
@@ -153,7 +178,7 @@ final class LoadSearchDialog extends javax.swing.JDialog {
     SearchFilterSave getSearch() throws FileNotFoundException, IOException {
         //get name of selected search
         if (fileName != null) {
-            try (FileInputStream is = new FileInputStream(fileName); InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
+            try (FileInputStream is = new FileInputStream(SAVE_DIR + File.separator + fileName); InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
                 GsonBuilder gsonBuilder = new GsonBuilder()
                         .setPrettyPrinting();
                 Gson gson = gsonBuilder.create();
