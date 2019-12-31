@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.tools.ant.util.FileUtils;
@@ -49,6 +50,7 @@ final class LoadSearchDialog extends javax.swing.JDialog {
         super((JFrame) null, "Title here", true);
         initComponents();
         setResizable(false);
+        jTable1.setDefaultEditor(Object.class, null);
         File folder = new File(SAVE_DIR);
         File[] files = folder.listFiles(new FileFilter() {
             @Override
@@ -83,13 +85,10 @@ final class LoadSearchDialog extends javax.swing.JDialog {
         setResizable(false);
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
-            new String [][] {
-
-            },
-            new String [] {
-                "Search Name", "Date Saved"
-            }
+            new String [][] {},
+            new String [] {"Search Name", "Date Saved"}
         ));
+        jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane1.setViewportView(jTable1);
 
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(LoadSearchDialog.class, "LoadSearchDialog.jButton1.text")); // NOI18N
@@ -159,11 +158,14 @@ final class LoadSearchDialog extends javax.swing.JDialog {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         int selectedRow = jTable1.getSelectedRow();
         fileName = jTable1.getValueAt(selectedRow, 0) + ".dsf";
-        if (fileName != null) {
-            FileUtils.delete(new File(SAVE_DIR + File.separator + fileName));
+        int confirmed = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete " + fileName, "Confirm deletion", JOptionPane.OK_CANCEL_OPTION);
+        if (confirmed == JOptionPane.OK_OPTION) {
+            if (fileName != null) {
+                FileUtils.delete(new File(SAVE_DIR + File.separator + fileName));
+            }
+            ((DefaultTableModel) jTable1.getModel()).removeRow(jTable1.convertRowIndexToModel(selectedRow));
+            jTable1.repaint();
         }
-        ((DefaultTableModel)jTable1.getModel()).removeRow(jTable1.convertRowIndexToModel(selectedRow));
-        jTable1.repaint();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
