@@ -354,8 +354,7 @@ UnpackagePortableCaseProgressDialog.title.text=Unpackage Portable Case Progress
 UnpackageWorker.doInBackground.canceled=Unpackaging canceled by user
 UnpackageWorker.doInBackground.errorCompressingCase=Error unpackaging case
 UnpackageWorker.doInBackground.errorFinding7zip=Could not locate 7-Zip executable
-# {0} - case name
-UnpackageWorker.doInBackground.previousSeenCase=Case with name {0} has been previously opened do you want to open it again?
+UnpackageWorker.doInBackground.previouslySeenCase=Case has been previously opened. Open it again?
 UpdateRecentCases.menuItem.clearRecentCases.text=Clear Recent Cases
 UpdateRecentCases.menuItem.empty=-Empty-
 AddImageWizardIngestConfigPanel.CANCEL_BUTTON.text=Cancel
