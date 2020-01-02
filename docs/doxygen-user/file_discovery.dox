@@ -1,0 +1,56 @@
+/*! \page file_discovery_page File Discovery
+
+\section file_disc_prereq Prerequisites
+
+We suggest running all \ref ingest_page "ingest modules" before launching file discovery, but if time is a factor the following are the modules that are the most important. You will see a warning if you open file discovery without running the \ref file_type_identification_page and \ref EXIF_parser_page.
+
+Required ingest modules:
+<ul>
+<li>\ref file_type_identification_page
+</ul>
+
+Optional ingest modules:
+<ul>
+<li>\ref cr_ingest_module - Needed to use the \ref file_disc_occur_filter filter
+<li> \ref EXIF_parser_page - Needed to use the \ref file_disc_user_filter filter
+<li>\ref hash_db_page - Needed to use the \ref file_disc_hash_filter filter
+<li>\ref interesting_files_identifier_page - Needed to use the \ref file_disc_int_filter filter
+<li>\ref object_detection_page - Needed to use the \ref file_disc_obj_filter filter
+</ul>
+
+\section file_disc_run Running File Discovery
+
+To launch file discovery, either click the "File Discovery" icon near the top of the Autopsy UI or go to "Tools", "File Discovery". There are three steps when setting up file discovery, which flow from the top of the panel to the bottom:
+<ol>
+<li>\ref file_disc_type "Choose the file type"
+<li>\ref file_disc_filtering "Set up filters"
+<li>\ref file_disc_grouping "Choose how to group and sort the results
+</ol>
+
+Once everything is set up, use the "Show" button at the bottom of the left panel to display your results. If you want to cancel a search in progress you can use the "Cancel" button.
+
+\image html FileDiscovery/fd_main.png
+
+
+\subsection file_disc_type File Type
+
+The first step is choosing whether you want to display images or videos. The file type is determined by the MIME type of the file, which is why the file_type_identification_page must be run to see any results. Switching between the file types will clear any results being displayed and reset the filters.
+
+\subsection file_disc_filtering Filtering
+
+\subsubsection file_disc_size_filter File Size
+\subsubsection file_disc_ds_filter Data Source
+\subsubsection file_disc_occur_filter Past Occurrences
+\subsubsection file_disc_user_filter Possibly User Created
+\subsubsection file_disc_hash_filter Hash Set
+\subsubsection file_disc_int_filter Interesting Item
+\subsubsection file_disc_obj_filter Object Detected
+\subsubsection file_disc_parent_filter Parent Folder
+
+\subsection file_disc_grouping Grouping and Sorting
+
+
+
+\section file_disc_results Viewing Results
+
+*/
