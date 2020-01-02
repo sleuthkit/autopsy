@@ -173,6 +173,10 @@ ImageThumbnailPanel.megaBytes.text=MB
 # {1} - units
 ImageThumbnailPanel.sizeLabel.text=Size: {0} {1}
 ImageThumbnailPanel.terraBytes.text=TB
+# {0} - fileName
+LoadSearchDialog.confimMessage.text=Are you sure you want to delete {0}?
+LoadSearchDialog.confirmTitle.text=Confirm Deletion?
+LoadSearchDialog.title.text=Load Saved Filter Settings
 OpenFileDiscoveryAction.resultsIncomplete.text=Results may be incomplete
 ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
 ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
@@ -206,13 +210,13 @@ DiscoveryTopComponent.stepOneLabel.text=Step 1: Pick File Type
 DiscoveryTopComponent.loadSavedFiltersButton.text=Load Saved
 DiscoveryTopComponent.saveCurrentFiltersButton.text=Save Current
 DiscoveryTopComponent.manageSavedFiltersLabel.text=Managed Filter Sets:
-LoadSearchDialog.jButton3.text=Load Selected Filters
-LoadSearchDialog.jButton1.text=Delete Selected Filters
-LoadSearchDialog.jButton2.text=Cancel
+LoadSearchDialog.loadSearchButton.text=Load Selected Filters
+LoadSearchDialog.deleteSearchButton.text=Delete Selected Filters
+LoadSearchDialog.cancelButton.text=Cancel
 ResultsPanel.viewFileInDir.name=View File in Directory
-SaveSearchDialog.jLabel1.text=Name:
-SaveSearchDialog.jButton2.text=Save
-SaveSearchDialog.jButton1.text=Cancel
+SaveSearchDialog.saveButton.text=Save
+SaveSearchDialog.cancelButton.text=Cancel
+SaveSearchDialog.nameLabel.text=Name:
 VideoThumbnailPanel.bytes.text=bytes
 # {0} - numberOfInstances
 VideoThumbnailPanel.countLabel.text=Number of Instances: {0}

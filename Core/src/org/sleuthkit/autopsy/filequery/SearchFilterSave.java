@@ -47,7 +47,7 @@ public class SearchFilterSave {
         this.orderGroupsBy = orderGroupsBy;
     }
 
-     SearchFilterSave(File searchSaveFile) {
+    SearchFilterSave(File searchSaveFile) {
         this.fileTypeIndex = 0;
         this.orderByIndex = 0;
         this.groupByIndex = 0;
@@ -72,7 +72,11 @@ public class SearchFilterSave {
 
     void setSizeFilter(boolean enabled, int[] indices) {
         sizeFilterEnabled = enabled;
-        sizeFilterIndices = indices.clone();
+        if (indices == null) {
+            sizeFilterIndices = null;
+        } else {
+            sizeFilterIndices = indices.clone();
+        }
     }
 
     boolean isSizeFilterEnabled() {
@@ -80,12 +84,19 @@ public class SearchFilterSave {
     }
 
     int[] getSizeFilters() {
+        if (sizeFilterIndices == null) {
+            return null;
+        }
         return sizeFilterIndices.clone();
     }
 
     void setDataSourceFilter(boolean enabled, int[] indices) {
         dataSourceFilterEnabled = enabled;
-        dataSourceFilterIndices = indices.clone();
+        if (indices == null) {
+            dataSourceFilterIndices = null;
+        } else {
+            dataSourceFilterIndices = indices.clone();
+        }
     }
 
     boolean isDataSourceFilterEnabled() {
@@ -93,12 +104,19 @@ public class SearchFilterSave {
     }
 
     int[] getDataSourceFilters() {
+        if (dataSourceFilterIndices == null) {
+            return null;
+        }
         return dataSourceFilterIndices.clone();
     }
 
     void setCrFrequencyFilter(boolean enabled, int[] indices) {
         crFrequencyFilterEnabled = enabled;
-        crFrequencyFilterIndices = indices.clone();
+        if (indices == null) {
+            crFrequencyFilterIndices = null;
+        } else {
+            crFrequencyFilterIndices = indices.clone();
+        }
     }
 
     boolean isCrFrequencyFilterEnabled() {
@@ -106,12 +124,19 @@ public class SearchFilterSave {
     }
 
     int[] getCrFrequencyFilters() {
+        if (crFrequencyFilterIndices == null) {
+            return null;
+        }
         return crFrequencyFilterIndices.clone();
     }
 
     void setKeywordFilter(boolean enabled, int[] indices) {
         keywordFilterEnabled = enabled;
-        keywordFilterIndices = indices.clone();
+        if (indices == null) {
+            keywordFilterIndices = null;
+        } else {
+            keywordFilterIndices = indices.clone();
+        }
     }
 
     boolean isKeywordFilterEnabled() {
@@ -119,12 +144,19 @@ public class SearchFilterSave {
     }
 
     int[] getKeywordFilters() {
+        if (keywordFilterIndices == null) {
+            return null;
+        }
         return keywordFilterIndices.clone();
     }
 
     void setHashSetFilter(boolean enabled, int[] indices) {
         hashSetFilterEnabled = enabled;
-        hashSetFilterIndices = indices.clone();
+        if (indices == null) {
+            hashSetFilterIndices = null;
+        } else {
+            hashSetFilterIndices = indices.clone();
+        }
     }
 
     boolean isHashSetFilterEnabled() {
@@ -132,12 +164,19 @@ public class SearchFilterSave {
     }
 
     int[] getHashSetFilters() {
+        if (hashSetFilterIndices == null) {
+            return null;
+        }
         return hashSetFilterIndices.clone();
     }
 
     void setObjectsFilter(boolean enabled, int[] indices) {
         objectsFilterEnabled = enabled;
-        objectsFilterIndices = indices.clone();
+        if (indices == null) {
+            objectsFilterIndices = null;
+        } else {
+            objectsFilterIndices = indices.clone();
+        }
     }
 
     boolean isObjectsFilterEnabled() {
@@ -145,12 +184,19 @@ public class SearchFilterSave {
     }
 
     int[] getObjectsFilters() {
+        if (objectsFilterIndices == null) {
+            return null;
+        }
         return objectsFilterIndices.clone();
     }
 
     void setTagsFilter(boolean enabled, int[] indices) {
         tagsFilterEnabled = enabled;
-        tagsFilterIndices = indices.clone();
+        if (indices == null) {
+            tagsFilterIndices = null;
+        } else {
+            tagsFilterIndices = indices.clone();
+        }
     }
 
     boolean isTagsFilterEnabled() {
@@ -158,12 +204,19 @@ public class SearchFilterSave {
     }
 
     int[] getTagsFilters() {
+        if (tagsFilterIndices == null) {
+            return null;
+        }
         return tagsFilterIndices.clone();
     }
 
     void setInterestingItemsFilter(boolean enabled, int[] indices) {
         interestingItemsFilterEnabled = enabled;
-        interestingItemsFilterIndices = indices.clone();
+        if (indices == null) {
+            interestingItemsFilterIndices = null;
+        } else {
+            interestingItemsFilterIndices = indices.clone();
+        }
     }
 
     boolean isInterestingItemsFilterEnabled() {
@@ -171,12 +224,19 @@ public class SearchFilterSave {
     }
 
     int[] getInterestingItemsFilters() {
+        if (interestingItemsFilterIndices == null) {
+            return null;
+        }
         return interestingItemsFilterIndices.clone();
     }
 
     void setScoreFilter(boolean enabled, int[] indices) {
         scoreFilterEnabled = enabled;
-        scoreFilterIndices = indices.clone();
+        if (indices == null) {
+            scoreFilterIndices = null;
+        } else {
+            scoreFilterIndices = indices.clone();
+        }
     }
 
     /**
@@ -190,6 +250,9 @@ public class SearchFilterSave {
      * @return the scoreFilterIndices
      */
     int[] getScoreFilters() {
+        if (scoreFilterIndices == null) {
+            return null;
+        }
         return scoreFilterIndices.clone();
     }
 
@@ -237,8 +300,10 @@ public class SearchFilterSave {
 
     void setParentFilter(boolean enabled, List<FileSearchFiltering.ParentSearchTerm> parentTerms) {
         parentFilterEnabled = enabled;
-        getParentFilters().clear();
-        getParentFilters().addAll(parentTerms);
+        parentFilters.clear();
+        if (parentTerms != null) {
+            parentFilters.addAll(parentTerms);
+        }
     }
 
     /**

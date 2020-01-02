@@ -20,6 +20,9 @@ package org.sleuthkit.autopsy.filequery;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import java.awt.Point;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -27,13 +30,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.tools.ant.util.FileUtils;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
@@ -42,28 +47,57 @@ final class LoadSearchDialog extends javax.swing.JDialog {
     private static final long serialVersionUID = 1L;
     private String fileName = null;
     private static final String SAVE_DIR = PlatformUtil.getUserDirectory() + File.separator + "discoveryFilterSaves";
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final String SAVE_EXTENSION = "dsf";
 
     /**
      * Creates new form SaveSearchDialog
      */
+    @Messages({"LoadSearchDialog.title.text=Load Saved Filter Settings"})
     LoadSearchDialog() {
-        super((JFrame) null, "Title here", true);
+        super((JFrame) null, Bundle.LoadSearchDialog_title_text(), true);
         initComponents();
         setResizable(false);
-        jTable1.setDefaultEditor(Object.class, null);
+        filtersTable.setDefaultEditor(Object.class, null);
+        filtersTable.getSelectionModel().addListSelectionListener((e) -> {
+            if (!e.getValueIsAdjusting()) {
+                if (filtersTable.getSelectedRow() != -1) {
+                    fileName = filtersTable.getValueAt(filtersTable.getSelectedRow(), 0) + "." + SAVE_EXTENSION;
+                    setButtonsEnabled(true);
+                } else {
+                    fileName = null;
+                    setButtonsEnabled(false);
+                }
+
+            }
+        });
+        filtersTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent mouseEvent) {
+                super.mousePressed(mouseEvent);
+                if (mouseEvent.getClickCount() == 2 && fileName != null) {
+                    dispose(); //double clicking on item will close the load dialog with the fileName ready to be loaded
+                }
+            }
+        });
         File folder = new File(SAVE_DIR);
         File[] files = folder.listFiles(new FileFilter() {
             @Override
             public boolean accept(File pathname) {
-                return FilenameUtils.getExtension(pathname.getName()).equalsIgnoreCase("dsf");
+                return FilenameUtils.getExtension(pathname.getName()).equalsIgnoreCase(SAVE_EXTENSION);
             }
         });
         if (files != null) {
-            DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+            DefaultTableModel model = (DefaultTableModel) filtersTable.getModel();
             for (final File savedSettings : files) {
-                model.addRow(new Object[]{FilenameUtils.getBaseName(savedSettings.getName()), new Date(savedSettings.lastModified()).toString()});
+                model.addRow(new Object[]{FilenameUtils.getBaseName(savedSettings.getName()), DATE_FORMAT.format(new Date(savedSettings.lastModified()))});
             }
         }
+    }
+
+    void setButtonsEnabled(boolean enabled) {
+        deleteSearchButton.setEnabled(enabled);
+        loadSearchButton.setEnabled(enabled);
     }
 
     /**
@@ -75,40 +109,40 @@ final class LoadSearchDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
-        jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
+        filtersScrollPane = new javax.swing.JScrollPane();
+        filtersTable = new javax.swing.JTable();
+        deleteSearchButton = new javax.swing.JButton();
+        cancelButton = new javax.swing.JButton();
+        loadSearchButton = new javax.swing.JButton();
 
         setMinimumSize(new java.awt.Dimension(400, 145));
         setResizable(false);
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        filtersTable.setModel(new javax.swing.table.DefaultTableModel(
             new String [][] {},
             new String [] {"Search Name", "Date Saved"}
         ));
-        jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane1.setViewportView(jTable1);
+        filtersTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        filtersScrollPane.setViewportView(filtersTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(LoadSearchDialog.class, "LoadSearchDialog.jButton1.text")); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(deleteSearchButton, org.openide.util.NbBundle.getMessage(LoadSearchDialog.class, "LoadSearchDialog.deleteSearchButton.text")); // NOI18N
+        deleteSearchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                deleteSearchButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton2, org.openide.util.NbBundle.getMessage(LoadSearchDialog.class, "LoadSearchDialog.jButton2.text")); // NOI18N
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(LoadSearchDialog.class, "LoadSearchDialog.cancelButton.text")); // NOI18N
+        cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+                cancelButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton3, org.openide.util.NbBundle.getMessage(LoadSearchDialog.class, "LoadSearchDialog.jButton3.text")); // NOI18N
-        jButton3.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(loadSearchButton, org.openide.util.NbBundle.getMessage(LoadSearchDialog.class, "LoadSearchDialog.loadSearchButton.text")); // NOI18N
+        loadSearchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton3ActionPerformed(evt);
+                loadSearchButtonActionPerformed(evt);
             }
         });
 
@@ -118,16 +152,16 @@ final class LoadSearchDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 251, Short.MAX_VALUE)
+                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 251, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton1, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jButton2, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jButton3, javax.swing.GroupLayout.Alignment.TRAILING))
+                    .addComponent(deleteSearchButton, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(cancelButton, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(loadSearchButton, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jButton1, jButton2, jButton3});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {cancelButton, deleteSearchButton, loadSearchButton});
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -136,37 +170,40 @@ final class LoadSearchDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jButton3)
+                        .addComponent(loadSearchButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(deleteSearchButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButton2))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 368, Short.MAX_VALUE))
+                        .addComponent(cancelButton))
+                    .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 368, Short.MAX_VALUE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        fileName = jTable1.getValueAt(jTable1.getSelectedRow(), 0) + ".dsf";
+    private void loadSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadSearchButtonActionPerformed
         dispose();        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton3ActionPerformed
+    }//GEN-LAST:event_loadSearchButtonActionPerformed
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
+        fileName = null;
         dispose();
-    }//GEN-LAST:event_jButton2ActionPerformed
+    }//GEN-LAST:event_cancelButtonActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        int selectedRow = jTable1.getSelectedRow();
-        fileName = jTable1.getValueAt(selectedRow, 0) + ".dsf";
-        int confirmed = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete " + fileName, "Confirm deletion", JOptionPane.OK_CANCEL_OPTION);
+    @Messages({"# {0} - fileName",
+        "LoadSearchDialog.confimMessage.text=Are you sure you want to delete {0}?",
+        "LoadSearchDialog.confirmTitle.text=Confirm Deletion?"})
+    private void deleteSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSearchButtonActionPerformed
+        int confirmed = JOptionPane.showConfirmDialog(this, Bundle.LoadSearchDialog_confimMessage_text(fileName), Bundle.LoadSearchDialog_confirmTitle_text(), JOptionPane.OK_CANCEL_OPTION);
         if (confirmed == JOptionPane.OK_OPTION) {
             if (fileName != null) {
                 FileUtils.delete(new File(SAVE_DIR + File.separator + fileName));
             }
-            ((DefaultTableModel) jTable1.getModel()).removeRow(jTable1.convertRowIndexToModel(selectedRow));
-            jTable1.repaint();
+            ((DefaultTableModel) filtersTable.getModel()).removeRow(filtersTable.convertRowIndexToModel(filtersTable.getSelectedRow()));
+            filtersTable.repaint();
+            fileName = null;
+            setButtonsEnabled(false);
         }
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_deleteSearchButtonActionPerformed
 
     /**
      * Display the Search Other Cases dialog.
@@ -191,10 +228,10 @@ final class LoadSearchDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
+    private javax.swing.JButton cancelButton;
+    private javax.swing.JButton deleteSearchButton;
+    private javax.swing.JScrollPane filtersScrollPane;
+    private javax.swing.JTable filtersTable;
+    private javax.swing.JButton loadSearchButton;
     // End of variables declaration//GEN-END:variables
 }

@@ -104,10 +104,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             dataSourceList.setEnabled(true);
             if (indicesSelected != null) {
                 dataSourceList.setSelectedIndices(indicesSelected);
+            } else {
+                dataSourceList.clearSelection();
             }
         } else {
             dataSourceScrollPane.setEnabled(false);
             dataSourceList.setEnabled(false);
+            dataSourceList.clearSelection();
         }
     }
 
@@ -135,10 +138,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             sizeList.setEnabled(true);
             if (indicesSelected != null) {
                 sizeList.setSelectedIndices(indicesSelected);
+            } else {
+                sizeList.clearSelection();
             }
         } else {
             sizeScrollPane.setEnabled(false);
             sizeList.setEnabled(false);
+            sizeList.clearSelection();
         }
     }
 
@@ -166,10 +172,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             crFrequencyList.setEnabled(true);
             if (indicesSelected != null) {
                 crFrequencyList.setSelectedIndices(indicesSelected);
+            } else {
+                crFrequencyList.clearSelection();
             }
         } else {
             crFrequencyScrollPane.setEnabled(false);
             crFrequencyList.setEnabled(false);
+            crFrequencyList.clearSelection();
         }
     }
 
@@ -198,10 +207,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             objectsList.setEnabled(true);
             if (indicesSelected != null) {
                 objectsList.setSelectedIndices(indicesSelected);
+            } else {
+                objectsList.clearSelection();
             }
         } else {
             objectsScrollPane.setEnabled(false);
             objectsList.setEnabled(false);
+            objectsList.clearSelection();
         }
     }
 
@@ -230,10 +242,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             hashSetList.setEnabled(true);
             if (indicesSelected != null) {
                 hashSetList.setSelectedIndices(indicesSelected);
+            } else {
+                hashSetList.clearSelection();
             }
         } else {
             hashSetScrollPane.setEnabled(false);
             hashSetList.setEnabled(false);
+            hashSetList.clearSelection();
         }
     }
 
@@ -262,10 +277,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             interestingItemsList.setEnabled(true);
             if (indicesSelected != null) {
                 interestingItemsList.setSelectedIndices(indicesSelected);
+            } else {
+                hashSetList.clearSelection();
             }
         } else {
             interestingItemsScrollPane.setEnabled(false);
             interestingItemsList.setEnabled(false);
+            hashSetList.clearSelection();
         }
     }
 
@@ -293,10 +311,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             scoreList.setEnabled(true);
             if (indicesSelected != null) {
                 scoreList.setSelectedIndices(indicesSelected);
+            } else {
+                scoreList.clearSelection();
             }
         } else {
             scoreScrollPane.setEnabled(false);
             scoreList.setEnabled(false);
+            scoreList.clearSelection();
         }
     }
 
@@ -331,6 +352,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             parentTextField.setEnabled(true);
             if (indicesSelected != null) {
                 parentList.setSelectedIndices(indicesSelected);
+            } else {
+                parentList.clearSelection();
             }
         } else {
             parentScrollPane.setEnabled(false);
@@ -342,6 +365,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             addButton.setEnabled(false);
             deleteButton.setEnabled(false);
             parentTextField.setEnabled(false);
+            parentList.clearSelection();
         }
     }
 
@@ -369,10 +393,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             tagsList.setEnabled(true);
             if (indicesSelected != null) {
                 tagsList.setSelectedIndices(indicesSelected);
+            } else {
+                tagsList.clearSelection();
             }
         } else {
             tagsScrollPane.setEnabled(false);
             tagsList.setEnabled(false);
+            tagsList.clearSelection();
         }
     }
 
@@ -400,10 +427,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             keywordList.setEnabled(true);
             if (indicesSelected != null) {
                 keywordList.setSelectedIndices(indicesSelected);
+            } else {
+                keywordList.clearSelection();
             }
         } else {
             keywordScrollPane.setEnabled(false);
             keywordList.setEnabled(false);
+            keywordList.clearSelection();
         }
     }
 
@@ -1792,9 +1822,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (sizeCheckbox.isSelected()) {
             search.setSizeFilter(true, sizeList.getSelectedIndices());
         }
-//        if (dataSourceCheckbox.isSelected()) {  Different for every case doesn't really make sense to save
-//            dataSourceList.getSelectedIndices();
-//        }
+        if (dataSourceCheckbox.isSelected()) {
+            search.setDataSourceFilter(true, dataSourceList.getSelectedIndices());
+        }
         if (crFrequencyCheckbox.isSelected()) {
             search.setCrFrequencyFilter(true, crFrequencyList.getSelectedIndices());
         }
@@ -1830,57 +1860,30 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     void loadSearch(SearchFilterSave search) throws IllegalArgumentException {
-        fileType = FileType.fromRanking(search.getSelectedFileType());
+        //type is loaded as a side effect of needing to set the type in the TopComponent already
         orderByCombobox.setSelectedIndex(search.getOrderByIndex());
         groupByCombobox.setSelectedIndex(search.getGroupByIndex());
         groupSortingComboBox.setSelectedIndex(search.getOrderGroupsBy());
-        
-        sizeCheckbox.setSelected(search.isSizeFilterEnabled());
-        if (sizeCheckbox.isSelected()) {
-            sizeList.setSelectedIndices(search.getSizeFilters());
-        }
+        sizeFilterSettings(true, true, search.isSizeFilterEnabled(), search.getSizeFilters());
+        dataSourceFilterSettings(true, true, search.isDataSourceFilterEnabled(), search.getDataSourceFilters());
 
-        //        if (dataSourceCheckbox.isSelected()) {  Different for every case doesn't really make sense to save
-//            dataSourceList.getSelectedIndices();
-//        }
-        crFrequencyCheckbox.setSelected(search.isCrFrequencyFilterEnabled());
-        if (crFrequencyCheckbox.isSelected()) {
-            crFrequencyList.setSelectedIndices(search.getCrFrequencyFilters());
-        }
-        keywordCheckbox.setSelected(search.isKeywordFilterEnabled());
-        if (keywordCheckbox.isSelected()) {
-            keywordList.setSelectedIndices(search.getKeywordFilters());
-        }
-        hashSetCheckbox.setSelected(search.isHashSetFilterEnabled());
-        if (hashSetCheckbox.isSelected()) {
-            hashSetList.setSelectedIndices(search.getHashSetFilters());
-        }
-        objectsCheckbox.setSelected(search.isObjectsFilterEnabled());
-        if (objectsCheckbox.isSelected()) {
-            objectsList.setSelectedIndices(search.getObjectsFilters());
-        }
-        tagsCheckbox.setSelected(search.isTagsFilterEnabled());
-        if (tagsCheckbox.isSelected()) {
-            tagsList.setSelectedIndices(search.getTagsFilters());
-        }
-        interestingItemsCheckbox.setSelected(search.isInterestingItemsFilterEnabled());
-        if (interestingItemsCheckbox.isSelected()) {
-            interestingItemsList.setSelectedIndices(search.getInterestingItemsFilters());
-        }
-        scoreCheckbox.setSelected(search.isScoreFilterEnabled());
-        if (scoreCheckbox.isSelected()) {
-            scoreList.setSelectedIndices(search.getScoreFilters());
-        }
-        exifCheckbox.setSelected(search.isDeviceOriginalFilterEnabled());
-        notableCheckbox.setSelected(search.isNotableFilesFilterEnabled());
-        knownFilesCheckbox.setSelected(search.isKnownFilesFilterEnabled());
+        crFrequencyFilterSettings(true, true, search.isCrFrequencyFilterEnabled(), search.getCrFrequencyFilters());
+        exifFilterSettings(true, true, search.isDeviceOriginalFilterEnabled());
+        objectsFilterSettings(true, true, search.isObjectsFilterEnabled(), search.getObjectsFilters());
+        hashSetFilterSettings(true, true, search.isHashSetFilterEnabled(), search.getHashSetFilters());
+        interestingItemsFilterSettings(true, true, search.isInterestingItemsFilterEnabled(), search.getInterestingItemsFilters());
         parentCheckbox.setSelected(search.isParentFilterEnabled());
         if (parentCheckbox.isSelected()) {
             parentListModel.clear();
-            for (ParentSearchTerm term : search.getParentFilters()){
+            for (ParentSearchTerm term : search.getParentFilters()) {
                 parentListModel.addElement(term);
             }
         }
+
+        scoreFilterSettings(false, false, search.isScoreFilterEnabled(), search.getScoreFilters());
+        exifFilterSettings(false, false, search.isDeviceOriginalFilterEnabled());
+        notableFilterSettings(false, false, search.isNotableFilesFilterEnabled());
+        knownFilesFilterSettings(false, false, search.isKnownFilesFilterEnabled());
         validateFields();
     }
 

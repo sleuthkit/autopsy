@@ -362,6 +362,7 @@ public final class DiscoveryTopComponent extends TopComponent {
             } else if (fileSearchPanel.getSelectedType() == FileType.IMAGE) {
                 videosButton.setEnabled(true);
             }
+            loadSavedFiltersButton.setEnabled(true);
         });
     }
 
@@ -378,6 +379,7 @@ public final class DiscoveryTopComponent extends TopComponent {
             } else if (fileSearchPanel.getSelectedType() == FileType.IMAGE) {
                 videosButton.setEnabled(true);
             }
+            loadSavedFiltersButton.setEnabled(true);
         });
     }
 
@@ -402,7 +404,9 @@ public final class DiscoveryTopComponent extends TopComponent {
         SwingUtilities.invokeLater(() -> {
             imagesButton.setEnabled(false);
             videosButton.setEnabled(false);
+            loadSavedFiltersButton.setEnabled(false);
         });
+        
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
