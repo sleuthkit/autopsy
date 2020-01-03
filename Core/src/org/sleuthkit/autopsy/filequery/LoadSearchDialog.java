@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.filequery;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -34,7 +33,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.tools.ant.util.FileUtils;

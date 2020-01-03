@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.filequery;
 
@@ -9,6 +22,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.sleuthkit.autopsy.filequery.FileSearchData.Frequency;
+import org.sleuthkit.autopsy.filequery.FileSearchData.Score;
+import org.sleuthkit.datamodel.TagName;
 
 public class SearchFilterSave {
 
@@ -19,21 +35,21 @@ public class SearchFilterSave {
     private boolean sizeFilterEnabled = false;
     private int[] sizeFilterIndices;
     private boolean dataSourceFilterEnabled = false;
-    private int[] dataSourceFilterIndices;
+    private final List<DataSourceItem> dataSourceFilters = new ArrayList<>();
     private boolean crFrequencyFilterEnabled = false;
-    private int[] crFrequencyFilterIndices;
+    private final List<Frequency> crFrequencyFilters = new ArrayList<>();
     private boolean keywordFilterEnabled = false;
-    private int[] keywordFilterIndices;
+    private final List<String> keywordFilters = new ArrayList<>();
     private boolean hashSetFilterEnabled = false;
-    private int[] hashSetFilterIndices;
+    private final List<String> hashSetFilters = new ArrayList<>();
     private boolean objectsFilterEnabled = false;
-    private int[] objectsFilterIndices;
+    private final List<String> objectsFilters = new ArrayList<>();
     private boolean tagsFilterEnabled = false;
-    private int[] tagsFilterIndices;
+    private final List<TagName> tagsFilters = new ArrayList<>();
     private boolean interestingItemsFilterEnabled = false;
-    private int[] interestingItemsFilterIndices;
+    private final List<String> interestingItemsFilters = new ArrayList<>();
     private boolean scoreFilterEnabled = false;
-    private int[] scoreFilterIndices;
+    private final List<Score> scoreFilters = new ArrayList<>();
     private boolean deviceOriginalFilterEnabled = false;
     private boolean notableFilesFilterEnabled = false;
     private boolean knownFilesFilterEnabled = false;
@@ -90,12 +106,11 @@ public class SearchFilterSave {
         return sizeFilterIndices.clone();
     }
 
-    void setDataSourceFilter(boolean enabled, int[] indices) {
+    void setDataSourceFilter(boolean enabled, List<DataSourceItem> filters) {
         dataSourceFilterEnabled = enabled;
-        if (indices == null) {
-            dataSourceFilterIndices = null;
-        } else {
-            dataSourceFilterIndices = indices.clone();
+        dataSourceFilters.clear();
+        if (filters != null) {
+            dataSourceFilters.addAll(filters);
         }
     }
 
@@ -103,19 +118,18 @@ public class SearchFilterSave {
         return dataSourceFilterEnabled;
     }
 
-    int[] getDataSourceFilters() {
-        if (dataSourceFilterIndices == null) {
+    List<DataSourceItem> getDataSourceFilters() {
+        if (dataSourceFilters == null) {
             return null;
         }
-        return dataSourceFilterIndices.clone();
+        return Collections.unmodifiableList(dataSourceFilters);
     }
 
-    void setCrFrequencyFilter(boolean enabled, int[] indices) {
+    void setCrFrequencyFilter(boolean enabled, List<Frequency> filters) {
         crFrequencyFilterEnabled = enabled;
-        if (indices == null) {
-            crFrequencyFilterIndices = null;
-        } else {
-            crFrequencyFilterIndices = indices.clone();
+        crFrequencyFilters.clear();
+        if (filters != null) {
+            crFrequencyFilters.addAll(filters);
         }
     }
 
@@ -123,19 +137,18 @@ public class SearchFilterSave {
         return crFrequencyFilterEnabled;
     }
 
-    int[] getCrFrequencyFilters() {
-        if (crFrequencyFilterIndices == null) {
+    List<Frequency> getCrFrequencyFilters() {
+        if (crFrequencyFilters == null) {
             return null;
         }
-        return crFrequencyFilterIndices.clone();
+        return Collections.unmodifiableList(crFrequencyFilters);
     }
 
-    void setKeywordFilter(boolean enabled, int[] indices) {
+    void setKeywordFilter(boolean enabled, List<String> filters) {
         keywordFilterEnabled = enabled;
-        if (indices == null) {
-            keywordFilterIndices = null;
-        } else {
-            keywordFilterIndices = indices.clone();
+        keywordFilters.clear();
+        if (filters != null) {
+            keywordFilters.addAll(filters);
         }
     }
 
@@ -143,19 +156,18 @@ public class SearchFilterSave {
         return keywordFilterEnabled;
     }
 
-    int[] getKeywordFilters() {
-        if (keywordFilterIndices == null) {
+    List<String> getKeywordFilters() {
+        if (keywordFilters == null) {
             return null;
         }
-        return keywordFilterIndices.clone();
+        return Collections.unmodifiableList(keywordFilters);
     }
 
-    void setHashSetFilter(boolean enabled, int[] indices) {
+    void setHashSetFilter(boolean enabled, List<String> filters) {
         hashSetFilterEnabled = enabled;
-        if (indices == null) {
-            hashSetFilterIndices = null;
-        } else {
-            hashSetFilterIndices = indices.clone();
+        hashSetFilters.clear();
+        if (filters != null) {
+            hashSetFilters.addAll(filters);
         }
     }
 
@@ -163,19 +175,18 @@ public class SearchFilterSave {
         return hashSetFilterEnabled;
     }
 
-    int[] getHashSetFilters() {
-        if (hashSetFilterIndices == null) {
+    List<String> getHashSetFilters() {
+        if (hashSetFilters == null) {
             return null;
         }
-        return hashSetFilterIndices.clone();
+        return Collections.unmodifiableList(hashSetFilters);
     }
 
-    void setObjectsFilter(boolean enabled, int[] indices) {
+    void setObjectsFilter(boolean enabled, List<String> filters) {
         objectsFilterEnabled = enabled;
-        if (indices == null) {
-            objectsFilterIndices = null;
-        } else {
-            objectsFilterIndices = indices.clone();
+        objectsFilters.clear();
+        if (filters != null) {
+            objectsFilters.addAll(filters);
         }
     }
 
@@ -183,19 +194,18 @@ public class SearchFilterSave {
         return objectsFilterEnabled;
     }
 
-    int[] getObjectsFilters() {
-        if (objectsFilterIndices == null) {
+    List<String> getObjectsFilters() {
+        if (objectsFilters == null) {
             return null;
         }
-        return objectsFilterIndices.clone();
+        return Collections.unmodifiableList(objectsFilters);
     }
 
-    void setTagsFilter(boolean enabled, int[] indices) {
+    void setTagsFilter(boolean enabled, List<TagName> filters) {
         tagsFilterEnabled = enabled;
-        if (indices == null) {
-            tagsFilterIndices = null;
-        } else {
-            tagsFilterIndices = indices.clone();
+        tagsFilters.clear();
+        if (filters != null) {
+            tagsFilters.addAll(filters);
         }
     }
 
@@ -203,19 +213,18 @@ public class SearchFilterSave {
         return tagsFilterEnabled;
     }
 
-    int[] getTagsFilters() {
-        if (tagsFilterIndices == null) {
+    List<TagName> getTagsFilters() {
+        if (tagsFilters == null) {
             return null;
         }
-        return tagsFilterIndices.clone();
+        return Collections.unmodifiableList(tagsFilters);
     }
 
-    void setInterestingItemsFilter(boolean enabled, int[] indices) {
+    void setInterestingItemsFilter(boolean enabled, List<String> filters) {
         interestingItemsFilterEnabled = enabled;
-        if (indices == null) {
-            interestingItemsFilterIndices = null;
-        } else {
-            interestingItemsFilterIndices = indices.clone();
+        interestingItemsFilters.clear();
+        if (filters != null) {
+            interestingItemsFilters.addAll(filters);
         }
     }
 
@@ -223,19 +232,18 @@ public class SearchFilterSave {
         return interestingItemsFilterEnabled;
     }
 
-    int[] getInterestingItemsFilters() {
-        if (interestingItemsFilterIndices == null) {
+    List<String> getInterestingItemsFilters() {
+        if (interestingItemsFilters == null) {
             return null;
         }
-        return interestingItemsFilterIndices.clone();
+        return Collections.unmodifiableList(interestingItemsFilters);
     }
 
-    void setScoreFilter(boolean enabled, int[] indices) {
+    void setScoreFilter(boolean enabled, List<Score> filters) {
         scoreFilterEnabled = enabled;
-        if (indices == null) {
-            scoreFilterIndices = null;
-        } else {
-            scoreFilterIndices = indices.clone();
+        scoreFilters.clear();
+        if (filters != null) {
+            scoreFilters.addAll(filters);
         }
     }
 
@@ -247,13 +255,13 @@ public class SearchFilterSave {
     }
 
     /**
-     * @return the scoreFilterIndices
+     * @return the scoreFilters
      */
-    int[] getScoreFilters() {
-        if (scoreFilterIndices == null) {
+    List<Score> getScoreFilters() {
+        if (scoreFilters == null) {
             return null;
         }
-        return scoreFilterIndices.clone();
+        return Collections.unmodifiableList(scoreFilters);
     }
 
     /**

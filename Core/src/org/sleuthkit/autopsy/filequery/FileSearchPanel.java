@@ -25,16 +25,19 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -64,6 +67,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private FileType fileType = FileType.IMAGE;
     private DefaultListModel<FileSearchFiltering.ParentSearchTerm> parentListModel;
     private SearchWorker searchWorker = null;
+    private UsePartialData continueWithPartialDataFlag = UsePartialData.UNSET;
 
     /**
      * Creates new form FileSearchDialog
@@ -93,7 +97,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                        selected, null to indicate leaving selected items
      *                        unchanged.
      */
-    private void dataSourceFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
+    private void dataSourceFilterSettings(boolean visible, boolean enabled, boolean selected, List<DataSourceItem> dsFilters) {
         dataSourceCheckbox.setVisible(visible);
         dataSourceScrollPane.setVisible(visible);
         dataSourceList.setVisible(visible);
@@ -101,17 +105,61 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         dataSourceCheckbox.setSelected(selected);
         if (dataSourceCheckbox.isEnabled() && dataSourceCheckbox.isSelected()) {
             dataSourceScrollPane.setEnabled(true);
-            dataSourceList.setEnabled(true);
-            if (indicesSelected != null) {
-                dataSourceList.setSelectedIndices(indicesSelected);
-            } else {
-                dataSourceList.clearSelection();
+            //attempt to select the filters
+            if (!selectIndices(dsFilters, dataSourceList)) {
+                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
+                dataSourceFilterSettings(visible, enabled, false, null);
             }
         } else {
             dataSourceScrollPane.setEnabled(false);
             dataSourceList.setEnabled(false);
             dataSourceList.clearSelection();
         }
+    }
+
+    private enum UsePartialData {
+        UNSET,
+        USE_PARTIAL,
+        DONT_USE;
+    }
+
+    @Messages({"FileSearchPanel.loading.partialFilter.text=Not all of the settings saved can be loaded. Do you want to load the selections which are available anyway?",
+        "FileSearchPanel.loading.partialFilter.title=Load Partial Filter"})
+    private <T> boolean selectIndices(List<T> filtersToSelect, JList<T> listOfCurrentFilters) {
+        listOfCurrentFilters.setEnabled(true);
+        if (filtersToSelect != null && !filtersToSelect.isEmpty()) {
+            List<Integer> selectedDsIndices = new ArrayList<>();
+            List<T> currentFilters = new ArrayList<>();
+            for (int i = 0; i < listOfCurrentFilters.getModel().getSize(); i++) {
+                currentFilters.add(listOfCurrentFilters.getModel().getElementAt(i));
+            }
+            for (T filter : filtersToSelect) {
+                int index = currentFilters.lastIndexOf(filter);
+                if (index != -1) {
+                    selectedDsIndices.add(index);
+                } else if (continueWithPartialDataFlag == UsePartialData.UNSET) {
+                    boolean continueAnyway = JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(this,
+                            Bundle.FileSearchPanel_loading_partialFilter_text(),
+                            Bundle.FileSearchPanel_loading_partialFilter_title(), JOptionPane.YES_NO_OPTION);
+                    if (continueAnyway) {
+                        continueWithPartialDataFlag = UsePartialData.USE_PARTIAL;
+                    } else {
+                        continueWithPartialDataFlag = UsePartialData.DONT_USE;
+                        break;
+                    }
+                }
+            }
+            if (continueWithPartialDataFlag != UsePartialData.DONT_USE) {
+                int[] selectedDs = selectedDsIndices.stream()
+                        .filter(Objects::nonNull)
+                        .mapToInt(Integer::intValue)
+                        .toArray();
+                listOfCurrentFilters.setSelectedIndices(selectedDs);
+            }
+        } else {
+            listOfCurrentFilters.clearSelection();
+        }
+        return continueWithPartialDataFlag != UsePartialData.DONT_USE;
     }
 
     /**
@@ -151,17 +199,17 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     /**
      * Setup the central repository frequency filter settings.
      *
-     * @param visible         Boolean indicating if the filter should be
-     *                        visible.
-     * @param enabled         Boolean indicating if the filter should be
-     *                        enabled.
-     * @param selected        Boolean indicating if the filter should be
-     *                        selected.
-     * @param indicesSelected Array of integers indicating which list items are
-     *                        selected, null to indicate leaving selected items
-     *                        unchanged.
+     * @param visible             Boolean indicating if the filter should be
+     *                            visible.
+     * @param enabled             Boolean indicating if the filter should be
+     *                            enabled.
+     * @param selected            Boolean indicating if the filter should be
+     *                            selected.
+     * @param selectedFrequencies Array of integers indicating which list items
+     *                            are selected, null to indicate leaving
+     *                            selected items unchanged.
      */
-    private void crFrequencyFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
+    private void crFrequencyFilterSettings(boolean visible, boolean enabled, boolean selected, List<Frequency> selectedFrequencies) {
         crFrequencyCheckbox.setVisible(visible);
         crFrequencyScrollPane.setVisible(visible);
         crFrequencyList.setVisible(visible);
@@ -169,11 +217,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         crFrequencyCheckbox.setSelected(selected);
         if (crFrequencyCheckbox.isEnabled() && crFrequencyCheckbox.isSelected()) {
             crFrequencyScrollPane.setEnabled(true);
-            crFrequencyList.setEnabled(true);
-            if (indicesSelected != null) {
-                crFrequencyList.setSelectedIndices(indicesSelected);
-            } else {
-                crFrequencyList.clearSelection();
+            //attempt to select the filters
+            if (!selectIndices(selectedFrequencies, crFrequencyList)) {
+                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
+                crFrequencyFilterSettings(visible, enabled, false, null);
             }
         } else {
             crFrequencyScrollPane.setEnabled(false);
@@ -195,7 +242,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                        selected, null to indicate leaving selected items
      *                        unchanged.
      */
-    private void objectsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
+    private void objectsFilterSettings(boolean visible, boolean enabled, boolean selected, List<String> filters) {
         objectsCheckbox.setVisible(visible);
         objectsScrollPane.setVisible(visible);
         objectsList.setVisible(visible);
@@ -204,11 +251,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         objectsCheckbox.setSelected(selected && hasObjects);
         if (objectsCheckbox.isEnabled() && objectsCheckbox.isSelected()) {
             objectsScrollPane.setEnabled(true);
-            objectsList.setEnabled(true);
-            if (indicesSelected != null) {
-                objectsList.setSelectedIndices(indicesSelected);
-            } else {
-                objectsList.clearSelection();
+            //attempt to select the filters
+            if (!selectIndices(filters, objectsList)) {
+                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
+                objectsFilterSettings(visible, enabled, false, null);
             }
         } else {
             objectsScrollPane.setEnabled(false);
@@ -230,7 +276,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                        selected, null to indicate leaving selected items
      *                        unchanged.
      */
-    private void hashSetFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
+    private void hashSetFilterSettings(boolean visible, boolean enabled, boolean selected, List<String> filters) {
         hashSetCheckbox.setVisible(visible);
         hashSetScrollPane.setVisible(visible);
         hashSetList.setVisible(visible);
@@ -239,11 +285,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         hashSetCheckbox.setSelected(selected && hasHashSets);
         if (hashSetCheckbox.isEnabled() && hashSetCheckbox.isSelected()) {
             hashSetScrollPane.setEnabled(true);
-            hashSetList.setEnabled(true);
-            if (indicesSelected != null) {
-                hashSetList.setSelectedIndices(indicesSelected);
-            } else {
-                hashSetList.clearSelection();
+            //attempt to select the filters
+            if (!selectIndices(filters, hashSetList)) {
+                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
+                hashSetFilterSettings(visible, enabled, false, null);
             }
         } else {
             hashSetScrollPane.setEnabled(false);
@@ -265,7 +310,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                        selected, null to indicate leaving selected items
      *                        unchanged.
      */
-    private void interestingItemsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
+    private void interestingItemsFilterSettings(boolean visible, boolean enabled, boolean selected, List<String> filters) {
         interestingItemsCheckbox.setVisible(visible);
         interestingItemsScrollPane.setVisible(visible);
         interestingItemsList.setVisible(visible);
@@ -274,11 +319,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         interestingItemsCheckbox.setSelected(selected && hasInterestingItems);
         if (interestingItemsCheckbox.isEnabled() && interestingItemsCheckbox.isSelected()) {
             interestingItemsScrollPane.setEnabled(true);
-            interestingItemsList.setEnabled(true);
-            if (indicesSelected != null) {
-                interestingItemsList.setSelectedIndices(indicesSelected);
-            } else {
-                hashSetList.clearSelection();
+            //attempt to select the filters
+            if (!selectIndices(filters, interestingItemsList)) {
+                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
+                interestingItemsFilterSettings(visible, enabled, false, null);
             }
         } else {
             interestingItemsScrollPane.setEnabled(false);
@@ -300,7 +344,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                        selected, null to indicate leaving selected items
      *                        unchanged.
      */
-    private void scoreFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
+    private void scoreFilterSettings(boolean visible, boolean enabled, boolean selected, List<Score> filters) {
         scoreCheckbox.setVisible(visible);
         scoreScrollPane.setVisible(visible);
         scoreList.setVisible(visible);
@@ -308,11 +352,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         scoreCheckbox.setSelected(selected);
         if (scoreCheckbox.isEnabled() && scoreCheckbox.isSelected()) {
             scoreScrollPane.setEnabled(true);
-            scoreList.setEnabled(true);
-            if (indicesSelected != null) {
-                scoreList.setSelectedIndices(indicesSelected);
-            } else {
-                scoreList.clearSelection();
+            //attempt to select the filters
+            if (!selectIndices(filters, scoreList)) {
+                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
+                scoreFilterSettings(visible, enabled, false, null);
             }
         } else {
             scoreScrollPane.setEnabled(false);
@@ -334,7 +377,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                        selected, null to indicate leaving selected items
      *                        unchanged.
      */
-    private void parentFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
+    private void parentFilterSettings(boolean visible, boolean enabled, boolean selected, List<ParentSearchTerm> searchTerms) {
         parentCheckbox.setVisible(visible);
         parentScrollPane.setVisible(visible);
         parentList.setVisible(visible);
@@ -350,11 +393,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             deleteButton.setEnabled(!parentListModel.isEmpty());
             parentList.setEnabled(true);
             parentTextField.setEnabled(true);
-            if (indicesSelected != null) {
-                parentList.setSelectedIndices(indicesSelected);
-            } else {
-                parentList.clearSelection();
-            }
+            parentList.removeAll();
         } else {
             parentScrollPane.setEnabled(false);
             parentList.setEnabled(false);
@@ -366,6 +405,12 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             deleteButton.setEnabled(false);
             parentTextField.setEnabled(false);
             parentList.clearSelection();
+        }
+        if (searchTerms != null) {
+            parentListModel.clear();
+            for (ParentSearchTerm term : searchTerms) {
+                parentListModel.addElement(term);
+            }
         }
     }
 
@@ -382,7 +427,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                        selected, null to indicate leaving selected items
      *                        unchanged.
      */
-    private void tagsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
+    private void tagsFilterSettings(boolean visible, boolean enabled, boolean selected, List<TagName> filters) {
         tagsCheckbox.setVisible(visible);
         tagsScrollPane.setVisible(visible);
         tagsList.setVisible(visible);
@@ -390,11 +435,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         tagsCheckbox.setSelected(selected);
         if (tagsCheckbox.isEnabled() && tagsCheckbox.isSelected()) {
             tagsScrollPane.setEnabled(true);
-            tagsList.setEnabled(true);
-            if (indicesSelected != null) {
-                tagsList.setSelectedIndices(indicesSelected);
-            } else {
-                tagsList.clearSelection();
+            //attempt to select the filters
+            if (!selectIndices(filters, tagsList)) {
+                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
+                tagsFilterSettings(visible, enabled, false, null);
             }
         } else {
             tagsScrollPane.setEnabled(false);
@@ -416,7 +460,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                        selected, null to indicate leaving selected items
      *                        unchanged.
      */
-    private void keywordFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
+    private void keywordFilterSettings(boolean visible, boolean enabled, boolean selected, List<String> filters) {
         keywordCheckbox.setVisible(visible);
         keywordScrollPane.setVisible(visible);
         keywordList.setVisible(visible);
@@ -424,11 +468,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         keywordCheckbox.setSelected(selected);
         if (keywordCheckbox.isEnabled() && keywordCheckbox.isSelected()) {
             keywordScrollPane.setEnabled(true);
-            keywordList.setEnabled(true);
-            if (indicesSelected != null) {
-                keywordList.setSelectedIndices(indicesSelected);
-            } else {
-                keywordList.clearSelection();
+            //attempt to select the filters
+            if (!selectIndices(filters, keywordList)) {
+                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
+                keywordFilterSettings(visible, enabled, false, null);
             }
         } else {
             keywordScrollPane.setEnabled(false);
@@ -490,13 +533,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
         int[] selectedSizeIndices = {1, 2, 3, 4, 5};
         sizeFilterSettings(true, enabled, resetSelected || sizeCheckbox.isSelected(), resetSelected == true ? selectedSizeIndices : null);
-        int[] selectedFrequencyIndices;
-        if (!EamDb.isEnabled()) {
-            selectedFrequencyIndices = new int[]{0};
-        } else {
-            selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
-        }
-        crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
+        crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? getDefaultSelectedFrequencies() : null);
         exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
@@ -507,6 +544,19 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         keywordFilterSettings(false, false, false, null);
         knownFilesFilterSettings(false, false, false);
         notableFilterSettings(false, false, false);
+    }
+
+    private List<Frequency> getDefaultSelectedFrequencies() {
+        List<Frequency> selectedFrequencies = new ArrayList<>();
+        if (!EamDb.isEnabled()) {
+            selectedFrequencies.add(Frequency.UNKNOWN);
+        } else {
+            selectedFrequencies.add(Frequency.COMMON);
+            selectedFrequencies.add(Frequency.RARE);
+            selectedFrequencies.add(Frequency.UNIQUE);
+            selectedFrequencies.add(Frequency.VERY_COMMON);
+        }
+        return selectedFrequencies;
     }
 
     /**
@@ -522,13 +572,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private void videosSelected(boolean enabled, boolean resetSelected) {
         dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
         sizeFilterSettings(true, enabled, !resetSelected && sizeCheckbox.isSelected(), null);
-        int[] selectedFrequencyIndices;
-        if (!EamDb.isEnabled()) {
-            selectedFrequencyIndices = new int[]{0};
-        } else {
-            selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
-        }
-        crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
+        crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? getDefaultSelectedFrequencies() : null);
         exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
@@ -992,32 +1036,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     /**
-     * Utility class to allow us to display the data source ID along with the
-     * name
-     */
-    private class DataSourceItem {
-
-        private final DataSource ds;
-
-        DataSourceItem(DataSource ds) {
-            this.ds = ds;
-        }
-
-        DataSource getDataSource() {
-            return ds;
-        }
-
-        @Override
-        public String toString() {
-            return ds.getName() + " (ID: " + ds.getId() + ")";
-        }
-    }
-
-    /**
      * Validate the form. If we use any of this in the final dialog we should
      * use bundle messages.
      */
     private void validateFields() {
+        continueWithPartialDataFlag = UsePartialData.UNSET; //reset the use partial data flag
         // There will be a file type selected.
         if (fileType == null) {
             setInvalid("At least one file type must be selected");
@@ -1823,39 +1846,37 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             search.setSizeFilter(true, sizeList.getSelectedIndices());
         }
         if (dataSourceCheckbox.isSelected()) {
-            search.setDataSourceFilter(true, dataSourceList.getSelectedIndices());
+            search.setDataSourceFilter(true, dataSourceList.getSelectedValuesList());
         }
         if (crFrequencyCheckbox.isSelected()) {
-            search.setCrFrequencyFilter(true, crFrequencyList.getSelectedIndices());
+            search.setCrFrequencyFilter(true, crFrequencyList.getSelectedValuesList());
         }
         if (keywordCheckbox.isSelected()) {
-            search.setKeywordFilter(true, keywordList.getSelectedIndices());
+            search.setKeywordFilter(true, keywordList.getSelectedValuesList());
         }
         if (hashSetCheckbox.isSelected()) {
-            search.setHashSetFilter(true, hashSetList.getSelectedIndices());
+            search.setHashSetFilter(true, hashSetList.getSelectedValuesList());
         }
         if (objectsCheckbox.isSelected()) {
-            search.setObjectsFilter(true, objectsList.getSelectedIndices());
+            search.setObjectsFilter(true, objectsList.getSelectedValuesList());
         }
         if (tagsCheckbox.isSelected()) {
-            search.setTagsFilter(true, tagsList.getSelectedIndices());
+            search.setTagsFilter(true, tagsList.getSelectedValuesList());
         }
         if (interestingItemsCheckbox.isSelected()) {
-            search.setInterestingItemsFilter(true, interestingItemsList.getSelectedIndices());
+            search.setInterestingItemsFilter(true, interestingItemsList.getSelectedValuesList());
         }
         if (scoreCheckbox.isSelected()) {
-            search.setScoreFilter(true, scoreList.getSelectedIndices());
+            search.setScoreFilter(true, scoreList.getSelectedValuesList());
         }
         search.setDeviceOriginalFilterEnabled(exifCheckbox.isSelected());
         search.setNotableFilesFilterEnabled(notableCheckbox.isSelected());
         search.setKnownFilesFilterEnabled(knownFilesCheckbox.isSelected());
-        if (parentCheckbox.isSelected()) {
-            List<ParentSearchTerm> parentTerms = new ArrayList<>();
-            for (int i = 0; i < parentList.getModel().getSize(); i++) {
-                parentTerms.add(parentList.getModel().getElementAt(i));
-            }
-            search.setParentFilter(true, parentTerms);
+        List<ParentSearchTerm> parentTerms = new ArrayList<>();
+        for (int i = 0; i < parentList.getModel().getSize(); i++) {
+            parentTerms.add(parentList.getModel().getElementAt(i));
         }
+        search.setParentFilter(parentCheckbox.isSelected(), parentTerms);
         return search;
     }
 
@@ -1866,20 +1887,12 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         groupSortingComboBox.setSelectedIndex(search.getOrderGroupsBy());
         sizeFilterSettings(true, true, search.isSizeFilterEnabled(), search.getSizeFilters());
         dataSourceFilterSettings(true, true, search.isDataSourceFilterEnabled(), search.getDataSourceFilters());
-
         crFrequencyFilterSettings(true, true, search.isCrFrequencyFilterEnabled(), search.getCrFrequencyFilters());
         exifFilterSettings(true, true, search.isDeviceOriginalFilterEnabled());
         objectsFilterSettings(true, true, search.isObjectsFilterEnabled(), search.getObjectsFilters());
         hashSetFilterSettings(true, true, search.isHashSetFilterEnabled(), search.getHashSetFilters());
         interestingItemsFilterSettings(true, true, search.isInterestingItemsFilterEnabled(), search.getInterestingItemsFilters());
-        parentCheckbox.setSelected(search.isParentFilterEnabled());
-        if (parentCheckbox.isSelected()) {
-            parentListModel.clear();
-            for (ParentSearchTerm term : search.getParentFilters()) {
-                parentListModel.addElement(term);
-            }
-        }
-
+        parentFilterSettings(true, true, search.isParentFilterEnabled(), search.getParentFilters());
         scoreFilterSettings(false, false, search.isScoreFilterEnabled(), search.getScoreFilters());
         exifFilterSettings(false, false, search.isDeviceOriginalFilterEnabled());
         notableFilterSettings(false, false, search.isNotableFilesFilterEnabled());
