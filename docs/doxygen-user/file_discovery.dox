@@ -151,7 +151,9 @@ The bottom section of the panel is identical to the standard \ref content_viewer
 
 \subsection file_disc_dedupe De-duplication
 
-Assuming the \ref hash_db_page module has been run, all files in the result group with the same hash will be merged together under a single instance. You can see the number of instances of each file under the thumbnail, and each file instance will be displayed in the middle section of the panel.
+Assuming the \ref hash_db_page module has been run, all files in a result group with the same hash will be merged together under a single instance. You can see the number of instances of each file under the thumbnail, and each file instance will be displayed in the middle section of the panel.
+
+
 
 \image html FileDiscovery/fd_dupeEx.png
 
@@ -160,6 +162,19 @@ Clicking on a particular instance will load data for that file in the content vi
 Note that files in different groups will not be merged together or appear under the instances list of each other. For example, if you choose to group by parent folder and have two instances of a file with the same hash but in different folders, each will appear once under its parent folder. Grouping by file size (the default) will always be able to merge every instance of the same file.
 
 \subsection file_disc_icons Status Icons
+
+A number of icons may be displayed in the bottom right of the thumbnails to help point out notable results. Hovering over the icon will display a message explaining why the icon is present. In the image below, the yellow icon is present because the file is associated with an interesting item set.
+
+\image html FileDiscovery/fd_icon.png
+
+Most of the icons match what would be displayed in the "S" column of the normal \ref result_viewer_page. 
+
+| Icon | Usage |
+|-------|------|
+\image html FileDiscovery/yellow-circle-yield.png "" | \ref interesting_files_identifier_page "Interesting file set match" or normal \ref tagging_page "file tag"
+\image html FileDiscovery/red-circle-exclamation.png "" | Notable \ref hash_db_page "hash set hit" or notable \ref tagging_page "file tag"
+\image html FileDiscovery/file-icon-deleted.png "" | Deleted file (every instance is deleted)
+
 
 \subsection file_disc_paging Paging
 
