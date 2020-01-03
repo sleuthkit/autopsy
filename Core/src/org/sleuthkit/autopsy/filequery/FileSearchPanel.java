@@ -67,7 +67,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private FileType fileType = FileType.IMAGE;
     private DefaultListModel<FileSearchFiltering.ParentSearchTerm> parentListModel;
     private SearchWorker searchWorker = null;
-    private UsePartialData continueWithPartialDataFlag = UsePartialData.UNSET;
+    private boolean partialSaveLoaded = false;
 
     /**
      * Creates new form FileSearchDialog
@@ -113,19 +113,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                     currentFilters.add(dataSourceList.getModel().getElementAt(i).toString());
                 }
                 List<Integer> selectedDsIndices = selectIndiciesHelper(dsFilters, currentFilters);
-                if (continueWithPartialDataFlag != UsePartialData.DONT_USE) {
-                    int[] selectedDs = selectedDsIndices.stream()
-                            .filter(Objects::nonNull)
-                            .mapToInt(Integer::intValue)
-                            .toArray();
-                    dataSourceList.setSelectedIndices(selectedDs);
-                }
+                int[] selectedDs = selectedDsIndices.stream()
+                        .filter(Objects::nonNull)
+                        .mapToInt(Integer::intValue)
+                        .toArray();
+                dataSourceList.setSelectedIndices(selectedDs);
             } else {
                 dataSourceList.clearSelection();
-            }
-            if (continueWithPartialDataFlag == UsePartialData.DONT_USE) {
-                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
-                dataSourceFilterSettings(visible, enabled, false, null);
             }
         } else {
             dataSourceScrollPane.setEnabled(false);
@@ -134,15 +128,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         }
     }
 
-    private enum UsePartialData {
-        UNSET,
-        USE_PARTIAL,
-        DONT_USE;
-    }
-
     @Messages({"FileSearchPanel.loading.partialFilter.text=Not all of the settings saved can be loaded. Do you want to load the selections which are available anyway?",
         "FileSearchPanel.loading.partialFilter.title=Load Partial Filter"})
-    private <T> boolean selectIndices(List<T> filtersToSelect, JList<T> listOfCurrentFilters) {
+    private <T> void selectIndices(List<T> filtersToSelect, JList<T> listOfCurrentFilters) {
         listOfCurrentFilters.setEnabled(true);
         if (filtersToSelect != null && !filtersToSelect.isEmpty()) {
 
@@ -151,18 +139,14 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                 currentFilters.add(listOfCurrentFilters.getModel().getElementAt(i));
             }
             List<Integer> selectedDsIndices = selectIndiciesHelper(filtersToSelect, currentFilters);
-
-            if (continueWithPartialDataFlag != UsePartialData.DONT_USE) {
-                int[] selectedDs = selectedDsIndices.stream()
-                        .filter(Objects::nonNull)
-                        .mapToInt(Integer::intValue)
-                        .toArray();
-                listOfCurrentFilters.setSelectedIndices(selectedDs);
-            }
+            int[] selectedDs = selectedDsIndices.stream()
+                    .filter(Objects::nonNull)
+                    .mapToInt(Integer::intValue)
+                    .toArray();
+            listOfCurrentFilters.setSelectedIndices(selectedDs);
         } else {
             listOfCurrentFilters.clearSelection();
         }
-        return continueWithPartialDataFlag != UsePartialData.DONT_USE;
     }
 
     private <T> List<Integer> selectIndiciesHelper(List<T> filtersToSelect, List<T> currentFilters) {
@@ -171,20 +155,14 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             int index = currentFilters.lastIndexOf(filter);
             if (index != -1) {
                 selectedDsIndices.add(index);
-            } else if (continueWithPartialDataFlag == UsePartialData.UNSET) {
-                boolean continueAnyway = JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(this,
+            } else if (!partialSaveLoaded) {
+                JOptionPane.showConfirmDialog(this,
                         Bundle.FileSearchPanel_loading_partialFilter_text(),
-                        Bundle.FileSearchPanel_loading_partialFilter_title(), JOptionPane.YES_NO_OPTION);
-                if (continueAnyway) {
-                    continueWithPartialDataFlag = UsePartialData.USE_PARTIAL;
-                } else {
-                    continueWithPartialDataFlag = UsePartialData.DONT_USE;
-                    break;
-                }
+                        Bundle.FileSearchPanel_loading_partialFilter_title(), JOptionPane.OK_OPTION);
+                partialSaveLoaded = true;
             }
         }
         return selectedDsIndices;
-
     }
 
     /**
@@ -243,10 +221,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (crFrequencyCheckbox.isEnabled() && crFrequencyCheckbox.isSelected()) {
             crFrequencyScrollPane.setEnabled(true);
             //attempt to select the filters
-            if (!selectIndices(selectedFrequencies, crFrequencyList)) {
-                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
-                crFrequencyFilterSettings(visible, enabled, false, null);
-            }
+            selectIndices(selectedFrequencies, crFrequencyList);
         } else {
             crFrequencyScrollPane.setEnabled(false);
             crFrequencyList.setEnabled(false);
@@ -277,10 +252,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (objectsCheckbox.isEnabled() && objectsCheckbox.isSelected()) {
             objectsScrollPane.setEnabled(true);
             //attempt to select the filters
-            if (!selectIndices(filters, objectsList)) {
-                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
-                objectsFilterSettings(visible, enabled, false, null);
-            }
+            selectIndices(filters, objectsList);
         } else {
             objectsScrollPane.setEnabled(false);
             objectsList.setEnabled(false);
@@ -311,10 +283,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (hashSetCheckbox.isEnabled() && hashSetCheckbox.isSelected()) {
             hashSetScrollPane.setEnabled(true);
             //attempt to select the filters
-            if (!selectIndices(filters, hashSetList)) {
-                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
-                hashSetFilterSettings(visible, enabled, false, null);
-            }
+            selectIndices(filters, hashSetList);
         } else {
             hashSetScrollPane.setEnabled(false);
             hashSetList.setEnabled(false);
@@ -345,10 +314,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (interestingItemsCheckbox.isEnabled() && interestingItemsCheckbox.isSelected()) {
             interestingItemsScrollPane.setEnabled(true);
             //attempt to select the filters
-            if (!selectIndices(filters, interestingItemsList)) {
-                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
-                interestingItemsFilterSettings(visible, enabled, false, null);
-            }
+            selectIndices(filters, interestingItemsList);
         } else {
             interestingItemsScrollPane.setEnabled(false);
             interestingItemsList.setEnabled(false);
@@ -378,10 +344,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (scoreCheckbox.isEnabled() && scoreCheckbox.isSelected()) {
             scoreScrollPane.setEnabled(true);
             //attempt to select the filters
-            if (!selectIndices(filters, scoreList)) {
-                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
-                scoreFilterSettings(visible, enabled, false, null);
-            }
+            selectIndices(filters, scoreList);
         } else {
             scoreScrollPane.setEnabled(false);
             scoreList.setEnabled(false);
@@ -461,10 +424,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (tagsCheckbox.isEnabled() && tagsCheckbox.isSelected()) {
             tagsScrollPane.setEnabled(true);
             //attempt to select the filters
-            if (!selectIndices(filters, tagsList)) {
-                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
-                tagsFilterSettings(visible, enabled, false, null);
-            }
+            selectIndices(filters, tagsList);
         } else {
             tagsScrollPane.setEnabled(false);
             tagsList.setEnabled(false);
@@ -494,10 +454,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (keywordCheckbox.isEnabled() && keywordCheckbox.isSelected()) {
             keywordScrollPane.setEnabled(true);
             //attempt to select the filters
-            if (!selectIndices(filters, keywordList)) {
-                //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
-                keywordFilterSettings(visible, enabled, false, null);
-            }
+            selectIndices(filters, keywordList);
         } else {
             keywordScrollPane.setEnabled(false);
             keywordList.setEnabled(false);
@@ -569,7 +526,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         keywordFilterSettings(false, false, false, null);
         knownFilesFilterSettings(false, false, false);
         notableFilterSettings(false, false, false);
-        continueWithPartialDataFlag = UsePartialData.UNSET; //reset the use partial data flag
+        partialSaveLoaded = false; //reset the use partial data flag
     }
 
     private List<Frequency> getDefaultSelectedFrequencies() {
@@ -609,7 +566,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         keywordFilterSettings(false, false, false, null);
         knownFilesFilterSettings(false, false, false);
         notableFilterSettings(false, false, false);
-        continueWithPartialDataFlag = UsePartialData.UNSET; //reset the use partial data flag
+        partialSaveLoaded = false; //reset the use partial data flag
     }
 
     /**
@@ -672,7 +629,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         groupSortingComboBox.setSelectedIndex(0);
         setSelectedType(FileType.IMAGE);
-        continueWithPartialDataFlag = UsePartialData.UNSET; //reset the use partial data flag
+        partialSaveLoaded = false; //reset the use partial data flag
         validateFields();
     }
 
@@ -853,6 +810,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             tagsList.setEnabled(false);
         }
         addListeners(tagsCheckbox, tagsList);
+
     }
 
     /**
@@ -1908,7 +1866,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         exifFilterSettings(false, false, search.isUserContentFilterEnabled());
         notableFilterSettings(false, false, search.isNotableFilesFilterEnabled());
         knownFilesFilterSettings(false, false, search.isKnownFilesFilterEnabled());
-        continueWithPartialDataFlag = UsePartialData.UNSET; //reset the use partial data flag
+        partialSaveLoaded = false; //reset the use partial data flag
         validateFields();
     }
 

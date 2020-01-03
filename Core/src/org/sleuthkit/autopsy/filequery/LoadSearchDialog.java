@@ -52,7 +52,7 @@ final class LoadSearchDialog extends javax.swing.JDialog {
      * Creates new form SaveSearchDialog
      */
     @Messages({"LoadSearchDialog.title.text=Load Saved Filter Settings",
-                "LoadSearchDialog.filtersTable.nameColumn=Search Name",
+                "LoadSearchDialog.filtersTable.nameColumn=Name",
                 "LoadSearchDialog.filtersTable.dateColumn=Date Saved"})
     LoadSearchDialog() {
         super((JFrame) null, Bundle.LoadSearchDialog_title_text(), true);

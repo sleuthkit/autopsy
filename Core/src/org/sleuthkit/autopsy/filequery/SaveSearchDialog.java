@@ -24,23 +24,28 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JFrame;
 import org.apache.commons.io.FileUtils;
-import org.openide.util.Exceptions;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 final class SaveSearchDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(SaveSearchDialog.class.getName());
     private final SearchFilterSave searchFilters;
     private static final String SAVE_DIR = PlatformUtil.getUserDirectory() + File.separator + "discoveryFilterSaves";
+    private static final String SAVE_EXTENSION = ".dsf";
 
     /**
      * Creates new form SaveSearchDialog
      */
+    @Messages({"SaveSearchDialog.saveFilter.title=Save Current Filter Settings"})
     SaveSearchDialog(SearchFilterSave search) {
-        super((JFrame) null, "Title here", true);
+        super((JFrame) null, Bundle.SaveSearchDialog_saveFilter_title(), true);
         searchFilters = search;
         initComponents();
         setResizable(false);
@@ -115,7 +120,7 @@ final class SaveSearchDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
-        String fileName = fileNameTextField.getText() + ".dsf";
+        String fileName = fileNameTextField.getText() + SAVE_EXTENSION;
 
         GsonBuilder gsonBuilder = new GsonBuilder()
                 .setPrettyPrinting();
@@ -125,7 +130,7 @@ final class SaveSearchDialog extends javax.swing.JDialog {
         try {
             FileUtils.writeLines(new File(SAVE_DIR + File.separator + fileName), "UTF-8", lines, System.getProperty("line.separator")); // NON-NLS
         } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Error writing lines to file: " + SAVE_DIR + File.separator + fileName, ex);
         }
         dispose();
     }//GEN-LAST:event_saveButtonActionPerformed
