@@ -25,6 +25,9 @@ import org.sleuthkit.autopsy.filequery.FileSearchData.Frequency;
 import org.sleuthkit.autopsy.filequery.FileSearchData.Score;
 import org.sleuthkit.datamodel.TagName;
 
+/**
+ * Class for storing the saved state of the file discovery filters.
+ */
 public class SearchFilterSave {
 
     private final int fileTypeIndex;
@@ -49,12 +52,20 @@ public class SearchFilterSave {
     private final List<String> interestingItemsFilters = new ArrayList<>();
     private boolean scoreFilterEnabled = false;
     private final List<Score> scoreFilters = new ArrayList<>();
-    private boolean deviceOriginalFilterEnabled = false;
+    private boolean userContentFilterEnabled = false;
     private boolean notableFilesFilterEnabled = false;
     private boolean knownFilesFilterEnabled = false;
     private boolean parentFilterEnabled = false;
     private final List<FileSearchFiltering.ParentSearchTerm> parentFilters = new ArrayList<>();
 
+    /**
+     * Create a new SearchFilterSave.
+     *
+     * @param fileTypeIndex - Index which corresponds to the selected file type.
+     * @param orderBy       - The SortingMethod which is selected.
+     * @param groupBy       - The GroupingAttributeType selected.
+     * @param orderGroupsBy - The GroupSortingAlgoritm selected.
+     */
     SearchFilterSave(int fileTypeIndex, FileSorter.SortingMethod orderBy, FileSearch.GroupingAttributeType groupBy, FileGroup.GroupSortingAlgorithm orderGroupsBy) {
         this.fileTypeIndex = fileTypeIndex;
         this.orderBy = orderBy;
@@ -62,22 +73,49 @@ public class SearchFilterSave {
         this.orderGroupsBy = orderGroupsBy;
     }
 
+    /**
+     * Get the index of the selected file type.
+     *
+     * @return The index of the selected file type.
+     */
     int getSelectedFileType() {
         return fileTypeIndex;
     }
 
+    /**
+     * Get the sorting method used to order the results.
+     *
+     * @return The SortingMethod which will be applied to the results.
+     */
     FileSorter.SortingMethod getOrderBy() {
         return orderBy;
     }
 
+    /**
+     * Get the grouping attribute used to group the results.
+     *
+     * @return The GroupingAttributeType which will be used to group the
+     *         results.
+     */
     FileSearch.GroupingAttributeType getGroupByIndex() {
         return groupBy;
     }
 
+    /**
+     * Get the group sorting algorithm used to sort the groups.
+     *
+     * @return The GroupSortingAlgorithm which will be used to sort the groups.
+     */
     FileGroup.GroupSortingAlgorithm getOrderGroupsBy() {
         return orderGroupsBy;
     }
 
+    /**
+     * Set the size filter saved information.
+     *
+     * @param enabled - True if the Size filter is enabled.
+     * @param indices - The indices of the size filters to select.
+     */
     void setSizeFilter(boolean enabled, int[] indices) {
         sizeFilterEnabled = enabled;
         if (indices == null) {
@@ -87,10 +125,20 @@ public class SearchFilterSave {
         }
     }
 
+    /**
+     * Identifies if the size filter is enabled.
+     *
+     * @return True if the size filter is enabled.
+     */
     boolean isSizeFilterEnabled() {
         return sizeFilterEnabled;
     }
 
+    /**
+     * Get the indices of the size filters selected in the list of size filters.
+     *
+     * @return The indices of the filters selected in the list.
+     */
     int[] getSizeFilters() {
         if (sizeFilterIndices == null) {
             return null;
@@ -98,6 +146,12 @@ public class SearchFilterSave {
         return sizeFilterIndices.clone();
     }
 
+    /**
+     * Set the data source filter saved information.
+     *
+     * @param enabled - True if the data source filter is enabled.
+     * @param filters - The data source filters to select.
+     */
     void setDataSourceFilter(boolean enabled, List<DataSourceItem> filters) {
         dataSourceFilterEnabled = enabled;
         dataSourceFilters.clear();
@@ -108,10 +162,20 @@ public class SearchFilterSave {
         }
     }
 
+    /**
+     * Identifies if the data source filter is enabled.
+     *
+     * @return True if the data source filter is enabled.
+     */
     boolean isDataSourceFilterEnabled() {
         return dataSourceFilterEnabled;
     }
 
+    /**
+     * Get the list of data source filters which should be selected.
+     *
+     * @return The list of filters selected in the data sources list.
+     */
     List<String> getDataSourceFilters() {
         if (dataSourceFilters == null) {
             return null;
@@ -119,6 +183,12 @@ public class SearchFilterSave {
         return Collections.unmodifiableList(dataSourceFilters);
     }
 
+    /**
+     * Set the CR frequency filter saved information.
+     *
+     * @param enabled - True if the CR frequency filter is enabled.
+     * @param filters - The CR frequency filters to select.
+     */
     void setCrFrequencyFilter(boolean enabled, List<Frequency> filters) {
         crFrequencyFilterEnabled = enabled;
         crFrequencyFilters.clear();
@@ -127,10 +197,20 @@ public class SearchFilterSave {
         }
     }
 
+    /**
+     * Identifies if the CR frequency filter is enabled.
+     *
+     * @return True if the CR frequency filter is enabled.
+     */
     boolean isCrFrequencyFilterEnabled() {
         return crFrequencyFilterEnabled;
     }
 
+    /**
+     * Get the list of CR frequency filters which should be selected.
+     *
+     * @return The list of filters selected in the CR frequency list.
+     */
     List<Frequency> getCrFrequencyFilters() {
         if (crFrequencyFilters == null) {
             return null;
@@ -138,6 +218,12 @@ public class SearchFilterSave {
         return Collections.unmodifiableList(crFrequencyFilters);
     }
 
+    /**
+     * Set the keyword filter saved information.
+     *
+     * @param enabled - True if the keyword filter is enabled.
+     * @param filters - The keyword filters to select.
+     */
     void setKeywordFilter(boolean enabled, List<String> filters) {
         keywordFilterEnabled = enabled;
         keywordFilters.clear();
@@ -146,10 +232,20 @@ public class SearchFilterSave {
         }
     }
 
+    /**
+     * Identifies if the keyword filter is enabled.
+     *
+     * @return True if the keyword filter is enabled.
+     */
     boolean isKeywordFilterEnabled() {
         return keywordFilterEnabled;
     }
 
+    /**
+     * Get the list of keyword filters which should be selected.
+     *
+     * @return The list of filters selected in the keyword list.
+     */
     List<String> getKeywordFilters() {
         if (keywordFilters == null) {
             return null;
@@ -157,6 +253,12 @@ public class SearchFilterSave {
         return Collections.unmodifiableList(keywordFilters);
     }
 
+    /**
+     * Set the hash set filter saved information.
+     *
+     * @param enabled - True if the hash set filter is enabled.
+     * @param filters - The hash set filters to select.
+     */
     void setHashSetFilter(boolean enabled, List<String> filters) {
         hashSetFilterEnabled = enabled;
         hashSetFilters.clear();
@@ -165,10 +267,20 @@ public class SearchFilterSave {
         }
     }
 
+    /**
+     * Identifies if the hash set filter is enabled.
+     *
+     * @return True if the hash set filter is enabled.
+     */
     boolean isHashSetFilterEnabled() {
         return hashSetFilterEnabled;
     }
 
+    /**
+     * Get the list of hash set filters which should be selected.
+     *
+     * @return The list of filters selected in the hash sets list.
+     */
     List<String> getHashSetFilters() {
         if (hashSetFilters == null) {
             return null;
@@ -176,6 +288,12 @@ public class SearchFilterSave {
         return Collections.unmodifiableList(hashSetFilters);
     }
 
+    /**
+     * Set the objects filter saved information.
+     *
+     * @param enabled - True if the objects filter is enabled.
+     * @param filters - The objects filters to select.
+     */
     void setObjectsFilter(boolean enabled, List<String> filters) {
         objectsFilterEnabled = enabled;
         objectsFilters.clear();
@@ -184,10 +302,20 @@ public class SearchFilterSave {
         }
     }
 
+    /**
+     * Identifies if the objects filter is enabled.
+     *
+     * @return True if the objects filter is enabled.
+     */
     boolean isObjectsFilterEnabled() {
         return objectsFilterEnabled;
     }
 
+    /**
+     * Get the list of objects filters which should be selected.
+     *
+     * @return The list of filters selected in the objects list.
+     */
     List<String> getObjectsFilters() {
         if (objectsFilters == null) {
             return null;
@@ -195,6 +323,12 @@ public class SearchFilterSave {
         return Collections.unmodifiableList(objectsFilters);
     }
 
+    /**
+     * Set the tags filter saved information.
+     *
+     * @param enabled - True if the tags filter is enabled.
+     * @param filters - The tags filters to select.
+     */
     void setTagsFilter(boolean enabled, List<TagName> filters) {
         tagsFilterEnabled = enabled;
         tagsFilters.clear();
@@ -203,10 +337,20 @@ public class SearchFilterSave {
         }
     }
 
+    /**
+     * Identifies if the tags filter is enabled.
+     *
+     * @return True if the tags filter is enabled.
+     */
     boolean isTagsFilterEnabled() {
         return tagsFilterEnabled;
     }
 
+    /**
+     * Get the list of tags filters which should be selected.
+     *
+     * @return The list of filters selected in the tags list.
+     */
     List<TagName> getTagsFilters() {
         if (tagsFilters == null) {
             return null;
@@ -214,6 +358,12 @@ public class SearchFilterSave {
         return Collections.unmodifiableList(tagsFilters);
     }
 
+    /**
+     * Set the interesting items filter saved information.
+     *
+     * @param enabled - True if the interesting items filter is enabled.
+     * @param filters - The interesting items filters to select.
+     */
     void setInterestingItemsFilter(boolean enabled, List<String> filters) {
         interestingItemsFilterEnabled = enabled;
         interestingItemsFilters.clear();
@@ -222,10 +372,20 @@ public class SearchFilterSave {
         }
     }
 
+    /**
+     * Identifies if the interesting items filter is enabled.
+     *
+     * @return True if the interesting items filter is enabled.
+     */
     boolean isInterestingItemsFilterEnabled() {
         return interestingItemsFilterEnabled;
     }
 
+    /**
+     * Get the list of interesting items filters which should be selected.
+     *
+     * @return The list of filters selected in the interesting items list.
+     */
     List<String> getInterestingItemsFilters() {
         if (interestingItemsFilters == null) {
             return null;
@@ -233,6 +393,12 @@ public class SearchFilterSave {
         return Collections.unmodifiableList(interestingItemsFilters);
     }
 
+    /**
+     * Set the score filter saved information.
+     *
+     * @param enabled - True if the score filter is enabled.
+     * @param filters - The score filters to select.
+     */
     void setScoreFilter(boolean enabled, List<Score> filters) {
         scoreFilterEnabled = enabled;
         scoreFilters.clear();
@@ -242,14 +408,18 @@ public class SearchFilterSave {
     }
 
     /**
-     * @return the scoreFilterEnabled
+     * Identifies if the score filter is enabled.
+     *
+     * @return True if the score filter is enabled.
      */
     boolean isScoreFilterEnabled() {
         return scoreFilterEnabled;
     }
 
     /**
-     * @return the scoreFilters
+     * Get the list of score filters which should be selected.
+     *
+     * @return The list of filters selected in the score list.
      */
     List<Score> getScoreFilters() {
         if (scoreFilters == null) {
@@ -259,47 +429,65 @@ public class SearchFilterSave {
     }
 
     /**
-     * @return the deviceOriginalFilterEnabled
+     * Identifies if the user content filter is enabled.
+     *
+     * @return True if the user content filter is enabled.
      */
-    boolean isDeviceOriginalFilterEnabled() {
-        return deviceOriginalFilterEnabled;
+    boolean isUserContentFilterEnabled() {
+        return userContentFilterEnabled;
     }
 
     /**
-     * @param deviceOriginalFilterEnabled the deviceOriginalFilterEnabled to set
+     * Set the user content filter saved information.
+     *
+     * @param enabled True if the userContentFilterEnabled is enabled.
      */
-    void setDeviceOriginalFilterEnabled(boolean enabled) {
-        this.deviceOriginalFilterEnabled = enabled;
+    void setUserContentFilterEnabled(boolean enabled) {
+        this.userContentFilterEnabled = enabled;
     }
 
     /**
-     * @return the notableFilesFilterEnabled
+     * Identifies if the notable files filter is enabled.
+     *
+     * @return True if the notable files filter is enabled.
      */
     boolean isNotableFilesFilterEnabled() {
         return notableFilesFilterEnabled;
     }
 
     /**
-     * @param notableFilesFilterEnabled the notableFilesFilterEnabled to set
+     * Set the notable files filter saved information.
+     *
+     * @param enabled True if the notableFilesFilterEnabled is enabled.
      */
     void setNotableFilesFilterEnabled(boolean enabled) {
         this.notableFilesFilterEnabled = enabled;
     }
 
     /**
-     * @return the knownFilesFilterEnabled
+     * Identifies if the known files filter is enabled.
+     *
+     * @return True if the known files filter is enabled.
      */
     boolean isKnownFilesFilterEnabled() {
         return knownFilesFilterEnabled;
     }
 
     /**
-     * @param knownFilesFilterEnabled the knownFilesFilterEnabled to set
+     * Set the known files filter saved information.
+     *
+     * @param enabled True if the knownFilesFilterEnabled is enabled.
      */
     void setKnownFilesFilterEnabled(boolean enabled) {
         this.knownFilesFilterEnabled = enabled;
     }
 
+    /**
+     * Set the parent filter saved information.
+     *
+     * @param enabled - True if the parent filter is enabled.
+     * @param filters - The parent filters to select.
+     */
     void setParentFilter(boolean enabled, List<FileSearchFiltering.ParentSearchTerm> parentTerms) {
         parentFilterEnabled = enabled;
         parentFilters.clear();
@@ -309,14 +497,18 @@ public class SearchFilterSave {
     }
 
     /**
-     * @return the parentFilterEnabled
+     * Identifies if the parent filter is enabled.
+     *
+     * @return True if the parent filter is enabled.
      */
     boolean isParentFilterEnabled() {
         return parentFilterEnabled;
     }
 
     /**
-     * @return the parentFilters
+     * Get the list of parent filters which should be selected.
+     *
+     * @return The list of filters selected in the parent list.
      */
     List<FileSearchFiltering.ParentSearchTerm> getParentFilters() {
         return Collections.unmodifiableList(parentFilters);

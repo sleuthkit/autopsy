@@ -1878,7 +1878,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         search.setTagsFilter(tagsCheckbox.isSelected(), tagsList.getSelectedValuesList());
         search.setInterestingItemsFilter(interestingItemsCheckbox.isSelected(), interestingItemsList.getSelectedValuesList());
         search.setScoreFilter(scoreCheckbox.isSelected(), scoreList.getSelectedValuesList());
-        search.setDeviceOriginalFilterEnabled(exifCheckbox.isSelected());
+        search.setUserContentFilterEnabled(exifCheckbox.isSelected());
         search.setNotableFilesFilterEnabled(notableCheckbox.isSelected());
         search.setKnownFilesFilterEnabled(knownFilesCheckbox.isSelected());
         List<ParentSearchTerm> parentTerms = new ArrayList<>();
@@ -1897,13 +1897,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         sizeFilterSettings(true, true, search.isSizeFilterEnabled(), search.getSizeFilters());
         dataSourceFilterSettings(true, true, search.isDataSourceFilterEnabled(), search.getDataSourceFilters());
         crFrequencyFilterSettings(true, true, search.isCrFrequencyFilterEnabled(), search.getCrFrequencyFilters());
-        exifFilterSettings(true, true, search.isDeviceOriginalFilterEnabled());
+        exifFilterSettings(true, true, search.isUserContentFilterEnabled());
         objectsFilterSettings(true, true, search.isObjectsFilterEnabled(), search.getObjectsFilters());
         hashSetFilterSettings(true, true, search.isHashSetFilterEnabled(), search.getHashSetFilters());
         interestingItemsFilterSettings(true, true, search.isInterestingItemsFilterEnabled(), search.getInterestingItemsFilters());
         parentFilterSettings(true, true, search.isParentFilterEnabled(), search.getParentFilters());
         scoreFilterSettings(false, false, search.isScoreFilterEnabled(), search.getScoreFilters());
-        exifFilterSettings(false, false, search.isDeviceOriginalFilterEnabled());
+        exifFilterSettings(false, false, search.isUserContentFilterEnabled());
         notableFilterSettings(false, false, search.isNotableFilesFilterEnabled());
         knownFilesFilterSettings(false, false, search.isKnownFilesFilterEnabled());
         validateFields();
