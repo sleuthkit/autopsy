@@ -178,6 +178,8 @@ ImageThumbnailPanel.terraBytes.text=TB
 # {0} - fileName
 LoadSearchDialog.confimMessage.text=Are you sure you want to delete {0}?
 LoadSearchDialog.confirmTitle.text=Confirm Deletion?
+LoadSearchDialog.filtersTable.dateColumn=Date Saved
+LoadSearchDialog.filtersTable.nameColumn=Search Name
 LoadSearchDialog.title.text=Load Saved Filter Settings
 OpenFileDiscoveryAction.resultsIncomplete.text=Results may be incomplete
 ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.

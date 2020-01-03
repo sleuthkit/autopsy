@@ -35,7 +35,7 @@ public class SearchFilterSave {
     private boolean sizeFilterEnabled = false;
     private int[] sizeFilterIndices;
     private boolean dataSourceFilterEnabled = false;
-    private final List<DataSourceItem> dataSourceFilters = new ArrayList<>();
+    private final List<String> dataSourceFilters = new ArrayList<>();
     private boolean crFrequencyFilterEnabled = false;
     private final List<Frequency> crFrequencyFilters = new ArrayList<>();
     private boolean keywordFilterEnabled = false;
@@ -110,7 +110,9 @@ public class SearchFilterSave {
         dataSourceFilterEnabled = enabled;
         dataSourceFilters.clear();
         if (filters != null) {
-            dataSourceFilters.addAll(filters);
+            for (DataSourceItem dataSource : filters) {
+                dataSourceFilters.add(dataSource.toString());
+            }
         }
     }
 
@@ -118,7 +120,7 @@ public class SearchFilterSave {
         return dataSourceFilterEnabled;
     }
 
-    List<DataSourceItem> getDataSourceFilters() {
+    List<String> getDataSourceFilters() {
         if (dataSourceFilters == null) {
             return null;
         }

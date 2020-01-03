@@ -97,7 +97,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                        selected, null to indicate leaving selected items
      *                        unchanged.
      */
-    private void dataSourceFilterSettings(boolean visible, boolean enabled, boolean selected, List<DataSourceItem> dsFilters) {
+    private void dataSourceFilterSettings(boolean visible, boolean enabled, boolean selected, List<String> dsFilters) {
         dataSourceCheckbox.setVisible(visible);
         dataSourceScrollPane.setVisible(visible);
         dataSourceList.setVisible(visible);
@@ -106,7 +106,24 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (dataSourceCheckbox.isEnabled() && dataSourceCheckbox.isSelected()) {
             dataSourceScrollPane.setEnabled(true);
             //attempt to select the filters
-            if (!selectIndices(dsFilters, dataSourceList)) {
+            dataSourceList.setEnabled(true);
+            if (dsFilters != null && !dsFilters.isEmpty()) {
+                List<String> currentFilters = new ArrayList<>();
+                for (int i = 0; i < dataSourceList.getModel().getSize(); i++) {
+                    currentFilters.add(dataSourceList.getModel().getElementAt(i).toString());
+                }
+                List<Integer> selectedDsIndices = selectIndiciesHelper(dsFilters, currentFilters);
+                if (continueWithPartialDataFlag != UsePartialData.DONT_USE) {
+                    int[] selectedDs = selectedDsIndices.stream()
+                            .filter(Objects::nonNull)
+                            .mapToInt(Integer::intValue)
+                            .toArray();
+                    dataSourceList.setSelectedIndices(selectedDs);
+                }
+            } else {
+                dataSourceList.clearSelection();
+            }
+            if (continueWithPartialDataFlag == UsePartialData.DONT_USE) {
                 //if the data can't be loaded completely and the user decides not to load partial data reset any changes to the filter being unselected
                 dataSourceFilterSettings(visible, enabled, false, null);
             }
@@ -128,27 +145,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private <T> boolean selectIndices(List<T> filtersToSelect, JList<T> listOfCurrentFilters) {
         listOfCurrentFilters.setEnabled(true);
         if (filtersToSelect != null && !filtersToSelect.isEmpty()) {
-            List<Integer> selectedDsIndices = new ArrayList<>();
+
             List<T> currentFilters = new ArrayList<>();
             for (int i = 0; i < listOfCurrentFilters.getModel().getSize(); i++) {
                 currentFilters.add(listOfCurrentFilters.getModel().getElementAt(i));
             }
-            for (T filter : filtersToSelect) {
-                int index = currentFilters.lastIndexOf(filter);
-                if (index != -1) {
-                    selectedDsIndices.add(index);
-                } else if (continueWithPartialDataFlag == UsePartialData.UNSET) {
-                    boolean continueAnyway = JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(this,
-                            Bundle.FileSearchPanel_loading_partialFilter_text(),
-                            Bundle.FileSearchPanel_loading_partialFilter_title(), JOptionPane.YES_NO_OPTION);
-                    if (continueAnyway) {
-                        continueWithPartialDataFlag = UsePartialData.USE_PARTIAL;
-                    } else {
-                        continueWithPartialDataFlag = UsePartialData.DONT_USE;
-                        break;
-                    }
-                }
-            }
+            List<Integer> selectedDsIndices = selectIndiciesHelper(filtersToSelect, currentFilters);
+
             if (continueWithPartialDataFlag != UsePartialData.DONT_USE) {
                 int[] selectedDs = selectedDsIndices.stream()
                         .filter(Objects::nonNull)
@@ -160,6 +163,28 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             listOfCurrentFilters.clearSelection();
         }
         return continueWithPartialDataFlag != UsePartialData.DONT_USE;
+    }
+
+    private <T> List<Integer> selectIndiciesHelper(List<T> filtersToSelect, List<T> currentFilters) {
+        List<Integer> selectedDsIndices = new ArrayList<>();
+        for (T filter : filtersToSelect) {
+            int index = currentFilters.lastIndexOf(filter);
+            if (index != -1) {
+                selectedDsIndices.add(index);
+            } else if (continueWithPartialDataFlag == UsePartialData.UNSET) {
+                boolean continueAnyway = JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(this,
+                        Bundle.FileSearchPanel_loading_partialFilter_text(),
+                        Bundle.FileSearchPanel_loading_partialFilter_title(), JOptionPane.YES_NO_OPTION);
+                if (continueAnyway) {
+                    continueWithPartialDataFlag = UsePartialData.USE_PARTIAL;
+                } else {
+                    continueWithPartialDataFlag = UsePartialData.DONT_USE;
+                    break;
+                }
+            }
+        }
+        return selectedDsIndices;
+
     }
 
     /**
@@ -1840,35 +1865,16 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     SearchFilterSave getCurrentFilters() {
-
         SearchFilterSave search = new SearchFilterSave(fileType.getRanking(), orderByCombobox.getSelectedIndex(), groupByCombobox.getSelectedIndex(), groupSortingComboBox.getSelectedIndex());
-        if (sizeCheckbox.isSelected()) {
-            search.setSizeFilter(true, sizeList.getSelectedIndices());
-        }
-        if (dataSourceCheckbox.isSelected()) {
-            search.setDataSourceFilter(true, dataSourceList.getSelectedValuesList());
-        }
-        if (crFrequencyCheckbox.isSelected()) {
-            search.setCrFrequencyFilter(true, crFrequencyList.getSelectedValuesList());
-        }
-        if (keywordCheckbox.isSelected()) {
-            search.setKeywordFilter(true, keywordList.getSelectedValuesList());
-        }
-        if (hashSetCheckbox.isSelected()) {
-            search.setHashSetFilter(true, hashSetList.getSelectedValuesList());
-        }
-        if (objectsCheckbox.isSelected()) {
-            search.setObjectsFilter(true, objectsList.getSelectedValuesList());
-        }
-        if (tagsCheckbox.isSelected()) {
-            search.setTagsFilter(true, tagsList.getSelectedValuesList());
-        }
-        if (interestingItemsCheckbox.isSelected()) {
-            search.setInterestingItemsFilter(true, interestingItemsList.getSelectedValuesList());
-        }
-        if (scoreCheckbox.isSelected()) {
-            search.setScoreFilter(true, scoreList.getSelectedValuesList());
-        }
+        search.setSizeFilter(sizeCheckbox.isSelected(), sizeList.getSelectedIndices());
+        search.setDataSourceFilter(crFrequencyCheckbox.isSelected(), dataSourceList.getSelectedValuesList());
+        search.setCrFrequencyFilter(crFrequencyCheckbox.isSelected(), crFrequencyList.getSelectedValuesList());
+        search.setKeywordFilter(keywordCheckbox.isSelected(), keywordList.getSelectedValuesList());
+        search.setHashSetFilter(hashSetCheckbox.isSelected(), hashSetList.getSelectedValuesList());
+        search.setObjectsFilter(objectsCheckbox.isSelected(), objectsList.getSelectedValuesList());
+        search.setTagsFilter(tagsCheckbox.isSelected(), tagsList.getSelectedValuesList());
+        search.setInterestingItemsFilter(interestingItemsCheckbox.isSelected(), interestingItemsList.getSelectedValuesList());
+        search.setScoreFilter(scoreCheckbox.isSelected(), scoreList.getSelectedValuesList());
         search.setDeviceOriginalFilterEnabled(exifCheckbox.isSelected());
         search.setNotableFilesFilterEnabled(notableCheckbox.isSelected());
         search.setKnownFilesFilterEnabled(knownFilesCheckbox.isSelected());

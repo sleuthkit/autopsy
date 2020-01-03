@@ -51,7 +51,9 @@ final class LoadSearchDialog extends javax.swing.JDialog {
     /**
      * Creates new form SaveSearchDialog
      */
-    @Messages({"LoadSearchDialog.title.text=Load Saved Filter Settings"})
+    @Messages({"LoadSearchDialog.title.text=Load Saved Filter Settings",
+                "LoadSearchDialog.filtersTable.nameColumn=Search Name",
+                "LoadSearchDialog.filtersTable.dateColumn=Date Saved"})
     LoadSearchDialog() {
         super((JFrame) null, Bundle.LoadSearchDialog_title_text(), true);
         initComponents();
@@ -118,7 +120,7 @@ final class LoadSearchDialog extends javax.swing.JDialog {
 
         filtersTable.setModel(new javax.swing.table.DefaultTableModel(
             new String [][] {},
-            new String [] {"Search Name", "Date Saved"}
+            new String [] {Bundle.LoadSearchDialog_filtersTable_nameColumn(), Bundle.LoadSearchDialog_filtersTable_dateColumn()}
         ));
         filtersTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         filtersScrollPane.setViewportView(filtersTable);
