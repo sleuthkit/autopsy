@@ -107,7 +107,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             dataSourceScrollPane.setEnabled(true);
             //attempt to select the filters
             dataSourceList.setEnabled(true);
-            if (dsFilters != null && !dsFilters.isEmpty()) {
+            if (dsFilters != null && dsFilters.isEmpty()) {
+                dataSourceList.clearSelection();
+            } else if (dsFilters != null) {
                 List<String> currentFilters = new ArrayList<>();
                 for (int i = 0; i < dataSourceList.getModel().getSize(); i++) {
                     currentFilters.add(dataSourceList.getModel().getElementAt(i).toString());
@@ -118,13 +120,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                         .mapToInt(Integer::intValue)
                         .toArray();
                 dataSourceList.setSelectedIndices(selectedDs);
-            } else {
-                dataSourceList.clearSelection();
             }
         } else {
             dataSourceScrollPane.setEnabled(false);
             dataSourceList.setEnabled(false);
-            dataSourceList.clearSelection();
+            if (!dataSourceCheckbox.isSelected()) {
+                dataSourceList.clearSelection();
+            }
         }
     }
 
@@ -132,8 +134,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         "FileSearchPanel.loading.partialFilter.title=Load Partial Filter"})
     private <T> void selectIndices(List<T> filtersToSelect, JList<T> listOfCurrentFilters) {
         listOfCurrentFilters.setEnabled(true);
-        if (filtersToSelect != null && !filtersToSelect.isEmpty()) {
-
+        if (filtersToSelect != null && filtersToSelect.isEmpty()) {
+            listOfCurrentFilters.clearSelection();
+        } else if (filtersToSelect != null) {
             List<T> currentFilters = new ArrayList<>();
             for (int i = 0; i < listOfCurrentFilters.getModel().getSize(); i++) {
                 currentFilters.add(listOfCurrentFilters.getModel().getElementAt(i));
@@ -144,9 +147,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                     .mapToInt(Integer::intValue)
                     .toArray();
             listOfCurrentFilters.setSelectedIndices(selectedDs);
-        } else {
-            listOfCurrentFilters.clearSelection();
         }
+
     }
 
     private <T> List<Integer> selectIndiciesHelper(List<T> filtersToSelect, List<T> currentFilters) {
@@ -195,7 +197,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         } else {
             sizeScrollPane.setEnabled(false);
             sizeList.setEnabled(false);
-            sizeList.clearSelection();
+            if (!sizeCheckbox.isSelected()) {
+                sizeList.clearSelection();
+            }
         }
     }
 
@@ -225,7 +229,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         } else {
             crFrequencyScrollPane.setEnabled(false);
             crFrequencyList.setEnabled(false);
-            crFrequencyList.clearSelection();
+            if (!crFrequencyCheckbox.isSelected()) {
+                crFrequencyList.clearSelection();
+            }
         }
     }
 
@@ -256,7 +262,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         } else {
             objectsScrollPane.setEnabled(false);
             objectsList.setEnabled(false);
-            objectsList.clearSelection();
+            if (!objectsCheckbox.isSelected()) {
+                objectsList.clearSelection();
+            }
         }
     }
 
@@ -287,7 +295,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         } else {
             hashSetScrollPane.setEnabled(false);
             hashSetList.setEnabled(false);
-            hashSetList.clearSelection();
+            if (!hashSetCheckbox.isSelected()) {
+                hashSetList.clearSelection();
+            }
         }
     }
 
@@ -318,7 +328,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         } else {
             interestingItemsScrollPane.setEnabled(false);
             interestingItemsList.setEnabled(false);
-            hashSetList.clearSelection();
+            if (!interestingItemsCheckbox.isSelected()) {
+                interestingItemsList.clearSelection();
+            }
         }
     }
 
@@ -348,7 +360,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         } else {
             scoreScrollPane.setEnabled(false);
             scoreList.setEnabled(false);
-            scoreList.clearSelection();
+            if (!scoreCheckbox.isSelected()) {
+                scoreList.clearSelection();
+            }
         }
     }
 
@@ -428,7 +442,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         } else {
             tagsScrollPane.setEnabled(false);
             tagsList.setEnabled(false);
-            tagsList.clearSelection();
+            if (!tagsCheckbox.isSelected()) {
+                tagsList.clearSelection();
+            }
         }
     }
 
@@ -458,7 +474,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         } else {
             keywordScrollPane.setEnabled(false);
             keywordList.setEnabled(false);
-            keywordList.clearSelection();
+            if (!keywordCheckbox.isSelected()) {
+                keywordList.clearSelection();
+            }
         }
     }
 
@@ -514,7 +532,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private void imagesSelected(boolean enabled, boolean resetSelected) {
         dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
         int[] selectedSizeIndices = {1, 2, 3, 4, 5};
-        sizeFilterSettings(true, enabled, resetSelected || sizeCheckbox.isSelected(), resetSelected == true ? selectedSizeIndices : null);
+        sizeFilterSettings(true, enabled, resetSelected || sizeCheckbox.isSelected(), resetSelected == true ? selectedSizeIndices : sizeList.getSelectedIndices());
         crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? getDefaultSelectedFrequencies() : null);
         exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
@@ -554,7 +572,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      */
     private void videosSelected(boolean enabled, boolean resetSelected) {
         dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
-        sizeFilterSettings(true, enabled, !resetSelected && sizeCheckbox.isSelected(), null);
+        sizeFilterSettings(true, enabled, !resetSelected && sizeCheckbox.isSelected(), resetSelected == true ? null : sizeList.getSelectedIndices());
         crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? getDefaultSelectedFrequencies() : null);
         exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
@@ -1025,58 +1043,69 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * Validate the form. If we use any of this in the final dialog we should
      * use bundle messages.
      */
+    @Messages({"FileSearchPanel.invalidFileType.message=A file type must be selected",
+        "FileSearchPanel.invalidDataSource.message=A data source must be selected",
+        "FileSearchPanel.invalidPastOccurrence.message=A past occurrence must be selected",
+        "FileSearchPanel.invalidSize.message=A file size must be selected",
+        "FileSearchPanel.invalidKeyword.message=A keyword list must be selected",
+        "FileSearchPanel.invalidParent.message=A parent folder must be selected",
+        "FileSearchPanel.invalidHashSet.message=A hash set must be selected",
+        "FileSearchPanel.invalidInterestingItem.message=An interesting item must be selected",
+        "FileSearchPanel.invalidObject.message=An object detected must be selected",
+        "FileSearchPanel.invalidTag.message=A tag name must be selected",
+        "FileSearchPanel.invalidScore.message=A score must be selected"})
     private void validateFields() {
         // There will be a file type selected.
         if (fileType == null) {
-            setInvalid("At least one file type must be selected");
+            setInvalid(Bundle.FileSearchPanel_invalidFileType_message());
             return;
         }
         // For most enabled filters, there should be something selected
         if (dataSourceCheckbox.isSelected() && dataSourceList.getSelectedValuesList().isEmpty()) {
-            setInvalid("At least one data source must be selected");
+            setInvalid(Bundle.FileSearchPanel_invalidDataSource_message());
             return;
         }
         if (crFrequencyCheckbox.isSelected() && crFrequencyList.getSelectedValuesList().isEmpty()) {
-            setInvalid("At least one CR frequency must be selected");
+            setInvalid(Bundle.FileSearchPanel_invalidPastOccurrence_message());
             return;
         }
         if (sizeCheckbox.isSelected() && sizeList.getSelectedValuesList().isEmpty()) {
-            setInvalid("At least one size must be selected");
+            setInvalid(Bundle.FileSearchPanel_invalidSize_message());
             return;
         }
         if (keywordCheckbox.isSelected() && keywordList.getSelectedValuesList().isEmpty()) {
-            setInvalid("At least one keyword list name must be selected");
+            setInvalid(Bundle.FileSearchPanel_invalidKeyword_message());
             return;
         }
 
         // Parent uses everything in the box
         if (parentCheckbox.isSelected() && getParentPaths().isEmpty()) {
-            setInvalid("At least one parent path must be entered");
+            setInvalid(Bundle.FileSearchPanel_invalidParent_message());
             return;
         }
 
         if (hashSetCheckbox.isSelected() && hashSetList.getSelectedValuesList().isEmpty()) {
-            setInvalid("At least one hash set name must be selected");
+            setInvalid(Bundle.FileSearchPanel_invalidHashSet_message());
             return;
         }
 
         if (interestingItemsCheckbox.isSelected() && interestingItemsList.getSelectedValuesList().isEmpty()) {
-            setInvalid("At least one interesting file set name must be selected");
+            setInvalid(Bundle.FileSearchPanel_invalidInterestingItem_message());
             return;
         }
 
         if (objectsCheckbox.isSelected() && objectsList.getSelectedValuesList().isEmpty()) {
-            setInvalid("At least one object type name must be selected");
+            setInvalid(Bundle.FileSearchPanel_invalidObject_message());
             return;
         }
 
         if (tagsCheckbox.isSelected() && tagsList.getSelectedValuesList().isEmpty()) {
-            setInvalid("At least one tag name must be selected");
+            setInvalid(Bundle.FileSearchPanel_invalidTag_message());
             return;
         }
 
         if (scoreCheckbox.isSelected() && scoreList.getSelectedValuesList().isEmpty()) {
-            setInvalid("At least one score must be selected");
+            setInvalid(Bundle.FileSearchPanel_invalidScore_message());
             return;
         }
         setValid();
