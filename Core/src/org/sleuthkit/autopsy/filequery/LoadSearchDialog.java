@@ -126,6 +126,7 @@ final class LoadSearchDialog extends javax.swing.JDialog {
         filtersScrollPane.setViewportView(filtersTable);
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteSearchButton, org.openide.util.NbBundle.getMessage(LoadSearchDialog.class, "LoadSearchDialog.deleteSearchButton.text")); // NOI18N
+        deleteSearchButton.setEnabled(false);
         deleteSearchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteSearchButtonActionPerformed(evt);
@@ -140,6 +141,7 @@ final class LoadSearchDialog extends javax.swing.JDialog {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(loadSearchButton, org.openide.util.NbBundle.getMessage(LoadSearchDialog.class, "LoadSearchDialog.loadSearchButton.text")); // NOI18N
+        loadSearchButton.setEnabled(false);
         loadSearchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 loadSearchButtonActionPerformed(evt);
