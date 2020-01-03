@@ -1,0 +1,5 @@
+DATExtractor_process_message=Processing DJI DAT file: %s
+DATFileExtractor_Extractor_Name=DAT File Extractor
+DroneIngestModule_Description=Description
+DroneIngestModule_Name=Drone
+DroneIngestModule_process_start=Started {0}

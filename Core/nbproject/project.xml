@@ -803,6 +803,10 @@
                 <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jutf7-1.0.0.jar</binary-origin>
             </class-path-extension>
+			<class-path-extension>
+                <runtime-relative-path>ext/DatCon.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/DatCon.jar</binary-origin>
+            </class-path-extension>
         </data>
     </configuration>
 </project>
