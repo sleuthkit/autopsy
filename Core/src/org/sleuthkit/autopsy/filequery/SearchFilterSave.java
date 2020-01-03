@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,9 +28,9 @@ import org.sleuthkit.datamodel.TagName;
 public class SearchFilterSave {
 
     private final int fileTypeIndex;
-    private final int orderByIndex;
-    private final int groupByIndex;
-    private final int orderGroupsBy;
+    private final FileSorter.SortingMethod orderBy;
+    private final FileSearch.GroupingAttributeType groupBy;
+    private final FileGroup.GroupSortingAlgorithm orderGroupsBy;
     private boolean sizeFilterEnabled = false;
     private int[] sizeFilterIndices;
     private boolean dataSourceFilterEnabled = false;
@@ -56,33 +55,26 @@ public class SearchFilterSave {
     private boolean parentFilterEnabled = false;
     private final List<FileSearchFiltering.ParentSearchTerm> parentFilters = new ArrayList<>();
 
-    SearchFilterSave(int fileTypeIndex, int orderByIndex, int groupByIndex, int orderGroupsBy) {
+    SearchFilterSave(int fileTypeIndex, FileSorter.SortingMethod orderBy, FileSearch.GroupingAttributeType groupBy, FileGroup.GroupSortingAlgorithm orderGroupsBy) {
         this.fileTypeIndex = fileTypeIndex;
-        this.orderByIndex = orderByIndex;
-        this.groupByIndex = groupByIndex;
+        this.orderBy = orderBy;
+        this.groupBy = groupBy;
         this.orderGroupsBy = orderGroupsBy;
-    }
-
-    SearchFilterSave(File searchSaveFile) {
-        this.fileTypeIndex = 0;
-        this.orderByIndex = 0;
-        this.groupByIndex = 0;
-        this.orderGroupsBy = 0;
     }
 
     int getSelectedFileType() {
         return fileTypeIndex;
     }
 
-    int getOrderByIndex() {
-        return orderByIndex;
+    FileSorter.SortingMethod getOrderBy() {
+        return orderBy;
     }
 
-    int getGroupByIndex() {
-        return groupByIndex;
+    FileSearch.GroupingAttributeType getGroupByIndex() {
+        return groupBy;
     }
 
-    int getOrderGroupsBy() {
+    FileGroup.GroupSortingAlgorithm getOrderGroupsBy() {
         return orderGroupsBy;
     }
 

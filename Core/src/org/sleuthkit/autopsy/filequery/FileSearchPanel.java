@@ -1865,7 +1865,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     SearchFilterSave getCurrentFilters() {
-        SearchFilterSave search = new SearchFilterSave(fileType.getRanking(), orderByCombobox.getSelectedIndex(), groupByCombobox.getSelectedIndex(), groupSortingComboBox.getSelectedIndex());
+        SearchFilterSave search = new SearchFilterSave(fileType.getRanking(),
+                orderByCombobox.getModel().getElementAt(orderByCombobox.getSelectedIndex()),
+                groupByCombobox.getModel().getElementAt(groupByCombobox.getSelectedIndex()),
+                groupSortingComboBox.getModel().getElementAt(groupSortingComboBox.getSelectedIndex()));
         search.setSizeFilter(sizeCheckbox.isSelected(), sizeList.getSelectedIndices());
         search.setDataSourceFilter(crFrequencyCheckbox.isSelected(), dataSourceList.getSelectedValuesList());
         search.setCrFrequencyFilter(crFrequencyCheckbox.isSelected(), crFrequencyList.getSelectedValuesList());
@@ -1888,9 +1891,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
     void loadSearch(SearchFilterSave search) throws IllegalArgumentException {
         //type is loaded as a side effect of needing to set the type in the TopComponent already
-        orderByCombobox.setSelectedIndex(search.getOrderByIndex());
-        groupByCombobox.setSelectedIndex(search.getGroupByIndex());
-        groupSortingComboBox.setSelectedIndex(search.getOrderGroupsBy());
+        orderByCombobox.setSelectedItem(search.getOrderBy());
+        groupByCombobox.setSelectedItem(search.getGroupByIndex());
+        groupSortingComboBox.setSelectedItem(search.getOrderGroupsBy());
         sizeFilterSettings(true, true, search.isSizeFilterEnabled(), search.getSizeFilters());
         dataSourceFilterSettings(true, true, search.isDataSourceFilterEnabled(), search.getDataSourceFilters());
         crFrequencyFilterSettings(true, true, search.isCrFrequencyFilterEnabled(), search.getCrFrequencyFilters());
