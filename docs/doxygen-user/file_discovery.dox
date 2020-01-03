@@ -79,7 +79,7 @@ The hash set filter restricts the results to files found in the selected hash se
 
 \subsubsection file_disc_int_filter Interesting Item Filter
 
-The interesting item filter restricts the results to files found in the selected interesting item rule sets. Only interesting file rule sets that have results in the current case are listed (though those matches may not be images or videos). See the \ref interesting_item_page page for more information on creating and using interesting item rule sets.
+The interesting item filter restricts the results to files found in the selected interesting item rule sets. Only interesting file rule sets that have results in the current case are listed (though those matches may not be images or videos). See the \ref interesting_files_identifier_page page for more information on creating and using interesting item rule sets.
 
 \image html FileDiscovery/fd_interestingItemsFilter.png
 
@@ -103,9 +103,15 @@ Here is another example. This rule was created with "Full" and "Include" selecte
 
 \image html FileDiscovery/fd_parentEx2.png
 
-This matches the file "/LogicalFileSet2/File Discovery/bird1.tif"
+This matches the file "/LogicalFileSet2/File Discovery/bird1.tif" but not any images in subfolders under "File Discovery".
 
-When considering multiple "Include" rules, remember that all rules are applied to each file path. So making a rule to include "My Documents" and another to include "My Pictures" will mean that only files that contain both folders in their path (e.g., "/My Documents/files/My Pictures/image3.png") will appear in the results.
+When there are multiple path options in the filter, they will be applied as follows:
+<ul>
+<li>The file path must match every "exclude" rule to pass
+<li>If any "include" rules exist, the file path must match at least one "include" rule to pass
+</ul>
+
+This allows you to, for example, make rules to include both the "My Documents" and the "My Pictures" folders.
 
 \subsection file_disc_grouping Grouping and Sorting
 
@@ -121,13 +127,41 @@ In the case of file size and past occurrences, ordering by group name is based o
 
 \image html FileDiscovery/fd_groupingInt.png
 
-The interesting items filter was not enabled, so most images ended up in the "None" group, meaning they have no interesting file result associated with them. The final group in the list contains a file that matched both interesting item rule sets.
+The interesting items filter was not enabled so most images ended up in the "None" group, meaning they have no interesting file result associated with them. The final group in the list contains a file that matched both interesting item rule sets.
 
 The last grouping and sorting option is choosing how to sort the results within a group. This is the order of the results in the top right panel after selecting a group from the middle column. Note that due to the merging of results with the same hash in that panel, ordering by file name, path, or data source can vary. See the \ref file_disc_dedupe section below for more information.
 
 \section file_disc_results Viewing Results
 
+\subsection file_disc_results_overview Overview
+
+Once you select your options and click "Show", you'll see a list of groups in the middle panel. Selecting one of these groups will display the results from that group in the right panel. If your results are images, you'll see thumbnails for each image in the top area of the right panel.
+
+\image html FileDiscovery/fd_resultGroups.png
+
+If your results are videos, each result will display four thumbnails from the video.
+
+\image html FileDiscovery/fd_videos.png
+
+When you select a result from the top of the right panel, you'll see the path to the corresponding file(s) in the "Instances" panel below the thumbnails. There may be more than one file instance associated with a result - see the \ref file_disc_dedupe section below. You can right-click on files in the instances panel to use most of options available in the normal \ref result_viewer_page.
+
+\image html FileDiscovery/fd_instanceContext.png
+
+The bottom section of the panel is identical to the standard \ref content_viewer_page and displays data corresponding to the file instance selected in the middle of the panel.
+
 \subsection file_disc_dedupe De-duplication
+
+Assuming the \ref hash_db_page module has been run, all files in the result group with the same hash will be merged together under a single instance. You can see the number of instances of each file under the thumbnail, and each file instance will be displayed in the middle section of the panel.
+
+\image html FileDiscovery/fd_dupeEx.png
+
+Clicking on a particular instance will load data for that file in the content viewer area at the bottom.
+
+Note that files in different groups will not be merged together or appear under the instances list of each other. For example, if you choose to group by parent folder and have two instances of a file with the same hash but in different folders, each will appear once under its parent folder. Grouping by file size (the default) will always be able to merge every instance of the same file.
+
+\subsection file_disc_icons Status Icons
+
+\subsection file_disc_paging Paging
 
 
 */
