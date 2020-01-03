@@ -107,7 +107,7 @@
             </Property>
           </Properties>
           <AuxValues>
-            <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="progressSlider.setUI(new CircularJSliderUI(progressSlider, new CircularJSliderConfiguration(new Dimension(18,18))));"/>
+            <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="progressSlider.setUI(new CircularJSliderUI(progressSlider, new Dimension(18,18)));"/>
           </AuxValues>
         </Component>
         <Component class="javax.swing.JLabel" name="progressLabel">
@@ -227,7 +227,7 @@
                 <Property name="requestFocusEnabled" type="boolean" value="false"/>
               </Properties>
               <AuxValues>
-                <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="audioSlider.setUI(new CircularJSliderUI(audioSlider, new CircularJSliderConfiguration(new Dimension(15,15))));"/>
+                <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="audioSlider.setUI(new CircularJSliderUI(audioSlider, new Dimension(15,15)));"/>
               </AuxValues>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout" value="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout$GridBagConstraintsDescription">
