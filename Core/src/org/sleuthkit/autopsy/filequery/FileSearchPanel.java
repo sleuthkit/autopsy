@@ -569,6 +569,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         keywordFilterSettings(false, false, false, null);
         knownFilesFilterSettings(false, false, false);
         notableFilterSettings(false, false, false);
+        continueWithPartialDataFlag = UsePartialData.UNSET; //reset the use partial data flag
     }
 
     private List<Frequency> getDefaultSelectedFrequencies() {
@@ -608,6 +609,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         keywordFilterSettings(false, false, false, null);
         knownFilesFilterSettings(false, false, false);
         notableFilterSettings(false, false, false);
+        continueWithPartialDataFlag = UsePartialData.UNSET; //reset the use partial data flag
     }
 
     /**
@@ -670,6 +672,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         groupSortingComboBox.setSelectedIndex(0);
         setSelectedType(FileType.IMAGE);
+        continueWithPartialDataFlag = UsePartialData.UNSET; //reset the use partial data flag
         validateFields();
     }
 
@@ -1065,7 +1068,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * use bundle messages.
      */
     private void validateFields() {
-        continueWithPartialDataFlag = UsePartialData.UNSET; //reset the use partial data flag
         // There will be a file type selected.
         if (fileType == null) {
             setInvalid("At least one file type must be selected");
@@ -1870,7 +1872,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                 groupByCombobox.getModel().getElementAt(groupByCombobox.getSelectedIndex()),
                 groupSortingComboBox.getModel().getElementAt(groupSortingComboBox.getSelectedIndex()));
         search.setSizeFilter(sizeCheckbox.isSelected(), sizeList.getSelectedIndices());
-        search.setDataSourceFilter(crFrequencyCheckbox.isSelected(), dataSourceList.getSelectedValuesList());
+        search.setDataSourceFilter(dataSourceCheckbox.isSelected(), dataSourceList.getSelectedValuesList());
         search.setCrFrequencyFilter(crFrequencyCheckbox.isSelected(), crFrequencyList.getSelectedValuesList());
         search.setKeywordFilter(keywordCheckbox.isSelected(), keywordList.getSelectedValuesList());
         search.setHashSetFilter(hashSetCheckbox.isSelected(), hashSetList.getSelectedValuesList());
@@ -1906,6 +1908,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         exifFilterSettings(false, false, search.isUserContentFilterEnabled());
         notableFilterSettings(false, false, search.isNotableFilesFilterEnabled());
         knownFilesFilterSettings(false, false, search.isKnownFilesFilterEnabled());
+        continueWithPartialDataFlag = UsePartialData.UNSET; //reset the use partial data flag
         validateFields();
     }
 
