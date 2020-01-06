@@ -29,6 +29,7 @@ import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -259,6 +260,36 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     updateTimeLabel(newStartTime, duration);
                 }
             }
+        });
+        //Manage the video while the user is performing actions on the track.
+        progressSlider.addMouseListener(new MouseListener() {
+            private State previousState = State.NULL;
+            
+            @Override
+            public void mousePressed(MouseEvent e) {
+                previousState = gstPlayBin.getState();
+                gstPlayBin.pause();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if(previousState.equals(State.PLAYING)) {
+                    gstPlayBin.play();
+                }
+                previousState = State.NULL;
+            }
+            @Override
+            public void mouseClicked(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+            
         });
         //Manage the audio level when the user is adjusting the volumn slider
         audioSlider.addChangeListener((ChangeEvent event) -> {
@@ -590,62 +621,14 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     }
 
     /**
-     * Represents the default configuration for the circular JSliderUI.
-     */
-    private class CircularJSliderConfiguration {
-
-        //Thumb configurations
-        private final Color thumbColor;
-        private final Dimension thumbDimension;
-
-        //Track configurations
-        //Progress bar can be bisected into a seen group 
-        //and an unseen group.
-        private final Color unseen;
-        private final Color seen;
-
-        /**
-         * Default configuration
-         *
-         * JSlider is light blue RGB(0,130,255). Seen track is light blue
-         * RGB(0,130,255). Unseen track is light grey RGB(192, 192, 192).
-         *
-         * @param thumbDimension Size of the oval thumb.
-         */
-        public CircularJSliderConfiguration(Dimension thumbDimension) {
-            Color lightBlue = new Color(0, 130, 255);
-
-            seen = lightBlue;
-            unseen = Color.LIGHT_GRAY;
-
-            thumbColor = lightBlue;
-
-            this.thumbDimension = new Dimension(thumbDimension);
-        }
-
-        public Color getThumbColor() {
-            return thumbColor;
-        }
-
-        public Color getUnseenTrackColor() {
-            return unseen;
-        }
-
-        public Color getSeenTrackColor() {
-            return seen;
-        }
-
-        public Dimension getThumbDimension() {
-            return new Dimension(thumbDimension);
-        }
-    }
-
-    /**
      * Custom view for the JSlider.
      */
     private class CircularJSliderUI extends BasicSliderUI {
 
-        private final CircularJSliderConfiguration config;
+        private final Dimension thumbDimension;
+        private final Color thumbColor;
+        private final Color trackUnseen;
+        private final Color trackSeen;
 
         /**
          * Creates a custom view for the JSlider. This view draws a blue oval
@@ -656,14 +639,20 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
          * @param config Configuration object. Contains info about thumb
          * dimensions and colors.
          */
-        public CircularJSliderUI(JSlider slider, CircularJSliderConfiguration config) {
+        public CircularJSliderUI(JSlider slider, Dimension thumbDimension) {
             super(slider);
-            this.config = config;
+            this.thumbDimension = thumbDimension;
+            
+            //Configure track and thumb colors.
+            Color lightBlue = new Color(0, 130, 255);
+            thumbColor = lightBlue;
+            trackSeen = lightBlue;
+            trackUnseen = Color.LIGHT_GRAY;
         }
 
         @Override
         protected Dimension getThumbSize() {
-            return config.getThumbDimension();
+            return new Dimension(thumbDimension);
         }
 
         /**
@@ -677,8 +666,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
             //Change the thumb view from the rectangle
             //controller to an oval.
-            graphic.setColor(config.getThumbColor());
-            Dimension thumbDimension = config.getThumbDimension();
+            graphic.setColor(thumbColor);
             graphic.fillOval(thumb.x, thumb.y, thumbDimension.width, thumbDimension.height);
 
             //Preserve the graphics original color
@@ -701,12 +689,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             Color original = graphic.getColor();
 
             //Paint the seen side
-            graphic.setColor(config.getSeenTrackColor());
+            graphic.setColor(trackSeen);
             graphic.drawLine(track.x, track.y + track.height / 2,
                     thumbX, thumbY + track.height / 2);
 
             //Paint the unseen side
-            graphic.setColor(config.getUnseenTrackColor());
+            graphic.setColor(trackUnseen);
             graphic.drawLine(thumbX, thumbY + track.height / 2,
                     track.x + track.width, track.y + track.height / 2);
 
@@ -716,7 +704,26 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
         @Override
         protected TrackListener createTrackListener(JSlider slider) {
-            return new CustomTrackListener();
+            /**
+            * This track listener will force the thumb to be snapped to the mouse
+            * location. This makes grabbing and dragging the JSlider much easier.
+            * Using the default track listener, the user would have to click
+            * exactly on the slider thumb to drag it. Now the thumb positions
+            * itself under the mouse so that it can always be dragged.
+            */
+            return new TrackListener() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    if (!slider.isEnabled() || !SwingUtilities.isLeftMouseButton(e)) {
+                        return;
+                    }
+                    //Snap the thumb to position of the mouse
+                    scrollDueToClickInTrack(0);
+
+                    //Handle the event as normal.
+                    super.mousePressed(e);
+                }
+            };
         }
 
         @Override
@@ -752,43 +759,6 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             }
 
             super.update(graphic, component);
-        }
-
-        /**
-         * This track listener will force the thumb to be snapped to the mouse
-         * location. This makes grabbing and dragging the JSlider much easier.
-         * Using the default track listener, the user would have to click
-         * exactly on the slider thumb to drag it. Now the thumb positions
-         * itself under the mouse so that it can always be dragged.
-         */
-        private class CustomTrackListener extends CircularJSliderUI.TrackListener {
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (!slider.isEnabled() || !SwingUtilities.isLeftMouseButton(e)) {
-                    return;
-                }
-                //Snap the thumb to position of the mouse
-                scrollDueToClickInTrack(0);
-
-                //Pause the video for convenience
-                gstPlayBin.pause();
-
-                //Handle the event as normal.
-                super.mousePressed(e);
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (!slider.isEnabled() || !SwingUtilities.isLeftMouseButton(e)) {
-                    return;
-                }
-
-                super.mouseReleased(e);
-
-                //Unpause once the mouse has been released.
-                gstPlayBin.play();
-            }
         }
     }
 
@@ -833,7 +803,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.setDoubleBuffered(true);
         progressSlider.setMinimumSize(new java.awt.Dimension(36, 21));
         progressSlider.setPreferredSize(new java.awt.Dimension(200, 21));
-        progressSlider.setUI(new CircularJSliderUI(progressSlider, new CircularJSliderConfiguration(new Dimension(18,18))));
+        progressSlider.setUI(new CircularJSliderUI(progressSlider, new Dimension(18,18)));
 
         org.openide.awt.Mnemonics.setLocalizedText(progressLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.progressLabel.text")); // NOI18N
 
@@ -908,7 +878,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         audioSlider.setMinimumSize(new java.awt.Dimension(200, 19));
         audioSlider.setPreferredSize(new java.awt.Dimension(200, 30));
         audioSlider.setRequestFocusEnabled(false);
-        audioSlider.setUI(new CircularJSliderUI(audioSlider, new CircularJSliderConfiguration(new Dimension(15,15))));
+        audioSlider.setUI(new CircularJSliderUI(audioSlider, new Dimension(15,15)));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
         gridBagConstraints.gridy = 0;
