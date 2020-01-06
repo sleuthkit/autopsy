@@ -404,15 +404,6 @@
                       <Connection code="new DefaultListModel&lt;ParentSearchTerm&gt;()" type="code"/>
                     </Property>
                     <Property name="enabled" type="boolean" value="false"/>
-                    <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                      <Dimension value="null"/>
-                    </Property>
-                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                      <Dimension value="[0, 30]"/>
-                    </Property>
-                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                      <Dimension value="[0, 30]"/>
-                    </Property>
                     <Property name="visibleRowCount" type="int" value="4"/>
                   </Properties>
                   <Events>
@@ -457,12 +448,6 @@
                       <Connection code="new DefaultListModel&lt;String&gt;()" type="code"/>
                     </Property>
                     <Property name="enabled" type="boolean" value="false"/>
-                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                      <Dimension value="[0, 30]"/>
-                    </Property>
-                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                      <Dimension value="[0, 30]"/>
-                    </Property>
                     <Property name="visibleRowCount" type="int" value="3"/>
                   </Properties>
                   <AuxValues>
@@ -573,12 +558,6 @@
                       <Connection code="new DefaultListModel&lt;String&gt;()" type="code"/>
                     </Property>
                     <Property name="enabled" type="boolean" value="false"/>
-                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                      <Dimension value="[0, 30]"/>
-                    </Property>
-                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                      <Dimension value="[0, 30]"/>
-                    </Property>
                     <Property name="visibleRowCount" type="int" value="2"/>
                   </Properties>
                   <AuxValues>
@@ -631,12 +610,6 @@
                       <Connection code="new DefaultListModel&lt;String&gt;()" type="code"/>
                     </Property>
                     <Property name="enabled" type="boolean" value="false"/>
-                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                      <Dimension value="[0, 30]"/>
-                    </Property>
-                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                      <Dimension value="[0, 30]"/>
-                    </Property>
                     <Property name="visibleRowCount" type="int" value="2"/>
                   </Properties>
                   <AuxValues>

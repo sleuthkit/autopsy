@@ -1328,9 +1328,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         parentList.setModel(new DefaultListModel<ParentSearchTerm>());
         parentList.setEnabled(false);
-        parentList.setMaximumSize(null);
-        parentList.setMinimumSize(new java.awt.Dimension(0, 30));
-        parentList.setPreferredSize(new java.awt.Dimension(0, 30));
         parentList.setVisibleRowCount(4);
         parentList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
@@ -1366,8 +1363,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         hashSetList.setModel(new DefaultListModel<String>());
         hashSetList.setEnabled(false);
-        hashSetList.setMinimumSize(new java.awt.Dimension(0, 30));
-        hashSetList.setPreferredSize(new java.awt.Dimension(0, 30));
         hashSetList.setVisibleRowCount(3);
         hashSetScrollPane.setViewportView(hashSetList);
 
@@ -1454,8 +1449,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         objectsList.setModel(new DefaultListModel<String>());
         objectsList.setEnabled(false);
-        objectsList.setMinimumSize(new java.awt.Dimension(0, 30));
-        objectsList.setPreferredSize(new java.awt.Dimension(0, 30));
         objectsList.setVisibleRowCount(2);
         objectsScrollPane.setViewportView(objectsList);
 
@@ -1487,8 +1480,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         interestingItemsList.setModel(new DefaultListModel<String>());
         interestingItemsList.setEnabled(false);
-        interestingItemsList.setMinimumSize(new java.awt.Dimension(0, 30));
-        interestingItemsList.setPreferredSize(new java.awt.Dimension(0, 30));
         interestingItemsList.setVisibleRowCount(2);
         interestingItemsScrollPane.setViewportView(interestingItemsList);
 
