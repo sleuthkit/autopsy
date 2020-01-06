@@ -332,6 +332,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         try {
             SearchFilterSave save = loadSearchDialog.getSearch();
             if (save != null) {
+                resetTopComponent();
                 selectType(save.getSelectedFileType());
                 try {
                     fileSearchPanel.loadSearch(save);
