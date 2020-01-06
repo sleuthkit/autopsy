@@ -61,6 +61,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import javafx.embed.swing.JFXPanel;
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
@@ -201,6 +202,9 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private static final int PROGRESS_SLIDER_SIZE = 2000;
     private static final int SKIP_IN_SECONDS = 30;
 
+    private final ImageIcon playIcon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/Play-arrow-01.png"));
+    private final ImageIcon pauseIcon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/Pause-01.png"));
+
     private ExtractMedia extractMediaWorker;
 
     //Serialize setting the value of the Video progress slider.
@@ -217,12 +221,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         //True for fairness. In other words,
         //acquire() calls are processed in order of invocation.
         sliderLock = new Semaphore(1, true);
-        
+
         /**
          * See JIRA-5888 for details. Initializing gstreamer here is more stable
          * on Windows.
          */
-        if(PlatformUtil.isWindowsOS()) {
+        if (PlatformUtil.isWindowsOS()) {
             Gst.init();
         }
     }
@@ -280,11 +284,11 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             public void stateChanged(GstObject go, State oldState, State currentState, State pendingState) {
                 if (State.PLAYING.equals(currentState)) {
                     SwingUtilities.invokeLater(() -> {
-                        playButton.setText("||");
+                        playButton.setIcon(pauseIcon);
                     });
                 } else {
                     SwingUtilities.invokeLater(() -> {
-                        playButton.setText("►");
+                        playButton.setIcon(playIcon);
                     });
                 }
             }
@@ -514,7 +518,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 // Initialize Gstreamer. It is safe to call this for every file.
                 // It was moved here from the constructor because having it happen
                 // earlier resulted in conflicts on Linux. See JIRA-5888.
-                if(!PlatformUtil.isWindowsOS()) {
+                if (!PlatformUtil.isWindowsOS()) {
                     Gst.init();
                 }
 
@@ -821,7 +825,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         );
         videoPanelLayout.setVerticalGroup(
             videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 131, Short.MAX_VALUE)
+            .addGap(0, 117, Short.MAX_VALUE)
         );
 
         progressSlider.setValue(0);
@@ -835,7 +839,11 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
         buttonPanel.setLayout(new java.awt.GridBagLayout());
 
+        playButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/Play-arrow-01.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(playButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.playButton.text")); // NOI18N
+        playButton.setMaximumSize(new java.awt.Dimension(53, 29));
+        playButton.setMinimumSize(new java.awt.Dimension(53, 29));
+        playButton.setPreferredSize(new java.awt.Dimension(49, 29));
         playButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 playButtonActionPerformed(evt);
@@ -849,6 +857,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         gridBagConstraints.insets = new java.awt.Insets(5, 6, 0, 0);
         buttonPanel.add(playButton, gridBagConstraints);
 
+        fastForwardButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/Fast-forward-01.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(fastForwardButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.fastForwardButton.text")); // NOI18N
         fastForwardButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -862,6 +871,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         gridBagConstraints.insets = new java.awt.Insets(5, 6, 0, 0);
         buttonPanel.add(fastForwardButton, gridBagConstraints);
 
+        rewindButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/Fast-rewind-01.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(rewindButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.rewindButton.text")); // NOI18N
         rewindButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -877,6 +887,9 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
         org.openide.awt.Mnemonics.setLocalizedText(VolumeIcon, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.VolumeIcon.text")); // NOI18N
         VolumeIcon.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        VolumeIcon.setMaximumSize(new java.awt.Dimension(34, 29));
+        VolumeIcon.setMinimumSize(new java.awt.Dimension(34, 29));
+        VolumeIcon.setPreferredSize(new java.awt.Dimension(34, 19));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 0;
@@ -891,8 +904,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         audioSlider.setMinorTickSpacing(5);
         audioSlider.setToolTipText(org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.audioSlider.toolTipText")); // NOI18N
         audioSlider.setValue(25);
-        audioSlider.setMinimumSize(new java.awt.Dimension(200, 21));
-        audioSlider.setPreferredSize(new java.awt.Dimension(200, 21));
+        audioSlider.setMaximumSize(new java.awt.Dimension(32767, 19));
+        audioSlider.setMinimumSize(new java.awt.Dimension(200, 19));
+        audioSlider.setPreferredSize(new java.awt.Dimension(200, 30));
+        audioSlider.setRequestFocusEnabled(false);
         audioSlider.setUI(new CircularJSliderUI(audioSlider, new CircularJSliderConfiguration(new Dimension(15,15))));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
@@ -909,9 +924,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
         playBackSpeedComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "0.25x", "0.50x", "0.75x", "1x", "1.25x", "1.50x", "1.75x", "2x" }));
         playBackSpeedComboBox.setSelectedIndex(3);
-        playBackSpeedComboBox.setMaximumSize(new java.awt.Dimension(53, 23));
-        playBackSpeedComboBox.setMinimumSize(new java.awt.Dimension(53, 23));
-        playBackSpeedComboBox.setPreferredSize(new java.awt.Dimension(53, 23));
+        playBackSpeedComboBox.setMaximumSize(new java.awt.Dimension(53, 29));
+        playBackSpeedComboBox.setMinimumSize(new java.awt.Dimension(53, 29));
+        playBackSpeedComboBox.setPreferredSize(new java.awt.Dimension(53, 29));
+        playBackSpeedComboBox.setRequestFocusEnabled(false);
         playBackSpeedComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 playBackSpeedComboBoxActionPerformed(evt);
@@ -919,13 +935,16 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(playBackSpeedLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.playBackSpeedLabel.text")); // NOI18N
+        playBackSpeedLabel.setMaximumSize(new java.awt.Dimension(34, 19));
+        playBackSpeedLabel.setMinimumSize(new java.awt.Dimension(34, 19));
+        playBackSpeedLabel.setPreferredSize(new java.awt.Dimension(34, 19));
 
         javax.swing.GroupLayout playBackPanelLayout = new javax.swing.GroupLayout(playBackPanel);
         playBackPanel.setLayout(playBackPanelLayout);
         playBackPanelLayout.setHorizontalGroup(
             playBackPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(playBackPanelLayout.createSequentialGroup()
-                .addComponent(playBackSpeedLabel)
+                .addComponent(playBackSpeedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(playBackSpeedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(13, 13, 13))
@@ -933,11 +952,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         playBackPanelLayout.setVerticalGroup(
             playBackPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(playBackPanelLayout.createSequentialGroup()
-                .addGap(6, 6, 6)
-                .addGroup(playBackPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(playBackSpeedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(playBackSpeedLabel))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(7, 7, 7)
+                .addGroup(playBackPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(playBackPanelLayout.createSequentialGroup()
+                        .addGap(2, 2, 2)
+                        .addComponent(playBackSpeedLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(playBackSpeedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(10, 10, 10))
         );
 
         javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
@@ -969,7 +990,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 .addGap(5, 5, 5)
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(buttonPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(playBackPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                    .addComponent(playBackPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(14, 14, 14)
                 .addComponent(infoLabel))
         );
