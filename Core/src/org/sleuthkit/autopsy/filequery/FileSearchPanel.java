@@ -160,7 +160,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             } else if (!partialSaveLoaded) {
                 JOptionPane.showMessageDialog(this,
                         Bundle.FileSearchPanel_loading_partialFilter_text(),
-                        Bundle.FileSearchPanel_loading_partialFilter_title(), JOptionPane.OK_OPTION);
+                        Bundle.FileSearchPanel_loading_partialFilter_title(), JOptionPane.PLAIN_MESSAGE);
                 partialSaveLoaded = true;
             }
         }
