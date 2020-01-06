@@ -131,18 +131,6 @@ The interesting items filter was not enabled so most images ended up in the "Non
 
 The last grouping and sorting option is choosing how to sort the results within a group. This is the order of the results in the top right panel after selecting a group from the middle column. Note that due to the merging of results with the same hash in that panel, ordering by file name, path, or data source can vary. See the \ref file_disc_dedupe section below for more information.
 
-\subsection file_disc_save Saving and Loading Settings
-
-You can use the buttons on the top left under "Manage Filter Sets" to save your current settings or load previously saved settings. To save, click the "Save Current" button and then enter a name for your settings. To load previously saved settings, click the "Load Saved" button and select the name of your settings then "Load Selected Filters". 
-
-\image html FileDiscovery/fd_loadSettings.png
-
-You can also delete any old settings from the loading panel.
-
-The saved settings include your selections from all three steps - file type, filters, and display settings. However, many of the filters and even some of the display settings are dependent on the data in your case and may not be able to be applied to a different case. For example, suppose you save your settings with "Hash Set" enabled and a hash set selected. If you open a new case that doesn't have any hash set hits and try to load this filter in file discovery, you'll get a warning message because it could not select the saved hash set. Similarly, the interesting item filter and object detection filters can change from case to case, and the data source filter almost always will. 
-
-Note that if you were to save your settings and then reload them into the same case, all of the settings would be restored to your original selections. So if you want to re-run a search on a particular case later, saving the filters will work perfectly unless you delete a data source or disable a previously enabled central repository.
-
 \section file_disc_results Viewing Results
 
 \subsection file_disc_results_overview Overview
