@@ -159,7 +159,7 @@ Assuming the \ref hash_db_page module has been run, all files in a result group 
 
 Clicking on a particular instance will load data for that file in the content viewer area at the bottom.
 
-Note that files in different groups will not be merged together or appear under the instances list of each other. For example, if you choose to group by parent folder and have two instances of a file with the same hash but in different folders, each will appear once under its parent folder. Grouping by file size (the default) will always be able to merge every instance of the same file.
+Note that files in different groups will not be merged together or appear under the instances list of each other. For example, if you choose to group by parent folder and have two instances of a file with the same hash but in different folders, each will appear once under its parent folder. Grouping by file size (the default) will always merge every instance of the same file.
 
 \subsection file_disc_icons Status Icons
 
@@ -178,5 +178,8 @@ Most of the icons match what would be displayed in the "S" column of the normal 
 
 \subsection file_disc_paging Paging
 
+If the group you select has many results, the results will be split up into pages. You can use the left and right arrows to move between pages or type in the page number you wish to go to. You can adjust the number of results per page using the drop down box in the upper right.
+
+\image html FileDiscovery/fd_paging.png
 
 */
