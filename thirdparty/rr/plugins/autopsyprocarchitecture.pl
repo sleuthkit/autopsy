@@ -47,7 +47,6 @@ sub pluginmain {
 				my $arch = $env->get_value("PROCESSOR_ARCHITECTURE")->get_data();
 				::rptMsg("<ProcessorArchitecture><mtime></mtime><artifacts><architecture mtime=\"\">" . $arch . "</architecture></artifacts></ProcessorArchitecture>");
 			};
-			::rptMsg($@) if ($@);
 			
 		}	
 		else {
