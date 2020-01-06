@@ -1,5 +1,9 @@
 /*! \page file_discovery_page File Discovery
 
+\section file_disc_overview Overview
+
+The file discovery tool shows images or videos that match a set of filters configured by the user. You can choose how to group and order your results in order to see the most relevant data first.
+
 \section file_disc_prereq Prerequisites
 
 We suggest running all \ref ingest_page "ingest modules" before launching file discovery, but if time is a factor the following are the modules that are the most important. You will see a warning if you open file discovery without running the \ref file_type_identification_page and \ref EXIF_parser_page.
