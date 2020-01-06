@@ -68,9 +68,9 @@ final class DATDumper {
             ConvertDat convertDat = datFile.createConVertDat();
             
             // The lower the sample rate the smaller the output csv file will be 
-            // however the date will be less precise. 30 was recommended in the
-            // DatCon documentation as a good default.
-            convertDat.sampleRate = 30;
+            // however the date will be less precise. For our purposes we are going 
+            // a sample rate of 1.
+            convertDat.sampleRate = 1;
             
             // Setting the tickRangeLower and upper values reduces some of the 
             // noise invalid data in the output file.

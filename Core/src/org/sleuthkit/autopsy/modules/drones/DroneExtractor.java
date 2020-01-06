@@ -119,7 +119,7 @@ abstract class DroneExtractor {
      */
     protected BlackboardArtifact makeWaypointArtifact(AbstractFile DATFile, Collection<BlackboardAttribute> attributes) throws DroneIngestException {
         try {
-            BlackboardArtifact artifact = DATFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WAYPOINT);
+            BlackboardArtifact artifact = DATFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
             artifact.addAttributes(attributes);
             return artifact;
         } catch (TskCoreException ex) {
@@ -174,13 +174,13 @@ abstract class DroneExtractor {
         }
 
         if (distanceHP != null) {
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DRONE_HP_DISTANCE,
-                    DroneIngestModuleFactory.getModuleName(), velocity));
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GPS_DISTANCE_FROM_HOMEPOINT,
+                    DroneIngestModuleFactory.getModuleName(), distanceHP));
         }
 
         if (distanceTraveled != null) {
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DRONE_DISTANCE_TRAVELED,
-                    DroneIngestModuleFactory.getModuleName(), velocity));
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GPS_DISTANCE_TRAVELED,
+                    DroneIngestModuleFactory.getModuleName(), distanceTraveled));
         }
 
         return attributes;
