@@ -1,3 +1,36 @@
+---------------- VERSION 4.14.0  --------------
+Specialized UIs:
+- New File Discovery UI that allows you to search and filter for certain types of files. 
+- New Map viewer that uses either Bing (when online) or offline map tiles. 
+- Communications UI shows country names for phone numbers and fixed bug in summary panel. 
+- Fixed bugs in timeline filtering. 
+- Refactored backend timeline filtering code based on The Sleuth Kit datamodel changes to remove JavaFX dependency. 
+
+Data Sources:
+- Added limited support for APFS disk images.  Does not include encrypted volumes or ones that span multiple disks.   Uses contribution to The Sleuth Kit from Blackbag Technologies. 
+- New data source processor that parses “XRY File Exports”. 
+
+Content Viewers:
+- Added a new “Context” viewer to show where a file came from.  Currently shows what message a file was attached to or what URL a file was downloaded from. 
+- Added support to seek and change playback speed for videos in “Application” viewer.
+- Improved support for Unicode HTML files in “Application” viewer.
+- Added support for webp image files in “Application” viewer.
+
+Ingest Modules:
+- Keyword Search module uses Decodetect statistical encoding detection for plain text files. Fixes issues with incorrect detection of Japanese files. 
+- Embedded File Extractor module uses statistical analysis to determine encoding of file names in ZIP files. Fixes issues with ZIP files created on Windows Japanese computers. 
+- Solr (Keyword Search module) now uses Japanese-specific tokenization using Kuromoji. 
+- Fixed Shellbags module in RegRipper (used by Autopsy Recent Activity module) to fix parsing errors. 
+- Plaso module no longer generates an error if enabled for non-disk image data sources.  
+- Added support for message attachments that are stored as an external file system file. Expanded Email and Android modules to use this technique. 
+
+General:
+- Fixed crashes by gstreamer when a video is selected.
+- Added initial capability to delete a data source from a case (excludes data in the CR).
+- Changed behavior of portable case menu item to automatically open the case and warn if it was already unpacked. 
+- Fixed bug that caused issues when case metadata had Unicode values. 
+- Added new Attachment APIs to the CommunicationsArtifactHelper class to support attachments stored as external file system files. 
+
 ---------------- VERSION 4.13.0  --------------
 General:
 - Switch from Oracle JDK to OpenJDK.
