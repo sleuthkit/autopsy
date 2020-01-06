@@ -43,7 +43,7 @@ final class SaveSearchDialog extends javax.swing.JDialog {
     /**
      * Creates new form SaveSearchDialog
      */
-    @Messages({"SaveSearchDialog.saveFilter.title=Save Current Filter Settings"})
+    @Messages({"SaveSearchDialog.saveFilter.title=Save Current Filter Set"})
     SaveSearchDialog(SearchFilterSave search) {
         super((JFrame) null, Bundle.SaveSearchDialog_saveFilter_title(), true);
         searchFilters = search;

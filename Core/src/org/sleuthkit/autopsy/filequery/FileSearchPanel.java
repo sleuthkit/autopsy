@@ -72,7 +72,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     /**
      * Creates new form FileSearchDialog
      */
-    @NbBundle.Messages({"FileSearchPanel.dialogTitle.text=Test file search"})
+    @NbBundle.Messages({"FileSearchPanel.dialogTitle.text=File Discovery"})
     FileSearchPanel() {
         initComponents();
         for (GroupSortingAlgorithm groupSortAlgorithm : GroupSortingAlgorithm.values()) {
@@ -130,8 +130,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         }
     }
 
-    @Messages({"FileSearchPanel.loading.partialFilter.text=Not all of the settings saved can be loaded. Do you want to load the selections which are available anyway?",
-        "FileSearchPanel.loading.partialFilter.title=Load Partial Filter"})
     private <T> void selectIndices(List<T> filtersToSelect, JList<T> listOfCurrentFilters) {
         listOfCurrentFilters.setEnabled(true);
         if (filtersToSelect != null && filtersToSelect.isEmpty()) {
@@ -151,6 +149,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
     }
 
+    @Messages({"FileSearchPanel.loading.partialFilter.text=Not all of the saved filters can be loaded. The loaded filters will be incomplete.",
+        "FileSearchPanel.loading.partialFilter.title=Partial Filter Set Loaded"})
     private <T> List<Integer> selectIndiciesHelper(List<T> filtersToSelect, List<T> currentFilters) {
         List<Integer> selectedDsIndices = new ArrayList<>();
         for (T filter : filtersToSelect) {
@@ -158,7 +158,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             if (index != -1) {
                 selectedDsIndices.add(index);
             } else if (!partialSaveLoaded) {
-                JOptionPane.showConfirmDialog(this,
+                JOptionPane.showMessageDialog(this,
                         Bundle.FileSearchPanel_loading_partialFilter_text(),
                         Bundle.FileSearchPanel_loading_partialFilter_title(), JOptionPane.OK_OPTION);
                 partialSaveLoaded = true;
@@ -1892,7 +1892,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         interestingItemsFilterSettings(true, true, search.isInterestingItemsFilterEnabled(), search.getInterestingItemsFilters());
         parentFilterSettings(true, true, search.isParentFilterEnabled(), search.getParentFilters());
         scoreFilterSettings(false, false, search.isScoreFilterEnabled(), search.getScoreFilters());
-        exifFilterSettings(false, false, search.isUserContentFilterEnabled());
         notableFilterSettings(false, false, search.isNotableFilesFilterEnabled());
         knownFilesFilterSettings(false, false, search.isKnownFilesFilterEnabled());
         partialSaveLoaded = false; //reset the use partial data flag

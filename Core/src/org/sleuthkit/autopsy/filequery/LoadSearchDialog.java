@@ -51,7 +51,7 @@ final class LoadSearchDialog extends javax.swing.JDialog {
     /**
      * Creates new form SaveSearchDialog
      */
-    @Messages({"LoadSearchDialog.title.text=Load Saved Filter Settings",
+    @Messages({"LoadSearchDialog.title.text=Load Saved Filter Set",
                 "LoadSearchDialog.filtersTable.nameColumn=Name",
                 "LoadSearchDialog.filtersTable.dateColumn=Date Saved"})
     LoadSearchDialog() {
@@ -154,7 +154,7 @@ final class LoadSearchDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 251, Short.MAX_VALUE)
+                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 291, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(deleteSearchButton, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -183,7 +183,7 @@ final class LoadSearchDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void loadSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadSearchButtonActionPerformed
-        dispose();        // TODO add your handling code here:
+        dispose();       
     }//GEN-LAST:event_loadSearchButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
