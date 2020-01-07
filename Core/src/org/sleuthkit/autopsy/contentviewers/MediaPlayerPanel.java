@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2019 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -85,106 +85,32 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
     //Enumerate the accepted file extensions and mimetypes
     private static final String[] FILE_EXTENSIONS = new String[]{
-        ".3g2",
-        ".3gp",
-        ".3gpp",
-        ".aac",
-        ".aif",
-        ".aiff",
-        ".amr",
-        ".asf",
-        ".au",
-        ".avi",
-        ".flac",
-        ".flv",
-        ".m4a",
-        ".m4v",
-        ".mka",
-        ".mkv",
-        ".mov",
-        ".mp2",
-        ".mp3",
-        ".mp4",
-        ".mpeg",
-        ".mpg",
-        ".mxf",
-        ".ogg",
-        ".wav",
-        ".webm",
-        ".wma",
-        ".wmv",}; //NON-NLS
+        ".3g2", ".3gp", ".3gpp", ".aac", ".aif",
+        ".aiff", ".amr", ".asf", ".au", ".avi",
+        ".flac", ".flv", ".m4a", ".m4v", ".mka",
+        ".mkv", ".mov", ".mp2", ".mp3", ".mp4",
+        ".mpeg", ".mpg", ".mxf", ".ogg", ".wav",
+        ".webm", ".wma", ".wmv"}; //NON-NLS
+    
     private static final List<String> MIME_TYPES = Arrays.asList(
-            "video/3gpp",
-            "video/3gpp2",
-            "audio/aiff",
-            "audio/amr-wb",
-            "audio/basic",
-            "audio/mp4",
-            "video/mp4",
-            "audio/mpeg",
-            "video/mpeg",
-            "audio/mpeg3",
-            "application/mxf",
-            "application/ogg",
-            "video/quicktime",
-            "audio/vorbis",
-            "audio/vnd.wave",
-            "video/webm",
-            "video/x-3ivx",
-            "audio/x-aac",
-            "audio/x-adpcm",
-            "audio/x-alaw",
-            "audio/x-cinepak",
-            "video/x-divx",
-            "audio/x-dv",
-            "video/x-dv",
-            "video/x-ffv",
-            "audio/x-flac",
-            "video/x-flv",
-            "audio/x-gsm",
-            "video/x-h263",
-            "video/x-h264",
-            "video/x-huffyuv",
-            "video/x-indeo",
-            "video/x-intel-h263",
-            "audio/x-ircam",
-            "video/x-jpeg",
-            "audio/x-m4a",
-            "video/x-m4v",
-            "audio/x-mace",
-            "audio/x-matroska",
-            "video/x-matroska",
-            "audio/x-mpeg",
-            "video/x-mpeg",
-            "audio/x-mpeg-3",
-            "video/x-ms-asf",
-            "audio/x-ms-wma",
-            "video/x-ms-wmv",
-            "video/x-msmpeg",
-            "video/x-msvideo",
-            "video/x-msvideocodec",
-            "audio/x-mulaw",
-            "audio/x-nist",
-            "audio/x-oggflac",
-            "audio/x-paris",
-            "audio/x-qdm2",
-            "audio/x-raw",
-            "video/x-raw",
-            "video/x-rle",
-            "audio/x-speex",
-            "video/x-svq",
-            "audio/x-svx",
-            "video/x-tarkin",
-            "video/x-theora",
-            "audio/x-voc",
-            "audio/x-vorbis",
-            "video/x-vp3",
-            "audio/x-w64",
-            "audio/x-wav",
-            "audio/x-wma",
-            "video/x-wmv",
-            "video/x-xvid"
-    ); //NON-NLS
+            "video/3gpp", "video/3gpp2", "audio/aiff", "audio/amr-wb", 
+            "audio/basic", "audio/mp4", "video/mp4", "audio/mpeg", 
+            "video/mpeg", "audio/mpeg3", "application/mxf", "application/ogg",
+            "video/quicktime", "audio/vorbis", "audio/vnd.wave", "video/webm", 
+            "video/x-3ivx", "audio/x-aac", "audio/x-adpcm", "audio/x-alaw", 
+            "audio/x-cinepak", "video/x-divx", "audio/x-dv", "video/x-dv",
+            "video/x-ffv", "audio/x-flac", "video/x-flv", "audio/x-gsm", 
+            "video/x-h263", "video/x-h264", "video/x-huffyuv", "video/x-indeo", 
+            "video/x-intel-h263", "audio/x-ircam", "video/x-jpeg", "audio/x-m4a",
+            "video/x-m4v", "audio/x-mace", "audio/x-matroska","video/x-matroska", 
+            "audio/x-mpeg", "video/x-mpeg", "audio/x-mpeg-3", "video/x-ms-asf", 
+            "audio/x-ms-wma", "video/x-ms-wmv", "video/x-msmpeg", "video/x-msvideo",
+            "video/x-msvideocodec", "audio/x-mulaw", "audio/x-nist", "audio/x-oggflac",
+            "audio/x-paris", "audio/x-qdm2", "audio/x-raw", "video/x-raw",
+            "video/x-rle", "audio/x-speex", "video/x-svq", "audio/x-svx",
+            "video/x-tarkin", "video/x-theora", "audio/x-voc", "audio/x-vorbis",
+            "video/x-vp3", "audio/x-w64", "audio/x-wav", "audio/x-wma",
+            "video/x-wmv","video/x-xvid"); //NON-NLS
 
     private static final Logger logger = Logger.getLogger(MediaPlayerPanel.class.getName());
     private static final String MEDIA_PLAYER_ERROR_STRING = NbBundle.getMessage(MediaPlayerPanel.class,
@@ -210,11 +136,11 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
     //Serialize setting the value of the Video progress slider.
     //The slider is a shared resource between the VideoPanelUpdater
-    //and the TrackListener of the JSliderUI.
+    //and the TrackListener on the slider itself.
     private final Semaphore sliderLock;
 
     /**
-     * Creates new form MediaViewVideoPanel
+     * Creates a new MediaPlayerPanel
      */
     public MediaPlayerPanel() throws GstException, UnsatisfiedLinkError {
         initComponents();
@@ -291,7 +217,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             }
             
         });
-        //Manage the audio level when the user is adjusting the volumn slider
+        //Manage the audio level when the user is adjusting the volume slider
         audioSlider.addChangeListener((ChangeEvent event) -> {
             if (audioSlider.getValueIsAdjusting()) {
                 double audioPercent = (audioSlider.getValue() * 2.0) / 100.0;
@@ -656,7 +582,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         }
 
         /**
-         * Modifies the View to be an oval rather than the rectangle Controller.
+         * Modifies the View to be an oval rather than the underlying 
+         * rectangle Controller.
          */
         @Override
         public void paintThumb(Graphics graphic) {
@@ -737,7 +664,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             int value = this.valueForXPosition(mousePosition.x);
 
             //Lock the slider down, which is a shared resource.
-            //The VideoPanelUpdater (dedicated thread) keeps the
+            //The VideoPanelUpdater keeps the
             //slider in sync with the video position, so without 
             //proper locking our change could be overwritten.
             sliderLock.acquireUninterruptibly();
@@ -1004,7 +931,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
         //Skip 30 seconds.
         long fastForwardDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
-
+        
         //Ignore fast forward requests if there are less than 30 seconds left.
         if (currentTime + fastForwardDelta >= duration) {
             return;
