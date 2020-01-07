@@ -29,6 +29,7 @@ import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -61,6 +62,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import javafx.embed.swing.JFXPanel;
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
@@ -72,6 +74,7 @@ import org.freedesktop.gstreamer.Format;
 import org.freedesktop.gstreamer.GstException;
 import org.freedesktop.gstreamer.event.SeekFlags;
 import org.freedesktop.gstreamer.event.SeekType;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * This is a video player that is part of the Media View layered pane. It uses
@@ -200,6 +203,9 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private static final int PROGRESS_SLIDER_SIZE = 2000;
     private static final int SKIP_IN_SECONDS = 30;
 
+    private final ImageIcon playIcon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/Play-arrow-01.png"));
+    private final ImageIcon pauseIcon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/Pause-01.png"));
+
     private ExtractMedia extractMediaWorker;
 
     //Serialize setting the value of the Video progress slider.
@@ -216,6 +222,14 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         //True for fairness. In other words,
         //acquire() calls are processed in order of invocation.
         sliderLock = new Semaphore(1, true);
+
+        /**
+         * See JIRA-5888 for details. Initializing gstreamer here is more stable
+         * on Windows.
+         */
+        if (PlatformUtil.isWindowsOS()) {
+            Gst.init();
+        }
     }
 
     private void customizeComponents() {
@@ -247,6 +261,36 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 }
             }
         });
+        //Manage the video while the user is performing actions on the track.
+        progressSlider.addMouseListener(new MouseListener() {
+            private State previousState = State.NULL;
+            
+            @Override
+            public void mousePressed(MouseEvent e) {
+                previousState = gstPlayBin.getState();
+                gstPlayBin.pause();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if(previousState.equals(State.PLAYING)) {
+                    gstPlayBin.play();
+                }
+                previousState = State.NULL;
+            }
+            @Override
+            public void mouseClicked(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+            
+        });
         //Manage the audio level when the user is adjusting the volumn slider
         audioSlider.addChangeListener((ChangeEvent event) -> {
             if (audioSlider.getValueIsAdjusting()) {
@@ -271,11 +315,11 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             public void stateChanged(GstObject go, State oldState, State currentState, State pendingState) {
                 if (State.PLAYING.equals(currentState)) {
                     SwingUtilities.invokeLater(() -> {
-                        playButton.setText("||");
+                        playButton.setIcon(pauseIcon);
                     });
                 } else {
                     SwingUtilities.invokeLater(() -> {
-                        playButton.setText("►");
+                        playButton.setIcon(playIcon);
                     });
                 }
             }
@@ -504,8 +548,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
                 // Initialize Gstreamer. It is safe to call this for every file.
                 // It was moved here from the constructor because having it happen
-                // earlier resulted in conflicts on Linux.
-                Gst.init();
+                // earlier resulted in conflicts on Linux. See JIRA-5888.
+                if (!PlatformUtil.isWindowsOS()) {
+                    Gst.init();
+                }
 
                 //Video is ready for playback. Create new components
                 gstPlayBin = new PlayBin("VideoPlayer", tempFile.toURI());
@@ -575,62 +621,14 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     }
 
     /**
-     * Represents the default configuration for the circular JSliderUI.
-     */
-    private class CircularJSliderConfiguration {
-
-        //Thumb configurations
-        private final Color thumbColor;
-        private final Dimension thumbDimension;
-
-        //Track configurations
-        //Progress bar can be bisected into a seen group 
-        //and an unseen group.
-        private final Color unseen;
-        private final Color seen;
-
-        /**
-         * Default configuration
-         *
-         * JSlider is light blue RGB(0,130,255). Seen track is light blue
-         * RGB(0,130,255). Unseen track is light grey RGB(192, 192, 192).
-         *
-         * @param thumbDimension Size of the oval thumb.
-         */
-        public CircularJSliderConfiguration(Dimension thumbDimension) {
-            Color lightBlue = new Color(0, 130, 255);
-
-            seen = lightBlue;
-            unseen = Color.LIGHT_GRAY;
-
-            thumbColor = lightBlue;
-
-            this.thumbDimension = new Dimension(thumbDimension);
-        }
-
-        public Color getThumbColor() {
-            return thumbColor;
-        }
-
-        public Color getUnseenTrackColor() {
-            return unseen;
-        }
-
-        public Color getSeenTrackColor() {
-            return seen;
-        }
-
-        public Dimension getThumbDimension() {
-            return new Dimension(thumbDimension);
-        }
-    }
-
-    /**
      * Custom view for the JSlider.
      */
     private class CircularJSliderUI extends BasicSliderUI {
 
-        private final CircularJSliderConfiguration config;
+        private final Dimension thumbDimension;
+        private final Color thumbColor;
+        private final Color trackUnseen;
+        private final Color trackSeen;
 
         /**
          * Creates a custom view for the JSlider. This view draws a blue oval
@@ -641,14 +639,20 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
          * @param config Configuration object. Contains info about thumb
          * dimensions and colors.
          */
-        public CircularJSliderUI(JSlider slider, CircularJSliderConfiguration config) {
+        public CircularJSliderUI(JSlider slider, Dimension thumbDimension) {
             super(slider);
-            this.config = config;
+            this.thumbDimension = thumbDimension;
+            
+            //Configure track and thumb colors.
+            Color lightBlue = new Color(0, 130, 255);
+            thumbColor = lightBlue;
+            trackSeen = lightBlue;
+            trackUnseen = Color.LIGHT_GRAY;
         }
 
         @Override
         protected Dimension getThumbSize() {
-            return config.getThumbDimension();
+            return new Dimension(thumbDimension);
         }
 
         /**
@@ -662,8 +666,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
             //Change the thumb view from the rectangle
             //controller to an oval.
-            graphic.setColor(config.getThumbColor());
-            Dimension thumbDimension = config.getThumbDimension();
+            graphic.setColor(thumbColor);
             graphic.fillOval(thumb.x, thumb.y, thumbDimension.width, thumbDimension.height);
 
             //Preserve the graphics original color
@@ -686,12 +689,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             Color original = graphic.getColor();
 
             //Paint the seen side
-            graphic.setColor(config.getSeenTrackColor());
+            graphic.setColor(trackSeen);
             graphic.drawLine(track.x, track.y + track.height / 2,
                     thumbX, thumbY + track.height / 2);
 
             //Paint the unseen side
-            graphic.setColor(config.getUnseenTrackColor());
+            graphic.setColor(trackUnseen);
             graphic.drawLine(thumbX, thumbY + track.height / 2,
                     track.x + track.width, track.y + track.height / 2);
 
@@ -701,7 +704,26 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
         @Override
         protected TrackListener createTrackListener(JSlider slider) {
-            return new CustomTrackListener();
+            /**
+            * This track listener will force the thumb to be snapped to the mouse
+            * location. This makes grabbing and dragging the JSlider much easier.
+            * Using the default track listener, the user would have to click
+            * exactly on the slider thumb to drag it. Now the thumb positions
+            * itself under the mouse so that it can always be dragged.
+            */
+            return new TrackListener() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    if (!slider.isEnabled() || !SwingUtilities.isLeftMouseButton(e)) {
+                        return;
+                    }
+                    //Snap the thumb to position of the mouse
+                    scrollDueToClickInTrack(0);
+
+                    //Handle the event as normal.
+                    super.mousePressed(e);
+                }
+            };
         }
 
         @Override
@@ -738,43 +760,6 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
             super.update(graphic, component);
         }
-
-        /**
-         * This track listener will force the thumb to be snapped to the mouse
-         * location. This makes grabbing and dragging the JSlider much easier.
-         * Using the default track listener, the user would have to click
-         * exactly on the slider thumb to drag it. Now the thumb positions
-         * itself under the mouse so that it can always be dragged.
-         */
-        private class CustomTrackListener extends CircularJSliderUI.TrackListener {
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (!slider.isEnabled() || !SwingUtilities.isLeftMouseButton(e)) {
-                    return;
-                }
-                //Snap the thumb to position of the mouse
-                scrollDueToClickInTrack(0);
-
-                //Pause the video for convenience
-                gstPlayBin.pause();
-
-                //Handle the event as normal.
-                super.mousePressed(e);
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (!slider.isEnabled() || !SwingUtilities.isLeftMouseButton(e)) {
-                    return;
-                }
-
-                super.mouseReleased(e);
-
-                //Unpause once the mouse has been released.
-                gstPlayBin.play();
-            }
-        }
     }
 
     /**
@@ -810,7 +795,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         );
         videoPanelLayout.setVerticalGroup(
             videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 131, Short.MAX_VALUE)
+            .addGap(0, 117, Short.MAX_VALUE)
         );
 
         progressSlider.setValue(0);
@@ -818,13 +803,17 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.setDoubleBuffered(true);
         progressSlider.setMinimumSize(new java.awt.Dimension(36, 21));
         progressSlider.setPreferredSize(new java.awt.Dimension(200, 21));
-        progressSlider.setUI(new CircularJSliderUI(progressSlider, new CircularJSliderConfiguration(new Dimension(18,18))));
+        progressSlider.setUI(new CircularJSliderUI(progressSlider, new Dimension(18,18)));
 
         org.openide.awt.Mnemonics.setLocalizedText(progressLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.progressLabel.text")); // NOI18N
 
         buttonPanel.setLayout(new java.awt.GridBagLayout());
 
+        playButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/Play-arrow-01.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(playButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.playButton.text")); // NOI18N
+        playButton.setMaximumSize(new java.awt.Dimension(53, 29));
+        playButton.setMinimumSize(new java.awt.Dimension(53, 29));
+        playButton.setPreferredSize(new java.awt.Dimension(49, 29));
         playButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 playButtonActionPerformed(evt);
@@ -838,6 +827,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         gridBagConstraints.insets = new java.awt.Insets(5, 6, 0, 0);
         buttonPanel.add(playButton, gridBagConstraints);
 
+        fastForwardButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/Fast-forward-01.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(fastForwardButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.fastForwardButton.text")); // NOI18N
         fastForwardButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -851,6 +841,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         gridBagConstraints.insets = new java.awt.Insets(5, 6, 0, 0);
         buttonPanel.add(fastForwardButton, gridBagConstraints);
 
+        rewindButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/Fast-rewind-01.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(rewindButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.rewindButton.text")); // NOI18N
         rewindButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -866,6 +857,9 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
         org.openide.awt.Mnemonics.setLocalizedText(VolumeIcon, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.VolumeIcon.text")); // NOI18N
         VolumeIcon.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        VolumeIcon.setMaximumSize(new java.awt.Dimension(34, 29));
+        VolumeIcon.setMinimumSize(new java.awt.Dimension(34, 29));
+        VolumeIcon.setPreferredSize(new java.awt.Dimension(34, 19));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 0;
@@ -880,9 +874,11 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         audioSlider.setMinorTickSpacing(5);
         audioSlider.setToolTipText(org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.audioSlider.toolTipText")); // NOI18N
         audioSlider.setValue(25);
-        audioSlider.setMinimumSize(new java.awt.Dimension(200, 21));
-        audioSlider.setPreferredSize(new java.awt.Dimension(200, 21));
-        audioSlider.setUI(new CircularJSliderUI(audioSlider, new CircularJSliderConfiguration(new Dimension(15,15))));
+        audioSlider.setMaximumSize(new java.awt.Dimension(32767, 19));
+        audioSlider.setMinimumSize(new java.awt.Dimension(200, 19));
+        audioSlider.setPreferredSize(new java.awt.Dimension(200, 30));
+        audioSlider.setRequestFocusEnabled(false);
+        audioSlider.setUI(new CircularJSliderUI(audioSlider, new Dimension(15,15)));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
         gridBagConstraints.gridy = 0;
@@ -898,9 +894,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
         playBackSpeedComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "0.25x", "0.50x", "0.75x", "1x", "1.25x", "1.50x", "1.75x", "2x" }));
         playBackSpeedComboBox.setSelectedIndex(3);
-        playBackSpeedComboBox.setMaximumSize(new java.awt.Dimension(53, 23));
-        playBackSpeedComboBox.setMinimumSize(new java.awt.Dimension(53, 23));
-        playBackSpeedComboBox.setPreferredSize(new java.awt.Dimension(53, 23));
+        playBackSpeedComboBox.setMaximumSize(new java.awt.Dimension(53, 29));
+        playBackSpeedComboBox.setMinimumSize(new java.awt.Dimension(53, 29));
+        playBackSpeedComboBox.setPreferredSize(new java.awt.Dimension(53, 29));
+        playBackSpeedComboBox.setRequestFocusEnabled(false);
         playBackSpeedComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 playBackSpeedComboBoxActionPerformed(evt);
@@ -908,13 +905,16 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(playBackSpeedLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.playBackSpeedLabel.text")); // NOI18N
+        playBackSpeedLabel.setMaximumSize(new java.awt.Dimension(34, 19));
+        playBackSpeedLabel.setMinimumSize(new java.awt.Dimension(34, 19));
+        playBackSpeedLabel.setPreferredSize(new java.awt.Dimension(34, 19));
 
         javax.swing.GroupLayout playBackPanelLayout = new javax.swing.GroupLayout(playBackPanel);
         playBackPanel.setLayout(playBackPanelLayout);
         playBackPanelLayout.setHorizontalGroup(
             playBackPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(playBackPanelLayout.createSequentialGroup()
-                .addComponent(playBackSpeedLabel)
+                .addComponent(playBackSpeedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(playBackSpeedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(13, 13, 13))
@@ -922,11 +922,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         playBackPanelLayout.setVerticalGroup(
             playBackPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(playBackPanelLayout.createSequentialGroup()
-                .addGap(6, 6, 6)
-                .addGroup(playBackPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(playBackSpeedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(playBackSpeedLabel))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(7, 7, 7)
+                .addGroup(playBackPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(playBackPanelLayout.createSequentialGroup()
+                        .addGap(2, 2, 2)
+                        .addComponent(playBackSpeedLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(playBackSpeedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(10, 10, 10))
         );
 
         javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
@@ -958,7 +960,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 .addGap(5, 5, 5)
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(buttonPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(playBackPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                    .addComponent(playBackPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(14, 14, 14)
                 .addComponent(infoLabel))
         );
