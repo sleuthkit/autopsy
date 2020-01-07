@@ -93,24 +93,24 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         ".webm", ".wma", ".wmv"}; //NON-NLS
     
     private static final List<String> MIME_TYPES = Arrays.asList(
-            "video/3gpp", "video/3gpp2", "audio/aiff", "audio/amr-wb", 
-            "audio/basic", "audio/mp4", "video/mp4", "audio/mpeg", 
+            "video/3gpp", "video/3gpp2", "audio/aiff", "audio/amr-wb",
+            "audio/basic", "audio/mp4", "video/mp4", "audio/mpeg",
             "video/mpeg", "audio/mpeg3", "application/mxf", "application/ogg",
-            "video/quicktime", "audio/vorbis", "audio/vnd.wave", "video/webm", 
-            "video/x-3ivx", "audio/x-aac", "audio/x-adpcm", "audio/x-alaw", 
+            "video/quicktime", "audio/vorbis", "audio/vnd.wave", "video/webm",
+            "video/x-3ivx", "audio/x-aac", "audio/x-adpcm", "audio/x-alaw",
             "audio/x-cinepak", "video/x-divx", "audio/x-dv", "video/x-dv",
-            "video/x-ffv", "audio/x-flac", "video/x-flv", "audio/x-gsm", 
-            "video/x-h263", "video/x-h264", "video/x-huffyuv", "video/x-indeo", 
+            "video/x-ffv", "audio/x-flac", "video/x-flv", "audio/x-gsm",
+            "video/x-h263", "video/x-h264", "video/x-huffyuv", "video/x-indeo",
             "video/x-intel-h263", "audio/x-ircam", "video/x-jpeg", "audio/x-m4a",
-            "video/x-m4v", "audio/x-mace", "audio/x-matroska","video/x-matroska", 
-            "audio/x-mpeg", "video/x-mpeg", "audio/x-mpeg-3", "video/x-ms-asf", 
+            "video/x-m4v", "audio/x-mace", "audio/x-matroska", "video/x-matroska",
+            "audio/x-mpeg", "video/x-mpeg", "audio/x-mpeg-3", "video/x-ms-asf",
             "audio/x-ms-wma", "video/x-ms-wmv", "video/x-msmpeg", "video/x-msvideo",
             "video/x-msvideocodec", "audio/x-mulaw", "audio/x-nist", "audio/x-oggflac",
             "audio/x-paris", "audio/x-qdm2", "audio/x-raw", "video/x-raw",
             "video/x-rle", "audio/x-speex", "video/x-svq", "audio/x-svx",
             "video/x-tarkin", "video/x-theora", "audio/x-voc", "audio/x-vorbis",
             "video/x-vp3", "audio/x-w64", "audio/x-wav", "audio/x-wma",
-            "video/x-wmv","video/x-xvid"); //NON-NLS
+            "video/x-wmv", "video/x-xvid"); //NON-NLS
 
     private static final Logger logger = Logger.getLogger(MediaPlayerPanel.class.getName());
     private static final String MEDIA_PLAYER_ERROR_STRING = NbBundle.getMessage(MediaPlayerPanel.class,
@@ -931,13 +931,21 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
         //Skip 30 seconds.
         long fastForwardDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
-        
-        //Ignore fast forward requests if there are less than 30 seconds left.
-        if (currentTime + fastForwardDelta >= duration) {
+        //Don't allow skipping within 2 seconds of video ending. Skipping right to
+        //the end causes undefined behavior for some gstreamer plugins.
+        long twoSecondsInNano = TimeUnit.NANOSECONDS.convert(2, TimeUnit.SECONDS);
+        if((duration - currentTime) <= twoSecondsInNano) {
             return;
         }
+        
+        long newTime;
+        if (currentTime + fastForwardDelta >= duration) {
+            //If there are less than 30 seconds left, only fast forward to the midpoint.
+            newTime = currentTime + (duration - currentTime)/2;
+        } else {
+            newTime = currentTime + fastForwardDelta;
+        }
 
-        long newTime = currentTime + fastForwardDelta;
         double playBackRate = getPlayBackRate();
         gstPlayBin.seek(playBackRate,
                 Format.TIME,
