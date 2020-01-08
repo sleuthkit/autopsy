@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -876,8 +877,8 @@ public class Server {
 
                     Properties properties = new Properties();
                     properties.setProperty("dataDir", dataDir.getAbsolutePath());
-                    properties.setProperty("transient", "true");
-                    properties.setProperty("loadOnStartup", "false");
+                    // ELTODO properties.setProperty("transient", "true");
+                    // ELTODO properties.setProperty("loadOnStartup", "false");
 
                     Integer numShards = 1;
                     Integer numNrtReplicas = 1;
@@ -899,6 +900,15 @@ public class Server {
                     if (!collectionExists(collectionName)) {
                         throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
                     }
+                } else {
+                    // since we make the cores transient=true and loadonstartup=false, we need to verify that the core is laoded
+                    /* ELTODO String coreName = collectionName + "_shard1_replica_n1";
+
+                    loadCoreForCollection(collectionName, dataDir.getAbsolutePath());
+
+                    if (!coreIndexFolderExists(coreName)) {
+                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+                    }*/
                 }
             } else {
                 // for single user cases, we unload the core when we close the case. So we have to load the core again. 
@@ -920,8 +930,8 @@ public class Server {
                 createCoreRequest.setDataDir(dataDir.getAbsolutePath());
                 createCoreRequest.setCoreName(collectionName);
                 createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
-                createCoreRequest.setIsLoadOnStartup(false);
-                createCoreRequest.setIsTransient(true);
+                // ELTODO createCoreRequest.setIsLoadOnStartup(false);
+                // ELTODO createCoreRequest.setIsTransient(true);
                 currentSolrServer.request(createCoreRequest);
 
                 if (!coreIndexFolderExists(collectionName)) {
@@ -934,6 +944,24 @@ public class Server {
         } catch (Exception ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         }
+    }
+    
+    /**
+     * Determines whether or not a particular Solr core exists and is loaded.
+     *
+     * @param coreName The name of the core.
+     *
+     * @return True if the core exists and is loaded, false if the core does not
+     * exist or is not loaded
+     *
+     * @throws SolrServerException If there is a problem communicating with the
+     * Solr server.
+     * @throws IOException If there is a problem communicating with the Solr
+     * server.
+     */
+    private boolean coreIsLoaded(String coreName) throws SolrServerException, IOException {
+        CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, currentSolrServer);
+        return response.getCoreStatus(coreName).get("instanceDir") != null; //NON-NLS
     }
     
     /**
@@ -1517,6 +1545,76 @@ public class Server {
         NamedList collections = (NamedList) cluster.get("collections");
         // NOTE: in case we need this, core name is (collectionName + "_shard1_replica_n1")
         if (collections != null) {
+            LinkedHashMap collection = (LinkedHashMap) collections.get(collectionName);
+            return (collection != null);
+        } else {
+            return false;
+        }
+    }
+
+    private boolean loadCoreForCollection(String collectionName, String dataDir) throws SolrServerException, IOException, KeywordSearchModuleException {
+        // ELTODO remove code duplication with collectionExists()
+        
+        CollectionAdminRequest.ClusterStatus statusRequest = CollectionAdminRequest.getClusterStatus().setCollectionName(collectionName);
+        CollectionAdminResponse statusResponse;
+        try {
+            statusResponse = statusRequest.process(currentSolrServer);
+        } catch (RemoteSolrException ex) {
+            // collection doesn't exist
+            return false;
+        }
+
+        if (statusResponse == null) {
+            return false;
+        }
+
+        NamedList error = (NamedList) statusResponse.getResponse().get("error");
+        if (error != null) {
+            return false;
+        }
+
+        // For some reason this returns info about all collections even though it's supposed to only return about the one we are requesting
+        NamedList cluster = (NamedList) statusResponse.getResponse().get("cluster");
+        NamedList collections = (NamedList) cluster.get("collections");
+        // NOTE: in case we need this, core name is (collectionName + "_shard1_replica_n1")
+        if (collections != null) {
+            LinkedHashMap collection = (LinkedHashMap) collections.get(collectionName);
+            LinkedHashMap shards = (LinkedHashMap) collection.get("shards");
+            String shardId = (String) shards.keySet().toArray()[0];
+            LinkedHashMap shard = (LinkedHashMap) shards.get(shardId);
+            LinkedHashMap replicas = (LinkedHashMap) shard.get("replicas");
+            String coreNodeName = (String) replicas.keySet().toArray()[0];
+            LinkedHashMap core = (LinkedHashMap) replicas.get(coreNodeName);
+            String coreName = (String) core.get("core");
+            coreNodeName = (String) core.get("node_name");
+
+            //if (coreIsLoaded(coreName)) {
+            //    return true;
+            //}
+            try {
+                CoreAdminRequest.Unload unloadCoreRequest = new CoreAdminRequest.Unload(false);
+                unloadCoreRequest.setDeleteDataDir(false);
+                unloadCoreRequest.setDeleteInstanceDir(false);
+                unloadCoreRequest.setCoreName(coreName);
+                currentSolrServer.request(unloadCoreRequest);
+                //CoreAdminRequest.unloadCore(coreName, currentSolrServer);
+            } catch (SolrServerException ex) {
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.close.exception.msg"), ex);
+            } catch (IOException ex) {
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.close.exception.msg2"), ex);
+            }
+            
+            CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
+            createCoreRequest.setDataDir(dataDir);
+            createCoreRequest.setCoreName(coreName);
+            createCoreRequest.setCoreNodeName(coreNodeName);
+            createCoreRequest.setShardId(shardId);
+            createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
+            createCoreRequest.setIsLoadOnStartup(false);
+            createCoreRequest.setIsTransient(true);
+            currentSolrServer.request(createCoreRequest);
             return true;
         } else {
             return false;
