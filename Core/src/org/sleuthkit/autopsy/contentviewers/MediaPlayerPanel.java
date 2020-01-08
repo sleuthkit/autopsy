@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2019 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -112,7 +112,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         ".wav",
         ".webm",
         ".wma",
-        ".wmv",}; //NON-NLS
+        ".wmv"}; //NON-NLS
     private static final List<String> MIME_TYPES = Arrays.asList(
             "video/3gpp",
             "video/3gpp2",
@@ -210,11 +210,11 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
     //Serialize setting the value of the Video progress slider.
     //The slider is a shared resource between the VideoPanelUpdater
-    //and the TrackListener of the JSliderUI.
+    //and the TrackListener on the slider itself.
     private final Semaphore sliderLock;
 
     /**
-     * Creates new form MediaViewVideoPanel
+     * Creates a new MediaPlayerPanel
      */
     public MediaPlayerPanel() throws GstException, UnsatisfiedLinkError {
         initComponents();
@@ -291,7 +291,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             }
             
         });
-        //Manage the audio level when the user is adjusting the volumn slider
+        //Manage the audio level when the user is adjusting the volume slider
         audioSlider.addChangeListener((ChangeEvent event) -> {
             if (audioSlider.getValueIsAdjusting()) {
                 double audioPercent = (audioSlider.getValue() * 2.0) / 100.0;
@@ -656,7 +656,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         }
 
         /**
-         * Modifies the View to be an oval rather than the rectangle Controller.
+         * Modifies the View to be an oval rather than the underlying 
+         * rectangle Controller.
          */
         @Override
         public void paintThumb(Graphics graphic) {
@@ -737,7 +738,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             int value = this.valueForXPosition(mousePosition.x);
 
             //Lock the slider down, which is a shared resource.
-            //The VideoPanelUpdater (dedicated thread) keeps the
+            //The VideoPanelUpdater keeps the
             //slider in sync with the video position, so without 
             //proper locking our change could be overwritten.
             sliderLock.acquireUninterruptibly();
@@ -1004,13 +1005,21 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
         //Skip 30 seconds.
         long fastForwardDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
-
-        //Ignore fast forward requests if there are less than 30 seconds left.
-        if (currentTime + fastForwardDelta >= duration) {
+        //Don't allow skipping within 2 seconds of video ending. Skipping right to
+        //the end causes undefined behavior for some gstreamer plugins.
+        long twoSecondsInNano = TimeUnit.NANOSECONDS.convert(2, TimeUnit.SECONDS);
+        if((duration - currentTime) <= twoSecondsInNano) {
             return;
         }
+        
+        long newTime;
+        if (currentTime + fastForwardDelta >= duration) {
+            //If there are less than 30 seconds left, only fast forward to the midpoint.
+            newTime = currentTime + (duration - currentTime)/2;
+        } else {
+            newTime = currentTime + fastForwardDelta;
+        }
 
-        long newTime = currentTime + fastForwardDelta;
         double playBackRate = getPlayBackRate();
         gstPlayBin.seek(playBackRate,
                 Format.TIME,
