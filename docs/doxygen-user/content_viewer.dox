@@ -54,6 +54,10 @@ It will display most image types, which can be scaled and rotated:
 
 \image html content_viewer_app_image.png
 
+It displays video files, allowing you to move play/pause, move forward or backward 30 seconds, adjust the volume, and change the playback speed.
+
+\image html content_viewer_video.png
+
 It also allows you to browse SQLite tables and export their contents as CSV:
 
 \image html content_viewer_app_sqlite.png 
