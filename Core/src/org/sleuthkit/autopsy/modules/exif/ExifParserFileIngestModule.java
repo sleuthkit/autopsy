@@ -197,7 +197,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                     BlackboardArtifact bba = file.newArtifact(TSK_METADATA_EXIF);
                     BlackboardArtifact bba2 = file.newArtifact(TSK_USER_CONTENT_SUSPECTED);
                     bba.addAttributes(attributes);
-                    bba2.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION, MODULE_NAME, Bundle.ExifParserFileIngestModule_userContent_description()));
+                    bba2.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, Bundle.ExifParserFileIngestModule_userContent_description()));
                     try {
                         // index the artifact for keyword search
                         blackboard.postArtifact(bba, MODULE_NAME);
