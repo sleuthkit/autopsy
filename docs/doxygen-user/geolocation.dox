@@ -49,7 +49,7 @@ on the Geolocation panel in the Options dialog. There are four options for geolo
 <ul>
 <li><b>Default online tile server</b>
 <ul>
-<li>The default Geolocation window tile data source is the Microsoft Virtual Earth server bing.com\maps.
+<li>The default Geolocation window tile data source is the Microsoft Virtual Earth server https://www.bing.com/maps.
 </ul>
 <li><b>OpenStreetMap server</b>
 <ul>
