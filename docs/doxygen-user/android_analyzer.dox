@@ -52,13 +52,9 @@ There are no runtime ingest settings required.
 
 Seeing Results
 ------
-The results show up in the tree under "Results", "Extracted Content".
+The results show up in the tree under "Results", "Extracted Content". The exact data extracted will vary but can include contacts, call logs, messages, and GPS entries.
 
 \image html android_analyzer_output.PNG
-
-Messages can also be seen by browsing to the source file in the Data Sources tree, which will display the messages in the Results Viewer to the right. Any messages with attachments will be shown under the source file in the tree, and the attachments can be seen in the Result Viewer.
-
-\image html messages_datasource_tree.png
 
 
 

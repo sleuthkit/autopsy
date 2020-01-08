@@ -761,7 +761,7 @@ public class Case {
     @Messages({
         "Case.progressIndicatorTitle.deletingDataSource=Removing Data Source"
     })
-    public static void deleteDataSourceFromCurrentCase(Long dataSourceObjectID) throws CaseActionException {
+    static void deleteDataSourceFromCurrentCase(Long dataSourceObjectID) throws CaseActionException {
         synchronized (caseActionSerializationLock) {
             if (null == currentCase) {
                 return;

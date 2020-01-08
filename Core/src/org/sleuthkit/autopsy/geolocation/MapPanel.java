@@ -26,7 +26,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
@@ -54,7 +53,6 @@ import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.VirtualEarthTileFactoryInfo;
 import org.jxmapviewer.input.CenterMapListener;
-import org.jxmapviewer.input.PanMouseInputListener;
 import org.jxmapviewer.input.ZoomMouseWheelListenerCursor;
 import org.jxmapviewer.viewer.DefaultTileFactory;
 import org.jxmapviewer.viewer.GeoPosition;
@@ -140,6 +138,8 @@ final public class MapPanel extends javax.swing.JPanel {
                 }
             }
         });
+        
+       
     }
 
     /**
@@ -172,7 +172,7 @@ final public class MapPanel extends javax.swing.JPanel {
         mapViewer.setTileFactory(tileFactory);
 
         // Add Mouse interactions
-        MouseInputListener mia = new PanMouseInputListener(mapViewer);
+        MouseInputListener mia = new MapPanMouseInputListener(mapViewer);
         mapViewer.addMouseListener(mia);
         mapViewer.addMouseMotionListener(mia);
 
@@ -279,7 +279,7 @@ final public class MapPanel extends javax.swing.JPanel {
     /**
      * Create the TileFactoryInfo for OSM zip File
      *
-     * @param zipPath Path to zip file.
+     * @param path Path to zip file.
      *
      * @return TileFactoryInfo for zip file.
      *
@@ -332,6 +332,11 @@ final public class MapPanel extends javax.swing.JPanel {
      */
     void clearWaypoints() {
         waypointTree = null;
+        currentlySelectedWaypoint = null;
+        if (currentPopup != null) {
+            currentPopup.hide();
+        }
+        mapViewer.repaint();
     }
 
     /**
@@ -525,7 +530,7 @@ final public class MapPanel extends javax.swing.JPanel {
         }
 
         /**
-         * Called when the resize event has completed\timed out
+         * Called when the resize event has completed or timed out
          */
         public abstract void resizeTimedOut();
     }
