@@ -30,7 +30,7 @@ import org.apache.tika.Tika;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.mime.MimeTypes;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.textextractors.TextFileExtractor;
+import org.sleuthkit.autopsy.coreutils.textutils.EncodingUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -257,8 +257,8 @@ public class FileTypeDetector {
                      * encoding 
                      */
                     if (file.getNameExtension().equals("txt")) {
-                        Charset detectedCharset = new TextFileExtractor(file).getEncoding();
-                        if (detectedCharset != TextFileExtractor.UNKNOWN_CHARSET) {
+                        Charset detectedCharset = EncodingUtils.getEncoding(file);
+                        if (detectedCharset != EncodingUtils.UNKNOWN_CHARSET) {
                             mimeType = MimeTypes.PLAIN_TEXT;
                         }
                     }

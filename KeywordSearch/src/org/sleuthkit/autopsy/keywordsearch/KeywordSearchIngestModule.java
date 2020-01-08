@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.tika.mime.MimeTypes;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -692,7 +693,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
                     return true;
                 }
-            } catch (IngesterException | IOException ex) {
+            } catch (IngesterException | IOException | TextExtractor.InitReaderException ex) {
                 logger.log(Level.WARNING, "Unable to index " + aFile.getName(), ex);
             }
             return false;
