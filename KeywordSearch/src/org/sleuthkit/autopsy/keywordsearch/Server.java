@@ -877,8 +877,8 @@ public class Server {
 
                     Properties properties = new Properties();
                     properties.setProperty("dataDir", dataDir.getAbsolutePath());
-                    // ELTODO properties.setProperty("transient", "true");
-                    // ELTODO properties.setProperty("loadOnStartup", "false");
+                    // properties.setProperty("transient", "true");
+                    // properties.setProperty("loadOnStartup", "false");
 
                     Integer numShards = 1;
                     Integer numNrtReplicas = 1;
@@ -900,19 +900,8 @@ public class Server {
                     if (!collectionExists(collectionName)) {
                         throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
                     }
-                } else {
-                    // since we make the cores transient=true and loadonstartup=false, we need to verify that the core is laoded
-                    /* ELTODO String coreName = collectionName + "_shard1_replica_n1";
-
-                    loadCoreForCollection(collectionName, dataDir.getAbsolutePath());
-
-                    if (!coreIndexFolderExists(coreName)) {
-                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
-                    }*/
-                }
-            } else {
-                // for single user cases, we unload the core when we close the case. So we have to load the core again. 
-                
+                } 
+            } else {                
                 // In single user mode, if there is a core.properties file already,
                 // we've hit a solr bug. Compensate by deleting it.
                 if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
@@ -926,12 +915,13 @@ public class Server {
                     }
                 }
 
+                // for single user cases, we unload the core when we close the case. So we have to load the core again. 
                 CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
                 createCoreRequest.setDataDir(dataDir.getAbsolutePath());
                 createCoreRequest.setCoreName(collectionName);
                 createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
-                // ELTODO createCoreRequest.setIsLoadOnStartup(false);
-                // ELTODO createCoreRequest.setIsTransient(true);
+                createCoreRequest.setIsLoadOnStartup(false);
+                createCoreRequest.setIsTransient(true);
                 currentSolrServer.request(createCoreRequest);
 
                 if (!coreIndexFolderExists(collectionName)) {
@@ -1552,6 +1542,8 @@ public class Server {
         }
     }
 
+    /** Leaving this code as a reference, in case we need a programmatic way to obtain info
+     * regarding the core, replicas, node names, etc.
     private boolean loadCoreForCollection(String collectionName, String dataDir) throws SolrServerException, IOException, KeywordSearchModuleException {
         // ELTODO remove code duplication with collectionExists()
         
@@ -1619,7 +1611,7 @@ public class Server {
         } else {
             return false;
         }
-    }
+    }*/
 
     class Collection {
 
