@@ -186,7 +186,7 @@ class TestRunner(object):
             Errors.print_error("No image had any gold; Regression did not run")
             exit(1)
 
-        if not (test_config.args.rebuild or all([ test_data.overall_passed for test_data in test_data_list ])):
+        if not (test_config.args.rebuild or test_config.args.both or all([ test_data.overall_passed for test_data in test_data_list ])):
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
             html.close()
