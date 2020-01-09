@@ -636,8 +636,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
          * the thumb progresses.
          *
          * @param slider JSlider component
-         * @param config Configuration object. Contains info about thumb
-         * dimensions and colors.
+         * @param thumbDimension
          */
         public CircularJSliderUI(JSlider slider, Dimension thumbDimension) {
             super(slider);
