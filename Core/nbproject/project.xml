@@ -346,6 +346,7 @@
                 <package>org.sleuthkit.autopsy.texttranslation</package>
                 <package>org.sleuthkit.datamodel</package>
                 <package>org.sleuthkit.datamodel.blackboardutils</package>
+                <package>org.sleuthkit.datamodel.blackboardutils.attributes</package>
             </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.8.1.jar</runtime-relative-path>
