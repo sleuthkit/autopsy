@@ -177,7 +177,7 @@ public class PlatformUtil {
                     NbBundle.getMessage(PlatformUtil.class,
                             "PlatformUtil.jrePath.jreDir.msg",
                             jrePath.getAbsolutePath()));
-            javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java"; //NON-NLS
+            javaPath = jrePath.getAbsolutePath(); //NON-NLS
         } else if (System.getenv("JAVA_HOME") != null && !(System.getenv("JAVA_HOME").isEmpty())) {
             // if there is environmet variable set for specific installation of Java (e.g. development environment)
             return System.getenv("JAVA_HOME");
