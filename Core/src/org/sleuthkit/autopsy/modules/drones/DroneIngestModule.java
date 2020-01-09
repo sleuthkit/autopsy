@@ -56,6 +56,7 @@ public final class DroneIngestModule implements DataSourceIngestModule {
     }
 
     @Messages({
+        "# {0} - AbstractFileName",
         "DroneIngestModule_process_start=Started {0}"
     })
     @Override

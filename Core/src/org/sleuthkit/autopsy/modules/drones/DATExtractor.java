@@ -23,14 +23,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,14 +40,16 @@ import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.blackboardutils.GeoArtifactHelper.GeoTrackPoint;
+import org.sleuthkit.datamodel.blackboardutils.GeoArtifactHelper.GeoTrackPoints;
+import org.sleuthkit.datamodel.blackboardutils.GeoArtifactHelper;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 
 /**
  * Extract drone position data from DJI Phantom drones.
- * 
+ *
  * Module uses DatCon.jar to dump FLYXXX.DAT file to a CSV file which is stored
  * in the case temp directory. Artifacts are created by parsing the csv file.
  *
@@ -59,24 +58,23 @@ final class DATExtractor extends DroneExtractor {
 
     private static final Logger logger = Logger.getLogger(DATExtractor.class.getName());
 
-    private static final String HEADER_LONG = "IMU_ATTI(0):Longitude";
-    private static final String HEADER_LAT = "IMU_ATTI(0):Latitude";
-    private static final String HEADER_VELOCITY = "IMU_ATTI(0):velComposite";
-    private static final String HEADER_DATETILE = "GPS:dateTimeStamp";
-    private static final String HEADER_ALTITUDE = "GPS(0):heightMSL";
-    private static final String HEADER_DISTANCE_FROM_HP = "IMU_ATTI(0):distanceHP";
-    private static final String HEADER_DISTANCE_TRAVELED = "IMU_ATTI(0):distanceTravelled";
+    private static final String HEADER_LONG = "IMU_ATTI(0):Longitude";  //NON-NLS
+    private static final String HEADER_LAT = "IMU_ATTI(0):Latitude"; //NON-NLS
+    private static final String HEADER_VELOCITY = "IMU_ATTI(0):velComposite"; //NON-NLS
+    private static final String HEADER_DATETILE = "GPS:dateTimeStamp"; //NON-NLS
+    private static final String HEADER_ALTITUDE = "GPS(0):heightMSL"; //NON-NLS
+    private static final String HEADER_DISTANCE_FROM_HP = "IMU_ATTI(0):distanceHP"; //NON-NLS
+    private static final String HEADER_DISTANCE_TRAVELED = "IMU_ATTI(0):distanceTravelled"; //NON-NLS
 
     /**
      * Construct a DATExtractor.
-     * 
-     * @throws DroneIngestException 
+     *
+     * @throws DroneIngestException
      */
     DATExtractor() throws DroneIngestException {
         super();
     }
 
-    
     @Messages({
         "DATExtractor_process_message=Processing DJI DAT file: %s"
     })
@@ -91,27 +89,38 @@ final class DATExtractor extends DroneExtractor {
                 if (context.dataSourceIngestIsCancelled()) {
                     break;
                 }
-                
+
                 progressBar.progress(String.format(Bundle.DATExtractor_process_message(), DATFile.getName()));
-                
+
                 // Copy the DAT file into the case temp folder
                 File tempDATFile = getTemporaryFile(context, DATFile);
-                
+
                 // Create a path for the csv file
                 String csvFilePath = getCSVPathForDAT(DATFile);
 
                 try {
+                    if (!dumper.isDATFile(tempDATFile.getAbsolutePath())) {
+                        logger.log(Level.WARNING, String.format("%s is not a valid DAT file", DATFile.getName())); //NON-NLS
+                        continue;
+                    }
                     // Dump the DAT file to a csv file
                     dumper.dumpDATFile(tempDATFile.getAbsolutePath(), csvFilePath, true);
 
                     if (context.dataSourceIngestIsCancelled()) {
                         break;
                     }
-                    
+
                     // Process the csv file
-                    processCSVFile(context, DATFile, csvFilePath);
-                } catch (DroneIngestException ex) {
-                    logger.log(Level.WARNING, String.format("Exception thrown while processing DAT file %s", DATFile.getName()), ex);
+                    List<GeoTrackPoint> trackPoints = processCSVFile(context, DATFile, csvFilePath);
+
+                    if (trackPoints != null && !trackPoints.isEmpty()) {
+                        (new GeoArtifactHelper(getSleuthkitCase(), getName(), DATFile)).addTrack(DATFile.getName(), new GeoTrackPoints(trackPoints));
+                    } else {
+                        logger.log(Level.INFO, String.format("No trackpoints with valid longitude or latitude found in %s", DATFile.getName())); //NON-NLS
+                    }
+
+                } catch (TskCoreException | BlackboardException ex) {
+                    logger.log(Level.WARNING, String.format("Exception thrown while processing DAT file %s", DATFile.getName()), ex); //NON-NLS
                 } finally {
                     tempDATFile.delete();
                     (new File(csvFilePath)).delete();
@@ -148,9 +157,9 @@ final class DATExtractor extends DroneExtractor {
 
         // findFiles use the SQL wildcard # in the file name
         try {
-            fileList = fileManager.findFiles(dataSource, "FLY___.DAT");
+            fileList = fileManager.findFiles(dataSource, "FLY___.DAT"); //NON-NLS
         } catch (TskCoreException ex) {
-            throw new DroneIngestException("Unable to find drone DAT files.", ex);
+            throw new DroneIngestException("Unable to find drone DAT files.", ex); //NON-NLS
         }
 
         return fileList;
@@ -164,49 +173,45 @@ final class DATExtractor extends DroneExtractor {
      * @return Absolute csv file path
      */
     private String getCSVPathForDAT(AbstractFile file) {
-        String tempFileName = file.getName() + file.getId() + ".csv";
+        String tempFileName = file.getName() + file.getId() + ".csv"; //NON-NLS
         return Paths.get(getExtractorTempPath().toString(), tempFileName).toString();
     }
 
     /**
      * Process the csv dump of the drone DAT file.
-     * 
+     *
      * Create artifacts for all rows that have a valid longitude and latitude.
-     * 
-     * @param context current case job context
-     * @param DATFile Original DAT file
+     *
+     * @param context     current case job context
+     * @param DATFile     Original DAT file
      * @param csvFilePath Path of csv file to process
-     * 
-     * @throws DroneIngestException 
+     *
+     * @throws DroneIngestException
      */
-    private void processCSVFile(IngestJobContext context, AbstractFile DATFile, String csvFilePath) throws DroneIngestException {
+    private List<GeoTrackPoint> processCSVFile(IngestJobContext context, AbstractFile DATFile, String csvFilePath) throws DroneIngestException {
+        List<GeoTrackPoint> trackPoints = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(new File(csvFilePath)))) {
             // First read in the header line and process
             String line = reader.readLine();
-            Map<String, Integer> headerMap = makeHeaderMap(line.split(","));
-            Collection<BlackboardArtifact> artifacts = new ArrayList<>();
+            Map<String, Integer> headerMap = makeHeaderMap(line.split(",")); //NON-NLS
 
             while ((line = reader.readLine()) != null) {
                 if (context.dataSourceIngestIsCancelled()) {
-                    break;
+                    return null;
                 }
-                
-                String[] values = line.split(",");
-                Collection<BlackboardAttribute> attributes = buildAttributes(headerMap, values);
-                if (attributes != null) {
-                    artifacts.add(makeWaypointArtifact(DATFile, attributes));
-                }
-            }
-            
-            if (context.dataSourceIngestIsCancelled()) {
-                return;
-            }
 
-            postArtifacts(artifacts);
+                String[] values = line.split(","); //NON-NLS
+                GeoTrackPoint point = createTrackPoint(headerMap, values);
+                if (point != null) {
+                    trackPoints.add(point);
+                }
+            }
 
         } catch (IOException ex) {
-            throw new DroneIngestException(String.format("Failed to read DAT csvFile %s", csvFilePath), ex);
+            throw new DroneIngestException(String.format("Failed to read DAT csvFile %s", csvFilePath), ex); //NON-NLS
         }
+
+        return trackPoints;
     }
 
     /**
@@ -234,14 +239,14 @@ final class DATExtractor extends DroneExtractor {
      * interesting and return a null collection.
      *
      * @param columnLookup column header lookup map
-     * @param values Row data
+     * @param values       Row data
      *
-     * @return  Collection of BlackboardAttributes for row or null collection if 
-     *          longitude or latitude was not valid
+     * @return Collection of BlackboardAttributes for row or null collection if
+     *         longitude or latitude was not valid
      *
      * @throws DroneIngestException
      */
-    private Collection<BlackboardAttribute> buildAttributes(Map<String, Integer> columnLookup, String[] values) throws DroneIngestException {
+    private GeoTrackPoint createTrackPoint(Map<String, Integer> columnLookup, String[] values) throws DroneIngestException {
 
         Double latitude = getDoubleValue(columnLookup.get(HEADER_LAT), values);
         Double longitude = getDoubleValue(columnLookup.get(HEADER_LONG), values);
@@ -251,13 +256,13 @@ final class DATExtractor extends DroneExtractor {
             return null;
         }
 
-        return makeWaypointAttributes(latitude,
+        return new GeoArtifactHelper.GeoTrackPoint(latitude,
                 longitude,
                 getDoubleValue(columnLookup.get(HEADER_ALTITUDE), values),
-                getDateTimeValue(columnLookup, values),
                 getDoubleValue(columnLookup.get(HEADER_VELOCITY), values),
                 getDoubleValue(columnLookup.get(HEADER_DISTANCE_FROM_HP), values),
-                getDoubleValue(columnLookup.get(HEADER_DISTANCE_TRAVELED), values));
+                getDoubleValue(columnLookup.get(HEADER_DISTANCE_TRAVELED), values),
+                getDateTimeValue(columnLookup, values));
     }
 
     /**
@@ -291,12 +296,12 @@ final class DATExtractor extends DroneExtractor {
 
     /**
      * Returns the string value at the given index parsed as a double.
-     * 
-     * @param index     Index to string array
-     * @param values    Array of string values
-     * 
-     * @return  Double value or null if the index is out of bounds of the string 
-     *          array or the string value at index was not a double.
+     *
+     * @param index  Index to string array
+     * @param values Array of string values
+     *
+     * @return Double value or null if the index is out of bounds of the string
+     *         array or the string value at index was not a double.
      */
     private Double getDoubleValue(Integer index, String[] values) {
         if (index == null || index == -1 || index > values.length) {

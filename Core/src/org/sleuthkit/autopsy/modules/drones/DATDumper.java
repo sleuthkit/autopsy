@@ -42,18 +42,20 @@ final class DATDumper {
 
     /**
      * Dump the DJI DAT file to a csv file.
-     * 
+     *
      * @param datFilePath       Path to input DAT file
      * @param outputFilePath    Output file path
      * @param overWriteExisting True to overwrite an existing csv file with
      *                          outputFilePath
-     * 
-     * @throws DroneIngestException 
+     *
+     * @throws DroneIngestException
      */
     void dumpDATFile(String datFilePath, String outputFilePath, boolean overWriteExisting) throws DroneIngestException {
         // Validate the input and output file paths.
         validateOutputFile(outputFilePath, overWriteExisting);
-        validateDATFile(datFilePath);
+        if (!isDATFile(datFilePath)) {
+            throw new DroneIngestException(String.format("Not a DAT file!  DAT = %s", datFilePath)); //NON-NLS
+        }
 
         DatFile datFile = null;
         try (CsvWriter writer = new CsvWriter(outputFilePath)) {
@@ -66,12 +68,12 @@ final class DATDumper {
 
             // Creates a version specific ConvertDat object
             ConvertDat convertDat = datFile.createConVertDat();
-            
+
             // The lower the sample rate the smaller the output csv file will be 
             // however the date will be less precise. For our purposes we are going 
             // a sample rate of 1.
             convertDat.sampleRate = 1;
-            
+
             // Setting the tickRangeLower and upper values reduces some of the 
             // noise invalid data in the output file.
             if (datFile.gpsLockTick != -1) {
@@ -81,17 +83,17 @@ final class DATDumper {
             if (datFile.lastMotorStopTick != -1) {
                 convertDat.tickRangeUpper = datFile.lastMotorStopTick;
             }
-            
+
             convertDat.setCsvWriter(writer);
             convertDat.createRecordParsers();
             datFile.reset();
-            
+
             // Analyze does the work of parsing the data, everything prior was
             // setup
             convertDat.analyze(true);
 
         } catch (IOException | NotDatFile | FileEnd ex) {
-            throw new DroneIngestException(String.format("Failed to dump DAT file to csv.  DAT = %s, CSV = %s", datFilePath, outputFilePath), ex);
+            throw new DroneIngestException(String.format("Failed to dump DAT file to csv.  DAT = %s, CSV = %s", datFilePath, outputFilePath), ex); //NON-NLS
         } finally {
             if (datFile != null) {
                 datFile.close();
@@ -117,7 +119,7 @@ final class DATDumper {
             if (overWriteExisting) {
                 csvFile.delete();
             } else {
-                throw new DroneIngestException(String.format("Unable to dump DAT file. overWriteExsiting is false and DAT output csv file exists: %s", outputFileName));
+                throw new DroneIngestException(String.format("Unable to dump DAT file. overWriteExsiting is false and DAT output csv file exists: %s", outputFileName)); //NON-NLS
             }
         }
     }
@@ -130,19 +132,17 @@ final class DATDumper {
      *
      * @throws DroneIngestException
      */
-    private void validateDATFile(String datFilePath) throws DroneIngestException {
+    public boolean isDATFile(String datFilePath) throws DroneIngestException {
         File datFile = new File(datFilePath);
 
         if (!datFile.exists()) {
-            throw new DroneIngestException(String.format("Unable to dump DAT file DAT file does not exist: %s", datFilePath));
+            throw new DroneIngestException(String.format("Unable to dump DAT file DAT file does not exist: %s", datFilePath)); //NON-NLS
         }
 
         try {
-            if (!DatFile.isDatFile(datFilePath) && !DJIAssistantFile.isDJIDat(datFile)) {
-                throw new DroneIngestException(String.format("Unable to dump DAT file. File is not a DAT file: %s", datFilePath));
-            }
+            return DatFile.isDatFile(datFilePath) || DJIAssistantFile.isDJIDat(datFile);
         } catch (FileNotFoundException ex) {
-            throw new DroneIngestException(String.format("Unable to dump DAT file. File not found %s", datFilePath), ex);
+            throw new DroneIngestException(String.format("Unable to dump DAT file. File not found %s", datFilePath), ex); //NON-NLS
         }
     }
 }
