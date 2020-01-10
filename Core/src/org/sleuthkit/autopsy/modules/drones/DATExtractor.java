@@ -41,9 +41,9 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.blackboardutils.GeoArtifactHelper.GeoTrackPoint;
-import org.sleuthkit.datamodel.blackboardutils.GeoArtifactHelper.GeoTrackPoints;
-import org.sleuthkit.datamodel.blackboardutils.GeoArtifactHelper;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoint.GeoTrackPoint;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints;
+import org.sleuthkit.datamodel.blackboardutils.GeoArtifactsHelper;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 
@@ -114,7 +114,7 @@ final class DATExtractor extends DroneExtractor {
                     List<GeoTrackPoint> trackPoints = processCSVFile(context, DATFile, csvFilePath);
 
                     if (trackPoints != null && !trackPoints.isEmpty()) {
-                        (new GeoArtifactHelper(getSleuthkitCase(), getName(), DATFile)).addTrack(DATFile.getName(), new GeoTrackPoints(trackPoints));
+                        (new GeoArtifactsHelper(getSleuthkitCase(), getName(), DATFile)).addTrack(DATFile.getName(), new GeoTrackPoints(trackPoints));
                     } else {
                         logger.log(Level.INFO, String.format("No trackpoints with valid longitude or latitude found in %s", DATFile.getName())); //NON-NLS
                     }
@@ -256,7 +256,7 @@ final class DATExtractor extends DroneExtractor {
             return null;
         }
 
-        return new GeoArtifactHelper.GeoTrackPoint(latitude,
+        return new GeoTrackPoint(latitude,
                 longitude,
                 getDoubleValue(columnLookup.get(HEADER_ALTITUDE), values),
                 getDoubleValue(columnLookup.get(HEADER_VELOCITY), values),
