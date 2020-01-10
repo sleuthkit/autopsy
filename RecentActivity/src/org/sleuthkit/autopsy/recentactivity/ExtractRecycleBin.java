@@ -71,6 +71,8 @@ final class ExtractRecycleBin extends Extract {
     private static final Logger logger = Logger.getLogger(ExtractRecycleBin.class.getName());
 
     private static final String RECYCLE_BIN_ARTIFACT_NAME = "TSK_RECYCLE_BIN"; //NON-NLS
+    
+    private static final String RECYCLE_BIN_DIR_NAME = "$RECYCLE.BIN"; //NON-NLS
 
     private static final int V1_FILE_NAME_OFFSET = 24;
     private static final int V2_FILE_NAME_OFFSET = 28;
@@ -127,7 +129,7 @@ final class ExtractRecycleBin extends Extract {
         // Get the $I files
         List<AbstractFile> iFiles;
         try {
-            iFiles = fileManager.findFiles(dataSource, "$I%"); //NON-NLS            
+            iFiles = fileManager.findFiles(dataSource, "$I%", RECYCLE_BIN_DIR_NAME); //NON-NLS            
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to find recycle bin I files.", ex); //NON-NLS
             return;  // No need to continue
@@ -321,7 +323,7 @@ final class ExtractRecycleBin extends Extract {
 
         return new RecycledFileMetaData(fileSize, timestamp, fileName);
     }
-
+    
     /**
      * Create a map of userids to usernames from the OS Accounts.
      *
