@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import org.apache.commons.io.FileUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -275,6 +276,7 @@ public class Server {
                 Files.createDirectory(solrHome);
                 Files.copy(Paths.get(solrFolder.getAbsolutePath(), "solr", "solr.xml"), solrHome.resolve("solr.xml")); //NON-NLS
                 Files.copy(Paths.get(solrFolder.getAbsolutePath(), "solr", "zoo.cfg"), solrHome.resolve("zoo.cfg")); //NON-NLS
+                FileUtils.copyDirectory(Paths.get(solrFolder.getAbsolutePath(), "solr", "configsets").toFile(), solrHome.resolve("configsets").toFile()); //NON-NLS
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
             }
