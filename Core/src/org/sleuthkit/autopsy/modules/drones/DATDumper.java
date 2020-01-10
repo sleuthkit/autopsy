@@ -38,6 +38,7 @@ final class DATDumper {
      * Construct a DATDumper.
      */
     DATDumper() {
+        // This constructor is intentionally empty. Nothing special is needed here.
     }
 
     /**
