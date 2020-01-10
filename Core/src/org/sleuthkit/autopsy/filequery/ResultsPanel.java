@@ -496,7 +496,6 @@ public class ResultsPanel extends javax.swing.JPanel {
         instancesList.setModel(instancesListModel);
         instancesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         instancesList.setCellRenderer(new InstancesCellRenderer());
-        instancesList.setPreferredSize(new java.awt.Dimension(0, 50));
         instancesList.setVisibleRowCount(2);
         instancesScrollPane.setViewportView(instancesList);
 
@@ -510,11 +509,11 @@ public class ResultsPanel extends javax.swing.JPanel {
         );
         instancesPanelLayout.setVerticalGroup(
             instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 221, Short.MAX_VALUE)
+            .addGap(0, 68, Short.MAX_VALUE)
             .addGroup(instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, instancesPanelLayout.createSequentialGroup()
                     .addGap(0, 0, 0)
-                    .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 221, Short.MAX_VALUE)))
+                    .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
 
         resultsSplitPane.setRightComponent(instancesPanel);

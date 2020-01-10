@@ -449,10 +449,6 @@ class SevenZipExtractor {
             } else {
                 pathInArchive = "/" + useName;
             }
-            String msg = NbBundle.getMessage(SevenZipExtractor.class,
-                    "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.unknownPath.msg",
-                    getArchiveFilePath(archiveFile), pathInArchive);
-            logger.log(Level.WARNING, msg);
         }
         return pathInArchive;
     }

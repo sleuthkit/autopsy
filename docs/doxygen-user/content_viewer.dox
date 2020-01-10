@@ -54,6 +54,10 @@ It will display most image types, which can be scaled and rotated:
 
 \image html content_viewer_app_image.png
 
+It displays video files, allowing you to move play/pause, move forward or backward 30 seconds, adjust the volume, and change the playback speed.
+
+\image html content_viewer_video.png
+
 It also allows you to browse SQLite tables and export their contents as CSV:
 
 \image html content_viewer_app_sqlite.png 
@@ -81,6 +85,12 @@ The Message tab shows details of emails and SMS messages.
 The File Metadata tab displays basic information about the file, such as type, size, and hash. It also displays the output of the Sleuth Kit istat tool.
 
 \image html content_viewer_metadata.png
+
+\section cv_context Context
+
+The Context tab shows the the source of attached files and allows you to view the original result. In the image below you can see the context for an image that was sent as an email attachment.
+
+\image html content_viewer_context.png
 
 \section cv_results Results
 
