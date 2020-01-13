@@ -16,19 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.ingest;
+package org.sleuthkit.autopsy.python;
 
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Used to strip Python IDs on factory class names.
  */
-class FactoryClassNameNormalizer {
+public class FactoryClassNameNormalizer {
 
     private static final CharSequence pythonModuleSettingsPrefixCS = "org.python.proxies.".subSequence(0, "org.python.proxies.".length() - 1); //NON-NLS
     private static final Logger logger = Logger.getLogger(FactoryClassNameNormalizer.class.getName());
 
-    static String normalize(String canonicalClassName) {
+    public static String normalize(String canonicalClassName) {
         if (isPythonModuleSettingsFile(canonicalClassName)) {
             // Compiled Python modules have variable instance number as a part
             // of their file name. This block of code gets rid of that variable

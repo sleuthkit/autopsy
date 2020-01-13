@@ -47,6 +47,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -144,19 +145,19 @@ public class ReportGenerator {
             // load all report modules 
             Map<String, ReportModule> modules = new HashMap<>();
             for (TableReportModule module : ReportModuleLoader.getTableReportModules()) {
-                modules.put(module.getClass().getCanonicalName(), module);
+                modules.put(FactoryClassNameNormalizer.normalize(module.getClass().getCanonicalName()), module);
             }
 
             for (GeneralReportModule module : ReportModuleLoader.getGeneralReportModules()) {
-                modules.put(module.getClass().getCanonicalName(), module);
+                modules.put(FactoryClassNameNormalizer.normalize(module.getClass().getCanonicalName()), module);
             }
 
             for (FileReportModule module : ReportModuleLoader.getFileReportModules()) {
-                modules.put(module.getClass().getCanonicalName(), module);
+                modules.put(FactoryClassNameNormalizer.normalize(module.getClass().getCanonicalName()), module);
             }
 
             // special case for PortableCaseReportModule
-            modules.put(PortableCaseReportModule.class.getCanonicalName(), new PortableCaseReportModule());
+            modules.put(FactoryClassNameNormalizer.normalize(PortableCaseReportModule.class.getCanonicalName()), new PortableCaseReportModule());
 
             // generate reports for enabled modules
             for (Map.Entry<String, ReportModuleConfig> entry : config.getModuleConfigs().entrySet()) {

@@ -50,6 +50,7 @@ import org.sleuthkit.datamodel.IngestModuleInfo.IngestModuleType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
+import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
 
 /**
  * Encapsulates a data source and the ingest module pipelines used to process
