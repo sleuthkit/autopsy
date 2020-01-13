@@ -114,6 +114,7 @@ public final class CaseUcoReportModule implements GeneralReportModule {
         "CaseUcoReportModule.processingDataSource=Processing datasource: %s",
         "CaseUcoReportModule.ingestWarning=Warning, this report will be created before ingest services completed",
         "CaseUcoReportModule.unableToCreateDirectories=Unable to create directory for CASE-UCO report",
+        "CaseUcoReportModule.srcModuleName=CASE-UCO Report"
     })
     @Override
     @SuppressWarnings("deprecation")
@@ -174,7 +175,10 @@ public final class CaseUcoReportModule implements GeneralReportModule {
             }
             
             //Complete the report.
-            caseUco.generateReport();
+            Path reportPath = caseUco.generateReport();
+            caseObj.addReport(reportPath.toString(), 
+                    Bundle.CaseUcoReportModule_srcModuleName(), 
+                    REPORT_FILE_NAME);
             progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "I/O error encountered while generating the report.", ex);
