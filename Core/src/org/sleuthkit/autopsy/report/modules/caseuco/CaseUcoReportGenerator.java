@@ -130,7 +130,7 @@ public final class CaseUcoReportGenerator {
         reportGenerator.writeFieldName("propertyBundle");
         reportGenerator.writeStartArray();
 
-        String createdTime = ContentUtils.getStringTimeISO8601(file.getCtime(), timeZone);
+        String createdTime = ContentUtils.getStringTimeISO8601(file.getCrtime(), timeZone);
         String accessedTime = ContentUtils.getStringTimeISO8601(file.getAtime(), timeZone);
         String modifiedTime = ContentUtils.getStringTimeISO8601(file.getMtime(), timeZone);
         reportGenerator.writeStartObject();
