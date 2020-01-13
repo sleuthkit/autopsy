@@ -56,6 +56,11 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.netbeans.swing.etable.ETable;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonArray;
+import java.util.Map;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the
@@ -552,6 +557,14 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                                 value = dateFormatter.format(new java.util.Date(epoch * 1000));
                             }
                             break;
+                        case JSON: 
+                            // Get the attribute's JSON value and convert to indented multiline display string
+                            String jsonVal = attr.getValueString();
+                            JsonParser parser = new JsonParser();
+                            JsonObject json = parser.parse(jsonVal).getAsJsonObject();
+                           
+                            value = toJsonDisplayString(json, "");
+                            break;
                     }
                     /*
                      * Attribute sources column.
@@ -587,6 +600,63 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
          */
         String getArtifactDisplayName() {
             return artifactDisplayName;
+        }
+        
+        private static final String INDENT_RIGHT = "    ";
+        private static final String NEW_LINE = "\n";
+            
+        /**
+         * Recursively converts a JSON element into an indented multi-line
+         * display string.
+         *
+         * @param element JSON element to convert
+         * @param indentStr Starting indentation for the element.
+         *
+         * @return A multi-line display string.
+         */
+        private String toJsonDisplayString(JsonElement element, String startIndent) {
+           
+            StringBuilder sb = new StringBuilder("");
+            JsonObject obj = element.getAsJsonObject();
+
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                appendJsonElementToString(entry.getKey(), entry.getValue(), startIndent, sb );
+            }
+
+            String returnString = sb.toString();
+            if (startIndent.length() == 0 &&  returnString.startsWith(NEW_LINE)) {
+                returnString = returnString.substring(NEW_LINE.length());
+            }
+            return returnString;
+        }
+        
+       
+        /**
+         * Converts the given JSON element into string and appends to the given string builder.
+         * 
+         * @param entry JSON entry to parse
+         * @param startIndent Starting indentation for the element.
+         * @param sb String builder to append to.
+         */
+        private void appendJsonElementToString(String jsonKey, JsonElement jsonElement, String startIndent, StringBuilder sb) {
+            if (jsonElement.isJsonArray()) {
+                JsonArray jsonArray = jsonElement.getAsJsonArray();
+                if (jsonArray.size() > 0) {
+                    int count = 1;
+                    sb.append(NEW_LINE).append(String.format("%s%s", startIndent, jsonKey));
+                    for (JsonElement arrayMember : jsonArray) {
+                        sb.append(NEW_LINE).append(String.format("%s%d", startIndent.concat(INDENT_RIGHT), count));
+                        sb.append(toJsonDisplayString(arrayMember, startIndent.concat(INDENT_RIGHT).concat(INDENT_RIGHT)));
+                        count++;
+                    }
+                }
+            } else if (jsonElement.isJsonObject()) {
+                sb.append(NEW_LINE).append(String.format("%s%s %s", startIndent, jsonKey, toJsonDisplayString(jsonElement.getAsJsonObject(), startIndent + INDENT_RIGHT)));
+            } else if (jsonElement.isJsonPrimitive()) {
+                sb.append(NEW_LINE).append(String.format("%s%s = %s", startIndent, jsonKey, jsonElement.getAsString()));
+            } else if (jsonElement.isJsonNull()) {
+                sb.append(NEW_LINE).append(String.format("%s%s = null", startIndent, jsonKey));
+            }
         }
     }
 

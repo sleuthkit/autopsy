@@ -1,5 +1,5 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
  * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -16,52 +16,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.communications.relationships;
+package org.sleuthkit.autopsy.filequery;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.logging.Level;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Factory for creating thumbnail children nodes.
+ * Create a node containing the children to display in the
+ * DataResultViewerThumbnail
  */
-final class AttachmentsChildren extends Children.Keys<AbstractFile> {
+class DiscoveryThumbnailChildren extends Children.Keys<AbstractFile> {
 
-    private static final Logger logger = Logger.getLogger(AttachmentsChildren.class.getName());
-
-    private final Set<BlackboardArtifact> artifacts;
+    private final List<AbstractFile> files;
 
     /*
-     * Creates the list of thumbnails from the given list of
-     * BlackboardArtifacts.
-     *
-     * The thumbnails will be initialls sorted by size, then name so that they
-     * appear sorted by size by default.
+     * Creates the list of thumbnails from the given list of AbstractFiles.
      */
-    AttachmentsChildren(Set<BlackboardArtifact> artifacts) {
+    DiscoveryThumbnailChildren(List<AbstractFile> files) {
         super(false);
 
-        this.artifacts = artifacts;
-
+        this.files = files;
 
     }
 
     @Override
     protected Node[] createNodes(AbstractFile t) {
-        return new Node[]{new AttachementNode(t)};
+        return new Node[]{new ThumbnailNode(t)};
     }
 
     @Override
@@ -76,28 +66,16 @@ final class AttachmentsChildren extends Children.Keys<AbstractFile> {
 
             return result;
         });
-
-        artifacts.forEach((bba) -> {
-            try {
-                for (Content childContent : bba.getChildren()) {
-                    if (childContent instanceof AbstractFile) {
-                        thumbnails.add((AbstractFile) childContent);
-                    }
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to get children from artifact.", ex); //NON-NLS
-            }
-        });
-
+        thumbnails.addAll(files);
         setKeys(thumbnails);
     }
 
     /**
      * A node for representing a thumbnail.
      */
-    static class AttachementNode extends FileNode {
+    static class ThumbnailNode extends FileNode {
 
-        AttachementNode(AbstractFile file) {
+        ThumbnailNode(AbstractFile file) {
             super(file, false);
         }
 

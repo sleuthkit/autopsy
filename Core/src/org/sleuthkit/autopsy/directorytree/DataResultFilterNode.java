@@ -136,11 +136,12 @@ public class DataResultFilterNode extends FilterNode {
     public Action[] getActions(boolean popup) {
 
         List<Action> actions = new ArrayList<>();
-
-        final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
-        List<Action> accept = originalNode.accept(getActionsDIV);
-        if (accept != null) {
-            actions.addAll(accept);
+        if (this.getOriginal() instanceof DisplayableItemNode) {
+            final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
+            List<Action> accept = originalNode.accept(getActionsDIV);
+            if (accept != null) {
+                actions.addAll(accept);
+            }
         }
 
         //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
@@ -291,6 +292,9 @@ public class DataResultFilterNode extends FilterNode {
             for (Action a : ban.getActions(true)) {
                 actionsList.add(a);
             }
+            
+            //Add seperator between the decorated actions and the actions from the node itself.
+            actionsList.add(null);
             BlackboardArtifact ba = ban.getLookup().lookup(BlackboardArtifact.class);
             final int artifactTypeID = ba.getArtifactTypeID();
 

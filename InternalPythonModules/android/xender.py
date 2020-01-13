@@ -43,6 +43,8 @@ from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils import FileAttachment
+from org.sleuthkit.datamodel.blackboardutils import MessageAttachments
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 import traceback
@@ -96,7 +98,7 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                                             Account.Type.XENDER)
 
                 queryString = """
-                                SELECT f_path, f_display_name, f_size_str, f_create_time, c_direction, c_session_id,
+                                SELECT f_path, f_display_name, f_size_str, c_start_time, c_direction, c_session_id,
                                     s_name, s_device_id, r_name, r_device_id
                                 FROM new_history
                               """
@@ -107,6 +109,8 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                         fromId = None
                         toId = None
                     
+                        fileAttachments = ArrayList()
+                    
                         if (messagesResultSet.getInt("c_direction") == 1):
                             direction = CommunicationDirection.OUTGOING
                             toId = messagesResultSet.getString("r_device_id")
@@ -114,11 +118,7 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                             direction = CommunicationDirection.INCOMING
                             fromId = messagesResultSet.getString("s_device_id")                          
 
-                        msgBody = ""    # there is no body.
-                        attachments = [messagesResultSet.getString("f_path")]
-                        msgBody = general.appendAttachmentList(msgBody, attachments)
-                        
-                        timeStamp = messagesResultSet.getLong("f_create_time") / 1000
+                        timeStamp = messagesResultSet.getLong("c_start_time") / 1000
                         messageArtifact = transactionDbHelper.addMessage( 
                                                             self._MESSAGE_TYPE,
                                                             direction,
@@ -127,10 +127,13 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
                                                             None,   # subject
-                                                            msgBody,
+                                                            None,   # message text
                                                             messagesResultSet.getString("c_session_id") )
                                                                                                 
-                        # TBD: add the file as attachment ??
+                        # add the file as attachment 
+                        fileAttachments.add(FileAttachment(current_case.getSleuthkitCase(), transactionDb.getDBFile().getDataSource(), messagesResultSet.getString("f_path")))
+                        messageAttachments = MessageAttachments(fileAttachments, [])
+                        transactionDbHelper.addAttachments(messageArtifact, messageAttachments)
 
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for profiles.", ex)

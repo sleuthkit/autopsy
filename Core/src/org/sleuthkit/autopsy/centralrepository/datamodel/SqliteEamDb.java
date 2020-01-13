@@ -158,7 +158,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     private void setupConnectionPool(boolean foreignKeysEnabled) throws EamDbException {
 
         if (dbSettings.dbFileExists() == false) {
-            throw new EamDbException(Bundle.SqliteEamDb_databaseMissing_message());
+            throw new EamDbException("Central repository database missing", Bundle.SqliteEamDb_databaseMissing_message());
         }
 
         connectionPool = new BasicDataSource();
@@ -194,7 +194,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     protected Connection connect(boolean foreignKeys) throws EamDbException {
         synchronized (this) {
             if (!EamDb.isEnabled()) {
-                throw new EamDbException(Bundle.SqliteEamDb_centralRepositoryDisabled_message()); // NON-NLS
+                throw new EamDbException("Central repository database missing", Bundle.SqliteEamDb_centralRepositoryDisabled_message()); // NON-NLS
             }
             if (connectionPool == null) {
                 setupConnectionPool(foreignKeys);
@@ -202,7 +202,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             try {
                 return connectionPool.getConnection();
             } catch (SQLException ex) {
-                throw new EamDbException(Bundle.SqliteEamDb_connectionFailedMessage_message(), ex); // NON-NLS
+                throw new EamDbException("Error getting connection from connection pool.", Bundle.SqliteEamDb_connectionFailedMessage_message(), ex); // NON-NLS
             }
         }
     }
@@ -809,6 +809,24 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
+
+    /**
+     * Process a SELECT query
+     *
+     * @param selectClause          query string to execute
+     * @param instanceTableCallback callback to process the instance
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws EamDbException {
+        try {
+            acquireSharedLock();
+            super.processSelectClause(selectClause, instanceTableCallback);
+        } finally {
+            releaseSharedLock();
+        }        
+    }      
 
     /**
      * Check whether a reference set with the given name/version is in the

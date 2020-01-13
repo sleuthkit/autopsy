@@ -1,0 +1,16 @@
+XRYDataSourceProcessor.childNotReadable=Top level path [ %s ] is not readable
+XRYDataSourceProcessor.dataSourceType=XRY Text Export
+XRYDataSourceProcessor.fileAdded=Added %s to the case database
+XRYDataSourceProcessor.ioError=I/O error occured trying to test the selected folder
+XRYDataSourceProcessor.noCurrentCase=No case is open.
+XRYDataSourceProcessor.noPathSelected=Please select a folder containing exported XRY text files
+XRYDataSourceProcessor.notAFolder=The selected path is not a folder
+XRYDataSourceProcessor.notReadable=Selected path is not readable
+XRYDataSourceProcessor.notXRYFolder=Selected folder did not contain any XRY text files
+XRYDataSourceProcessor.preppingFiles=Preparing to add files to the case database
+XRYDataSourceProcessor.processingFiles=Processing all XRY files...
+XRYDataSourceProcessor.unexpectedError=Internal error occurred while processing XRY report
+XRYDataSourceProcessorConfigPanel.fileBrowserButton.text=Browse
+XRYDataSourceProcessorConfigPanel.filePathTextField.text=
+XRYDataSourceProcessorConfigPanel.xrySelectFolderLabel.text=Select a folder containing exported XRY text files
+XRYDataSourceProcessorConfigPanel.errorLabel.text=

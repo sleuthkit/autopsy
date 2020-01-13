@@ -59,6 +59,7 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
+import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TagName;
@@ -894,6 +895,7 @@ public class PortableCaseReportModule implements ReportModule {
                             oldAttr.getValueLong()));
                     break;
                 case STRING:
+                case JSON:
                     newAttrs.add(new BlackboardAttribute(newAttributeType, String.join(",", oldAttr.getSources()),
                             oldAttr.getValueString()));
                     break;
@@ -1016,6 +1018,9 @@ public class PortableCaseReportModule implements ReportModule {
                     Volume vs = (Volume)content;
                     newContent = portableSkCase.addVolume(parentId, vs.getAddr(), vs.getStart(), vs.getLength(), 
                             vs.getDescription(), vs.getFlags(), trans);
+                } else if (content instanceof Pool) {
+                    Pool pool = (Pool)content;
+                    newContent = portableSkCase.addPool(parentId, pool.getType(), trans);
                 } else if (content instanceof FileSystem) {
                     FileSystem fs = (FileSystem)content;
                     newContent = portableSkCase.addFileSystem(parentId, fs.getImageOffset(), fs.getFsType(), fs.getBlock_size(), 

@@ -42,6 +42,8 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO;
@@ -228,7 +230,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
         TypeFactory() {
             super();
 
-            // these are shown in other parts of the UI tree
+            // these are shown in other parts of the UI
             doNotShow.add(new BlackboardArtifact.Type(TSK_GEN_INFO));
             doNotShow.add(new BlackboardArtifact.Type(TSK_EMAIL_MSG));
             doNotShow.add(new BlackboardArtifact.Type(TSK_HASHSET_HIT));
@@ -238,6 +240,10 @@ public class ExtractedContent implements AutopsyVisitableItem {
             doNotShow.add(new BlackboardArtifact.Type(TSK_ACCOUNT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_DATA_SOURCE_USAGE));
             doNotShow.add(new BlackboardArtifact.Type(TSK_DOWNLOAD_SOURCE));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_TL_EVENT));
+            
+            //This is not meant to be shown in the UI at all. It is more of a meta artifact.
+            doNotShow.add(new BlackboardArtifact.Type(TSK_ASSOCIATED_OBJECT));
         }
 
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {

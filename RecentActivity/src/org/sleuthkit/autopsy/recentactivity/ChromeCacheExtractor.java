@@ -39,6 +39,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -276,6 +277,10 @@ final class ChromeCacheExtractor {
         } 
     }
     
+    @Messages({
+        "ChromeCacheExtract_adding_extracted_files_msg=Adding %d extracted files for analysis."
+    })
+    
     /**
      * Processes a user's cache and creates corresponding artifacts and derived files. 
      * 
@@ -355,6 +360,8 @@ final class ChromeCacheExtractor {
             cleanup();
             return;
         }
+        
+        progressBar.progress(String.format(Bundle.ChromeCacheExtract_adding_extracted_files_msg(), derivedFiles.size()));
 
         derivedFiles.forEach((derived) -> {
             services.fireModuleContentEvent(new ModuleContentEvent(derived));
@@ -380,12 +387,12 @@ final class ChromeCacheExtractor {
      * Extracts the files if needed and adds as derived files, creates artifacts
      * 
      * @param cacheEntryAddress cache entry address
-     * @param sourceArtifacts any source artifacts created are added to this collection
+     * @param associatedObjectArtifacts any associated object artifacts created are added to this collection
      * @param webCacheArtifacts any web cache artifacts created are added to this collection
      * 
      * @return Optional derived file, is a derived file is added for the given entry
      */
-    private List<DerivedFile> processCacheEntry(CacheAddress cacheEntryAddress, Collection<BlackboardArtifact> sourceArtifacts, Collection<BlackboardArtifact> webCacheArtifacts ) throws TskCoreException, IngestModuleException {
+    private List<DerivedFile> processCacheEntry(CacheAddress cacheEntryAddress, Collection<BlackboardArtifact> associatedObjectArtifacts, Collection<BlackboardArtifact> webCacheArtifacts ) throws TskCoreException, IngestModuleException {
          
         List<DerivedFile> derivedFiles = new ArrayList<>();
         
@@ -437,10 +444,6 @@ final class ChromeCacheExtractor {
                                                     moduleName,
                                                     cacheEntry.getHTTPHeaders());
         
-        Collection<BlackboardAttribute> sourceArtifactAttributes = new ArrayList<>();
-        sourceArtifactAttributes.add(urlAttr);
-        sourceArtifactAttributes.add(createTimeAttr);
-
         Collection<BlackboardAttribute> webCacheAttributes = new ArrayList<>();
         webCacheAttributes.add(urlAttr);
         webCacheAttributes.add(createTimeAttr);
@@ -450,12 +453,7 @@ final class ChromeCacheExtractor {
         // add artifacts to the f_XXX file
         if (dataSegment.isInExternalFile() )  {
             try {
-                BlackboardArtifact sourceArtifact = cachedFileAbstractFile.get().newArtifact(ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
-                if (sourceArtifact != null) {
-                    sourceArtifact.addAttributes(sourceArtifactAttributes);
-                    sourceArtifacts.add(sourceArtifact);
-                }
-
+                
                 BlackboardArtifact webCacheArtifact = cacheEntryFile.get().getAbstractFile().newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
                 if (webCacheArtifact != null) {
                     webCacheArtifact.addAttributes(webCacheAttributes);
@@ -469,6 +467,14 @@ final class ChromeCacheExtractor {
                                 moduleName, cachedFileAbstractFile.get().getId()));
 
                     webCacheArtifacts.add(webCacheArtifact);
+                    
+                    BlackboardArtifact associatedObjectArtifact = cachedFileAbstractFile.get().newArtifact(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
+                    if (associatedObjectArtifact != null) {
+                        associatedObjectArtifact.addAttribute(
+                                    new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
+                                            moduleName, webCacheArtifact.getArtifactID()));
+                        associatedObjectArtifacts.add(associatedObjectArtifact);
+                    }
                 }
 
                 if (isBrotliCompressed) {
@@ -497,12 +503,7 @@ final class ChromeCacheExtractor {
                                                     "", 
                                                     TskData.EncodingType.NONE);
 
-                BlackboardArtifact sourceArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
-                if (sourceArtifact != null) {
-                    sourceArtifact.addAttributes(sourceArtifactAttributes);
-                    sourceArtifacts.add(sourceArtifact);
-                }    
-
+                
                 BlackboardArtifact webCacheArtifact =  cacheEntryFile.get().getAbstractFile().newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE); 
                 if (webCacheArtifact != null) {
                     webCacheArtifact.addAttributes(webCacheAttributes);
@@ -516,6 +517,14 @@ final class ChromeCacheExtractor {
                             moduleName, derivedFile.getId()));
 
                     webCacheArtifacts.add(webCacheArtifact);
+                    
+                    BlackboardArtifact associatedObjectArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
+                    if (associatedObjectArtifact != null) {
+                        associatedObjectArtifact.addAttribute(
+                                new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
+                                            moduleName, webCacheArtifact.getArtifactID()));
+                        associatedObjectArtifacts.add(associatedObjectArtifact);
+                    }    
                 }
 
                 if (isBrotliCompressed) {

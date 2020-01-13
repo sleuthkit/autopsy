@@ -1,13 +1,12 @@
+CentralRepoIngestModel_name_header=Name:<br>
+CentralRepoIngestModel_previous_case_header=<br>Previous Cases:<br>
 CentralRepoIngestModule.errorMessage.isNotEnabled=Central repository settings are not initialized, cannot run Correlation Engine ingest module.
 CentralRepoIngestModule.notfyBubble.title=Central Repository Not Initialized
-CentralRepoIngestModule.postToBB.eamHit=Central Repository
-CentralRepoIngestModule.postToBB.fileName=File Name
-CentralRepoIngestModule.postToBB.hashSetSource=Source of Hash
-# {0} - Name of file that is Notable
-CentralRepoIngestModule.postToBB.knownBadMsg=Notable: {0}
-CentralRepoIngestModule.postToBB.md5Hash=MD5 Hash
 CentralRepoIngestModule.prevCaseComment.text=Previous Case: 
 CentralRepoIngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)
+CentralRepoIngestModule_notable_message_header=<html>A file in this data source was previously seen and tagged as Notable.<br>
+# {0} - Name of file that is Notable
+CentralRepoIngestModule_postToBB_knownBadMsg=Notable: {0}
 CentralRepoIngestModuleFactory.ingestmodule.desc=Saves properties to the central repository for later correlation
 CentralRepoIngestModuleFactory.ingestmodule.name=Correlation Engine
 IngestSettingsPanel.ingestSettingsLabel.text=Ingest Settings

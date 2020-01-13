@@ -59,6 +59,8 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(ImageNode in);
 
     T visit(VolumeNode vn);
+    
+    T visit(PoolNode pn);
 
     T visit(SlackFileNode sfn);
 
@@ -186,6 +188,11 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(InterestingHits.InterestingItemTypeNode aThis);
 
+    /*
+     * Attachments
+     */
+    T visit(AttachmentNode node);
+    
     /**
      * Visitor with an implementable default behavior for all types. Override
      * specific visit types to not use the default behavior.
@@ -256,6 +263,11 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(ImageNode in) {
             return defaultVisit(in);
+        }
+        
+        @Override
+        public T visit(PoolNode pn) {
+            return defaultVisit(pn);
         }
 
         @Override
@@ -522,5 +534,11 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(Accounts.DefaultAccountTypeNode node) {
             return defaultVisit(node);
         }
+        
+        @Override
+        public T visit(AttachmentNode node) {
+            return defaultVisit(node);
+        }
+        
     }
 }

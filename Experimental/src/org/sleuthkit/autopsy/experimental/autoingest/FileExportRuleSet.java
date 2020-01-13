@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -179,6 +179,20 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
         }
 
         /**
+         * Sort the file size conditions of this rule.
+         */
+        void sortFileSizeConditions() {
+            this.fileSizeConditions.sort(null);
+        }
+
+        /**
+         * Sort the artifact conditions of this rule.
+         */
+        void sortArtifactConditions() {
+            this.artifactConditions.sort(null);
+        }
+
+        /**
          * Gets the name of the rule.
          *
          * @return The rule name.
@@ -336,13 +350,13 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
             if (!Objects.equals(this.fileTypeCondition, that.getFileMIMETypeCondition())) {
                 return false;
             }
-            this.fileSizeConditions.sort(null);
-            that.fileSizeConditions.sort(null);
+            this.sortFileSizeConditions();
+            that.sortFileSizeConditions();
             if (!this.fileSizeConditions.equals(that.getFileSizeConditions())) {
                 return false;
             }
-            this.artifactConditions.sort(null);
-            that.artifactConditions.sort(null);
+            this.sortArtifactConditions();
+            that.sortArtifactConditions();
             return this.artifactConditions.equals(that.getArtifactConditions());
         }
 
@@ -376,8 +390,8 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
         List<Long> evaluate(long dataSourceId) throws ExportRulesException {
             try {
                 SleuthkitCase db = Case.getCurrentCaseThrows().getSleuthkitCase();
-                try (SleuthkitCase.CaseDbQuery queryResult = db.executeQuery(getQuery(dataSourceId))) {
-                    ResultSet resultSet = queryResult.getResultSet();
+                try (SleuthkitCase.CaseDbQuery queryResult = db.executeQuery(getQuery(dataSourceId));
+                        ResultSet resultSet = queryResult.getResultSet();) {
                     List<Long> fileIds = new ArrayList<>();
                     while (resultSet.next()) {
                         fileIds.add(resultSet.getLong("obj_id"));
@@ -889,7 +903,7 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
              * @return The value, may be null.
              */
             byte[] getByteValue() {
-                return this.byteValue;
+                return this.byteValue.clone();
             }
 
             /**
@@ -908,7 +922,7 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
              * @return The value, may be null.
              */
             String getStringRepresentationOfValue() {
-                String valueText = "";
+                String valueText;
                 switch (this.attributeValueType) {
                     case BYTE:
                         valueText = new String(Hex.encodeHex(getByteValue()));
@@ -1069,20 +1083,20 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
                 }
                 SleuthkitCase caseDb = currentCase.getSleuthkitCase();
                 BlackboardArtifact.Type artifactType;
-                BlackboardAttribute.Type attributeType;
                 try {
                     artifactType = caseDb.getArtifactType(artifactTypeName);
                 } catch (TskCoreException ex) {
                     throw new ExportRulesException(String.format("The specified %s artifact type does not exist in case database for %s", artifactTypeName, currentCase.getCaseDirectory()), ex);
                 }
+                BlackboardAttribute.Type attributeType;
                 try {
                     attributeType = caseDb.getAttributeType(attributeTypeName);
                 } catch (TskCoreException ex) {
                     throw new ExportRulesException(String.format("The specified %s attribute type does not exist in case database for %s", attributeTypeName, currentCase.getCaseDirectory()), ex);
                 }
-                                                
+
                 String clause = String.format("files.obj_id = arts%d.obj_id AND arts%d.artifact_type_id = %d AND attrs%d.artifact_id = arts%d.artifact_id AND attrs%d.attribute_type_id = %d AND ",
-                        index, index, artifactType.getTypeID(), index, index, index, attributeType.getTypeID());                
+                        index, index, artifactType.getTypeID(), index, index, index, attributeType.getTypeID());
                 switch (this.attributeValueType) {
                     case INTEGER:
                         clause += String.format("attrs%d.value_int32 %s %d", index, this.op.getSymbol(), this.intValue);
@@ -1100,7 +1114,9 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
                         clause += String.format("attrs%d.value_byte %s decode('%s', 'hex')", index, this.op.getSymbol(), new String(Hex.encodeHex(getByteValue())));
                         break;
                     case DATETIME:
-                        clause += String.format("attrs%d.value_int64 %s '%s'", index, this.op.getSymbol(), this.dateTimeValue.getMillis()/1000);
+                        clause += String.format("attrs%d.value_int64 %s '%s'", index, this.op.getSymbol(), this.dateTimeValue.getMillis() / 1000);
+                        break;
+                    default:
                         break;
                 }
                 return clause;

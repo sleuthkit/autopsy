@@ -21,37 +21,39 @@ package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 import org.sleuthkit.datamodel.TimelineFilter;
 
 /**
- * Default FilterState implementation for individual TimelineFilters.
+ * An implementation of the FilterState interface for wrapping TimelineFilter
+ * objects. TimelineFilter objects provide SQL WHERE clauses for querying the
+ * case database and are displayed in the timeline GUI via the filters panel.
+ * Filter state objects provide selected, disabled, and active properties for
+ * the wrapped filter.
  *
- * @param <FilterType>
+ * @param <FilterType> The type of the wrapped filter, required to be a
+ *                     TimelineFilter type.
  */
 public class SqlFilterState<FilterType extends TimelineFilter> extends AbstractFilterState<FilterType> {
+
     /**
-     * Selected = false, Disabled = false
+     * Constructs an implementation of the FilterState interface for wrapping
+     * TimelineFilter objects. TimelineFilter objects provide SQL WHERE clauses
+     * for querying the case database and are displayed in the timeline GUI via
+     * the filters panel. Filter state objects provide selected, disabled, and
+     * active properties for the wrapped filter.
      *
-     * @param filter
+     * @param filter The TimelineFilter object to be wrapped.
      */
     public SqlFilterState(FilterType filter) {
-        // Setting the intial state to all filters to "selected" except
-        // the "Hide Known Filters", "Tags", "Hashsets" and "Text".
-        // There are better ways to do this, but this works in a pinch
-        this(filter, !(filter instanceof TimelineFilter.HideKnownFilter || filter instanceof TimelineFilter.TagsFilter || filter instanceof TimelineFilter.HashHitsFilter || filter instanceof TimelineFilter.TextFilter));
-        
-         selectedProperty().addListener(selectedProperty -> {
-           if (filter instanceof TimelineFilter.TagsFilter) {
-               ((TimelineFilter.TagsFilter)filter).setEventSourcesAreTagged(isSelected());
-           } else  if (filter instanceof TimelineFilter.HashHitsFilter) {
-               ((TimelineFilter.HashHitsFilter)filter).setEventSourcesHaveHashSetHits(isSelected());
-           }
-        });
-        
+        this(filter, false);
     }
 
     /**
-     * Disabled = false
+     * /**
+     * Constructs an implementation of the FilterState interface for wrapping
+     * TimelineFilter objects. TimelineFilter objects provide SQL WHERE clauses
+     * for querying the case database and are displayed in the timeline GUI via
+     * the filters panel.
      *
-     * @param filter
-     * @param selected True to select this filter initially.
+     * @param filter   The TimelineFilter object to be wrapped.
+     * @param selected The initial value for the selected property.
      */
     public SqlFilterState(FilterType filter, boolean selected) {
         super(filter, selected);
@@ -74,9 +76,10 @@ public class SqlFilterState<FilterType extends TimelineFilter> extends AbstractF
     @Override
     public String toString() {
         return "TimelineFilterState{"
-               + " filter=" + getFilter().toString()
-               + ", selected=" + isSelected()
-               + ", disabled=" + isDisabled()
-               + ", activeProp=" + isActive() + '}'; //NON-NLS
+                + " filter=" + getFilter().toString()
+                + ", selected=" + isSelected()
+                + ", disabled=" + isDisabled()
+                + ", activeP=" + isActive() + '}'; //NON-NLS
     }
+
 }

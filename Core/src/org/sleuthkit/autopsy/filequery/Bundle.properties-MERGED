@@ -1,0 +1,217 @@
+CTL_OpenFileDiscoveryAction=File Discovery
+# {0} - dataSourceName
+DataSourceModuleWrapper.exifModule.text=Exif Parser module was not run on data source: {0}\n
+# {0} - dataSourceName
+DataSourceModuleWrapper.fileTypeModule.text=File Type Identification module was not run on data source: {0}\n
+# {0} - dataSourceName
+DataSourceModuleWrapper.hashModule.text=Hash Lookup module was not run on data source: {0}\n
+DiscoveryTopComponent.name=\ File Discovery
+FileGroup.groupSortingAlgorithm.groupName.text=Group Name
+FileGroup.groupSortingAlgorithm.groupSize.text=Group Size
+# {0} - Data source name
+# {1} - Data source ID
+FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
+# {0} - Data source ID
+FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})
+FileSearch.FileTagGroupKey.noSets=None
+# {0} - file name
+FileSearch.genVideoThumb.progress.text=extracting temporary file {0}
+FileSearch.GroupingAttributeType.datasource.displayName=Data Source
+FileSearch.GroupingAttributeType.fileType.displayName=File Type
+FileSearch.GroupingAttributeType.frequency.displayName=Past Occurrences
+FileSearch.GroupingAttributeType.hash.displayName=Hash Set
+FileSearch.GroupingAttributeType.interestingItem.displayName=Interesting Item
+FileSearch.GroupingAttributeType.keywordList.displayName=Keyword
+FileSearch.GroupingAttributeType.none.displayName=None
+FileSearch.GroupingAttributeType.object.displayName=Object Detected
+FileSearch.GroupingAttributeType.parent.displayName=Parent Folder
+FileSearch.GroupingAttributeType.size.displayName=File Size
+FileSearch.GroupingAttributeType.tag.displayName=Tag
+FileSearch.HashHitsGroupKey.noHashHits=None
+FileSearch.InterestingItemGroupKey.noSets=None
+FileSearch.KeywordListGroupKey.noKeywords=None
+FileSearch.NoGroupingGroupKey.allFiles=All Files
+FileSearch.ObjectDetectedGroupKey.noSets=None
+FileSearchData.FileSize.LARGE_IMAGE.displayName=Large: 1-50MB
+FileSearchData.FileSize.LARGE_VIDEO.displayName=Large: 1-5GB
+FileSearchData.FileSize.MEDIUM_IMAGE.displayName=Medium: 100KB-1MB
+FileSearchData.FileSize.MEDIUM_VIDEO.displayName=Medium: 100MB-1GB
+FileSearchData.FileSize.SMALL_IMAGE.displayName=Small: 16-100KB
+FileSearchData.FileSize.SMALL_VIDEO.displayName=Small: 500KB-100MB
+FileSearchData.FileSize.XLARGE_IMAGE.displayName=XLarge: 50-200MB
+FileSearchData.FileSize.XLARGE_VIDEO.displayName=XLarge: 5-10GB
+FileSearchData.FileSize.XSMALL_IMAGE.displayName=XSmall: 0-16KB
+FileSearchData.FileSize.XSMALL_VIDEO.displayName=XSmall: 0-500KB
+FileSearchData.FileSize.XXLARGE_IMAGE.displayName=XXLarge: 200MB+
+FileSearchData.FileSize.XXLARGE_VIDEO.displayName=XXLarge: 10GB+
+FileSearchData.FileType.Audio.displayName=Audio
+FileSearchData.FileType.Documents.displayName=Documents
+FileSearchData.FileType.Executables.displayName=Executables
+FileSearchData.FileType.Image.displayName=Image
+FileSearchData.FileType.Other.displayName=Other/Unknown
+FileSearchData.FileType.Video.displayName=Video
+FileSearchData.Frequency.common.displayName=Common (11 - 100)
+FileSearchData.Frequency.known.displayName=Known (NSRL)
+FileSearchData.Frequency.rare.displayName=Rare (2-10)
+FileSearchData.Frequency.unique.displayName=Unique (1)
+FileSearchData.Frequency.unknown.displayName=Unknown
+FileSearchData.Frequency.verycommon.displayName=Very Common (100+)
+FileSearchData.Score.interesting.displayName=Interesting
+FileSearchData.Score.notable.displayName=Notable
+FileSearchData.Score.unknown.displayName=Unknown
+FileSearchDialog.jLabel1.text=File Type
+FileSearchDialog.dsCheckBox.text=Data source
+FileSearchDialog.cancelButton.text=Cancel
+FileSearchDialog.freqCheckBox.text=CR Frequency
+FileSearchDialog.sizeCheckBox.text=Size
+FileSearchDialog.kwCheckBox.text=Keyword
+FileSearchDialog.addParentButton.text=Add
+FileSearchDialog.deleteParentButton.text=Delete
+FileSearchDialog.parentFullRadioButton.text=Full
+FileSearchDialog.parentSubstringRadioButton.text=Substring
+FileSearchDialog.jLabel2.text=(All will be used)
+FileSearchDialog.jLabel3.text=Group by attribute:
+FileSearchDialog.jLabel4.text=Order groups by:
+FileSearchDialog.orderAttrRadioButton.text=Attribute
+FileSearchDialog.orderSizeRadioButton.text=Group Size
+FileSearchDialog.jLabel5.text=Order files by: 
+FileSearchDialog.parentCheckBox.text=Parent
+FileSearchFiltering.concatenateSetNamesForDisplay.comma=, 
+# {0} - Data source name
+# {1} - Data source ID
+FileSearchFiltering.DataSourceFilter.datasource={0}({1})
+# {0} - filters
+FileSearchFiltering.DataSourceFilter.desc=Files in data source(s): {0}
+FileSearchFiltering.DataSourceFilter.or=\ or 
+FileSearchFiltering.ExifFilter.desc=Files that contain EXIF data
+# {0} - filters
+FileSearchFiltering.FileTypeFilter.desc=Files with type: {0}
+FileSearchFiltering.FileTypeFilter.or=\ or 
+# {0} - filters
+FileSearchFiltering.FrequencyFilter.desc=Files with frequency: {0}
+FileSearchFiltering.FrequencyFilter.or=\ or 
+# {0} - filters
+FileSearchFiltering.HashSetFilter.desc=Files with hash set hits in set(s): {0}
+# {0} - filters
+FileSearchFiltering.InterestingItemSetFilter.desc=Files with interesting item hits in set(s): {0}
+# {0} - filters
+FileSearchFiltering.KeywordListFilter.desc=Files with keywords in list(s): {0}
+FileSearchFiltering.KnownFilter.desc=Files which are not known
+# {0} - filters
+FileSearchFiltering.ObjectDetectionFilter.desc=Files with objects detected in set(s): {0}
+# {0} - filters
+FileSearchFiltering.ParentFilter.desc=Files with paths matching: {0}
+FileSearchFiltering.ParentFilter.exact=(exact match)
+FileSearchFiltering.ParentFilter.or=\ or 
+FileSearchFiltering.ParentFilter.substring=(substring)
+FileSearchFiltering.ParentSearchTerm.excludeString=\ (exclude)
+FileSearchFiltering.ParentSearchTerm.fullString=\ (exact)
+FileSearchFiltering.ParentSearchTerm.includeString=\ (include)
+FileSearchFiltering.ParentSearchTerm.subString=\ (substring)
+FileSearchFiltering.PreviouslyNotableFilter.desc=Files that were previously marked as notable
+# {0} - filters
+FileSearchFiltering.ScoreFilter.desc=Files with score(s) of : {0}
+# {0} - filters
+FileSearchFiltering.SizeFilter.desc=Files with size in range(s): {0}
+FileSearchFiltering.SizeFilter.or=\ or 
+# {0} - Minimum bytes
+# {1} - Maximum bytes
+FileSearchFiltering.SizeFilter.range=({0} to {1})
+# {0} - tag names
+FileSearchFiltering.TagsFilter.desc=Files that have been tagged {0}
+FileSearchFiltering.TagsFilter.or=\ or 
+FileSearchPanel.dialogTitle.text=Test file search
+FileSearchPanel.sortingPanel.border.title=Grouping
+FileSearchPanel.searchButton.text=Show
+FileSearchPanel.addButton.text=Add
+FileSearchPanel.substringRadioButton.text=Substring
+FileSearchPanel.fullRadioButton.text=Full
+FileSearchPanel.parentCheckbox.text=Parent Folder:
+FileSearchPanel.keywordCheckbox.text=Keyword:
+FileSearchPanel.crFrequencyCheckbox.text=Past Occurrences:
+FileSearchPanel.dataSourceCheckbox.text=Data Source:
+FileSearchPanel.sizeCheckbox.text=File Size:
+FileSearchPanel.orderGroupsByLabel.text=Order Groups By:
+FileSearchPanel.filtersScrollPane.border.title=Filters
+FileSearchPanel.parentLabel.text=(All will be used)
+FileSearchPanel.deleteButton.text=Delete
+FileSearchPanel.orderByLabel.text=Order Within Groups By:
+FileSearchPanel.groupByLabel.text=Group By:
+FileSearchDialog.searchButton.text=Search
+FileSearchDialog.hashCheckBox.text=Hash Set
+FileSearchDialog.intCheckBox.text=Interesting Items
+FileSearchDialog.tagsCheckBox.text=Tags
+FileSearchDialog.objCheckBox.text=Objects
+FileSearchDialog.exifCheckBox.text=Must contain EXIF data
+FileSearchDialog.notableCheckBox.text=Must have been tagged as notable
+FileSearchDialog.scoreCheckBox.text=Has score
+FileSearchPanel.cancelButton.text=Cancel
+FileSearchPanel.hashSetCheckbox.text=Hash Set:
+FileSearchPanel.tagsCheckbox.text=Tag:
+FileSearchPanel.interestingItemsCheckbox.text=Interesting Item:
+FileSearchPanel.scoreCheckbox.text=Has Score:
+FileSearchPanel.exifCheckbox.text=Must contain EXIF data
+FileSearchPanel.notableCheckbox.text=Must have been tagged as notable
+FileSearchPanel.objectsCheckbox.text=Object Detected:
+FileSorter.SortingMethod.datasource.displayName=Data Source
+FileSorter.SortingMethod.filename.displayName=File Name
+FileSorter.SortingMethod.filesize.displayName=File Size
+FileSorter.SortingMethod.filetype.displayName=File Type
+FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency
+FileSorter.SortingMethod.fullPath.displayName=Full Path
+FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names
+GroupsListPanel.noResults.message.text=No results were found for the selected filters.
+GroupsListPanel.noResults.title.text=No results found
+ImageThumbnailPanel.bytes.text=bytes
+# {0} - numberOfInstances
+ImageThumbnailPanel.countLabel.text=Number of Instances: {0}
+ImageThumbnailPanel.gigaBytes.text=GB
+ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
+ImageThumbnailPanel.kiloBytes.text=KB
+ImageThumbnailPanel.megaBytes.text=MB
+# {0} - fileSize
+# {1} - units
+ImageThumbnailPanel.sizeLabel.text=Size: {0} {1}
+ImageThumbnailPanel.terraBytes.text=TB
+OpenFileDiscoveryAction.resultsIncomplete.text=Results may be incomplete
+ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
+ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
+ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
+ResultFile.score.taggedFile.description=At least one instance of the file has been tagged.
+# {0} - currentPage
+# {1} - totalPages
+ResultsPanel.currentPage.displayValue=Page: {0} of {1}
+ResultsPanel.currentPageLabel.text=Page: -
+# {0} - selectedPage
+# {1} - maxPage
+ResultsPanel.invalidPageNumber.message=The selected page number {0} does not exist. Please select a value from 1 to {1}.
+ResultsPanel.invalidPageNumber.title=Invalid Page Number
+ResultsPanel.openInExternalViewer.name=Open in External Viewer
+ResultsPanel.pageControlsLabel.text=Pages:
+ResultsPanel.gotoPageLabel.text=Go to Page:
+ResultsPanel.pageSizeLabel.text=Page Size:
+ResultsPanel.instancesList.border.title=Instances
+DiscoveryExtractAction.title.extractFiles.text=Extract File
+FileSearchPanel.includeRadioButton.text=Include
+FileSearchPanel.excludeRadioButton.text=Exclude
+FileSearchPanel.knownFilesCheckbox.toolTipText=
+FileSearchPanel.knownFilesCheckbox.text=Hide known files
+GroupListPanel.groupKeyList.border.title=Groups
+DiscoveryTopComponent.imagesButton.text=Images
+DiscoveryTopComponent.videosButton.text=Videos
+ResultsPanel.resultsSplitPane.toolTipText=
+FileSearchPanel.stepTwoLabel.text=Step 2: Filter which images to show
+FileSearchPanel.stepThreeLabel.text=Step 3: Choose display settings
+DiscoveryTopComponent.stepOneLabel.text=Step 1: Pick File Type
+ResultsPanel.viewFileInDir.name=View File in Directory
+VideoThumbnailPanel.bytes.text=bytes
+# {0} - numberOfInstances
+VideoThumbnailPanel.countLabel.text=Number of Instances: {0}
+VideoThumbnailPanel.deleted.text=All instances of file are deleted.
+VideoThumbnailPanel.gigaBytes.text=GB
+VideoThumbnailPanel.kiloBytes.text=KB
+VideoThumbnailPanel.megaBytes.text=MB
+# {0} - fileSize
+# {1} - units
+VideoThumbnailPanel.sizeLabel.text=Size: {0} {1}
+VideoThumbnailPanel.terraBytes.text=TB
