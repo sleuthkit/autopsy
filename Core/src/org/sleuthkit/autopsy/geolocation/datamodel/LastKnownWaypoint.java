@@ -71,7 +71,7 @@ final class LastKnownWaypoint extends Waypoint {
     "LastKnownWaypoint_Label=Last Known Location",})
     private static String getLabelFromArtifact(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-        String label = attribute.getDisplayString();
+        String label = attribute != null ? attribute.getDisplayString() : Bundle.LastKnownWaypoint_Label();
 
         if (label == null || label.isEmpty()) {
             label = Bundle.LastKnownWaypoint_Label();

@@ -3,12 +3,13 @@
 
 A data source is the thing you want to analyze. It can be a disk image, some logical files, a local disk, etc. You must open a case prior to adding a data source to Autopsy. 
 
-Autopsy supports four types of data sources:
+Autopsy supports multiple types of data sources:
 - Disk Image or VM File: A file (or set of files) that is a byte-for-byte copy of a hard drive or media card, or a virtual machine image.  (see \ref ds_img)
 - Local Disk: Local storage device (local drive, USB-attached drive, etc.).  (see \ref ds_local)
 - Logical Files: Local files or folders. (see \ref ds_log)
 - Unallocated Space Image Files: Any type of file that does not contain a file system but you want to run through ingest (see \ref ds_unalloc)
 - Autopsy Logical Imager Results: The results from running the logical imager. (see \ref ds_logical_imager)
+- XRY Text Export: The results from exporting text files from XRY. (see \ref ds_xry)
 
 \section ds_add Adding a Data Source
 
@@ -41,7 +42,7 @@ NOTE: If you are adding a data source to a multi-user case, ensure that all Auto
 
 6) After the ingest modules have been configured and the basic examination of the data source is complete, the ingest modules will begin to analyze the file contents. 
 
-You cannot remove a data source from a case.
+Data sources can be removed from cases created with Autopsy 4.14.0 and later. See the section \ref data_source_deletion "below".
 
 \section ds_img Adding a Disk Image
 
@@ -115,5 +116,24 @@ To add unallocated space image files:
 \section ds_logical_imager Adding an Autopsy Logical Imager Result
 
 This option allows you to add the results of a logical imager collection. See the \ref logical_imager_page page for details.
+
+\section ds_xry Adding XRY Text Export Data
+An XRY text export folder is expected to look similar to this:
+
+\image html xry_folder.png
+
+To add exported text files:
+-# Choose "XRY Text Export" from the data source types.
+-# Browse to the folder containing the text files.
+
+\image html xry_dsp.png
+
+\section data_source_deletion Deleting Data Sources
+
+As of Autopsy 4.14.0, data sources can be removed from cases. Removing a data source will delete all files associate with the data source, as well as all results from running ingest modules, tags, and timeline data. \ref reporting_page "Reports" will not be deleted, as most are not associated with a specific data source. If a new data source was created while processing another (from the \ref vm_extractor_page for example), this new data source will also be deleted if its parent is deleted.
+
+To delete a data source, right click it in either the \ref tree_viewer_page or the \ref result_viewer_page and select "Remove Data Source". If the case was originally created with a version of Autopsy earlier than 4.14.0 then this option will be disabled. After a confirmation dialog, the case will close and then reopen after the data source has been removed. 
+
+\image html data_source_delete.png
 
 */

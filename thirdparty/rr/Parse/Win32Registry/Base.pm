@@ -161,14 +161,26 @@ sub unpack_windows_time {
     # The equation can be found in several places on the Net.
     # My thanks go to Dan Sully for Audio::WMA's _fileTimeToUnixTime
     # which shows a perl implementation of it.
-    my ($low, $high) = unpack("VV", $data);
-    my $filetime = $high * 2 ** 32 + $low;
-    my $epoch_time = int(($filetime - 116444736000000000) / 10000000);
+    my ($lo, $hi) = unpack("VV", $data);
+#   my $filetime = $high * 2 ** 32 + $low;
+#   my $epoch_time = int(($filetime - 116444736000000000) / 10000000);
+		
+		my $epoch_time;
 
+		if ($lo == 0 && $hi == 0) {
+			$epoch_time = 0;
+		} else {
+			$lo -= 0xd53e8000;
+			$hi -= 0x019db1de;
+			$epoch_time = int($hi*429.4967296 + $lo/1e7);
+		};
+		$epoch_time = 0 if ($epoch_time < 0);
+	
+		
     # adjust the UNIX epoch time to the local OS's epoch time
     # (see perlport's Time and Date section)
-    my $epoch_offset = timegm(0, 0, 0, 1, 0, 70);
-    $epoch_time += $epoch_offset;
+ #  my $epoch_offset = timegm(0, 0, 0, 1, 0, 70);
+ #  $epoch_time += $epoch_offset;
 
     if ($epoch_time < 0 || $epoch_time > 0x7fffffff) {
         $epoch_time = undef;

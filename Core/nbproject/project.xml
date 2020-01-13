@@ -345,6 +345,7 @@
                 <package>org.sleuthkit.autopsy.textextractors.configs</package>
                 <package>org.sleuthkit.autopsy.texttranslation</package>
                 <package>org.sleuthkit.datamodel</package>
+                <package>org.sleuthkit.datamodel.blackboardutils</package>
             </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.8.1.jar</runtime-relative-path>
@@ -527,8 +528,8 @@
                 <binary-origin>release/modules/ext/google-http-client-1.29.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.7.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.7.0.jar</binary-origin>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.8.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/bcpkix-jdk15on-1.60.jar</runtime-relative-path>

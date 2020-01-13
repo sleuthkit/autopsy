@@ -47,7 +47,7 @@ final class FileSearchData {
         UNIQUE(0, 1, Bundle.FileSearchData_Frequency_unique_displayName()),
         RARE(1, 10, Bundle.FileSearchData_Frequency_rare_displayName()),
         COMMON(2, 100, Bundle.FileSearchData_Frequency_common_displayName()),
-        VERY_COMMON(3, 0, Bundle.FileSearchData_Frequency_common_displayName()),
+        VERY_COMMON(3, 0, Bundle.FileSearchData_Frequency_verycommon_displayName()),
         KNOWN(4, 0, Bundle.FileSearchData_Frequency_known_displayName()),
         UNKNOWN(5, 0, Bundle.FileSearchData_Frequency_unknown_displayName());
 

@@ -18,16 +18,21 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
+import com.google.gson.Gson;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.blackboardutils.FileAttachment;
+import org.sleuthkit.datamodel.blackboardutils.MessageAttachments;
 
 /**
  * 
@@ -121,10 +126,29 @@ class AccountSummary {
                 }
             }
             try {
-                attachmentCnt += artifact.getChildrenCount();
-                for (Content childContent : artifact.getChildren()) {
-                    if (ImageUtils.thumbnailSupported(childContent)) {
-                        mediaCnt++;
+                // count the attachments from the TSK_ATTACHMENTS attribute.
+                BlackboardAttribute attachmentsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
+                if (attachmentsAttr != null) {
+                    String jsonVal = attachmentsAttr.getValueString();
+                    MessageAttachments msgAttachments = new Gson().fromJson(jsonVal, MessageAttachments.class);
+
+                    Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
+                    for (FileAttachment fileAttachment : fileAttachments) {
+                        attachmentCnt++;
+                        long attachedFileObjId = fileAttachment.getObjectId();
+                        if (attachedFileObjId >= 0) {
+                            AbstractFile attachedFile = artifact.getSleuthkitCase().getAbstractFileById(attachedFileObjId);
+                            if (ImageUtils.thumbnailSupported(attachedFile)) {
+                                mediaCnt++;
+                            }  
+                        }
+                    }
+                } else {  // backward compatibility - email message attachments are derived files, children of the message.
+                    attachmentCnt += artifact.getChildrenCount();
+                    for (Content childContent : artifact.getChildren()) {
+                        if (ImageUtils.thumbnailSupported(childContent)) {
+                            mediaCnt++;
+                        }
                     }
                 }
             } catch (TskCoreException ex) {
