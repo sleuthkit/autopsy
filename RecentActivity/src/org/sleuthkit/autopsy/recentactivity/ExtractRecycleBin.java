@@ -23,10 +23,10 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.BufferUnderflowException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -151,7 +151,8 @@ final class ExtractRecycleBin extends Extract {
     }
 
     /**
-     * Process each individual iFile.
+     * Process each individual iFile.  Each iFile ($I) contains metadata about files that have been deleted.
+     * Each $I file should have a corresponding $R file which is the actuall deleted file.
      *
      * @param context
      * @param recycleBinArtifactType Module created artifact type
@@ -176,7 +177,7 @@ final class ExtractRecycleBin extends Extract {
             try {
                 metaData = parseIFile(tempFilePath);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Unable to parse iFile %s", iFile.getName()), ex); //NON-NLS
+                logger.log(Level.WARNING, String.format("Unable to parse iFile %s", iFile.getParentPath() + iFile.getName()), ex); //NON-NLS
                 // Unable to parse the $I file move onto the next file
                 return;
             }
@@ -268,37 +269,34 @@ final class ExtractRecycleBin extends Extract {
     }
 
     /**
-     * Parse the $I file.
+     * Parse the $I file.  This file contains metadata information about deleted files
      *
      * File format prior to Windows 10:
-     * <table>
-     * <tr><th>Offset</th><th>Size</th><th>Description</th></tr>
-     * <tr><td>0</td><td>8</td><td>Header</td></tr>
-     * <tr><td>8</td><td>8</td><td>File Size</td></tr>
-     * <tr><td>16</td><td>8</td><td>Deleted Timestamp</td></tr>
-     * <tr><td>24</td><td>520</td><td>File Name</td></tr>
-     * </table>
-     *
+     * Offset  Size  Description
+     *   0       8     Header
+     *   8       8     File Size
+     *  16       8     Deleted Timestamp
+     *  24     520     File Name
+     * 
      * File format Windows 10+
-     * <table>
-     * <tr><th>Offset</th><th>Size</th><th>Description</th></tr>
-     * <tr><td>0</td><td>8</td><td>Header</td></tr>
-     * <tr><td>8</td><td>8</td><td>File Size</td></tr>
-     * <tr><td>16</td><td>8</td><td>Deleted TimeStamp</td></tr>
-     * <tr><td>24</td><td>4</td><td>File Name Length</td></tr>
-     * <tr><td>28</td><td>var</td><td>File Name</td></tr>
-     * </table>
-     *
+     * Offset  Size  Description
+     *   0       8     Header
+     *   8       8     File Size
+     *  16       8     Deleted TimeStamp
+     *  24       4     File Name Length
+     *  28     var     File Name
+     * 
      * For versions of Windows prior to 10, header = 0x01. Windows 10+ header ==
      * 0x02
      *
      * @param iFilePath Path to local copy of file in temp folder
      *
-     * @throws FileNotFoundException
      * @throws IOException
      */
-    private RecycledFileMetaData parseIFile(String iFilePath) throws FileNotFoundException, IOException {
-        byte[] allBytes = Files.readAllBytes(Paths.get(iFilePath));
+    private RecycledFileMetaData parseIFile(String iFilePath) throws IOException {
+        try {
+            byte[] allBytes = Files.readAllBytes(Paths.get(iFilePath));
+        
 
         ByteBuffer byteBuffer = ByteBuffer.wrap(allBytes);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -322,6 +320,9 @@ final class ExtractRecycleBin extends Extract {
         String fileName = new String(stringBytes, "UTF-16LE"); //NON-NLS
 
         return new RecycledFileMetaData(fileSize, timestamp, fileName);
+        } catch (BufferUnderflowException | IllegalArgumentException | ArrayIndexOutOfBoundsException ex) {
+            throw new IOException("Error parsing $I File, file is corrupt or not a valid I$ file");
+        }
     }
     
     /**
