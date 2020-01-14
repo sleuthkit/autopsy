@@ -324,7 +324,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             return IngestModule.ProcessResult.ERROR;
         } catch (IOException ex) {
             totals.totalItemsWithErrors.incrementAndGet();
-            logger.log(Level.SEVERE, String.format("Error writing file '%s' (id=%d) to '%s' with the PhotoRec carver.", file.getName(), file.getId(), tempFilePath), ex); // NON-NLS
+            logger.log(Level.SEVERE, String.format("Error writing or processing file '%s' (id=%d) to '%s' with the PhotoRec carver.", file.getName(), file.getId(), tempFilePath), ex); // NON-NLS
             MessageNotifyUtil.Notify.error(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.error.msg", file.getName()));
             return IngestModule.ProcessResult.ERROR;
         } finally {
