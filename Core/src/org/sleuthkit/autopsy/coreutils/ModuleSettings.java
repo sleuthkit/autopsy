@@ -40,6 +40,9 @@ import java.util.logging.Level;
  * modules confine themselves to their use when manipulating their settings
  * files, with the consequence of serializing all such operations across the
  * entire application.
+ * 
+ * TODO (JIRA-5964): The error handling in this method is not consistent with
+ * Autopsy error handling policy.
  */
 public class ModuleSettings {
 
