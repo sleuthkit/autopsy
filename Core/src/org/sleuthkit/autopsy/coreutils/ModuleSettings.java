@@ -132,7 +132,7 @@ public class ModuleSettings {
      * @return The settings file path as a string.
      */
     private static String getSettingsFilePath(String moduleName) {
-        return Paths.get(MODULE_DIR_PATH, moduleName + SETTINGS_FILE_EXT).toString(); //NON-NLS
+        return Paths.get(MODULE_DIR_PATH, moduleName + SETTINGS_FILE_EXT).toString();
     }
 
     /**
