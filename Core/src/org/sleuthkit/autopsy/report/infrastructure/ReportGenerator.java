@@ -120,12 +120,40 @@ public class ReportGenerator {
         this.progressIndicator = panel.getProgressPanel();
         this.configName = configName;
     }
+    
+    public void generateReports() {
+        // load all report modules 
+        Map<String, ReportModule> modules = new HashMap<>();
+        for (TableReportModule module : ReportModuleLoader.getTableReportModules()) {
+            modules.put(FactoryClassNameNormalizer.normalize(module.getClass().getCanonicalName()), module);
+        }
+
+        for (GeneralReportModule module : ReportModuleLoader.getGeneralReportModules()) {
+            modules.put(FactoryClassNameNormalizer.normalize(module.getClass().getCanonicalName()), module);
+        }
+
+        for (FileReportModule module : ReportModuleLoader.getFileReportModules()) {
+            modules.put(FactoryClassNameNormalizer.normalize(module.getClass().getCanonicalName()), module);
+        }
+
+        // special case for PortableCaseReportModule
+        modules.put(FactoryClassNameNormalizer.normalize(PortableCaseReportModule.class.getCanonicalName()), new PortableCaseReportModule());
+        
+        generateReports(modules);
+    }
 
     /**
      * Generates the reports specified by the reporting configuration passed in
      * via the constructor.
      */
-    public void generateReports() {
+    public void generateReports(Map<String, ReportModule> modules) {
+        
+        if (modules == null || modules.isEmpty()) {
+            logger.log(Level.SEVERE, "No report modules found");
+            progressIndicator.updateStatusLabel("No report modules found. Exiting");
+            return;            
+        }
+        
         ReportingConfig config = null;
         try {
             config = ReportingConfigLoader.loadConfig(configName);
@@ -142,23 +170,6 @@ public class ReportGenerator {
         }
 
         try {
-            // load all report modules 
-            Map<String, ReportModule> modules = new HashMap<>();
-            for (TableReportModule module : ReportModuleLoader.getTableReportModules()) {
-                modules.put(FactoryClassNameNormalizer.normalize(module.getClass().getCanonicalName()), module);
-            }
-
-            for (GeneralReportModule module : ReportModuleLoader.getGeneralReportModules()) {
-                modules.put(FactoryClassNameNormalizer.normalize(module.getClass().getCanonicalName()), module);
-            }
-
-            for (FileReportModule module : ReportModuleLoader.getFileReportModules()) {
-                modules.put(FactoryClassNameNormalizer.normalize(module.getClass().getCanonicalName()), module);
-            }
-
-            // special case for PortableCaseReportModule
-            modules.put(FactoryClassNameNormalizer.normalize(PortableCaseReportModule.class.getCanonicalName()), new PortableCaseReportModule());
-
             // generate reports for enabled modules
             for (Map.Entry<String, ReportModuleConfig> entry : config.getModuleConfigs().entrySet()) {
                 ReportModuleConfig moduleConfig = entry.getValue();

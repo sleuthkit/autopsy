@@ -250,6 +250,14 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         
         return moduleConfigs;
     }
+    
+    Map<String, ReportModule> getReportModules() {
+        Map<String, ReportModule> modulesMap = new HashMap<>();
+        for (ReportModule module : modules) {
+            modulesMap.put(FactoryClassNameNormalizer.normalize(module.getClass().getCanonicalName()), module);
+        }
+        return modulesMap;
+    } 
 
     /**
      * This method is called from within the constructor to initialize the form.
