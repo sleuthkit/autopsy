@@ -121,6 +121,10 @@ public class ReportGenerator {
         this.configName = configName;
     }
     
+    /**
+     * Generates the reports specified by the reporting configuration passed 
+     * in via the constructor. Does lookup of all existing report modules.
+     */
     public void generateReports() {
         // load all report modules 
         Map<String, ReportModule> modules = new HashMap<>();
@@ -144,7 +148,10 @@ public class ReportGenerator {
 
     /**
      * Generates the reports specified by the reporting configuration passed in
-     * via the constructor.
+     * via the constructor. 
+     * 
+     * @param modules Map of report module objects to use. This is useful when we want to 
+     *                re-use the module instances or limit which reports are generated.
      */
     public void generateReports(Map<String, ReportModule> modules) {
         
