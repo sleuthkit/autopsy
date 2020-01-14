@@ -320,8 +320,8 @@ final class ExtractRecycleBin extends Extract {
         String fileName = new String(stringBytes, "UTF-16LE"); //NON-NLS
 
         return new RecycledFileMetaData(fileSize, timestamp, fileName);
-        } catch (BufferUnderflowException | IllegalArgumentException | ArrayIndexOutOfBoundsException ex) {
-            throw new IOException("Error parsing $I File, file is corrupt or not a valid I$ file");
+        } catch (IOException | BufferUnderflowException | IllegalArgumentException | ArrayIndexOutOfBoundsException ex) {
+            throw new IOException("Error parsing $I File, file is corrupt or not a valid I$ file", ex);
         }
     }
     
