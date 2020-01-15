@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,17 +43,17 @@ public class Waypoint {
     final private String label;
     final private AbstractFile image;
     final private BlackboardArtifact artifact;
-    final private Route route;
+    final private Path path;
 
     // This list is not expected to change after construction. The 
     // constructor will take care of making an unmodifiable List
-    final private List<Waypoint.Property> immutablePropertiesList;
+    final private List<Waypoint.Property> propertiesList;
 
     /**
      * This is a list of attributes that are already being handled by the by
      * getter functions.
      */
-    static final private BlackboardAttribute.ATTRIBUTE_TYPE[] ALREADY_HANDLED_ATTRIBUTES = {
+    static final BlackboardAttribute.ATTRIBUTE_TYPE[] ALREADY_HANDLED_ATTRIBUTES = {
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE,
@@ -80,7 +80,7 @@ public class Waypoint {
      * @throws GeoLocationDataException Exception will be thrown if artifact did
      *                                  not have a valid longitude and latitude.
      */
-    Waypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap, Route route) throws GeoLocationDataException {
+    Waypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap, Path path) throws GeoLocationDataException {
         if (longitude == null || latitude == null) {
             throw new GeoLocationDataException("Invalid waypoint, null value passed for longitude or latitude");
         }
@@ -92,9 +92,9 @@ public class Waypoint {
         this.longitude = longitude;
         this.latitude = latitude;
         this.altitude = altitude;
-        this.route = null;
+        this.path = path;
 
-        immutablePropertiesList = Collections.unmodifiableList(createGeolocationProperties(attributeMap));
+        propertiesList = createGeolocationProperties(attributeMap);
     }
 
     /**
@@ -171,7 +171,7 @@ public class Waypoint {
      * @return A List of waypoint properties
      */
     public List<Waypoint.Property> getOtherProperties() {
-        return immutablePropertiesList;
+        return Collections.unmodifiableList(propertiesList);
     }
 
     /**
@@ -180,25 +180,8 @@ public class Waypoint {
      * @return The waypoint route or null if the waypoint is not apart of a
      *         route.
      */
-    public Route getRoute() {
-        return route;
-    }
-
-    /**
-     * Gets the label for this waypoint.
-     *
-     * @param attributeMap Attributes for waypoint
-     *
-     * @return Returns a label for the waypoint, or empty string if no label was
-     *         found.
-     */
-    private static String getLabelFromArtifact(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) {
-        BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-        if (attribute != null) {
-            return attribute.getDisplayString();
-        }
-
-        return "";
+    public Path getPath() {
+        return path;
     }
 
     /**
@@ -238,29 +221,32 @@ public class Waypoint {
      *
      * @throws GeoLocationDataException
      */
-    static public List<Waypoint.Property> createGeolocationProperties(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+    static List<Waypoint.Property> createGeolocationProperties(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         List<Waypoint.Property> list = new ArrayList<>();
+        
+        if(attributeMap != null) {
 
-        Set<BlackboardAttribute.ATTRIBUTE_TYPE> keys = new HashSet<>(attributeMap.keySet());
+            Set<BlackboardAttribute.ATTRIBUTE_TYPE> keys = new HashSet<>(attributeMap.keySet());
 
-        for (BlackboardAttribute.ATTRIBUTE_TYPE type : ALREADY_HANDLED_ATTRIBUTES) {
-            keys.remove(type);
-        }
+            for (BlackboardAttribute.ATTRIBUTE_TYPE type : ALREADY_HANDLED_ATTRIBUTES) {
+                keys.remove(type);
+            }
 
-        for (BlackboardAttribute.ATTRIBUTE_TYPE type : keys) {
-            String key = type.getDisplayName();
-            String value = attributeMap.get(type).getDisplayString();
+            for (BlackboardAttribute.ATTRIBUTE_TYPE type : keys) {
+                String key = type.getDisplayName();
+                String value = attributeMap.get(type).getDisplayString();
 
-            list.add(new Waypoint.Property(key, value));
+                list.add(new Waypoint.Property(key, value));
+            }
         }
         return list;
     }
-
+   
     /**
      * Simple property class for waypoint properties that a purely
      * informational.
      */
-    public static final class Property {
+    public final static class Property {
 
         private final String displayName;
         private final String value;
@@ -272,7 +258,7 @@ public class Waypoint {
          *                    or empty string.
          * @param value       String value for property. Can be null.
          */
-        private Property(String displayName, String value) {
+        Property(String displayName, String value) {
             this.displayName = displayName;
             this.value = value;
         }

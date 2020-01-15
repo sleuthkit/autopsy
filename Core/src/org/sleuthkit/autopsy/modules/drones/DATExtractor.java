@@ -114,7 +114,7 @@ final class DATExtractor extends DroneExtractor {
                     List<GeoTrackPoint> trackPoints = processCSVFile(context, DATFile, csvFilePath);
 
                     if (trackPoints != null && !trackPoints.isEmpty()) {
-                        (new GeoArtifactsHelper(getSleuthkitCase(), getName(), DATFile)).addTrack(DATFile.getName(), new GeoTrackPoints(trackPoints));
+                        (new GeoArtifactsHelper(getSleuthkitCase(), getName(), DATFile)).addTrack(DATFile.getName(), trackPoints);
                     } else {
                         logger.log(Level.INFO, String.format("No trackpoints with valid longitude or latitude found in %s", DATFile.getName())); //NON-NLS
                     }

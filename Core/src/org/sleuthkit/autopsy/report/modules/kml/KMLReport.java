@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2018 Basis Technology Corp.
+ * Copyright 2014-2020 Basis Technology Corp.
  * contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,6 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.jdom2.Document;
@@ -48,6 +47,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
+import org.sleuthkit.autopsy.geolocation.datamodel.Track;
 import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder;
 import org.sleuthkit.autopsy.report.ReportBranding;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
@@ -79,6 +79,7 @@ public final class KMLReport implements GeneralReportModule {
     private Element gpsRouteFolder;
     private Element gpsSearchesFolder;
     private Element gpsTrackpointsFolder;
+    private Element gpsTracksFolder;
 
     private List<Waypoint> waypointList = null;
 
@@ -142,7 +143,10 @@ public final class KMLReport implements GeneralReportModule {
         "Waypoint_Route_Point_Display_String=GPS Individual Route Point",
         "Waypoint_Search_Display_String=GPS Search",
         "Waypoint_Trackpoint_Display_String=GPS Trackpoint",
-        "Route_Details_Header=GPS Route"
+        "Waypoint_Track_Display_String=GPS Track",
+        "Route_Details_Header=GPS Route",
+        "ReportBodyFile.ingestWarning.text=Ingest Warning message",
+        "Waypoint_Track_Point_Display_String=GPS Individual Track Point"
     })
 
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel, List<Waypoint> waypointList) {
@@ -175,6 +179,7 @@ public final class KMLReport implements GeneralReportModule {
 
         try {
             makeRoutes(skCase);
+            makeTracks(skCase);
             addLocationsToReport(skCase, baseReportDir);
         } catch (GeoLocationDataException | IOException ex) {
             errorMessage = "Failed to complete report.";
@@ -280,12 +285,18 @@ public final class KMLReport implements GeneralReportModule {
         Element hrefTrackpoints = new Element("href", ns).addContent(cdataTrackpoints); //NON-NLS
         gpsTrackpointsFolder.addContent(new Element("Icon", ns).addContent(hrefTrackpoints)); //NON-NLS
 
+        gpsTracksFolder = new Element("Folder", ns); //NON-NLS
+        CDATA cdataTrack = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-trackpoint.png"); //NON-NLS
+        Element hrefTrack = new Element("href", ns).addContent(cdataTrack); //NON-NLS
+        gpsTracksFolder.addContent(new Element("Icon", ns).addContent(hrefTrack)); //NON-NLS
+
         gpsExifMetadataFolder.addContent(new Element("name", ns).addContent("EXIF Metadata")); //NON-NLS
         gpsBookmarksFolder.addContent(new Element("name", ns).addContent("GPS Bookmarks")); //NON-NLS
         gpsLastKnownLocationFolder.addContent(new Element("name", ns).addContent("GPS Last Known Location")); //NON-NLS
         gpsRouteFolder.addContent(new Element("name", ns).addContent("GPS Routes")); //NON-NLS
         gpsSearchesFolder.addContent(new Element("name", ns).addContent("GPS Searches")); //NON-NLS
         gpsTrackpointsFolder.addContent(new Element("name", ns).addContent("GPS Trackpoints")); //NON-NLS
+        gpsTracksFolder.addContent(new Element("name", ns).addContent("GPS Tracks")); //NON-NLS
 
         document.addContent(gpsExifMetadataFolder);
         document.addContent(gpsBookmarksFolder);
@@ -293,6 +304,7 @@ public final class KMLReport implements GeneralReportModule {
         document.addContent(gpsRouteFolder);
         document.addContent(gpsSearchesFolder);
         document.addContent(gpsTrackpointsFolder);
+        document.addContent(gpsTracksFolder);
 
         return kmlDocument;
     }
@@ -402,7 +414,7 @@ public final class KMLReport implements GeneralReportModule {
         if (waypointList == null) {
             routes = Route.getRoutes(skCase);
         } else {
-            routes = new ArrayList<>();
+            routes = WaypointBuilder.getRoutes(waypointList);
         }
 
         for (Route route : routes) {
@@ -410,7 +422,12 @@ public final class KMLReport implements GeneralReportModule {
         }
     }
 
-    void addRouteToReport(Route route) {
+    /**
+     * Add the given route to the KML report.
+     * 
+     * @param route
+     */
+    private void addRouteToReport(Route route) {
         List<Waypoint> routePoints = route.getRoute();
         Waypoint start = null;
         Waypoint end = null;
@@ -452,6 +469,49 @@ public final class KMLReport implements GeneralReportModule {
                     FeatureColor.GREEN,
                     getFormattedDetails(end, Bundle.Waypoint_Route_Point_Display_String()),
                     end.getTimestamp(), endingPoint, formattedEnd)); //NON-NLS
+        }
+    }
+
+    /**
+     * Add the track to the track folder in the document.
+     *
+     * @param skCase Currently open case.
+     *
+     * @throws TskCoreException
+     */
+    void makeTracks(SleuthkitCase skCase) throws GeoLocationDataException {
+        List<Track> tracks = null;
+
+        if (waypointList == null) {
+            tracks = Track.getTracks(skCase, null);
+        } else {
+            tracks = WaypointBuilder.getTracks(waypointList);
+        }
+
+        for (Track track : tracks) {
+            addTrackToReport(track);
+        }
+    }
+
+    /**
+     * Add a track to the KML report.
+     * 
+     * @param track
+     */
+    private void addTrackToReport(Track track) {
+        List<Waypoint> trackPoints = track.getPath();
+
+        // Adding a folder with the track name so that all of the 
+        // tracks waypoints with be grouped together.
+        Element trackFolder = new Element("Folder", ns); //NON-NLS
+        trackFolder.addContent(new Element("name", ns).addContent(track.getLabel())); //NON-NLS
+        gpsTracksFolder.addContent(trackFolder);
+
+        for (Waypoint point : trackPoints) {
+            Element element = makePoint(point.getLatitude(), point.getLongitude(), point.getAltitude());
+            trackFolder.addContent(makePlacemark("",
+                    FeatureColor.GREEN, getFormattedDetails(point, Bundle.Waypoint_Track_Point_Display_String()),
+                    point.getTimestamp(), element, formattedCoordinates(point.getLatitude(), point.getLongitude()))); //NON-NLS
         }
     }
 
@@ -739,6 +799,14 @@ public final class KMLReport implements GeneralReportModule {
         return result.toString();
     }
 
+    /**
+     * Returns a HTML formatted string with the given title and value.
+     *
+     * @param title
+     * @param value
+     *
+     * @return HTML formatted string
+     */
     private String formatAttribute(String title, String value) {
         return String.format(HTML_PROP_FORMAT, title, value);
     }

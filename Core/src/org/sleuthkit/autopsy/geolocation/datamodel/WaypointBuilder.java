@@ -132,13 +132,38 @@ public final class WaypointBuilder {
     public static List<Route> getRoutes(List<Waypoint> waypoints) {
         List<Route> routeList = new ArrayList<>();
         for (Waypoint point : waypoints) {
-            Route route = point.getRoute();
-            if (route != null && !routeList.contains(route)) {
-                routeList.add(route);
+            Path path = point.getPath();
+            if (path != null && path instanceof Route) {
+                Route route = (Route) path;
+                if (!routeList.contains(route)) {
+                    routeList.add(route);
+                }
             }
         }
 
         return routeList;
+    }
+    
+    /**
+     * Returns a list of tracks from the given list of waypoints.
+     *
+     * @param waypoints A list of waypoints
+     *
+     * @return A list of track or an empty list if none were found.
+     */
+    public static List<Track> getTracks(List<Waypoint> waypoints) {
+        List<Track> trackList = new ArrayList<>();
+        for (Waypoint point : waypoints) {
+            Path path = point.getPath();
+            if (path != null && path instanceof Track) {
+                Track route = (Track) path;
+                if (!trackList.contains(route)) {
+                    trackList.add(route);
+                }
+            }
+        }
+
+        return trackList;
     }
 
     /**

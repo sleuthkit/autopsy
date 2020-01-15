@@ -19,15 +19,12 @@
  */
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Route represents a TSK_GPS_ROUTE artifact which has a start and end point
@@ -35,56 +32,35 @@ import org.sleuthkit.datamodel.TskCoreException;
  * more that two points.
  *
  */
-public final class Route {
-    private final List<Waypoint> points;
+public class Route extends Path{
     private final Long timestamp;
 
     // This list is not expected to change after construction so the 
     // constructor will take care of creating an unmodifiable List
-    private final List<Waypoint.Property> immutablePropertiesList;
-
-    /**
-     * Gets the list of Routes from the TSK_GPS_ROUTE artifacts.
-     *
-     * @param skCase Currently open SleuthkitCase
-     *
-     * @return List of Route objects, empty list will be returned if no Routes
-     *         were found
-     *
-     * @throws GeoLocationDataException
-     */
-    static public List<Route> getRoutes(SleuthkitCase skCase) throws GeoLocationDataException {
-        List<BlackboardArtifact> artifacts = null;
-        try {
-            artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE);
-        } catch (TskCoreException ex) {
-            throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_BOOKMARK", ex);
-        }
-
-        List<Route> routes = new ArrayList<>();
-        for (BlackboardArtifact artifact : artifacts) {
-            Route route = new Route(artifact);
-            routes.add(route);
-        }
-        return routes;
-    }
+    private final List<Waypoint.Property> propertiesList;
 
     /**
      * Construct a route for the given artifact.
      *
      * @param artifact TSK_GPS_ROUTE artifact object
      */
+    @Messages({
+        // This is the original static hardcoded label from the 
+        // original kml-report code
+        "Route_Label=As-the-crow-flies Route"
+    })
     Route(BlackboardArtifact artifact) throws GeoLocationDataException {
-        points = new ArrayList<>();
-
-        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap = Waypoint.getAttributesFromArtifactAsMap(artifact);        
-        points.add(getRouteStartPoint(artifact, attributeMap));
-        points.add(getRouteEndPoint(artifact, attributeMap));
+        super(artifact, Bundle.Route_Label());
+        
+        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap = Waypoint.getAttributesFromArtifactAsMap(artifact);
+        
+        addToPath(getRouteStartPoint(artifact, attributeMap));
+        addToPath(getRouteEndPoint(artifact, attributeMap));
              
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
         timestamp = attribute != null ? attribute.getValueLong() : null;
 
-        immutablePropertiesList = Collections.unmodifiableList(Waypoint.createGeolocationProperties(attributeMap));
+        propertiesList = Waypoint.createGeolocationProperties(attributeMap);
     }
 
     /**
@@ -93,7 +69,7 @@ public final class Route {
      * @return List an unmodifiableList of ArtifactWaypoints for this route
      */
     public List<Waypoint> getRoute() {
-        return Collections.unmodifiableList(points);
+        return getPath();
     }
 
     /**
@@ -103,21 +79,9 @@ public final class Route {
      * @return Map of key, value pairs.
      */
     public List<Waypoint.Property> getOtherProperties() {
-        return immutablePropertiesList;
+        return Collections.unmodifiableList(propertiesList);
     }
 
-    /**
-     * Get the route label.
-     */
-    @Messages({
-        // This is the original static hardcoded label from the 
-        // original kml-report code
-        "Route_Label=As-the-crow-flies Route"
-    })
-    public String getLabel() {
-        return Bundle.Route_Label();
-    }
-    
     public Long getTimestamp() {
         return timestamp;
     }
@@ -171,7 +135,7 @@ public final class Route {
     @Messages({
         "Route_End_Label=End"
     })
-    Waypoint getRouteEndPoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+    private Waypoint getRouteEndPoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute latitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END);
         BlackboardAttribute longitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END);
         BlackboardAttribute altitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
