@@ -38,7 +38,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
@@ -458,7 +457,7 @@ public final class GeolocationTopComponent extends TopComponent {
             } catch (GeoLocationDataException ex) {
                 logger.log(Level.WARNING, "Exception thrown while retrieving list of Tracks", ex);
             }
-            
+
             final List<Waypoint> completeList = createWaypointList(waypoints, tracks);
 
             // Make sure that the waypoints are added to the map panel in
@@ -487,14 +486,14 @@ public final class GeolocationTopComponent extends TopComponent {
         }
 
         /**
-         * Returns a complete list of waypoints including the tracks.  Takes into
+         * Returns a complete list of waypoints including the tracks. Takes into
          * account the current filters and includes waypoints as approprate.
-         * 
+         *
          * @param waypoints List of waypoints
-         * @param tracks List of tracks
-         * 
-         * @return  A list of waypoints including the tracks based on the current
-         *          filters.
+         * @param tracks    List of tracks
+         *
+         * @return A list of waypoints including the tracks based on the current
+         *         filters.
          */
         private List<Waypoint> createWaypointList(List<Waypoint> waypoints, List<Track> tracks) {
             final List<Waypoint> completeList = new ArrayList<>();
@@ -508,31 +507,11 @@ public final class GeolocationTopComponent extends TopComponent {
                     timeRangeEnd = getMostRecent(waypoints, tracks);
                     timeRangeStart = timeRangeEnd - (86400 * filters.getMostRecentNumDays());
 
-                    // Add all of the waypoints that fix into the time range.
-                    for (Waypoint point : waypoints) {
-                        Long time = point.getTimestamp();
-                        if ((time == null && filters.showWaypointsWithoutTimeStamp())
-                                || (time != null && (time >= timeRangeStart && time <= timeRangeEnd))) {
+                    completeList.addAll(getWaypointsInRange(timeRangeStart, timeRangeEnd, waypoints));
+                    completeList.addAll(getTracksInRange(timeRangeStart, timeRangeEnd, tracks));
 
-                            completeList.add(point);
-                        }
-                    }
-
-                    // Add all of the tracks, using only the start timestamp 
-                    // of the track to determine if the track fixes into the 
-                    // range.
-                    for (Track track : tracks) {
-                        Long trackTime = track.getStartTime();
-
-                        if ((trackTime == null && filters.showWaypointsWithoutTimeStamp())
-                                || (trackTime != null && (trackTime >= timeRangeStart && trackTime <= timeRangeEnd))) {
-
-                            completeList.addAll(track.getPath());
-                        }
-                    }
                 } else {
                     completeList.addAll(waypoints);
-
                     for (Track track : tracks) {
                         completeList.addAll(track.getPath());
                     }
@@ -543,12 +522,69 @@ public final class GeolocationTopComponent extends TopComponent {
 
             return completeList;
         }
-        
+
+        /**
+         * Return a list of waypoints that fall into the given time range.
+         *
+         * @param timeRangeStart start timestamp of range (seconds from java
+         *                       epoch)
+         * @param timeRangeEnd   start timestamp of range (seconds from java
+         *                       epoch)
+         * @param waypoints      List of waypoints to filter.
+         *
+         * @return A list of waypoints that fall into the time range.
+         */
+        private List<Waypoint> getWaypointsInRange(Long timeRangeStart, Long timeRangeEnd, List<Waypoint> waypoints) {
+            List<Waypoint> completeList = new ArrayList<>();
+            // Add all of the waypoints that fix into the time range.
+            if (waypoints != null) {
+                for (Waypoint point : waypoints) {
+                    Long time = point.getTimestamp();
+                    if ((time == null && filters.showWaypointsWithoutTimeStamp())
+                            || (time != null && (time >= timeRangeStart && time <= timeRangeEnd))) {
+
+                        completeList.add(point);
+                    }
+                }
+            }
+            return completeList;
+        }
+
+        /**
+         * Return a list of waypoints from the given tracks that fall into for
+         * tracks that fall into the given time range. The track start time will
+         * used for determining if the whole track falls into the range.
+         *
+         * @param timeRangeStart start timestamp of range (seconds from java
+         *                       epoch)
+         * @param timeRangeEnd   start timestamp of range (seconds from java
+         *                       epoch)
+         * @param tracks         Track list.
+         *
+         * @return A list of waypoints that that belong to tracks that fall into
+         *         the time range.
+         */
+        private List<Waypoint> getTracksInRange(Long timeRangeStart, Long timeRangeEnd, List<Track> tracks) {
+            List<Waypoint> completeList = new ArrayList<>();
+            if (tracks != null) {
+                for (Track track : tracks) {
+                    Long trackTime = track.getStartTime();
+
+                    if ((trackTime == null && filters.showWaypointsWithoutTimeStamp())
+                            || (trackTime != null && (trackTime >= timeRangeStart && trackTime <= timeRangeEnd))) {
+
+                        completeList.addAll(track.getPath());
+                    }
+                }
+            }
+            return completeList;
+        }
+
         /**
          * Find the latest time stamp in the given list of waypoints.
-         * 
+         *
          * @param points List of Waypoints, required.
-         * 
+         *
          * @return The latest time stamp (seconds from java epoch)
          */
         private Long findMostRecentTimestamp(List<Waypoint> points) {
@@ -568,9 +604,9 @@ public final class GeolocationTopComponent extends TopComponent {
 
         /**
          * Find the latest time stamp in the given list of tracks.
-         * 
+         *
          * @param tracks List of Waypoints, required.
-         * 
+         *
          * @return The latest time stamp (seconds from java epoch)
          */
         private Long findMostRecentTracks(List<Track> tracks) {
@@ -588,12 +624,12 @@ public final class GeolocationTopComponent extends TopComponent {
         }
 
         /**
-         * Returns the "most recent" timestamp amount the list of waypoints
-         * and track points.
-         * 
+         * Returns the "most recent" timestamp amount the list of waypoints and
+         * track points.
+         *
          * @param points List of Waypoints
          * @param tracks List of Tracks
-         * 
+         *
          * @return Latest time stamp (seconds from java epoch)
          */
         private Long getMostRecent(List<Waypoint> points, List<Track> tracks) {

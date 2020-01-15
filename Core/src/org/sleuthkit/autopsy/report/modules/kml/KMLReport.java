@@ -424,7 +424,7 @@ public final class KMLReport implements GeneralReportModule {
 
     /**
      * Add the given route to the KML report.
-     * 
+     *
      * @param route
      */
     private void addRouteToReport(Route route) {
@@ -495,7 +495,7 @@ public final class KMLReport implements GeneralReportModule {
 
     /**
      * Add a track to the KML report.
-     * 
+     *
      * @param track
      */
     private void addTrackToReport(Track track) {

@@ -31,8 +31,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Class representing a series of waypoints that form a path.
  */
 public class Path {
-    
-    private final List<Waypoint> path;
+
+    private final List<Waypoint> waypointList;
     private final String pathName;
     private final BlackboardArtifact artifact;
 
@@ -65,9 +65,9 @@ public class Path {
     /**
      * Gets the list of Routes from the TSK_GPS_TRACK artifacts.
      *
-     * @param skCase Currently open SleuthkitCase
-     * @param sourceList    List of source to return tracks from, maybe null to
-     *                      return tracks from all sources
+     * @param skCase     Currently open SleuthkitCase
+     * @param sourceList List of source to return tracks from, maybe null to
+     *                   return tracks from all sources
      *
      * @return List of Route objects, empty list will be returned if no Routes
      *         were found
@@ -76,63 +76,63 @@ public class Path {
      */
     static public List<Track> getTracks(SleuthkitCase skCase, List<? extends Content> sourceList) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
-         List<Track> tracks = new ArrayList<>();
+        List<Track> tracks = new ArrayList<>();
         try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK);
-        for (BlackboardArtifact artifact : artifacts) {
-            if(sourceList == null || sourceList.contains(artifact.getDataSource())){
-                Track route = new Track(artifact);
-                tracks.add(route);
+            for (BlackboardArtifact artifact : artifacts) {
+                if (sourceList == null || sourceList.contains(artifact.getDataSource())) {
+                    Track route = new Track(artifact);
+                    tracks.add(route);
+                }
             }
-        }
         } catch (TskCoreException ex) {
             throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_BOOKMARK", ex);
         }
         return tracks;
     }
-   
+
     /**
      * Path constructor.
-     * 
+     *
      * @param artifact BlackboardARtifact that this path represents, required
      * @param pathName Name for this path, maybe null or empty string.
      */
     Path(BlackboardArtifact artifact, String pathName) {
-        this.path = new ArrayList<>();
+        this.waypointList = new ArrayList<>();
         this.pathName = pathName;
         this.artifact = artifact;
     }
-    
+
     /**
      * Adds a Waypoint to the path.
-     * 
-     * @param point 
+     *
+     * @param point
      */
     final void addToPath(Waypoint point) {
-        path.add(point);
+        waypointList.add(point);
     }
-    
+
     /**
      * Get the list of way points for this route;
      *
      * @return List an unmodifiableList of ArtifactWaypoints for this route
      */
     final public List<Waypoint> getPath() {
-        return Collections.unmodifiableList(path);
+        return Collections.unmodifiableList(waypointList);
     }
-    
+
     /**
      * Returns the BlackboardARtifact that this path represents.
-     * 
-     * @return 
+     *
+     * @return
      */
     final BlackboardArtifact getArtifact() {
         return artifact;
     }
-    
+
     /**
      * Returns the label\display name for this path.
-     * 
+     *
      * @return Path label, empty string
      */
     public String getLabel() {
