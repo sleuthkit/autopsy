@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.report.modules.portablecase;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.sleuthkit.autopsy.report.ReportModule;
 import java.util.logging.Level;
 import java.io.BufferedReader;
@@ -471,65 +473,40 @@ public class PortableCaseReportModule implements ReportModule {
             //Create temp directory to filter out duplicate files.
             //Clear out the old directory if it exists.
             Path tmpDir = Paths.get(caseTempDirectory, CASE_UCO_TMP_DIR);
-            FileUtils.deleteDirectory(tmpDir.toFile());
-            Files.createDirectory(tmpDir);
+            createTempDirectory(tmpDir);
 
             reportGenerator.addCase(currentCase);
             
             //Load all interesting BlackboardArtifacts that belong to the selected SET_NAMEs
-            List<BlackboardArtifact> artifactsWithSetName = new ArrayList<>();
-            if(!setNames.isEmpty()) {
-                List<BlackboardArtifact> allArtifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                allArtifacts.addAll(skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
-                
-                for(BlackboardArtifact bArt : allArtifacts) {
-                    BlackboardAttribute setAttr = bArt.getAttribute(
-                                new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
-                    if (setNames.contains(setAttr.getValueString())) {
-                        artifactsWithSetName.add(bArt);
-                    }
-                }
-            }
+            //binned by data source id.
+            Multimap<Long, BlackboardArtifact> artifactsWithSetName = getInterestingArtifactsBySetName(skCase, setNames);
             
             //Search each data source looking for content tags and interesting
             //items that match the selected tag names and set names.
             for (Content dataSource : currentCase.getDataSources()) {
                 /**
-                 * It is currently believed that the DataSource CASE-UCO entity
-                 * should precede all file entities in the report.
+                 * It is currently believed that DataSources in a CASE-UCO report
+                 * should precede all file entities. Therefore, before
+                 * writing a file, add the data source if it
+                 * has yet to be included.
                  */
                 boolean dataSourceHasBeenIncluded = false;
                 //Search content tags and artifact tags that match
                 for (TagName tagName : tagNames) {
                     for (ContentTag ct : tagsManager.getContentTagsByTagName(tagName, dataSource.getId())) {
-                        if(!dataSourceHasBeenIncluded) {
-                            reportGenerator.addDataSource(dataSource, currentCase);
-                            dataSourceHasBeenIncluded = true;
-                        }
-                        addUniqueFile(ct.getContent(), dataSource, tmpDir, reportGenerator);
+                        dataSourceHasBeenIncluded |= addUniqueFile(ct.getContent(), 
+                                dataSource, tmpDir, reportGenerator, dataSourceHasBeenIncluded);
                     }
                     for (BlackboardArtifactTag bat : tagsManager.getBlackboardArtifactTagsByTagName(tagName, dataSource.getId())) {
-                        if(!dataSourceHasBeenIncluded) {
-                            reportGenerator.addDataSource(dataSource, currentCase);
-                            dataSourceHasBeenIncluded = true;
-                        }
-                        addUniqueFile(bat.getContent(), dataSource, tmpDir, reportGenerator);
+                        dataSourceHasBeenIncluded |= addUniqueFile(bat.getContent(), 
+                                dataSource, tmpDir, reportGenerator, dataSourceHasBeenIncluded);
                     }
                 }
-
-                if (!artifactsWithSetName.isEmpty()) {
-                    //Search artifacts that this data source contains
-                    for(BlackboardArtifact bArt : artifactsWithSetName) {
-                        if (bArt.getDataSource().getId() != dataSource.getId()) {
-                            continue;
-                        }
-                        if(!dataSourceHasBeenIncluded) {
-                            reportGenerator.addDataSource(dataSource, currentCase);
-                            dataSourceHasBeenIncluded = true;
-                        }
-                        Content content = skCase.getContentById(bArt.getObjectID());
-                        addUniqueFile(content, dataSource, tmpDir, reportGenerator);
-                    }
+                //Search artifacts that this data source contains
+                for(BlackboardArtifact bArt : artifactsWithSetName.get(dataSource.getId())) {
+                    Content sourceContent = bArt.getParent();
+                    dataSourceHasBeenIncluded |= addUniqueFile(sourceContent, dataSource, 
+                            tmpDir, reportGenerator, dataSourceHasBeenIncluded);
                 }
             }
         
@@ -544,6 +521,38 @@ public class PortableCaseReportModule implements ReportModule {
         }
     }
     
+    private void createTempDirectory(Path tmpDir) throws IOException {
+        FileUtils.deleteDirectory(tmpDir.toFile());
+        Files.createDirectory(tmpDir);
+    }
+    
+    /**
+     * 
+     * @param skCase
+     * @param setNames
+     * @return
+     * @throws TskCoreException 
+     */
+    private Multimap<Long, BlackboardArtifact> getInterestingArtifactsBySetName(SleuthkitCase skCase, List<String> setNames) throws TskCoreException {
+        Multimap<Long, BlackboardArtifact> artifactsWithSetName = ArrayListMultimap.create();
+        if(!setNames.isEmpty()) {
+            List<BlackboardArtifact> allArtifacts = skCase.getBlackboardArtifacts(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+            allArtifacts.addAll(skCase.getBlackboardArtifacts(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
+
+            for(BlackboardArtifact bArt : allArtifacts) {
+                BlackboardAttribute setAttr = bArt.getAttribute(
+                            new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+                if (setNames.contains(setAttr.getValueString())) {
+                    
+                    artifactsWithSetName.put(bArt.getDataSource().getId(), bArt);
+                }
+            }
+        }
+        return artifactsWithSetName;
+    }
+    
     /**
      * Adds the content if and only if it has not already been seen.
      * 
@@ -554,15 +563,20 @@ public class PortableCaseReportModule implements ReportModule {
      * @throws IOException If an I/O error occurs.
      * @throws TskCoreException If an internal database error occurs.
      */
-    private void addUniqueFile(Content content, Content dataSource, 
-            Path tmpDir, CaseUcoReportGenerator reportGenerator) throws IOException, TskCoreException {
+    private boolean addUniqueFile(Content content, Content dataSource, 
+            Path tmpDir, CaseUcoReportGenerator reportGenerator, boolean dataSourceHasBeenIncluded) throws IOException, TskCoreException {
         if (content instanceof AbstractFile && !(content instanceof DataSource)) {
             AbstractFile absFile = (AbstractFile) content;
             Path filePath = tmpDir.resolve(Long.toString(absFile.getId()));
             if (!Files.exists(filePath) && !absFile.isDir()) {
+                if(!dataSourceHasBeenIncluded) {
+                    reportGenerator.addDataSource(dataSource, currentCase);
+                }
                 reportGenerator.addFile(absFile, dataSource);
+                return true;
             }
         }
+        return false;
     }
     
     private List<String> getAllInterestingItemsSets() throws NoCurrentCaseException, TskCoreException {
