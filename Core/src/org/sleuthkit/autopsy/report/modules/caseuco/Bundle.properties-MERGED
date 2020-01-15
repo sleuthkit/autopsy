@@ -4,6 +4,7 @@ CaseUcoReportModule.noCaseOpen=No case is currently open
 CaseUcoReportModule.noDataSourceSelected=No data source selected for CASE-UCO report
 CaseUcoReportModule.notInitialized=CASE-UCO settings panel has not been initialized
 CaseUcoReportModule.processingDataSource=Processing datasource: %s
+CaseUcoReportModule.srcModuleName=CASE-UCO Report
 CaseUcoReportModule.tskCoreException=TskCoreException [%s] encountered while generating the report. Please reference the log for more details.
 CaseUcoReportModule.unableToCreateDirectories=Unable to create directory for CASE-UCO report
 OpenIDE-Module-Name=CaseUcoModule

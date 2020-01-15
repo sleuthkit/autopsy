@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -121,9 +123,7 @@ public final class CaseUcoReportModule implements GeneralReportModule {
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         try {
             // Check if ingest has finished
-            if (IngestManager.getInstance().isIngestRunning()) {
-                progressPanel.updateStatusLabel(Bundle.CaseUcoReportModule_ingestWarning());
-            }
+            warnIngest(progressPanel);
             
             //Create report paths if they don't already exist.
             Path reportDirectory = Paths.get(baseReportDir);
@@ -136,11 +136,12 @@ public final class CaseUcoReportModule implements GeneralReportModule {
                 return;
             }
             
-            CaseUcoReportGenerator caseUco = new CaseUcoReportGenerator(reportDirectory, REPORT_FILE_NAME);
+            CaseUcoReportGenerator generator = 
+                    new CaseUcoReportGenerator(reportDirectory, REPORT_FILE_NAME);
             
             //First write the Case to the report file.
             Case caseObj = Case.getCurrentCaseThrows();
-            caseUco.addCase(caseObj);
+            generator.addCase(caseObj);
             
             List<Content> dataSources = caseObj.getDataSources();
             progressPanel.setIndeterminate(false);
@@ -150,32 +151,17 @@ public final class CaseUcoReportModule implements GeneralReportModule {
             //Then search each data source for file content.
             for(int i = 0; i < dataSources.size(); i++) {
                 Content dataSource = dataSources.get(i);
-                progressPanel.updateStatusLabel(String.format(Bundle.CaseUcoReportModule_processingDataSource(), dataSource.getName()));
-                caseUco.addDataSource(dataSource, caseObj);
-                
-                Queue<Content> dataSourceChildrenQueue = new LinkedList<>();
-                dataSourceChildrenQueue.addAll(dataSource.getChildren());
-                
-                //Breadth First Search the data source tree.
-                while(!dataSourceChildrenQueue.isEmpty()) {
-                    Content currentChild = dataSourceChildrenQueue.poll();
-                    if(currentChild instanceof AbstractFile) {
-                        AbstractFile f = (AbstractFile) (currentChild);
-                        if(SUPPORTED_TYPES.contains(f.getMetaType().getValue())) {
-                            caseUco.addFile(f, dataSource);   
-                        }
-                    }
-                    
-                    if(currentChild.hasChildren()) {
-                        dataSourceChildrenQueue.addAll(currentChild.getChildren());
-                    }
-                }
-                
+                progressPanel.updateStatusLabel(String.format(
+                        Bundle.CaseUcoReportModule_processingDataSource(), 
+                        dataSource.getName()));
+                //Add the data source and then all children.
+                generator.addDataSource(dataSource, caseObj);
+                performDepthFirstSearch(dataSource, generator);
                 progressPanel.setProgress(i+1);
             }
             
             //Complete the report.
-            Path reportPath = caseUco.generateReport();
+            Path reportPath = generator.generateReport();
             caseObj.addReport(reportPath.toString(), 
                     Bundle.CaseUcoReportModule_srcModuleName(), 
                     REPORT_FILE_NAME);
@@ -195,5 +181,40 @@ public final class CaseUcoReportModule implements GeneralReportModule {
         }
         
         progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
+    }
+    
+    /**
+     * Warn the user if ingest is still ongoing.
+     */
+    private void warnIngest(ReportProgressPanel progressPanel) {
+        if (IngestManager.getInstance().isIngestRunning()) {
+            progressPanel.updateStatusLabel(Bundle.CaseUcoReportModule_ingestWarning());
+        }
+    }
+    
+    /**
+     * Perform DFS on the data sources tree. This traversal is more memory
+     * efficient than BFS (Breadth first search).
+     */
+    private void performDepthFirstSearch(Content dataSource, 
+            CaseUcoReportGenerator generator) throws IOException, TskCoreException {
+        
+        Deque<Content> stack = new ArrayDeque<>();
+        stack.addAll(dataSource.getChildren());
+
+        //Depth First Search the data source tree.
+        while(!stack.isEmpty()) {
+            Content current = stack.pop();
+            if(current instanceof AbstractFile) {
+                AbstractFile f = (AbstractFile) (current);
+                if(SUPPORTED_TYPES.contains(f.getMetaType().getValue())) {
+                    generator.addFile(f, dataSource);   
+                }
+            }
+
+            for(Content child : current.getChildren()) {
+                stack.push(child);
+            }
+        }
     }
 }

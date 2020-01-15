@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,7 +70,7 @@ public final class CaseUcoReportGenerator {
 
     private static final String EXTENSION = "json-ld";
 
-    private TimeZone timeZone;
+    private final TimeZone timeZone;
     private final Path reportPath;
     private final JsonGenerator reportGenerator;
 
