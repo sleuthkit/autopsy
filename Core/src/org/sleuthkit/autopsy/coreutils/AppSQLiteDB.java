@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.coreutils;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -286,6 +287,16 @@ public final class AppSQLiteDB {
         }
     }
 
+    /**
+     * Returns connection meta data.
+     * 
+     * @return DatabaseMetaData 
+     * @throws SQLException 
+     */
+    public DatabaseMetaData getConnectionMetadata() throws SQLException {
+        return connection.getMetaData();
+    }
+    
     /**
      * Searches for a meta file associated with the give SQLite database. If
      * found, it copies this file into the temp directory of the current case.
