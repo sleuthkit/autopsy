@@ -473,7 +473,8 @@ public class PortableCaseReportModule implements ReportModule {
             //Create temp directory to filter out duplicate files.
             //Clear out the old directory if it exists.
             Path tmpDir = Paths.get(caseTempDirectory, CASE_UCO_TMP_DIR);
-            createTempDirectory(tmpDir);
+            FileUtils.deleteDirectory(tmpDir.toFile());
+            Files.createDirectory(tmpDir);
 
             reportGenerator.addCase(currentCase);
             
@@ -521,17 +522,10 @@ public class PortableCaseReportModule implements ReportModule {
         }
     }
     
-    private void createTempDirectory(Path tmpDir) throws IOException {
-        FileUtils.deleteDirectory(tmpDir.toFile());
-        Files.createDirectory(tmpDir);
-    }
-    
     /**
-     * 
-     * @param skCase
-     * @param setNames
-     * @return
-     * @throws TskCoreException 
+     * Load all interesting BlackboardArtifacts that belong to the selected
+     * SET_NAME. This operation would be duplicated for every data source, since
+     * the Sleuthkit API does not have a notion of searching by data source id.
      */
     private Multimap<Long, BlackboardArtifact> getInterestingArtifactsBySetName(SleuthkitCase skCase, List<String> setNames) throws TskCoreException {
         Multimap<Long, BlackboardArtifact> artifactsWithSetName = ArrayListMultimap.create();
@@ -545,7 +539,6 @@ public class PortableCaseReportModule implements ReportModule {
                 BlackboardAttribute setAttr = bArt.getAttribute(
                             new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
                 if (setNames.contains(setAttr.getValueString())) {
-                    
                     artifactsWithSetName.put(bArt.getDataSource().getId(), bArt);
                 }
             }
@@ -555,24 +548,30 @@ public class PortableCaseReportModule implements ReportModule {
     
     /**
      * Adds the content if and only if it has not already been seen.
-     * 
+     *
      * @param content Content to add to the report.
      * @param dataSource Parent dataSource of the content instance.
      * @param tmpDir Path to the tmpDir to enforce uniqueness
      * @param reportGenerator Report generator instance to add the content to
+     * @param dataSourceHasBeenIncluded Flag determining if the data source
+     * should be written before the file. False will cause the data source to be written.
      * @throws IOException If an I/O error occurs.
      * @throws TskCoreException If an internal database error occurs.
+     *
+     * return True if the data source was written during this operation.
      */
     private boolean addUniqueFile(Content content, Content dataSource, 
-            Path tmpDir, CaseUcoReportGenerator reportGenerator, boolean dataSourceHasBeenIncluded) throws IOException, TskCoreException {
+            Path tmpDir, CaseUcoReportGenerator reportGenerator, 
+            boolean dataSourceHasBeenIncluded) throws IOException, TskCoreException {
         if (content instanceof AbstractFile && !(content instanceof DataSource)) {
             AbstractFile absFile = (AbstractFile) content;
             Path filePath = tmpDir.resolve(Long.toString(absFile.getId()));
-            if (!Files.exists(filePath) && !absFile.isDir()) {
+            if (!absFile.isDir() && !Files.exists(filePath)) {
                 if(!dataSourceHasBeenIncluded) {
                     reportGenerator.addDataSource(dataSource, currentCase);
                 }
                 reportGenerator.addFile(absFile, dataSource);
+                Files.createFile(filePath);
                 return true;
             }
         }
