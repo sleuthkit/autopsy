@@ -94,6 +94,16 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             }
         }
+        
+        try {
+            //See JIRA-5971
+            //Attempt to cache file path during construction of this UI component.
+            this.content.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Failed attempt to cache the "
+                            + "unique path of the abstract file instance. Name: %s (objID=%d)", 
+                            this.content.getName(), this.content.getId()), ex);
+        }
 
         if (UserPreferences.displayTranslatedFileNames()) {
             backgroundTasksPool.submit(new TranslationTask(

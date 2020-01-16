@@ -194,6 +194,16 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
             if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
                 this.associated = lookupContent;
+                
+                try {
+                    //See JIRA-5971
+                    //Attempt to cache file path during construction of this UI component.
+                    this.associated.getUniquePath();
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed attempt to cache the "
+                            + "unique path of the associated content instance. Name: %s (objID=%d)", 
+                            this.associated.getName(), this.associated.getId()), ex);
+                }
                 break;
             }
         }
