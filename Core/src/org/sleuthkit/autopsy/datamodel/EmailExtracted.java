@@ -521,7 +521,11 @@ public class EmailExtracted implements AutopsyVisitableItem {
             if (skCase != null) {
                 emailResults.getArtifactIds(accountName, folderName).forEach((id) -> {
                     try {
-                        keys.add(skCase.getBlackboardArtifact(id));
+                        BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                        //Cache attributes while we are off the EDT.
+                        //See JIRA-5969
+                        art.getAttributes();
+                        keys.add(art);
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Error getting mail messages keys", ex); //NON-NLS
                     }

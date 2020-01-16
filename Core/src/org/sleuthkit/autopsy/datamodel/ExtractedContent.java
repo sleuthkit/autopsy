@@ -508,9 +508,18 @@ public class ExtractedContent implements AutopsyVisitableItem {
         protected List<BlackboardArtifact> makeKeys() {
             if (skCase != null) {
                 try {
-                    return (filteringDSObjId > 0)
-                            ? blackboard.getArtifacts(type.getTypeID(), filteringDSObjId)
-                            : skCase.getBlackboardArtifacts(type.getTypeID());
+                    List<BlackboardArtifact> arts;
+                    if(filteringDSObjId > 0) {
+                        arts = blackboard.getArtifacts(type.getTypeID(), filteringDSObjId);
+                    } else {
+                        arts = skCase.getBlackboardArtifacts(type.getTypeID());
+                    }
+                    for(BlackboardArtifact art: arts) {
+                        //Cache attributes while we are off the EDT.
+                        //See JIRA-5969
+                        art.getAttributes();
+                    }
+                    return arts;
                 } catch (TskCoreException ex) {
                     Logger.getLogger(ArtifactFactory.class.getName()).log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex); //NON-NLS
                 }

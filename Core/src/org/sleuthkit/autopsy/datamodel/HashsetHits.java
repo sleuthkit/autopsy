@@ -413,6 +413,9 @@ public class HashsetHits implements AutopsyVisitableItem {
                     try {
                         if (!artifactHits.containsKey(id)) {
                             BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                            //Cache attributes while we are off the EDT.
+                            //See JIRA-5969
+                            art.getAttributes();
                             artifactHits.put(id, art);
                         }
                     } catch (TskCoreException ex) {
