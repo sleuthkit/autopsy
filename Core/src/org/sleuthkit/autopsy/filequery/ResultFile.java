@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -60,6 +61,12 @@ class ResultFile {
      * @param abstractFile
      */
     ResultFile(AbstractFile abstractFile) {
+        try {
+            //call get uniquePath to cache the path
+            abstractFile.getUniquePath();
+        } catch (TskCoreException ignored) {
+            //path wasnt cached will likely be called on EDT later JIRA-5972
+        }
         //store the file the ResultFile was created for as the first value in the instances list
         instances.add(abstractFile);
         if (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
@@ -107,6 +114,12 @@ class ResultFile {
             fileType = FileType.fromMIMEtype(duplicate.getMIMEType());
         }
         updateScoreAndDescription(duplicate);
+        try {
+            //call get uniquePath to cache the path
+            duplicate.getUniquePath();
+        } catch (TskCoreException ignored) {
+            //path wasnt cached will likely be called on EDT later JIRA-5972
+        }
         instances.add(duplicate);
     }
 
