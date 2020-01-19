@@ -40,7 +40,7 @@ That's it. In the file-level ingest module, we had a shutdown() method, but we d
 
 \subsection python_tutorial2_process The process() Method
 
-The process method in a data source-level ingest module is passed in reference to the data source as a <a href="https://www.sleuthkit.org/sleuthkit/docs/jni-docs/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html" target="_blank" rel="noopener noreferrer">Content</a> object and a <a href="https://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html" target="_blank" rel="noopener noreferrer">Progress Bar</a> class to update our progress.</p>
+The process method in a data source-level ingest module is passed in reference to the data source as a <a href="https://www.sleuthkit.org/sleuthkit/docs/jni-docs/latest/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html" target="_blank" rel="noopener noreferrer">Content</a> object and a <a href="https://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html" target="_blank" rel="noopener noreferrer">Progress Bar</a> class to update our progress.</p>
 <p>For this tutorial, you can start by deleting the contents of the existing process() method in the sample module. The full source code is linked to at the end of this blog and shows more detail about a fully fledged module. We'll just cover the analytics in the blog.</p>
 
 \subsubsection python_tutorial2_getting_files Getting Files
@@ -55,7 +55,7 @@ Our example needs these two lines to get the FileManager for the current case an
 fileManager = Case.getCurrentCase().getServices().getFileManager()
 files = fileManager.findFiles(dataSource, "contacts.db")\endverbatim
 
-findFiles() returns a list of <a href="https://sleuthkit.org/sleuthkit/docs/jni-docs/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html">AbstractFile</a> objects. This gives you access to the file's metadata and content.
+findFiles() returns a list of <a href="https://sleuthkit.org/sleuthkit/docs/jni-docs/latest/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html">AbstractFile</a> objects. This gives you access to the file's metadata and content.
 
 For our example, we are going to open these SQLite files. That means that we need to save them to disk. This is less than ideal because it wastes time writing the data to disk and then reading it back in, but it is the only option with many libraries. If you are doing some other type analysis on the content, then you do not need to write it to disk. You can read directly from the AbstractFile (see the sample modules for specific code to do this).
 
