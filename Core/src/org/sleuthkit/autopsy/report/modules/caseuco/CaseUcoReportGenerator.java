@@ -129,7 +129,7 @@ public final class CaseUcoReportGenerator {
      * @throws TskCoreException 
      */
     public void addFile(AbstractFile file, Content parentDataSource) throws IOException, TskCoreException {
-        addFile(file, parentDataSource, "");
+        addFile(file, parentDataSource, null);
     }
     
     /**
@@ -141,11 +141,11 @@ public final class CaseUcoReportGenerator {
      * addDataSource) prior to this call. Otherwise, the report may be invalid.
      * @param localPath The location of the file on secondary storage, somewhere
      * other than the case. Example: local disk. This value will be ignored if
-     * it is null or empty.
+     * it is null.
      * @throws IOException
      * @throws TskCoreException 
      */
-    public void addFile(AbstractFile file, Content parentDataSource, String localPath) throws IOException, TskCoreException {
+    public void addFile(AbstractFile file, Content parentDataSource, Path localPath) throws IOException, TskCoreException {
         String fileTraceId = getFileTraceId(file);
 
         //Create the Trace CASE node, which will contain attributes about some evidence.
@@ -165,11 +165,11 @@ public final class CaseUcoReportGenerator {
         CASEPropertyBundle contentDataPropertyBundle = createContentDataBundle(file);
         fileTrace.addBundle(contentDataPropertyBundle);
         
-        if(!Strings.isNullOrEmpty(localPath)) {
+        if(localPath != null) {
             String urlTraceId = getURLTraceId(file);
             CASENode urlTrace = new CASENode(urlTraceId, "Trace");
             CASEPropertyBundle urlPropertyBundle = new CASEPropertyBundle("URL");
-            urlPropertyBundle.addProperty("fullValue", localPath);
+            urlPropertyBundle.addProperty("fullValue", localPath.toString());
             urlTrace.addBundle(urlPropertyBundle);
 
             contentDataPropertyBundle.addProperty("dataPayloadReferenceUrl", urlTraceId);
@@ -399,15 +399,28 @@ public final class CaseUcoReportGenerator {
      */
     private final class CASENode {
         
+        private final String id;
+        private final String type;
+        
         //Dynamic properties added to this CASENode.
-        private final LinkedHashMap<String, Object> properties;
+        private final Map<String, Object> properties;
         private final List<CASEPropertyBundle> propertyBundle;
 
         public CASENode(String id, String type) {
-            propertyBundle = new ArrayList<>();
+            this.id = id;
+            this.type = type;
             properties = new LinkedHashMap<>();
-            addProperty("@id", id);
-            addProperty("@type", type);
+            propertyBundle = new ArrayList<>();
+        }
+        
+        @JsonProperty("@id")
+        public String getId() {
+            return id;
+        }
+        
+        @JsonProperty("@type")
+        public String getType() {
+            return type;
         }
         
         @JsonAnyGetter

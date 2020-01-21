@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -570,7 +570,9 @@ public class PortableCaseReportModule implements ReportModule {
                 if(!dataSourceHasBeenIncluded) {
                     reportGenerator.addDataSource(dataSource, currentCase);
                 }
-                reportGenerator.addFile(absFile, dataSource);
+                String subFolder = getExportSubfolder(absFile);
+                String fileName = absFile.getId() + "-" + FileUtil.escapeFileName(absFile.getName());
+                reportGenerator.addFile(absFile, dataSource, Paths.get(FILE_FOLDER_NAME, subFolder, fileName));
                 Files.createFile(filePath);
                 return true;
             }
