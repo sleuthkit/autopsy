@@ -111,7 +111,7 @@ abstract class DroneExtractor {
         try {
             ContentUtils.writeToFile(file, tempFilePath.toFile(), context::dataSourceIngestIsCancelled);
         } catch (IOException ex) {
-            throw new DroneIngestException(String.format("Unable to create temp file %s for abstract file %s", tempFilePath.toString(), file.getName()), ex); //NON-NLS
+            throw new DroneIngestException(String.format("Unable to create temp file %s for abstract file %s objectID: %d", tempFilePath.toString(), file.getName(), file.getId()), ex); //NON-NLS
         }
 
         return tempFilePath.toFile();

@@ -207,7 +207,7 @@ final class DATExtractor extends DroneExtractor {
             }
 
         } catch (IOException ex) {
-            throw new DroneIngestException(String.format("Failed to read DAT csvFile %s", csvFilePath), ex); //NON-NLS
+            throw new DroneIngestException(String.format("Failed to read DAT csvFile %s created for AbstractFile: %s", csvFilePath, DATFile.getId()), ex); //NON-NLS
         }
 
         return trackPoints;

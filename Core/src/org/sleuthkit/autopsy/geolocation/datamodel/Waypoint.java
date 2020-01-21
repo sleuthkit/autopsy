@@ -45,8 +45,6 @@ public class Waypoint {
     final private BlackboardArtifact artifact;
     final private Path path;
 
-    // This list is not expected to change after construction. The 
-    // constructor will take care of making an unmodifiable List
     final private List<Waypoint.Property> propertiesList;
 
     /**
