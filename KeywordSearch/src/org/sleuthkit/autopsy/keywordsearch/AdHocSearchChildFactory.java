@@ -176,6 +176,14 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
              * Get file properties.
              */
             Map<String, Object> properties = new LinkedHashMap<>();
+ 
+            /**
+             * Add a snippet property, if available.
+             */
+            if (hit.hasSnippet()) {
+                properties.put(TSK_KEYWORD_PREVIEW.getDisplayName(), hit.getSnippet());
+            }
+
             Content content;
             String contentName;
             try {
@@ -196,12 +204,6 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
                 properties.put(LOCATION.toString(), contentName);
             }
 
-            /**
-             * Add a snippet property, if available.
-             */
-            if (hit.hasSnippet()) {
-                properties.put(TSK_KEYWORD_PREVIEW.getDisplayName(), hit.getSnippet());
-            }
 
             String hitName;
             BlackboardArtifact artifact = null;
