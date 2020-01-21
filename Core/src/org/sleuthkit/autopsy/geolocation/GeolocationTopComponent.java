@@ -30,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -217,7 +218,7 @@ public final class GeolocationTopComponent extends TopComponent {
                 return; // Doen't set the waypoints.
             }
         }
-        mapPanel.setWaypoints(new ArrayList<>());
+        mapPanel.setWaypoints(new LinkedHashSet<>());
         updateWaypoints();
     }
 
@@ -457,6 +458,10 @@ public final class GeolocationTopComponent extends TopComponent {
         public void process(final List<Waypoint> waypoints) {
             // Make sure that the waypoints are added to the map panel in
             // the correct thread.
+            
+            final Set<MapWaypoint> pointSet = new LinkedHashSet<>();
+            pointSet.addAll(MapWaypoint.getWaypoints(waypoints));
+            
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -473,7 +478,7 @@ public final class GeolocationTopComponent extends TopComponent {
                         return;
                     }
                     mapPanel.clearWaypoints();
-                    mapPanel.setWaypoints(MapWaypoint.getWaypoints(waypoints));
+                    mapPanel.setWaypoints(pointSet);
                     setWaypointLoading(false);
                     geoFilterPanel.setEnabled(true);
                 }
