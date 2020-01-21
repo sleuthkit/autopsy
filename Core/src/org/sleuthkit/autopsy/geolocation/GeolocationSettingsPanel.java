@@ -344,7 +344,7 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
     }//GEN-LAST:event_zipFileRBntActionPerformed
 
     @Messages({
-        "GeolocationSettingsPanel_malformed_url_message=The supplies OSM tile server address is invalid.\nPlease supply a well formed url prefixed with http://",
+        "GeolocationSettingsPanel_malformed_url_message=The supplied OSM tile server address is invalid.\nPlease supply a well formed url prefixed with http://",
         "GeolocationSettingsPanel_malformed_url_message_tile=Malformed URL",
         "GeolocationSettingsPanel_osm_server_test_fail_message=OSM tile server test failed.\nUnable to connect to server.",
         "GeolocationSettingsPanel_osm_server_test_fail_message_title=Error",

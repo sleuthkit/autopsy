@@ -90,7 +90,7 @@ public final class GeolocationTopComponent extends TopComponent {
 
     @Messages({
         "GLTopComponent_name=Geolocation",
-        "GLTopComponent_initilzation_error=An error occurred during waypoint initilization.  Geolocation data maybe incomplete."
+        "GLTopComponent_initilzation_error=An error occurred during waypoint initilization. Geolocation data maybe incomplete."
     })
 
     /**
@@ -242,7 +242,7 @@ public final class GeolocationTopComponent extends TopComponent {
     @Messages({
         "GeoTopComponent_no_waypoints_returned_mgs=Applied filter failed to find waypoints that matched criteria.\nRevise filter options and try again.",
         "GeoTopComponent_no_waypoints_returned_Title=No Waypoints Found",
-        "GeoTopComponent_filter_exception_msg=Exception occured during waypoint filtering.",
+        "GeoTopComponent_filter_exception_msg=Exception occurred during waypoint filtering.",
         "GeoTopComponent_filter_exception_Title=Filter Failure",
         "GeoTopComponent_filer_data_invalid_msg=Unable to run waypoint filter.\nPlease select one or more data sources.",
         "GeoTopComponent_filer_data_invalid_Title=Filter Failure"
