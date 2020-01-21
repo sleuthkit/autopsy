@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.report.modules.caseuco;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.SimpleTimeZone;
@@ -32,7 +35,12 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -61,10 +69,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * Path reportOutput = caseUco.generateReport();
  * //Done. Report at - "C:\Reports\my-report.json-ld" 
- * 
+ *
  * Please note that the life cycle for this class ends with generateReport().
- * The underlying file handle to 'my-report.json-ld' will be closed.
- * Any further calls to addX() will result in an IOException.
+ * The underlying file handle to 'my-report.json-ld' will be closed. Any further
+ * calls to addX() will result in an IOException.
  */
 public final class CaseUcoReportGenerator {
 
@@ -78,8 +86,8 @@ public final class CaseUcoReportGenerator {
      * Creates a CaseUCO Report Generator that writes a report in the specified
      * directory.
      *
-     * TimeZone is assumed to be GMT+0 for formatting file creation time, accessed
-     * time and modified time.
+     * TimeZone is assumed to be GMT+0 for formatting file creation time,
+     * accessed time and modified time.
      *
      * @param directory Directory to write the CaseUCO report file. Assumes the
      * calling thread has write access to the directory and that the directory
@@ -95,8 +103,13 @@ public final class CaseUcoReportGenerator {
         // Puts a newline between each Key, Value pair for readability.
         reportGenerator.setPrettyPrinter(new DefaultPrettyPrinter()
                 .withObjectIndenter(new DefaultIndenter("  ", "\n")));
+        
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        
+        reportGenerator.setCodec(mapper);
 
-        //Start report.
         reportGenerator.writeStartObject();
         reportGenerator.writeFieldName("@graph");
         reportGenerator.writeStartArray();
@@ -106,124 +119,195 @@ public final class CaseUcoReportGenerator {
     }
 
     /**
-     * Adds an AbstractFile instance to the Case UCO report. This means writing
-     * a selection of file attributes to a Case UCO entity.
-     *
-     * Attributes captured: Created time, Accessed time, Modified time,
-     * Extension, Name, Path, is Directory, Size (in bytes), MIME type and MD5
-     * hash.
+     * Adds an AbstractFile instance to the Case UCO report.
      *
      * @param file AbstractFile instance to write
-     * @param parentDataSource The parent data source for this abstract file. It 
-     * is assumed that this parent has been written to the report (via addDataSource)
-     * prior to this call. Otherwise, the report may be invalid.
+     * @param parentDataSource The parent data source for this abstract file. It
+     * is assumed that this parent has been written to the report (via
+     * addDataSource) prior to this call. Otherwise, the report may be invalid.
      * @throws IOException If an I/O error occurs.
+     * @throws TskCoreException 
      */
     public void addFile(AbstractFile file, Content parentDataSource) throws IOException, TskCoreException {
+        addFile(file, parentDataSource, "");
+    }
+    
+    /**
+     * Adds an AbstractFile instance to the Case UCO report.
+     * 
+     * @param file AbstractFile instance to write
+     * @param parentDataSource The parent data source for this abstract file. It
+     * is assumed that this parent has been written to the report (via
+     * addDataSource) prior to this call. Otherwise, the report may be invalid.
+     * @param localPath The location of the file on secondary storage, somewhere
+     * other than the case. Example: local disk. This value will be ignored if
+     * it is null or empty.
+     * @throws IOException
+     * @throws TskCoreException 
+     */
+    public void addFile(AbstractFile file, Content parentDataSource, String localPath) throws IOException, TskCoreException {
         String fileTraceId = getFileTraceId(file);
 
-        // create a "trace" entry for the file
-        reportGenerator.writeStartObject();
-        reportGenerator.writeStringField("@id", fileTraceId);
-        reportGenerator.writeStringField("@type", "Trace");
+        //Create the Trace CASE node, which will contain attributes about some evidence.
+        //Trace is the standard term for evidence. For us, this means file system files.
+        CASENode fileTrace = new CASENode(fileTraceId, "Trace");
+        
+        //The bits of evidence for each Trace node are contained within Property
+        //Bundles. There are a number of Property Bundles available in the CASE ontology.
 
-        reportGenerator.writeFieldName("propertyBundle");
-        reportGenerator.writeStartArray();
+        //Build up the File Property Bundle, as the name implies - properties of
+        //the file itself.
+        CASEPropertyBundle filePropertyBundle = createFileBundle(file);
+        fileTrace.addBundle(filePropertyBundle);
 
+        //Build up the ContentData Property Bundle, as the name implies - properties of
+        //the File data itself.
+        CASEPropertyBundle contentDataPropertyBundle = createContentDataBundle(file);
+        fileTrace.addBundle(contentDataPropertyBundle);
+        
+        if(!Strings.isNullOrEmpty(localPath)) {
+            String urlTraceId = getURLTraceId(file);
+            CASENode urlTrace = new CASENode(urlTraceId, "Trace");
+            CASEPropertyBundle urlPropertyBundle = new CASEPropertyBundle("URL");
+            urlPropertyBundle.addProperty("fullValue", localPath);
+            urlTrace.addBundle(urlPropertyBundle);
+
+            contentDataPropertyBundle.addProperty("dataPayloadReferenceUrl", urlTraceId);
+            reportGenerator.writeObject(urlTrace);
+        }
+
+        //Create the Relationship CASE node. This defines how the Trace CASE node described above
+        //is related to another CASE node (in this case, the parent data source).
+        String relationshipID = getRelationshipId(file);
+        CASENode relationship = createRelationshipNode(relationshipID, 
+                fileTraceId, getDataSourceTraceId(parentDataSource));
+
+        //Build up the PathRelation bundle for the relationship node, 
+        //as the name implies - the Path of the Trace in the data source.
+        CASEPropertyBundle pathRelationPropertyBundle = new CASEPropertyBundle("PathRelation");
+        pathRelationPropertyBundle.addProperty("path", file.getUniquePath());
+        relationship.addBundle(pathRelationPropertyBundle);
+        
+        //This completes the triage, write them to JSON.
+        reportGenerator.writeObject(fileTrace);
+        reportGenerator.writeObject(relationship);
+    }
+    
+    private String getURLTraceId(Content content) {
+        return "url-" + content.getId(); 
+    }
+    
+    /**
+     * All relationship nodes will be the same within our context. Namely, contained-within
+     * and isDirectional as true.
+     */
+    private CASENode createRelationshipNode(String relationshipID, String sourceID, String targetID) {
+        CASENode relationship = new CASENode(relationshipID, "Relationship");
+        relationship.addProperty("source", sourceID);
+        relationship.addProperty("target", targetID);
+        relationship.addProperty("kindOfRelationship", "contained-within");
+        relationship.addProperty("isDirectional", true);
+        return relationship;
+    }
+    
+    /**
+     * Creates a File Property Bundle with a selection of file attributes.
+     */
+    private CASEPropertyBundle createFileBundle(AbstractFile file) throws TskCoreException {
+        CASEPropertyBundle filePropertyBundle = new CASEPropertyBundle("File");
         String createdTime = ContentUtils.getStringTimeISO8601(file.getCrtime(), timeZone);
         String accessedTime = ContentUtils.getStringTimeISO8601(file.getAtime(), timeZone);
         String modifiedTime = ContentUtils.getStringTimeISO8601(file.getMtime(), timeZone);
-        reportGenerator.writeStartObject();
-        reportGenerator.writeStringField("@type", "File");
-        reportGenerator.writeStringField("createdTime", createdTime);
-        reportGenerator.writeStringField("accessedTime", accessedTime);
-        reportGenerator.writeStringField("modifiedTime", modifiedTime);
-
+        filePropertyBundle.addProperty("createdTime", createdTime);
+        filePropertyBundle.addProperty("accessedTime", accessedTime);
+        filePropertyBundle.addProperty("modifiedTime", modifiedTime);
         if (!Strings.isNullOrEmpty(file.getNameExtension())) {
-            reportGenerator.writeStringField("extension", file.getNameExtension());
+            filePropertyBundle.addProperty("extension", file.getNameExtension());
         }
-        reportGenerator.writeStringField("fileName", file.getName());
-        reportGenerator.writeStringField("filePath", file.getUniquePath());
-        reportGenerator.writeBooleanField("isDirectory", file.isDir());
-        reportGenerator.writeStringField("sizeInBytes", Long.toString(file.getSize()));
-        reportGenerator.writeEndObject();
-
-        reportGenerator.writeStartObject();
-        reportGenerator.writeStringField("@type", "ContentData");
+        filePropertyBundle.addProperty("fileName", file.getName());
+        filePropertyBundle.addProperty("filePath", file.getUniquePath());
+        filePropertyBundle.addProperty("isDirectory", file.isDir());
+        filePropertyBundle.addProperty("sizeInBytes", Long.toString(file.getSize()));
+        return filePropertyBundle;
+    }
+    
+    /**
+     * Creates a Content Data Property Bundle with a selection of file attributes.
+     */
+    private CASEPropertyBundle createContentDataBundle(AbstractFile file) {
+        CASEPropertyBundle contentDataPropertyBundle = new CASEPropertyBundle("ContentData");
         if (!Strings.isNullOrEmpty(file.getMIMEType())) {
-            reportGenerator.writeStringField("mimeType", file.getMIMEType());
+            contentDataPropertyBundle.addProperty("mimeType", file.getMIMEType());
         }
         if (!Strings.isNullOrEmpty(file.getMd5Hash())) {
-            reportGenerator.writeFieldName("hash");
-            reportGenerator.writeStartArray();
-            reportGenerator.writeStartObject();
-            reportGenerator.writeStringField("@type", "Hash");
-            reportGenerator.writeStringField("hashMethod", "MD5");
-            reportGenerator.writeStringField("hashValue", file.getMd5Hash());
-            reportGenerator.writeEndObject();
-            reportGenerator.writeEndArray();
+            List<CASEPropertyBundle> hashPropertyBundles = new ArrayList<>();
+            CASEPropertyBundle md5HashPropertyBundle = new CASEPropertyBundle("Hash");
+            md5HashPropertyBundle.addProperty("hashMethod", "MD5");
+            md5HashPropertyBundle.addProperty("hashValue", file.getMd5Hash());
+            hashPropertyBundles.add(md5HashPropertyBundle);
+            contentDataPropertyBundle.addProperty("hash", hashPropertyBundles);
         }
-        reportGenerator.writeStringField("sizeInBytes", Long.toString(file.getSize()));
-
-        reportGenerator.writeEndObject();
-
-        reportGenerator.writeEndArray();
-        reportGenerator.writeEndObject();
-
-        // create a "relationship" entry between the file and the data source
-        reportGenerator.writeStartObject();
-        reportGenerator.writeStringField("@id", "relationship-" + file.getId());
-        reportGenerator.writeStringField("@type", "Relationship");
-        reportGenerator.writeStringField("source", fileTraceId);
-        reportGenerator.writeStringField("target", getDataSourceTraceId(parentDataSource));
-        reportGenerator.writeStringField("kindOfRelationship", "contained-within");
-        reportGenerator.writeBooleanField("isDirectional", true);
-
-        reportGenerator.writeFieldName("propertyBundle");
-        reportGenerator.writeStartArray();
-        reportGenerator.writeStartObject();
-        reportGenerator.writeStringField("@type", "PathRelation");
-        reportGenerator.writeStringField("path", file.getUniquePath());
-        reportGenerator.writeEndObject();
-        reportGenerator.writeEndArray();
-
-        reportGenerator.writeEndObject();
+        contentDataPropertyBundle.addProperty("sizeInBytes", Long.toString(file.getSize()));
+        return contentDataPropertyBundle;
     }
 
     /**
-     * Creates a unique Case UCO file trace id.
-     *
-     * @param file File to create an id.
-     * @return
+     * Creates a unique CASE Node file trace id.
      */
     private String getFileTraceId(AbstractFile file) {
         return "file-" + file.getId();
     }
 
     /**
-     * Adds a Content instance (which is known to be a DataSource) to the Case
-     * UCO report. This means writing a selection of attributes to a Case UCO
-     * entity.
-     *
-     * Attributes captured: Path, Size (in bytes),
+     * Creates a unique CASE Node relationship id value.
+     */
+    private String getRelationshipId(Content content) {
+        return "relationship-" + content.getId();
+    }
+
+    /**
+     * Adds a Content instance (which is known to be a DataSource) to the CASE
+     * report. This means writing a selection of attributes to a CASE or UCO
+     * object.
      *
      * @param dataSource Datasource content to write
      * @param parentCase The parent case that this data source belongs in. It is
-     * assumed that this parent has been written to the report (via addCase) 
+     * assumed that this parent has been written to the report (via addCase)
      * prior to this call. Otherwise, the report may be invalid.
      */
     public void addDataSource(Content dataSource, Case parentCase) throws IOException, TskCoreException {
         String dataSourceTraceId = this.getDataSourceTraceId(dataSource);
-        reportGenerator.writeStartObject();
-        reportGenerator.writeStringField("@id", dataSourceTraceId);
-        reportGenerator.writeStringField("@type", "Trace");
+        
+        CASENode dataSourceTrace = new CASENode(dataSourceTraceId, "Trace");
+        CASEPropertyBundle filePropertyBundle = new CASEPropertyBundle("File");
 
-        reportGenerator.writeFieldName("propertyBundle");
-        reportGenerator.writeStartArray();
+        String dataSourcePath = getDataSourcePath(dataSource);
+        
+        filePropertyBundle.addProperty("filePath", dataSourcePath);
+        dataSourceTrace.addBundle(filePropertyBundle);
+        
+        if (dataSource.getSize() > 0) {
+            CASEPropertyBundle contentDataPropertyBundle = new CASEPropertyBundle("ContentData");
+            contentDataPropertyBundle.addProperty("sizeInBytes", Long.toString(dataSource.getSize()));
+            dataSourceTrace.addBundle(contentDataPropertyBundle);
+        }
 
-        reportGenerator.writeStartObject();
-        reportGenerator.writeStringField("@type", "File");
+        // create a "relationship" entry between the case and the data source
+        String caseTraceId = getCaseTraceId(parentCase);
+        String relationshipTraceId = getRelationshipId(dataSource);
+        CASENode relationship = createRelationshipNode(relationshipTraceId, 
+                dataSourceTraceId, caseTraceId);
 
+        CASEPropertyBundle pathRelationBundle = new CASEPropertyBundle("PathRelation");
+        pathRelationBundle.addProperty("path", dataSourcePath);
+        relationship.addBundle(pathRelationBundle);
+        
+        //This completes the triage, write them to JSON.
+        reportGenerator.writeObject(dataSourceTrace);
+        reportGenerator.writeObject(relationship);
+    }
+    
+    private String getDataSourcePath(Content dataSource) {
         String dataSourcePath = "";
         if (dataSource instanceof Image) {
             String[] paths = ((Image) dataSource).getPaths();
@@ -235,41 +319,8 @@ public final class CaseUcoReportGenerator {
         } else {
             dataSourcePath = dataSource.getName();
         }
-
         dataSourcePath = dataSourcePath.replaceAll("\\\\", "/");
-
-        reportGenerator.writeStringField("filePath", dataSourcePath);
-        reportGenerator.writeEndObject();
-
-        if (dataSource.getSize() > 0) {
-            reportGenerator.writeStartObject();
-            reportGenerator.writeStringField("@type", "ContentData");
-            reportGenerator.writeStringField("sizeInBytes", Long.toString(dataSource.getSize()));
-            reportGenerator.writeEndObject();
-        }
-
-        reportGenerator.writeEndArray();
-        reportGenerator.writeEndObject();
-
-        // create a "relationship" entry between the case and the data source
-        String caseTraceId = getCaseTraceId(parentCase);
-        reportGenerator.writeStartObject();
-        reportGenerator.writeStringField("@id", "relationship-" + caseTraceId);
-        reportGenerator.writeStringField("@type", "Relationship");
-        reportGenerator.writeStringField("source", dataSourceTraceId);
-        reportGenerator.writeStringField("target", caseTraceId);
-        reportGenerator.writeStringField("kindOfRelationship", "contained-within");
-        reportGenerator.writeBooleanField("isDirectional", true);
-
-        reportGenerator.writeFieldName("propertyBundle");
-        reportGenerator.writeStartArray();
-        reportGenerator.writeStartObject();
-        reportGenerator.writeStringField("@type", "PathRelation");
-        reportGenerator.writeStringField("path", dataSourcePath);
-        reportGenerator.writeEndObject();
-        reportGenerator.writeEndArray();
-
-        reportGenerator.writeEndObject();
+        return dataSourcePath;
     }
 
     /**
@@ -284,9 +335,7 @@ public final class CaseUcoReportGenerator {
 
     /**
      * Adds a Case instance to the Case UCO report. This means writing a
-     * selection of Case attributes to a Case UCO entity.
-     *
-     * Attributes captured: Case directory.
+     * selection of Case attributes to a CASE/UCO object.
      *
      * @param caseObj Case instance to include in the report.
      * @throws IOException If an I/O error is encountered.
@@ -296,31 +345,23 @@ public final class CaseUcoReportGenerator {
 
         String caseDirPath = skCase.getDbDirPath();
         String caseTraceId = getCaseTraceId(caseObj);
-        reportGenerator.writeStartObject();
-        reportGenerator.writeStringField("@id", caseTraceId);
-        reportGenerator.writeStringField("@type", "Trace");
-
-        reportGenerator.writeFieldName("propertyBundle");
-        reportGenerator.writeStartArray();
-        reportGenerator.writeStartObject();
+        CASENode caseTrace = new CASENode(caseTraceId, "Trace");
+        CASEPropertyBundle filePropertyBundle = new CASEPropertyBundle("File");
 
         // replace double slashes with single ones
         caseDirPath = caseDirPath.replaceAll("\\\\", "/");
 
-        reportGenerator.writeStringField("@type", "File");
-
         Case.CaseType caseType = caseObj.getCaseType();
         if (caseType.equals(CaseType.SINGLE_USER_CASE)) {
-            reportGenerator.writeStringField("filePath", caseDirPath + "/" + skCase.getDatabaseName());
-            reportGenerator.writeBooleanField("isDirectory", false);
+            filePropertyBundle.addProperty("filePath", caseDirPath + "/" + skCase.getDatabaseName());
+            filePropertyBundle.addProperty("isDirectory", false);
         } else {
-            reportGenerator.writeStringField("filePath", caseDirPath);
-            reportGenerator.writeBooleanField("isDirectory", true);
+            filePropertyBundle.addProperty("filePath", caseDirPath);
+            filePropertyBundle.addProperty("isDirectory", true);
         }
 
-        reportGenerator.writeEndObject();
-        reportGenerator.writeEndArray();
-        reportGenerator.writeEndObject();
+        caseTrace.addBundle(filePropertyBundle);
+        reportGenerator.writeObject(caseTrace);
     }
 
     /**
@@ -350,5 +391,63 @@ public final class CaseUcoReportGenerator {
         reportGenerator.close();
 
         return reportPath;
+    }
+
+    /**
+     * A CASE or UCO object. CASE objects can have properties and
+     * property bundles.
+     */
+    private final class CASENode {
+        
+        //Dynamic properties added to this CASENode.
+        private final LinkedHashMap<String, Object> properties;
+        private final List<CASEPropertyBundle> propertyBundle;
+
+        public CASENode(String id, String type) {
+            propertyBundle = new ArrayList<>();
+            properties = new LinkedHashMap<>();
+            addProperty("@id", id);
+            addProperty("@type", type);
+        }
+        
+        @JsonAnyGetter
+        public Map<String, Object> getProperties() {
+            return properties;
+        }
+        
+        @JsonProperty("propertyBundle")
+        public List<CASEPropertyBundle> getPropertyBundle() {
+            return propertyBundle;
+        }
+        
+        public void addProperty(String key, Object val) {
+            properties.put(key, val);
+        }
+
+        public void addBundle(CASEPropertyBundle bundle) {
+            propertyBundle.add(bundle);
+        }
+    }
+
+    /**
+     * Contains CASE or UCO properties.
+     */
+    private final class CASEPropertyBundle {
+        
+        private final LinkedHashMap<String, Object> properties;
+
+        public CASEPropertyBundle(String type) {
+            properties = new LinkedHashMap<>();
+            addProperty("@type", type);
+        }
+        
+        @JsonAnyGetter
+        public Map<String, Object> getProperties() {
+            return properties;
+        }
+        
+        public void addProperty(String key, Object val) {
+            properties.put(key, val);
+        }
     }
 }
