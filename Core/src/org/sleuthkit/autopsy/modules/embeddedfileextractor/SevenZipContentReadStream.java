@@ -85,8 +85,9 @@ class SevenZipContentReadStream implements IInStream {
             return readBytes;
 
         } catch (IOException ex) {
+            // This is only a warning because the file may be deleted or otherwise corrupt
             String msg = NbBundle.getMessage(this.getClass(), "SevenZipContentReadStream.read.exception.errReadStream");
-            logger.log(Level.SEVERE, msg, ex);
+            logger.log(Level.WARNING, msg, ex);
             throw new SevenZipException(msg, ex);
         }
     }

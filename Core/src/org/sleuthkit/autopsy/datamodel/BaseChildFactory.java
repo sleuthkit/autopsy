@@ -286,8 +286,14 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
              * If pageSize is set split keys into pages, otherwise create a
              * single page containing all keys.
              */
-            if (keys.isEmpty()) {
-                pages.clear();
+            if (keys.isEmpty() && !pages.isEmpty()) {
+                /**
+                 * If we previously had keys (i.e. pages is not empty) and now
+                 * we don't have keys, reset pages to an empty list.
+                 * Cannot use a call to List.clear() here because the call to
+                 * Lists.partition() below returns an unmodifiable list.
+                 */
+                pages = new ArrayList<>();
             } else {
                 pages = Lists.partition(keys, pageSize > 0 ? pageSize : keys.size());
             }
