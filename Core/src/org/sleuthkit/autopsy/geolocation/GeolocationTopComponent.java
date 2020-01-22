@@ -476,10 +476,7 @@ public final class GeolocationTopComponent extends TopComponent {
             }
 
             List<Waypoint> completeList = createWaypointList(waypoints, tracks);
-            List<MapWaypoint> mapPoints = MapWaypoint.getWaypoints(completeList);
-            
-            final Set<MapWaypoint> pointSet = new LinkedHashSet<>();
-            pointSet.addAll(mapPoints);
+            final Set<MapWaypoint> pointSet = MapWaypoint.getWaypoints(completeList);
             
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
