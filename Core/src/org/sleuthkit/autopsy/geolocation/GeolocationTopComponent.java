@@ -234,7 +234,7 @@ public final class GeolocationTopComponent extends TopComponent {
                 boolean isShowing = false;
                 Component[] comps = mapPanel.getComponents();
                 for(Component comp: comps) {
-                    if(comp == refreshPanel) {
+                    if(comp.equals(refreshPanel)) {
                         isShowing = true;
                         break;
                     }
