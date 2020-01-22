@@ -535,6 +535,8 @@ final public class MapPanel extends javax.swing.JPanel {
         mapViewer = new org.jxmapviewer.JXMapViewer();
         zoomPanel = new javax.swing.JPanel();
         zoomSlider = new javax.swing.JSlider();
+        javax.swing.JButton zoomInBtn = new javax.swing.JButton();
+        javax.swing.JButton zoomOutBtn = new javax.swing.JButton();
 
         setFocusable(false);
         setLayout(new java.awt.BorderLayout());
@@ -560,6 +562,7 @@ final public class MapPanel extends javax.swing.JPanel {
         zoomPanel.setFocusable(false);
         zoomPanel.setOpaque(false);
         zoomPanel.setRequestFocusEnabled(false);
+        zoomPanel.setLayout(new java.awt.GridBagLayout());
 
         zoomSlider.setMaximum(15);
         zoomSlider.setMinimum(10);
@@ -575,23 +578,44 @@ final public class MapPanel extends javax.swing.JPanel {
                 zoomSliderStateChanged(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        zoomPanel.add(zoomSlider, gridBagConstraints);
 
-        javax.swing.GroupLayout zoomPanelLayout = new javax.swing.GroupLayout(zoomPanel);
-        zoomPanel.setLayout(zoomPanelLayout);
-        zoomPanelLayout.setHorizontalGroup(
-            zoomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(zoomPanelLayout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(zoomSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        zoomPanelLayout.setVerticalGroup(
-            zoomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, zoomPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(zoomSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0))
-        );
+        zoomInBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/plus-grey.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(zoomInBtn, org.openide.util.NbBundle.getMessage(MapPanel.class, "MapPanel.zoomInBtn.text")); // NOI18N
+        zoomInBtn.setBorder(null);
+        zoomInBtn.setBorderPainted(false);
+        zoomInBtn.setFocusPainted(false);
+        zoomInBtn.setRequestFocusEnabled(false);
+        zoomInBtn.setRolloverEnabled(false);
+        zoomInBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zoomInBtnActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        zoomPanel.add(zoomInBtn, gridBagConstraints);
+
+        zoomOutBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/minus-grey.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(zoomOutBtn, org.openide.util.NbBundle.getMessage(MapPanel.class, "MapPanel.zoomOutBtn.text")); // NOI18N
+        zoomOutBtn.setBorder(null);
+        zoomOutBtn.setBorderPainted(false);
+        zoomOutBtn.setFocusPainted(false);
+        zoomOutBtn.setRequestFocusEnabled(false);
+        zoomOutBtn.setRolloverEnabled(false);
+        zoomOutBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zoomOutBtnActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        zoomPanel.add(zoomOutBtn, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.anchor = java.awt.GridBagConstraints.SOUTHWEST;
@@ -638,6 +662,16 @@ final public class MapPanel extends javax.swing.JPanel {
             showDetailsPopup();
         }
     }//GEN-LAST:event_mapViewerMouseClicked
+
+    private void zoomInBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInBtnActionPerformed
+        int currentValue = mapViewer.getZoom();
+        setZoom(currentValue-1);
+    }//GEN-LAST:event_zoomInBtnActionPerformed
+
+    private void zoomOutBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutBtnActionPerformed
+        int currentValue = mapViewer.getZoom();
+        setZoom(currentValue+1);
+    }//GEN-LAST:event_zoomOutBtnActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
