@@ -82,6 +82,7 @@ final public class MapPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     private boolean zoomChanging;
     private KdTree<MapWaypoint> waypointTree;
+    private Set<MapWaypoint> waypointSet;
 
     private Popup currentPopup;
     private final PopupFactory popupFactory;
@@ -195,26 +196,14 @@ final public class MapPanel extends javax.swing.JPanel {
         mapViewer.setCenterPosition(new GeoPosition(0, 0));
 
         // Basic painters for the way points. 
-        WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<Waypoint>() {
+        WaypointPainter<MapWaypoint> waypointPainter = new WaypointPainter<MapWaypoint>() {
             @Override
-            public Set<Waypoint> getWaypoints() {
-                //To assure that the currentlySelectedWaypoint is visible it needs
-                // to be painted last. LinkedHashSet has a predicable ordering.
-                Set<Waypoint> set = new LinkedHashSet<>();
-                if (waypointTree != null) {
-                    Iterator<MapWaypoint> iterator = waypointTree.iterator();
-                    while (iterator.hasNext()) {
-                        MapWaypoint point = iterator.next();
-                        set.add(point);
-                    }
-                    // Add the currentlySelectedWaypoint to the end so that
-                    // it will be painted last.
-                    if (currentlySelectedWaypoint != null) {
-                        set.remove(currentlySelectedWaypoint);
-                        set.add(currentlySelectedWaypoint);
-                    }
+            public Set<MapWaypoint> getWaypoints() {
+                if (currentlySelectedWaypoint != null) {
+                    waypointSet.remove(currentlySelectedWaypoint);
+                    waypointSet.add(currentlySelectedWaypoint);
                 }
-                return set;
+                return waypointSet;
             }
         };
         
@@ -222,7 +211,6 @@ final public class MapPanel extends javax.swing.JPanel {
             waypointPainter.setRenderer(new MapWaypointRenderer());
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Failed to load waypoint image resource, using DefaultWaypointRenderer", ex);
-            waypointPainter.setRenderer(new DefaultWaypointRenderer());
         }
 
         mapViewer.setOverlayPainter(waypointPainter);
@@ -305,13 +293,12 @@ final public class MapPanel extends javax.swing.JPanel {
      *
      * @param waypoints List of waypoints
      */
-    void setWaypoints(List<MapWaypoint> waypoints) {
+    void setWaypoints(Set<MapWaypoint> waypoints) {
         waypointTree = new KdTree<>();
-
+        this.waypointSet = waypoints;
         for (MapWaypoint waypoint : waypoints) {
             waypointTree.add(waypoint);
         }
-
         mapViewer.repaint();
     }
 
@@ -662,7 +649,7 @@ final public class MapPanel extends javax.swing.JPanel {
     /**
      * Renderer for the map waypoints.
      */
-    private class MapWaypointRenderer implements WaypointRenderer<Waypoint> {
+    private class MapWaypointRenderer implements WaypointRenderer<MapWaypoint> {
         private final BufferedImage defaultWaypointImage;
         private final BufferedImage selectedWaypointImage;
         
@@ -677,7 +664,7 @@ final public class MapPanel extends javax.swing.JPanel {
         }
         
         @Override
-        public void paintWaypoint(Graphics2D gd, JXMapViewer jxmv, Waypoint waypoint) {
+        public void paintWaypoint(Graphics2D gd, JXMapViewer jxmv, MapWaypoint waypoint) {
             Point2D point = jxmv.getTileFactory().geoToPixel(waypoint.getPosition(), jxmv.getZoom());
 
             int x = (int)point.getX();

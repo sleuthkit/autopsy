@@ -23,8 +23,10 @@ import java.awt.image.BufferedImage;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -75,8 +77,8 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      * @return List of MapWaypoint objects. List will be empty if dmWaypoints
      *         was empty or null.
      */
-    static List<MapWaypoint> getWaypoints(List<Waypoint> dmWaypoints) {
-        List<MapWaypoint> mapPoints = new ArrayList<>();
+    static Set<MapWaypoint> getWaypoints(List<Waypoint> dmWaypoints) {
+        Set<MapWaypoint> mapPoints = new LinkedHashSet<>();
 
         if (dmWaypoints != null) {
 

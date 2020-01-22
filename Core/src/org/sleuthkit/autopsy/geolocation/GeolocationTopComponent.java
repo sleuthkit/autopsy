@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.geolocation;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -30,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -219,7 +221,7 @@ public final class GeolocationTopComponent extends TopComponent {
                 return; // Doen't set the waypoints.
             }
         }
-        mapPanel.setWaypoints(new ArrayList<>());
+        mapPanel.setWaypoints(new LinkedHashSet<>());
         updateWaypoints();
     }
 
@@ -229,12 +231,27 @@ public final class GeolocationTopComponent extends TopComponent {
      * @param show Whether to show or hide the panel.
      */
     private void showRefreshPanel(boolean show) {
-        if (show) {
-            mapPanel.add(refreshPanel, BorderLayout.NORTH);
-        } else {
-            mapPanel.remove(refreshPanel);
-        }
-        mapPanel.revalidate();
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                boolean isShowing = false;
+                Component[] comps = mapPanel.getComponents();
+                for(Component comp: comps) {
+                    if(comp.equals(refreshPanel)) {
+                        isShowing = true;
+                        break;
+                    }
+                }
+                if (show && !isShowing) {
+                    mapPanel.add(refreshPanel, BorderLayout.NORTH);
+                    mapPanel.revalidate();
+                } else if(!show && isShowing){
+                    mapPanel.remove(refreshPanel);
+                    mapPanel.revalidate();
+                }         
+            }
+        });
+
     }
 
     /**
@@ -458,10 +475,9 @@ public final class GeolocationTopComponent extends TopComponent {
                 logger.log(Level.WARNING, "Exception thrown while retrieving list of Tracks", ex);
             }
 
-            final List<Waypoint> completeList = createWaypointList(waypoints, tracks);
-
-            // Make sure that the waypoints are added to the map panel in
-            // the correct thread.
+            List<Waypoint> completeList = createWaypointList(waypoints, tracks);
+            final Set<MapWaypoint> pointSet = MapWaypoint.getWaypoints(completeList);
+            
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -478,7 +494,7 @@ public final class GeolocationTopComponent extends TopComponent {
                         return;
                     }
                     mapPanel.clearWaypoints();
-                    mapPanel.setWaypoints(MapWaypoint.getWaypoints(completeList));
+                    mapPanel.setWaypoints(pointSet);
                     setWaypointLoading(false);
                     geoFilterPanel.setEnabled(true);
                 }
