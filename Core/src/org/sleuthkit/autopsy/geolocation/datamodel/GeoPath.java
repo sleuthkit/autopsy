@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Class representing a series of waypoints that form a path.
  */
-public class Path {
+public class GeoPath {
 
     private final List<Waypoint> waypointList;
     private final String pathName;
@@ -97,7 +97,7 @@ public class Path {
      * @param artifact BlackboardARtifact that this path represents, required
      * @param pathName Name for this path, maybe null or empty string.
      */
-    Path(BlackboardArtifact artifact, String pathName) {
+    GeoPath(BlackboardArtifact artifact, String pathName) {
         this.waypointList = new ArrayList<>();
         this.pathName = pathName;
         this.artifact = artifact;
@@ -133,7 +133,7 @@ public class Path {
     /**
      * Returns the label\display name for this path.
      *
-     * @return Path label, empty string
+     * @return GeoPath label, empty string
      */
     public String getLabel() {
         return pathName != null ? pathName : "";

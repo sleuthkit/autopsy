@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  * more that two points.
  *
  */
-public class Route extends Path{
+public class Route extends GeoPath{
     private final Long timestamp;
 
     // This list is not expected to change after construction so the 

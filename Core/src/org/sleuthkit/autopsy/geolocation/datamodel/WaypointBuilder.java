@@ -132,7 +132,7 @@ public final class WaypointBuilder {
     public static List<Route> getRoutes(List<Waypoint> waypoints) {
         List<Route> routeList = new ArrayList<>();
         for (Waypoint point : waypoints) {
-            Path path = point.getPath();
+            GeoPath path = point.getPath();
             if (path instanceof Route) {
                 Route route = (Route) path;
                 if (!routeList.contains(route)) {
@@ -154,7 +154,7 @@ public final class WaypointBuilder {
     public static List<Track> getTracks(List<Waypoint> waypoints) {
         List<Track> trackList = new ArrayList<>();
         for (Waypoint point : waypoints) {
-            Path path = point.getPath();
+            GeoPath path = point.getPath();
             if (path instanceof Track) {
                 Track route = (Track) path;
                 if (!trackList.contains(route)) {

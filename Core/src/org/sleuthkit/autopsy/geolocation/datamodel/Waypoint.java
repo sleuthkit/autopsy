@@ -43,7 +43,7 @@ public class Waypoint {
     final private String label;
     final private AbstractFile image;
     final private BlackboardArtifact artifact;
-    final private Path path;
+    final private GeoPath path;
 
     final private List<Waypoint.Property> propertiesList;
 
@@ -78,7 +78,7 @@ public class Waypoint {
      * @throws GeoLocationDataException Exception will be thrown if artifact did
      *                                  not have a valid longitude and latitude.
      */
-    Waypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap, Path path) throws GeoLocationDataException {
+    Waypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap, GeoPath path) throws GeoLocationDataException {
         if (longitude == null || latitude == null) {
             throw new GeoLocationDataException("Invalid waypoint, null value passed for longitude or latitude");
         }
@@ -178,7 +178,7 @@ public class Waypoint {
      * @return The waypoint route or null if the waypoint is not apart of a
      *         route.
      */
-    public Path getPath() {
+    public GeoPath getPath() {
         return path;
     }
 

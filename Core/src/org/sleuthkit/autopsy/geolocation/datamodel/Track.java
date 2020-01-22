@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoint.GeoTrackPo
 /**
  * A GPS track with which wraps the TSK_GPS_TRACK artifact.
  */
-public final class Track extends Path{
+public final class Track extends GeoPath{
 
     private final Long startTimestamp;
     private final Long endTimeStamp;
