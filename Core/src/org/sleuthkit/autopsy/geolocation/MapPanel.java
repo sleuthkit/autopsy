@@ -548,8 +548,8 @@ final public class MapPanel extends javax.swing.JPanel {
         mapViewer = new org.jxmapviewer.JXMapViewer();
         zoomPanel = new javax.swing.JPanel();
         zoomSlider = new javax.swing.JSlider();
-        zoomInBtn = new javax.swing.JButton();
-        zoomOutBtn = new javax.swing.JButton();
+        javax.swing.JButton zoomInBtn = new javax.swing.JButton();
+        javax.swing.JButton zoomOutBtn = new javax.swing.JButton();
 
         setFocusable(false);
         setLayout(new java.awt.BorderLayout());
@@ -689,8 +689,6 @@ final public class MapPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.jxmapviewer.JXMapViewer mapViewer;
-    private javax.swing.JButton zoomInBtn;
-    private javax.swing.JButton zoomOutBtn;
     private javax.swing.JPanel zoomPanel;
     private javax.swing.JSlider zoomSlider;
     // End of variables declaration//GEN-END:variables

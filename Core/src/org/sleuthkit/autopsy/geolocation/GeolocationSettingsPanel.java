@@ -348,7 +348,7 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         "GeolocationSettingsPanel_malformed_url_message_tile=Malformed URL",
         "GeolocationSettingsPanel_osm_server_test_fail_message=OSM tile server test failed.\nUnable to connect to server.",
         "GeolocationSettingsPanel_osm_server_test_fail_message_title=Error",
-        "GeolocationSettingsPanel_osm_server_test_success_message=The provide OSM tile server address is valid.",
+        "GeolocationSettingsPanel_osm_server_test_success_message=The provided OSM tile server address is valid.",
         "GeolocationSettingsPanel_osm_server_test_success_message_title=Success",})
     private void serverTestBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_serverTestBtnActionPerformed
         String address = osmServerAddressField.getText();
