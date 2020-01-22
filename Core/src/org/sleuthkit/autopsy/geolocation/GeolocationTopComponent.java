@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.geolocation;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -229,12 +230,27 @@ public final class GeolocationTopComponent extends TopComponent {
      * @param show Whether to show or hide the panel.
      */
     private void showRefreshPanel(boolean show) {
-        if (show) {
-            mapPanel.add(refreshPanel, BorderLayout.NORTH);
-        } else {
-            mapPanel.remove(refreshPanel);
-        }
-        mapPanel.revalidate();
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                boolean isShowing = false;
+                Component[] comps = mapPanel.getComponents();
+                for(Component comp: comps) {
+                    if(comp.equals(refreshPanel)) {
+                        isShowing = true;
+                        break;
+                    }
+                }
+                if (show && !isShowing) {
+                    mapPanel.add(refreshPanel, BorderLayout.NORTH);
+                    mapPanel.revalidate();
+                } else if(!show && isShowing){
+                    mapPanel.remove(refreshPanel);
+                    mapPanel.revalidate();
+                }         
+            }
+        });
+
     }
 
     /**
