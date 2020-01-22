@@ -18,12 +18,16 @@
  */
 package org.sleuthkit.autopsy.report.modules.portablecase;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.sleuthkit.autopsy.report.ReportModule;
 import java.util.logging.Level;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -37,6 +41,7 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -44,7 +49,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
-import org.sleuthkit.autopsy.report.modules.caseuco.CaseUcoFormatExporter;
+import org.sleuthkit.autopsy.report.modules.caseuco.CaseUcoReportGenerator;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -52,6 +57,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
@@ -73,6 +79,8 @@ public class PortableCaseReportModule implements ReportModule {
     private static final String FILE_FOLDER_NAME = "PortableCaseFiles";  // NON-NLS
     private static final String UNKNOWN_FILE_TYPE_FOLDER = "Other";  // NON-NLS
     private static final String MAX_ID_TABLE_NAME = "portable_case_max_ids";  // NON-NLS
+    private static final String CASE_UCO_FILE_NAME = "portable_CASE_UCO_output";
+    private static final String CASE_UCO_TMP_DIR = "case_uco_tmp";
     private PortableCaseReportModuleSettings settings;
     
     // These are the types for the exported file subfolders
@@ -191,9 +199,7 @@ public class PortableCaseReportModule implements ReportModule {
         "PortableCaseReportModule.generateReport.errorCreatingImageTagTable=Error creating image tags table",
         "# {0} - attribute type name",
         "PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}",
-        "PortableCaseReportModule.generateReport.compressingCase=Compressing case...",
-        "PortableCaseReportModule.generateReport.errorCreatingReportFolder=Could not make report folder",
-        "PortableCaseReportModule.generateReport.errorGeneratingUCOreport=Problem while generating CASE-UCO report"
+        "PortableCaseReportModule.generateReport.compressingCase=Compressing case..."
     })
 
     public void generateReport(String reportPath, PortableCaseReportModuleSettings options, ReportProgressPanel progressPanel) {
@@ -310,7 +316,7 @@ public class PortableCaseReportModule implements ReportModule {
                         ex, progressPanel); // NON-NLS
             }
         }        
-        
+                
         // Copy the tagged files
         try {
             for(TagName tagName:tagNames) {
@@ -401,19 +407,9 @@ public class PortableCaseReportModule implements ReportModule {
             return;
         }
         
-        File reportsFolder = Paths.get(caseFolder.toString(), "Reports").toFile();
-        if(!reportsFolder.mkdir()) {
-            handleError("Could not make report folder", Bundle.PortableCaseReportModule_generateReport_errorCreatingReportFolder(), null, progressPanel); // NON-NLS
-            return;
-        }
-        
-        try {
-            CaseUcoFormatExporter.export(tagNames, setNames, reportsFolder, progressPanel);
-        } catch (IOException | SQLException | NoCurrentCaseException | TskCoreException ex) {
-            handleError("Problem while generating CASE-UCO report", 
-                    Bundle.PortableCaseReportModule_generateReport_errorGeneratingUCOreport(), ex, progressPanel); // NON-NLS
-        }
-        
+        //Attempt to generate and included the CASE-UCO report.
+        generateCaseUcoReport(tagNames, setNames, progressPanel);
+
         // Compress the case (if desired)
         if (options.shouldCompress()) {
             progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_compressingCase());
@@ -437,6 +433,149 @@ public class PortableCaseReportModule implements ReportModule {
         
         progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
         
+    }
+    
+    /**
+     * Generates a CASE-UCO report for all files that have a specified TagName
+     * or TSK_INTERESTING artifacts that are flagged by the specified SET_NAMEs.
+     * 
+     * Only one copy of the file will be saved in the report if it is the source
+     * of more than one of the above.
+     * 
+     * @param tagNames TagNames to included in the report.
+     * @param setNames SET_NAMEs to include in the report.
+     * @param progressPanel ProgressPanel to relay progress messages.
+     */
+    @NbBundle.Messages({
+        "PortableCaseReportModule.generateCaseUcoReport.errorCreatingReportFolder=Could not make report folder",
+        "PortableCaseReportModule.generateCaseUcoReport.errorGeneratingCaseUcoReport=Problem while generating CASE-UCO report",
+        "PortableCaseReportModule.generateCaseUcoReport.startCaseUcoReportGeneration=Creating a CASE-UCO report of the portable case",
+        "PortableCaseReportModule.generateCaseUcoReport.successCaseUcoReportGeneration=Successfully created a CASE-UCO report of the portable case"
+    })
+    private void generateCaseUcoReport(List<TagName> tagNames, List<String> setNames, ReportProgressPanel progressPanel) {
+        //Create the 'Reports' directory to include a CASE-UCO report.
+        Path reportsDirectory = Paths.get(caseFolder.toString(), "Reports");
+        if(!reportsDirectory.toFile().mkdir()) {
+            logger.log(Level.SEVERE, "Could not make the report folder... skipping "
+                    + "CASE-UCO report generation for the portable case");
+            return;
+        }
+
+        try {
+            //Try to generate case uco output.
+            progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateCaseUcoReport_startCaseUcoReportGeneration());
+            CaseUcoReportGenerator reportGenerator = new CaseUcoReportGenerator(reportsDirectory, CASE_UCO_FILE_NAME);
+            //Acquire references for file discovery
+            String caseTempDirectory = currentCase.getTempDirectory();
+            SleuthkitCase skCase = currentCase.getSleuthkitCase();
+            TagsManager tagsManager = currentCase.getServices().getTagsManager();
+
+            //Create temp directory to filter out duplicate files.
+            //Clear out the old directory if it exists.
+            Path tmpDir = Paths.get(caseTempDirectory, CASE_UCO_TMP_DIR);
+            FileUtils.deleteDirectory(tmpDir.toFile());
+            Files.createDirectory(tmpDir);
+
+            reportGenerator.addCase(currentCase);
+            
+            //Load all interesting BlackboardArtifacts that belong to the selected SET_NAMEs
+            //binned by data source id.
+            Multimap<Long, BlackboardArtifact> artifactsWithSetName = getInterestingArtifactsBySetName(skCase, setNames);
+            
+            //Search each data source looking for content tags and interesting
+            //items that match the selected tag names and set names.
+            for (Content dataSource : currentCase.getDataSources()) {
+                /**
+                 * It is currently believed that DataSources in a CASE-UCO report
+                 * should precede all file entities. Therefore, before
+                 * writing a file, add the data source if it
+                 * has yet to be included.
+                 */
+                boolean dataSourceHasBeenIncluded = false;
+                //Search content tags and artifact tags that match
+                for (TagName tagName : tagNames) {
+                    for (ContentTag ct : tagsManager.getContentTagsByTagName(tagName, dataSource.getId())) {
+                        dataSourceHasBeenIncluded |= addUniqueFile(ct.getContent(), 
+                                dataSource, tmpDir, reportGenerator, dataSourceHasBeenIncluded);
+                    }
+                    for (BlackboardArtifactTag bat : tagsManager.getBlackboardArtifactTagsByTagName(tagName, dataSource.getId())) {
+                        dataSourceHasBeenIncluded |= addUniqueFile(bat.getContent(), 
+                                dataSource, tmpDir, reportGenerator, dataSourceHasBeenIncluded);
+                    }
+                }
+                //Search artifacts that this data source contains
+                for(BlackboardArtifact bArt : artifactsWithSetName.get(dataSource.getId())) {
+                    Content sourceContent = bArt.getParent();
+                    dataSourceHasBeenIncluded |= addUniqueFile(sourceContent, dataSource, 
+                            tmpDir, reportGenerator, dataSourceHasBeenIncluded);
+                }
+            }
+        
+            //Create the report.
+            reportGenerator.generateReport();
+            progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateCaseUcoReport_successCaseUcoReportGeneration());
+        } catch (IOException | TskCoreException ex) {
+            progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateCaseUcoReport_errorGeneratingCaseUcoReport());
+            logger.log(Level.SEVERE, "Error encountered while trying to create "
+                    + "CASE-UCO output for portable case.. the portable case will be "
+                    + "completed without a CASE-UCO report.", ex);
+        }
+    }
+    
+    /**
+     * Load all interesting BlackboardArtifacts that belong to the selected
+     * SET_NAME. This operation would be duplicated for every data source, since
+     * the Sleuthkit API does not have a notion of searching by data source id.
+     */
+    private Multimap<Long, BlackboardArtifact> getInterestingArtifactsBySetName(SleuthkitCase skCase, List<String> setNames) throws TskCoreException {
+        Multimap<Long, BlackboardArtifact> artifactsWithSetName = ArrayListMultimap.create();
+        if(!setNames.isEmpty()) {
+            List<BlackboardArtifact> allArtifacts = skCase.getBlackboardArtifacts(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+            allArtifacts.addAll(skCase.getBlackboardArtifacts(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
+
+            for(BlackboardArtifact bArt : allArtifacts) {
+                BlackboardAttribute setAttr = bArt.getAttribute(
+                            new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+                if (setNames.contains(setAttr.getValueString())) {
+                    artifactsWithSetName.put(bArt.getDataSource().getId(), bArt);
+                }
+            }
+        }
+        return artifactsWithSetName;
+    }
+    
+    /**
+     * Adds the content if and only if it has not already been seen.
+     *
+     * @param content Content to add to the report.
+     * @param dataSource Parent dataSource of the content instance.
+     * @param tmpDir Path to the tmpDir to enforce uniqueness
+     * @param reportGenerator Report generator instance to add the content to
+     * @param dataSourceHasBeenIncluded Flag determining if the data source
+     * should be written before the file. False will cause the data source to be written.
+     * @throws IOException If an I/O error occurs.
+     * @throws TskCoreException If an internal database error occurs.
+     *
+     * return True if the data source was written during this operation.
+     */
+    private boolean addUniqueFile(Content content, Content dataSource, 
+            Path tmpDir, CaseUcoReportGenerator reportGenerator, 
+            boolean dataSourceHasBeenIncluded) throws IOException, TskCoreException {
+        if (content instanceof AbstractFile && !(content instanceof DataSource)) {
+            AbstractFile absFile = (AbstractFile) content;
+            Path filePath = tmpDir.resolve(Long.toString(absFile.getId()));
+            if (!absFile.isDir() && !Files.exists(filePath)) {
+                if(!dataSourceHasBeenIncluded) {
+                    reportGenerator.addDataSource(dataSource, currentCase);
+                }
+                reportGenerator.addFile(absFile, dataSource);
+                Files.createFile(filePath);
+                return true;
+            }
+        }
+        return false;
     }
     
     private List<String> getAllInterestingItemsSets() throws NoCurrentCaseException, TskCoreException {
