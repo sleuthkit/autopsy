@@ -132,13 +132,38 @@ public final class WaypointBuilder {
     public static List<Route> getRoutes(List<Waypoint> waypoints) {
         List<Route> routeList = new ArrayList<>();
         for (Waypoint point : waypoints) {
-            Route route = point.getRoute();
-            if (route != null && !routeList.contains(route)) {
-                routeList.add(route);
+            GeoPath path = point.getPath();
+            if (path instanceof Route) {
+                Route route = (Route) path;
+                if (!routeList.contains(route)) {
+                    routeList.add(route);
+                }
             }
         }
 
         return routeList;
+    }
+
+    /**
+     * Returns a list of tracks from the given list of waypoints.
+     *
+     * @param waypoints A list of waypoints
+     *
+     * @return A list of track or an empty list if none were found.
+     */
+    public static List<Track> getTracks(List<Waypoint> waypoints) {
+        List<Track> trackList = new ArrayList<>();
+        for (Waypoint point : waypoints) {
+            GeoPath path = point.getPath();
+            if (path instanceof Track) {
+                Track route = (Track) path;
+                if (!trackList.contains(route)) {
+                    trackList.add(route);
+                }
+            }
+        }
+
+        return trackList;
     }
 
     /**
@@ -470,18 +495,16 @@ public final class WaypointBuilder {
      * @return SQL SELECT statement
      */
     static private String buildQueryForWaypointsWOTimeStamps(List<DataSource> dataSources) {
-        
+
 //      SELECT_WO_TIMESTAMP
 //          SELECT DISTINCT artifact_id, artifact_type_id
 //          FROM blackboard_attributes
 //          WHERE artifact_id NOT IN (%s)
 //          AND artifact_id IN (%s)
-        
 //        GEO_ARTIFACT_QUERY_ID_ONLY
 //            SELECT artifact_id
 //            FROM blackboard_attributes
 //            WHERE attribute_type_id IN (%d, %d)
-        
         return String.format(SELECT_WO_TIMESTAMP,
                 String.format(GEO_ARTIFACT_QUERY_ID_ONLY,
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
@@ -523,12 +546,12 @@ public final class WaypointBuilder {
 //              IN ( %s )
 //       
             mostRecentQuery = String.format("AND value_int64 > (%s)", //NON-NLS           
-            String.format(MOST_RECENT_TIME,
-                    cntDaysFromRecent,
-                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
-                    getWaypointListQuery(dataSources)
-            ));
+                    String.format(MOST_RECENT_TIME,
+                            cntDaysFromRecent,
+                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
+                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+                            getWaypointListQuery(dataSources)
+                    ));
         }
 
 //      GEO_ARTIFACT_QUERY
@@ -622,8 +645,12 @@ public final class WaypointBuilder {
             case TSK_GPS_LAST_KNOWN_LOCATION:
                 waypoints.add(new LastKnownWaypoint(artifact));
                 break;
+            case TSK_GPS_TRACK:
+                Track track = new Track(artifact);
+                waypoints.addAll(track.getPath());
+                break;
             default:
-                 waypoints.add(new CustomArtifactWaypoint(artifact));
+                waypoints.add(new CustomArtifactWaypoint(artifact));
         }
 
         return waypoints;

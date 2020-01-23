@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.geolocation;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -30,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -49,6 +51,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.geolocation.GeoFilterPanel.GeoFilter;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
+import org.sleuthkit.autopsy.geolocation.datamodel.Track;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder;
 import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder.WaypointFilterQueryCallBack;
@@ -85,12 +88,12 @@ public final class GeolocationTopComponent extends TopComponent {
 
     // This is the hardcoded report name from KMLReport.java
     private static final String REPORT_KML = "ReportKML.kml";
-    
+
     private boolean mapInitalized = false;
 
     @Messages({
         "GLTopComponent_name=Geolocation",
-        "GLTopComponent_initilzation_error=An error occurred during waypoint initilization.  Geolocation data maybe incomplete."
+        "GLTopComponent_initilzation_error=An error occurred during waypoint initilization. Geolocation data maybe incomplete."
     })
 
     /**
@@ -113,13 +116,14 @@ public final class GeolocationTopComponent extends TopComponent {
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()
-                        || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID())) {
+                        || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()
+                        || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID())) {
 
                     showRefreshPanel(true);
                 }
             }
         };
-        
+
         this.caseEventListener = pce -> {
             mapPanel.clearWaypoints();
             if (pce.getNewValue() != null) {
@@ -148,7 +152,7 @@ public final class GeolocationTopComponent extends TopComponent {
         filterPane.setPanel(geoFilterPanel);
         geoFilterPanel.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {          
+            public void actionPerformed(ActionEvent e) {
                 updateWaypoints();
             }
         });
@@ -186,7 +190,7 @@ public final class GeolocationTopComponent extends TopComponent {
     public void componentOpened() {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
-        
+
     }
 
     @Messages({
@@ -199,7 +203,7 @@ public final class GeolocationTopComponent extends TopComponent {
         mapPanel.clearWaypoints();
         geoFilterPanel.clearDataSourceList();
         geoFilterPanel.updateDataSourceList();
-        
+
         // Let's make sure we only do this on the first open
         if (!mapInitalized) {
             try {
@@ -217,7 +221,7 @@ public final class GeolocationTopComponent extends TopComponent {
                 return; // Doen't set the waypoints.
             }
         }
-        mapPanel.setWaypoints(new ArrayList<>());
+        mapPanel.setWaypoints(new LinkedHashSet<>());
         updateWaypoints();
     }
 
@@ -227,12 +231,27 @@ public final class GeolocationTopComponent extends TopComponent {
      * @param show Whether to show or hide the panel.
      */
     private void showRefreshPanel(boolean show) {
-        if (show) {
-            mapPanel.add(refreshPanel, BorderLayout.NORTH);
-        } else {
-            mapPanel.remove(refreshPanel);
-        }
-        mapPanel.revalidate();
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                boolean isShowing = false;
+                Component[] comps = mapPanel.getComponents();
+                for(Component comp: comps) {
+                    if(comp.equals(refreshPanel)) {
+                        isShowing = true;
+                        break;
+                    }
+                }
+                if (show && !isShowing) {
+                    mapPanel.add(refreshPanel, BorderLayout.NORTH);
+                    mapPanel.revalidate();
+                } else if(!show && isShowing){
+                    mapPanel.remove(refreshPanel);
+                    mapPanel.revalidate();
+                }         
+            }
+        });
+
     }
 
     /**
@@ -242,7 +261,7 @@ public final class GeolocationTopComponent extends TopComponent {
     @Messages({
         "GeoTopComponent_no_waypoints_returned_mgs=Applied filter failed to find waypoints that matched criteria.\nRevise filter options and try again.",
         "GeoTopComponent_no_waypoints_returned_Title=No Waypoints Found",
-        "GeoTopComponent_filter_exception_msg=Exception occured during waypoint filtering.",
+        "GeoTopComponent_filter_exception_msg=Exception occurred during waypoint filtering.",
         "GeoTopComponent_filter_exception_Title=Filter Failure",
         "GeoTopComponent_filer_data_invalid_msg=Unable to run waypoint filter.\nPlease select one or more data sources.",
         "GeoTopComponent_filer_data_invalid_Title=Filter Failure"
@@ -378,7 +397,7 @@ public final class GeolocationTopComponent extends TopComponent {
             String reportBaseDir = createReportDirectory();
 
             progressPanel.setLabels(REPORT_KML, reportBaseDir);
-            
+
             SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() throws Exception {
@@ -406,7 +425,7 @@ public final class GeolocationTopComponent extends TopComponent {
     /**
      * A runnable class for getting waypoints based on the current filters.
      */
-    private class WaypointRunner implements Runnable {
+    private class WaypointRunner implements Runnable, WaypointFilterQueryCallBack {
 
         private final GeoFilter filters;
 
@@ -428,7 +447,7 @@ public final class GeolocationTopComponent extends TopComponent {
                         filters.showAllWaypoints(),
                         filters.getMostRecentNumDays(),
                         filters.showWaypointsWithoutTimeStamp(),
-                        new WaypointCallBack());
+                        this);
 
             } catch (GeoLocationDataException ex) {
                 logger.log(Level.SEVERE, "Failed to filter waypoints.", ex);
@@ -439,30 +458,32 @@ public final class GeolocationTopComponent extends TopComponent {
                                 Bundle.GeoTopComponent_filter_exception_Title(),
                                 Bundle.GeoTopComponent_filter_exception_msg(),
                                 JOptionPane.ERROR_MESSAGE);
-                        
+
                         setWaypointLoading(false);
                     }
                 });
             }
         }
 
-    }
-
-    /**
-     * Callback for getting waypoints.
-     */
-    private class WaypointCallBack implements WaypointFilterQueryCallBack {
-
         @Override
-        public void process(final List<Waypoint> waypoints) {
-            // Make sure that the waypoints are added to the map panel in
-            // the correct thread.
+        public void process(List<Waypoint> waypoints) {
+
+            List<Track> tracks = null;
+            try {
+                tracks = Track.getTracks(Case.getCurrentCase().getSleuthkitCase(), filters.getDataSources());
+            } catch (GeoLocationDataException ex) {
+                logger.log(Level.WARNING, "Exception thrown while retrieving list of Tracks", ex);
+            }
+
+            List<Waypoint> completeList = createWaypointList(waypoints, tracks);
+            final Set<MapWaypoint> pointSet = MapWaypoint.getWaypoints(completeList);
+            
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
                     // If the list is empty, tell the user and do not change 
                     // the visible waypoints.
-                    if (waypoints == null || waypoints.isEmpty()) {
+                    if (completeList == null || completeList.isEmpty()) {
                         mapPanel.clearWaypoints();
                         JOptionPane.showMessageDialog(GeolocationTopComponent.this,
                                 Bundle.GeoTopComponent_no_waypoints_returned_Title(),
@@ -473,11 +494,173 @@ public final class GeolocationTopComponent extends TopComponent {
                         return;
                     }
                     mapPanel.clearWaypoints();
-                    mapPanel.setWaypoints(MapWaypoint.getWaypoints(waypoints));
+                    mapPanel.setWaypoints(pointSet);
                     setWaypointLoading(false);
                     geoFilterPanel.setEnabled(true);
                 }
             });
+        }
+
+        /**
+         * Returns a complete list of waypoints including the tracks. Takes into
+         * account the current filters and includes waypoints as approprate.
+         *
+         * @param waypoints List of waypoints
+         * @param tracks    List of tracks
+         *
+         * @return A list of waypoints including the tracks based on the current
+         *         filters.
+         */
+        private List<Waypoint> createWaypointList(List<Waypoint> waypoints, List<Track> tracks) {
+            final List<Waypoint> completeList = new ArrayList<>();
+
+            if (tracks != null) {
+                Long timeRangeEnd;
+                Long timeRangeStart;
+                if (!filters.showAllWaypoints()) {
+                    // Figure out what the most recent time is given the filtered
+                    // waypoints and the tracks.
+                    timeRangeEnd = getMostRecent(waypoints, tracks);
+                    timeRangeStart = timeRangeEnd - (86400 * filters.getMostRecentNumDays());
+
+                    completeList.addAll(getWaypointsInRange(timeRangeStart, timeRangeEnd, waypoints));
+                    completeList.addAll(getTracksInRange(timeRangeStart, timeRangeEnd, tracks));
+
+                } else {
+                    completeList.addAll(waypoints);
+                    for (Track track : tracks) {
+                        completeList.addAll(track.getPath());
+                    }
+                }
+            } else {
+                completeList.addAll(waypoints);
+            }
+
+            return completeList;
+        }
+
+        /**
+         * Return a list of waypoints that fall into the given time range.
+         *
+         * @param timeRangeStart start timestamp of range (seconds from java
+         *                       epoch)
+         * @param timeRangeEnd   start timestamp of range (seconds from java
+         *                       epoch)
+         * @param waypoints      List of waypoints to filter.
+         *
+         * @return A list of waypoints that fall into the time range.
+         */
+        private List<Waypoint> getWaypointsInRange(Long timeRangeStart, Long timeRangeEnd, List<Waypoint> waypoints) {
+            List<Waypoint> completeList = new ArrayList<>();
+            // Add all of the waypoints that fix into the time range.
+            if (waypoints != null) {
+                for (Waypoint point : waypoints) {
+                    Long time = point.getTimestamp();
+                    if ((time == null && filters.showWaypointsWithoutTimeStamp())
+                            || (time != null && (time >= timeRangeStart && time <= timeRangeEnd))) {
+
+                        completeList.add(point);
+                    }
+                }
+            }
+            return completeList;
+        }
+
+        /**
+         * Return a list of waypoints from the given tracks that fall into for
+         * tracks that fall into the given time range. The track start time will
+         * used for determining if the whole track falls into the range.
+         *
+         * @param timeRangeStart start timestamp of range (seconds from java
+         *                       epoch)
+         * @param timeRangeEnd   start timestamp of range (seconds from java
+         *                       epoch)
+         * @param tracks         Track list.
+         *
+         * @return A list of waypoints that that belong to tracks that fall into
+         *         the time range.
+         */
+        private List<Waypoint> getTracksInRange(Long timeRangeStart, Long timeRangeEnd, List<Track> tracks) {
+            List<Waypoint> completeList = new ArrayList<>();
+            if (tracks != null) {
+                for (Track track : tracks) {
+                    Long trackTime = track.getStartTime();
+
+                    if ((trackTime == null && filters.showWaypointsWithoutTimeStamp())
+                            || (trackTime != null && (trackTime >= timeRangeStart && trackTime <= timeRangeEnd))) {
+
+                        completeList.addAll(track.getPath());
+                    }
+                }
+            }
+            return completeList;
+        }
+
+        /**
+         * Find the latest time stamp in the given list of waypoints.
+         *
+         * @param points List of Waypoints, required.
+         *
+         * @return The latest time stamp (seconds from java epoch)
+         */
+        private Long findMostRecentTimestamp(List<Waypoint> points) {
+
+            Long mostRecent = null;
+
+            for (Waypoint point : points) {
+                if (mostRecent == null) {
+                    mostRecent = point.getTimestamp();
+                } else {
+                    mostRecent = Math.max(mostRecent, point.getTimestamp());
+                }
+            }
+
+            return mostRecent;
+        }
+
+        /**
+         * Find the latest time stamp in the given list of tracks.
+         *
+         * @param tracks List of Waypoints, required.
+         *
+         * @return The latest time stamp (seconds from java epoch)
+         */
+        private Long findMostRecentTracks(List<Track> tracks) {
+            Long mostRecent = null;
+
+            for (Track track : tracks) {
+                if (mostRecent == null) {
+                    mostRecent = track.getStartTime();
+                } else {
+                    mostRecent = Math.max(mostRecent, track.getStartTime());
+                }
+            }
+
+            return mostRecent;
+        }
+
+        /**
+         * Returns the "most recent" timestamp amount the list of waypoints and
+         * track points.
+         *
+         * @param points List of Waypoints
+         * @param tracks List of Tracks
+         *
+         * @return Latest time stamp (seconds from java epoch)
+         */
+        private Long getMostRecent(List<Waypoint> points, List<Track> tracks) {
+            Long waypointMostRecent = findMostRecentTimestamp(points);
+            Long trackMostRecent = findMostRecentTracks(tracks);
+
+            if (waypointMostRecent != null && trackMostRecent != null) {
+                return Math.max(waypointMostRecent, trackMostRecent);
+            } else if (waypointMostRecent == null && trackMostRecent != null) {
+                return trackMostRecent;
+            } else if (waypointMostRecent != null && trackMostRecent == null) {
+                return waypointMostRecent;
+            }
+
+            return null;
         }
     }
 }
