@@ -129,12 +129,6 @@ final class FileIngestPipeline {
                     module.process(file);
                 } catch (Throwable ex) { // Catch-all exception firewall
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                    String msg = ex.getMessage();
-                    // Jython run-time errors don't seem to have a message, but have details in toString.
-                    if (msg == null) {
-                        msg = ex.toString();
-                    }
-                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "FileIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
                 }
                 if (this.job.isCancelled()) {
                     break;
