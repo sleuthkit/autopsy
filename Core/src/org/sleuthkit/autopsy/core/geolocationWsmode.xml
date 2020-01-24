@@ -3,7 +3,7 @@
     <name unique="geolocation"/>
     <kind type="editor"/>
     <state type="separated"/>
-    <bounds x="76" y="68" width="500" height="500"/>
+    <bounds x="76" y="68" width="800" height="500"/>
     <frame state="0"/>
     
     <empty-behavior permanent="false"/>
