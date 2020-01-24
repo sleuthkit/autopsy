@@ -51,7 +51,6 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
-// ELTODO see if this is better: import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
@@ -85,7 +84,7 @@ import org.sleuthkit.datamodel.Content;
 
 /**
  * Handles management of a either a local or centralized Solr server and its
- * cores.
+ * collections or cores.
  */
 public class Server {
 
