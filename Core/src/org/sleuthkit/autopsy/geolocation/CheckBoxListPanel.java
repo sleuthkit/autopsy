@@ -67,6 +67,10 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
         model.removeAllElements();
     }
     
+    boolean isEmpty() {
+        return model.isEmpty();
+    }
+    
     @Override
     public void setEnabled(boolean enabled) {
         checkboxList.setEnabled(enabled);

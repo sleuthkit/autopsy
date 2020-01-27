@@ -20,14 +20,19 @@ package org.sleuthkit.autopsy.geolocation;
 
 import java.awt.GridBagConstraints;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javafx.util.Pair;
 import javax.swing.ImageIcon;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingWorker;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -38,11 +43,23 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class GeoFilterPanel extends javax.swing.JPanel {
 
+    final static String INITPROPERTY = "FilterPanelInitCompleted";
+
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(GeoFilterPanel.class.getName());
 
     private final SpinnerNumberModel numberModel;
     private final CheckBoxListPanel<DataSource> checkboxPanel;
+
+    // Make sure to update if 
+    private static final BlackboardArtifact.ARTIFACT_TYPE[] GPS_ARTIFACT_TYPES = {
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK,
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION,
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE,
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH,
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK,
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT
+    };
 
     /**
      * Creates new GeoFilterPanel
@@ -73,7 +90,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 15, 0, 15);
         add(checkboxPanel, gridBagConstraints);
     }
-    
+
     @Override
     public void setEnabled(boolean enabled) {
         applyButton.setEnabled(enabled);
@@ -84,23 +101,24 @@ class GeoFilterPanel extends javax.swing.JPanel {
         daysLabel.setEnabled(enabled);
         daysSpinner.setEnabled(enabled);
     }
-    
+
     /**
      * Update the data source list with the current data sources
      */
     void updateDataSourceList() {
-         try {
-            initCheckboxList();
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to initialize the CheckboxListPane", ex); //NON-NLS
-        }
+        DataSourceUpdater updater = new DataSourceUpdater();
+        updater.execute();
     }
-    
+
     /**
      * Clears the data source list.
      */
     void clearDataSourceList() {
         checkboxPanel.clearList();
+    }
+
+    boolean hasDataSources() {
+        return !checkboxPanel.isEmpty();
     }
 
     /**
@@ -128,24 +146,10 @@ class GeoFilterPanel extends javax.swing.JPanel {
         if (dataSources.isEmpty()) {
             throw new GeoLocationUIException(Bundle.GeoFilterPanel_empty_dataSource());
         }
-        return new GeoFilter(allButton.isSelected(), 
-                showWaypointsWOTSCheckBox.isSelected(), 
-                numberModel.getNumber().intValue(), 
+        return new GeoFilter(allButton.isSelected(),
+                showWaypointsWOTSCheckBox.isSelected(),
+                numberModel.getNumber().intValue(),
                 dataSources);
-    }
-
-    /**
-     * Initialize the checkbox list panel
-     *
-     * @throws TskCoreException
-     */
-    private void initCheckboxList() throws TskCoreException {
-        final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-        
-        for (DataSource dataSource : sleuthkitCase.getDataSources()) {
-            String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
-            checkboxPanel.addElement(dsName, dataSource);
-        }
     }
 
     /**
@@ -374,6 +378,74 @@ class GeoFilterPanel extends javax.swing.JPanel {
         List<DataSource> getDataSources() {
             return Collections.unmodifiableList(dataSources);
         }
+    }
+
+    /**
+     * SwingWorker for updating the list of valid data sources.
+     * 
+     * doInBackground creates a list of Pair objects that contain the 
+     * display name of the data source and the data source object. 
+     */
+    final private class DataSourceUpdater extends SwingWorker<List<Pair<String, DataSource>>, Void> {
+
+        @Override
+        protected List<Pair<String, DataSource>> doInBackground() throws Exception {
+            SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+            List<Pair<String, DataSource>> validSources = new ArrayList<>();
+            for (DataSource dataSource : sleuthkitCase.getDataSources()) {
+                if (isGPSDataSource(sleuthkitCase, dataSource)) {
+                    String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
+                    Pair<String, DataSource> pair = new Pair<>(dsName, dataSource);
+                    validSources.add(pair);
+                }
+            }
+
+            return validSources;
+        }
+
+        /**
+         * Returns whether or not the given data source has GPS artifacts.
+         * 
+         * @param sleuthkitCase The current sleuthkitCase
+         * @param dataSource 
+         * 
+         * @return True if the data source as at least one TSK_GPS_XXXX
+         * 
+         * @throws TskCoreException 
+         */
+        private boolean isGPSDataSource(SleuthkitCase sleuthkitCase, DataSource dataSource) throws TskCoreException {
+            for (BlackboardArtifact.ARTIFACT_TYPE type : GPS_ARTIFACT_TYPES) {
+                if (sleuthkitCase.getBlackboardArtifactsTypeCount(type.getTypeID(), dataSource.getId()) > 0) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        @Override
+        public void done() {
+            List<Pair<String, DataSource>> sources = null;
+            try {
+                sources = get();
+            } catch (InterruptedException | ExecutionException ex) {
+                Throwable cause = ex.getCause();
+                if (cause != null) {
+                    logger.log(Level.SEVERE, cause.getMessage(), cause);
+                } else {
+                    logger.log(Level.SEVERE, ex.getMessage(), ex);
+                }
+            }
+
+            if (sources != null) {
+                for (Pair<String, DataSource> source : sources) {
+                    checkboxPanel.addElement(source.getKey(), source.getValue());
+                }
+            }
+
+            GeoFilterPanel.this.firePropertyChange(INITPROPERTY, false, true);
+        }
+
     }
 
 }
