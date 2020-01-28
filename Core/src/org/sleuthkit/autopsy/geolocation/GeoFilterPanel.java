@@ -226,6 +226,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         waypointSettings.add(showWaypointsWOTSCheckBox, gridBagConstraints);
 
         daysSpinner.setEnabled(false);
+        daysSpinner.setPreferredSize(new java.awt.Dimension(75, 26));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 1;
