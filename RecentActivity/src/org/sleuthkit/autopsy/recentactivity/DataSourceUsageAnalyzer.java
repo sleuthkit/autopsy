@@ -214,15 +214,24 @@ class DataSourceUsageAnalyzer extends Extract {
         }
     }
     
+  
+    /**
+     * Checks to see if the data source might be a DJI internal drone storage
+     * card. If so, creates TSK_DATA_SOURCE_USAGE artifact.
+     *
+     * @return true if any specified files exist false if none exist
+     *
+     * @throws TskCoreException
+     */
     @Messages({
         "DataSourceUsage_DJU_Drone_DAT=DJI Internal SD Card"
     })
     private void createDJIDroneDATArtitifacts() throws TskCoreException {
-        //fileList = fileManager.findFiles(dataSource, "FLY___.DAT"); //NON-NLS
         FileManager fileManager = currentCase.getServices().getFileManager();
-        for(AbstractFile file : fileManager.findFiles(dataSource, "FLY___.DAT")) {
+        // The underscores are SQL wild cards.
+        List<AbstractFile> files = fileManager.findFiles(dataSource, "FLY___.DAT");
+        if (files != null && files.size() > 0) {
             createDataSourceUsageArtifact(Bundle.DataSourceUsage_DJU_Drone_DAT());
-            return;
         }
     }
 }
