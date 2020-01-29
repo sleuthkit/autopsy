@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Central Repository database implementation using Postgres as a backend
  */
-final class PostgresCentralRepo extends AbstractCentralRepo {
+final class PostgresCentralRepo extends RelationalDbCentralRepo {
 
     private final static Logger LOGGER = Logger.getLogger(PostgresCentralRepo.class.getName());
 

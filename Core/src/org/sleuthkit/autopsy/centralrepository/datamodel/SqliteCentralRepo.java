@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
  * AbstractSqlEamDb that read or write to the database should be overriden here
  * and use appropriate locking.
  */
-final class SqliteCentralRepo extends AbstractCentralRepo {
+final class SqliteCentralRepo extends RelationalDbCentralRepo {
 
     private final static Logger LOGGER = Logger.getLogger(SqliteCentralRepo.class.getName());
 

@@ -55,9 +55,9 @@ import org.sleuthkit.datamodel.TskData;
  * Generic JDBC methods
  *
  */
-abstract class AbstractCentralRepo implements CentralRepository {
+abstract class RelationalDbCentralRepo implements CentralRepository {
 
-    private final static Logger logger = Logger.getLogger(AbstractCentralRepo.class.getName());
+    private final static Logger logger = Logger.getLogger(RelationalDbCentralRepo.class.getName());
     static final String SCHEMA_MAJOR_VERSION_KEY = "SCHEMA_VERSION";
     static final String SCHEMA_MINOR_VERSION_KEY = "SCHEMA_MINOR_VERSION";
     static final String CREATION_SCHEMA_MAJOR_VERSION_KEY = "CREATION_SCHEMA_MAJOR_VERSION";
@@ -96,7 +96,7 @@ abstract class AbstractCentralRepo implements CentralRepository {
      *
      * @throws UnknownHostException, EamDbException
      */
-    protected AbstractCentralRepo() throws CentralRepoException {
+    protected RelationalDbCentralRepo() throws CentralRepoException {
         bulkArtifactsCount = 0;
         bulkArtifacts = new HashMap<>();
 
@@ -3331,7 +3331,7 @@ abstract class AbstractCentralRepo implements CentralRepository {
             selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
             int minorVersion = 0;
             String minorVersionStr = null;
-            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + AbstractCentralRepo.SCHEMA_MINOR_VERSION_KEY + "'");
+            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + RelationalDbCentralRepo.SCHEMA_MINOR_VERSION_KEY + "'");
             if (resultSet.next()) {
                 minorVersionStr = resultSet.getString("value");
                 try {
@@ -3345,7 +3345,7 @@ abstract class AbstractCentralRepo implements CentralRepository {
 
             int majorVersion = 0;
             String majorVersionStr = null;
-            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + AbstractCentralRepo.SCHEMA_MAJOR_VERSION_KEY + "'");
+            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + RelationalDbCentralRepo.SCHEMA_MAJOR_VERSION_KEY + "'");
             if (resultSet.next()) {
                 majorVersionStr = resultSet.getString("value");
                 try {
@@ -3541,14 +3541,14 @@ abstract class AbstractCentralRepo implements CentralRepository {
                  * indicate that it is unknown.
                  */
                 String creationMajorVer;
-                resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name = '" + AbstractCentralRepo.CREATION_SCHEMA_MAJOR_VERSION_KEY + "'");
+                resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name = '" + RelationalDbCentralRepo.CREATION_SCHEMA_MAJOR_VERSION_KEY + "'");
                 if (resultSet.next()) {
                     creationMajorVer = resultSet.getString("value");
                 } else {
                     creationMajorVer = "0";
                 }
                 String creationMinorVer;
-                resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name = '" + AbstractCentralRepo.CREATION_SCHEMA_MINOR_VERSION_KEY + "'");
+                resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name = '" + RelationalDbCentralRepo.CREATION_SCHEMA_MINOR_VERSION_KEY + "'");
                 if (resultSet.next()) {
                     creationMinorVer = resultSet.getString("value");
                 } else {
@@ -3560,10 +3560,10 @@ abstract class AbstractCentralRepo implements CentralRepository {
                 } else {
                     statement.execute("CREATE TABLE db_info (id INTEGER PRIMARY KEY, name TEXT UNIQUE NOT NULL, value TEXT NOT NULL)");
                 }
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractCentralRepo.SCHEMA_MAJOR_VERSION_KEY + "','" + majorVersionStr + "')");
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractCentralRepo.SCHEMA_MINOR_VERSION_KEY + "','" + minorVersionStr + "')");
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractCentralRepo.CREATION_SCHEMA_MAJOR_VERSION_KEY + "','" + creationMajorVer + "')");
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractCentralRepo.CREATION_SCHEMA_MINOR_VERSION_KEY + "','" + creationMinorVer + "')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + RelationalDbCentralRepo.SCHEMA_MAJOR_VERSION_KEY + "','" + majorVersionStr + "')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + RelationalDbCentralRepo.SCHEMA_MINOR_VERSION_KEY + "','" + minorVersionStr + "')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + RelationalDbCentralRepo.CREATION_SCHEMA_MAJOR_VERSION_KEY + "','" + creationMajorVer + "')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + RelationalDbCentralRepo.CREATION_SCHEMA_MINOR_VERSION_KEY + "','" + creationMinorVer + "')");
             }
             /*
              * Update to 1.3
