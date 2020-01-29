@@ -77,6 +77,7 @@ class DataSourceUsageAnalyzer extends Extract {
         
          createOSInfoDataSourceUsageArtifacts();
          createAndroidMediaCardArtifacts(); 
+         createDJIDroneDATArtitifacts();
      }
     /**
      * Create TSK_DATA_SOURCE_USAGE artifacts based on OS_INFO artifacts
@@ -175,7 +176,7 @@ class DataSourceUsageAnalyzer extends Extract {
         "DataSourceUsage_AndroidMedia=Android Media Card",
         "DataSourceUsage_FlashDrive=Flash Drive"
     })
-    private void createAndroidMediaCardArtifacts() throws TskCoreException {
+    private void createAndroidMediaCardArtifacts() {
          
         if (dataSource instanceof Image) {
            Image image = (Image) dataSource;
@@ -210,6 +211,18 @@ class DataSourceUsageAnalyzer extends Extract {
            } catch (TskCoreException ex) {
                logger.log(Level.SEVERE, "Exception while checking image: {0} for Andriod media card", image.getName() + ex.getMessage()); //NON-NLS
            }
+        }
+    }
+    
+    @Messages({
+        "DataSourceUsage_DJU_Drone_DAT=DJI Internal SD Card"
+    })
+    private void createDJIDroneDATArtitifacts() throws TskCoreException {
+        //fileList = fileManager.findFiles(dataSource, "FLY___.DAT"); //NON-NLS
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        for(AbstractFile file : fileManager.findFiles(dataSource, "FLY___.DAT")) {
+            createDataSourceUsageArtifact(Bundle.DataSourceUsage_DJU_Drone_DAT());
+            return;
         }
     }
 }
