@@ -52,6 +52,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.report.ReportModule;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.report.infrastructure.ReportWizardAction")
 @ActionRegistration(displayName = "#CTL_ReportWizardAction", lazy = false)
@@ -101,9 +102,10 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
             if (runReports) {
                 // generate reports in a separate thread
                 panel = new ReportGenerationPanel();
+                Map<String, ReportModule> modules = (Map<String, ReportModule>) wiz.getProperty("modules");
                 ReportGenerator generator = new ReportGenerator(configName, panel); //NON-NLS
                 ReportWorker worker = new ReportWorker(() -> {
-                    generator.generateReports();
+                    generator.generateReports(modules);
                 });
                 worker.execute();
                 generator.displayProgressPanel();

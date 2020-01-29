@@ -33,7 +33,7 @@ The module may also extract data from the following apps:
 
 NOTE: These database formats vary by version of OS and different vendors can place the databases in different places. Autopsy may not support all versions and vendors. 
 
-NOTE: This module is not exhaustive with its support for Android.  It was created as a starting point for others to contribute plug-ins for 3rd party apps.  See the <a href="http://sleuthkit.org/autopsy/docs/api-docs/4.13.0/mod_mobile_page.html">Developer docs</a>  for information on writing modules. 
+NOTE: This module is not exhaustive with its support for Android.  It was created as a starting point for others to contribute plug-ins for 3rd party apps.  See the <a href="http://sleuthkit.org/autopsy/docs/api-docs/latest/mod_mobile_page.html">Developer docs</a>  for information on writing modules. 
 
 
 Configuration

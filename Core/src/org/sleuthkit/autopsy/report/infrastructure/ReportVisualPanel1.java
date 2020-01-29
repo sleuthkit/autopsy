@@ -42,6 +42,7 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
 
 /**
  * Display reports modules.
@@ -128,7 +129,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             ReportModuleSettings settings = null;
             if (moduleConfigs != null) {
                 // get configuration for this module
-                ReportModuleConfig config = moduleConfigs.get(module.getClass().getCanonicalName());                
+                ReportModuleConfig config = moduleConfigs.get(FactoryClassNameNormalizer.normalize(module.getClass().getCanonicalName()));                
                 if (config != null) {
                     // there is an existing configuration for this module
                     settings = config.getModuleSettings();
@@ -239,16 +240,24 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         for (ReportModule module : modules) {
             // get updated module configuration
             ReportModuleSettings settings = module.getConfiguration();
-            moduleConfigs.put(module.getClass().getCanonicalName(), new ReportModuleConfig(module, false, settings));
+            moduleConfigs.put(FactoryClassNameNormalizer.normalize(module.getClass().getCanonicalName()), new ReportModuleConfig(module, false, settings));
         }
         
         // set "enabled" flag for the selected module
         ReportModule mod = getSelectedModule();
-        ReportModuleConfig config = moduleConfigs.get(mod.getClass().getCanonicalName());
+        ReportModuleConfig config = moduleConfigs.get(FactoryClassNameNormalizer.normalize(mod.getClass().getCanonicalName()));
         config.setEnabled(true);
         
         return moduleConfigs;
     }
+    
+    Map<String, ReportModule> getReportModules() {
+        Map<String, ReportModule> modulesMap = new HashMap<>();
+        for (ReportModule module : modules) {
+            modulesMap.put(FactoryClassNameNormalizer.normalize(module.getClass().getCanonicalName()), module);
+        }
+        return modulesMap;
+    } 
 
     /**
      * This method is called from within the constructor to initialize the form.

@@ -198,7 +198,7 @@ See \ref platform_blackboard  for details on saving results to it.  You use the 
 The blackboard defines artifacts for specific data types (such as web bookmarks). 
 You can use one of the standard artifact types or create your own.
 
-After you've added an artifact and all of its attributes to the blackboard, you should call <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.6/classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html">sleuthkit.Blackboard.postArtifact()</a>, which will:
+After you've added an artifact and all of its attributes to the blackboard, you should call <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/latest/classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html">sleuthkit.Blackboard.postArtifact()</a>, which will:
 <ul>
 <li>Analyze the artifact and add any timestamps to the Timeline tables
 <li>Send an event over the Sleuth Kit event bus that the artifact(s) was added
@@ -212,7 +212,7 @@ This means you no longer have to make separate calls to:
  - Index the artifact
  - Fire the event to refresh the UI.
  
-If you are creating a large number of artifacts, you may see better performance if you save all the artifacts you create and do one bulk post at the end using <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.6/classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html">sleuthkit.Blackboard.postArtifacts()</a>. You can also post batches of artifacts instead of saving all of them until the end.
+If you are creating a large number of artifacts, you may see better performance if you save all the artifacts you create and do one bulk post at the end using <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/latest/classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html">sleuthkit.Blackboard.postArtifacts()</a>. You can also post batches of artifacts instead of saving all of them until the end.
  
 You should not be using the Autopsy version of Blackboard. Those methods have all been deprecated and is another example of us moving "services" into the TSK data model.
 
