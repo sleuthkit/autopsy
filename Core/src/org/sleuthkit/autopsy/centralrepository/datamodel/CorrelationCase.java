@@ -36,7 +36,7 @@ public class CorrelationCase implements Serializable {
 
     private int databaseId;
     private String caseUUID;    // globally unique
-    private EamOrganization org;
+    private CentralRepoOrganization org;
     private String displayName;
     private String creationDate;
     private String caseNumber;
@@ -56,7 +56,7 @@ public class CorrelationCase implements Serializable {
 
     CorrelationCase(int ID,
             String caseUUID,
-            EamOrganization org,
+            CentralRepoOrganization org,
             String displayName,
             String creationDate,
             String caseNumber,
@@ -172,14 +172,14 @@ public class CorrelationCase implements Serializable {
     /**
      * @return the org
      */
-    public EamOrganization getOrg() {
+    public CentralRepoOrganization getOrg() {
         return org;
     }
 
     /**
      * @param org the org to set
      */
-    public void setOrg(EamOrganization org) {
+    public void setOrg(CentralRepoOrganization org) {
         this.org = org;
     }
 

@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2019 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb.SOFTWARE_CR_DB_SCHEMA_VERSION;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
 
 /**
  * Settings for the sqlite implementation of the Central Repository database
@@ -40,9 +40,9 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb
  * NOTE: This is public scope because the options panel calls it directly to
  * set/get
  */
-public final class SqliteEamDbSettings {
+public final class SqliteCentralRepoSettings {
 
-    private final static Logger LOGGER = Logger.getLogger(SqliteEamDbSettings.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(SqliteCentralRepoSettings.class.getName());
     private final static String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
     private final static String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "central_repository"; // NON-NLS
     private final static String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
@@ -60,7 +60,7 @@ public final class SqliteEamDbSettings {
     private String dbDirectory;
     private int bulkThreshold;
 
-    public SqliteEamDbSettings() {
+    public SqliteCentralRepoSettings() {
         loadSettings();
     }
 
@@ -78,15 +78,15 @@ public final class SqliteEamDbSettings {
         try {
             String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.bulkThreshold"); // NON-NLS
             if (bulkThresholdString == null || bulkThresholdString.isEmpty()) {
-                this.bulkThreshold = AbstractSqlEamDb.DEFAULT_BULK_THRESHHOLD;
+                this.bulkThreshold = AbstractCentralRepo.DEFAULT_BULK_THRESHHOLD;
             } else {
                 this.bulkThreshold = Integer.parseInt(bulkThresholdString);
                 if (getBulkThreshold() <= 0) {
-                    this.bulkThreshold = AbstractSqlEamDb.DEFAULT_BULK_THRESHHOLD;
+                    this.bulkThreshold = AbstractCentralRepo.DEFAULT_BULK_THRESHHOLD;
                 }
             }
         } catch (NumberFormatException ex) {
-            this.bulkThreshold = AbstractSqlEamDb.DEFAULT_BULK_THRESHHOLD;
+            this.bulkThreshold = AbstractCentralRepo.DEFAULT_BULK_THRESHHOLD;
         }
     }
 
@@ -211,8 +211,8 @@ public final class SqliteEamDbSettings {
             return false;
         }
 
-        boolean result = EamDbUtil.executeValidationQuery(conn, VALIDATION_QUERY);
-        EamDbUtil.closeConnection(conn);
+        boolean result = CentralRepoDbUtil.executeValidationQuery(conn, VALIDATION_QUERY);
+        CentralRepoDbUtil.closeConnection(conn);
         return result;
     }
 
@@ -228,8 +228,8 @@ public final class SqliteEamDbSettings {
             return false;
         }
 
-        boolean result = EamDbUtil.schemaVersionIsSet(conn);
-        EamDbUtil.closeConnection(conn);
+        boolean result = CentralRepoDbUtil.schemaVersionIsSet(conn);
+        CentralRepoDbUtil.closeConnection(conn);
         return result;
     }
 
@@ -369,10 +369,10 @@ public final class SqliteEamDbSettings {
              * name column could be the primary key.
              */
             stmt.execute("CREATE TABLE db_info (id INTEGER PRIMARY KEY, name TEXT UNIQUE NOT NULL, value TEXT NOT NULL)");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractCentralRepo.SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractCentralRepo.SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractCentralRepo.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractCentralRepo.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
 
             // Create a separate instance and reference table for each artifact type
             List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttributeInstance.getDefaultCorrelationTypes();
@@ -380,8 +380,8 @@ public final class SqliteEamDbSettings {
             String reference_type_dbname;
             String instance_type_dbname;
             for (CorrelationAttributeInstance.Type type : DEFAULT_CORRELATION_TYPES) {
-                reference_type_dbname = EamDbUtil.correlationTypeToReferenceTableName(type);
-                instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
+                reference_type_dbname = CentralRepoDbUtil.correlationTypeToReferenceTableName(type);
+                instance_type_dbname = CentralRepoDbUtil.correlationTypeToInstanceTableName(type);
 
                 stmt.execute(String.format(createArtifactInstancesTableTemplate, instance_type_dbname, instance_type_dbname));
                 stmt.execute(String.format(instancesCaseIdIdx, instance_type_dbname, instance_type_dbname));
@@ -400,11 +400,11 @@ public final class SqliteEamDbSettings {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
             return false;
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             LOGGER.log(Level.SEVERE, "Error getting default correlation types. Likely due to one or more Type's with an invalid db table name."); // NON-NLS
             return false;
         } finally {
-            EamDbUtil.closeConnection(conn);
+            CentralRepoDbUtil.closeConnection(conn);
         }
         return true;
     }
@@ -534,8 +534,8 @@ public final class SqliteEamDbSettings {
             return false;
         }
 
-        boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn) && EamDbUtil.insertDefaultOrganization(conn);
-        EamDbUtil.closeConnection(conn);
+        boolean result = CentralRepoDbUtil.insertDefaultCorrelationTypes(conn) && CentralRepoDbUtil.insertDefaultOrganization(conn);
+        CentralRepoDbUtil.closeConnection(conn);
         return result;
     }
 
@@ -561,11 +561,11 @@ public final class SqliteEamDbSettings {
      *
      * @param dbName the dbName to set
      */
-    public void setDbName(String dbName) throws EamDbException {
+    public void setDbName(String dbName) throws CentralRepoException {
         if (dbName == null || dbName.isEmpty()) {
-            throw new EamDbException("Invalid database file name. Cannot be null or empty."); // NON-NLS
+            throw new CentralRepoException("Invalid database file name. Cannot be null or empty."); // NON-NLS
         } else if (!Pattern.matches(DB_NAMES_REGEX, dbName)) {
-            throw new EamDbException("Invalid database file name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
+            throw new CentralRepoException("Invalid database file name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
         }
 
         this.dbName = dbName;
@@ -581,11 +581,11 @@ public final class SqliteEamDbSettings {
     /**
      * @param bulkThreshold the bulkThreshold to set
      */
-    void setBulkThreshold(int bulkThreshold) throws EamDbException {
+    void setBulkThreshold(int bulkThreshold) throws CentralRepoException {
         if (bulkThreshold > 0) {
             this.bulkThreshold = bulkThreshold;
         } else {
-            throw new EamDbException("Invalid bulk threshold."); // NON-NLS
+            throw new CentralRepoException("Invalid bulk threshold."); // NON-NLS
         }
     }
 
@@ -603,11 +603,11 @@ public final class SqliteEamDbSettings {
      *
      * @param dbDirectory the dbDirectory to set
      */
-    public void setDbDirectory(String dbDirectory) throws EamDbException {
+    public void setDbDirectory(String dbDirectory) throws CentralRepoException {
         if (dbDirectory != null && !dbDirectory.isEmpty()) {
             this.dbDirectory = dbDirectory;
         } else {
-            throw new EamDbException("Invalid directory for sqlite database. Cannot empty"); // NON-NLS
+            throw new CentralRepoException("Invalid directory for sqlite database. Cannot empty"); // NON-NLS
         }
     }
 

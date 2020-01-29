@@ -28,8 +28,8 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Encapsulates a menu action which triggers the common files search dialog.
@@ -107,19 +107,19 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
                 } else {
                     reason += Bundle.CommonAttributeSearchAction_openPanel_notEnoughDataSources();
                 }
-                if (!EamDb.isEnabled()) {
+                if (!CentralRepository.isEnabled()) {
                     reason += Bundle.CommonAttributeSearchAction_openPanel_centralRepoDisabled();
                     return false;
                 }
-                if (EamDb.getInstance() == null) {
+                if (CentralRepository.getInstance() == null) {
                     reason += Bundle.CommonAttributeSearchAction_openPanel_centralRepoInvalid();
                     return false;
                 }
-                if (EamDb.getInstance().getCases().size() < 2) {
+                if (CentralRepository.getInstance().getCases().size() < 2) {
                     reason += Bundle.CommonAttributeSearchAction_openPanel_notEnoughCases();
                     return false;
                 }
-                if (EamDb.getInstance().getCase(Case.getCurrentCase()) == null) {
+                if (CentralRepository.getInstance().getCase(Case.getCurrentCase()) == null) {
                     reason += Bundle.CommonAttributeSearchAction_openPanel_caseNotInCentralRepo();
                     return false;
                 }

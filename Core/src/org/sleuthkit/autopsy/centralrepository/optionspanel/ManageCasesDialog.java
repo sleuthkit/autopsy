@@ -28,10 +28,10 @@ import javax.swing.event.ListSelectionListener;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * A dialog which displays cases existing in the central repository and the
@@ -55,7 +55,7 @@ final class ManageCasesDialog extends javax.swing.JDialog {
                 true);
         initComponents();
         try {
-            EamDb dbManager = EamDb.getInstance();
+            CentralRepository dbManager = CentralRepository.getInstance();
             Map<Integer, List<CorrelationDataSource>> dataSourcesByCaseId = new HashMap<>();
             for (CorrelationDataSource dataSource : dbManager.getDataSources()) {
                 int caseID = dataSource.getCaseID();
@@ -66,7 +66,7 @@ final class ManageCasesDialog extends javax.swing.JDialog {
             for (CorrelationCase eamCase : dbManager.getCases()) {
                 casesTableModel.addEamCase(eamCase, dataSourcesByCaseId.getOrDefault(eamCase.getID(), new ArrayList<>()));
             }
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error getting list of cases from database.", ex); // NON-NLS
         }
 

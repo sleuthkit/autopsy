@@ -29,9 +29,9 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoOrganization;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Dialog to add a new organization to the Central Repository database
@@ -45,8 +45,8 @@ class AddNewOrganizationDialog extends javax.swing.JDialog {
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
     private boolean hasChanged;
-    private EamOrganization newOrg;
-    private final EamOrganization organizationToEdit;
+    private CentralRepoOrganization newOrg;
+    private final CentralRepoOrganization organizationToEdit;
 
     /**
      * Creates new form AddNewOrganizationDialog
@@ -67,7 +67,7 @@ class AddNewOrganizationDialog extends javax.swing.JDialog {
     }
 
     // populates the dialog with existing case information to edit
-    public AddNewOrganizationDialog(EamOrganization orgToEdit) {
+    public AddNewOrganizationDialog(CentralRepoOrganization orgToEdit) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.AddNewOrganizationDialog_addNewOrg_msg(),
                 true); // NON-NLS
@@ -208,7 +208,7 @@ class AddNewOrganizationDialog extends javax.swing.JDialog {
      * 
      * @return Org that was added or changed.  null if nothing changed
      */
-    public EamOrganization getNewOrg() {
+    public CentralRepoOrganization getNewOrg() {
         return newOrg;
     }
 
@@ -341,7 +341,7 @@ class AddNewOrganizationDialog extends javax.swing.JDialog {
     private void bnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOKActionPerformed
 
         try {
-            EamDb dbManager = EamDb.getInstance();
+            CentralRepository dbManager = CentralRepository.getInstance();
             if (organizationToEdit != null) {
                 // make a copy in case the update fails
                 newOrg = dbManager.getOrganizationByID(organizationToEdit.getOrgID());
@@ -351,7 +351,7 @@ class AddNewOrganizationDialog extends javax.swing.JDialog {
                 newOrg.setPocPhone(tfPocPhone.getText());
                 dbManager.updateOrganization(newOrg);
             } else {
-                newOrg = new EamOrganization(
+                newOrg = new CentralRepoOrganization(
                         tfOrganizationName.getText(),
                         tfPocName.getText(),
                         tfPocEmail.getText(),
@@ -360,7 +360,7 @@ class AddNewOrganizationDialog extends javax.swing.JDialog {
             }
             hasChanged = true;
             dispose();
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             lbWarningMsg.setText(Bundle.AddNewOrganizationDialog_bnOk_addFailed_text());
             logger.log(Level.SEVERE, "Failed adding new organization.", ex);
             newOrg = null;

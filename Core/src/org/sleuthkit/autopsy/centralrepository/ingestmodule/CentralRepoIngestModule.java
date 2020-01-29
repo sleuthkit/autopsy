@@ -30,10 +30,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
 import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -55,6 +54,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Ingest module for inserting entries into the Central Repository database on
@@ -96,7 +96,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
 
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
-        if (EamDb.isEnabled() == false) {
+        if (CentralRepository.isEnabled() == false) {
             /*
              * Not signaling an error for now. This is a workaround for the way
              * all newly didscovered ingest modules are automatically anabled.
@@ -113,7 +113,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
             return ProcessResult.ERROR;
         }
 
-        if (!EamArtifactUtil.isSupportedAbstractFileType(abstractFile)) {
+        if (!CorrelationAttributeUtil.isSupportedAbstractFileType(abstractFile)) {
             return ProcessResult.OK;
         }
 
@@ -121,10 +121,10 @@ final class CentralRepoIngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        EamDb dbManager;
+        CentralRepository dbManager;
         try {
-            dbManager = EamDb.getInstance();
-        } catch (EamDbException ex) {
+            dbManager = CentralRepository.getInstance();
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
             return ProcessResult.ERROR;
         }
@@ -152,7 +152,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
                 if (!caseDisplayNamesList.isEmpty()) {
                     postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList);
                 }
-            } catch (EamDbException ex) {
+            } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             } catch (CorrelationAttributeNormalizationException ex) {
@@ -175,7 +175,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
                         ,
                          abstractFile.getId());
                 dbManager.addAttributeInstanceBulk(cefi);
-            } catch (EamDbException ex) {
+            } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             } catch (CorrelationAttributeNormalizationException ex) {
@@ -190,25 +190,25 @@ final class CentralRepoIngestModule implements FileIngestModule {
     public void shutDown() {
         IngestEventsListener.decrementCorrelationEngineModuleCount();
 
-        if ((EamDb.isEnabled() == false) || (eamCase == null) || (eamDataSource == null)) {
+        if ((CentralRepository.isEnabled() == false) || (eamCase == null) || (eamDataSource == null)) {
             return;
         }
-        EamDb dbManager;
+        CentralRepository dbManager;
         try {
-            dbManager = EamDb.getInstance();
-        } catch (EamDbException ex) {
+            dbManager = CentralRepository.getInstance();
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
             return;
         }
         try {
             dbManager.commitAttributeInstancesBulk();
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error doing bulk insert of artifacts.", ex); // NON-NLS
         }
         try {
             Long count = dbManager.getCountArtifactInstancesByCaseDataSource(eamDataSource);
             logger.log(Level.INFO, "{0} artifacts in db for case: {1} ds:{2}", new Object[]{count, eamCase.getDisplayName(), eamDataSource.getName()}); // NON-NLS
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error counting artifacts.", ex); // NON-NLS
         }
 
@@ -249,7 +249,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
             IngestEventsListener.setCreateCrProperties(createCorrelationProperties);
         }
 
-        if (EamDb.isEnabled() == false) {
+        if (CentralRepository.isEnabled() == false) {
             /*
              * Not throwing the customary exception for now. This is a
              * workaround for the way all newly didscovered ingest modules are
@@ -274,36 +274,36 @@ final class CentralRepoIngestModule implements FileIngestModule {
 
         // Don't allow sqlite central repo databases to be used for multi user cases
         if ((autopsyCase.getCaseType() == Case.CaseType.MULTI_USER_CASE)
-                && (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.SQLITE)) {
+                && (CentralRepoPlatforms.getSelectedPlatform() == CentralRepoPlatforms.SQLITE)) {
             logger.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite central repository.");
             throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }
         jobId = context.getJobId();
 
-        EamDb centralRepoDb;
+        CentralRepository centralRepoDb;
         try {
-            centralRepoDb = EamDb.getInstance();
-        } catch (EamDbException ex) {
+            centralRepoDb = CentralRepository.getInstance();
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error connecting to central repository database.", ex); // NON-NLS
             throw new IngestModuleException("Error connecting to central repository database.", ex); // NON-NLS
         }
 
         try {
             filesType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
             throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
         }
 
         try {
             eamCase = centralRepoDb.getCase(autopsyCase);
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             throw new IngestModuleException("Unable to get case from central repository database ", ex);
         }
 
         try {
             eamDataSource = CorrelationDataSource.fromTSKDataSource(eamCase, context.getDataSource());
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
             throw new IngestModuleException("Error getting data source info.", ex); // NON-NLS
         }
@@ -317,7 +317,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
                 if (null == centralRepoDb.getDataSource(eamCase, eamDataSource.getDataSourceObjectID())) {
                     centralRepoDb.newDataSource(eamDataSource);
                 }
-            } catch (EamDbException ex) {
+            } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Error adding data source to Central Repository.", ex); // NON-NLS
                 throw new IngestModuleException("Error adding data source to Central Repository.", ex); // NON-NLS
             }

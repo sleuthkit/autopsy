@@ -39,11 +39,10 @@ import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -54,6 +53,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Listen for case events and update entries in the Central Repository database
@@ -76,10 +76,10 @@ final class CaseEventListener implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        EamDb dbManager;
+        CentralRepository dbManager;
         try {
-            dbManager = EamDb.getInstance();
-        } catch (EamDbException ex) {
+            dbManager = CentralRepository.getInstance();
+        } catch (CentralRepoException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get instance of db manager.", ex);
             return;
         }
@@ -117,17 +117,17 @@ final class CaseEventListener implements PropertyChangeListener {
 
     private final class ContentTagTask implements Runnable {
 
-        private final EamDb dbManager;
+        private final CentralRepository dbManager;
         private final PropertyChangeEvent event;
 
-        private ContentTagTask(EamDb db, PropertyChangeEvent evt) {
+        private ContentTagTask(CentralRepository db, PropertyChangeEvent evt) {
             dbManager = db;
             event = evt;
         }
 
         @Override
         public void run() {
-            if (!EamDb.isEnabled()) {
+            if (!CentralRepository.isEnabled()) {
                 return;
             }
 
@@ -197,13 +197,13 @@ final class CaseEventListener implements PropertyChangeListener {
                 }
             }
 
-            final CorrelationAttributeInstance eamArtifact = EamArtifactUtil.makeInstanceFromContent(af);
+            final CorrelationAttributeInstance eamArtifact = CorrelationAttributeUtil.makeInstanceFromContent(af);
 
             if (eamArtifact != null) {
                 // send update to Central Repository db
                 try {
                     dbManager.setAttributeInstanceKnownStatus(eamArtifact, knownStatus);
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database while setting artifact known status.", ex); //NON-NLS
                 }
             }
@@ -212,17 +212,17 @@ final class CaseEventListener implements PropertyChangeListener {
 
     private final class BlackboardTagTask implements Runnable {
 
-        private final EamDb dbManager;
+        private final CentralRepository dbManager;
         private final PropertyChangeEvent event;
 
-        private BlackboardTagTask(EamDb db, PropertyChangeEvent evt) {
+        private BlackboardTagTask(CentralRepository db, PropertyChangeEvent evt) {
             dbManager = db;
             event = evt;
         }
 
         @Override
         public void run() {
-            if (!EamDb.isEnabled()) {
+            if (!CentralRepository.isEnabled()) {
                 return;
             }
 
@@ -297,12 +297,12 @@ final class CaseEventListener implements PropertyChangeListener {
                 return;
             }
 
-            List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, true);
+            List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeInstancesFromBlackboardArtifact(bbArtifact, true);
             for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                 eamArtifact.setComment(comment);
                 try {
                     dbManager.setAttributeInstanceKnownStatus(eamArtifact, knownStatus);
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database while setting artifact known status.", ex); //NON-NLS
                 }
             }
@@ -320,7 +320,7 @@ final class CaseEventListener implements PropertyChangeListener {
 
         @Override
         public void run() {
-            if (!EamDb.isEnabled()) {
+            if (!CentralRepository.isEnabled()) {
                 return;
             }
             //get the display name of the tag that has had it's definition modified
@@ -370,9 +370,9 @@ final class CaseEventListener implements PropertyChangeListener {
                     if (!hasTagWithConflictingKnownStatus) {
                         //Get the correlation atttributes that correspond to the current BlackboardArtifactTag if their status should be changed
                         //with the initial set of correlation attributes this should be a single correlation attribute
-                        List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbTag.getArtifact(), true);
+                        List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeInstancesFromBlackboardArtifact(bbTag.getArtifact(), true);
                         for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
-                            EamDb.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
+                            CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
                         }
                     }
                 }
@@ -406,15 +406,15 @@ final class CaseEventListener implements PropertyChangeListener {
                     }
                     //if the file will have no tags with a status which would prevent the current status from being changed 
                     if (!hasTagWithConflictingKnownStatus) {
-                        final CorrelationAttributeInstance eamArtifact = EamArtifactUtil.makeInstanceFromContent(contentTag.getContent());
+                        final CorrelationAttributeInstance eamArtifact = CorrelationAttributeUtil.makeInstanceFromContent(contentTag.getContent());
                         if (eamArtifact != null) {
-                            EamDb.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
+                            CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
                         }
                     }
                 }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Cannot update known status in central repository for tag: " + modifiedTagName, ex);  //NON-NLS
-            } catch (EamDbException ex) {
+            } catch (CentralRepoException ex) {
                 LOGGER.log(Level.SEVERE, "Cannot get central repository for tag: " + modifiedTagName, ex);  //NON-NLS
             } catch (NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);  //NON-NLS
@@ -424,17 +424,17 @@ final class CaseEventListener implements PropertyChangeListener {
 
     private final class DataSourceAddedTask implements Runnable {
 
-        private final EamDb dbManager;
+        private final CentralRepository dbManager;
         private final PropertyChangeEvent event;
 
-        private DataSourceAddedTask(EamDb db, PropertyChangeEvent evt) {
+        private DataSourceAddedTask(CentralRepository db, PropertyChangeEvent evt) {
             dbManager = db;
             event = evt;
         }
 
         @Override
         public void run() {
-            if (!EamDb.isEnabled()) {
+            if (!CentralRepository.isEnabled()) {
                 return;
             }
             Case openCase;
@@ -453,7 +453,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 if (null == dbManager.getDataSource(correlationCase, newDataSource.getId())) {
                     CorrelationDataSource.fromTSKDataSource(correlationCase, newDataSource);
                 }
-            } catch (EamDbException ex) {
+            } catch (CentralRepoException ex) {
                 LOGGER.log(Level.SEVERE, "Error adding new data source to the central repository", ex); //NON-NLS
             } 
         } // DATA_SOURCE_ADDED
@@ -461,10 +461,10 @@ final class CaseEventListener implements PropertyChangeListener {
 
     private final class CurrentCaseTask implements Runnable {
 
-        private final EamDb dbManager;
+        private final CentralRepository dbManager;
         private final PropertyChangeEvent event;
 
-        private CurrentCaseTask(EamDb db, PropertyChangeEvent evt) {
+        private CurrentCaseTask(CentralRepository db, PropertyChangeEvent evt) {
             dbManager = db;
             event = evt;
         }
@@ -479,7 +479,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 Case curCase = (Case) event.getNewValue();
                 IngestEventsListener.resetCeModuleInstanceCount();
 
-                if (!EamDb.isEnabled()) {
+                if (!CentralRepository.isEnabled()) {
                     return;
                 }
 
@@ -489,7 +489,7 @@ final class CaseEventListener implements PropertyChangeListener {
                     if (dbManager.getCase(curCase) == null) {
                         dbManager.newCase(curCase);
                     }
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
                 }
             }
@@ -498,10 +498,10 @@ final class CaseEventListener implements PropertyChangeListener {
     
     private final class DataSourceNameChangedTask implements Runnable {
 
-        private final EamDb dbManager;
+        private final CentralRepository dbManager;
         private final PropertyChangeEvent event;
 
-        private DataSourceNameChangedTask(EamDb db, PropertyChangeEvent evt) {
+        private DataSourceNameChangedTask(CentralRepository db, PropertyChangeEvent evt) {
             dbManager = db;
             event = evt;
         }
@@ -515,7 +515,7 @@ final class CaseEventListener implements PropertyChangeListener {
             
             if (! StringUtils.isEmpty(newName)) {
 
-                if (!EamDb.isEnabled()) {
+                if (!CentralRepository.isEnabled()) {
                     return;
                 }
 
@@ -523,7 +523,7 @@ final class CaseEventListener implements PropertyChangeListener {
                     CorrelationCase correlationCase = dbManager.getCase(Case.getCurrentCaseThrows());
                     CorrelationDataSource existingEamDataSource = dbManager.getDataSource(correlationCase, dataSource.getId());
                     dbManager.updateDataSourceName(existingEamDataSource, newName);
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     LOGGER.log(Level.SEVERE, "Error updating data source with ID " + dataSource.getId() + " to " + newName, ex); //NON-NLS
                 } catch (NoCurrentCaseException ex) {
                     LOGGER.log(Level.SEVERE, "No open case", ex);

@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
 import org.sleuthkit.autopsy.coreutils.TextConverterException;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb.SOFTWARE_CR_DB_SCHEMA_VERSION;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
 
 /**
  * Settings for the Postgres implementation of the Central Repository database
@@ -40,9 +40,9 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb
  * NOTE: This is public scope because the options panel calls it directly to
  * set/get
  */
-public final class PostgresEamDbSettings {
+public final class PostgresCentralRepoSettings {
 
-    private final static Logger LOGGER = Logger.getLogger(PostgresEamDbSettings.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(PostgresCentralRepoSettings.class.getName());
     private final static String DEFAULT_HOST = ""; // NON-NLS
     private final static int DEFAULT_PORT = 5432;
     private final static String DEFAULT_DBNAME = "central_repository"; // NON-NLS
@@ -60,7 +60,7 @@ public final class PostgresEamDbSettings {
     private String userName;
     private String password;
 
-    public PostgresEamDbSettings() {
+    public PostgresCentralRepoSettings() {
         loadSettings();
     }
 
@@ -92,15 +92,15 @@ public final class PostgresEamDbSettings {
         try {
             String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.bulkThreshold"); // NON-NLS
             if (bulkThresholdString == null || bulkThresholdString.isEmpty()) {
-                this.bulkThreshold = AbstractSqlEamDb.DEFAULT_BULK_THRESHHOLD;
+                this.bulkThreshold = AbstractCentralRepo.DEFAULT_BULK_THRESHHOLD;
             } else {
                 this.bulkThreshold = Integer.parseInt(bulkThresholdString);
                 if (getBulkThreshold() <= 0) {
-                    this.bulkThreshold = AbstractSqlEamDb.DEFAULT_BULK_THRESHHOLD;
+                    this.bulkThreshold = AbstractCentralRepo.DEFAULT_BULK_THRESHHOLD;
                 }
             }
         } catch (NumberFormatException ex) {
-            this.bulkThreshold = AbstractSqlEamDb.DEFAULT_BULK_THRESHHOLD;
+            this.bulkThreshold = AbstractCentralRepo.DEFAULT_BULK_THRESHHOLD;
         }
 
         userName = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.user"); // NON-NLS
@@ -193,8 +193,8 @@ public final class PostgresEamDbSettings {
             return false;
         }
 
-        boolean result = EamDbUtil.executeValidationQuery(conn, VALIDATION_QUERY);
-        EamDbUtil.closeConnection(conn);
+        boolean result = CentralRepoDbUtil.executeValidationQuery(conn, VALIDATION_QUERY);
+        CentralRepoDbUtil.closeConnection(conn);
         return result;
     }
 
@@ -223,9 +223,9 @@ public final class PostgresEamDbSettings {
             LOGGER.log(Level.SEVERE, "Failed to execute database existance query.", ex); // NON-NLS
             return false;
         } finally {
-            EamDbUtil.closeStatement(ps);
-            EamDbUtil.closeResultSet(rs);
-            EamDbUtil.closeConnection(conn);
+            CentralRepoDbUtil.closeStatement(ps);
+            CentralRepoDbUtil.closeResultSet(rs);
+            CentralRepoDbUtil.closeConnection(conn);
         }
         return false;
     }
@@ -242,9 +242,9 @@ public final class PostgresEamDbSettings {
             return false;
         }
 
-        boolean result = EamDbUtil.schemaVersionIsSet(conn);
+        boolean result = CentralRepoDbUtil.schemaVersionIsSet(conn);
 
-        EamDbUtil.closeConnection(conn);
+        CentralRepoDbUtil.closeConnection(conn);
         return result;
     }
 
@@ -263,7 +263,7 @@ public final class PostgresEamDbSettings {
             LOGGER.log(Level.SEVERE, "Failed to execute create database statement.", ex); // NON-NLS
             return false;
         } finally {
-            EamDbUtil.closeConnection(conn);
+            CentralRepoDbUtil.closeConnection(conn);
         }
         return true;
 
@@ -284,7 +284,7 @@ public final class PostgresEamDbSettings {
             LOGGER.log(Level.SEVERE, "Failed to execute drop database statement.", ex); // NON-NLS
             return false;
         } finally {
-            EamDbUtil.closeConnection(conn);
+            CentralRepoDbUtil.closeConnection(conn);
         }
         return true;
 
@@ -420,10 +420,10 @@ public final class PostgresEamDbSettings {
              * name column could be the primary key.
              */
             stmt.execute("CREATE TABLE db_info (id SERIAL, name TEXT UNIQUE NOT NULL, value TEXT NOT NULL)");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractCentralRepo.SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractCentralRepo.SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractCentralRepo.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractCentralRepo.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
 
             // Create a separate instance and reference table for each correlation type
             List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttributeInstance.getDefaultCorrelationTypes();
@@ -431,8 +431,8 @@ public final class PostgresEamDbSettings {
             String reference_type_dbname;
             String instance_type_dbname;
             for (CorrelationAttributeInstance.Type type : DEFAULT_CORRELATION_TYPES) {
-                reference_type_dbname = EamDbUtil.correlationTypeToReferenceTableName(type);
-                instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
+                reference_type_dbname = CentralRepoDbUtil.correlationTypeToReferenceTableName(type);
+                instance_type_dbname = CentralRepoDbUtil.correlationTypeToInstanceTableName(type);
 
                 stmt.execute(String.format(createArtifactInstancesTableTemplate, instance_type_dbname, instance_type_dbname));
                 stmt.execute(String.format(instancesCaseIdIdx, instance_type_dbname, instance_type_dbname));
@@ -452,11 +452,11 @@ public final class PostgresEamDbSettings {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
             return false;
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             LOGGER.log(Level.SEVERE, "Error getting default correlation types. Likely due to one or more Type's with an invalid db table name."); // NON-NLS
             return false;
         } finally {
-            EamDbUtil.closeConnection(conn);
+            CentralRepoDbUtil.closeConnection(conn);
         }
         return true;
     }
@@ -587,8 +587,8 @@ public final class PostgresEamDbSettings {
             return false;
         }
 
-        boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn) && EamDbUtil.insertDefaultOrganization(conn);
-        EamDbUtil.closeConnection(conn);
+        boolean result = CentralRepoDbUtil.insertDefaultCorrelationTypes(conn) && CentralRepoDbUtil.insertDefaultOrganization(conn);
+        CentralRepoDbUtil.closeConnection(conn);
 
         return result;
     }
@@ -616,11 +616,11 @@ public final class PostgresEamDbSettings {
     /**
      * @param host the host to set
      */
-    public void setHost(String host) throws EamDbException {
+    public void setHost(String host) throws CentralRepoException {
         if (null != host && !host.isEmpty()) {
             this.host = host;
         } else {
-            throw new EamDbException("Invalid host name. Cannot be empty."); // NON-NLS
+            throw new CentralRepoException("Invalid host name. Cannot be empty."); // NON-NLS
         }
     }
 
@@ -634,11 +634,11 @@ public final class PostgresEamDbSettings {
     /**
      * @param port the port to set
      */
-    public void setPort(int port) throws EamDbException {
+    public void setPort(int port) throws CentralRepoException {
         if (port > 0 && port < 65535) {
             this.port = port;
         } else {
-            throw new EamDbException("Invalid port. Must be a number greater than 0."); // NON-NLS
+            throw new CentralRepoException("Invalid port. Must be a number greater than 0."); // NON-NLS
         }
     }
 
@@ -655,11 +655,11 @@ public final class PostgresEamDbSettings {
     /**
      * @param dbName the dbName to set
      */
-    public void setDbName(String dbName) throws EamDbException {
+    public void setDbName(String dbName) throws CentralRepoException {
         if (dbName == null || dbName.isEmpty()) {
-            throw new EamDbException("Invalid database name. Cannot be empty."); // NON-NLS
+            throw new CentralRepoException("Invalid database name. Cannot be empty."); // NON-NLS
         } else if (!Pattern.matches(DB_NAMES_REGEX, dbName)) {
-            throw new EamDbException("Invalid database name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
+            throw new CentralRepoException("Invalid database name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
         }
 
         this.dbName = dbName.toLowerCase();
@@ -675,11 +675,11 @@ public final class PostgresEamDbSettings {
     /**
      * @param bulkThreshold the bulkThreshold to set
      */
-    public void setBulkThreshold(int bulkThreshold) throws EamDbException {
+    public void setBulkThreshold(int bulkThreshold) throws CentralRepoException {
         if (bulkThreshold > 0) {
             this.bulkThreshold = bulkThreshold;
         } else {
-            throw new EamDbException("Invalid bulk threshold."); // NON-NLS
+            throw new CentralRepoException("Invalid bulk threshold."); // NON-NLS
         }
     }
 
@@ -693,11 +693,11 @@ public final class PostgresEamDbSettings {
     /**
      * @param userName the userName to set
      */
-    public void setUserName(String userName) throws EamDbException {
+    public void setUserName(String userName) throws CentralRepoException {
         if (userName == null || userName.isEmpty()) {
-            throw new EamDbException("Invalid user name. Cannot be empty."); // NON-NLS
+            throw new CentralRepoException("Invalid user name. Cannot be empty."); // NON-NLS
         } else if (!Pattern.matches(DB_USER_NAMES_REGEX, userName)) {
-            throw new EamDbException("Invalid user name. Name must start with a letter and can only contain letters, numbers, and '_'."); // NON-NLS
+            throw new CentralRepoException("Invalid user name. Name must start with a letter and can only contain letters, numbers, and '_'."); // NON-NLS
         }
         this.userName = userName;
     }
@@ -712,9 +712,9 @@ public final class PostgresEamDbSettings {
     /**
      * @param password the password to set
      */
-    public void setPassword(String password) throws EamDbException {
+    public void setPassword(String password) throws CentralRepoException {
         if (password == null || password.isEmpty()) {
-            throw new EamDbException("Invalid user password. Cannot be empty."); // NON-NLS
+            throw new CentralRepoException("Invalid user password. Cannot be empty."); // NON-NLS
         }
         this.password = password;
     }

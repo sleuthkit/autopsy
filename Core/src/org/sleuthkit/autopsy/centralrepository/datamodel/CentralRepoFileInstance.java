@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Global file hash instance
  */
-public class EamGlobalFileInstance {
+public class CentralRepoFileInstance {
 
     private int instanceID;
     private int globalSetID;
@@ -32,23 +32,23 @@ public class EamGlobalFileInstance {
     private TskData.FileKnown knownStatus;
     private String comment;
 
-    public EamGlobalFileInstance(
+    public CentralRepoFileInstance(
             int globalSetID,
             String MD5Hash,
             TskData.FileKnown knownStatus,
-            String comment) throws EamDbException, CorrelationAttributeNormalizationException {
+            String comment) throws CentralRepoException, CorrelationAttributeNormalizationException {
         this(-1, globalSetID, MD5Hash, knownStatus, comment);
     }
 
-    public EamGlobalFileInstance(
+    public CentralRepoFileInstance(
             int instanceID,
             int globalSetID,
             String MD5Hash,
             TskData.FileKnown knownStatus,
-            String comment) throws EamDbException, CorrelationAttributeNormalizationException {
+            String comment) throws CentralRepoException, CorrelationAttributeNormalizationException {
 
         if(knownStatus == null){
-            throw new EamDbException("null known status");
+            throw new CentralRepoException("null known status");
         }
         this.instanceID = instanceID;
         this.globalSetID = globalSetID;
@@ -61,7 +61,7 @@ public class EamGlobalFileInstance {
     public boolean equals(Object otherInstance) {
         if (this == otherInstance) {
             return true;
-        } else if (!(otherInstance instanceof EamGlobalFileInstance)) {
+        } else if (!(otherInstance instanceof CentralRepoFileInstance)) {
             return false;
         } else {
             return (this.hashCode() == otherInstance.hashCode());
