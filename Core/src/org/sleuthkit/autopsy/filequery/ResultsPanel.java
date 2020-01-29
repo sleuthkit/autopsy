@@ -64,6 +64,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private final static Logger logger = Logger.getLogger(ResultsPanel.class.getName());
     private final VideoThumbnailViewer videoThumbnailViewer;
     private final ImageThumbnailViewer imageThumbnailViewer;
+    private final DocumentViewer documentViewer;
     private List<FileSearchFiltering.FileFilter> searchFilters;
     private FileSearch.AttributeType groupingAttribute;
     private FileGroup.GroupSortingAlgorithm groupSort;
@@ -87,6 +88,7 @@ public class ResultsPanel extends javax.swing.JPanel {
         initComponents();
         imageThumbnailViewer = new ImageThumbnailViewer();
         videoThumbnailViewer = new VideoThumbnailViewer();
+        documentViewer = new DocumentViewer();
         videoThumbnailViewer.addListSelectionListener((e) -> {
             if (resultType == FileSearchData.FileType.VIDEO) {
                 if (!e.getValueIsAdjusting()) {
@@ -97,6 +99,15 @@ public class ResultsPanel extends javax.swing.JPanel {
             }
         });
         imageThumbnailViewer.addListSelectionListener((e) -> {
+            if (resultType == FileSearchData.FileType.IMAGE) {
+                if (!e.getValueIsAdjusting()) {
+                    populateInstancesList();
+                } else {
+                    instancesList.clearSelection();
+                }
+            }
+        });
+        documentViewer.addListSelectionListener((e) -> {
             if (resultType == FileSearchData.FileType.IMAGE) {
                 if (!e.getValueIsAdjusting()) {
                     populateInstancesList();
@@ -192,6 +203,8 @@ public class ResultsPanel extends javax.swing.JPanel {
             return videoThumbnailViewer.getInstancesForSelected();
         } else if (resultType == FileSearchData.FileType.IMAGE) {
             return imageThumbnailViewer.getInstancesForSelected();
+        } else if (resultType == FileSearchData.FileType.DOCUMENTS) {
+            return documentViewer.getInstancesForSelected();
         }
         return new ArrayList<>();
     }
@@ -214,6 +227,9 @@ public class ResultsPanel extends javax.swing.JPanel {
             } else if (pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
                 populateVideoViewer(pageRetrievedEvent.getSearchResults());
                 resultsViewerPanel.add(videoThumbnailViewer);
+            }  else if (pageRetrievedEvent.getType() == FileSearchData.FileType.DOCUMENTS) {
+                populateDocumentViewer(pageRetrievedEvent.getSearchResults());
+                resultsViewerPanel.add(documentViewer);
             }
             resultsViewerPanel.revalidate();
             resultsViewerPanel.repaint();
@@ -238,6 +254,7 @@ public class ResultsPanel extends javax.swing.JPanel {
         thumbnailWorkers.clear();
         videoThumbnailViewer.clearViewer();
         imageThumbnailViewer.clearViewer();
+        documentViewer.clearViewer();
     }
 
     /**
@@ -270,6 +287,15 @@ public class ResultsPanel extends javax.swing.JPanel {
         }
     }
 
+
+    synchronized void populateDocumentViewer(List<ResultFile> files) {
+        for (ResultFile file : files) {
+           
+//            thumbWorker.execute();
+//            //keep track of thumb worker for possible cancelation 
+//            thumbnailWorkers.add(thumbWorker);
+        }
+    }
     /**
      * Subscribe and respond to GroupSelectedEvents.
      *
@@ -303,6 +329,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             updateControls();
             videoThumbnailViewer.clearViewer();
             imageThumbnailViewer.clearViewer();
+            documentViewer.clearViewer();
             resultsViewerPanel.revalidate();
             resultsViewerPanel.repaint();
         });

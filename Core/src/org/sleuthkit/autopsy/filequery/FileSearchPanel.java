@@ -511,6 +511,28 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         notableFilterSettings(false, false, false);
     }
 
+    private void documentsSelected(boolean enabled, boolean resetSelected) {
+        dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
+        sizeFilterSettings(true, enabled, !resetSelected && sizeCheckbox.isSelected(), null);
+        int[] selectedFrequencyIndices;
+        if (!EamDb.isEnabled()) {
+            selectedFrequencyIndices = new int[]{0};
+        } else {
+            selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
+        }
+        crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
+        exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
+        objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
+        hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
+        interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
+        parentFilterSettings(true, enabled, !resetSelected && parentCheckbox.isSelected(), null);
+        scoreFilterSettings(false, false, false, null);
+        tagsFilterSettings(false, false, false, null);
+        keywordFilterSettings(false, false, false, null);
+        knownFilesFilterSettings(false, false, false);
+        notableFilterSettings(false, false, false);
+    }
+    
     /**
      * Set the type of search to perform.
      *
@@ -523,6 +545,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             imagesSelected(true, true);
         } else if (fileType == FileType.VIDEO) {
             videosSelected(true, true);
+        } else if (fileType == FileType.DOCUMENTS) {
+            documentsSelected(true, true);
         }
         validateFields();
     }
