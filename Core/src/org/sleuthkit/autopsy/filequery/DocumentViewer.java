@@ -7,6 +7,7 @@ package org.sleuthkit.autopsy.filequery;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.DefaultListModel;
 import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -15,6 +16,8 @@ import org.sleuthkit.datamodel.AbstractFile;
  * @author wschaefer
  */
 public class DocumentViewer extends javax.swing.JPanel {
+
+    private final DefaultListModel<DocumentWrapper> documentListModel = new DefaultListModel<>();
 
     /**
      * Creates new form DocumentViewer
@@ -32,22 +35,34 @@ public class DocumentViewer extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        documentScrollPane = new javax.swing.JScrollPane();
+        documentList = new javax.swing.JList<>();
+
+        documentList.setModel(documentListModel);
+        documentList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        documentList.setCellRenderer(new DocumentPanel());
+        documentScrollPane.setViewportView(documentList);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(documentScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(documentScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     void clearViewer() {
         synchronized (this) {
-//            thumbnailListModel.removeAllElements();
-//            thumbnailListScrollPane.getVerticalScrollBar().setValue(0);
+            documentListModel.removeAllElements();
+            documentScrollPane.getVerticalScrollBar().setValue(0);
         }
     }
 
@@ -57,20 +72,27 @@ public class DocumentViewer extends javax.swing.JPanel {
      * @param listener The ListSelectionListener to add to the selection model.
      */
     void addListSelectionListener(ListSelectionListener listener) {
-//        thumbnailList.getSelectionModel().addListSelectionListener(listener);
+        documentList.getSelectionModel().addListSelectionListener(listener);
     }
 
     List<AbstractFile> getInstancesForSelected() {
         synchronized (this) {
-//            if (thumbnailList.getSelectedIndex() == -1) {
-//                return new ArrayList<>();
-//            } else {
-//                return thumbnailListModel.getElementAt(thumbnailList.getSelectedIndex()).getResultFile().getAllInstances();
-//            }
-            return new ArrayList<>();
+            if (documentList.getSelectedIndex() == -1) {
+                return new ArrayList<>();
+            } else {
+                return documentListModel.getElementAt(documentList.getSelectedIndex()).getResultFile().getAllInstances();
+            }
         }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JList<DocumentWrapper> documentList;
+    private javax.swing.JScrollPane documentScrollPane;
     // End of variables declaration//GEN-END:variables
+
+    void addDocument(DocumentWrapper documentWrapper) {
+        synchronized (this) {
+            documentListModel.addElement(documentWrapper);
+        }
+    }
 }

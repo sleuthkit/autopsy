@@ -679,6 +679,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                 case IMAGE:
                     sizes = FileSearchData.FileSize.getOptionsForImages();
                     break;
+                case DOCUMENTS:
+                    sizes = FileSearchData.FileSize.getOptionsForImages();
+                    break;
                 default:
                     sizes = new ArrayList<>();
                     break;

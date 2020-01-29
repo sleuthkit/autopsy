@@ -108,7 +108,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             }
         });
         documentViewer.addListSelectionListener((e) -> {
-            if (resultType == FileSearchData.FileType.IMAGE) {
+            if (resultType == FileSearchData.FileType.DOCUMENTS) {
                 if (!e.getValueIsAdjusting()) {
                     populateInstancesList();
                 } else {
@@ -227,7 +227,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             } else if (pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
                 populateVideoViewer(pageRetrievedEvent.getSearchResults());
                 resultsViewerPanel.add(videoThumbnailViewer);
-            }  else if (pageRetrievedEvent.getType() == FileSearchData.FileType.DOCUMENTS) {
+            } else if (pageRetrievedEvent.getType() == FileSearchData.FileType.DOCUMENTS) {
                 populateDocumentViewer(pageRetrievedEvent.getSearchResults());
                 resultsViewerPanel.add(documentViewer);
             }
@@ -244,6 +244,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     synchronized void resetResultViewer() {
         resultsViewerPanel.remove(imageThumbnailViewer);
         resultsViewerPanel.remove(videoThumbnailViewer);
+        resultsViewerPanel.remove(documentViewer);
         //cancel any unfished thumb workers
         for (SwingWorker<Void, Void> thumbWorker : thumbnailWorkers) {
             if (!thumbWorker.isDone()) {
@@ -287,15 +288,15 @@ public class ResultsPanel extends javax.swing.JPanel {
         }
     }
 
-
     synchronized void populateDocumentViewer(List<ResultFile> files) {
         for (ResultFile file : files) {
-           
+            documentViewer.addDocument(new DocumentWrapper(file));
 //            thumbWorker.execute();
 //            //keep track of thumb worker for possible cancelation 
 //            thumbnailWorkers.add(thumbWorker);
         }
     }
+
     /**
      * Subscribe and respond to GroupSelectedEvents.
      *

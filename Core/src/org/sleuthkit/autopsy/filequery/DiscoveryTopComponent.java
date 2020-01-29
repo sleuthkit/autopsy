@@ -120,6 +120,9 @@ public final class DiscoveryTopComponent extends TopComponent {
         videosButton.setSelected(false);
         videosButton.setEnabled(true);
         videosButton.setBackground(UNSELECTED_COLOR);
+        documentsButton.setSelected(false);
+        documentsButton.setEnabled(true);
+        documentsButton.setBackground(UNSELECTED_COLOR);
         fileSearchPanel.setSelectedType(FileSearchData.FileType.IMAGE);
     }
 
@@ -212,7 +215,10 @@ public final class DiscoveryTopComponent extends TopComponent {
             }
         });
 
+        documentsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/documents-icon.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(documentsButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.documentsButton.text")); // NOI18N
+        documentsButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/documents-icon.png"))); // NOI18N
+        documentsButton.setDisabledSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/documents-icon.png"))); // NOI18N
         documentsButton.setFocusable(false);
         documentsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -225,7 +231,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         toolBarPanelLayout.setHorizontalGroup(
             toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(toolBarPanelLayout.createSequentialGroup()
-                .addContainerGap(430, Short.MAX_VALUE)
+                .addContainerGap(414, Short.MAX_VALUE)
                 .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(toolBarPanelLayout.createSequentialGroup()
                         .addComponent(imagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -238,7 +244,7 @@ public final class DiscoveryTopComponent extends TopComponent {
                         .addGap(0, 0, 0)
                         .addComponent(stepOneLabel)
                         .addGap(119, 119, 119)))
-                .addContainerGap(430, Short.MAX_VALUE))
+                .addContainerGap(413, Short.MAX_VALUE))
         );
 
         toolBarPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {documentsButton, imagesButton, videosButton});
@@ -318,9 +324,15 @@ public final class DiscoveryTopComponent extends TopComponent {
         SwingUtilities.invokeLater(() -> {
             if (fileSearchPanel.getSelectedType() == FileType.VIDEO) {
                 imagesButton.setEnabled(true);
+                documentsButton.setEnabled(true);
             } else if (fileSearchPanel.getSelectedType() == FileType.IMAGE) {
                 videosButton.setEnabled(true);
+                documentsButton.setEnabled(true);
+            } else if (fileSearchPanel.getSelectedType() == FileType.DOCUMENTS) {
+                videosButton.setEnabled(true);
+                imagesButton.setEnabled(true);
             }
+
         });
     }
 
@@ -334,8 +346,13 @@ public final class DiscoveryTopComponent extends TopComponent {
         SwingUtilities.invokeLater(() -> {
             if (fileSearchPanel.getSelectedType() == FileType.VIDEO) {
                 imagesButton.setEnabled(true);
+                documentsButton.setEnabled(true);
             } else if (fileSearchPanel.getSelectedType() == FileType.IMAGE) {
                 videosButton.setEnabled(true);
+                documentsButton.setEnabled(true);
+            } else if (fileSearchPanel.getSelectedType() == FileType.DOCUMENTS) {
+                videosButton.setEnabled(true);
+                imagesButton.setEnabled(true);
             }
         });
     }
@@ -361,6 +378,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         SwingUtilities.invokeLater(() -> {
             imagesButton.setEnabled(false);
             videosButton.setEnabled(false);
+            documentsButton.setEnabled(false);
         });
     }
 
