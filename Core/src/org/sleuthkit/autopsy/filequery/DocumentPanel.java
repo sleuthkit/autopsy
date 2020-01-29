@@ -89,13 +89,16 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
 
         org.openide.awt.Mnemonics.setLocalizedText(documentType, org.openide.util.NbBundle.getMessage(DocumentPanel.class, "DocumentPanel.documentType.text")); // NOI18N
 
+        previewScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+
         previewTextArea.setEditable(false);
         previewTextArea.setColumns(20);
         previewTextArea.setLineWrap(true);
-        previewTextArea.setRows(4);
+        previewTextArea.setRows(5);
         previewTextArea.setWrapStyleWord(true);
         previewTextArea.setEnabled(false);
         previewTextArea.setFocusable(false);
+        previewTextArea.setMaximumSize(new java.awt.Dimension(164, 94));
         previewScrollPane.setViewportView(previewTextArea);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -192,8 +195,9 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
     public Component getListCellRendererComponent(JList<? extends DocumentWrapper> list, DocumentWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         fileSizeLabel.setText(getFileSizeString(value.getResultFile().getFirstInstance().getSize()));
         countLabel.setText(Bundle.ImageThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
-        documentType.setText(value.getResultFile().getFileType().name()); //WJS-TODO fill this in with a document type instead of just DOCUMENT
+        documentType.setText("Extension: " + value.getResultFile().getFirstInstance().getNameExtension());  //WJS-TODO fill this in with a document type instead of just DOCUMENT
         previewTextArea.setText(value.getPreview());
+        previewTextArea.setCaretPosition(0);
         if (value.getResultFile().isDeleted()) {
             isDeletedLabel.setIcon(DELETED_ICON);
             isDeletedLabel.setToolTipText(Bundle.ImageThumbnailPanel_isDeleted_text());
