@@ -31,7 +31,7 @@ import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonpropertiessearch.AllIntraCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeCountSearchResults;
@@ -121,7 +121,7 @@ public class MatchesInAtLeastTwoSourcesIntraCaseTest extends NbTestCase {
             assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET1, 0));
             assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints;
@@ -106,9 +107,13 @@ public final class Track extends GeoPath{
      * 
      * @throws GeoLocationDataException 
      */
+    @Messages({
+        "# {0} - track name",
+        "GEOTrack_point_label_header=Trackpoint for track: {0}"
+    })
     private void buildPath(List<GeoTrackPoint> points) throws GeoLocationDataException {
         for (GeoTrackPoint point : points) {
-            addToPath(new TrackWaypoint(point));
+            addToPath(new TrackWaypoint(Bundle.GEOTrack_point_label_header(getLabel()), point));
         }
     }
 
@@ -183,8 +188,8 @@ public final class Track extends GeoPath{
          * 
          * @throws GeoLocationDataException 
          */
-        TrackWaypoint(GeoTrackPoint point) throws GeoLocationDataException {
-            super(null, "",
+        TrackWaypoint(String pointLabel, GeoTrackPoint point) throws GeoLocationDataException {
+            super(null, pointLabel,
                     point.getTimeStamp(),
                     point.getLatitude(),
                     point.getLongitude(),

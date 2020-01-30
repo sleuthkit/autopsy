@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -75,16 +75,16 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      * @param newFile     The abstract file
      * @param autopsyCase The current case
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    OtherOccurrenceNodeInstanceData(AbstractFile newFile, Case autopsyCase) throws EamDbException {
+    OtherOccurrenceNodeInstanceData(AbstractFile newFile, Case autopsyCase) throws CentralRepoException {
         caseName = autopsyCase.getDisplayName();
         try {
             DataSource dataSource = autopsyCase.getSleuthkitCase().getDataSource(newFile.getDataSource().getId());
             deviceID = dataSource.getDeviceId();
             dataSourceName = dataSource.getName();
         } catch (TskDataException | TskCoreException ex) {
-            throw new EamDbException("Error loading data source for abstract file ID " + newFile.getId(), ex);
+            throw new CentralRepoException("Error loading data source for abstract file ID " + newFile.getId(), ex);
         }
 
         filePath = newFile.getParentPath() + newFile.getName();
@@ -211,9 +211,9 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @return the original abstract file
      */
-    AbstractFile getAbstractFile() throws EamDbException {
+    AbstractFile getAbstractFile() throws CentralRepoException {
         if (originalAbstractFile == null) {
-            throw new EamDbException("AbstractFile is null");
+            throw new CentralRepoException("AbstractFile is null");
         }
         return originalAbstractFile;
     }
@@ -224,11 +224,11 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @return the original CorrelationAttributeInstance
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    CorrelationAttributeInstance getCorrelationAttributeInstance() throws EamDbException {
+    CorrelationAttributeInstance getCorrelationAttributeInstance() throws CentralRepoException {
         if (originalCorrelationInstance == null) {
-            throw new EamDbException("CorrelationAttributeInstance is null");
+            throw new CentralRepoException("CorrelationAttributeInstance is null");
         }
         return originalCorrelationInstance;
     }

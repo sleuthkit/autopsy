@@ -30,7 +30,7 @@ import org.openide.util.Exceptions;
 import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonpropertiessearch.AllIntraCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeCountSearchResults;
@@ -126,7 +126,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -167,7 +167,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -208,7 +208,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -250,7 +250,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -292,7 +292,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -334,7 +334,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -376,7 +376,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -417,7 +417,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -458,7 +458,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }

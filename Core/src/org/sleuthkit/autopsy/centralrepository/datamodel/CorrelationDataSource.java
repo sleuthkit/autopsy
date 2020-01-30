@@ -108,20 +108,20 @@ public class CorrelationDataSource implements Serializable {
      *
      * @return
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    public static CorrelationDataSource fromTSKDataSource(CorrelationCase correlationCase, Content dataSource) throws EamDbException {
+    public static CorrelationDataSource fromTSKDataSource(CorrelationCase correlationCase, Content dataSource) throws CentralRepoException {
         Case curCase;
         try {
             curCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            throw new EamDbException("Autopsy case is closed");
+            throw new CentralRepoException("Autopsy case is closed");
         }
 
         CorrelationDataSource correlationDataSource = null;
-        boolean useCR = EamDb.isEnabled();
+        boolean useCR = CentralRepository.isEnabled();
         if (useCR) {
-            correlationDataSource = EamDb.getInstance().getDataSource(correlationCase, dataSource.getId());
+            correlationDataSource = CentralRepository.getInstance().getDataSource(correlationCase, dataSource.getId());
         }
 
         if (correlationDataSource == null) {
@@ -139,13 +139,13 @@ public class CorrelationDataSource implements Serializable {
                     sha256 = image.getSha256();
                 }
             } catch (TskDataException | TskCoreException ex) {
-                throw new EamDbException("Error getting data source info: " + ex.getMessage());
+                throw new CentralRepoException("Error getting data source info: " + ex.getMessage());
             }
 
             correlationDataSource = new CorrelationDataSource(correlationCase, deviceId, dataSource.getName(), dataSource.getId(), md5, sha1, sha256);
             if (useCR) {
                 //add the correlation data source to the central repository and fill in the Central repository data source id in the object
-                correlationDataSource = EamDb.getInstance().newDataSource(correlationDataSource);
+                correlationDataSource = CentralRepository.getInstance().newDataSource(correlationDataSource);
             }
         }
         return correlationDataSource;
@@ -217,15 +217,14 @@ public class CorrelationDataSource implements Serializable {
      * Set the MD5 hash value and persist to the Central Repository if available.
      * 
      * @param md5Hash The MD5 hash value.
-     * 
-     * @exception EamDbException If there's an issue updating the Central
-     *                           Repository.
+     * @throws CentralRepoException If there's an issue updating the Central
+                           Repository.
      */
-    public void setMd5(String md5Hash) throws EamDbException {
+    public void setMd5(String md5Hash) throws CentralRepoException {
         this.md5Hash = md5Hash;
         
         if (dataSourceObjectID != -1) {
-            EamDb.getInstance().updateDataSourceMd5Hash(this);
+            CentralRepository.getInstance().updateDataSourceMd5Hash(this);
         }
     }
     
@@ -242,11 +241,11 @@ public class CorrelationDataSource implements Serializable {
      * 
      * @param sha1Hash The SHA-1 hash value.
      */
-    public void setSha1(String sha1Hash) throws EamDbException {
+    public void setSha1(String sha1Hash) throws CentralRepoException {
         this.sha1Hash = sha1Hash;
         
         if (dataSourceObjectID != -1) {
-            EamDb.getInstance().updateDataSourceSha1Hash(this);
+            CentralRepository.getInstance().updateDataSourceSha1Hash(this);
         }
     }
     
@@ -263,11 +262,11 @@ public class CorrelationDataSource implements Serializable {
      * 
      * @param sha256Hash The SHA-256 hash value.
      */
-    public void setSha256(String sha256Hash) throws EamDbException {
+    public void setSha256(String sha256Hash) throws CentralRepoException {
         this.sha256Hash = sha256Hash;
         
         if (dataSourceObjectID != -1) {
-            EamDb.getInstance().updateDataSourceSha256Hash(this);
+            CentralRepository.getInstance().updateDataSourceSha256Hash(this);
         }
     }
 }

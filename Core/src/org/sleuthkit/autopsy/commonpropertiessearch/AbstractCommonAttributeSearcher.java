@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -60,9 +60,9 @@ public abstract class AbstractCommonAttributeSearcher {
      * @throws TskCoreException
      * @throws NoCurrentCaseException
      * @throws SQLException
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    public abstract CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
+    public abstract CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException, CentralRepoException;
 
     /**
      * Implement this to search for files with common attributes. Creates an
@@ -78,9 +78,9 @@ public abstract class AbstractCommonAttributeSearcher {
      * @throws TskCoreException
      * @throws NoCurrentCaseException
      * @throws SQLException
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    public abstract CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
+    public abstract CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, CentralRepoException;
 
     /**
      * Implement this to create a descriptive string for the tab which will

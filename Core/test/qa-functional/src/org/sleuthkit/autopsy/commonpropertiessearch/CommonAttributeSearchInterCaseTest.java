@@ -28,7 +28,7 @@ import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonpropertiessearch.AllInterCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeCountSearchResults;

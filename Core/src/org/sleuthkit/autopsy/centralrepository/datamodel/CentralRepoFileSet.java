@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * A global set in the Central Repository database
  */
-public class EamGlobalSet {
+public class CentralRepoFileSet {
 
     private int globalSetID;
     private int orgID;
@@ -35,7 +35,7 @@ public class EamGlobalSet {
     private CorrelationAttributeInstance.Type type;
     private LocalDate importDate;
 
-    public EamGlobalSet(
+    public CentralRepoFileSet(
             int globalSetID,
             int orgID,
             String setName,
@@ -54,7 +54,7 @@ public class EamGlobalSet {
         this.importDate = importDate;
     }
 
-    public EamGlobalSet(
+    public CentralRepoFileSet(
             int orgID,
             String setName,
             String version,
@@ -77,7 +77,7 @@ public class EamGlobalSet {
      * @param isReadOnly 
      * @param type
      */
-    public EamGlobalSet(
+    public CentralRepoFileSet(
             int orgID,
             String setName,
             String version,

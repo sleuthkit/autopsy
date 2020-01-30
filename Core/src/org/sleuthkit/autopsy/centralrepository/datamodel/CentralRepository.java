@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2019 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,27 +28,27 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 /**
  * Main interface for interacting with the database
  */
-public interface EamDb {
+public interface CentralRepository {
 
     /**
      * Get the instance
      *
      * @return The EamDb instance or null if one is not configured.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    static EamDb getInstance() throws EamDbException {
+    static CentralRepository getInstance() throws CentralRepoException {
 
-        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.DISABLED;
-        if (EamDbUtil.allowUseOfCentralRepository()) {
-            selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+        CentralRepoPlatforms selectedPlatform = CentralRepoPlatforms.DISABLED;
+        if (CentralRepoDbUtil.allowUseOfCentralRepository()) {
+            selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
         }
         switch (selectedPlatform) {
             case POSTGRESQL:
-                return PostgresEamDb.getInstance();
+                return PostgresCentralRepo.getInstance();
 
             case SQLITE:
-                return SqliteEamDb.getInstance();
+                return SqliteCentralRepo.getInstance();
             default:
                 return null;
         }
@@ -61,9 +61,9 @@ public interface EamDb {
      * It will not close active/in-use connections. Thus, it is vital that there
      * are no in-use connections when you call this method.
      *
-     * @throws EamDbException if there is a problem closing the connection pool.
+     * @throws CentralRepoException if there is a problem closing the connection pool.
      */
-    void shutdownConnections() throws EamDbException;
+    void shutdownConnections() throws CentralRepoException;
 
     /**
      * Update settings
@@ -83,7 +83,7 @@ public interface EamDb {
     /**
      * Reset the database (testing method)
      */
-    void reset() throws EamDbException;
+    void reset() throws CentralRepoException;
 
     /**
      * Is the database enabled?
@@ -91,8 +91,8 @@ public interface EamDb {
      * @return Is the database enabled
      */
     static boolean isEnabled() {
-        return EamDbUtil.allowUseOfCentralRepository()
-                && EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
+        return CentralRepoDbUtil.allowUseOfCentralRepository()
+                && CentralRepoPlatforms.getSelectedPlatform() != CentralRepoPlatforms.DISABLED;
     }
 
     /**
@@ -101,9 +101,9 @@ public interface EamDb {
      * @param name  Key to set
      * @param value Value to set
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    public void newDbInfo(String name, String value) throws EamDbException;
+    public void newDbInfo(String name, String value) throws CentralRepoException;
 
     /**
      * Set the data source object id for a specific entry in the data_sources
@@ -113,7 +113,7 @@ public interface EamDb {
      * @param dataSourceObjectId - the object id for the data source from the
      *                           caseDb
      */
-    void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException;
+    void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws CentralRepoException;
 
     /**
      * Get the value for the given name from the name/value db_info table.
@@ -122,9 +122,9 @@ public interface EamDb {
      *
      * @return value associated with name.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    public String getDbInfo(String name) throws EamDbException;
+    public String getDbInfo(String name) throws CentralRepoException;
 
     /**
      * Update the value for a name in the name/value db_info table.
@@ -132,9 +132,9 @@ public interface EamDb {
      * @param name  Name to find
      * @param value Value to assign to name.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    public void updateDbInfo(String name, String value) throws EamDbException;
+    public void updateDbInfo(String name, String value) throws CentralRepoException;
 
     /**
      * Creates new Case in the database
@@ -143,21 +143,21 @@ public interface EamDb {
      *
      * @param eamCase The case to add
      */
-    CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException;
+    CorrelationCase newCase(CorrelationCase eamCase) throws CentralRepoException;
 
     /**
      * Creates new Case in the database from the given case
      *
      * @param autopsyCase The case to add
      */
-    CorrelationCase newCase(Case autopsyCase) throws EamDbException;
+    CorrelationCase newCase(Case autopsyCase) throws CentralRepoException;
 
     /**
      * Updates an existing Case in the database
      *
      * @param eamCase The case to update
      */
-    void updateCase(CorrelationCase eamCase) throws EamDbException;
+    void updateCase(CorrelationCase eamCase) throws CentralRepoException;
 
     /**
      * Retrieves Central Repo case based on an Autopsy Case
@@ -166,9 +166,9 @@ public interface EamDb {
      *
      * @return CR Case
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    CorrelationCase getCase(Case autopsyCase) throws EamDbException;
+    CorrelationCase getCase(Case autopsyCase) throws CentralRepoException;
 
     /**
      * Retrieves Case details based on Case UUID
@@ -177,7 +177,7 @@ public interface EamDb {
      *
      * @return The retrieved case
      */
-    CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException;
+    CorrelationCase getCaseByUUID(String caseUUID) throws CentralRepoException;
 
     /**
      * Retrieves Case details based on Case ID
@@ -186,14 +186,14 @@ public interface EamDb {
      *
      * @return The retrieved case
      */
-    CorrelationCase getCaseById(int caseId) throws EamDbException;
+    CorrelationCase getCaseById(int caseId) throws CentralRepoException;
 
     /**
      * Retrieves cases that are in DB.
      *
      * @return List of cases
      */
-    List<CorrelationCase> getCases() throws EamDbException;
+    List<CorrelationCase> getCases() throws CentralRepoException;
 
     /**
      * Creates new Data Source in the database
@@ -203,21 +203,21 @@ public interface EamDb {
      * @return - A CorrelationDataSource object with data source's central
      *         repository id
      */
-    CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
+    CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws CentralRepoException;
 
     /**
      * Updates the MD5 hash value in an existing data source in the database.
      *
      * @param eamDataSource The data source to update
      */
-    void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws EamDbException;
+    void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws CentralRepoException;
 
     /**
      * Updates the SHA-1 hash value in an existing data source in the database.
      *
      * @param eamDataSource The data source to update
      */
-    void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws EamDbException;
+    void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws CentralRepoException;
 
     /**
      * Updates the SHA-256 hash value in an existing data source in the
@@ -225,7 +225,7 @@ public interface EamDb {
      *
      * @param eamDataSource The data source to update
      */
-    void updateDataSourceSha256Hash(CorrelationDataSource eamDataSource) throws EamDbException;
+    void updateDataSourceSha256Hash(CorrelationDataSource eamDataSource) throws CentralRepoException;
 
     /**
      * Retrieves Data Source details based on data source device ID
@@ -236,7 +236,7 @@ public interface EamDb {
      *
      * @return The data source
      */
-    CorrelationDataSource getDataSource(CorrelationCase correlationCase, Long caseDbDataSourceId) throws EamDbException;
+    CorrelationDataSource getDataSource(CorrelationCase correlationCase, Long caseDbDataSourceId) throws CentralRepoException;
 
     /**
      * Retrieves Data Source details based on data source ID
@@ -247,14 +247,14 @@ public interface EamDb {
      *
      * @return The data source
      */
-    CorrelationDataSource getDataSourceById(CorrelationCase correlationCase, int dataSourceId) throws EamDbException;
+    CorrelationDataSource getDataSourceById(CorrelationCase correlationCase, int dataSourceId) throws CentralRepoException;
 
     /**
      * Retrieves data sources that are in DB
      *
      * @return List of data sources
      */
-    List<CorrelationDataSource> getDataSources() throws EamDbException;
+    List<CorrelationDataSource> getDataSources() throws CentralRepoException;
 
     /**
      * Changes the name of a data source in the DB
@@ -262,9 +262,9 @@ public interface EamDb {
      * @param eamDataSource The data source
      * @param newName       The new name
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException;
+    void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws CentralRepoException;
 
     /**
      * Inserts new Artifact(s) into the database. Should add associated Case and
@@ -272,7 +272,7 @@ public interface EamDb {
      *
      * @param eamArtifact The artifact to add
      */
-    void addArtifactInstance(CorrelationAttributeInstance eamArtifact) throws EamDbException;
+    void addArtifactInstance(CorrelationAttributeInstance eamArtifact) throws CentralRepoException;
 
     /**
      * Retrieves eamArtifact instances from the database that are associated
@@ -286,9 +286,9 @@ public interface EamDb {
      *         values
      *
      * @throws CorrelationAttributeNormalizationException
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws EamDbException, CorrelationAttributeNormalizationException;
+    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves eamArtifact instances from the database that are associated
@@ -300,9 +300,9 @@ public interface EamDb {
      * @return List of artifact instances for a given type/value
      *
      * @throws CorrelationAttributeNormalizationException
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
+    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves eamArtifact instances from the database that are associated
@@ -319,9 +319,9 @@ public interface EamDb {
      *         values for the specified cases
      *
      * @throws CorrelationAttributeNormalizationException
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException;
+    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves number of artifact instances in the database that are
@@ -333,7 +333,7 @@ public interface EamDb {
      * @return Number of artifact instances having ArtifactType and
      *         ArtifactValue.
      */
-    Long getCountArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
+    Long getCountArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Calculate the percentage of data sources that have this attribute value.
@@ -342,7 +342,7 @@ public interface EamDb {
      *
      * @return Int between 0 and 100
      */
-    int getFrequencyPercentage(CorrelationAttributeInstance corAttr) throws EamDbException, CorrelationAttributeNormalizationException;
+    int getFrequencyPercentage(CorrelationAttributeInstance corAttr) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves number of unique caseDisplayName / dataSource tuples in the
@@ -354,14 +354,14 @@ public interface EamDb {
      *
      * @return Number of unique tuples
      */
-    Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
+    Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves number of data sources in the database.
      *
      * @return Number of unique data sources
      */
-    Long getCountUniqueDataSources() throws EamDbException;
+    Long getCountUniqueDataSources() throws CentralRepoException;
 
     /**
      * Retrieves number of eamArtifact instances in the database that are
@@ -372,7 +372,7 @@ public interface EamDb {
      * @return Number of artifact instances having caseDisplayName and
      *         dataSource
      */
-    Long getCountArtifactInstancesByCaseDataSource(CorrelationDataSource correlationDataSource) throws EamDbException;
+    Long getCountArtifactInstancesByCaseDataSource(CorrelationDataSource correlationDataSource) throws CentralRepoException;
 
     /**
      * Adds an eamArtifact to an internal list to be later added to DB. Artifact
@@ -381,18 +381,18 @@ public interface EamDb {
      *
      * @param eamArtifact The artifact to add
      */
-    void addAttributeInstanceBulk(CorrelationAttributeInstance eamArtifact) throws EamDbException;
+    void addAttributeInstanceBulk(CorrelationAttributeInstance eamArtifact) throws CentralRepoException;
 
     /**
      * Executes a bulk insert of the eamArtifacts added from the
      * addAttributeInstanceBulk() method
      */
-    void commitAttributeInstancesBulk() throws EamDbException;
+    void commitAttributeInstancesBulk() throws CentralRepoException;
 
     /**
      * Executes a bulk insert of the cases
      */
-    void bulkInsertCases(List<CorrelationCase> cases) throws EamDbException;
+    void bulkInsertCases(List<CorrelationCase> cases) throws CentralRepoException;
 
     /**
      * Update a correlation attribute instance comment in the database with that
@@ -401,9 +401,9 @@ public interface EamDb {
      * @param eamArtifact The correlation attribute whose database instance will
      *                    be updated.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    void updateAttributeInstanceComment(CorrelationAttributeInstance eamArtifact) throws EamDbException;
+    void updateAttributeInstanceComment(CorrelationAttributeInstance eamArtifact) throws CentralRepoException;
 
     /**
      * Find a correlation attribute in the Central Repository database given the
@@ -420,10 +420,10 @@ public interface EamDb {
      *
      * @return The correlation attribute if it exists; otherwise null.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
-            CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException, CorrelationAttributeNormalizationException;
+            CorrelationDataSource correlationDataSource, String value, String filePath) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Find a correlation attribute in the Central Repository database given the
@@ -437,10 +437,10 @@ public interface EamDb {
      *
      * @return The correlation attribute if it exists; otherwise null.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
-            CorrelationDataSource correlationDataSource, long objectID) throws EamDbException, CorrelationAttributeNormalizationException;
+            CorrelationDataSource correlationDataSource, long objectID) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Sets an eamArtifact instance to the given known status. If eamArtifact
@@ -449,7 +449,7 @@ public interface EamDb {
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
      * @param knownStatus The status to change the artifact to
      */
-    void setAttributeInstanceKnownStatus(CorrelationAttributeInstance eamArtifact, TskData.FileKnown knownStatus) throws EamDbException;
+    void setAttributeInstanceKnownStatus(CorrelationAttributeInstance eamArtifact, TskData.FileKnown knownStatus) throws CentralRepoException;
 
     /**
      * Count matching eamArtifacts instances that have knownStatus = "Bad".
@@ -459,7 +459,7 @@ public interface EamDb {
      *
      * @return Number of matching eamArtifacts
      */
-    Long getCountArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
+    Long getCountArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Gets list of distinct case display names, where each case has 1+ Artifact
@@ -471,9 +471,9 @@ public interface EamDb {
      * @return List of cases containing this artifact with instances marked as
      *         bad
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
+    List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Gets list of distinct case display names, where each case has 1+ Artifact
@@ -485,18 +485,18 @@ public interface EamDb {
      * @return List of cases containing this artifact with instances marked as
      *         bad
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    List<String> getListCasesHavingArtifactInstances(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
+    List<String> getListCasesHavingArtifactInstances(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Remove a reference set and all values contained in it.
      *
      * @param referenceSetID
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    public void deleteReferenceSet(int referenceSetID) throws EamDbException;
+    public void deleteReferenceSet(int referenceSetID) throws CentralRepoException;
 
     /**
      * Check whether a reference set with the given parameters exists in the
@@ -509,9 +509,9 @@ public interface EamDb {
      *
      * @return true if a matching entry exists in the central repository
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    public boolean referenceSetIsValid(int referenceSetID, String referenceSetName, String version) throws EamDbException;
+    public boolean referenceSetIsValid(int referenceSetID, String referenceSetName, String version) throws CentralRepoException;
 
     /**
      * Check whether a reference set with the given name/version is in the
@@ -523,9 +523,9 @@ public interface EamDb {
      *
      * @return true if a matching set is found
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException;
+    public boolean referenceSetExists(String referenceSetName, String version) throws CentralRepoException;
 
     /**
      * Check if the given file hash is in this reference set. Only searches the
@@ -536,9 +536,9 @@ public interface EamDb {
      *
      * @return true if the hash is found in the reference set
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws EamDbException, CorrelationAttributeNormalizationException;
+    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Check if the given value is in a specific reference set
@@ -549,7 +549,7 @@ public interface EamDb {
      *
      * @return true if the hash is found in the reference set
      */
-    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException, CorrelationAttributeNormalizationException;
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Is the artifact known as bad according to the reference entries?
@@ -559,7 +559,7 @@ public interface EamDb {
      *
      * @return Global known status of the artifact
      */
-    boolean isArtifactKnownBadByReference(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
+    boolean isArtifactKnownBadByReference(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Add a new organization
@@ -568,18 +568,18 @@ public interface EamDb {
      *
      * @return The organization with the org ID set.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    EamOrganization newOrganization(EamOrganization eamOrg) throws EamDbException;
+    CentralRepoOrganization newOrganization(CentralRepoOrganization eamOrg) throws CentralRepoException;
 
     /**
      * Get all organizations
      *
      * @return A list of all organizations
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    List<EamOrganization> getOrganizations() throws EamDbException;
+    List<CentralRepoOrganization> getOrganizations() throws CentralRepoException;
 
     /**
      * Get an organization having the given ID
@@ -588,9 +588,9 @@ public interface EamDb {
      *
      * @return The organization with the given ID
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    EamOrganization getOrganizationByID(int orgID) throws EamDbException;
+    CentralRepoOrganization getOrganizationByID(int orgID) throws CentralRepoException;
 
     /**
      * Get the organization associated with the given reference set.
@@ -599,9 +599,9 @@ public interface EamDb {
      *
      * @return The organization object
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    EamOrganization getReferenceSetOrganization(int referenceSetID) throws EamDbException;
+    CentralRepoOrganization getReferenceSetOrganization(int referenceSetID) throws CentralRepoException;
 
     /**
      * Update an existing organization.
@@ -609,18 +609,18 @@ public interface EamDb {
      * @param updatedOrganization the values the Organization with the same ID
      *                            will be updated to in the database.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    void updateOrganization(EamOrganization updatedOrganization) throws EamDbException;
+    void updateOrganization(CentralRepoOrganization updatedOrganization) throws CentralRepoException;
 
     /**
      * Delete an organization if it is not being used by any case.
      *
      * @param organizationToDelete the organization to be deleted
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException;
+    void deleteOrganization(CentralRepoOrganization organizationToDelete) throws CentralRepoException;
 
     /**
      * Add a new Global Set
@@ -629,9 +629,9 @@ public interface EamDb {
      *
      * @return The ID of the new global set
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    int newReferenceSet(EamGlobalSet eamGlobalSet) throws EamDbException;
+    int newReferenceSet(CentralRepoFileSet eamGlobalSet) throws CentralRepoException;
 
     /**
      * Get a global set by ID
@@ -640,9 +640,9 @@ public interface EamDb {
      *
      * @return The global set associated with the ID
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    EamGlobalSet getReferenceSetByID(int globalSetID) throws EamDbException;
+    CentralRepoFileSet getReferenceSetByID(int globalSetID) throws CentralRepoException;
 
     /**
      * Get all reference sets
@@ -651,9 +651,9 @@ public interface EamDb {
      *
      * @return List of all reference sets in the central repository
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    List<EamGlobalSet> getAllReferenceSets(CorrelationAttributeInstance.Type correlationType) throws EamDbException;
+    List<CentralRepoFileSet> getAllReferenceSets(CorrelationAttributeInstance.Type correlationType) throws CentralRepoException;
 
     /**
      * Add a new reference instance
@@ -662,9 +662,9 @@ public interface EamDb {
      * @param correlationType       Correlation Type that this Reference
      *                              Instance is
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttributeInstance.Type correlationType) throws EamDbException;
+    void addReferenceInstance(CentralRepoFileInstance eamGlobalFileInstance, CorrelationAttributeInstance.Type correlationType) throws CentralRepoException;
 
     /**
      * Insert the bulk collection of Global File Instances
@@ -673,9 +673,9 @@ public interface EamDb {
      *                        db.
      * @param contentType     the Type of the global instances
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    void bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances, CorrelationAttributeInstance.Type contentType) throws EamDbException;
+    void bulkInsertReferenceTypeEntries(Set<CentralRepoFileInstance> globalInstances, CorrelationAttributeInstance.Type contentType) throws CentralRepoException;
 
     /**
      * Get all reference entries having a given correlation type and value
@@ -685,9 +685,9 @@ public interface EamDb {
      *
      * @return List of all global file instances with a type and value
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String aValue) throws EamDbException, CorrelationAttributeNormalizationException;
+    List<CentralRepoFileInstance> getReferenceInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String aValue) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Add a new EamArtifact.Type to the db.
@@ -696,9 +696,9 @@ public interface EamDb {
      *
      * @return Type.ID for newType
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    int newCorrelationType(CorrelationAttributeInstance.Type newType) throws EamDbException;
+    int newCorrelationType(CorrelationAttributeInstance.Type newType) throws CentralRepoException;
 
     /**
      * Get the list of EamArtifact.Type's that are defined in the DB and can be
@@ -707,9 +707,9 @@ public interface EamDb {
      * @return List of EamArtifact.Type's. If none are defined in the database,
      *         the default list will be returned.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    List<CorrelationAttributeInstance.Type> getDefinedCorrelationTypes() throws EamDbException;
+    List<CorrelationAttributeInstance.Type> getDefinedCorrelationTypes() throws CentralRepoException;
 
     /**
      * Get the list of enabled EamArtifact.Type's that will be used to correlate
@@ -718,9 +718,9 @@ public interface EamDb {
      * @return List of enabled EamArtifact.Type's. If none are defined in the
      *         database, the default list will be returned.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    List<CorrelationAttributeInstance.Type> getEnabledCorrelationTypes() throws EamDbException;
+    List<CorrelationAttributeInstance.Type> getEnabledCorrelationTypes() throws CentralRepoException;
 
     /**
      * Get the list of supported EamArtifact.Type's that can be used to
@@ -729,18 +729,18 @@ public interface EamDb {
      * @return List of supported EamArtifact.Type's. If none are defined in the
      *         database, the default list will be returned.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    List<CorrelationAttributeInstance.Type> getSupportedCorrelationTypes() throws EamDbException;
+    List<CorrelationAttributeInstance.Type> getSupportedCorrelationTypes() throws CentralRepoException;
 
     /**
      * Update a EamArtifact.Type.
      *
      * @param aType EamArtifact.Type to update.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    void updateCorrelationType(CorrelationAttributeInstance.Type aType) throws EamDbException;
+    void updateCorrelationType(CorrelationAttributeInstance.Type aType) throws CentralRepoException;
 
     /**
      * Get the EamArtifact.Type that has the given Type.Id.
@@ -749,16 +749,16 @@ public interface EamDb {
      *
      * @return EamArtifact.Type or null if it doesn't exist.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    CorrelationAttributeInstance.Type getCorrelationTypeById(int typeId) throws EamDbException;
+    CorrelationAttributeInstance.Type getCorrelationTypeById(int typeId) throws CentralRepoException;
 
     /**
      * Upgrade the schema of the database (if needed)
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    public void upgradeSchema() throws EamDbException, SQLException, IncompatibleCentralRepoException;
+    public void upgradeSchema() throws CentralRepoException, SQLException, IncompatibleCentralRepoException;
 
     /**
      * Gets an exclusive lock (if applicable). Will return the lock if
@@ -768,10 +768,10 @@ public interface EamDb {
      *
      * @return the lock, or null if locking is not supported
      *
-     * @throws EamDbException if the coordination service is running but we fail
+     * @throws CentralRepoException if the coordination service is running but we fail
      *                        to get the lock
      */
-    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException;
+    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws CentralRepoException;
 
     /**
      * Process the Artifact instance in the EamDb
@@ -779,9 +779,9 @@ public interface EamDb {
      * @param type                  EamArtifact.Type to search for
      * @param instanceTableCallback callback to process the instance
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    void processInstanceTable(CorrelationAttributeInstance.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException;
+    void processInstanceTable(CorrelationAttributeInstance.Type type, InstanceTableCallback instanceTableCallback) throws CentralRepoException;
 
     /**
      * Process the Artifact instance in the EamDb
@@ -790,9 +790,9 @@ public interface EamDb {
      * @param instanceTableCallback callback to process the instance
      * @param whereClause           query string to execute
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    void processInstanceTableWhere(CorrelationAttributeInstance.Type type, String whereClause, InstanceTableCallback instanceTableCallback) throws EamDbException;
+    void processInstanceTableWhere(CorrelationAttributeInstance.Type type, String whereClause, InstanceTableCallback instanceTableCallback) throws CentralRepoException;
 
     /**
      * Process a SELECT query
@@ -800,7 +800,7 @@ public interface EamDb {
      * @param selectClause          query string to execute
      * @param instanceTableCallback callback to process the instance
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws EamDbException;      
+    public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws CentralRepoException;      
 }
