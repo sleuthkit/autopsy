@@ -515,7 +515,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
         sizeFilterSettings(true, enabled, !resetSelected && sizeCheckbox.isSelected(), null);
         int[] selectedFrequencyIndices;
-        if (!EamDb.isEnabled()) {
+        if (!CentralRepository.isEnabled()) {
             selectedFrequencyIndices = new int[]{0};
         } else {
             selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
