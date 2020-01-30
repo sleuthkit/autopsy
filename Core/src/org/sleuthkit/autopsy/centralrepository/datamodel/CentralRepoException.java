@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2019 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ import org.sleuthkit.autopsy.exceptions.AutopsyException;
 /**
  * An exception to be thrown by an artifact manager.
  */
-public class EamDbException extends AutopsyException {
+public class CentralRepoException extends AutopsyException {
 
     private static final long serialVersionUID = 1L;
 
@@ -32,7 +32,7 @@ public class EamDbException extends AutopsyException {
      *
      * @param message The exception message.
      */
-    public EamDbException(String message) {
+    public CentralRepoException(String message) {
         super(message);
     }
 
@@ -42,7 +42,7 @@ public class EamDbException extends AutopsyException {
      * @param message     Exception message.
      * @param userMessage the user friendly message to include in this exception
      */
-    public EamDbException(String message, String userMessage) {
+    public CentralRepoException(String message, String userMessage) {
         super(message, userMessage);
     }
 
@@ -54,7 +54,7 @@ public class EamDbException extends AutopsyException {
      * @param userMessage the user friendly message to include in this exception
      * @param cause       Exception cause.
      */
-    public  EamDbException(String message, String userMessage, Throwable cause) {
+    public  CentralRepoException(String message, String userMessage, Throwable cause) {
         super(message, userMessage, cause);
     }
 
@@ -64,7 +64,7 @@ public class EamDbException extends AutopsyException {
      * @param message The exception message.
      * @param cause   The exception cause.
      */
-    public EamDbException(String message, Throwable cause) {
+    public CentralRepoException(String message, Throwable cause) {
         super(message, cause);
     }
 }

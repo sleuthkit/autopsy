@@ -49,8 +49,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -65,6 +64,7 @@ import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Panel used for common files search configuration and configuration business
@@ -162,13 +162,13 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
      */
     static boolean isEamDbAvailableForIntercaseSearch() {
         try {
-            return EamDb.isEnabled()
-                    && EamDb.getInstance() != null
-                    && EamDb.getInstance().getCases().size() > 1
+            return CentralRepository.isEnabled()
+                    && CentralRepository.getInstance() != null
+                    && CentralRepository.getInstance().getCases().size() > 1
                     && Case.isCaseOpen()
                     && Case.getCurrentCase() != null
-                    && EamDb.getInstance().getCase(Case.getCurrentCase()) != null;
-        } catch (EamDbException ex) {
+                    && CentralRepository.getInstance().getCase(Case.getCurrentCase()) != null;
+        } catch (CentralRepoException ex) {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
         return false;
@@ -188,11 +188,11 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
      */
     private static Long getNumberOfDataSourcesAvailable() {
         try {
-            if (EamDb.isEnabled()
-                    && EamDb.getInstance() != null) {
-                return EamDb.getInstance().getCountUniqueDataSources();
+            if (CentralRepository.isEnabled()
+                    && CentralRepository.getInstance() != null) {
+                return CentralRepository.getInstance().getCountUniqueDataSources();
             }
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
         return 0L;
@@ -227,7 +227,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             private ProgressHandle progress;
 
             @Override
-            protected CommonAttributeCountSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+            protected CommonAttributeCountSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, CentralRepoException {
                 progress = ProgressHandle.createHandle(Bundle.CommonAttributePanel_search_done_searchProgressGathering());
                 progress.start();
                 progress.switchToIndeterminate();
@@ -344,7 +344,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             private ProgressHandle progress;
 
             @Override
-            protected CommonAttributeCaseSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+            protected CommonAttributeCaseSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, CentralRepoException {
                 progress = ProgressHandle.createHandle(Bundle.CommonAttributePanel_search_done_searchProgressGathering());
                 progress.start();
                 progress.switchToIndeterminate();
@@ -573,11 +573,11 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
              *
              * @return a map of Cases
              *
-             * @throws EamDbException
+             * @throws CentralRepoException
              */
-            private Map<Integer, String> mapCases(List<CorrelationCase> cases) throws EamDbException {
+            private Map<Integer, String> mapCases(List<CorrelationCase> cases) throws CentralRepoException {
                 Map<Integer, String> casemap = new HashMap<>();
-                CorrelationCase currentCorCase = EamDb.getInstance().getCase(Case.getCurrentCase());
+                CorrelationCase currentCorCase = CentralRepository.getInstance().getCase(Case.getCurrentCase());
                 for (CorrelationCase correlationCase : cases) {
                     if (currentCorCase.getID() != correlationCase.getID()) { // if not the current Case
                         casemap.put(correlationCase.getID(), correlationCase.getDisplayName());
@@ -587,9 +587,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             }
 
             @Override
-            protected Map<Integer, String> doInBackground() throws EamDbException {
+            protected Map<Integer, String> doInBackground() throws CentralRepoException {
 
-                List<CorrelationCase> dataSources = EamDb.getInstance().getCases();
+                List<CorrelationCase> dataSources = CentralRepository.getInstance().getCases();
                 Map<Integer, String> caseMap = mapCases(dataSources);
 
                 return caseMap;
@@ -874,14 +874,14 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             @Override
             protected List<String> doInBackground() throws Exception {
                 List<String> unCorrelatedDataSources = new ArrayList<>();
-                if (!interCaseRadio.isSelected() || !EamDb.isEnabled() || EamDb.getInstance() == null) {
+                if (!interCaseRadio.isSelected() || !CentralRepository.isEnabled() || CentralRepository.getInstance() == null) {
                     return unCorrelatedDataSources;
                 }
                 //if the eamdb is enabled and an instance is able to be retrieved check if each data source has been processed into the cr 
                 HashMap<DataSource, CorrelatedStatus> dataSourceCorrelationMap = new HashMap<>(); //keep track of the status of all data sources that have been ingested
                 String correlationEngineModuleName = CentralRepoIngestModuleFactory.getModuleName();
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                List<CorrelationDataSource> correlatedDataSources = EamDb.getInstance().getDataSources();
+                List<CorrelationDataSource> correlatedDataSources = CentralRepository.getInstance().getDataSources();
                 List<IngestJobInfo> ingestJobs = skCase.getIngestJobs();
                 for (IngestJobInfo jobInfo : ingestJobs) {
                     //get the data source for each ingest job

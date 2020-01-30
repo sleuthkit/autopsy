@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2019 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,16 +31,16 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum.DISABLED;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresEamDbSettings;
-import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms.DISABLED;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSettings;
+import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 
 /**
  * Main settings panel for the Central Repository
@@ -80,15 +80,15 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     @Messages({"GlobalSettingsPanel.updateFailed.title=Central repository disabled"})
     private void updateDatabase() {
 
-        if (EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED)) {
+        if (CentralRepoPlatforms.getSelectedPlatform().equals(DISABLED)) {
             return;
         }
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         try {
-            EamDbUtil.upgradeDatabase();
+            CentralRepoDbUtil.upgradeDatabase();
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             JOptionPane.showMessageDialog(this,
                     ex.getUserMessage(),
@@ -456,25 +456,25 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     public void load() {
         tbOops.setText("");
         enableButtonSubComponents(false);
-        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-        cbUseCentralRepo.setSelected(EamDbUtil.allowUseOfCentralRepository()); // NON-NLS
+        CentralRepoPlatforms selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
+        cbUseCentralRepo.setSelected(CentralRepoDbUtil.allowUseOfCentralRepository()); // NON-NLS
         switch (selectedPlatform) {
             case POSTGRESQL:
-                PostgresEamDbSettings dbSettingsPg = new PostgresEamDbSettings();
-                lbDbPlatformValue.setText(EamDbPlatformEnum.POSTGRESQL.toString());
+                PostgresCentralRepoSettings dbSettingsPg = new PostgresCentralRepoSettings();
+                lbDbPlatformValue.setText(CentralRepoPlatforms.POSTGRESQL.toString());
                 lbDbNameValue.setText(dbSettingsPg.getDbName());
                 lbDbLocationValue.setText(dbSettingsPg.getHost());
                 enableButtonSubComponents(cbUseCentralRepo.isSelected());
                 break;
             case SQLITE:
-                SqliteEamDbSettings dbSettingsSqlite = new SqliteEamDbSettings();
-                lbDbPlatformValue.setText(EamDbPlatformEnum.SQLITE.toString());
+                SqliteCentralRepoSettings dbSettingsSqlite = new SqliteCentralRepoSettings();
+                lbDbPlatformValue.setText(CentralRepoPlatforms.SQLITE.toString());
                 lbDbNameValue.setText(dbSettingsSqlite.getDbName());
                 lbDbLocationValue.setText(dbSettingsSqlite.getDbDirectory());
                 enableButtonSubComponents(cbUseCentralRepo.isSelected());
                 break;
             default:
-                lbDbPlatformValue.setText(EamDbPlatformEnum.DISABLED.toString());
+                lbDbPlatformValue.setText(CentralRepoPlatforms.DISABLED.toString());
                 lbDbNameValue.setText("");
                 lbDbLocationValue.setText("");
                 tbOops.setText(Bundle.GlobalSettingsPanel_validationerrMsg_mustConfigure());
@@ -485,7 +485,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     @Override
     public void store() { // Click OK or Apply on Options Panel
-        EamDbUtil.setUseCentralRepo(cbUseCentralRepo.isSelected());
+        CentralRepoDbUtil.setUseCentralRepo(cbUseCentralRepo.isSelected());
     }
 
     /**

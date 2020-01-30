@@ -23,13 +23,13 @@ import java.util.logging.Level;
 import javax.swing.JComboBox;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoOrganization;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Panel which allows for editing and setting of the case details which are
@@ -40,8 +40,8 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
 
     private final static Logger logger = Logger.getLogger(OptionalCasePropertiesPanel.class.getName());
     private static final long serialVersionUID = 1L;
-    private EamOrganization selectedOrg = null;
-    private java.util.List<EamOrganization> orgs = null;
+    private CentralRepoOrganization selectedOrg = null;
+    private java.util.List<CentralRepoOrganization> orgs = null;
 
     /**
      * Creates new form OptionalCasePropertiesPanel
@@ -92,14 +92,14 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
     }
 
     private void setUpOrganizationData() {
-        if (EamDb.isEnabled()) {
+        if (CentralRepository.isEnabled()) {
             try {
                 Case currentCase = Case.getCurrentCaseThrows();
                 if (currentCase != null) {
-                    EamDb dbManager = EamDb.getInstance();
+                    CentralRepository dbManager = CentralRepository.getInstance();
                     selectedOrg = dbManager.getCase(currentCase).getOrg();
                 }
-            } catch (EamDbException ex) {
+            } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Unable to get Organization associated with the case from Central Repo", ex);
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Exception while getting open case.", ex);
@@ -109,13 +109,13 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                 setCurrentlySelectedOrganization(selectedOrg.getName());
             }
             else {
-                setCurrentlySelectedOrganization(EamDbUtil.getDefaultOrgName());
+                setCurrentlySelectedOrganization(CentralRepoDbUtil.getDefaultOrgName());
             }
         }
     }
 
     void setUpCaseDetailsFields() {
-        boolean cREnabled = EamDb.isEnabled();
+        boolean cREnabled = CentralRepository.isEnabled();
         comboBoxOrgName.setEnabled(cREnabled);
         bnNewOrganization.setEnabled(cREnabled);
         lbPointOfContactNameText.setEnabled(cREnabled);
@@ -138,13 +138,13 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         Object selectedBeforeLoad = comboBoxOrgName.getSelectedItem();
         comboBoxOrgName.removeAllItems();
         try {
-            EamDb dbManager = EamDb.getInstance();
+            CentralRepository dbManager = CentralRepository.getInstance();
             orgs = dbManager.getOrganizations();
             orgs.forEach((org) -> {
                 comboBoxOrgName.addItem(org.getName());
             });
             comboBoxOrgName.setSelectedItem(selectedBeforeLoad);
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.WARNING, "Unable to populate list of Organizations from Central Repo", ex);
         }
     }
@@ -180,7 +180,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         if (selectedOrg != null) {
             return selectedOrg.getName();
         } else {
-            return EamDbUtil.getDefaultOrgName();
+            return CentralRepoDbUtil.getDefaultOrgName();
         }
     }
 
@@ -514,7 +514,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             clearOrganization();
             return;
         }
-        for (EamOrganization org : orgs) {
+        for (CentralRepoOrganization org : orgs) {
             if (org.getName().equals(orgName)) {
                 selectedOrg = org;
                 lbPointOfContactNameText.setText(selectedOrg.getPocName());
@@ -538,7 +538,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_bnNewOrganizationActionPerformed
 
     void setCurrentlySelectedOrganization(String orgName) {
-        comboBoxOrgName.setSelectedItem(orgName == null ? EamDbUtil.getDefaultOrgName() : orgName);
+        comboBoxOrgName.setSelectedItem(orgName == null ? CentralRepoDbUtil.getDefaultOrgName() : orgName);
     }
 
     @Messages({
@@ -583,9 +583,9 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
      */
     private void updateCorrelationCase() {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        if (EamDb.isEnabled()) {
+        if (CentralRepository.isEnabled()) {
             try {
-                EamDb dbManager = EamDb.getInstance();
+                CentralRepository dbManager = CentralRepository.getInstance();
                 CorrelationCase correlationCase = dbManager.getCase(Case.getCurrentCaseThrows());
                 if (caseDisplayNameTextField.isVisible()) {
                     correlationCase.setDisplayName(caseDisplayNameTextField.getText());
@@ -597,7 +597,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                 correlationCase.setExaminerPhone(tfExaminerPhoneText.getText());
                 correlationCase.setNotes(taNotesText.getText());
                 dbManager.updateCase(correlationCase);
-            } catch (EamDbException ex) {
+            } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Error connecting to central repository database", ex); // NON-NLS  
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS

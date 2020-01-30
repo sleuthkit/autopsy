@@ -31,11 +31,11 @@ import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * ChildFactory for CorrelationCases. Finds the cases that reference the given
@@ -59,14 +59,14 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
 
     @Override
     protected boolean createKeys(List<CorrelationCase> list) {
-        if (!EamDb.isEnabled()) {
+        if (!CentralRepository.isEnabled()) {
             return true;
         }
 
-        EamDb dbInstance;
+        CentralRepository dbInstance;
         try {
-            dbInstance = EamDb.getInstance();
-        } catch (EamDbException ex) {
+            dbInstance = CentralRepository.getInstance();
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Unable to connect to the Central Repository database.", ex); //NON-NLS
             return false;
         }
@@ -83,7 +83,7 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
                         uniqueCaseMap.put(correlationCase.getCaseUUID(), correlationCase);
                     });
                 }
-            } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+            } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
                 logger.log(Level.WARNING, String.format("Unable to getArtifactInstance for accountID: %d", account.getAccountID()), ex); //NON-NLS
             }
         });
@@ -106,9 +106,9 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
      * @return CorrelationAttributeInstance.Type for given account or null if
      *         there is no match
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    private CorrelationAttributeInstance.Type getCorrelationType(Account.Type accountType) throws EamDbException {
+    private CorrelationAttributeInstance.Type getCorrelationType(Account.Type accountType) throws CentralRepoException {
         if (correlationTypeMap == null) {
             correlationTypeMap = new HashMap<>();
             List<CorrelationAttributeInstance.Type> correcationTypeList = CorrelationAttributeInstance.getDefaultCorrelationTypes();

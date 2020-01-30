@@ -34,9 +34,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -46,6 +45,7 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Annotations view of file contents.
@@ -194,19 +194,19 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      *                   artifact.
      */
     private void populateCentralRepositoryData(StringBuilder html, BlackboardArtifact artifact, AbstractFile sourceFile) {
-        if (EamDb.isEnabled()) {
+        if (CentralRepository.isEnabled()) {
             startSection(html, "Central Repository Comments");
             List<CorrelationAttributeInstance> instancesList = new ArrayList<>();
             if (artifact != null) {
-                instancesList.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(artifact, false));
+                instancesList.addAll(CorrelationAttributeUtil.makeInstancesFromBlackboardArtifact(artifact, false));
             }
             try {
-                List<CorrelationAttributeInstance.Type> artifactTypes = EamDb.getInstance().getDefinedCorrelationTypes();
+                List<CorrelationAttributeInstance.Type> artifactTypes = CentralRepository.getInstance().getDefinedCorrelationTypes();
                 String md5 = sourceFile.getMd5Hash();
                 if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
                     for (CorrelationAttributeInstance.Type attributeType : artifactTypes) {
                         if (attributeType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
-                            CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCase());
+                            CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCase());
                             instancesList.add(new CorrelationAttributeInstance(
                                     attributeType,
                                     md5,
@@ -225,7 +225,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
                 for (CorrelationAttributeInstance instance : instancesList) {
                     List<CorrelationAttributeInstance> correlatedInstancesList
-                            = EamDb.getInstance().getArtifactInstancesByTypeValue(instance.getCorrelationType(), instance.getCorrelationValue());
+                            = CentralRepository.getInstance().getArtifactInstancesByTypeValue(instance.getCorrelationType(), instance.getCorrelationValue());
                     for (CorrelationAttributeInstance correlatedInstance : correlatedInstancesList) {
                         if (correlatedInstance.getComment() != null && correlatedInstance.getComment().isEmpty() == false) {
                             commentDataFound = true;
@@ -237,7 +237,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                 if (commentDataFound == false) {
                     addMessage(html, "There is no comment data for the selected content in the Central Repository.");
                 }
-            } catch (EamDbException | TskCoreException ex) {
+            } catch (CentralRepoException | TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error connecting to the Central Repository database.", ex); // NON-NLS
             } catch (CorrelationAttributeNormalizationException ex) {
                 logger.log(Level.SEVERE, "Error normalizing instance from Central Repository database.", ex); // NON-NLS

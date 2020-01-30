@@ -20,8 +20,7 @@ package org.sleuthkit.autopsy.filequery;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileSize;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.autopsy.filequery.FileSearchData.Frequency;
@@ -38,6 +37,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Run various filters to return a subset of files from the current case.
@@ -54,7 +54,7 @@ class FileSearchFiltering {
      *
      * @return
      */
-    static List<ResultFile> runQueries(List<FileFilter> filters, SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+    static List<ResultFile> runQueries(List<FileFilter> filters, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
         if (caseDb == null) {
             throw new FileSearchException("Case DB parameter is null"); // NON-NLS
         }
@@ -94,7 +94,7 @@ class FileSearchFiltering {
      * @throws TskCoreException
      * @throws FileSearchException
      */
-    private static List<ResultFile> getResultList(List<FileFilter> filters, String combinedQuery, SleuthkitCase caseDb, EamDb centralRepoDb) throws TskCoreException, FileSearchException {
+    private static List<ResultFile> getResultList(List<FileFilter> filters, String combinedQuery, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws TskCoreException, FileSearchException {
         // Get all matching abstract files
         List<ResultFile> resultList = new ArrayList<>();
         List<AbstractFile> sqlResults = caseDb.findAllFilesWhere(combinedQuery);
@@ -161,7 +161,7 @@ class FileSearchFiltering {
          * @throws FileSearchException
          */
         List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
             return new ArrayList<>();
         }
 
@@ -562,7 +562,7 @@ class FileSearchFiltering {
 
         @Override
         List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             // We have to have run some kind of SQL filter before getting to this point,
             // and should have checked afterward to see if the results were empty.
@@ -895,7 +895,7 @@ class FileSearchFiltering {
 
         @Override
         List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             if (centralRepoDb == null) {
                 throw new FileSearchException("Can not run Previously Notable filter with null Central Repository DB"); // NON-NLS
@@ -924,7 +924,7 @@ class FileSearchFiltering {
                     }
                 }
                 return notableResults;
-            } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+            } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
                 throw new FileSearchException("Error querying central repository", ex); // NON-NLS
             }
         }
