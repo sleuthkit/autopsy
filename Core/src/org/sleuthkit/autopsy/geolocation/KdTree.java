@@ -99,12 +99,6 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
     static final int Y_AXIS = 1;
     static final int Z_AXIS = 2;
 
-    /**
-     * Default constructor.
-     */
-    public KdTree() {
-    }
-
     public KdNode getRoot() {
         return root;
     }
@@ -571,9 +565,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder(200);
-            builder.append("dimensions=").append(DIMENSIONS);
-            builder.append(" depth=").append(depth);
-            builder.append(" point=").append(getPoint().toString());
+            builder.append("dimensions=").append(DIMENSIONS).append(" depth=").append(depth).append(" point=").append(getPoint().toString());
             return builder.toString();
         }
     }
