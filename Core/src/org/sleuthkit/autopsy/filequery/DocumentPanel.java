@@ -21,7 +21,10 @@ package org.sleuthkit.autopsy.filequery;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.ImageUtilities;
@@ -68,6 +71,8 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
         previewScrollPane = new javax.swing.JScrollPane();
         previewTextArea = new javax.swing.JTextArea();
 
+        setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
         countLabel.setToolTipText(org.openide.util.NbBundle.getMessage(DocumentPanel.class, "DocumentPanel.countLabel.toolTipText")); // NOI18N
         countLabel.setMaximumSize(new java.awt.Dimension(159, 12));
         countLabel.setMinimumSize(new java.awt.Dimension(159, 12));
@@ -93,6 +98,7 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
 
         previewTextArea.setEditable(false);
         previewTextArea.setColumns(20);
+        previewTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         previewTextArea.setLineWrap(true);
         previewTextArea.setRows(5);
         previewTextArea.setWrapStyleWord(true);
@@ -110,7 +116,7 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(countLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 530, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 85, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 81, Short.MAX_VALUE)
                         .addComponent(isDeletedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(scoreLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -221,5 +227,36 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
 
         return this;
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+        if (event != null) {
+            //gets tooltip of internal panel item mouse is over
+            Point point = event.getPoint();
+            for (Component comp : getComponents()) {
+                if (isPointOnIcon(comp, point)) {
+                    String toolTip = ((JComponent) comp).getToolTipText();
+                    if (toolTip == null || toolTip.isEmpty()) {
+                        return null;
+                    } else {
+                        return toolTip;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Helper method to see if point is on the icon.
+     *
+     * @param comp  The component to check if the cursor is over the icon of
+     * @param point The point the cursor is at.
+     *
+     * @return True if the point is over the icon, false otherwise.
+     */
+    private boolean isPointOnIcon(Component comp, Point point) {
+        return comp instanceof JComponent && point.x >= comp.getX() && point.x <= comp.getX() + ICON_SIZE && point.y >= comp.getY() && point.y <= comp.getY() + ICON_SIZE;
     }
 }
