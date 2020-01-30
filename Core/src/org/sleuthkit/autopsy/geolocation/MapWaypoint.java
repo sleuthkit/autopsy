@@ -184,13 +184,6 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         return getFormattedDetails(dataModelWaypoint);
     }
     
-    public String toString() {
-        if(position != null) {
-            return String.format("%f, %f", position.getLatitude(), position.getLongitude());
-        } 
-        return super.toString();
-    }
-
     /**
      * Returns a list of JMenuItems for the waypoint. The list list may contain
      * nulls which should be removed or replaced with JSeparators.

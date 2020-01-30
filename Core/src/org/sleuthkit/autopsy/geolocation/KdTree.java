@@ -69,7 +69,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
         }
     };
 
-     /**
+    /**
      * Compares two XYZPoints by their Y value.
      */
     private static final Comparator<XYZPoint> Y_COMPARATOR = new Comparator<XYZPoint>() {
@@ -104,7 +104,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
      */
     public KdTree() {
     }
-    
+
     public KdNode getRoot() {
         return root;
     }
@@ -169,7 +169,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
     /**
      * Locates T in the tree.
      *
-     * @param tree to search.
+     * @param tree  to search.
      * @param value to search for.
      *
      * @return KdNode or NULL if not found
@@ -202,9 +202,9 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
     /**
      * Searches for numNeighbors nearest neighbor.
      *
-     * @param numNeighbors Number of neighbors to retrieve. Can return more than K, if
-     *              last nodes are equal distances.
-     * @param value to find neighbors of.
+     * @param numNeighbors Number of neighbors to retrieve. Can return more than
+     *                     K, if last nodes are equal distances.
+     * @param value        to find neighbors of.
      *
      * @return Collection of T neighbors.
      */
@@ -255,14 +255,14 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
     }
 
     /**
-     * Searches the tree to find any nodes that are closer 
-     * than what is currently in results.
-     *  
-     * @param value Nearest value search point
-     * @param node  Search starting node
+     * Searches the tree to find any nodes that are closer than what is
+     * currently in results.
+     *
+     * @param value        Nearest value search point
+     * @param node         Search starting node
      * @param numNeighbors Number of nearest neighbors to return
-     * @param results Current result set
-     * @param examined List of examined nodes
+     * @param results      Current result set
+     * @param examined     List of examined nodes
      */
     private <T extends KdTree.XYZPoint> void searchNode(T value, KdNode node, int numNeighbors, TreeSet<KdNode> results, Set<KdNode> examined) {
         examined.add(node);
@@ -349,7 +349,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
      * Adds, in a specified queue, a given node and its related nodes (lesser,
      * greater).
      *
-     * @param node Node to check. May be null.
+     * @param node    Node to check. May be null.
      *
      * @param results Queue containing all found entries. Must not be null.
      */
@@ -363,8 +363,8 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
     }
 
     /**
-     * A comparator class for doing a euclidean distance comparison of 
-     * two KdNodes.
+     * A comparator class for doing a euclidean distance comparison of two
+     * KdNodes.
      */
     private final class EuclideanComparator implements Comparator<KdNode> {
 
@@ -416,26 +416,26 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
     }
 
     /**
-     * A node in the KdTree.  Each node has a parent node (unless the node is
-     * the root) and a lesser and greater child node.
-     * 
-     * The child nodes are set to "lesser" or "greater" depending on a comparison
-     * between the nodes XYZPoint and the child's XYZPoint.
+     * A node in the KdTree. Each node has a parent node (unless the node is the
+     * root) and a lesser and greater child node.
+     *
+     * The child nodes are set to "lesser" or "greater" depending on a
+     * comparison between the nodes XYZPoint and the child's XYZPoint.
      */
     public static class KdNode implements Comparable<KdNode> {
 
         private final XYZPoint point;
         private final int depth;
         private final KdNode parent;
-        
+
         private KdNode lesser = null;
         private KdNode greater = null;
 
         /**
          * Constructs a new KdNode.
-         * 
-         * @param point Node point
-         * @param depth Depth of node in the tree, set to 0 if root node
+         *
+         * @param point  Node point
+         * @param depth  Depth of node in the tree, set to 0 if root node
          * @param parent Parent of this node, can be null if root node
          */
         public KdNode(XYZPoint point, int depth, KdNode parent) {
@@ -447,14 +447,13 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
         /**
          * Compares two XYZPoints. The value used for the comparision is based
          * on the depth of the node in the tree and the tree's dimension.
-         * 
-         * @param depth Depth of node in the tree
+         *
+         * @param depth  Depth of node in the tree
          * @param point1 First point to compare
          * @param point2 Second point to compare
-         * 
-         * @return   0 if points are equal
-         *          -1 if point2 is "less than" point1
-         *           1 if point1 is "greater than" point2
+         *
+         * @return 0 if points are equal -1 if point2 is "less than" point1 1 if
+         *         point1 is "greater than" point2
          */
         public static int compareTo(int depth, XYZPoint point1, XYZPoint point2) {
             int axis = depth % DIMENSIONS;
@@ -470,7 +469,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
 
         /**
          * Returns the nodes depth in the kdtree.
-         * 
+         *
          * @return Node depth.
          */
         int getDepth() {
@@ -478,18 +477,19 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
         }
 
         /**
-         * Returns the parent of this node.  If parent is null, the node is 
-         * the tree root node.
-         * 
-         * @return Returns the parent of this node, or null if node is tree root.
+         * Returns the parent of this node. If parent is null, the node is the
+         * tree root node.
+         *
+         * @return Returns the parent of this node, or null if node is tree
+         *         root.
          */
         KdNode getParent() {
             return parent;
         }
 
         /**
-         * Sets the lesser child of this node. 
-         * 
+         * Sets the lesser child of this node.
+         *
          * @param node lesser Child node
          */
         void setLesser(KdNode node) {
@@ -498,7 +498,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
 
         /**
          * Returns the nodes lesser child node.
-         * 
+         *
          * @return Returns KdNode or null if one was not set.
          */
         KdNode getLesser() {
@@ -507,8 +507,8 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
 
         /**
          * Sets the greater child of this node.
-         * 
-         * @param node 
+         *
+         * @param node
          */
         void setGreater(KdNode node) {
             greater = node;
@@ -516,7 +516,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
 
         /**
          * Returns the nodes lesser child node.
-         * 
+         *
          * @return Returns KdNode or null if one was not set.
          */
         KdNode getGreater() {
@@ -524,10 +524,10 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
         }
 
         /**
-         * Returns the XYZ point of this node which contains the 
-         * longitude and latitude values.
-         * 
-         * @return XYZPoint 
+         * Returns the XYZ point of this node which contains the longitude and
+         * latitude values.
+         *
+         * @return XYZPoint
          */
         XYZPoint getPoint() {
             return point;
@@ -578,10 +578,9 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
         }
     }
 
-
     /**
-     * An XYZPoint is a representation of a three dimensional point. 
-     * 
+     * An XYZPoint is a representation of a three dimensional point.
+     *
      * Z value will always been 0 when using latitude and longitude values.
      */
     public static class XYZPoint implements Comparable<XYZPoint> {
@@ -592,7 +591,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
 
         /**
          * Constructs a new XYZPoint.
-         * 
+         *
          * @param latitude
          * @param longitude
          */
@@ -604,7 +603,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
 
         /**
          * Returns the x\latitude value for the point.
-         * 
+         *
          * @return x\Latitude value for the point
          */
         public double getX() {
@@ -613,7 +612,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
 
         /**
          * Returns the y/longitude value for the point.
-         * 
+         *
          * @return Longitude for point
          */
         public double getY() {
@@ -622,7 +621,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
 
         /**
          * Returns the z value, will always be 0.
-         * 
+         *
          * @return Always 0.
          */
         public double getZ() {
@@ -642,7 +641,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
 
         /**
          * Computes the Euclidean distance from one point to the other.
-         * 
+         *
          * Source for the distance calculation:
          * https://www.movable-type.co.uk/scripts/latlong.html
          *
@@ -696,7 +695,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
 
             return ((Double.compare(this.x, xyzPoint.x) == 0)
                     && (Double.compare(this.y, xyzPoint.y) == 0)
-                    && (Double.compare(this.z, xyzPoint.z) == 0)) ;
+                    && (Double.compare(this.z, xyzPoint.z) == 0));
         }
 
         /**
