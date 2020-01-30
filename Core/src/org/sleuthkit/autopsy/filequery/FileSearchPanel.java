@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -522,7 +522,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         }
         crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
         exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
-        objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
+        objectsFilterSettings(false, false, false, null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
         interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
         parentFilterSettings(true, enabled, !resetSelected && parentCheckbox.isSelected(), null);

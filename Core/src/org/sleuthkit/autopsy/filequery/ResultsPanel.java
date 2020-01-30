@@ -38,6 +38,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionListener;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
@@ -45,6 +46,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -75,7 +77,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private FileSearchData.FileType resultType;
     private int groupSize = 0;
     private PageWorker pageWorker;
-    private final List<SwingWorker<Void, Void>> thumbnailWorkers = new ArrayList<>();
+    private final List<SwingWorker<Void, Void>> resultContentWorkers = new ArrayList<>();
     private final DefaultListModel<AbstractFile> instancesListModel = new DefaultListModel<>();
     private ListSelectionListener listener = null;
 
@@ -246,13 +248,13 @@ public class ResultsPanel extends javax.swing.JPanel {
         resultsViewerPanel.remove(videoThumbnailViewer);
         resultsViewerPanel.remove(documentViewer);
         //cancel any unfished thumb workers
-        for (SwingWorker<Void, Void> thumbWorker : thumbnailWorkers) {
+        for (SwingWorker<Void, Void> thumbWorker : resultContentWorkers) {
             if (!thumbWorker.isDone()) {
                 thumbWorker.cancel(true);
             }
         }
         //clear old thumbnails
-        thumbnailWorkers.clear();
+        resultContentWorkers.clear();
         videoThumbnailViewer.clearViewer();
         imageThumbnailViewer.clearViewer();
         documentViewer.clearViewer();
@@ -269,7 +271,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             VideoThumbnailWorker thumbWorker = new VideoThumbnailWorker(file);
             thumbWorker.execute();
             //keep track of thumb worker for possible cancelation 
-            thumbnailWorkers.add(thumbWorker);
+            resultContentWorkers.add(thumbWorker);
         }
     }
 
@@ -284,16 +286,16 @@ public class ResultsPanel extends javax.swing.JPanel {
             ImageThumbnailWorker thumbWorker = new ImageThumbnailWorker(file);
             thumbWorker.execute();
             //keep track of thumb worker for possible cancelation 
-            thumbnailWorkers.add(thumbWorker);
+            resultContentWorkers.add(thumbWorker);
         }
     }
 
     synchronized void populateDocumentViewer(List<ResultFile> files) {
         for (ResultFile file : files) {
-            documentViewer.addDocument(new DocumentWrapper(file));
-//            thumbWorker.execute();
-//            //keep track of thumb worker for possible cancelation 
-//            thumbnailWorkers.add(thumbWorker);
+            DocumentSummaryWorker documentWorker = new DocumentSummaryWorker(file);
+            documentWorker.execute();
+            //keep track of thumb worker for possible cancelation 
+            resultContentWorkers.add(documentWorker);
         }
     }
 
@@ -716,6 +718,68 @@ public class ResultsPanel extends javax.swing.JPanel {
         @Override
         protected void done() {
             imageThumbnailViewer.repaint();
+        }
+
+    }
+
+    /**
+     * Swing worker to handle the retrieval of image thumbnails and population
+     * of the Image Thumbnail Viewer.
+     */
+    private class DocumentSummaryWorker extends SwingWorker<Void, Void> {
+
+        private final DocumentWrapper documentWrapper;
+
+        /**
+         * Construct a new ImageThumbnailWorker.
+         *
+         * @param file The ResultFile which represents the image file thumbnails
+         *             are being retrieved for.
+         */
+        DocumentSummaryWorker(ResultFile file) {
+            documentWrapper = new DocumentWrapper(file);
+            documentViewer.addDocument(documentWrapper);
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            String preview = createPreview(documentWrapper.getResultFile().getFirstInstance());
+            if (preview != null) {
+                documentWrapper.setSummary(preview);
+            }
+            return null;
+        }
+
+        private String createPreview(AbstractFile file) {
+
+            byte[] data = new byte[256];
+            int bytesRead = 0;
+            if (file.getSize() > 0) {
+                try {
+                    bytesRead = file.read(data, 0, 256); // read the data
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Error while trying to show the String content.", ex); //NON-NLS
+                }
+            }
+            String text;
+            if (bytesRead > 0) {
+                StringExtract stringExtract = new StringExtract();
+                final StringExtract.StringExtractUnicodeTable.SCRIPT selScript = StringExtract.StringExtractUnicodeTable.SCRIPT.LATIN_1;
+                stringExtract.setEnabledScript(selScript);
+                StringExtract.StringExtractResult res = stringExtract.extract(data, bytesRead, 0);
+                text = res.getText();
+                if (StringUtils.isBlank(text)) {
+                    text = "No Preview available.";
+                }
+            } else {
+                text = "No bytes read for preview.";
+            }
+            return text;
+        }
+
+        @Override
+        protected void done() {
+           documentViewer.repaint();
         }
 
     }
