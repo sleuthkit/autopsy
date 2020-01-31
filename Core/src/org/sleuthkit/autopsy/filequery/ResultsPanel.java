@@ -769,8 +769,16 @@ public class ResultsPanel extends javax.swing.JPanel {
             return null;
         }
 
+        /**
+         * Create the string that will be used as the preview for the specified
+         * AbstractFile.
+         *
+         * @param file The AbstractFile to create the preview for.
+         *
+         * @return The String which is the preview for the specified
+         *         AbstractFile.
+         */
         private String createPreview(AbstractFile file) {
-
             byte[] data = new byte[256];
             int bytesRead = 0;
             if (file.getSize() > 0) {
