@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.RelationalDbCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
 
 /**
  *
@@ -135,8 +135,8 @@ public class CentralRepoDbUtil {
      */
     static void updateSchemaVersion(Connection conn) throws SQLException {
         try (Statement statement = conn.createStatement()) {
-            statement.execute("UPDATE db_info SET value = '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "' WHERE name = '" + RelationalDbCentralRepo.SCHEMA_MAJOR_VERSION_KEY + "'");
-            statement.execute("UPDATE db_info SET value = '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "' WHERE name = '" + RelationalDbCentralRepo.SCHEMA_MINOR_VERSION_KEY + "'");
+            statement.execute("UPDATE db_info SET value = '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "' WHERE name = '" + RdbmsCentralRepo.SCHEMA_MAJOR_VERSION_KEY + "'");
+            statement.execute("UPDATE db_info SET value = '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "' WHERE name = '" + RdbmsCentralRepo.SCHEMA_MINOR_VERSION_KEY + "'");
         }
     }
 
