@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import org.openide.util.NbBundle.Messages;
+
 /**
  * Class to wrap all the information necessary for a document preview to be
  * displayed.
@@ -33,8 +35,9 @@ public class DocumentWrapper {
      * @param file The ResultFile which represents the document which the
      *             preview summary is created for.
      */
+    @Messages({"DocumentWrapper.previewInitialValue=Preview not generated yet."})
     DocumentWrapper(ResultFile file) {
-        this.preview = "Preview being generated.";
+        this.preview = Bundle.DocumentWrapper_previewInitialValue();
         this.resultFile = file;
     }
 

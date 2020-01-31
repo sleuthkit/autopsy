@@ -748,6 +748,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private class DocumentPreviewWorker extends SwingWorker<Void, Void> {
 
         private final DocumentWrapper documentWrapper;
+        private static final int PREVIEW_SIZE = 256;
 
         /**
          * Construct a new DocumentPreviewWorker.
@@ -778,12 +779,15 @@ public class ResultsPanel extends javax.swing.JPanel {
          * @return The String which is the preview for the specified
          *         AbstractFile.
          */
+        @Messages({"ResultsPanel.documentPreviewWorker.noPreview=No preview available.",
+            "ResultsPanel.documentPreviewWorker.noBytes=No bytes read for document, unable to display preview."})
         private String createPreview(AbstractFile file) {
-            byte[] data = new byte[256];
+            byte[] data = new byte[PREVIEW_SIZE];
             int bytesRead = 0;
             if (file.getSize() > 0) {
                 try {
-                    bytesRead = file.read(data, 0, 256); // read the data
+                    int length = PREVIEW_SIZE > file.getSize() ? PREVIEW_SIZE : (int) file.getSize();  //if the size is less than the int it can be cast to an int
+                    bytesRead = file.read(data, 0, length); // read the data
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Error while trying to show the String content.", ex); //NON-NLS
                 }
@@ -796,10 +800,10 @@ public class ResultsPanel extends javax.swing.JPanel {
                 StringExtract.StringExtractResult res = stringExtract.extract(data, bytesRead, 0);
                 text = res.getText();
                 if (StringUtils.isBlank(text)) {
-                    text = "No Preview available.";
+                    text = Bundle.ResultsPanel_documentPreviewWorker_noPreview();
                 }
             } else {
-                text = "No bytes read for preview.";
+                text = Bundle.ResultsPanel_documentPreviewWorker_noBytes();
             }
             return text;
         }

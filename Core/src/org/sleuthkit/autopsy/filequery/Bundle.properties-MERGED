@@ -14,6 +14,9 @@ DiscoveryUiUtility.megaBytes.text=MB
 # {1} - units
 DiscoveryUiUtility.sizeLabel.text=Size: {0} {1}
 DiscoveryUiUtility.terraBytes.text=TB
+# {0} - extension
+DocumentPanel.documentType.extension.text=Extension: {0}
+DocumentWrapper.previewInitialValue=Preview not generated yet.
 FileGroup.groupSortingAlgorithm.groupName.text=Group Name
 FileGroup.groupSortingAlgorithm.groupSize.text=Group Size
 # {0} - Data source name
@@ -182,6 +185,8 @@ ResultFile.score.taggedFile.description=At least one instance of the file has be
 # {1} - totalPages
 ResultsPanel.currentPage.displayValue=Page: {0} of {1}
 ResultsPanel.currentPageLabel.text=Page: -
+ResultsPanel.documentPreviewWorker.noBytes=No bytes read for document, unable to display preview.
+ResultsPanel.documentPreviewWorker.noPreview=No preview available.
 # {0} - selectedPage
 # {1} - maxPage
 ResultsPanel.invalidPageNumber.message=The selected page number {0} does not exist. Please select a value from 1 to {1}.

@@ -26,7 +26,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
-
+import org.openide.util.NbBundle.Messages;
 
 /**
  * Class which displays a preview and details about a document.
@@ -133,7 +133,6 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
     }// </editor-fold>//GEN-END:initComponents
 
 
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel countLabel;
     private javax.swing.JLabel documentType;
@@ -144,15 +143,17 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
     private javax.swing.JLabel scoreLabel;
     // End of variables declaration//GEN-END:variables
 
+    @Messages({"# {0} - extension",
+        "DocumentPanel.documentType.extension.text=Extension: {0}"})
     @Override
     public Component getListCellRendererComponent(JList<? extends DocumentWrapper> list, DocumentWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         fileSizeLabel.setText(DiscoveryUiUtils.getFileSizeString(value.getResultFile().getFirstInstance().getSize()));
         countLabel.setText(Bundle.ImageThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
-        documentType.setText("Extension: " + value.getResultFile().getFirstInstance().getNameExtension());  //WJS-TODO fill this in with a document type instead of just DOCUMENT
+        documentType.setText(Bundle.DocumentPanel_documentType_extension_text(value.getResultFile().getFirstInstance().getNameExtension()));  //WJS-TODO fill this in with a document type instead of just DOCUMENT
         previewTextArea.setText(value.getPreview());
         previewTextArea.setCaretPosition(0);
         DiscoveryUiUtils.setDeletedIcon(value.getResultFile().isDeleted(), isDeletedLabel);
-        DiscoveryUiUtils.setScoreIcon(value.getResultFile(), scoreLabel);     
+        DiscoveryUiUtils.setScoreIcon(value.getResultFile(), scoreLabel);
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
 
         return this;
