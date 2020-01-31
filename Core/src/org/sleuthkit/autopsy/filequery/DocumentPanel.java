@@ -57,7 +57,7 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
         scoreLabel = new javax.swing.JLabel();
         fileSizeLabel = new javax.swing.JLabel();
         documentType = new javax.swing.JLabel();
-        previewScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JScrollPane previewScrollPane = new javax.swing.JScrollPane();
         previewTextArea = new javax.swing.JTextArea();
 
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -69,15 +69,15 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
 
         isDeletedLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/file-icon-deleted.png"))); // NOI18N
         isDeletedLabel.setToolTipText(org.openide.util.NbBundle.getMessage(DocumentPanel.class, "DocumentPanel.isDeletedLabel.toolTipText")); // NOI18N
-        isDeletedLabel.setMaximumSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
-        isDeletedLabel.setMinimumSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
-        isDeletedLabel.setPreferredSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
+        isDeletedLabel.setMaximumSize(new Dimension(org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize(),org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize()));
+        isDeletedLabel.setMinimumSize(new Dimension(org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize(),org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize()));
+        isDeletedLabel.setPreferredSize(new Dimension(org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize(),org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize()));
 
         scoreLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/red-circle-exclamation.png"))); // NOI18N
         scoreLabel.setToolTipText("");
-        scoreLabel.setMaximumSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
-        scoreLabel.setMinimumSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
-        scoreLabel.setPreferredSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
+        scoreLabel.setMaximumSize(new Dimension(org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize(),org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize()));
+        scoreLabel.setMinimumSize(new Dimension(org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize(),org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize()));
+        scoreLabel.setPreferredSize(new Dimension(org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize(),org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize()));
 
         fileSizeLabel.setToolTipText(org.openide.util.NbBundle.getMessage(DocumentPanel.class, "DocumentPanel.fileSizeLabel.toolTipText")); // NOI18N
 
@@ -138,7 +138,6 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
     private javax.swing.JLabel documentType;
     private javax.swing.JLabel fileSizeLabel;
     private javax.swing.JLabel isDeletedLabel;
-    private javax.swing.JScrollPane previewScrollPane;
     private javax.swing.JTextArea previewTextArea;
     private javax.swing.JLabel scoreLabel;
     // End of variables declaration//GEN-END:variables

@@ -28,7 +28,7 @@ import org.openide.util.NbBundle;
 /**
  * Utility class for the various user interface elements used by File Discovery.
  */
-class DiscoveryUiUtils {
+final class DiscoveryUiUtils {
 
     private static final int BYTE_UNIT_CONVERSION = 1000;
     private static final int ICON_SIZE = 16;
