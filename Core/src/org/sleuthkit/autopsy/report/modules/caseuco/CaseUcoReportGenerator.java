@@ -447,7 +447,7 @@ public final class CaseUcoReportGenerator {
      */
     private final class CASEPropertyBundle {
         
-        private final LinkedHashMap<String, Object> properties;
+        private final Map<String, Object> properties;
 
         public CASEPropertyBundle(String type) {
             properties = new LinkedHashMap<>();
