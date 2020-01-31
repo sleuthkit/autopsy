@@ -34,7 +34,6 @@ import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -322,15 +321,23 @@ public final class DiscoveryTopComponent extends TopComponent {
     @Subscribe
     void handleSearchCancelledEvent(DiscoveryEventUtils.SearchCancelledEvent searchCancelledEvent) {
         SwingUtilities.invokeLater(() -> {
-            if (fileSearchPanel.getSelectedType() == FileType.VIDEO) {
-                imagesButton.setEnabled(true);
-                documentsButton.setEnabled(true);
-            } else if (fileSearchPanel.getSelectedType() == FileType.IMAGE) {
-                videosButton.setEnabled(true);
-                documentsButton.setEnabled(true);
-            } else if (fileSearchPanel.getSelectedType() == FileType.DOCUMENTS) {
-                videosButton.setEnabled(true);
-                imagesButton.setEnabled(true);
+            if (null != fileSearchPanel.getSelectedType()) {
+                switch (fileSearchPanel.getSelectedType()) {
+                    case VIDEO:
+                        imagesButton.setEnabled(true);
+                        documentsButton.setEnabled(true);
+                        break;
+                    case IMAGE:
+                        videosButton.setEnabled(true);
+                        documentsButton.setEnabled(true);
+                        break;
+                    case DOCUMENTS:
+                        videosButton.setEnabled(true);
+                        imagesButton.setEnabled(true);
+                        break;
+                    default:
+                        break;
+                }
             }
 
         });
@@ -344,15 +351,23 @@ public final class DiscoveryTopComponent extends TopComponent {
     @Subscribe
     void handleSearchCompletedEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompletedEvent) {
         SwingUtilities.invokeLater(() -> {
-            if (fileSearchPanel.getSelectedType() == FileType.VIDEO) {
-                imagesButton.setEnabled(true);
-                documentsButton.setEnabled(true);
-            } else if (fileSearchPanel.getSelectedType() == FileType.IMAGE) {
-                videosButton.setEnabled(true);
-                documentsButton.setEnabled(true);
-            } else if (fileSearchPanel.getSelectedType() == FileType.DOCUMENTS) {
-                videosButton.setEnabled(true);
-                imagesButton.setEnabled(true);
+            if (null != fileSearchPanel.getSelectedType()) {
+                switch (fileSearchPanel.getSelectedType()) {
+                    case VIDEO:
+                        imagesButton.setEnabled(true);
+                        documentsButton.setEnabled(true);
+                        break;
+                    case IMAGE:
+                        videosButton.setEnabled(true);
+                        documentsButton.setEnabled(true);
+                        break;
+                    case DOCUMENTS:
+                        videosButton.setEnabled(true);
+                        imagesButton.setEnabled(true);
+                        break;
+                    default:
+                        break;
+                }
             }
         });
     }

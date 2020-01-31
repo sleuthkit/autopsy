@@ -18,22 +18,20 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import org.sleuthkit.autopsy.coreutils.Logger;
-
-
+/**
+ * Class to wrap all the information necessary for a document preview to be
+ * displayed.
+ */
 public class DocumentWrapper {
 
     private String preview;
     private final ResultFile resultFile;
-    private static final Logger logger = Logger.getLogger(DocumentWrapper.class.getName());
-    //string extract utility
-
 
     /**
-     * Construct a new ImageThumbnailsWrapper.
+     * Construct a new DocumentWrapper.
      *
      * @param file The ResultFile which represents the document which the
-     *             summary is created for.
+     *             preview summary is created for.
      */
     DocumentWrapper(ResultFile file) {
         this.preview = "Preview being generated.";
@@ -43,18 +41,19 @@ public class DocumentWrapper {
     /**
      * Set the preview summary which exists.
      *
-     * @param summary The String which summarizes this document.
+     * @param preview The String which should be displayed as a preview for this
+     *                document.
      */
-    void setSummary(String summary) {
-        this.preview = summary;
+    void setPreview(String preview) {
+        this.preview = preview;
     }
 
     /**
      * Get the ResultFile which represents the document the preview summary was
      * created for.
      *
-     * @return The ResultFile which represents the image file which the
-     *         thumbnail was created for.
+     * @return The ResultFile which represents the document file which the
+     *         preview was created for.
      */
     ResultFile getResultFile() {
         return resultFile;

@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy
+ *
+ * Copyright 2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.filequery;
 
@@ -12,17 +25,17 @@ import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- *
- * @author wschaefer
+ * A JPanel to display document previews.
  */
-public class DocumentViewer extends javax.swing.JPanel {
+public class DocumentPreviewViewer extends javax.swing.JPanel {
 
+    private static final long serialVersionUID = 1L;
     private final DefaultListModel<DocumentWrapper> documentListModel = new DefaultListModel<>();
 
     /**
      * Creates new form DocumentViewer
      */
-    public DocumentViewer() {
+    public DocumentPreviewViewer() {
         initComponents();
     }
 
@@ -59,6 +72,9 @@ public class DocumentViewer extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Clear the list of documents being displayed.
+     */
     void clearViewer() {
         synchronized (this) {
             documentListModel.removeAllElements();
@@ -67,7 +83,8 @@ public class DocumentViewer extends javax.swing.JPanel {
     }
 
     /**
-     * Add a selection listener to the list of thumbnails being displayed.
+     * Add a selection listener to the list of document previews being
+     * displayed.
      *
      * @param listener The ListSelectionListener to add to the selection model.
      */
@@ -75,6 +92,13 @@ public class DocumentViewer extends javax.swing.JPanel {
         documentList.getSelectionModel().addListSelectionListener(listener);
     }
 
+    /**
+     * Get the list of AbstractFiles which are represented by the selected
+     * document preview.
+     *
+     * @return The list of AbstractFiles which are represented by the selected
+     *         document preview.
+     */
     List<AbstractFile> getInstancesForSelected() {
         synchronized (this) {
             if (documentList.getSelectedIndex() == -1) {
@@ -90,6 +114,12 @@ public class DocumentViewer extends javax.swing.JPanel {
     private javax.swing.JScrollPane documentScrollPane;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Add the preview for a document to the panel.
+     *
+     * @param documentWrapper The object which contains the document preview
+     *                        which will be displayed.
+     */
     void addDocument(DocumentWrapper documentWrapper) {
         synchronized (this) {
             documentListModel.addElement(documentWrapper);

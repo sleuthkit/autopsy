@@ -511,6 +511,16 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         notableFilterSettings(false, false, false);
     }
 
+        /**
+     * Set the UI elements available to be the set of UI elements available when
+     * a Document search is being performed.
+     *
+     * @param enabled       Boolean indicating if the filters present for documents
+     *                      should be enabled.
+     * @param resetSelected Boolean indicating if selection of the filters
+     *                      present for documents should be reset to their default
+     *                      status.
+     */
     private void documentsSelected(boolean enabled, boolean resetSelected) {
         dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
         sizeFilterSettings(true, enabled, !resetSelected && sizeCheckbox.isSelected(), null);
@@ -541,12 +551,20 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     void setSelectedType(FileType type) {
         fileType = type;
         setUpSizeFilter();
-        if (fileType == FileType.IMAGE) {
-            imagesSelected(true, true);
-        } else if (fileType == FileType.VIDEO) {
-            videosSelected(true, true);
-        } else if (fileType == FileType.DOCUMENTS) {
-            documentsSelected(true, true);
+        if (null != fileType) {
+            switch (fileType) {
+                case IMAGE:
+                    imagesSelected(true, true);
+                    break;
+                case VIDEO:
+                    videosSelected(true, true);
+                    break;
+                case DOCUMENTS:
+                    documentsSelected(true, true);
+                    break;
+                default:
+                    break;
+            }
         }
         validateFields();
     }
@@ -1792,10 +1810,20 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         } else {
             DiscoveryTopComponent.getTopComponent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         }
-        if (fileType == FileType.IMAGE) {
-            imagesSelected(enabled, false);
-        } else if (fileType == FileType.VIDEO) {
-            videosSelected(enabled, false);
+        if (null != fileType) {
+            switch (fileType) {
+                case IMAGE:
+                    imagesSelected(enabled, false);
+                    break;
+                case VIDEO:
+                    videosSelected(enabled, false);
+                    break;
+                case DOCUMENTS:
+                    documentsSelected(enabled, false);
+                    break;
+                default:
+                    break;
+            }
         }
         searchButton.setEnabled(enabled);
         cancelButton.setEnabled(!enabled);
