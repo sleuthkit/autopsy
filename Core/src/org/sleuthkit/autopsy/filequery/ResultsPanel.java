@@ -786,7 +786,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             int bytesRead = 0;
             if (file.getSize() > 0) {
                 try {
-                    int length = PREVIEW_SIZE > file.getSize() ? PREVIEW_SIZE : (int) file.getSize();  //if the size is less than the int it can be cast to an int
+                    int length = PREVIEW_SIZE > file.getSize() ? (int) file.getSize() : PREVIEW_SIZE;  //if the size is less than the int it can be cast to an int
                     bytesRead = file.read(data, 0, length); // read the data
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Error while trying to show the String content.", ex); //NON-NLS
