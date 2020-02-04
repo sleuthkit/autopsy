@@ -197,7 +197,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
      * Searches for numNeighbors nearest neighbor.
      *
      * @param numNeighbors Number of neighbors to retrieve. Can return more than
-     *                     K, if last nodes are equal distances.
+     *                     numNeighbors, if last nodes are equal distances.
      * @param value        to find neighbors of.
      *
      * @return Collection of T neighbors.
@@ -594,9 +594,9 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
         }
 
         /**
-         * Returns the x\latitude value for the point.
+         * Returns the x(latitude) value for the point.
          *
-         * @return x\Latitude value for the point
+         * @return x(latitude) value for the point
          */
         public double getX() {
             return x;

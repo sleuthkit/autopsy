@@ -447,7 +447,7 @@ final public class MapPanel extends javax.swing.JPanel {
         // Convert the mouse click location to latitude & longitude
         GeoPosition geopos = mapViewer.convertPointToGeoPosition(clickPoint);
 
-        // Get the 5 nearest neightbors to the point
+        // Get the nearest neightbors to the point
         Collection<MapWaypoint> waypoints = waypointTree.nearestNeighbourSearch(1, MapWaypoint.getDummyWaypoint(geopos));
 
         if (waypoints == null || waypoints.isEmpty()) {
