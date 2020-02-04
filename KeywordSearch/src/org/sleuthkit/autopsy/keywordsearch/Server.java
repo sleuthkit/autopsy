@@ -872,34 +872,27 @@ public class Server {
                 if (!collectionExists(collectionName)) {
                     /*
                     * The core either does not exist or it is not loaded. Make a
-                    * request that will cause the core to be created if it does not
-                    * exist or loaded if it already exists.
+                    * request that will cause the core to be created.
                     */
-
-                    Properties properties = new Properties();
-                    properties.setProperty("dataDir", dataDir.getAbsolutePath());
-                    // properties.setProperty("transient", "true");
-                    // properties.setProperty("loadOnStartup", "false");
-
-                    Integer numShards = 1;
-                    Integer numNrtReplicas = 1;
-                    Integer numTlogReplicas = 0;
-                    Integer numPullReplicas = 0;
-                    CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas)
-                            .setProperties(properties);
-                    CollectionAdminResponse createResponse = createCollectionRequest.process(currentSolrServer);
-                    if (createResponse.isSuccess()) {
-                        logger.log(Level.INFO, "Collection {0} successfully created.", collectionName);
-                    } else {
-                        logger.log(Level.SEVERE, "Unable to create Solr collection {0}", collectionName); //NON-NLS
-                        throw new KeywordSearchModuleException(Bundle.Server_exceptionMessage_unableToCreateCollection());
-                    }
-
-                    /* If we need core name:
-                    Map<String, NamedList<Integer>> status = createResponse.getCollectionCoresStatus();
-                    existingCoreName = status.keySet().iterator().next();*/
-                    if (!collectionExists(collectionName)) {
-                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+                    int NUM_RETRIES = 3;
+                    boolean doRetry = false;
+                    for (int reTryAttempt = 0; reTryAttempt < NUM_RETRIES; reTryAttempt++) {
+                        try {
+                            doRetry = false;
+                            createMultiUserCollection(collectionName, dataDir.getAbsolutePath());
+                        } catch (Exception ex) {
+                            if (reTryAttempt >= NUM_RETRIES) {
+                                logger.log(Level.SEVERE, "Unable to create Solr collection " + collectionName, ex); //NON-NLS
+                                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
+                            } else {
+                                logger.log(Level.SEVERE, "Unable to create Solr collection " + collectionName + ". Re-trying...", ex); //NON-NLS
+                                Thread.sleep(1000L);
+                                doRetry = true;
+                            }
+                        }
+                        if (!doRetry) {
+                            break;
+                        }
                     }
                 } 
             } else {                
@@ -933,7 +926,44 @@ public class Server {
             return new Collection(collectionName, theCase.getCaseType(), index);
 
         } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Exception during Solr collection creation.", ex); //NON-NLS
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
+        }
+    }
+    
+    private void createMultiUserCollection(String collectionName, String dataDirPath) throws KeywordSearchModuleException, SolrServerException, IOException {
+        /*
+        * The core either does not exist or it is not loaded. Make a
+        * request that will cause the core to be created if it does not
+        * exist or loaded if it already exists.
+        */
+
+        Properties properties = new Properties(); 
+        // ELTODO properties.setProperty("dataDir", dataDirPath); store indexes on local drive in SOLR_HOME folder
+        // properties.setProperty("transient", "true");
+        // properties.setProperty("loadOnStartup", "false");
+
+        Integer numShards = 1;
+        Integer numNrtReplicas = 1;
+        Integer numTlogReplicas = 0;
+        Integer numPullReplicas = 0;
+        /* ELTODO CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas)
+                .setProperties(properties);*/
+        CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas);
+
+        CollectionAdminResponse createResponse = createCollectionRequest.process(currentSolrServer);
+        if (createResponse.isSuccess()) {
+            logger.log(Level.INFO, "Collection {0} successfully created.", collectionName);
+        } else {
+            logger.log(Level.SEVERE, "Unable to create Solr collection {0}", collectionName); //NON-NLS
+            throw new KeywordSearchModuleException(Bundle.Server_exceptionMessage_unableToCreateCollection());
+        }
+
+        /* If we need core name:
+        Map<String, NamedList<Integer>> status = createResponse.getCollectionCoresStatus();
+        existingCoreName = status.keySet().iterator().next();*/
+        if (!collectionExists(collectionName)) {
+            throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
         }
     }
     
@@ -1129,7 +1159,7 @@ public class Server {
         }
     }
 
-    NamedList<Object> request(SolrRequest request) throws SolrServerException, NoOpenCoreException {
+    NamedList<Object> request(SolrRequest request) throws SolrServerException, RemoteSolrException, NoOpenCoreException {
         currentCoreLock.readLock().lock();
         try {
             if (null == currentCollection) {
@@ -1159,7 +1189,7 @@ public class Server {
             }
             try {
                 return currentCollection.queryNumIndexedFiles();
-            } catch (SolrServerException | IOException ex) {
+            } catch (SolrServerException | RemoteSolrException | IOException ex) {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumIdxFiles.exception.msg"), ex);
             }
         } finally {
@@ -1664,7 +1694,7 @@ public class Server {
             return solrClient.query(sq);
         }
 
-        private NamedList<Object> request(SolrRequest request) throws SolrServerException {
+        private NamedList<Object> request(SolrRequest request) throws SolrServerException, RemoteSolrException {
             try {
                 return solrClient.request(request);
             } catch (IOException e) {
@@ -1704,7 +1734,7 @@ public class Server {
         void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
             try {
                 solrClient.add(doc);
-            } catch (SolrServerException ex) {
+            } catch (SolrServerException | RemoteSolrException ex) {
                 logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex); //NON-NLS
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg", doc.getField("id")), ex); //NON-NLS
