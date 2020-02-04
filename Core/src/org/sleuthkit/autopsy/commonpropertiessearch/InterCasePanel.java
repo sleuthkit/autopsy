@@ -30,7 +30,7 @@ import java.util.Observer;
 import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -122,7 +122,7 @@ public final class InterCasePanel extends javax.swing.JPanel {
                 correlationTypeFilters.put(type.getDisplayName(), type);
                 this.correlationTypeComboBox.addItem(type.getDisplayName());
             }
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.WARNING, "Error getting correlation types", ex);
         }
         this.correlationTypeComboBox.setSelectedIndex(0);

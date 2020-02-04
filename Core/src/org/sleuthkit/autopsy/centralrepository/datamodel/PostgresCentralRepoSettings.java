@@ -18,158 +18,140 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb.SOFTWARE_CR_DB_SCHEMA_VERSION;
+import org.sleuthkit.autopsy.coreutils.TextConverter;
+import org.sleuthkit.autopsy.coreutils.TextConverterException;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
 
 /**
- * Settings for the sqlite implementation of the Central Repository database
+ * Settings for the Postgres implementation of the Central Repository database
  *
  * NOTE: This is public scope because the options panel calls it directly to
  * set/get
  */
-public final class SqliteEamDbSettings {
+public final class PostgresCentralRepoSettings {
 
-    private final static Logger LOGGER = Logger.getLogger(SqliteEamDbSettings.class.getName());
-    private final static String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
-    private final static String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "central_repository"; // NON-NLS
-    private final static String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
-    private final static String JDBC_BASE_URI = "jdbc:sqlite:"; // NON-NLS
-    private final static String VALIDATION_QUERY = "SELECT count(*) from sqlite_master"; // NON-NLS
-    private final static String PRAGMA_SYNC_OFF = "PRAGMA synchronous = OFF";
-    private final static String PRAGMA_SYNC_NORMAL = "PRAGMA synchronous = NORMAL";
-    private final static String PRAGMA_JOURNAL_WAL = "PRAGMA journal_mode = WAL";
-    private final static String PRAGMA_READ_UNCOMMITTED_TRUE = "PRAGMA read_uncommitted = True";
-    private final static String PRAGMA_ENCODING_UTF8 = "PRAGMA encoding = 'UTF-8'";
-    private final static String PRAGMA_PAGE_SIZE_4096 = "PRAGMA page_size = 4096";
-    private final static String PRAGMA_FOREIGN_KEYS_ON = "PRAGMA foreign_keys = ON";
-    private final static String DB_NAMES_REGEX = "[a-z][a-z0-9_]*(\\.db)?";
+    private final static Logger LOGGER = Logger.getLogger(PostgresCentralRepoSettings.class.getName());
+    private final static String DEFAULT_HOST = ""; // NON-NLS
+    private final static int DEFAULT_PORT = 5432;
+    private final static String DEFAULT_DBNAME = "central_repository"; // NON-NLS
+    private final static String DEFAULT_USERNAME = "";
+    private final static String DEFAULT_PASSWORD = "";
+    private final static String VALIDATION_QUERY = "SELECT version()"; // NON-NLS
+    private final static String JDBC_BASE_URI = "jdbc:postgresql://"; // NON-NLS
+    private final static String JDBC_DRIVER = "org.postgresql.Driver"; // NON-NLS
+    private final static String DB_NAMES_REGEX = "[a-z][a-z0-9_]*"; // only lower case
+    private final static String DB_USER_NAMES_REGEX = "[a-zA-Z]\\w*";
+    private String host;
+    private int port;
     private String dbName;
-    private String dbDirectory;
     private int bulkThreshold;
+    private String userName;
+    private String password;
 
-    public SqliteEamDbSettings() {
+    public PostgresCentralRepoSettings() {
         loadSettings();
     }
 
     public void loadSettings() {
-        dbName = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbName"); // NON-NLS
+        host = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.host"); // NON-NLS
+        if (host == null || host.isEmpty()) {
+            host = DEFAULT_HOST;
+        }
+
+        try {
+            String portString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.port"); // NON-NLS
+            if (portString == null || portString.isEmpty()) {
+                port = DEFAULT_PORT;
+            } else {
+                port = Integer.parseInt(portString);
+                if (port < 0 || port > 65535) {
+                    port = DEFAULT_PORT;
+                }
+            }
+        } catch (NumberFormatException ex) {
+            port = DEFAULT_PORT;
+        }
+
+        dbName = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.dbName"); // NON-NLS
         if (dbName == null || dbName.isEmpty()) {
             dbName = DEFAULT_DBNAME;
         }
 
-        dbDirectory = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbDirectory"); // NON-NLS
-        if (dbDirectory == null || dbDirectory.isEmpty()) {
-            dbDirectory = DEFAULT_DBDIRECTORY;
-        }
-
         try {
-            String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.bulkThreshold"); // NON-NLS
+            String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.bulkThreshold"); // NON-NLS
             if (bulkThresholdString == null || bulkThresholdString.isEmpty()) {
-                this.bulkThreshold = AbstractSqlEamDb.DEFAULT_BULK_THRESHHOLD;
+                this.bulkThreshold = RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD;
             } else {
                 this.bulkThreshold = Integer.parseInt(bulkThresholdString);
                 if (getBulkThreshold() <= 0) {
-                    this.bulkThreshold = AbstractSqlEamDb.DEFAULT_BULK_THRESHHOLD;
+                    this.bulkThreshold = RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD;
                 }
             }
         } catch (NumberFormatException ex) {
-            this.bulkThreshold = AbstractSqlEamDb.DEFAULT_BULK_THRESHHOLD;
+            this.bulkThreshold = RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD;
+        }
+
+        userName = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.user"); // NON-NLS
+        if (userName == null || userName.isEmpty()) {
+            userName = DEFAULT_USERNAME;
+        }
+
+        password = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.password"); // NON-NLS
+        if (password == null || password.isEmpty()) {
+            password = DEFAULT_PASSWORD;
+        } else {
+            try {
+                password = TextConverter.convertHexTextToText(password);
+            } catch (TextConverterException ex) {
+                LOGGER.log(Level.WARNING, "Failed to convert password from hex text to text.", ex);
+                password = DEFAULT_PASSWORD;
+            }
         }
     }
 
     public void saveSettings() {
-        createDbDirectory();
-
-        ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.dbName", getDbName()); // NON-NLS
-        ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.dbDirectory", getDbDirectory()); // NON-NLS
-        ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
-    }
-
-    /**
-     * Verify that the db file exists.
-     *
-     * @return true if exists, else false
-     */
-    public boolean dbFileExists() {
-        File dbFile = new File(getFileNameWithPath());
-        if (!dbFile.exists()) {
-            return false;
+        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.host", getHost()); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.port", Integer.toString(port)); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.dbName", getDbName()); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.user", getUserName()); // NON-NLS
+        try {
+            ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.password", TextConverter.convertTextToHexText(getPassword())); // NON-NLS
+        } catch (TextConverterException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to convert password from text to hex text.", ex);
         }
-        // It's unlikely, but make sure the file isn't actually a directory
-        return (!dbFile.isDirectory());
-    }
-
-    /**
-     * Verify that the db directory path exists.
-     *
-     * @return true if exists, else false
-     */
-    public boolean dbDirectoryExists() {
-        // Ensure dbDirectory is a valid directory
-        File dbDir = new File(getDbDirectory());
-
-        if (!dbDir.exists()) {
-            return false;
-        } else if (!dbDir.isDirectory()) {
-            return false;
-        }
-
-        return true;
-
-    }
-
-    /**
-     * Create the db directory if it does not exist.
-     *
-     * @return true is successfully created or already exists, else false
-     */
-    public boolean createDbDirectory() {
-        if (!dbDirectoryExists()) {
-            try {
-                File dbDir = new File(getDbDirectory());
-                Files.createDirectories(dbDir.toPath());
-                LOGGER.log(Level.INFO, "sqlite directory did not exist, created it at {0}.", getDbDirectory()); // NON-NLS
-            } catch (IOException | InvalidPathException | SecurityException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to create sqlite database directory.", ex); // NON-NLS
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Delete the database
-     *
-     * @return
-     */
-    public boolean deleteDatabase() {
-        File dbFile = new File(this.getFileNameWithPath());
-        return dbFile.delete();
     }
 
     /**
      * Get the full connection URL as a String
      *
+     * @param usePostgresDb Connect to the 'postgres' database when testing
+     *                      connectivity and creating the main database.
+     *
      * @return
      */
-    String getConnectionURL() {
+    String getConnectionURL(boolean usePostgresDb) {
         StringBuilder url = new StringBuilder();
         url.append(getJDBCBaseURI());
-        url.append(getFileNameWithPath());
+        url.append(getHost());
+        url.append("/"); // NON-NLS
+        if (usePostgresDb) {
+            url.append("postgres"); // NON-NLS
+        } else {
+            url.append(getDbName());
+        }
 
         return url.toString();
     }
@@ -178,22 +160,22 @@ public final class SqliteEamDbSettings {
      * Use the current settings to get an ephemeral client connection for
      * testing.
      *
-     * If the directory path does not exist, it will return null.
-     *
      * @return Connection or null.
      */
-    private Connection getEphemeralConnection() {
-        if (!dbDirectoryExists()) {
-            return null;
-        }
-
+    private Connection getEphemeralConnection(boolean usePostgresDb) {
         Connection conn;
         try {
-            String url = getConnectionURL();
+            String url = getConnectionURL(usePostgresDb);
+            Properties props = new Properties();
+            props.setProperty("user", getUserName());
+            props.setProperty("password", getPassword());
+
             Class.forName(getDriver());
-            conn = DriverManager.getConnection(url);
+            conn = DriverManager.getConnection(url, props);
         } catch (ClassNotFoundException | SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to acquire ephemeral connection to sqlite.", ex); // NON-NLS
+            // TODO: Determine why a connection failure (ConnectionException) re-throws
+            // the SQLException and does not print this log message?
+            LOGGER.log(Level.SEVERE, "Failed to acquire ephemeral connection to postgresql."); // NON-NLS
             conn = null;
         }
         return conn;
@@ -206,31 +188,106 @@ public final class SqliteEamDbSettings {
      * @return true if successfull connection, else false.
      */
     public boolean verifyConnection() {
-        Connection conn = getEphemeralConnection();
+        Connection conn = getEphemeralConnection(true);
         if (null == conn) {
             return false;
         }
 
-        boolean result = EamDbUtil.executeValidationQuery(conn, VALIDATION_QUERY);
-        EamDbUtil.closeConnection(conn);
+        boolean result = CentralRepoDbUtil.executeValidationQuery(conn, VALIDATION_QUERY);
+        CentralRepoDbUtil.closeConnection(conn);
         return result;
+    }
+
+    /**
+     * Check to see if the database exists.
+     *
+     * @return true if exists, else false
+     */
+    public boolean verifyDatabaseExists() {
+        Connection conn = getEphemeralConnection(true);
+        if (null == conn) {
+            return false;
+        }
+
+        String sql = "SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower(?) LIMIT 1"; // NON-NLS
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, getDbName());
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return true;
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to execute database existance query.", ex); // NON-NLS
+            return false;
+        } finally {
+            CentralRepoDbUtil.closeStatement(ps);
+            CentralRepoDbUtil.closeResultSet(rs);
+            CentralRepoDbUtil.closeConnection(conn);
+        }
+        return false;
     }
 
     /**
      * Use the current settings and the schema version query to test the
      * database schema.
      *
-     * @return true if successfull connection, else false.
+     * @return true if successful connection, else false.
      */
     public boolean verifyDatabaseSchema() {
-        Connection conn = getEphemeralConnection();
+        Connection conn = getEphemeralConnection(false);
         if (null == conn) {
             return false;
         }
 
-        boolean result = EamDbUtil.schemaVersionIsSet(conn);
-        EamDbUtil.closeConnection(conn);
+        boolean result = CentralRepoDbUtil.schemaVersionIsSet(conn);
+
+        CentralRepoDbUtil.closeConnection(conn);
         return result;
+    }
+
+    public boolean createDatabase() {
+        Connection conn = getEphemeralConnection(true);
+        if (null == conn) {
+            return false;
+        }
+
+        String sql = "CREATE DATABASE %s OWNER %s"; // NON-NLS
+        try {
+            Statement stmt;
+            stmt = conn.createStatement();
+            stmt.execute(String.format(sql, getDbName(), getUserName()));
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to execute create database statement.", ex); // NON-NLS
+            return false;
+        } finally {
+            CentralRepoDbUtil.closeConnection(conn);
+        }
+        return true;
+
+    }
+
+    public boolean deleteDatabase() {
+        Connection conn = getEphemeralConnection(true);
+        if (null == conn) {
+            return false;
+        }
+
+        String sql = "DROP DATABASE %s"; // NON-NLS
+        try {
+            Statement stmt;
+            stmt = conn.createStatement();
+            stmt.execute(String.format(sql, getDbName()));
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to execute drop database statement.", ex); // NON-NLS
+            return false;
+        } finally {
+            CentralRepoDbUtil.closeConnection(conn);
+        }
+        return true;
+
     }
 
     /**
@@ -252,7 +309,7 @@ public final class SqliteEamDbSettings {
         // if a rowid is re-used after an existing rows was previously deleted.
         StringBuilder createOrganizationsTable = new StringBuilder();
         createOrganizationsTable.append("CREATE TABLE IF NOT EXISTS organizations (");
-        createOrganizationsTable.append("id integer primary key autoincrement NOT NULL,");
+        createOrganizationsTable.append("id SERIAL PRIMARY KEY,");
         createOrganizationsTable.append("org_name text NOT NULL,");
         createOrganizationsTable.append("poc_name text NOT NULL,");
         createOrganizationsTable.append("poc_email text NOT NULL,");
@@ -264,7 +321,7 @@ public final class SqliteEamDbSettings {
         // an index is probably not worthwhile.
         StringBuilder createCasesTable = new StringBuilder();
         createCasesTable.append("CREATE TABLE IF NOT EXISTS cases (");
-        createCasesTable.append("id integer primary key autoincrement NOT NULL,");
+        createCasesTable.append("id SERIAL PRIMARY KEY,");
         createCasesTable.append("case_uid text NOT NULL,");
         createCasesTable.append("org_id integer,");
         createCasesTable.append("case_name text NOT NULL,");
@@ -274,8 +331,8 @@ public final class SqliteEamDbSettings {
         createCasesTable.append("examiner_email text,");
         createCasesTable.append("examiner_phone text,");
         createCasesTable.append("notes text,");
-        createCasesTable.append("CONSTRAINT case_uid_unique UNIQUE(case_uid) ON CONFLICT IGNORE,");
-        createCasesTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL");
+        createCasesTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL,");
+        createCasesTable.append("CONSTRAINT case_uid_unique UNIQUE (case_uid)");
         createCasesTable.append(")");
 
         // NOTE: when there are few cases in the cases table, these indices may not be worthwhile
@@ -284,7 +341,7 @@ public final class SqliteEamDbSettings {
 
         StringBuilder createReferenceSetsTable = new StringBuilder();
         createReferenceSetsTable.append("CREATE TABLE IF NOT EXISTS reference_sets (");
-        createReferenceSetsTable.append("id integer primary key autoincrement NOT NULL,");
+        createReferenceSetsTable.append("id SERIAL PRIMARY KEY,");
         createReferenceSetsTable.append("org_id integer NOT NULL,");
         createReferenceSetsTable.append("set_name text NOT NULL,");
         createReferenceSetsTable.append("version text NOT NULL,");
@@ -301,12 +358,12 @@ public final class SqliteEamDbSettings {
         // Each "%s" will be replaced with the relevant reference_TYPE table name.
         StringBuilder createReferenceTypesTableTemplate = new StringBuilder();
         createReferenceTypesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
-        createReferenceTypesTableTemplate.append("id integer primary key autoincrement NOT NULL,");
+        createReferenceTypesTableTemplate.append("id SERIAL PRIMARY KEY,");
         createReferenceTypesTableTemplate.append("reference_set_id integer,");
         createReferenceTypesTableTemplate.append("value text NOT NULL,");
         createReferenceTypesTableTemplate.append("known_status integer NOT NULL,");
         createReferenceTypesTableTemplate.append("comment text,");
-        createReferenceTypesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(reference_set_id, value) ON CONFLICT IGNORE,");
+        createReferenceTypesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE (reference_set_id, value),");
         createReferenceTypesTableTemplate.append("foreign key (reference_set_id) references reference_sets(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createReferenceTypesTableTemplate.append(")");
 
@@ -316,7 +373,7 @@ public final class SqliteEamDbSettings {
 
         StringBuilder createCorrelationTypesTable = new StringBuilder();
         createCorrelationTypesTable.append("CREATE TABLE IF NOT EXISTS correlation_types (");
-        createCorrelationTypesTable.append("id integer primary key autoincrement NOT NULL,");
+        createCorrelationTypesTable.append("id SERIAL PRIMARY KEY,");
         createCorrelationTypesTable.append("display_name text NOT NULL,");
         createCorrelationTypesTable.append("db_table_name text NOT NULL,");
         createCorrelationTypesTable.append("supported integer NOT NULL,");
@@ -336,17 +393,11 @@ public final class SqliteEamDbSettings {
         // provides no benefit.
         Connection conn = null;
         try {
-            conn = getEphemeralConnection();
+            conn = getEphemeralConnection(false);
             if (null == conn) {
                 return false;
             }
             Statement stmt = conn.createStatement();
-            stmt.execute(PRAGMA_JOURNAL_WAL);
-            stmt.execute(PRAGMA_SYNC_OFF);
-            stmt.execute(PRAGMA_READ_UNCOMMITTED_TRUE);
-            stmt.execute(PRAGMA_ENCODING_UTF8);
-            stmt.execute(PRAGMA_PAGE_SIZE_4096);
-            stmt.execute(PRAGMA_FOREIGN_KEYS_ON);
 
             stmt.execute(createOrganizationsTable.toString());
 
@@ -368,20 +419,20 @@ public final class SqliteEamDbSettings {
              * table is required for backwards compatibility. Otherwise, the
              * name column could be the primary key.
              */
-            stmt.execute("CREATE TABLE db_info (id INTEGER PRIMARY KEY, name TEXT UNIQUE NOT NULL, value TEXT NOT NULL)");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
+            stmt.execute("CREATE TABLE db_info (id SERIAL, name TEXT UNIQUE NOT NULL, value TEXT NOT NULL)");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
 
-            // Create a separate instance and reference table for each artifact type
+            // Create a separate instance and reference table for each correlation type
             List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttributeInstance.getDefaultCorrelationTypes();
 
             String reference_type_dbname;
             String instance_type_dbname;
             for (CorrelationAttributeInstance.Type type : DEFAULT_CORRELATION_TYPES) {
-                reference_type_dbname = EamDbUtil.correlationTypeToReferenceTableName(type);
-                instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
+                reference_type_dbname = CentralRepoDbUtil.correlationTypeToReferenceTableName(type);
+                instance_type_dbname = CentralRepoDbUtil.correlationTypeToInstanceTableName(type);
 
                 stmt.execute(String.format(createArtifactInstancesTableTemplate, instance_type_dbname, instance_type_dbname));
                 stmt.execute(String.format(instancesCaseIdIdx, instance_type_dbname, instance_type_dbname));
@@ -397,20 +448,21 @@ public final class SqliteEamDbSettings {
                     stmt.execute(String.format(referenceTypesIdx2, reference_type_dbname, reference_type_dbname));
                 }
             }
+
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
             return false;
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             LOGGER.log(Level.SEVERE, "Error getting default correlation types. Likely due to one or more Type's with an invalid db table name."); // NON-NLS
             return false;
         } finally {
-            EamDbUtil.closeConnection(conn);
+            CentralRepoDbUtil.closeConnection(conn);
         }
         return true;
     }
 
     /**
-     * Get the template String for creating a new _instances table in a Sqlite
+     * Get the template String for creating a new _instances table in a Postgres
      * central repository. %s will exist in the template where the name of the
      * new table will be addedd.
      *
@@ -418,25 +470,26 @@ public final class SqliteEamDbSettings {
      */
     static String getCreateArtifactInstancesTableTemplate() {
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
-        return "CREATE TABLE IF NOT EXISTS %s (id integer primary key autoincrement NOT NULL,"
-                + "case_id integer NOT NULL,data_source_id integer NOT NULL,value text NOT NULL,"
-                + "file_path text NOT NULL,known_status integer NOT NULL,comment text,file_obj_id integer,"
-                + "CONSTRAINT %s_multi_unique UNIQUE(data_source_id, value, file_path) ON CONFLICT IGNORE,"
+        return ("CREATE TABLE IF NOT EXISTS %s (id SERIAL PRIMARY KEY,case_id integer NOT NULL,"
+                + "data_source_id integer NOT NULL,value text NOT NULL,file_path text NOT NULL,"
+                + "known_status integer NOT NULL,comment text,file_obj_id BIGINT,"
+                + "CONSTRAINT %s_multi_unique_ UNIQUE (data_source_id, value, file_path),"
                 + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
-                + "foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL)";
+                + "foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL)");
     }
 
     /**
      * Get the statement String for creating a new data_sources table in a
-     * Sqlite central repository.
+     * Postgres central repository.
      *
      * @return a String which is a statement for cretating a new data_sources
      *         table
      */
     static String getCreateDataSourcesTableStatement() {
-        return "CREATE TABLE IF NOT EXISTS data_sources (id integer primary key autoincrement NOT NULL,"
-                + "case_id integer NOT NULL,device_id text NOT NULL,name text NOT NULL,datasource_obj_id integer,"
-                + "md5 text DEFAULT NULL,sha1 text DEFAULT NULL,sha256 text DEFAULT NULL,"
+        return "CREATE TABLE IF NOT EXISTS data_sources "
+                + "(id SERIAL PRIMARY KEY,case_id integer NOT NULL,device_id text NOT NULL,"
+                + "name text NOT NULL,datasource_obj_id BIGINT,md5 text DEFAULT NULL,"
+                + "sha1 text DEFAULT NULL,sha256 text DEFAULT NULL,"
                 + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
                 + "CONSTRAINT datasource_unique UNIQUE (case_id, datasource_obj_id))";
     }
@@ -529,46 +582,87 @@ public final class SqliteEamDbSettings {
     }
 
     public boolean insertDefaultDatabaseContent() {
-        Connection conn = getEphemeralConnection();
+        Connection conn = getEphemeralConnection(false);
         if (null == conn) {
             return false;
         }
 
-        boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn) && EamDbUtil.insertDefaultOrganization(conn);
-        EamDbUtil.closeConnection(conn);
+        boolean result = CentralRepoDbUtil.insertDefaultCorrelationTypes(conn) && CentralRepoDbUtil.insertDefaultOrganization(conn);
+        CentralRepoDbUtil.closeConnection(conn);
+
         return result;
     }
 
     boolean isChanged() {
-        String dbNameString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbName"); // NON-NLS
-        String dbDirectoryString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbDirectory"); // NON-NLS
-        String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.bulkThreshold"); // NON-NLS
+        String hostString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.host"); // NON-NLS
+        String portString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.port"); // NON-NLS
+        String dbNameString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.dbName"); // NON-NLS
+        String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.bulkThreshold"); // NON-NLS
+        String userNameString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.user"); // NON-NLS
+        String userPasswordString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.password"); // NON-NLS
 
-        return !dbName.equals(dbNameString)
-                || !dbDirectory.equals(dbDirectoryString)
-                || !Integer.toString(bulkThreshold).equals(bulkThresholdString);
+        return !host.equals(hostString) || !Integer.toString(port).equals(portString)
+                || !dbName.equals(dbNameString) || !Integer.toString(bulkThreshold).equals(bulkThresholdString)
+                || !userName.equals(userNameString) || !password.equals(userPasswordString);
     }
 
     /**
+     * @return the host
+     */
+    public String getHost() {
+        return host;
+    }
+
+    /**
+     * @param host the host to set
+     */
+    public void setHost(String host) throws CentralRepoException {
+        if (null != host && !host.isEmpty()) {
+            this.host = host;
+        } else {
+            throw new CentralRepoException("Invalid host name. Cannot be empty."); // NON-NLS
+        }
+    }
+
+    /**
+     * @return the port
+     */
+    public int getPort() {
+        return port;
+    }
+
+    /**
+     * @param port the port to set
+     */
+    public void setPort(int port) throws CentralRepoException {
+        if (port > 0 && port < 65535) {
+            this.port = port;
+        } else {
+            throw new CentralRepoException("Invalid port. Must be a number greater than 0."); // NON-NLS
+        }
+    }
+
+    /**
+     * To prevent issues where one command can honor case and another cannot, we
+     * will force the dbname to lower case.
+     *
      * @return the dbName
      */
     public String getDbName() {
-        return dbName;
+        return dbName.toLowerCase();
     }
 
     /**
-     * Name of the sqlite db file.
-     *
      * @param dbName the dbName to set
      */
-    public void setDbName(String dbName) throws EamDbException {
+    public void setDbName(String dbName) throws CentralRepoException {
         if (dbName == null || dbName.isEmpty()) {
-            throw new EamDbException("Invalid database file name. Cannot be null or empty."); // NON-NLS
+            throw new CentralRepoException("Invalid database name. Cannot be empty."); // NON-NLS
         } else if (!Pattern.matches(DB_NAMES_REGEX, dbName)) {
-            throw new EamDbException("Invalid database file name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
+            throw new CentralRepoException("Invalid database name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
         }
 
-        this.dbName = dbName;
+        this.dbName = dbName.toLowerCase();
     }
 
     /**
@@ -581,50 +675,48 @@ public final class SqliteEamDbSettings {
     /**
      * @param bulkThreshold the bulkThreshold to set
      */
-    void setBulkThreshold(int bulkThreshold) throws EamDbException {
+    public void setBulkThreshold(int bulkThreshold) throws CentralRepoException {
         if (bulkThreshold > 0) {
             this.bulkThreshold = bulkThreshold;
         } else {
-            throw new EamDbException("Invalid bulk threshold."); // NON-NLS
+            throw new CentralRepoException("Invalid bulk threshold."); // NON-NLS
         }
     }
 
     /**
-     * @return the dbDirectory
+     * @return the userName
      */
-    public String getDbDirectory() {
-        return dbDirectory;
+    public String getUserName() {
+        return userName;
     }
 
     /**
-     * Path for directory to hold the sqlite database.
-     *
-     * User must have WRITE permission to this directory.
-     *
-     * @param dbDirectory the dbDirectory to set
+     * @param userName the userName to set
      */
-    public void setDbDirectory(String dbDirectory) throws EamDbException {
-        if (dbDirectory != null && !dbDirectory.isEmpty()) {
-            this.dbDirectory = dbDirectory;
-        } else {
-            throw new EamDbException("Invalid directory for sqlite database. Cannot empty"); // NON-NLS
+    public void setUserName(String userName) throws CentralRepoException {
+        if (userName == null || userName.isEmpty()) {
+            throw new CentralRepoException("Invalid user name. Cannot be empty."); // NON-NLS
+        } else if (!Pattern.matches(DB_USER_NAMES_REGEX, userName)) {
+            throw new CentralRepoException("Invalid user name. Name must start with a letter and can only contain letters, numbers, and '_'."); // NON-NLS
         }
+        this.userName = userName;
     }
 
     /**
-     * Join the DbDirectory and the DbName into a full path.
-     *
-     * @return
+     * @return the password
      */
-    public String getFileNameWithPath() {
-        return getDbDirectory() + File.separator + getDbName();
+    public String getPassword() {
+        return password;
     }
 
     /**
-     * @return the DRIVER
+     * @param password the password to set
      */
-    String getDriver() {
-        return JDBC_DRIVER;
+    public void setPassword(String password) throws CentralRepoException {
+        if (password == null || password.isEmpty()) {
+            throw new CentralRepoException("Invalid user password. Cannot be empty."); // NON-NLS
+        }
+        this.password = password;
     }
 
     /**
@@ -632,6 +724,13 @@ public final class SqliteEamDbSettings {
      */
     String getValidationQuery() {
         return VALIDATION_QUERY;
+    }
+
+    /**
+     * @return the POSTGRES_DRIVER
+     */
+    String getDriver() {
+        return JDBC_DRIVER;
     }
 
     /**

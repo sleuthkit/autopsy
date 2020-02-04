@@ -30,11 +30,11 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoOrganization;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Configuration dialog to manage organizations for the Central Repository.
@@ -44,9 +44,9 @@ public final class ManageOrganizationsDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
 
-    private EamDb dbManager;
-    private EamOrganization newOrg;
-    private final DefaultListModel<EamOrganization> rulesListModel = new DefaultListModel<>();
+    private CentralRepository dbManager;
+    private CentralRepoOrganization newOrg;
+    private final DefaultListModel<CentralRepoOrganization> rulesListModel = new DefaultListModel<>();
     private final static Logger logger = Logger.getLogger(ManageOrganizationsDialog.class.getName());
 
     @Messages({"ManageOrganizationsDialog.title.text=Manage Organizations"})
@@ -59,7 +59,7 @@ public final class ManageOrganizationsDialog extends JDialog {
                 true); // NON-NLS
         initComponents();
         try {
-            this.dbManager = EamDb.getInstance();
+            this.dbManager = CentralRepository.getInstance();
             organizationList.setCellRenderer(new DefaultListCellRenderer() {
                 private static final long serialVersionUID = 1L;
 
@@ -67,7 +67,7 @@ public final class ManageOrganizationsDialog extends JDialog {
                 @Override
                 public Component getListCellRendererComponent(javax.swing.JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    setText(((EamOrganization) value).getName());
+                    setText(((CentralRepoOrganization) value).getName());
                     return c;
                 }
             });
@@ -76,7 +76,7 @@ public final class ManageOrganizationsDialog extends JDialog {
             populateList();
             setButtonsEnabled(organizationList.getSelectedValue());
             newOrg = null;
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.WARNING, "Error getting Central Repo for Organizations dialog", ex);
         }
         display();
@@ -87,11 +87,11 @@ public final class ManageOrganizationsDialog extends JDialog {
         setVisible(true);
     }
 
-    private void populateListAndSelect(EamOrganization selected) throws EamDbException {
+    private void populateListAndSelect(CentralRepoOrganization selected) throws CentralRepoException {
         rulesListModel.clear();
-        List<EamOrganization> orgs = dbManager.getOrganizations();
+        List<CentralRepoOrganization> orgs = dbManager.getOrganizations();
         if (orgs.size() > 0) {
-            for (EamOrganization org : orgs) {
+            for (CentralRepoOrganization org : orgs) {
                 rulesListModel.addElement(org);
                 if (selected != null && org.getOrgID() == selected.getOrgID()) {
                     selected = org;
@@ -107,8 +107,8 @@ public final class ManageOrganizationsDialog extends JDialog {
         }
     }
 
-    private void populateList() throws EamDbException {
-        EamOrganization selected = organizationList.getSelectedValue();
+    private void populateList() throws CentralRepoException {
+        CentralRepoOrganization selected = organizationList.getSelectedValue();
         populateListAndSelect(selected);
     }
 
@@ -344,16 +344,16 @@ public final class ManageOrganizationsDialog extends JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
-        EamOrganization orgToDelete = organizationList.getSelectedValue();
+        CentralRepoOrganization orgToDelete = organizationList.getSelectedValue();
         if (orgToDelete != null) {
             if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
                     Bundle.ManageOrganizationsDialog_confirmDeletion_message(),
                     Bundle.ManageOrganizationsDialog_confirmDeletion_title(),
                     JOptionPane.YES_NO_OPTION)) {
                 try {
-                    EamDb.getInstance().deleteOrganization(orgToDelete);
+                    CentralRepository.getInstance().deleteOrganization(orgToDelete);
                     populateList();
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     JOptionPane.showMessageDialog(this,
                             ex.getMessage(), Bundle.ManageOrganizationsDialog_unableToDeleteOrg_title(), JOptionPane.WARNING_MESSAGE);
                     logger.log(Level.INFO, "Was unable to delete organization from central repository", ex);
@@ -372,21 +372,21 @@ public final class ManageOrganizationsDialog extends JDialog {
             try {
                 newOrg = dialogO.getNewOrg();
                 populateListAndSelect(dialogO.getNewOrg());
-            } catch (EamDbException ex) {
+            } catch (CentralRepoException ex) {
 
             }
         }
     }//GEN-LAST:event_newButtonActionPerformed
 
     private void editButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editButtonActionPerformed
-        EamOrganization orgToEdit = organizationList.getSelectedValue();
+        CentralRepoOrganization orgToEdit = organizationList.getSelectedValue();
         if (orgToEdit != null) {
             AddNewOrganizationDialog dialogO = new AddNewOrganizationDialog(orgToEdit);
             if (dialogO.isChanged()) {
                 try {
                     newOrg = dialogO.getNewOrg();
                     populateListAndSelect(dialogO.getNewOrg());
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
 
                 }
             }
@@ -409,7 +409,7 @@ public final class ManageOrganizationsDialog extends JDialog {
     private javax.swing.JScrollPane orgListScrollPane;
     private javax.swing.JLabel orgNameLabel;
     private javax.swing.JTextField orgNameTextField;
-    private javax.swing.JList<EamOrganization> organizationList;
+    private javax.swing.JList<CentralRepoOrganization> organizationList;
     private javax.swing.JLabel pocEmailLabel;
     private javax.swing.JTextField pocEmailTextField;
     private javax.swing.JLabel pocNameLabel;
@@ -421,15 +421,15 @@ public final class ManageOrganizationsDialog extends JDialog {
         return newOrg != null;
     }
 
-    public EamOrganization getNewOrg() {
+    public CentralRepoOrganization getNewOrg() {
         return newOrg;
     }
 
-    private void setButtonsEnabled(EamOrganization selectedOrg) {
+    private void setButtonsEnabled(CentralRepoOrganization selectedOrg) {
         boolean isSelected = (selectedOrg != null);
         boolean isDefaultOrg = false;
         if(selectedOrg != null){
-            isDefaultOrg = EamDbUtil.isDefaultOrg(selectedOrg);
+            isDefaultOrg = CentralRepoDbUtil.isDefaultOrg(selectedOrg);
         }
         
         editButton.setEnabled(isSelected && (! isDefaultOrg));
@@ -446,7 +446,7 @@ public final class ManageOrganizationsDialog extends JDialog {
             if (e.getValueIsAdjusting()) {
                 return;
             }
-            EamOrganization selected = organizationList.getSelectedValue();            
+            CentralRepoOrganization selected = organizationList.getSelectedValue();            
             setButtonsEnabled(selected);
             if (selected != null) {
                 orgNameTextField.setText(selected.getName());

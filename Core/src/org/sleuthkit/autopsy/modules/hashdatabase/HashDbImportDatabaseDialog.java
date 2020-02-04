@@ -31,10 +31,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoOrganization;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -42,6 +41,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Instances of this class allow a user to select an existing hash database and
@@ -55,8 +55,8 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private String selectedFilePath = "";
     private HashDb selectedHashDb = null;
     private final static String LAST_FILE_PATH_KEY = "HashDbImport_Path";
-    private EamOrganization selectedOrg = null;
-    private List<EamOrganization> orgs = null;
+    private CentralRepoOrganization selectedOrg = null;
+    private List<CentralRepoOrganization> orgs = null;
 
     /**
      * Displays a dialog that allows a user to select an existing hash database
@@ -109,7 +109,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private void enableComponents(){
         
         
-        if(! EamDb.isEnabled()){
+        if(! CentralRepository.isEnabled()){
             centralRepoRadioButton.setEnabled(false);
             fileTypeRadioButton.setSelected(true);
         } else {
@@ -132,11 +132,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private void populateCombobox() {
         orgComboBox.removeAllItems();
         try {
-            EamDb dbManager = EamDb.getInstance();
+            CentralRepository dbManager = CentralRepository.getInstance();
             orgs = dbManager.getOrganizations();
             orgs.forEach((org) -> {
                 orgComboBox.addItem(org.getName());
-                if(EamDbUtil.isDefaultOrg(org)){
+                if(CentralRepoDbUtil.isDefaultOrg(org)){
                     orgComboBox.setSelectedItem(org.getName());
                     selectedOrg = org;
                 }
@@ -144,7 +144,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             if ((selectedOrg == null) && (!orgs.isEmpty())) {
                 selectedOrg = orgs.get(0);
             }
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             JOptionPane.showMessageDialog(this, Bundle.HashDbImportDatabaseDialog_populateOrgsError_message());
             Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Failure loading organizations", ex);
         }
@@ -555,7 +555,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             
             // Check if a hash set with the same name/version already exists
             try{
-                if(EamDb.getInstance().referenceSetExists(hashSetNameTextField.getText(), versionTextField.getText())){
+                if(CentralRepository.getInstance().referenceSetExists(hashSetNameTextField.getText(), versionTextField.getText())){
                     JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(this.getClass(),
                                 "HashDbImportDatabaseDialog.duplicateName"),
@@ -564,7 +564,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                         JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-            } catch (EamDbException ex){
+            } catch (CentralRepoException ex){
                 Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Error looking up reference set", ex);
                 JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(this.getClass(),
@@ -615,7 +615,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private void orgComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orgComboBoxActionPerformed
         if (null == orgComboBox.getSelectedItem()) return;
         String orgName = this.orgComboBox.getSelectedItem().toString();
-        for (EamOrganization org : orgs) {
+        for (CentralRepoOrganization org : orgs) {
             if (org.getName().equals(orgName)) {
                 selectedOrg = org;
                 return;

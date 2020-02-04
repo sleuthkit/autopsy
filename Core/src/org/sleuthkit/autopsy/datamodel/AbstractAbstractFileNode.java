@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,9 +41,8 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
@@ -66,6 +65,7 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * An abstract node that encapsulates AbstractFile data
@@ -93,6 +93,16 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             if (FileTypeExtensions.getArchiveExtensions().contains(ext)) {
                 IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             }
+        }
+        
+        try {
+            //See JIRA-5971
+            //Attempt to cache file path during construction of this UI component.
+            this.content.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Failed attempt to cache the "
+                            + "unique path of the abstract file instance. Name: %s (objID=%d)", 
+                            this.content.getName(), this.content.getId()), ex);
         }
 
         if (UserPreferences.displayTranslatedFileNames()) {
@@ -329,7 +339,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         if (!UserPreferences.getHideSCOColumns()) {
             properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), VALUE_LOADING, ""));
             properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), VALUE_LOADING, ""));
-            if (EamDb.isEnabled()) {
+            if (CentralRepository.isEnabled()) {
                 properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), VALUE_LOADING, ""));
             }
             // Get the SCO columns data in a background task
@@ -405,12 +415,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         try {
             //don't perform the query if there is no correlation value
             if (attributeType != null && StringUtils.isNotBlank(attributeValue)) {
-                count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attributeType, attributeValue);
+                count = CentralRepository.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attributeType, attributeValue);
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_description(count);
             } else if (attributeType != null) {
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_hashLookupNotRun_description();
             }
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
@@ -538,8 +548,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     @Override
     protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance attribute = null;
-        if (EamDb.isEnabled() && !UserPreferences.getHideSCOColumns()) {
-            attribute = EamArtifactUtil.getInstanceFromContent(content);
+        if (CentralRepository.isEnabled() && !UserPreferences.getHideSCOColumns()) {
+            attribute = CorrelationAttributeUtil.getInstanceFromContent(content);
         }
         return attribute;
     }

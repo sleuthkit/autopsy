@@ -41,8 +41,7 @@ import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
@@ -53,6 +52,7 @@ import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.modules.hashdatabase.AddContentToHashDbAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Panel for displaying of file discovery results and handling the paging of
@@ -320,11 +320,11 @@ public class ResultsPanel extends javax.swing.JPanel {
             if (pageWorker != null && !pageWorker.isDone()) {
                 pageWorker.cancel(true);
             }
-            EamDb centralRepo = null;
-            if (EamDb.isEnabled()) {
+            CentralRepository centralRepo = null;
+            if (CentralRepository.isEnabled()) {
                 try {
-                    centralRepo = EamDb.getInstance();
-                } catch (EamDbException ex) {
+                    centralRepo = CentralRepository.getInstance();
+                } catch (CentralRepoException ex) {
                     centralRepo = null;
                     logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for File Discovery", ex);
                 }

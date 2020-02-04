@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 /**
  * An organization in the Central Repository database
  */
-public class EamOrganization {
+public class CentralRepoOrganization {
 
     private int orgID;
     private String name;
@@ -29,7 +29,7 @@ public class EamOrganization {
     private String pocEmail;
     private String pocPhone;
 
-    EamOrganization(
+    CentralRepoOrganization(
             int orgID,
             String name,
             String pocName,
@@ -42,7 +42,7 @@ public class EamOrganization {
         this.pocPhone = pocPhone;
     }
 
-    public EamOrganization(
+    public CentralRepoOrganization(
             String name,
             String pocName,
             String pocEmail,
@@ -50,12 +50,12 @@ public class EamOrganization {
         this(-1, name, pocName, pocEmail, pocPhone);
     }
 
-    public EamOrganization(
+    public CentralRepoOrganization(
             String name) {
         this(-1, name, "", "", "");
     }
 
-    public static EamOrganization getDefault() {
+    public static CentralRepoOrganization getDefault() {
         // TODO: when we allow the user to configure/specify the default organization
         //  this will return it.
         return null;

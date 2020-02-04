@@ -33,30 +33,30 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Central Repository database implementation using Postgres as a backend
  */
-final class PostgresEamDb extends AbstractSqlEamDb {
+final class PostgresCentralRepo extends RdbmsCentralRepo {
 
-    private final static Logger LOGGER = Logger.getLogger(PostgresEamDb.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(PostgresCentralRepo.class.getName());
 
     private final static String CONFLICT_CLAUSE = "ON CONFLICT DO NOTHING";
 
-    private static PostgresEamDb instance;
+    private static PostgresCentralRepo instance;
 
     private static final int CONN_POOL_SIZE = 10;
     private BasicDataSource connectionPool = null;
 
-    private final PostgresEamDbSettings dbSettings;
+    private final PostgresCentralRepoSettings dbSettings;
 
     /**
      * Get the singleton instance of PostgresEamDb
      *
      * @return the singleton instance of PostgresEamDb
      *
-     * @throws EamDbException if one or more default correlation type(s) have an
+     * @throws CentralRepoException if one or more default correlation type(s) have an
      *                        invalid db table name.
      */
-    public synchronized static PostgresEamDb getInstance() throws EamDbException {
+    public synchronized static PostgresCentralRepo getInstance() throws CentralRepoException {
         if (instance == null) {
-            instance = new PostgresEamDb();
+            instance = new PostgresCentralRepo();
         }
 
         return instance;
@@ -64,17 +64,17 @@ final class PostgresEamDb extends AbstractSqlEamDb {
 
     /**
      *
-     * @throws EamDbException if the AbstractSqlEamDb class has one or more
+     * @throws CentralRepoException if the AbstractSqlEamDb class has one or more
      *                        default correlation type(s) having an invalid db
      *                        table name.
      */
-    private PostgresEamDb() throws EamDbException {
-        dbSettings = new PostgresEamDbSettings();
+    private PostgresCentralRepo() throws CentralRepoException {
+        dbSettings = new PostgresCentralRepoSettings();
         bulkArtifactsThreshold = dbSettings.getBulkThreshold();
     }
 
     @Override
-    public void shutdownConnections() throws EamDbException {
+    public void shutdownConnections() throws CentralRepoException {
         try {
             synchronized (this) {
                 if (connectionPool != null) {
@@ -84,7 +84,7 @@ final class PostgresEamDb extends AbstractSqlEamDb {
                 clearCaches();
             }
         } catch (SQLException ex) {
-            throw new EamDbException("Failed to close existing database connections.", ex); // NON-NLS
+            throw new CentralRepoException("Failed to close existing database connections.", ex); // NON-NLS
         }
     }
 
@@ -104,7 +104,7 @@ final class PostgresEamDb extends AbstractSqlEamDb {
     }
 
     @Override
-    public void reset() throws EamDbException {
+    public void reset() throws CentralRepoException {
         Connection conn = connect();
 
         try {
@@ -128,7 +128,7 @@ final class PostgresEamDb extends AbstractSqlEamDb {
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "Failed to reset database.", ex);
         } finally {
-            EamDbUtil.closeConnection(conn);
+            CentralRepoDbUtil.closeConnection(conn);
         }
 
         dbSettings.insertDefaultDatabaseContent();
@@ -138,7 +138,7 @@ final class PostgresEamDb extends AbstractSqlEamDb {
      * Setup a connection pool for db connections.
      *
      */
-    private void setupConnectionPool() throws EamDbException {
+    private void setupConnectionPool() throws CentralRepoException {
         connectionPool = new BasicDataSource();
         connectionPool.setUsername(dbSettings.getUserName());
         connectionPool.setPassword(dbSettings.getPassword());
@@ -169,10 +169,10 @@ final class PostgresEamDb extends AbstractSqlEamDb {
      *
      * @return A connection from the connection pool.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    protected Connection connect(boolean foreignKeys) throws EamDbException {
+    protected Connection connect(boolean foreignKeys) throws CentralRepoException {
         //foreignKeys boolean is ignored for postgres
         return connect();
     }
@@ -182,15 +182,15 @@ final class PostgresEamDb extends AbstractSqlEamDb {
      *
      * @return A connection from the connection pool.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Messages({"PostgresEamDb.centralRepoDisabled.message=Central Repository module is not enabled.",
         "PostgresEamDb.connectionFailed.message=Error getting connection to database."})
     @Override
-    protected Connection connect() throws EamDbException {
+    protected Connection connect() throws CentralRepoException {
         synchronized (this) {
-            if (!EamDb.isEnabled()) {
-                throw new EamDbException("Central Repository module is not enabled", Bundle.PostgresEamDb_centralRepoDisabled_message()); // NON-NLS
+            if (!CentralRepository.isEnabled()) {
+                throw new CentralRepoException("Central Repository module is not enabled", Bundle.PostgresEamDb_centralRepoDisabled_message()); // NON-NLS
             }
 
             if (connectionPool == null) {
@@ -200,7 +200,7 @@ final class PostgresEamDb extends AbstractSqlEamDb {
         try {
             return connectionPool.getConnection();
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting connection from connection pool.", Bundle.PostgresEamDb_connectionFailed_message(), ex); // NON-NLS
+            throw new CentralRepoException("Error getting connection from connection pool.", Bundle.PostgresEamDb_connectionFailed_message(), ex); // NON-NLS
         }
     }
 
@@ -217,12 +217,12 @@ final class PostgresEamDb extends AbstractSqlEamDb {
      *
      * @return the lock, or null if locking is not supported
      *
-     * @throws EamDbException if the coordination service is running but we fail
+     * @throws CentralRepoException if the coordination service is running but we fail
      *                        to get the lock
      */
     @Override
     @Messages({"PostgresEamDb.multiUserLockError.message=Error acquiring database lock"})
-    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException {
+    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws CentralRepoException {
         try {
             // First check if multi user mode is enabled - if not there's no point trying to get a lock
             if (!UserPreferences.getIsMultiUserModeEnabled()) {
@@ -235,9 +235,9 @@ final class PostgresEamDb extends AbstractSqlEamDb {
             if (lock != null) {
                 return lock;
             }
-            throw new EamDbException("Error acquiring database lock", Bundle.PostgresEamDb_multiUserLockError_message());
+            throw new CentralRepoException("Error acquiring database lock", Bundle.PostgresEamDb_multiUserLockError_message());
         } catch (InterruptedException ex) {
-            throw new EamDbException("Error acquiring database lock", Bundle.PostgresEamDb_multiUserLockError_message(), ex);
+            throw new CentralRepoException("Error acquiring database lock", Bundle.PostgresEamDb_multiUserLockError_message(), ex);
         } catch (CoordinationService.CoordinationServiceException ex) {
             // This likely just means the coordination service isn't running, which is ok
             return null;
@@ -257,8 +257,8 @@ final class PostgresEamDb extends AbstractSqlEamDb {
                 columnExists = resultSet.getBoolean(1);
             }
         } finally {
-            EamDbUtil.closeResultSet(resultSet);
-            EamDbUtil.closeStatement(statement);
+            CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(statement);
         }
         return columnExists;
     }

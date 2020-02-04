@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2019 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,15 +39,15 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
  * AbstractSqlEamDb that read or write to the database should be overriden here
  * and use appropriate locking.
  */
-final class SqliteEamDb extends AbstractSqlEamDb {
+final class SqliteCentralRepo extends RdbmsCentralRepo {
 
-    private final static Logger LOGGER = Logger.getLogger(SqliteEamDb.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(SqliteCentralRepo.class.getName());
 
-    private static SqliteEamDb instance;
+    private static SqliteCentralRepo instance;
 
     private BasicDataSource connectionPool = null;
 
-    private final SqliteEamDbSettings dbSettings;
+    private final SqliteCentralRepoSettings dbSettings;
 
     // While the Sqlite database should only be used for single users, it is still
     // possible for multiple threads to attempt to write to the database simultaneously. 
@@ -58,12 +58,12 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return the singleton instance of SqliteEamDb
      *
-     * @throws EamDbException if one or more default correlation type(s) have an
+     * @throws CentralRepoException if one or more default correlation type(s) have an
      *                        invalid db table name.
      */
-    public synchronized static SqliteEamDb getInstance() throws EamDbException {
+    public synchronized static SqliteCentralRepo getInstance() throws CentralRepoException {
         if (instance == null) {
-            instance = new SqliteEamDb();
+            instance = new SqliteCentralRepo();
         }
 
         return instance;
@@ -71,17 +71,17 @@ final class SqliteEamDb extends AbstractSqlEamDb {
 
     /**
      *
-     * @throws EamDbException if the AbstractSqlEamDb class has one or more
+     * @throws CentralRepoException if the AbstractSqlEamDb class has one or more
      *                        default correlation type(s) having an invalid db
      *                        table name.
      */
-    private SqliteEamDb() throws EamDbException {
-        dbSettings = new SqliteEamDbSettings();
+    private SqliteCentralRepo() throws CentralRepoException {
+        dbSettings = new SqliteCentralRepoSettings();
         bulkArtifactsThreshold = dbSettings.getBulkThreshold();
     }
 
     @Override
-    public void shutdownConnections() throws EamDbException {
+    public void shutdownConnections() throws CentralRepoException {
         try {
             synchronized (this) {
                 if (null != connectionPool) {
@@ -91,7 +91,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
                 clearCaches();
             }
         } catch (SQLException ex) {
-            throw new EamDbException("Failed to close existing database connections.", ex); // NON-NLS
+            throw new CentralRepoException("Failed to close existing database connections.", ex); // NON-NLS
         }
     }
 
@@ -111,7 +111,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     @Override
-    public void reset() throws EamDbException {
+    public void reset() throws CentralRepoException {
         try {
             acquireExclusiveLock();
 
@@ -141,7 +141,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             } catch (SQLException ex) {
                 LOGGER.log(Level.WARNING, "Failed to reset database.", ex);
             } finally {
-                EamDbUtil.closeConnection(conn);
+                CentralRepoDbUtil.closeConnection(conn);
             }
 
             dbSettings.insertDefaultDatabaseContent();
@@ -155,10 +155,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      */
     @Messages({"SqliteEamDb.databaseMissing.message=Central repository database missing"})
-    private void setupConnectionPool(boolean foreignKeysEnabled) throws EamDbException {
+    private void setupConnectionPool(boolean foreignKeysEnabled) throws CentralRepoException {
 
         if (dbSettings.dbFileExists() == false) {
-            throw new EamDbException("Central repository database missing", Bundle.SqliteEamDb_databaseMissing_message());
+            throw new CentralRepoException("Central repository database missing", Bundle.SqliteEamDb_databaseMissing_message());
         }
 
         connectionPool = new BasicDataSource();
@@ -186,15 +186,15 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return A connection from the connection pool.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Messages({"SqliteEamDb.connectionFailedMessage.message=Error getting connection to database.",
         "SqliteEamDb.centralRepositoryDisabled.message=Central Repository module is not enabled."})
     @Override
-    protected Connection connect(boolean foreignKeys) throws EamDbException {
+    protected Connection connect(boolean foreignKeys) throws CentralRepoException {
         synchronized (this) {
-            if (!EamDb.isEnabled()) {
-                throw new EamDbException("Central repository database missing", Bundle.SqliteEamDb_centralRepositoryDisabled_message()); // NON-NLS
+            if (!CentralRepository.isEnabled()) {
+                throw new CentralRepoException("Central repository database missing", Bundle.SqliteEamDb_centralRepositoryDisabled_message()); // NON-NLS
             }
             if (connectionPool == null) {
                 setupConnectionPool(foreignKeys);
@@ -202,7 +202,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             try {
                 return connectionPool.getConnection();
             } catch (SQLException ex) {
-                throw new EamDbException("Error getting connection from connection pool.", Bundle.SqliteEamDb_connectionFailedMessage_message(), ex); // NON-NLS
+                throw new CentralRepoException("Error getting connection from connection pool.", Bundle.SqliteEamDb_connectionFailedMessage_message(), ex); // NON-NLS
             }
         }
     }
@@ -213,10 +213,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return A connection from the connection pool.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    protected Connection connect() throws EamDbException {
+    protected Connection connect() throws CentralRepoException {
         return connect(true);
     }
 
@@ -232,10 +232,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param name  Key to set
      * @param value Value to set
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public void newDbInfo(String name, String value) throws EamDbException {
+    public void newDbInfo(String name, String value) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.newDbInfo(name, value);
@@ -251,10 +251,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return value associated with name.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public String getDbInfo(String name) throws EamDbException {
+    public String getDbInfo(String name) throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getDbInfo(name);
@@ -269,10 +269,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param name  Name to find
      * @param value Value to assign to name.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public void updateDbInfo(String name, String value) throws EamDbException {
+    public void updateDbInfo(String name, String value) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.updateDbInfo(name, value);
@@ -287,7 +287,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param autopsyCase The case to add
      */
     @Override
-    public CorrelationCase newCase(Case autopsyCase) throws EamDbException {
+    public CorrelationCase newCase(Case autopsyCase) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             return super.newCase(autopsyCase);
@@ -297,7 +297,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     @Override
-    public void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException {
+    public void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.addDataSourceObjectId(rowId, dataSourceObjectId);
@@ -314,7 +314,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamCase The case to add
      */
     @Override
-    public CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
+    public CorrelationCase newCase(CorrelationCase eamCase) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             return super.newCase(eamCase);
@@ -329,7 +329,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamCase The case to update
      */
     @Override
-    public void updateCase(CorrelationCase eamCase) throws EamDbException {
+    public void updateCase(CorrelationCase eamCase) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.updateCase(eamCase);
@@ -346,7 +346,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return The retrieved case
      */
     @Override
-    public CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException {
+    public CorrelationCase getCaseByUUID(String caseUUID) throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getCaseByUUID(caseUUID);
@@ -363,7 +363,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return The retrieved case
      */
     @Override
-    public CorrelationCase getCaseById(int caseId) throws EamDbException {
+    public CorrelationCase getCaseById(int caseId) throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getCaseById(caseId);
@@ -379,7 +379,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return List of cases
      */
     @Override
-    public List<CorrelationCase> getCases() throws EamDbException {
+    public List<CorrelationCase> getCases() throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getCases();
@@ -394,7 +394,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamDataSource the data source to add
      */
     @Override
-    public CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
+    public CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             return super.newDataSource(eamDataSource);
@@ -413,7 +413,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return The data source
      */
     @Override
-    public CorrelationDataSource getDataSource(CorrelationCase correlationCase, Long caseDbDataSourceId) throws EamDbException {
+    public CorrelationDataSource getDataSource(CorrelationCase correlationCase, Long caseDbDataSourceId) throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getDataSource(correlationCase, caseDbDataSourceId);
@@ -432,7 +432,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return The data source
      */
     @Override
-    public CorrelationDataSource getDataSourceById(CorrelationCase correlationCase, int dataSourceId) throws EamDbException {
+    public CorrelationDataSource getDataSourceById(CorrelationCase correlationCase, int dataSourceId) throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getDataSourceById(correlationCase, dataSourceId);
@@ -447,7 +447,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return list of data sources in the DB
      */
     @Override
-    public List<CorrelationDataSource> getDataSources() throws EamDbException {
+    public List<CorrelationDataSource> getDataSources() throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getDataSources();
@@ -462,10 +462,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamDataSource The data source
      * @param newName       The new name
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException {
+    public void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.updateDataSourceName(eamDataSource, newName);
@@ -480,7 +480,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamDataSource The data source to update
      */
     @Override
-    public void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+    public void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.updateDataSourceMd5Hash(eamDataSource);
@@ -495,7 +495,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamDataSource The data source to update
      */
     @Override
-    public void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+    public void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.updateDataSourceSha1Hash(eamDataSource);
@@ -511,7 +511,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamDataSource The data source to update
      */
     @Override
-    public void updateDataSourceSha256Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+    public void updateDataSourceSha256Hash(CorrelationDataSource eamDataSource) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.updateDataSourceSha256Hash(eamDataSource);
@@ -527,7 +527,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamArtifact The artifact to add
      */
     @Override
-    public void addArtifactInstance(CorrelationAttributeInstance eamArtifact) throws EamDbException {
+    public void addArtifactInstance(CorrelationAttributeInstance eamArtifact) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.addArtifactInstance(eamArtifact);
@@ -537,7 +537,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     @Override
-    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException {
         try {
             acquireSharedLock();
             return super.getArtifactInstancesByTypeValue(aType, value);
@@ -547,7 +547,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     @Override
-    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws EamDbException, CorrelationAttributeNormalizationException {
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws CentralRepoException, CorrelationAttributeNormalizationException {
         try {
             acquireSharedLock();
             return super.getArtifactInstancesByTypeValues(aType, values);
@@ -557,7 +557,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     @Override
-    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException {
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws CentralRepoException, CorrelationAttributeNormalizationException {
         try {
             acquireSharedLock();
             return super.getArtifactInstancesByTypeValuesAndCases(aType, values, caseIds);
@@ -576,10 +576,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return Number of artifact instances having ArtifactType and
      *         ArtifactValue.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public Long getCountArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+    public Long getCountArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException {
         try {
             acquireSharedLock();
             return super.getCountArtifactInstancesByTypeValue(aType, value);
@@ -589,7 +589,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     @Override
-    public int getFrequencyPercentage(CorrelationAttributeInstance corAttr) throws EamDbException, CorrelationAttributeNormalizationException {
+    public int getFrequencyPercentage(CorrelationAttributeInstance corAttr) throws CentralRepoException, CorrelationAttributeNormalizationException {
         try {
             acquireSharedLock();
             return super.getFrequencyPercentage(corAttr);
@@ -608,10 +608,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return Number of unique tuples
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+    public Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException {
         try {
             acquireSharedLock();
             return super.getCountUniqueCaseDataSourceTuplesHavingTypeValue(aType, value);
@@ -621,7 +621,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     @Override
-    public Long getCountUniqueDataSources() throws EamDbException {
+    public Long getCountUniqueDataSources() throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getCountUniqueDataSources();
@@ -642,7 +642,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *         dataSource
      */
     @Override
-    public Long getCountArtifactInstancesByCaseDataSource(CorrelationDataSource correlationDataSource) throws EamDbException {
+    public Long getCountArtifactInstancesByCaseDataSource(CorrelationDataSource correlationDataSource) throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getCountArtifactInstancesByCaseDataSource(correlationDataSource);
@@ -656,7 +656,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * addAttributeInstanceBulk() method
      */
     @Override
-    public void commitAttributeInstancesBulk() throws EamDbException {
+    public void commitAttributeInstancesBulk() throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.commitAttributeInstancesBulk();
@@ -669,7 +669,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * Executes a bulk insert of the cases
      */
     @Override
-    public void bulkInsertCases(List<CorrelationCase> cases) throws EamDbException {
+    public void bulkInsertCases(List<CorrelationCase> cases) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.bulkInsertCases(cases);
@@ -689,7 +689,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *                    KNOWN
      */
     @Override
-    public void setAttributeInstanceKnownStatus(CorrelationAttributeInstance eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
+    public void setAttributeInstanceKnownStatus(CorrelationAttributeInstance eamArtifact, TskData.FileKnown knownStatus) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.setAttributeInstanceKnownStatus(eamArtifact, knownStatus);
@@ -707,7 +707,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return Number of matching eamArtifacts
      */
     @Override
-    public Long getCountArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+    public Long getCountArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException {
         try {
             acquireSharedLock();
             return super.getCountArtifactInstancesKnownBad(aType, value);
@@ -726,10 +726,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return List of cases containing this artifact with instances marked as
      *         bad
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+    public List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException {
         try {
             acquireSharedLock();
             return super.getListCasesHavingArtifactInstancesKnownBad(aType, value);
@@ -743,10 +743,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @param referenceSetID
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public void deleteReferenceSet(int referenceSetID) throws EamDbException {
+    public void deleteReferenceSet(int referenceSetID) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.deleteReferenceSet(referenceSetID);
@@ -765,7 +765,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return true if the hash is found in the reference set
      */
     @Override
-    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException, CorrelationAttributeNormalizationException {
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws CentralRepoException, CorrelationAttributeNormalizationException {
         try {
             acquireSharedLock();
             return super.isValueInReferenceSet(value, referenceSetID, correlationTypeID);
@@ -780,10 +780,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param type                  EamArtifact.Type to search for
      * @param instanceTableCallback callback to process the instance
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public void processInstanceTable(CorrelationAttributeInstance.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException {
+    public void processInstanceTable(CorrelationAttributeInstance.Type type, InstanceTableCallback instanceTableCallback) throws CentralRepoException {
         try {
             acquireSharedLock();
             super.processInstanceTable(type, instanceTableCallback);
@@ -798,10 +798,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param type                  EamArtifact.Type to search for
      * @param instanceTableCallback callback to process the instance
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public void processInstanceTableWhere(CorrelationAttributeInstance.Type type, String whereClause, InstanceTableCallback instanceTableCallback) throws EamDbException {
+    public void processInstanceTableWhere(CorrelationAttributeInstance.Type type, String whereClause, InstanceTableCallback instanceTableCallback) throws CentralRepoException {
         try {
             acquireSharedLock();
             super.processInstanceTableWhere(type, whereClause, instanceTableCallback);
@@ -816,10 +816,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param selectClause          query string to execute
      * @param instanceTableCallback callback to process the instance
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws EamDbException {
+    public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws CentralRepoException {
         try {
             acquireSharedLock();
             super.processSelectClause(selectClause, instanceTableCallback);
@@ -838,10 +838,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return true if a matching set is found
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException {
+    public boolean referenceSetExists(String referenceSetName, String version) throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.referenceSetExists(referenceSetName, version);
@@ -859,7 +859,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return Global known status of the artifact
      */
     @Override
-    public boolean isArtifactKnownBadByReference(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+    public boolean isArtifactKnownBadByReference(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException {
         try {
             acquireSharedLock();
             return super.isArtifactKnownBadByReference(aType, value);
@@ -875,10 +875,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @param eamOrg The organization to add
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public EamOrganization newOrganization(EamOrganization eamOrg) throws EamDbException {
+    public CentralRepoOrganization newOrganization(CentralRepoOrganization eamOrg) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             return super.newOrganization(eamOrg);
@@ -892,10 +892,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return A list of all organizations
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public List<EamOrganization> getOrganizations() throws EamDbException {
+    public List<CentralRepoOrganization> getOrganizations() throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getOrganizations();
@@ -911,10 +911,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return The organization with the given ID
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public EamOrganization getOrganizationByID(int orgID) throws EamDbException {
+    public CentralRepoOrganization getOrganizationByID(int orgID) throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getOrganizationByID(orgID);
@@ -924,7 +924,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     @Override
-    public void updateOrganization(EamOrganization updatedOrganization) throws EamDbException {
+    public void updateOrganization(CentralRepoOrganization updatedOrganization) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.updateOrganization(updatedOrganization);
@@ -934,7 +934,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     @Override
-    public void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException {
+    public void deleteOrganization(CentralRepoOrganization organizationToDelete) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.deleteOrganization(organizationToDelete);
@@ -950,10 +950,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return The ID of the new global set
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public int newReferenceSet(EamGlobalSet eamGlobalSet) throws EamDbException {
+    public int newReferenceSet(CentralRepoFileSet eamGlobalSet) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             return super.newReferenceSet(eamGlobalSet);
@@ -969,10 +969,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return The global set associated with the ID
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public EamGlobalSet getReferenceSetByID(int referenceSetID) throws EamDbException {
+    public CentralRepoFileSet getReferenceSetByID(int referenceSetID) throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getReferenceSetByID(referenceSetID);
@@ -988,10 +988,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return List of all reference sets in the central repository
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public List<EamGlobalSet> getAllReferenceSets(CorrelationAttributeInstance.Type correlationType) throws EamDbException {
+    public List<CentralRepoFileSet> getAllReferenceSets(CorrelationAttributeInstance.Type correlationType) throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getAllReferenceSets(correlationType);
@@ -1007,10 +1007,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param correlationType       Correlation Type that this Reference
      *                              Instance is
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttributeInstance.Type correlationType) throws EamDbException {
+    public void addReferenceInstance(CentralRepoFileInstance eamGlobalFileInstance, CorrelationAttributeInstance.Type correlationType) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.addReferenceInstance(eamGlobalFileInstance, correlationType);
@@ -1022,10 +1022,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Insert the bulk collection of Reference Type Instances
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public void bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances, CorrelationAttributeInstance.Type contentType) throws EamDbException {
+    public void bulkInsertReferenceTypeEntries(Set<CentralRepoFileInstance> globalInstances, CorrelationAttributeInstance.Type contentType) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.bulkInsertReferenceTypeEntries(globalInstances, contentType);
@@ -1042,10 +1042,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return List of all global file instances with a type and value
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String aValue) throws EamDbException, CorrelationAttributeNormalizationException {
+    public List<CentralRepoFileInstance> getReferenceInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String aValue) throws CentralRepoException, CorrelationAttributeNormalizationException {
         try {
             acquireSharedLock();
             return super.getReferenceInstancesByTypeValue(aType, aValue);
@@ -1061,10 +1061,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return ID of this new Correlation Type
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public int newCorrelationType(CorrelationAttributeInstance.Type newType) throws EamDbException {
+    public int newCorrelationType(CorrelationAttributeInstance.Type newType) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             return super.newCorrelationType(newType);
@@ -1080,10 +1080,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return List of EamArtifact.Type's. If none are defined in the database,
      *         the default list will be returned.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public List<CorrelationAttributeInstance.Type> getDefinedCorrelationTypes() throws EamDbException {
+    public List<CorrelationAttributeInstance.Type> getDefinedCorrelationTypes() throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getDefinedCorrelationTypes();
@@ -1099,10 +1099,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return List of enabled EamArtifact.Type's. If none are defined in the
      *         database, the default list will be returned.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public List<CorrelationAttributeInstance.Type> getEnabledCorrelationTypes() throws EamDbException {
+    public List<CorrelationAttributeInstance.Type> getEnabledCorrelationTypes() throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getEnabledCorrelationTypes();
@@ -1118,10 +1118,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return List of supported EamArtifact.Type's. If none are defined in the
      *         database, the default list will be returned.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public List<CorrelationAttributeInstance.Type> getSupportedCorrelationTypes() throws EamDbException {
+    public List<CorrelationAttributeInstance.Type> getSupportedCorrelationTypes() throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getSupportedCorrelationTypes();
@@ -1135,10 +1135,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @param aType EamArtifact.Type to update.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public void updateCorrelationType(CorrelationAttributeInstance.Type aType) throws EamDbException {
+    public void updateCorrelationType(CorrelationAttributeInstance.Type aType) throws CentralRepoException {
         try {
             acquireExclusiveLock();
             super.updateCorrelationType(aType);
@@ -1154,10 +1154,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return EamArtifact.Type or null if it doesn't exist.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public CorrelationAttributeInstance.Type getCorrelationTypeById(int typeId) throws EamDbException {
+    public CorrelationAttributeInstance.Type getCorrelationTypeById(int typeId) throws CentralRepoException {
         try {
             acquireSharedLock();
             return super.getCorrelationTypeById(typeId);
@@ -1169,10 +1169,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Upgrade the schema of the database (if needed)
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public void upgradeSchema() throws EamDbException, SQLException, IncompatibleCentralRepoException {
+    public void upgradeSchema() throws CentralRepoException, SQLException, IncompatibleCentralRepoException {
         try {
             acquireExclusiveLock();
             super.upgradeSchema();
@@ -1189,11 +1189,11 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @return the lock, or null if locking is not supported
      *
-     * @throws EamDbException if the coordination service is running but we fail
+     * @throws CentralRepoException if the coordination service is running but we fail
      *                        to get the lock
      */
     @Override
-    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException {
+    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws CentralRepoException {
         // Multiple users are not supported for SQLite
         return null;
     }
@@ -1251,8 +1251,8 @@ final class SqliteEamDb extends AbstractSqlEamDb {
                 }
             }
         } finally {
-            EamDbUtil.closeResultSet(resultSet);
-            EamDbUtil.closeStatement(statement);
+            CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(statement);
         }
         return columnExists;
     }

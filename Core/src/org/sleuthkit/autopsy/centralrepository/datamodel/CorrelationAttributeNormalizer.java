@@ -103,7 +103,7 @@ final public class CorrelationAttributeNormalizer {
             } else {
                 throw new CorrelationAttributeNormalizationException(String.format("Given attributeTypeId did not correspond to any known Attribute: %s", attributeTypeId));
             }
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             throw new CorrelationAttributeNormalizationException(ex);
         }
     }

@@ -183,7 +183,7 @@
                     <Property name="selectionMode" type="int" value="0"/>
                   </Properties>
                   <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;EamOrganization&gt;"/>
+                    <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoOrganization&gt;"/>
                   </AuxValues>
                 </Component>
               </SubComponents>

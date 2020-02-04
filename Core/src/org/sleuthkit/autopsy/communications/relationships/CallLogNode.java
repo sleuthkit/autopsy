@@ -71,6 +71,9 @@ final class CallLogNode extends BlackboardArtifactNode {
         if(phoneNumber == null || phoneNumber.isEmpty()) {
             phoneNumber = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO);
         }
+        if(phoneNumber == null || phoneNumber.isEmpty()) {
+            phoneNumber = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER);
+        }
         
         long duration = -1;
         try{

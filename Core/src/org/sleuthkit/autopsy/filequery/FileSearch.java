@@ -50,9 +50,8 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
@@ -71,6 +70,7 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Main class to perform the file search.
@@ -108,7 +108,7 @@ class FileSearch {
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
-            SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
         // Make a list of attributes that we want to add values for. This ensures the
         // ResultFile objects will have all needed fields set when it's time to group
         // and sort them. For example, if we're grouping by central repo frequency, we need
@@ -160,7 +160,7 @@ class FileSearch {
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
-            SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
         Map<GroupKey, List<ResultFile>> searchResults = runFileSearch(userName, filters,
                 groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
         LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
@@ -200,7 +200,7 @@ class FileSearch {
             GroupKey groupKey,
             int startingEntry,
             int numberOfEntries,
-            SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
         //the group should be in the cache at this point
         List<ResultFile> filesInGroup = null;
         SearchKey searchKey = new SearchKey(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod);
@@ -261,7 +261,7 @@ class FileSearch {
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
-            SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
 
         // Make a list of attributes that we want to add values for. This ensures the
         // ResultFile objects will have all needed fields set when it's time to group
@@ -302,7 +302,7 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    private static void addAttributes(List<AttributeType> attrs, List<ResultFile> resultFiles, SleuthkitCase caseDb, EamDb centralRepoDb)
+    private static void addAttributes(List<AttributeType> attrs, List<ResultFile> resultFiles, SleuthkitCase caseDb, CentralRepository centralRepoDb)
             throws FileSearchException {
         for (AttributeType attr : attrs) {
             attr.addAttributeToResultFiles(resultFiles, caseDb, centralRepoDb);
@@ -316,7 +316,7 @@ class FileSearch {
      * @param hashesToLookUp Hashes to find the frequency of
      * @param currentFiles   List of files to update with frequencies
      */
-    private static void computeFrequency(Set<String> hashesToLookUp, List<ResultFile> currentFiles, EamDb centralRepoDb) {
+    private static void computeFrequency(Set<String> hashesToLookUp, List<ResultFile> currentFiles, CentralRepository centralRepoDb) {
 
         if (hashesToLookUp.isEmpty()) {
             return;
@@ -326,7 +326,7 @@ class FileSearch {
         hashes = "'" + hashes + "'";
         try {
             CorrelationAttributeInstance.Type attributeType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
-            String tableName = EamDbUtil.correlationTypeToInstanceTableName(attributeType);
+            String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(attributeType);
 
             String selectClause = " value, COUNT(value) FROM "
                     + "(SELECT DISTINCT case_id, value FROM " + tableName
@@ -337,7 +337,7 @@ class FileSearch {
             FrequencyCallback callback = new FrequencyCallback(currentFiles);
             centralRepoDb.processSelectClause(selectClause, callback);
 
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.WARNING, "Error getting frequency counts from Central Repository", ex); // NON-NLS
         }
 
@@ -646,7 +646,7 @@ class FileSearch {
          *
          * @throws FileSearchException
          */
-        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
             // Default is to do nothing
         }
     }
@@ -1044,7 +1044,7 @@ class FileSearch {
 
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             // Get pairs of (object ID, keyword list name) for all files in the list of files that have
             // keyword list hits.
@@ -1199,7 +1199,7 @@ class FileSearch {
 
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
             if (centralRepoDb == null) {
                 for (ResultFile file : files) {
                     if (file.getFrequency() == Frequency.UNKNOWN && file.getFirstInstance().getKnown() == TskData.FileKnown.KNOWN) {
@@ -1220,7 +1220,7 @@ class FileSearch {
          * @param centralRepoDb The central repository currently in use.
          */
         private void processResultFilesForCR(List<ResultFile> files,
-                EamDb centralRepoDb) {
+                CentralRepository centralRepoDb) {
             List<ResultFile> currentFiles = new ArrayList<>();
             Set<String> hashesToLookUp = new HashSet<>();
             for (ResultFile file : files) {
@@ -1347,7 +1347,7 @@ class FileSearch {
 
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             // Get pairs of (object ID, hash set name) for all files in the list of files that have
             // hash set hits.
@@ -1499,7 +1499,7 @@ class FileSearch {
 
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             // Get pairs of (object ID, interesting item set name) for all files in the list of files that have
             // interesting file set hits.
@@ -1653,7 +1653,7 @@ class FileSearch {
 
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             // Get pairs of (object ID, object type name) for all files in the list of files that have
             // objects detected
@@ -1806,7 +1806,7 @@ class FileSearch {
 
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             try {
                 for (ResultFile resultFile : files) {

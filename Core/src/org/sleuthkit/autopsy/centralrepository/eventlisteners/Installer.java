@@ -23,8 +23,8 @@ import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -59,8 +59,8 @@ public class Installer extends ModuleInstall {
 
         // Perform the database upgrade and inform the user if it fails
         try {
-            EamDbUtil.upgradeDatabase();
-        } catch (EamDbException ex) {
+            CentralRepoDbUtil.upgradeDatabase();
+        } catch (CentralRepoException ex) {
             if (RuntimeProperties.runningWithGUI()) {
                 WindowManager.getDefault().invokeWhenUIReady(() -> {
                     JOptionPane.showMessageDialog(null,
