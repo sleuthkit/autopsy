@@ -14,19 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pdb
-
 import logging as mod_logging
 import math as mod_math
 
 from . import utils as mod_utils
 
+log = mod_logging.getLogger(__name__)
+
 # Generic geo related function and class(es)
 
-# One degree in meters:
-ONE_DEGREE = 1000. * 10000.8 / 90.
+# latitude/longitude in GPX files is always in WGS84 datum
+# WGS84 defined the Earth semi-major axis with 6378.137 km
+EARTH_RADIUS = 6378.137 * 1000
 
-EARTH_RADIUS = 6371 * 1000
+# One degree in meters:
+ONE_DEGREE = (2*mod_math.pi*EARTH_RADIUS) / 360  # ==> 111.319 km
 
 
 def to_rad(x):
@@ -66,9 +68,7 @@ def length(locations=None, _3d=None):
                 d = location.distance_3d(previous_location)
             else:
                 d = location.distance_2d(previous_location)
-            if d != 0 and not d:
-                pass
-            else:
+            if d:
                 length += d
     return length
 
@@ -100,15 +100,15 @@ def calculate_max_speed(speeds_and_distances):
         # ...
         assert len(speeds_and_distances[-1]) == 2
 
-    size = float(len(speeds_and_distances))
+    size = len(speeds_and_distances)
 
     if size < 20:
-        mod_logging.debug('Segment too small to compute speed, size=%s', size)
+        log.debug('Segment too small to compute speed, size=%s', size)
         return None
 
     distances = list(map(lambda x: x[1], speeds_and_distances))
     average_distance = sum(distances) / float(size)
-    standard_distance_deviation = mod_math.sqrt(sum(map(lambda distance: (distance-average_distance)**2, distances))/size)
+    standard_distance_deviation = mod_math.sqrt(sum(map(lambda distance: (distance-average_distance)**2, distances))/float(size))
 
     # Ignore items where the distance is too big:
     filtered_speeds_and_distances = filter(lambda speed_and_distance: abs(speed_and_distance[1] - average_distance) <= standard_distance_deviation * 1.5, speeds_and_distances)
@@ -261,9 +261,12 @@ def simplify_polyline(points, max_distance):
     # cases...
     a, b, c = get_line_equation_coefficients(begin, end)
 
-    tmp_max_distance = -1000000
-    tmp_max_distance_position = None
-    for point_no in range(len(points[1:-1])):
+    # Initialize to safe values
+    tmp_max_distance = 0
+    tmp_max_distance_position = 1
+    
+    # Check distance of all points between begin and end, exclusive
+    for point_no in range(1,len(points)-1):
         point = points[point_no]
         d = abs(a * point.latitude + b * point.longitude + c)
         if d > tmp_max_distance:
@@ -273,11 +276,14 @@ def simplify_polyline(points, max_distance):
     # Now that we have the most distance point, compute its real distance:
     real_max_distance = distance_from_line(points[tmp_max_distance_position], begin, end)
 
+    # If furthest point is less than max_distance, remove all points between begin and end
     if real_max_distance < max_distance:
         return [begin, end]
-
-    return (simplify_polyline(points[:tmp_max_distance_position + 2], max_distance) +
-            simplify_polyline(points[tmp_max_distance_position + 1:], max_distance)[1:])
+    
+    # If furthest point is more than max_distance, use it as anchor and run
+    # function again using (begin to anchor) and (anchor to end), remove extra anchor
+    return (simplify_polyline(points[:tmp_max_distance_position + 1], max_distance) +
+            simplify_polyline(points[tmp_max_distance_position:], max_distance)[1:])
 
 
 class Location:
@@ -362,8 +368,8 @@ class LocationDelta:
         elif (latitude_diff is not None) and (longitude_diff is not None):
             if (distance is not None) or (angle is not None):
                 raise Exception('No distance/angle if using lat/lon diff!')
-            this.latitude_diff  = latitude_diff
-            this.longitude_diff = longitude_diff
+            self.latitude_diff  = latitude_diff
+            self.longitude_diff = longitude_diff
             self.move_function = self.move_by_lat_lon_diff
 
     def move(self, location):
@@ -381,4 +387,4 @@ class LocationDelta:
         return location.latitude + lat_diff, location.longitude + lon_diff
 
     def move_by_lat_lon_diff(self, location):
-        return location.latitude  + self.latitude_diff, location.longitude + self.longitude_diff
+        return location.latitude + self.latitude_diff, location.longitude + self.longitude_diff

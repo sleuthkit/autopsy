@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import xml.dom.minidom as mod_minidom
-import gpxpy as mod_gpxpy
 
 def split_gpxs(xml):
     """

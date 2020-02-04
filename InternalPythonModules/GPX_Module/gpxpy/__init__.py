@@ -15,7 +15,9 @@
 # limitations under the License.
 
 
-def parse(xml_or_file, parser=None):
+__version__ = '1.3.5'
+
+def parse(xml_or_file, version = None):
     """
     Parse xml (string) or file object. This is just an wrapper for
     GPXParser.parse() function.
@@ -24,11 +26,13 @@ def parse(xml_or_file, parser=None):
     detected, lxml if possible).
 
     xml_or_file must be the xml to parse or a file-object with the XML.
+
+    version may be '1.0', '1.1' or None (then it will be read from the gpx
+    xml node if possible, if not then version 1.0 will be used).
     """
 
-    from . import gpx as mod_gpx
     from . import parser as mod_parser
 
-    parser = mod_parser.GPXParser(xml_or_file, parser=parser)
+    parser = mod_parser.GPXParser(xml_or_file)
 
-    return parser.parse()
+    return parser.parse(version)
