@@ -37,6 +37,8 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.blackboardutils import GeoArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils.attributes import GeoWaypoint
+from org.sleuthkit.datamodel.blackboardutils.attributes import GeoTrackPoints
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestModule
 from org.sleuthkit.autopsy.ingest.IngestModule import IngestModuleException
@@ -54,6 +56,7 @@ from org.sleuthkit.autopsy.ingest import ModuleDataEvent
 # Based on gpxpy module: https://github.com/tkrajina/gpxpy
 import gpxpy
 import gpxpy.gpx
+import gpxpy.parser
 
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the analysis.
@@ -63,7 +66,7 @@ class GPXParserDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
 
     # True - Verbose debugging messages sent to log file.
     # False - Verbose debugging turned off.
-    debuglevel = True
+    debuglevel = False
     
     def getModuleDisplayName(self):
         return self.moduleName
@@ -108,7 +111,7 @@ class GPXParserDataSourceIngestModule(DataSourceIngestModule):
         blackboard = Case.getCurrentCase().getServices().getBlackboard()
         
         # Get the sleuthkitcase
-        skcase = Case.getCurrentCase().getSleuthkitCase()
+        skCase = Case.getCurrentCase().getSleuthkitCase()
 
         # In the name and then count and read them.
         fileManager = Case.getCurrentCase().getServices().getFileManager()
@@ -124,12 +127,12 @@ class GPXParserDataSourceIngestModule(DataSourceIngestModule):
         fileCount = 0;
 
         # Get module name for adding attributes
-        modulename = GPXParserDataSourceIngestModuleFactory.moduleName
+        moduleName = GPXParserDataSourceIngestModuleFactory.moduleName
         
         for file in files:
 
             # Get the GeoArtifactsHelper
-            geoartifacthelper = GeoArtifactsHelper(skcase, modulename, file) 
+            geoArtifactHelper = GeoArtifactsHelper(skCase, moduleName, file) 
             
             # Check if the user pressed cancel while we were busy.
             if self.context.isJobCancelled():
@@ -139,27 +142,27 @@ class GPXParserDataSourceIngestModule(DataSourceIngestModule):
             fileCount += 1
 
             # Check if module folder is present. If not, create it.
-            dirname = os.path.join(Case.getCurrentCase().getTempDirectory(), "GPX_Parser_Module")
+            dirName = os.path.join(Case.getCurrentCase().getTempDirectory(), "GPX_Parser_Module")
             try:
-                os.stat(dirname)
+                os.stat(dirName)
             except:
-                os.mkdir(dirname)
-            filename = os.path.join(dirname, "tmp.gpx")
+                os.mkdir(dirName)
+            fileName = os.path.join(dirName, "tmp.gpx")
 
             # Check to see if temporary file exists. If it does, remove it.
-            if os.path.exists(filename):
+            if os.path.exists(fileName):
                 try:
-                    os.remove(filename)
-                    if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.INFO, "GPX:\t" + "FILE DELETED " + filename )
+                    os.remove(fileName)
+                    if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.INFO, "GPX:\t" + "FILE DELETED " + fileName )
                 except:
-                    if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.INFO, "GPX:\t" + "FILE NOT DELETED " + filename)
+                    if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.INFO, "GPX:\t" + "FILE NOT DELETED " + fileName)
 
             # This writes the file to the local file system.
-            localFile = File(filename)
+            localFile = File(fileName)
             ContentUtils.writeToFile(file, localFile)
 
             # Send to gpxpy for parsing.
-            gpxfile = open(filename)
+            gpxfile = open(fileName)
             try:
                 gpx = gpxpy.parse(gpxfile)
                 if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.INFO, "GPX:\t" + "FILE PARSED")
@@ -171,78 +174,87 @@ class GPXParserDataSourceIngestModule(DataSourceIngestModule):
                 if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.INFO, "GPX: TRACKS")
                 for track in gpx.tracks:                
                     for segment in track.segments:
+                        geoPointList = ArrayList()
                         for point in segment.points:
-                            # Make an Array to add attributes to allows to use bulk add attributes
-                            otherattributes = ArrayList()
-
-                            # Evelation may be None so why it is in a try block
-                            try:
-                                otherattributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), modulename, point.elevation))
-                            except:
-                                pass
                             
-                            otherattributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG.getTypeID(), modulename, "Tracks"))
-
-                            datetime = 0
+                            elevation = 0
+                            if point.elevation != None:
+                                elevation = point.elevation
+                                
+                            dateTime = 0                               
                             try: 
                                 if (point.time != None):
                                     datetime = long(time.mktime(point.time.timetuple()))                                    
                             except:                            
                                 pass
-                                                                                 
-                            try:
-                            # Add the trackpoint using the helper class
-                                geoartifact = geoartifacthelper.addGPSTrackpoint(point.latitude, point.longitude, datetime, "Trackpoint", "GPXParser", otherattributes)
-                            except Blackboard.BlackboardException as e:
-                                if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.SEVERE, "GPX: Error using geo artifact helper with blackboard " )
-                            except TskCoreException as e:
-                                if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.SEVERE, "GPX: Error using geo artifact helper tskcoreexception" )
+
+                            geoPointList.add(GeoWaypoint.GeoTrackPoint(point.latitude, point.longitude, elevation, 0, 0, 0, dateTime))
+                                                                                                             
+                        try:
+                        # Add the trackpoint using the helper class
+                            geoartifact = geoArtifactHelper.addTrack("Trackpoint", geoPointList)
+                        except Blackboard.BlackboardException as e:
+                            if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.SEVERE, "GPX: Error using geo artifact helper with blackboard " )
+                        except TskCoreException as e:
+                            if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.SEVERE, "GPX: Error using geo artifact helper tskcoreexception" )
                             
                 if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.INFO, "GPX: WAYPOINTS") 
                 for waypoint in gpx.waypoints:
                     attributes = ArrayList()
                     art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK)
 
-                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), modulename, waypoint.latitude))
-                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), modulename, waypoint.longitude))                    
-                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG.getTypeID(), modulename, "Waypoint"))
-                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), modulename, waypoint.name))
-                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), modulename, "GPXParser"))
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), moduleName, waypoint.latitude))
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), moduleName, waypoint.longitude))                    
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG.getTypeID(), moduleName, "Waypoint"))
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, waypoint.name))
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), moduleName, "GPXParser"))
 
                     art.addAttributes(attributes)
                     
                     try:
                     # Post the artifact to blackboard
-                       skcase.getBlackboard().postArtifact(art, modulename)
+                       skCase.getBlackboard().postArtifact(art, moduleName)
                     except Blackboard.BlackboardException as e:
                         if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.SEVERE, "GPX: Error using geo artifact helper with blackboard  for waypoints" )
 
                 if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.INFO, "GPX: ROUTES")
-                for route in gpx.routes:                    
+                for route in gpx.routes:    
+                    firstTimeThru = 0
+                    startingPoint = list()
+                    endingPoint = list()
                     for point in route.points:
-                        otherattributes = ArrayList()
-                        
-                        otherattributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG.getTypeID(), modulename, "Route"))
-                        
-                        # Evelation may be None so why it is in a try block
-                        try:
-                            otherattributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), modulename, point.elevation))
-                        except:
-                            pass
+                        # If first time in loop only populate starting point
+                        if (firstTimeThru == 0):
+                            startingPoint.append((point.latitude, point.longitude))
+                            firstTimeThru = 1
+                        else:
+                            startingPoint.append((point.latitude, point.longitude))
+                            endingPoint.append((point.latitude, point.longitude))
 
+                    # get length of ending point as this ensures that we have equal points to process.                            
+                    for i in range(0,len(endingPoint) -1):
+                        attributes = ArrayList()
+                        art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE)
+                        
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID(), moduleName, startingPoint[i][0]))
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getTypeID(), moduleName, startingPoint[i][1]))
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getTypeID(), moduleName, endingPoint[i][0]))
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getTypeID(), moduleName, endingPoint[i][1]))
+
+                        art.addAttributes(attributes)
+                        
                         try:
-                            # Add the artifact using the geoArtifactHelper.
-                            geoartifact = geoartifacthelper.addGPSTrackpoint(point.latitude, point.longitude, 0, "Trackpoint", "GPXParser", otherattributes)
+                        # Post the artifact to blackboard
+                           skCase.getBlackboard().postArtifact(art, moduleName)
                         except Blackboard.BlackboardException as e:
-                            if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.SEVERE, "GPX: Error using geo artifact helper with blackboard  for Routes")
-                        except TskCoreException as e:
-                            if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.SEVERE, "GPX: Error using geo artifact helper tskcoreexception for routes" )
+                            if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.SEVERE, "GPX: Error using geo artifact helper with blackboard  for waypoints" )
+                    
 
             # Update the progress bar.
             progressBar.progress(fileCount)
-            if os.path.exists(filename):
+            if os.path.exists(fileName):
                 try:
-                    os.remove(filename)
+                    os.remove(fileName)
                     if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.INFO, "GPX:\t" + "FILE DELETED")
                 except:
                     self.log(Level.SEVERE, "GPX:\t" + "FILE NOT DELETED")
