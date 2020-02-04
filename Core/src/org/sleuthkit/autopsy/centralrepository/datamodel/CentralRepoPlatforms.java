@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 /**
  *
  */
-public enum EamDbPlatformEnum {
+public enum CentralRepoPlatforms {
     DISABLED("Disabled", true),
     SQLITE("SQLite", false),
     POSTGRESQL("PostgreSQL", false);
@@ -31,7 +31,7 @@ public enum EamDbPlatformEnum {
     private final String platformName;
     private Boolean selected;
 
-    EamDbPlatformEnum(String name, Boolean selected) {
+    CentralRepoPlatforms(String name, Boolean selected) {
         this.platformName = name;
         this.selected = selected;
         loadSettings();
@@ -63,12 +63,12 @@ public enum EamDbPlatformEnum {
         return selected;
     }
 
-    public static EamDbPlatformEnum fromString(String pName) {
+    public static CentralRepoPlatforms fromString(String pName) {
         if (null == pName) {
             return DISABLED;
         }
 
-        for (EamDbPlatformEnum p : EamDbPlatformEnum.values()) {
+        for (CentralRepoPlatforms p : CentralRepoPlatforms.values()) {
             if (p.toString().equalsIgnoreCase(pName)) {
                 return p;
             }
@@ -80,8 +80,8 @@ public enum EamDbPlatformEnum {
      * Save the selected platform to the config file.
      */
     public static void saveSelectedPlatform() {
-        EamDbPlatformEnum selectedPlatform = DISABLED;
-        for (EamDbPlatformEnum p : EamDbPlatformEnum.values()) {
+        CentralRepoPlatforms selectedPlatform = DISABLED;
+        for (CentralRepoPlatforms p : CentralRepoPlatforms.values()) {
             if (p.isSelected()) {
                 selectedPlatform = p;
             }
@@ -96,8 +96,8 @@ public enum EamDbPlatformEnum {
      * @param platformString The name of the selected platform.
      */
     public static void setSelectedPlatform(String platformString) {
-        EamDbPlatformEnum pSelected = EamDbPlatformEnum.fromString(platformString);
-        for (EamDbPlatformEnum p : EamDbPlatformEnum.values()) {
+        CentralRepoPlatforms pSelected = CentralRepoPlatforms.fromString(platformString);
+        for (CentralRepoPlatforms p : CentralRepoPlatforms.values()) {
             p.setSelected(p == pSelected);
         }
     }
@@ -108,8 +108,8 @@ public enum EamDbPlatformEnum {
      * @return The selected platform, or if not platform is selected, default to
      *         DISABLED.
      */
-    public static EamDbPlatformEnum getSelectedPlatform() {
-        for (EamDbPlatformEnum p : EamDbPlatformEnum.values()) {
+    public static CentralRepoPlatforms getSelectedPlatform() {
+        for (CentralRepoPlatforms p : CentralRepoPlatforms.values()) {
             if (p.isSelected()) {
                 return p;
             }

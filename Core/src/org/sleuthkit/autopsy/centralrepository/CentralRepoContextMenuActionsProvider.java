@@ -24,10 +24,10 @@ import java.util.List;
 import javax.swing.Action;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * This creates a single context menu item for adding or editing a Central
@@ -46,7 +46,7 @@ public class CentralRepoContextMenuActionsProvider implements ContextMenuActions
         }
 
         for (AbstractFile file : selectedFiles) {
-            if (EamDb.isEnabled() && EamArtifactUtil.isSupportedAbstractFileType(file) && file.isFile()) {
+            if (CentralRepository.isEnabled() && CorrelationAttributeUtil.isSupportedAbstractFileType(file) && file.isFile()) {
                 AddEditCentralRepoCommentAction action = new AddEditCentralRepoCommentAction(file);
                 if (action.getCorrelationAttribute() == null) {
                     action.setEnabled(false);

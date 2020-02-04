@@ -40,8 +40,7 @@ import javax.swing.table.TableCellRenderer;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -53,6 +52,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.CentralRepoHashS
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Instances of this class provide a comprehensive UI for managing the hash sets
@@ -360,14 +360,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             // Remove any new central repo hash sets from the database
             for (int refID : newReferenceSetIDs) {
                 try {
-                    if (EamDb.isEnabled()) {
-                        EamDb.getInstance().deleteReferenceSet(refID);
+                    if (CentralRepository.isEnabled()) {
+                        CentralRepository.getInstance().deleteReferenceSet(refID);
                     } else {
                         // This is the case where the user imported a database, then switched over to the central
                         // repo panel and disabled it before cancelling. We can't delete the database at this point.
                         Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.WARNING, "Error reverting central repository hash sets"); //NON-NLS
                     }
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error reverting central repository hash sets", ex); //NON-NLS
                 }
             }

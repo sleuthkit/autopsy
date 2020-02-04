@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoOrganization;
 
 /**
  * An object to contain both a CorrelationCase and the list of
@@ -80,7 +80,7 @@ class CaseDataSourcesWrapper {
      * @return the organization name of the CorrelationCase.
      */
     String getOrganizationName() {
-        EamOrganization org = eamCase.getOrg();
+        CentralRepoOrganization org = eamCase.getOrg();
         return org == null ? "" : org.getName();
     }
 

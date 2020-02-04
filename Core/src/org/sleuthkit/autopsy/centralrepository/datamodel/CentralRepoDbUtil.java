@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,14 +30,14 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb.SOFTWARE_CR_DB_SCHEMA_VERSION;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
 
 /**
  *
  */
-public class EamDbUtil {
+public class CentralRepoDbUtil {
 
-    private final static Logger LOGGER = Logger.getLogger(EamDbUtil.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(CentralRepoDbUtil.class.getName());
     private static final String CENTRAL_REPO_NAME = "CentralRepository";
     private static final String CENTRAL_REPO_USE_KEY = "db.useCentralRepo";
     private static final String DEFAULT_ORG_NAME = "Not Specified";
@@ -47,7 +47,7 @@ public class EamDbUtil {
      *
      * @param statement The statement to be closed.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     public static void closeStatement(Statement statement) {
         if (null != statement) {
@@ -64,7 +64,7 @@ public class EamDbUtil {
      *
      * @param resultSet
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     public static void closeResultSet(ResultSet resultSet) {
         if (null != resultSet) {
@@ -81,7 +81,7 @@ public class EamDbUtil {
      *
      * @param conn An open connection
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     public static void closeConnection(Connection conn) {
         if (null != conn) {
@@ -117,11 +117,11 @@ public class EamDbUtil {
                 preparedStatement.addBatch();
             }
             preparedStatement.executeBatch();
-        } catch (EamDbException | SQLException ex) {
+        } catch (CentralRepoException | SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error inserting default correlation types.", ex); // NON-NLS
             return false;
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            CentralRepoDbUtil.closePreparedStatement(preparedStatement);
         }
         return true;
     }
@@ -135,8 +135,8 @@ public class EamDbUtil {
      */
     static void updateSchemaVersion(Connection conn) throws SQLException {
         try (Statement statement = conn.createStatement()) {
-            statement.execute("UPDATE db_info SET value = '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "'");
-            statement.execute("UPDATE db_info SET value = '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "'");
+            statement.execute("UPDATE db_info SET value = '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "' WHERE name = '" + RdbmsCentralRepo.SCHEMA_MAJOR_VERSION_KEY + "'");
+            statement.execute("UPDATE db_info SET value = '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "' WHERE name = '" + RdbmsCentralRepo.SCHEMA_MINOR_VERSION_KEY + "'");
         }
     }
 
@@ -161,7 +161,7 @@ public class EamDbUtil {
         } catch (SQLException ex) {
             return false;
         } finally {
-            EamDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeResultSet(resultSet);
         }
         return true;
     }
@@ -175,20 +175,20 @@ public class EamDbUtil {
         "EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade Central Repository.",
         "EamDbUtil.centralRepoConnectionFailed.message=Unable to connect to Central Repository.",
         "EamDbUtil.exclusiveLockAquisitionFailure.message=Unable to acquire exclusive lock for Central Repository."})
-    public static void upgradeDatabase() throws EamDbException {
-        if (!EamDb.isEnabled()) {
+    public static void upgradeDatabase() throws CentralRepoException {
+        if (!CentralRepository.isEnabled()) {
             return;
         }
-        EamDb db = null;
+        CentralRepository db = null;
         CoordinationService.Lock lock = null;
 
         //get connection
         try {
             try {
-                db = EamDb.getInstance();
-            } catch (EamDbException ex) {
+                db = CentralRepository.getInstance();
+            } catch (CentralRepoException ex) {
                 LOGGER.log(Level.SEVERE, "Error updating central repository, unable to make connection", ex);
-                throw new EamDbException("Error updating central repository, unable to make connection", Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+                throw new CentralRepoException("Error updating central repository, unable to make connection", Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
             }
             //get lock necessary for upgrade
             if (db != null) {
@@ -198,22 +198,22 @@ public class EamDbUtil {
                     // (meaning the database is in use by another user)
                     lock = db.getExclusiveMultiUserDbLock();
                     //perform upgrade         
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     LOGGER.log(Level.SEVERE, "Error updating central repository, unable to acquire exclusive lock", ex);
-                    throw new EamDbException("Error updating central repository, unable to acquire exclusive lock", Bundle.EamDbUtil_exclusiveLockAquisitionFailure_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+                    throw new CentralRepoException("Error updating central repository, unable to acquire exclusive lock", Bundle.EamDbUtil_exclusiveLockAquisitionFailure_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
                 }
 
                 try {
                     db.upgradeSchema();
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
-                    throw new EamDbException("Error updating central repository", ex.getUserMessage() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+                    throw new CentralRepoException("Error updating central repository", ex.getUserMessage() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
                 } catch (SQLException ex) {
                     LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
-                    throw new EamDbException("Error updating central repository", Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+                    throw new CentralRepoException("Error updating central repository", Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
                 } catch (IncompatibleCentralRepoException ex) {
                     LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
-                    throw new EamDbException("Error updating central repository", ex.getMessage() + "\n\n" + Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+                    throw new CentralRepoException("Error updating central repository", ex.getMessage() + "\n\n" + Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
                 } finally {
                     if (lock != null) {
                         try {
@@ -224,19 +224,19 @@ public class EamDbUtil {
                     }
                 }
             } else {
-                throw new EamDbException("Unable to connect to database", Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message());
+                throw new CentralRepoException("Unable to connect to database", Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message());
             }
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             // Disable the central repo and clear the current settings.
             try {
-                if (null != EamDb.getInstance()) {
-                    EamDb.getInstance().shutdownConnections();
+                if (null != CentralRepository.getInstance()) {
+                    CentralRepository.getInstance().shutdownConnections();
                 }
-            } catch (EamDbException ex2) {
+            } catch (CentralRepoException ex2) {
                 LOGGER.log(Level.SEVERE, "Error shutting down central repo connection pool", ex2);
             }
-            EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.name());
-            EamDbPlatformEnum.saveSelectedPlatform();
+            CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.DISABLED.name());
+            CentralRepoPlatforms.saveSelectedPlatform();
             throw ex;
         }
     }
@@ -257,7 +257,7 @@ public class EamDbUtil {
      *
      * @return true if it is the default org, false otherwise
      */
-    public static boolean isDefaultOrg(EamOrganization org) {
+    public static boolean isDefaultOrg(CentralRepoOrganization org) {
         return DEFAULT_ORG_NAME.equals(org.getName());
     }
 
@@ -286,7 +286,7 @@ public class EamDbUtil {
             LOGGER.log(Level.SEVERE, "Error adding default organization", ex);
             return false;
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            CentralRepoDbUtil.closePreparedStatement(preparedStatement);
         }
 
         return true;
@@ -338,7 +338,7 @@ public class EamDbUtil {
         } catch (SQLException ex) {
             return false;
         } finally {
-            EamDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeResultSet(resultSet);
         }
 
         return false;
@@ -373,7 +373,7 @@ public class EamDbUtil {
      *
      * @deprecated Use closeStatement() instead.
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Deprecated
     public static void closePreparedStatement(PreparedStatement preparedStatement) {

@@ -27,8 +27,8 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Account Summary View Panel. This panel shows a list of various counts related
@@ -92,7 +92,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
     @Override
     public void setSelectionInfo(SelectionInfo info) {
 
-        if (!EamDb.isEnabled()) {
+        if (!CentralRepository.isEnabled()) {
             caseReferencesPanel.hideOutlineView(Bundle.SummaryViewer_CentralRepository_Message());
         } else {
             caseReferencesPanel.showOutlineView();

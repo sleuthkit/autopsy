@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * SwingWorker to perform search on a background thread
@@ -39,7 +39,7 @@ final class SearchWorker extends SwingWorker<Void, Void> {
     private final FileSearch.AttributeType groupingAttr;
     private final FileSorter.SortingMethod fileSort;
     private final FileGroup.GroupSortingAlgorithm groupSortAlgorithm;
-    private final EamDb centralRepoDb;
+    private final CentralRepository centralRepoDb;
     private final Map<GroupKey, Integer> results = new LinkedHashMap<>();
 
     /**
@@ -51,7 +51,7 @@ final class SearchWorker extends SwingWorker<Void, Void> {
      * @param groupSort         the Algorithm to sort groups by
      * @param fileSortMethod    the SortingMethod to use for files
      */
-    SearchWorker(EamDb centralRepo, List<FileSearchFiltering.FileFilter> searchfilters, FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod) {
+    SearchWorker(CentralRepository centralRepo, List<FileSearchFiltering.FileFilter> searchfilters, FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod) {
         centralRepoDb = centralRepo;
         filters = searchfilters;
         groupingAttr = groupingAttribute;

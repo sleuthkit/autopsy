@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +26,8 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -36,6 +35,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Background task to get Score, Comment and Occurrences values for an Abstract
@@ -73,7 +73,7 @@ class GetSCOTask implements Runnable {
         CorrelationAttributeInstance fileAttribute = contentNode.getCorrelationAttributeInstance();
         scoData.setComment(contentNode.getCommentProperty(tags, fileAttribute));
 
-        if (EamDb.isEnabled()) {
+        if (CentralRepository.isEnabled()) {
             Type type = null;
             String value = null;
             String description = Bundle.GetSCOTask_occurrences_defaultDescription();
@@ -93,11 +93,11 @@ class GetSCOTask implements Runnable {
                             type = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(CorrelationAttributeInstance.FILES_TYPE_ID);
                             value = ((AbstractFile) bbArtifact.getParent()).getMd5Hash();
                         }
-                    } catch (TskCoreException | EamDbException ex) {
+                    } catch (TskCoreException | CentralRepoException ex) {
                         logger.log(Level.WARNING, "Unable to get correlation type or value to determine value for O column for artifact", ex);
                     }
                 } else {
-                    List<CorrelationAttributeInstance> listOfPossibleAttributes = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false);
+                    List<CorrelationAttributeInstance> listOfPossibleAttributes = CorrelationAttributeUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false);
                     if (listOfPossibleAttributes.size() > 1) {
                         //Don't display anything if there is more than 1 correlation property for an artifact but let the user know
                         description = Bundle.GetSCOTask_occurrences_multipleProperties();
@@ -112,7 +112,7 @@ class GetSCOTask implements Runnable {
                 try {
                     type = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(CorrelationAttributeInstance.FILES_TYPE_ID);
                     value = ((AbstractFile) contentNode.getContent()).getMd5Hash();
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     logger.log(Level.WARNING, "Unable to get correlation type to determine value for O column for file", ex);
                 }
             }

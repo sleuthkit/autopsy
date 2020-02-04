@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,14 +37,14 @@ import javax.swing.filechooser.FileFilter;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.corecomponents.TextPrompt;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum.SQLITE;
-import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresEamDbSettings;
-import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms.SQLITE;
+import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSettings;
+import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Configuration dialog for Central Repository database settings.
@@ -59,10 +59,10 @@ public class EamDbSettingsDialog extends JDialog {
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
 
-    private final PostgresEamDbSettings dbSettingsPostgres;
-    private final SqliteEamDbSettings dbSettingsSqlite;
+    private final PostgresCentralRepoSettings dbSettingsPostgres;
+    private final SqliteCentralRepoSettings dbSettingsSqlite;
     private DatabaseTestResult testingStatus;
-    private EamDbPlatformEnum selectedPlatform;
+    private CentralRepoPlatforms selectedPlatform;
     private boolean configurationChanged = false;
 
     /**
@@ -80,11 +80,11 @@ public class EamDbSettingsDialog extends JDialog {
 
         textBoxes = new ArrayList<>();
         textBoxChangedListener = new TextBoxChangedListener();
-        dbSettingsPostgres = new PostgresEamDbSettings();
-        dbSettingsSqlite = new SqliteEamDbSettings();
-        selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-        if (selectedPlatform == null || selectedPlatform.equals(EamDbPlatformEnum.DISABLED)) {
-            selectedPlatform = EamDbPlatformEnum.POSTGRESQL;
+        dbSettingsPostgres = new PostgresCentralRepoSettings();
+        dbSettingsSqlite = new SqliteCentralRepoSettings();
+        selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
+        if (selectedPlatform == null || selectedPlatform.equals(CentralRepoPlatforms.DISABLED)) {
+            selectedPlatform = CentralRepoPlatforms.POSTGRESQL;
         }
 
         initComponents();
@@ -226,7 +226,7 @@ public class EamDbSettingsDialog extends JDialog {
 
         jpDbPassword.setPreferredSize(new java.awt.Dimension(509, 20));
 
-        cbDatabaseType.setModel(new javax.swing.DefaultComboBoxModel<>(new EamDbPlatformEnum[]{EamDbPlatformEnum.POSTGRESQL, EamDbPlatformEnum.SQLITE}));
+        cbDatabaseType.setModel(new javax.swing.DefaultComboBoxModel<>(new CentralRepoPlatforms[]{CentralRepoPlatforms.POSTGRESQL, CentralRepoPlatforms.SQLITE}));
         cbDatabaseType.setPreferredSize(new java.awt.Dimension(120, 20));
         cbDatabaseType.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -372,7 +372,7 @@ public class EamDbSettingsDialog extends JDialog {
                 break;
 
         }
-        displayDatabaseSettings(selectedPlatform.equals(EamDbPlatformEnum.POSTGRESQL));
+        displayDatabaseSettings(selectedPlatform.equals(CentralRepoPlatforms.POSTGRESQL));
     }
 
     private void display() {
@@ -548,12 +548,12 @@ public class EamDbSettingsDialog extends JDialog {
          * using those new settings.
          */
         try {
-            EamDb previousDbManager = EamDb.getInstance();
+            CentralRepository previousDbManager = CentralRepository.getInstance();
             if (null != previousDbManager) {
                 // NOTE: do not set/save the seleted platform before calling this.
-                EamDb.getInstance().shutdownConnections();
+                CentralRepository.getInstance().shutdownConnections();
             }
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Failed to close database connections in previously selected platform.", ex); // NON-NLS
             SwingUtilities.invokeLater(() -> {
                 JOptionPane.showMessageDialog(this,
@@ -566,8 +566,8 @@ public class EamDbSettingsDialog extends JDialog {
         // Even if we fail to close the existing connections, make sure that we
         // save the new connection settings, so an Autopsy restart will correctly
         // start with the new settings.
-        EamDbPlatformEnum.setSelectedPlatform(selectedPlatform.name());
-        EamDbPlatformEnum.saveSelectedPlatform();
+        CentralRepoPlatforms.setSelectedPlatform(selectedPlatform.name());
+        CentralRepoPlatforms.saveSelectedPlatform();
 
         switch (selectedPlatform) {
             case POSTGRESQL:
@@ -576,9 +576,9 @@ public class EamDbSettingsDialog extends JDialog {
                 // Load those newly saved settings into the postgres db manager instance
                 //  in case we are still using the same instance.
                 try {
-                    EamDb.getInstance().updateSettings();
+                    CentralRepository.getInstance().updateSettings();
                     configurationChanged = true;
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     logger.log(Level.SEVERE, Bundle.EamDbSettingsDialog_okButton_connectionErrorMsg_text(), ex); //NON-NLS
                     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     return;
@@ -591,9 +591,9 @@ public class EamDbSettingsDialog extends JDialog {
                 // Load those newly saved settings into the sqlite db manager instance
                 //  in case we are still using the same instance.
                 try {
-                    EamDb.getInstance().updateSettings();
+                    CentralRepository.getInstance().updateSettings();
                     configurationChanged = true;
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     logger.log(Level.SEVERE, Bundle.EamDbSettingsDialog_okButton_connectionErrorMsg_text(), ex);  //NON-NLS
                     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     return;
@@ -613,7 +613,7 @@ public class EamDbSettingsDialog extends JDialog {
 
 
     private void cbDatabaseTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbDatabaseTypeActionPerformed
-        selectedPlatform = (EamDbPlatformEnum) cbDatabaseType.getSelectedItem();
+        selectedPlatform = (CentralRepoPlatforms) cbDatabaseType.getSelectedItem();
         customizeComponents();
     }//GEN-LAST:event_cbDatabaseTypeActionPerformed
 
@@ -770,35 +770,35 @@ public class EamDbSettingsDialog extends JDialog {
             case POSTGRESQL:
                 try {
                     dbSettingsPostgres.setHost(tbDbHostname.getText().trim());
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     guidanceText.append(ex.getMessage());
                     result = false;
                 }
 
                 try {
                     dbSettingsPostgres.setPort(Integer.valueOf(tbDbPort.getText().trim()));
-                } catch (NumberFormatException | EamDbException ex) {
+                } catch (NumberFormatException | CentralRepoException ex) {
                     guidanceText.append(ex.getMessage());
                     result = false;
                 }
 
                 try {
                     dbSettingsPostgres.setDbName(CENTRAL_REPO_DB_NAME);
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     guidanceText.append(ex.getMessage());
                     result = false;
                 }
 
                 try {
                     dbSettingsPostgres.setUserName(tbDbUsername.getText().trim());
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     guidanceText.append(ex.getMessage());
                     result = false;
                 }
 
                 try {
                     dbSettingsPostgres.setPassword(new String(jpDbPassword.getPassword()));
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     guidanceText.append(ex.getMessage());
                     result = false;
                 }
@@ -808,7 +808,7 @@ public class EamDbSettingsDialog extends JDialog {
                     File databasePath = new File(tfDatabasePath.getText());
                     dbSettingsSqlite.setDbName(CENTRAL_REPO_DB_NAME + CENTRAL_REPO_SQLITE_EXT);
                     dbSettingsSqlite.setDbDirectory(databasePath.getPath());
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     guidanceText.append(ex.getMessage());
                     result = false;
                 }
@@ -889,7 +889,7 @@ public class EamDbSettingsDialog extends JDialog {
     private javax.swing.JButton bnDatabasePathFileOpen;
     private javax.swing.ButtonGroup bnGrpDatabasePlatforms;
     private javax.swing.JButton bnOk;
-    private javax.swing.JComboBox<EamDbPlatformEnum> cbDatabaseType;
+    private javax.swing.JComboBox<CentralRepoPlatforms> cbDatabaseType;
     private javax.swing.JScrollPane dataBaseFileScrollPane;
     private javax.swing.JTextArea dataBaseFileTextArea;
     private javax.swing.JFileChooser fcDatabasePath;

@@ -20,9 +20,9 @@
 package org.sleuthkit.autopsy.commonpropertiessearch;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Provides logic for selecting common files from all data sources and all cases
@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
  */
 abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeSearcher {
 
-    private final EamDb dbManager;
+    private final CentralRepository dbManager;
     /**
      * The Correlation Type to find matches on.
      */
@@ -45,15 +45,15 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
      * @param filterByDocMimeType match only on files whose mime types can be
      * broadly categorized as document types
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    InterCaseCommonAttributeSearcher(boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType, int percentageThreshold) throws EamDbException {
+    InterCaseCommonAttributeSearcher(boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType, int percentageThreshold) throws CentralRepoException {
         super(filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
-        dbManager = EamDb.getInstance();
+        dbManager = CentralRepository.getInstance();
         this.corAttrType = corAttrType;
     }
 
-    protected CorrelationCase getCorrelationCaseFromId(int correlationCaseId) throws EamDbException {
+    protected CorrelationCase getCorrelationCaseFromId(int correlationCaseId) throws CentralRepoException {
         for (CorrelationCase cCase : this.dbManager.getCases()) {
             if (cCase.getID() == correlationCaseId) {
                 return cCase;
