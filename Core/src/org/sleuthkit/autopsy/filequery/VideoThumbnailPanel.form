@@ -75,13 +75,13 @@
           <Image iconType="3" name="/org/sleuthkit/autopsy/images/red-circle-exclamation.png"/>
         </Property>
         <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-          <Connection code="new Dimension(ICON_SIZE,ICON_SIZE)" type="code"/>
+          <Connection code="new Dimension(org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize(),org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize())" type="code"/>
         </Property>
         <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-          <Connection code="new Dimension(ICON_SIZE,ICON_SIZE)" type="code"/>
+          <Connection code="new Dimension(org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize(),org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize())" type="code"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-          <Connection code="new Dimension(ICON_SIZE,ICON_SIZE)" type="code"/>
+          <Connection code="new Dimension(org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize(),org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize())" type="code"/>
         </Property>
       </Properties>
     </Component>
@@ -91,13 +91,13 @@
           <Image iconType="3" name="/org/sleuthkit/autopsy/images/file-icon-deleted.png"/>
         </Property>
         <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-          <Connection code="new Dimension(ICON_SIZE,ICON_SIZE)" type="code"/>
+          <Connection code="new Dimension(org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize(),org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize())" type="code"/>
         </Property>
         <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-          <Connection code="new Dimension(ICON_SIZE,ICON_SIZE)" type="code"/>
+          <Connection code="new Dimension(org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize(),org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize())" type="code"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-          <Connection code="new Dimension(ICON_SIZE,ICON_SIZE)" type="code"/>
+          <Connection code="new Dimension(org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize(),org.sleuthkit.autopsy.filequery.DiscoveryUiUtils.getIconSize())" type="code"/>
         </Property>
       </Properties>
     </Component>

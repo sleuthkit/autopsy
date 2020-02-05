@@ -38,12 +38,14 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionListener;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -64,6 +66,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private final static Logger logger = Logger.getLogger(ResultsPanel.class.getName());
     private final VideoThumbnailViewer videoThumbnailViewer;
     private final ImageThumbnailViewer imageThumbnailViewer;
+    private final DocumentPreviewViewer documentPreviewViewer;
     private List<FileSearchFiltering.FileFilter> searchFilters;
     private FileSearch.AttributeType groupingAttribute;
     private FileGroup.GroupSortingAlgorithm groupSort;
@@ -74,7 +77,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private FileSearchData.FileType resultType;
     private int groupSize = 0;
     private PageWorker pageWorker;
-    private final List<SwingWorker<Void, Void>> thumbnailWorkers = new ArrayList<>();
+    private final List<SwingWorker<Void, Void>> resultContentWorkers = new ArrayList<>();
     private final DefaultListModel<AbstractFile> instancesListModel = new DefaultListModel<>();
     private ListSelectionListener listener = null;
 
@@ -87,6 +90,7 @@ public class ResultsPanel extends javax.swing.JPanel {
         initComponents();
         imageThumbnailViewer = new ImageThumbnailViewer();
         videoThumbnailViewer = new VideoThumbnailViewer();
+        documentPreviewViewer = new DocumentPreviewViewer();
         videoThumbnailViewer.addListSelectionListener((e) -> {
             if (resultType == FileSearchData.FileType.VIDEO) {
                 if (!e.getValueIsAdjusting()) {
@@ -98,6 +102,15 @@ public class ResultsPanel extends javax.swing.JPanel {
         });
         imageThumbnailViewer.addListSelectionListener((e) -> {
             if (resultType == FileSearchData.FileType.IMAGE) {
+                if (!e.getValueIsAdjusting()) {
+                    populateInstancesList();
+                } else {
+                    instancesList.clearSelection();
+                }
+            }
+        });
+        documentPreviewViewer.addListSelectionListener((e) -> {
+            if (resultType == FileSearchData.FileType.DOCUMENTS) {
                 if (!e.getValueIsAdjusting()) {
                     populateInstancesList();
                 } else {
@@ -188,10 +201,17 @@ public class ResultsPanel extends javax.swing.JPanel {
      *         selected in the results viewer area.
      */
     private List<AbstractFile> getInstancesForSelected() {
-        if (resultType == FileSearchData.FileType.VIDEO) {
-            return videoThumbnailViewer.getInstancesForSelected();
-        } else if (resultType == FileSearchData.FileType.IMAGE) {
-            return imageThumbnailViewer.getInstancesForSelected();
+        if (null != resultType) {
+            switch (resultType) {
+                case VIDEO:
+                    return videoThumbnailViewer.getInstancesForSelected();
+                case IMAGE:
+                    return imageThumbnailViewer.getInstancesForSelected();
+                case DOCUMENTS:
+                    return documentPreviewViewer.getInstancesForSelected();
+                default:
+                    break;
+            }
         }
         return new ArrayList<>();
     }
@@ -208,12 +228,23 @@ public class ResultsPanel extends javax.swing.JPanel {
             currentPage = pageRetrievedEvent.getPageNumber();
             updateControls();
             resetResultViewer();
-            if (pageRetrievedEvent.getType() == FileSearchData.FileType.IMAGE) {
-                populateImageViewer(pageRetrievedEvent.getSearchResults());
-                resultsViewerPanel.add(imageThumbnailViewer);
-            } else if (pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
-                populateVideoViewer(pageRetrievedEvent.getSearchResults());
-                resultsViewerPanel.add(videoThumbnailViewer);
+            if (null != pageRetrievedEvent.getType()) {
+                switch (pageRetrievedEvent.getType()) {
+                    case IMAGE:
+                        populateImageViewer(pageRetrievedEvent.getSearchResults());
+                        resultsViewerPanel.add(imageThumbnailViewer);
+                        break;
+                    case VIDEO:
+                        populateVideoViewer(pageRetrievedEvent.getSearchResults());
+                        resultsViewerPanel.add(videoThumbnailViewer);
+                        break;
+                    case DOCUMENTS:
+                        populateDocumentViewer(pageRetrievedEvent.getSearchResults());
+                        resultsViewerPanel.add(documentPreviewViewer);
+                        break;
+                    default:
+                        break;
+                }
             }
             resultsViewerPanel.revalidate();
             resultsViewerPanel.repaint();
@@ -228,16 +259,18 @@ public class ResultsPanel extends javax.swing.JPanel {
     synchronized void resetResultViewer() {
         resultsViewerPanel.remove(imageThumbnailViewer);
         resultsViewerPanel.remove(videoThumbnailViewer);
+        resultsViewerPanel.remove(documentPreviewViewer);
         //cancel any unfished thumb workers
-        for (SwingWorker<Void, Void> thumbWorker : thumbnailWorkers) {
+        for (SwingWorker<Void, Void> thumbWorker : resultContentWorkers) {
             if (!thumbWorker.isDone()) {
                 thumbWorker.cancel(true);
             }
         }
         //clear old thumbnails
-        thumbnailWorkers.clear();
+        resultContentWorkers.clear();
         videoThumbnailViewer.clearViewer();
         imageThumbnailViewer.clearViewer();
+        documentPreviewViewer.clearViewer();
     }
 
     /**
@@ -251,7 +284,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             VideoThumbnailWorker thumbWorker = new VideoThumbnailWorker(file);
             thumbWorker.execute();
             //keep track of thumb worker for possible cancelation 
-            thumbnailWorkers.add(thumbWorker);
+            resultContentWorkers.add(thumbWorker);
         }
     }
 
@@ -266,7 +299,22 @@ public class ResultsPanel extends javax.swing.JPanel {
             ImageThumbnailWorker thumbWorker = new ImageThumbnailWorker(file);
             thumbWorker.execute();
             //keep track of thumb worker for possible cancelation 
-            thumbnailWorkers.add(thumbWorker);
+            resultContentWorkers.add(thumbWorker);
+        }
+    }
+
+    /**
+     * Populate the document preview viewer, cancelling any content which is
+     * currently being created first.
+     *
+     * @param files The list of ResultFiles to populate the image viewer with.
+     */
+    synchronized void populateDocumentViewer(List<ResultFile> files) {
+        for (ResultFile file : files) {
+            DocumentPreviewWorker documentWorker = new DocumentPreviewWorker(file);
+            documentWorker.execute();
+            //keep track of thumb worker for possible cancelation 
+            resultContentWorkers.add(documentWorker);
         }
     }
 
@@ -303,6 +351,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             updateControls();
             videoThumbnailViewer.clearViewer();
             imageThumbnailViewer.clearViewer();
+            documentPreviewViewer.clearViewer();
             resultsViewerPanel.revalidate();
             resultsViewerPanel.repaint();
         });
@@ -688,6 +737,80 @@ public class ResultsPanel extends javax.swing.JPanel {
         @Override
         protected void done() {
             imageThumbnailViewer.repaint();
+        }
+
+    }
+
+    /**
+     * Swing worker to handle the retrieval of document previews and population
+     * of the Document Preview Viewer.
+     */
+    private class DocumentPreviewWorker extends SwingWorker<Void, Void> {
+
+        private final DocumentWrapper documentWrapper;
+        private static final int PREVIEW_SIZE = 256;
+
+        /**
+         * Construct a new DocumentPreviewWorker.
+         *
+         * @param file The ResultFile which represents the document file a
+         *             preview is being retrieved for.
+         */
+        DocumentPreviewWorker(ResultFile file) {
+            documentWrapper = new DocumentWrapper(file);
+            documentPreviewViewer.addDocument(documentWrapper);
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            String preview = createPreview(documentWrapper.getResultFile().getFirstInstance());
+            if (preview != null) {
+                documentWrapper.setPreview(preview);
+            }
+            return null;
+        }
+
+        /**
+         * Create the string that will be used as the preview for the specified
+         * AbstractFile.
+         *
+         * @param file The AbstractFile to create the preview for.
+         *
+         * @return The String which is the preview for the specified
+         *         AbstractFile.
+         */
+        @Messages({"ResultsPanel.documentPreviewWorker.noPreview=No preview available.",
+            "ResultsPanel.documentPreviewWorker.noBytes=No bytes read for document, unable to display preview."})
+        private String createPreview(AbstractFile file) {
+            byte[] data = new byte[PREVIEW_SIZE];
+            int bytesRead = 0;
+            if (file.getSize() > 0) {
+                try {
+                    int length = PREVIEW_SIZE > file.getSize() ? (int) file.getSize() : PREVIEW_SIZE;  //if the size is less than the int it can be cast to an int
+                    bytesRead = file.read(data, 0, length); // read the data
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Error while trying to show the String content.", ex); //NON-NLS
+                }
+            }
+            String text;
+            if (bytesRead > 0) {
+                StringExtract stringExtract = new StringExtract();
+                final StringExtract.StringExtractUnicodeTable.SCRIPT selScript = StringExtract.StringExtractUnicodeTable.SCRIPT.LATIN_1;
+                stringExtract.setEnabledScript(selScript);
+                StringExtract.StringExtractResult res = stringExtract.extract(data, bytesRead, 0);
+                text = res.getText();
+                if (StringUtils.isBlank(text)) {
+                    text = Bundle.ResultsPanel_documentPreviewWorker_noPreview();
+                }
+            } else {
+                text = Bundle.ResultsPanel_documentPreviewWorker_noBytes();
+            }
+            return text;
+        }
+
+        @Override
+        protected void done() {
+            documentPreviewViewer.repaint();
         }
 
     }
