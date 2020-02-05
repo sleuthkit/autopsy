@@ -44,7 +44,6 @@ from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
-from org.sleuthkit.datamodel.blackboardutils import GeoArtifactsHelper
 
 import traceback
 import general
@@ -68,30 +67,62 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
         for oruxMapsTrackpointsDb in oruxMapsTrackpointsDbs:
             try:
                 current_case = Case.getCurrentCaseThrows()
-                oruxDbHelper = GeoArtifactsHelper(current_case.getSleuthkitCase(),
-                                    self._MODULE_NAME, oruxMapsTrackpointsDb.getDBFile())
                 
                 poiQueryString = "SELECT poilat, poilon, poitime, poiname FROM pois"
                 poisResultSet = oruxMapsTrackpointsDb.runQuery(poiQueryString)
+                abstractFile = oruxMapsTrackpointsDb.getDBFile()
                 if poisResultSet is not None:
                     while poisResultSet.next():
-                        oruxDbHelper.addGPSTrackpoint(
-                                            poisResultSet.getDouble("poilat"),
-                                            poisResultSet.getDouble("poilon"),
-                                            poisResultSet.getLong("poitime") / 1000,    # milliseconds since unix epoch
-                                            poisResultSet.getString("poiname"),
-                                            self._PROGRAM_NAME)
+                        latitude = poisResultSet.getDouble("poilat")
+                        longitude = poisResultSet.getDouble("poilon")
+                        time = poisResultSet.getLong("poitime") / 1000    # milliseconds since unix epoch
+                        name = poisResultSet.getString("poiname")
+
+                        attributes = ArrayList()
+                        artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT)
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, self._MODULE_NAME, time))
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, self._MODULE_NAME, latitude))
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, self._MODULE_NAME, longitude))
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, self._MODULE_NAME, name))
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, self._MODULE_NAME, self._PROGRAM_NAME))
+						
+                        artifact.addAttributes(attributes)
+                        try:
+                            # index the artifact for keyword search
+                            blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
+                            blackboard.postArtifact(artifact, self._MODULE_NAME)
+                        except Blackboard.BlackboardException as ex:
+                            self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactID()), ex)
+                            self._logger.log(Level.SEVERE, traceback.format_exc())
+                            MessageNotifyUtil.Notify.error("Failed to index trackpoint artifact for keyword search.", artifact.getDisplayName())
                         
                 trackpointsQueryString = "SELECT trkptlat, trkptlon, trkpttime FROM trackpoints"
                 trackpointsResultSet = oruxMapsTrackpointsDb.runQuery(trackpointsQueryString)
                 if trackpointsResultSet is not None:
                     while trackpointsResultSet.next():
-                        oruxDbHelper.addGPSTrackpoint(
-                                            trackpointsResultSet.getDouble("trkptlat"),
-                                            trackpointsResultSet.getDouble("trkptlon"),
-                                            trackpointsResultSet.getLong("trkpttime") / 1000,    # milliseconds since unix epoch
-                                            "",
-                                            self._PROGRAM_NAME)
+                        latitude = trackpointsResultSet.getDouble("trkptlat")
+                        longitude = trackpointsResultSet.getDouble("trkptlon")
+                        time = trackpointsResultSet.getLong("trkpttime") / 1000    # milliseconds since unix epoch
+                        name = ""
+
+                        attributes = ArrayList()
+                        artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT)
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, self._MODULE_NAME, time))
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, self._MODULE_NAME, latitude))
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, self._MODULE_NAME, longitude))
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, self._MODULE_NAME, name))
+                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, self._MODULE_NAME, self._PROGRAM_NAME))
+						
+                        artifact.addAttributes(attributes)
+                        try:
+                            # index the artifact for keyword search
+                            blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
+                            blackboard.postArtifact(artifact, self._MODULE_NAME)
+                        except Blackboard.BlackboardException as ex:
+                            self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactID()), ex)
+                            self._logger.log(Level.SEVERE, traceback.format_exc())
+                            MessageNotifyUtil.Notify.error("Failed to index trackpoint artifact for keyword search.", artifact.getDisplayName())
+                        
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for Orux Map trackpoints.", ex)
                 self._logger.log(Level.WARNING, traceback.format_exc())
