@@ -98,6 +98,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
         return skCase;
     }
 
+    @SuppressWarnings("deprecation")
     static String getIconFilePath(int typeID) {
         String filePath = "org/sleuthkit/autopsy/images/"; //NON-NLS
         if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
