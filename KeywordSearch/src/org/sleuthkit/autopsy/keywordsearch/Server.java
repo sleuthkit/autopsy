@@ -939,7 +939,7 @@ public class Server {
         */
 
         Properties properties = new Properties(); 
-        // ELTODO properties.setProperty("dataDir", dataDirPath); store indexes on local drive in SOLR_HOME folder
+        properties.setProperty("dataDir", dataDirPath);
         // properties.setProperty("transient", "true");
         // properties.setProperty("loadOnStartup", "false");
 
@@ -947,9 +947,9 @@ public class Server {
         Integer numNrtReplicas = 1;
         Integer numTlogReplicas = 0;
         Integer numPullReplicas = 0;
-        /* ELTODO CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas)
-                .setProperties(properties);*/
-        CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas);
+        CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas)
+                .setProperties(properties);
+        //CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas);
 
         CollectionAdminResponse createResponse = createCollectionRequest.process(currentSolrServer);
         if (createResponse.isSuccess()) {
