@@ -46,6 +46,7 @@ The following topics are available here:
  - \subpage cr_ingest_module
  - \subpage encryption_page
  - \subpage vm_extractor_page
+ - \subpage plaso_page
 
 - Reviewing the Results
  - \subpage uilayout_page
