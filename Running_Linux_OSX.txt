@@ -1,4 +1,4 @@
-This document outlines how to run a packaged version of Autopsy on Linux or OS X.  It does not cover how to compile it from source or the Windows installer. 
+This document outlines how to run a packaged version of Autopsy on Linux or OS X.  It does not cover how to compile it from source or the Windows installer.
 
 
 * Prerequisites *
@@ -17,42 +17,42 @@ The following need to be done at least once. They do not need to be repeated for
        % wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add -
        % echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list
        % sudo apt-get update
-       % sudo apt-get install bellsoft-java8
+       % sudo apt-get install bellsoft-java8=1.8.0.232+10
     2. Set JAVA_HOME
        % export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-amd64
-       
-    NOTE: You may need to log out and back in again after setting JAVA_HOME before the Autopsy 
-          unix_setup.sh script can see the value. 
 
--- OS X: 
+    NOTE: You may need to log out and back in again after setting JAVA_HOME before the Autopsy
+          unix_setup.sh script can see the value.
+
+-- OS X:
     1. Install BellSoft Java 8.
         % brew tap bell-sw/liberica
         % brew cask install liberica-jdk8
     2. Set JAVA_HOME environment variable to location of JRE installation.
-       e.g. add the following to ~/.bashrc 
+       e.g. add the following to ~/.bashrc
            export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
 
 - Confirm your version of Java by running
-  % java -version    
+  % java -version
     openjdk version "1.8.0.232"
     OpenJDK Runtime Environment (build 1.8.0_232-BellSoft-b10)
     OpenJDK 64-Bit Server VM (build 25.232-b10, mixed mode)
-  
+
 * Install The Sleuth Kit Java Bindings *
 
-Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libraries of The Sleuth Kit installed, which is not part of all packages. 
+Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libraries of The Sleuth Kit installed, which is not part of all packages.
 
-- Linux: Install the sleuthkit-java.deb file that you can download from github.com/sleuthkit/sleuthkit/releases.  This will install libewf, etc. 
+- Linux: Install the sleuthkit-java.deb file that you can download from github.com/sleuthkit/sleuthkit/releases.  This will install libewf, etc.
 -- % sudo apt install ./sleuthkit-java_4.7.0-1_amd64.deb
 
-- OS X: Install The Sleuth Kit from brew.  
+- OS X: Install The Sleuth Kit from brew.
 -- % brew install sleuthkit
 
 
 * Install Autopsy *
 
 - Extract the contents of the Autopsy ZIP file to a folder.
-- Open a terminal and cd into the Autopsy folder. 
+- Open a terminal and cd into the Autopsy folder.
 - Run the unix_setup.sh script to configure Autopsy
   % sh unix_setup.sh
 
@@ -80,8 +80,8 @@ Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libr
   (a) confirm that you have a version of Java 8 installed and
   (b) confirm that your JAVA_HOME environment variable is set correctly:
       % echo $JAVA_HOME
-  
-* Limitations (Updated May 2018) * 
+
+* Limitations (Updated May 2018) *
 - Timeline does not work on OS X
 - Video thumbnails are not generated (need to get a consistent version of OpenCV)
 - VHD and VMDK files not supported on OS X
