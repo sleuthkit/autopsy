@@ -58,11 +58,13 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.TimeZone;
 import static java.util.TimeZone.getTimeZone;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -310,6 +312,7 @@ class ExtractRegistry extends Extract {
                     try {
                         List<ShellBag> shellbags = ShellBagParser.parseShellbagOutput(regOutputFiles.fullPlugins);
                         createShellBagArtifacts(regFile, shellbags);
+                        createRecentlyUsedArtifacts(regOutputFiles.fullPlugins, regFile);
                     } catch (IOException | TskCoreException ex) {
                         logger.log(Level.WARNING, String.format("Unable to get shell bags from file %s", regOutputFiles.fullPlugins), ex);
                     }
@@ -1151,7 +1154,76 @@ class ExtractRegistry extends Extract {
         }
     }
     
-   
+    /**
+     * Create recently used artifacts from NTUSER regripper files
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void createRecentlyUsedArtifacts(String regFileName, AbstractFile regFile) throws FileNotFoundException, IOException {
+        File regfile = new File(regFileName);
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(regfile))) {
+            String line = reader.readLine();
+            while (line != null) {
+                line = line.trim();
+
+                if (line.matches("^adoberdr v.*")) {
+                    SimpleDateFormat adobePluginDateFormat = new SimpleDateFormat("YYYYMMddHHmmssZ");
+                    Long adobeUsedTime;
+                    while (!line.contains(SECTION_DIVIDER)) {
+                        line = reader.readLine();
+                        line = line.trim();
+                        if (line.matches("^Key name,file name,sDate,uFileSize,uPageCount")) {
+                            line = reader.readLine();
+                            List<String> adobeFiles = new ArrayList<>();
+                            // Columns are
+                            // Key name,file name,sDate,uFileSize,uPageCount
+                            while (!line.contains(SECTION_DIVIDER)) {
+                                String tokens[] = line.split(",");
+                                String fileName = tokens[1];
+                                if (fileName.startsWith("/")) {
+                                    fileName = fileName.substring(1,fileName.length() - 1);
+                                    fileName = fileName.replaceFirst("/", ":/");
+                                }
+                                // Time in the format of 20200131104456-05'00'
+                                try {
+                                    String fileUsedTime = tokens[2].replaceAll("'","");
+                                    Date usedDate = adobePluginDateFormat.parse(fileUsedTime);
+                                    adobeUsedTime = usedDate.getTime()/1000;
+                                } catch (ParseException ex) {
+                                    // catching error and displaying date that could not be parsed
+                                    // we set the timestamp to 0 and continue on processing
+                                    logger.log(Level.WARNING, String.format("Failed to parse date/time %s for adobe file artifact.", tokens[2]), ex); //NON-NLS
+                                    adobeUsedTime = Long.valueOf(0);
+                                }
+                                Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                                attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), adobeUsedTime));
+                                BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                                if(bba != null) {
+                                    bbartifacts.add(bba);
+                                }
+                                adobeFiles.add(fileName);
+                                line = reader.readLine();
+                            }
+                            line = line.trim();
+                        }
+                    }
+                } 
+
+                line = reader.readLine();
+            }
+        }
+        if (bbartifacts != null) {
+            postArtifacts(bbartifacts);
+        }
+        
+    }
+    
     /**
      * Create the shellbag artifacts from the list of ShellBag objects.
      *
