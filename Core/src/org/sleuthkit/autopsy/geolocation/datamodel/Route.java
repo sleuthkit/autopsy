@@ -25,7 +25,6 @@ import java.util.Map;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints;
 import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints.GeoWaypoints;
 import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoint;
 
