@@ -117,6 +117,10 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     protected abstract Connection connect() throws CentralRepoException;
 
     /**
+     * Get an ephemeral connection.
+     */
+    protected abstract Connection getEphemeralConnection();
+    /**
      * Add a new name/value pair in the db_info table.
      *
      * @param name  Key to set
@@ -3414,22 +3418,23 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                     case POSTGRESQL:
                         addAttributeSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?) " + getConflictClause();  //NON-NLS
 
-                        addSsidTableTemplate = PostgresCentralRepoSettings.getCreateArtifactInstancesTableTemplate();
-                        addCaseIdIndexTemplate = PostgresCentralRepoSettings.getAddCaseIdIndexTemplate();
-                        addDataSourceIdIndexTemplate = PostgresCentralRepoSettings.getAddDataSourceIdIndexTemplate();
-                        addValueIndexTemplate = PostgresCentralRepoSettings.getAddValueIndexTemplate();
-                        addKnownStatusIndexTemplate = PostgresCentralRepoSettings.getAddKnownStatusIndexTemplate();
-                        addObjectIdIndexTemplate = PostgresCentralRepoSettings.getAddObjectIdIndexTemplate();
+                        // RAMAN TBD: get these from RdbmsCentralRepoSchemaFactory
+                        addSsidTableTemplate = RdbmsCentralRepoSchemaFactory.PostgresCRSchemaCreator.getCreateArtifactInstancesTableTemplate();
+                        addCaseIdIndexTemplate = RdbmsCentralRepoSchemaFactory.PostgresCRSchemaCreator.getAddCaseIdIndexTemplate();
+                        addDataSourceIdIndexTemplate = RdbmsCentralRepoSchemaFactory.PostgresCRSchemaCreator.getAddDataSourceIdIndexTemplate();
+                        addValueIndexTemplate = RdbmsCentralRepoSchemaFactory.PostgresCRSchemaCreator.getAddValueIndexTemplate();
+                        addKnownStatusIndexTemplate = RdbmsCentralRepoSchemaFactory.PostgresCRSchemaCreator.getAddKnownStatusIndexTemplate();
+                        addObjectIdIndexTemplate = RdbmsCentralRepoSchemaFactory.PostgresCRSchemaCreator.getAddObjectIdIndexTemplate();
                         break;
                     case SQLITE:
                         addAttributeSql = "INSERT OR IGNORE INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";  //NON-NLS
 
-                        addSsidTableTemplate = SqliteCentralRepoSettings.getCreateArtifactInstancesTableTemplate();
-                        addCaseIdIndexTemplate = SqliteCentralRepoSettings.getAddCaseIdIndexTemplate();
-                        addDataSourceIdIndexTemplate = SqliteCentralRepoSettings.getAddDataSourceIdIndexTemplate();
-                        addValueIndexTemplate = SqliteCentralRepoSettings.getAddValueIndexTemplate();
-                        addKnownStatusIndexTemplate = SqliteCentralRepoSettings.getAddKnownStatusIndexTemplate();
-                        addObjectIdIndexTemplate = SqliteCentralRepoSettings.getAddObjectIdIndexTemplate();
+                        addSsidTableTemplate = RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getCreateArtifactInstancesTableTemplate();
+                        addCaseIdIndexTemplate = RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddCaseIdIndexTemplate();
+                        addDataSourceIdIndexTemplate = RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddDataSourceIdIndexTemplate();
+                        addValueIndexTemplate = RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddValueIndexTemplate();
+                        addKnownStatusIndexTemplate = RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddKnownStatusIndexTemplate();
+                        addObjectIdIndexTemplate = RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddObjectIdIndexTemplate();
                         break;
                     default:
                         throw new CentralRepoException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.", Bundle.AbstractSqlEamDb_cannotUpgrage_message(selectedPlatform.name()));
@@ -3586,8 +3591,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                                 + "md5 text DEFAULT NULL,sha1 text DEFAULT NULL,sha256 text DEFAULT NULL,"
                                 + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
                                 + "CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id))");
-                        statement.execute(SqliteCentralRepoSettings.getAddDataSourcesNameIndexStatement());
-                        statement.execute(SqliteCentralRepoSettings.getAddDataSourcesObjectIdIndexStatement());
+                        statement.execute(RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddDataSourcesNameIndexStatement());
+                        statement.execute(RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddDataSourcesObjectIdIndexStatement());
                         statement.execute("INSERT INTO data_sources SELECT * FROM old_data_sources");
                         statement.execute("DROP TABLE old_data_sources");
                         break;

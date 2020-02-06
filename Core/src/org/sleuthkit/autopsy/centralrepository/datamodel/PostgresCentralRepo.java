@@ -131,7 +131,10 @@ final class PostgresCentralRepo extends RdbmsCentralRepo {
             CentralRepoDbUtil.closeConnection(conn);
         }
 
-        dbSettings.insertDefaultDatabaseContent();
+        
+        //dbSettings.insertDefaultDatabaseContent();
+        RdbmsCentralRepoSchemaFactory centralRepoSchemaFactory =  new RdbmsCentralRepoSchemaFactory(CentralRepoPlatforms.POSTGRESQL);
+        centralRepoSchemaFactory.insertDefaultDatabaseContent();
     }
 
     /**
@@ -209,6 +212,10 @@ final class PostgresCentralRepo extends RdbmsCentralRepo {
         return CONFLICT_CLAUSE;
     }
 
+    @Override
+    protected Connection getEphemeralConnection() {
+         return this.dbSettings.getEphemeralConnection(false);
+    }
     /**
      * Gets an exclusive lock (if applicable). Will return the lock if
      * successful, null if unsuccessful because locking isn't supported, and

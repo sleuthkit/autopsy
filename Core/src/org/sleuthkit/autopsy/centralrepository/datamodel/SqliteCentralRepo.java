@@ -113,6 +113,7 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
     @Override
     public void reset() throws CentralRepoException {
         try {
+            // RAMAN TBD: this should be moved to RdbmsCentralRepoSchemaFactory ??
             acquireExclusiveLock();
 
             Connection conn = connect();
@@ -144,7 +145,9 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
                 CentralRepoDbUtil.closeConnection(conn);
             }
 
-            dbSettings.insertDefaultDatabaseContent();
+            //RdbmsCentralRepoSchemaFactory.getInstance().insertDefaultDatabaseContent();
+            RdbmsCentralRepoSchemaFactory centralRepoSchemaFactory =  new RdbmsCentralRepoSchemaFactory(CentralRepoPlatforms.SQLITE);
+            centralRepoSchemaFactory.insertDefaultDatabaseContent();
         } finally {
             releaseExclusiveLock();
         }
@@ -226,6 +229,10 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
         return "";
     }
 
+    @Override
+    protected Connection getEphemeralConnection() {
+         return this.dbSettings.getEphemeralConnection();
+     }
     /**
      * Add a new name/value pair in the db_info table.
      *

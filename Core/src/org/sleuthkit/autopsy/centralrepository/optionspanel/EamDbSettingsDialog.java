@@ -35,6 +35,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponents.TextPrompt;
@@ -45,6 +46,7 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatf
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepoSchemaFactory;
 
 /**
  * Configuration dialog for Central Repository database settings.
@@ -447,12 +449,19 @@ public class EamDbSettingsDialog extends JDialog {
                     dbCreated = dbSettingsPostgres.createDatabase();
                 }
                 if (dbCreated) {
-                    result = dbSettingsPostgres.initializeDatabaseSchema()
-                            && dbSettingsPostgres.insertDefaultDatabaseContent();
+                    try {
+                        RdbmsCentralRepoSchemaFactory centralRepoSchemaFactory = new RdbmsCentralRepoSchemaFactory(selectedPlatform);
+                        
+                        result = centralRepoSchemaFactory.initializeDatabaseSchema()
+                            && centralRepoSchemaFactory.insertDefaultDatabaseContent();
+                    } catch (CentralRepoException ex) {
+                       logger.log( Level.SEVERE, "Unable to initialize database schema or insert contents into Postgres central repository.", ex);
+                    }
                 }
                 if (!result) {
                     // Remove the incomplete database
                     if (dbCreated) {
+                        // RAMAN TBD: migrate  deleteDatabase() to RdbmsCentralRepoSchemaFactory
                         dbSettingsPostgres.deleteDatabase();
                     }
 
@@ -469,8 +478,14 @@ public class EamDbSettingsDialog extends JDialog {
                     dbCreated = dbSettingsSqlite.createDbDirectory();
                 }
                 if (dbCreated) {
-                    result = dbSettingsSqlite.initializeDatabaseSchema()
-                            && dbSettingsSqlite.insertDefaultDatabaseContent();
+                    try {
+                       RdbmsCentralRepoSchemaFactory centralRepoSchemaFactory = new RdbmsCentralRepoSchemaFactory(selectedPlatform);
+                       result = centralRepoSchemaFactory.initializeDatabaseSchema()
+                            && centralRepoSchemaFactory.insertDefaultDatabaseContent();
+                    } catch (CentralRepoException ex) {
+                       logger.log( Level.SEVERE, "Unable to initialize database schema or insert contents into SQLite central repository.", ex);
+                    }
+                    
                 }
                 if (!result) {
                     if (dbCreated) {
