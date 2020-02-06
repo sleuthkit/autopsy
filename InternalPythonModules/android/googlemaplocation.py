@@ -41,6 +41,7 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.blackboardutils import GeoArtifactsHelper
 
 import traceback
 import general
@@ -52,15 +53,25 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
 
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
+        self.current_case = None
+        self.PROGRAM_NAME = "Google Maps History"
+        self.CAT_DESTINATION = "Destination"
 
     def analyze(self, dataSource, fileManager, context):
+        try:
+            self.current_case = Case.getCurrentCaseThrows()
+        except NoCurrentCaseException as ex:
+            self._logger.log(Level.WARNING, "No case currently open.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+            return
+
         try:
             absFiles = fileManager.findFiles(dataSource, "da_destination_history")
             if absFiles.isEmpty():
                 return
             for abstractFile in absFiles:
                 try:
-                    jFile = File(Case.getCurrentCase().getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
+                    jFile = File(self.current_case.getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findGeoLocationsInDB(jFile.toString(), abstractFile)
                 except Exception as ex:
@@ -75,6 +86,8 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
             return
 
         try:
+            artifactHelper = GeoArtifactsHelper(self.current_case.getSleuthkitCase(),
+                                    general.MODULE_NAME, abstractFile)
             Class.forName("org.sqlite.JDBC") # load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
             statement = connection.createStatement()
@@ -100,32 +113,18 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                 dest_lng = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("dest_lng"))
                 source_lat = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("source_lat"))
                 source_lng = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("source_lng"))
-
-                attributes = ArrayList()
-                artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE)
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, general.MODULE_NAME, "Destination"))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, general.MODULE_NAME, time))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END, general.MODULE_NAME, dest_lat))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END, general.MODULE_NAME, dest_lng))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START, general.MODULE_NAME, source_lat))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START, general.MODULE_NAME, source_lng))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, dest_title))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION, general.MODULE_NAME, dest_address))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, general.MODULE_NAME, "Google Maps History"))
-
-                artifact.addAttributes(attributes)
-                try:
-                    # index the artifact for keyword search
-                    blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
-                    blackboard.postArtifact(artifact, general.MODULE_NAME)
-                except Blackboard.BlackboardException as ex:
-                    self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactID()), ex)
-                    self._logger.log(Level.SEVERE, traceback.format_exc())
-                    MessageNotifyUtil.Notify.error("Failed to index GPS route artifact for keyword search.", artifact.getDisplayName())
+				
+                artifactHelper.addRoute(dest_title, time, dest_address, self.PROGRAM_NAME, self.CAT_DESTINATION, source_lat, source_lng, dest_lat, dest_lng)
 
         except SQLException as ex:
             # Unable to execute Google map locations SQL query against database.
             pass
+        except TskCoreException as ex:
+                self._logger.log(Level.SEVERE, "Failed to add route artifacts.", ex)
+                self._logger.log(Level.SEVERE, traceback.format_exc())
+        except BlackboardException as ex:
+                self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
         except Exception as ex:
             self._logger.log(Level.SEVERE, "Error processing google maps history.", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
