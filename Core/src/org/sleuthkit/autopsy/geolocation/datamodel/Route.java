@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoint;
 /**
  * A Route represents a TSK_GPS_ROUTE artifact which has a start and end point
  * however the class was written with the assumption that routes may have more
- * that two points.
+ * than two points.
  *
  */
 public class Route extends GeoPath {
@@ -103,7 +103,7 @@ public class Route extends GeoPath {
      * @throws GeoLocationDataException
      */
     @Messages({
-        "Route_point_label=Route point for route"
+        "Route_point_label=Waypoints for route"
     })
     private void createRoute(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_WAYPOINTS);
