@@ -1183,8 +1183,8 @@ class ExtractRegistry extends Extract {
                             // Columns are
                             // Key name,file name,sDate,uFileSize,uPageCount
                             while (!line.contains(SECTION_DIVIDER)) {
-                                String tokens[] = line.split(",");
-                                String fileName = tokens[1];
+                                String tokens[] = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+                                String fileName = tokens[1].substring(0, tokens[1].length() -1);
                                 if (fileName.startsWith("/")) {
                                     fileName = fileName.substring(1,fileName.length() - 1);
                                     fileName = fileName.replaceFirst("/", ":/");
