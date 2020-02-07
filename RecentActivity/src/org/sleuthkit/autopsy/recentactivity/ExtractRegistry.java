@@ -1173,7 +1173,7 @@ class ExtractRegistry extends Extract {
 
                 if (line.matches("^adoberdr v.*")) {
                     SimpleDateFormat adobePluginDateFormat = new SimpleDateFormat("YYYYMMddHHmmssZ");
-                    Long adobeUsedTime;
+                    Long adobeUsedTime = Long.valueOf(0);
                     while (!line.contains(SECTION_DIVIDER)) {
                         line = reader.readLine();
                         line = line.trim();
@@ -1181,24 +1181,29 @@ class ExtractRegistry extends Extract {
                             line = reader.readLine();
                             List<String> adobeFiles = new ArrayList<>();
                             // Columns are
-                            // Key name,file name,sDate,uFileSize,uPageCount
+                            // Key name, file name, sDate, uFileSize, uPageCount
                             while (!line.contains(SECTION_DIVIDER)) {
+                                // Split csv line, handles double quotes around individual file names
+                                // since file names can contain commas
                                 String tokens[] = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
                                 String fileName = tokens[1].substring(0, tokens[1].length() -1);
+                                fileName = fileName.replace("\"", "");
                                 if (fileName.startsWith("/")) {
                                     fileName = fileName.substring(1,fileName.length() - 1);
                                     fileName = fileName.replaceFirst("/", ":/");
                                 }
+                                // Check to see if more then 2 tokens, Date may not be populated, will default to 0
+                                if (tokens.length > 2) {
                                 // Time in the format of 20200131104456-05'00'
-                                try {
-                                    String fileUsedTime = tokens[2].replaceAll("'","");
-                                    Date usedDate = adobePluginDateFormat.parse(fileUsedTime);
-                                    adobeUsedTime = usedDate.getTime()/1000;
-                                } catch (ParseException ex) {
-                                    // catching error and displaying date that could not be parsed
-                                    // we set the timestamp to 0 and continue on processing
-                                    logger.log(Level.WARNING, String.format("Failed to parse date/time %s for adobe file artifact.", tokens[2]), ex); //NON-NLS
-                                    adobeUsedTime = Long.valueOf(0);
+                                    try {
+                                        String fileUsedTime = tokens[2].replaceAll("'","");
+                                        Date usedDate = adobePluginDateFormat.parse(fileUsedTime);
+                                        adobeUsedTime = usedDate.getTime()/1000;
+                                    } catch (ParseException ex) {
+                                        // catching error and displaying date that could not be parsed
+                                        // we set the timestamp to 0 and continue on processing
+                                        logger.log(Level.WARNING, String.format("Failed to parse date/time %s for adobe file artifact.", tokens[2]), ex); //NON-NLS
+                                    }
                                 }
                                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
                                 attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
