@@ -230,26 +230,44 @@ class GPXParserDataSourceIngestModule(DataSourceIngestModule):
                         else:
                             startingPoint.append((point.latitude, point.longitude))
                             endingPoint.append((point.latitude, point.longitude))
-
-                    # get length of ending point as this ensures that we have equal points to process.                            
-                    for i in range(0,len(endingPoint) -1):
-                        attributes = ArrayList()
-                        art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE)
-                        
-                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID(), moduleName, startingPoint[i][0]))
-                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getTypeID(), moduleName, startingPoint[i][1]))
-                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getTypeID(), moduleName, endingPoint[i][0]))
-                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getTypeID(), moduleName, endingPoint[i][1]))
-
-                        art.addAttributes(attributes)
-                        
-                        try:
-                        # Post the artifact to blackboard
-                           skCase.getBlackboard().postArtifact(art, moduleName)
-                        except Blackboard.BlackboardException as e:
-                            if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.SEVERE, "GPX: Error using geo artifact helper with blackboard  for waypoints" )
                     
+                    if (len(endingPoint) > 0):
+                    # get length of ending point as this ensures that we have equal points to process.                            
+                        for i in range(0,len(endingPoint) -1):
+                            attributes = ArrayList()
+                            art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE)
+                         
+                            attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID(), moduleName, startingPoint[i][0]))
+                            attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getTypeID(), moduleName, startingPoint[i][1]))
+                            attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getTypeID(), moduleName, endingPoint[i][0]))
+                            attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getTypeID(), moduleName, endingPoint[i][1]))
 
+                            art.addAttributes(attributes)
+                        
+                            try:
+                            # Post the artifact to blackboard
+                               skCase.getBlackboard().postArtifact(art, moduleName)
+                            except Blackboard.BlackboardException as e:
+                                if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.SEVERE, "GPX: Error using geo artifact helper with blackboard  for waypoints" )
+                    else:
+                        if (len(startingPoint) > 0):
+                            attributes = ArrayList()
+                            art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE)
+                         
+                            attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID(), moduleName, startingPoint[0][0]))
+                            attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getTypeID(), moduleName, startingPoint[0][1]))
+                            attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getTypeID(), moduleName, startingPoint[0][0]))
+                            attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getTypeID(), moduleName, startingPoint[0][1]))
+
+                            art.addAttributes(attributes)
+                        
+                            try:
+                            # Post the artifact to blackboard
+                               skCase.getBlackboard().postArtifact(art, moduleName)
+                            except Blackboard.BlackboardException as e:
+                                if GPXParserDataSourceIngestModuleFactory.debuglevel: self.log(Level.SEVERE, "GPX: Error using geo artifact helper with blackboard  for waypoints" )
+
+                                
             # Update the progress bar.
             progressBar.progress(fileCount)
             if os.path.exists(fileName):
