@@ -65,6 +65,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Locale;
+import static java.util.Locale.US;
 import static java.util.TimeZone.getTimeZone;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -1192,7 +1193,7 @@ class ExtractRegistry extends Extract {
     private void parseAdobeMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
-        SimpleDateFormat adobePluginDateFormat = new SimpleDateFormat("YYYYMMddHHmmssZ", Locale.US);
+        SimpleDateFormat adobePluginDateFormat = new SimpleDateFormat("yyyyMMddHHmmssZ", US);
         Long adobeUsedTime = Long.valueOf(0);
         while (!line.contains(SECTION_DIVIDER)) {
             line = reader.readLine();
