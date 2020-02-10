@@ -64,6 +64,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Locale;
 import static java.util.TimeZone.getTimeZone;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -1164,7 +1165,6 @@ class ExtractRegistry extends Extract {
      */
     private void createRecentlyUsedArtifacts(String regFileName, AbstractFile regFile) throws FileNotFoundException, IOException {
         File regfile = new File(regFileName);
-        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(regfile))) {
             String line = reader.readLine();
             while (line != null) {
@@ -1190,17 +1190,15 @@ class ExtractRegistry extends Extract {
      * @throws FileNotFound and IOException
      */
     private void parseAdobeMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
-        File regfile = new File(regFileName);
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
-        SimpleDateFormat adobePluginDateFormat = new SimpleDateFormat("YYYYMMddHHmmssZ");
+        SimpleDateFormat adobePluginDateFormat = new SimpleDateFormat("YYYYMMddHHmmssZ", Locale.US);
         Long adobeUsedTime = Long.valueOf(0);
         while (!line.contains(SECTION_DIVIDER)) {
             line = reader.readLine();
             line = line.trim();
             if (line.matches("^Key name,file name,sDate,uFileSize,uPageCount")) {
                 line = reader.readLine();
-                List<String> adobeFiles = new ArrayList<>();
                 // Columns are
                 // Key name, file name, sDate, uFileSize, uPageCount
                 while (!line.contains(SECTION_DIVIDER)) {
