@@ -3419,22 +3419,22 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                         addAttributeSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?) " + getConflictClause();  //NON-NLS
 
                         // RAMAN TBD: get these from RdbmsCentralRepoSchemaFactory
-                        addSsidTableTemplate = RdbmsCentralRepoSchemaFactory.PostgresCRSchemaCreator.getCreateArtifactInstancesTableTemplate();
-                        addCaseIdIndexTemplate = RdbmsCentralRepoSchemaFactory.PostgresCRSchemaCreator.getAddCaseIdIndexTemplate();
-                        addDataSourceIdIndexTemplate = RdbmsCentralRepoSchemaFactory.PostgresCRSchemaCreator.getAddDataSourceIdIndexTemplate();
-                        addValueIndexTemplate = RdbmsCentralRepoSchemaFactory.PostgresCRSchemaCreator.getAddValueIndexTemplate();
-                        addKnownStatusIndexTemplate = RdbmsCentralRepoSchemaFactory.PostgresCRSchemaCreator.getAddKnownStatusIndexTemplate();
-                        addObjectIdIndexTemplate = RdbmsCentralRepoSchemaFactory.PostgresCRSchemaCreator.getAddObjectIdIndexTemplate();
+                        addSsidTableTemplate = RdbmsCentralRepoSchemaFactory.getCreateArtifactInstancesTableTemplate(CentralRepoPlatforms.POSTGRESQL);
+                        addCaseIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddCaseIdIndexTemplate();
+                        addDataSourceIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddDataSourceIdIndexTemplate();
+                        addValueIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddValueIndexTemplate();
+                        addKnownStatusIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddKnownStatusIndexTemplate();
+                        addObjectIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddObjectIdIndexTemplate();
                         break;
                     case SQLITE:
                         addAttributeSql = "INSERT OR IGNORE INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";  //NON-NLS
 
-                        addSsidTableTemplate = RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getCreateArtifactInstancesTableTemplate();
-                        addCaseIdIndexTemplate = RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddCaseIdIndexTemplate();
-                        addDataSourceIdIndexTemplate = RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddDataSourceIdIndexTemplate();
-                        addValueIndexTemplate = RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddValueIndexTemplate();
-                        addKnownStatusIndexTemplate = RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddKnownStatusIndexTemplate();
-                        addObjectIdIndexTemplate = RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddObjectIdIndexTemplate();
+                        addSsidTableTemplate = RdbmsCentralRepoSchemaFactory.getCreateArtifactInstancesTableTemplate(CentralRepoPlatforms.SQLITE);
+                        addCaseIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddCaseIdIndexTemplate();
+                        addDataSourceIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddDataSourceIdIndexTemplate();
+                        addValueIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddValueIndexTemplate();
+                        addKnownStatusIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddKnownStatusIndexTemplate();
+                        addObjectIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddObjectIdIndexTemplate();
                         break;
                     default:
                         throw new CentralRepoException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.", Bundle.AbstractSqlEamDb_cannotUpgrage_message(selectedPlatform.name()));
@@ -3591,8 +3591,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                                 + "md5 text DEFAULT NULL,sha1 text DEFAULT NULL,sha256 text DEFAULT NULL,"
                                 + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
                                 + "CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id))");
-                        statement.execute(RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddDataSourcesNameIndexStatement());
-                        statement.execute(RdbmsCentralRepoSchemaFactory.SQLiteCRSchemaCreator.getAddDataSourcesObjectIdIndexStatement());
+                        statement.execute(RdbmsCentralRepoSchemaFactory.getAddDataSourcesNameIndexStatement());
+                        statement.execute(RdbmsCentralRepoSchemaFactory.getAddDataSourcesObjectIdIndexStatement());
                         statement.execute("INSERT INTO data_sources SELECT * FROM old_data_sources");
                         statement.execute("DROP TABLE old_data_sources");
                         break;
