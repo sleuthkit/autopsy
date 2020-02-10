@@ -46,7 +46,6 @@ public class SqlFilterState<FilterType extends TimelineFilter> extends AbstractF
     }
 
     /**
-     * /**
      * Constructs an implementation of the FilterState interface for wrapping
      * TimelineFilter objects. TimelineFilter objects provide SQL WHERE clauses
      * for querying the case database and are displayed in the timeline GUI via
