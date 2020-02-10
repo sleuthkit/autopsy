@@ -64,7 +64,6 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.Locale;
 import static java.util.Locale.US;
 import static java.util.TimeZone.getTimeZone;
 import org.openide.util.Lookup;
