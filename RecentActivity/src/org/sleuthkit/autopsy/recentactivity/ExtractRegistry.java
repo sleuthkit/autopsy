@@ -131,6 +131,7 @@ class ExtractRegistry extends Extract {
     final private static UsbDeviceIdMapper USB_MAPPER = new UsbDeviceIdMapper();
     final private static String RIP_EXE = "rip.exe";
     final private static String RIP_PL = "rip.pl";
+    final private static String RIP_PL_INCLUDE_FLAG = "-I";
     final private static int MS_IN_SEC = 1000;
     final private static String NEVER_DATE = "Never";
     final private static String SECTION_DIVIDER = "-------------------------";
@@ -193,8 +194,12 @@ class ExtractRegistry extends Extract {
                 throw new IngestModuleException("perl not found in your system");
             }
             rrCmd.add(perl);
+            rrCmd.add(RIP_PL_INCLUDE_FLAG);
+            rrCmd.add(rrHome.toString());
             rrCmd.add(rrPath);
             rrFullCmd.add(perl);
+            rrFullCmd.add(RIP_PL_INCLUDE_FLAG);
+            rrFullCmd.add(rrFullHome.toString());
             rrFullCmd.add(rrFullPath);
         }
     }
