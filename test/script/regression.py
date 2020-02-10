@@ -111,16 +111,26 @@ def main():
 
     test_config = TestConfiguration(args)
     case_type = test_config.userCaseType.lower()
+    # Indicates if the overall run was successful.
+    success = False;
     if case_type.startswith('multi'):
-        TestRunner.run_tests(test_config, True)
+        success = TestRunner.run_tests(test_config, True)
     elif case_type.startswith('single'):
-        TestRunner.run_tests(test_config, False)
+        success = TestRunner.run_tests(test_config, False)
     elif case_type.startswith('both'):
-        TestRunner.run_tests(test_config, False)
-        TestRunner.run_tests(test_config, True)
+        success = TestRunner.run_tests(test_config, False)
+        # You may be questioning why the test does not bail out if 
+        # single user failed. Doing so is too assuming. Additionally, 
+        # some flags only make sense if 'both' runs to completion.
+        success = TestRunner.run_tests(test_config, True) and success
     else:
         Errors.print_error("Invalid case type inputed. Please use 'Multi-user, Single-user or Both for case type'.")
         exit(1)
+	
+    if not success:
+        #If we failed any test, indicate failure to the caller.
+        exit(1)
+
     exit(0)
 
 
@@ -186,11 +196,15 @@ class TestRunner(object):
             Errors.print_error("No image had any gold; Regression did not run")
             exit(1)
 
-        if not (test_config.args.rebuild or all([ test_data.overall_passed for test_data in test_data_list ])):
+        # True for success, False for failure.
+        success = all([ test_data.overall_passed for test_data in test_data_list ])
+        if not success:
+            # If we failed, this adds the html log as an attachment for failure emailing. 
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
             html.close()
-            sys.exit(1)
+
+        return success
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.

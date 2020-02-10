@@ -126,11 +126,12 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
 
                 artifact.addAttributes(attributes)
 
-                # Create an account
-                msgAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, address, general.MODULE_NAME, abstractFile);
+                if address is not None:
+                    # Create an account
+                    msgAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, address, general.MODULE_NAME, abstractFile);
 
-                # create relationship between accounts
-                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [msgAccountInstance], artifact,Relationship.Type.MESSAGE, date);
+                    # create relationship between accounts
+                    Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [msgAccountInstance], artifact,Relationship.Type.MESSAGE, date);
 
                 bbartifacts.append(artifact)
 

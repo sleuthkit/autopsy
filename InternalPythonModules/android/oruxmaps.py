@@ -44,7 +44,7 @@ from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
-from org.sleuthkit.datamodel.blackboardutils import ArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils import GeoArtifactsHelper
 
 import traceback
 import general
@@ -68,14 +68,14 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
         for oruxMapsTrackpointsDb in oruxMapsTrackpointsDbs:
             try:
                 current_case = Case.getCurrentCaseThrows()
-                oruxDbHelper = ArtifactsHelper(current_case.getSleuthkitCase(),
+                oruxDbHelper = GeoArtifactsHelper(current_case.getSleuthkitCase(),
                                     self._MODULE_NAME, oruxMapsTrackpointsDb.getDBFile())
                 
                 poiQueryString = "SELECT poilat, poilon, poitime, poiname FROM pois"
                 poisResultSet = oruxMapsTrackpointsDb.runQuery(poiQueryString)
                 if poisResultSet is not None:
                     while poisResultSet.next():
-                        oruxDbHelper.addGPSLocation(
+                        oruxDbHelper.addGPSTrackpoint(
                                             poisResultSet.getDouble("poilat"),
                                             poisResultSet.getDouble("poilon"),
                                             poisResultSet.getLong("poitime") / 1000,    # milliseconds since unix epoch
@@ -86,7 +86,7 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
                 trackpointsResultSet = oruxMapsTrackpointsDb.runQuery(trackpointsQueryString)
                 if trackpointsResultSet is not None:
                     while trackpointsResultSet.next():
-                        oruxDbHelper.addGPSLocation(
+                        oruxDbHelper.addGPSTrackpoint(
                                             trackpointsResultSet.getDouble("trkptlat"),
                                             trackpointsResultSet.getDouble("trkptlon"),
                                             trackpointsResultSet.getLong("trkpttime") / 1000,    # milliseconds since unix epoch

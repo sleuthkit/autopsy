@@ -45,11 +45,7 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.actionhelpers.ExtractActionHelper;
-import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
-import org.sleuthkit.autopsy.geolocation.datamodel.Route;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
-import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -69,32 +65,6 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
 
     private final Waypoint dataModelWaypoint;
     private final GeoPosition position;
-
-    /**
-     * Returns a list of waypoints for the currently open case.
-     *
-     * @param skCase Current case
-     *
-     * @return list of waypoints, list will be empty if no waypoints were found
-     *
-     * @throws GeoLocationDataException
-     */
-    static List<MapWaypoint> getWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
-        List<Waypoint> points = WaypointBuilder.getAllWaypoints(skCase);
-
-        List<Route> routes = Route.getRoutes(skCase);
-        for (Route route : routes) {
-            points.addAll(route.getRoute());
-        }
-
-        List<MapWaypoint> mapPoints = new ArrayList<>();
-
-        for (Waypoint point : points) {
-            mapPoints.add(new MapWaypoint(point));
-        }
-
-        return mapPoints;
-    }
 
     /**
      * Returns a list of of MapWaypoint objects for the given list of

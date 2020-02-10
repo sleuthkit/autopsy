@@ -28,6 +28,7 @@ import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.report.ReportModule;
 
 class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
 
@@ -110,6 +111,7 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
     @Override
     public void storeSettings(WizardDescriptor wiz) {
         wiz.putProperty("moduleConfigs", getComponent().getUpdatedModuleConfigs()); //NON-NLS
+        wiz.putProperty("modules", getComponent().getReportModules()); //NON-NLS
 
         // Store preferences that WizardIterator will use to determine what 
         // panels need to be shown

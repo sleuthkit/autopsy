@@ -134,7 +134,6 @@ final class FileIngestPipeline {
                     if (msg == null) {
                         msg = ex.toString();
                     }
-                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "FileIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
                 }
                 if (this.job.isCancelled()) {
                     break;
