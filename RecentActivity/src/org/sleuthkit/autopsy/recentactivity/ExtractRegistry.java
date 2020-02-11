@@ -676,12 +676,15 @@ class ExtractRegistry extends Extract {
 
                                 switch (dataType) {
                                     case "recentdocs": //NON-NLS
-                                        // BlackboardArtifact bbart = tskCase.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
-                                        // bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", dataType, mtime));
-                                        // bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", dataType, mtimeItem));
-                                        // bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", dataType, value));
-                                        // bbart.addAttributes(bbattributes);
-                                        // @@@ BC: Why are we ignoring this...
+                                        try {
+                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, "RecentActivity", mtime));
+//                                          bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, "RecentActivity", mtimeItem));
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, "RecentActivity", value));
+                                            bbart.addAttributes(bbattributes);
+                                        } catch (TskCoreException ex) {
+                                            logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard.", ex); //NON-NLS
+                                        }
                                         break;
                                     case "usb": //NON-NLS
                                         try {

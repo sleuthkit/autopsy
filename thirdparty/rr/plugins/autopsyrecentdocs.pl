@@ -45,6 +45,7 @@ sub pluginmain {
 	my $root_key = $reg->get_root_key;
 	my $key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RecentDocs";
 	my $key;
+    my @recentDocs;
 	if ($key = $root_key->get_subkey($key_path)) {
 		#::rptMsg("RecentDocs");
 		#::rptMsg("**All values printed in MRUList\\MRUListEx order.");
@@ -66,7 +67,8 @@ sub pluginmain {
 			
 			my @list = split(/,/,$rdvals{$tag});
 			foreach my $i (@list) {
-				::rptMsg("<doc name=\"Windows\">".$rdvals{$i} . "</doc>");
+                push(@recentDocs, $rdvals{$i})
+				#::rptMsg("<doc name=\"Windows\">".$rdvals{$i} . "</doc>");
 			}
 			
 		}
@@ -74,7 +76,7 @@ sub pluginmain {
 			#::rptMsg($key_path." has no values.");
 			#::logMsg("Error: ".$key_path." has no values.");
 		}
-		::rptMsg("</artifacts></recentdocs>");
+#		::rptMsg("</artifacts></recentdocs>");
 # Get RecentDocs subkeys' values		
 	my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {
@@ -98,7 +100,8 @@ sub pluginmain {
 					my @list = split(/,/,$rdvals{$tag});
 					#::rptMsg($tag." = ".$rdvals{$tag});
 					foreach my $i (@list) {
-						#::rptMsg("".$rdvals{$i});
+                        push(@recentDocs, $rdvals{$i})
+						#::rptMsg("<doc name=\"Windows2\">".$rdvals{$i} . "</doc>");
 					}
 					
 					#::rptMsg("");
@@ -115,8 +118,20 @@ sub pluginmain {
 	else {
 		#::rptMsg($key_path." not found.");
 	}
+    
+    my @filtered = uniq(@recentDocs);
+    my $recentdoc = "";
+    foreach $recentdoc (@filtered) {
+        ::rptMsg("<doc name=\"Windows\">".$recentdoc . "</doc>");
+    }
+    ::rptMsg("</artifacts></recentdocs>");
+    
 }
-
+# Remove duplicate values in Array so documents are only seen once
+sub uniq {
+    my %seen;
+    grep !$seen{$_}++, @_;
+}
 
 sub getRDValues {
 	my $key = shift;
