@@ -3418,7 +3418,6 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                     case POSTGRESQL:
                         addAttributeSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?) " + getConflictClause();  //NON-NLS
 
-                        // RAMAN TBD: get these from RdbmsCentralRepoSchemaFactory
                         addSsidTableTemplate = RdbmsCentralRepoSchemaFactory.getCreateArtifactInstancesTableTemplate(CentralRepoPlatforms.POSTGRESQL);
                         addCaseIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddCaseIdIndexTemplate();
                         addDataSourceIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddDataSourceIdIndexTemplate();

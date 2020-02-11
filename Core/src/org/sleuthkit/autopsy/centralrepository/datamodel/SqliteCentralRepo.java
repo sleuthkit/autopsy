@@ -113,7 +113,6 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
     @Override
     public void reset() throws CentralRepoException {
         try {
-            // RAMAN TBD: this should be moved to RdbmsCentralRepoSchemaFactory ??
             acquireExclusiveLock();
 
             Connection conn = connect();
