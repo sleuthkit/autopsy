@@ -131,7 +131,7 @@ public class GeoPath {
     }
 
     /**
-     * Returns the label\display name for this path.
+     * Returns the label or display name for this path.
      *
      * @return GeoPath label, empty string
      */
