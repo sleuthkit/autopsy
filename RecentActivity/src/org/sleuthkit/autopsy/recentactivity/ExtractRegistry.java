@@ -1172,6 +1172,8 @@ class ExtractRegistry extends Extract {
 
                 if (line.matches("^adoberdr v.*")) {
                     parseAdobeMRUList(regFileName, regFile, reader);
+                } else if (line.matches("^mpmru v.*")) {
+                    parseMediaPlayerMRUList(regFileName, regFile, reader);
                 }
                 line = reader.readLine();
             }
@@ -1235,9 +1237,50 @@ class ExtractRegistry extends Extract {
                 }
                 line = line.trim();
             }
-            if (bbartifacts != null) {
-                postArtifacts(bbartifacts);
+        }    
+        if (bbartifacts != null) {
+            postArtifacts(bbartifacts);
+        }
+    }
+    
+     /**
+     * Create recently used artifacts from mpmru records
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseMediaPlayerMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String line = reader.readLine();
+        while (!line.contains(SECTION_DIVIDER)) {
+            line = reader.readLine();
+            line = line.trim();
+            if (line.contains("LastWrite")) {
+                line = reader.readLine();
+                // Columns are
+                // FileX -> <Media file>
+                while (!line.contains(SECTION_DIVIDER)) {
+                    // Split line on "> " which is the record delimiter between position and file
+                    String tokens[] = line.split("> ");
+                    String fileName = tokens[1];
+                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                    attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                    BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                    if(bba != null) {
+                         bbartifacts.add(bba);
+                    }
+                    line = reader.readLine();
+                }
+                line = line.trim();
             }
+        }
+        if (bbartifacts != null) {
+            postArtifacts(bbartifacts);
         }
     }
     
