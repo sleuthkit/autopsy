@@ -100,6 +100,7 @@ public final class GeolocationTopComponent extends TopComponent {
      * Constructs new GeoLocationTopComponent
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @SuppressWarnings("deprecation")
     public GeolocationTopComponent() {
         initComponents();
 

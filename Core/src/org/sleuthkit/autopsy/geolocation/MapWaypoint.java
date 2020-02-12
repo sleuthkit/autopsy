@@ -183,7 +183,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
     String getHTMLFormattedWaypointDetails() {
         return getFormattedDetails(dataModelWaypoint);
     }
-
+    
     /**
      * Returns a list of JMenuItems for the waypoint. The list list may contain
      * nulls which should be removed or replaced with JSeparators.

@@ -58,11 +58,13 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.HashSet;
+import static java.util.Locale.US;
 import static java.util.TimeZone.getTimeZone;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -131,6 +133,7 @@ class ExtractRegistry extends Extract {
     final private static UsbDeviceIdMapper USB_MAPPER = new UsbDeviceIdMapper();
     final private static String RIP_EXE = "rip.exe";
     final private static String RIP_PL = "rip.pl";
+    final private static String RIP_PL_INCLUDE_FLAG = "-I";
     final private static int MS_IN_SEC = 1000;
     final private static String NEVER_DATE = "Never";
     final private static String SECTION_DIVIDER = "-------------------------";
@@ -193,8 +196,12 @@ class ExtractRegistry extends Extract {
                 throw new IngestModuleException("perl not found in your system");
             }
             rrCmd.add(perl);
+            rrCmd.add(RIP_PL_INCLUDE_FLAG);
+            rrCmd.add(rrHome.toString());
             rrCmd.add(rrPath);
             rrFullCmd.add(perl);
+            rrFullCmd.add(RIP_PL_INCLUDE_FLAG);
+            rrFullCmd.add(rrFullHome.toString());
             rrFullCmd.add(rrFullPath);
         }
     }
@@ -310,6 +317,7 @@ class ExtractRegistry extends Extract {
                     try {
                         List<ShellBag> shellbags = ShellBagParser.parseShellbagOutput(regOutputFiles.fullPlugins);
                         createShellBagArtifacts(regFile, shellbags);
+                        createRecentlyUsedArtifacts(regOutputFiles.fullPlugins, regFile);
                     } catch (IOException | TskCoreException ex) {
                         logger.log(Level.WARNING, String.format("Unable to get shell bags from file %s", regOutputFiles.fullPlugins), ex);
                     }
@@ -1151,7 +1159,93 @@ class ExtractRegistry extends Extract {
         }
     }
     
-   
+    /**
+     * Create recently used artifacts from NTUSER regripper files
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void createRecentlyUsedArtifacts(String regFileName, AbstractFile regFile) throws FileNotFoundException, IOException {
+        File regfile = new File(regFileName);
+        try (BufferedReader reader = new BufferedReader(new FileReader(regfile))) {
+            String line = reader.readLine();
+            while (line != null) {
+                line = line.trim();
+
+                if (line.matches("^adoberdr v.*")) {
+                    parseAdobeMRUList(regFileName, regFile, reader);
+                }
+                line = reader.readLine();
+            }
+        }     
+    }
+    
+    /**
+     * Create recently used artifacts from adobemru records
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseAdobeMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String line = reader.readLine();
+        SimpleDateFormat adobePluginDateFormat = new SimpleDateFormat("yyyyMMddHHmmssZ", US);
+        Long adobeUsedTime = Long.valueOf(0);
+        while (!line.contains(SECTION_DIVIDER)) {
+            line = reader.readLine();
+            line = line.trim();
+            if (line.matches("^Key name,file name,sDate,uFileSize,uPageCount")) {
+                line = reader.readLine();
+                // Columns are
+                // Key name, file name, sDate, uFileSize, uPageCount
+                while (!line.contains(SECTION_DIVIDER)) {
+                    // Split csv line, handles double quotes around individual file names
+                    // since file names can contain commas
+                    String tokens[] = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+                    String fileName = tokens[1].substring(0, tokens[1].length() -1);
+                    fileName = fileName.replace("\"", "");
+                    if (fileName.charAt(0) == '/') {
+                        fileName = fileName.substring(1,fileName.length() - 1);
+                        fileName = fileName.replaceFirst("/", ":/");
+                    }
+                    // Check to see if more then 2 tokens, Date may not be populated, will default to 0
+                    if (tokens.length > 2) {
+                        // Time in the format of 20200131104456-05'00'
+                        try {
+                            String fileUsedTime = tokens[2].replaceAll("'","");
+                            Date usedDate = adobePluginDateFormat.parse(fileUsedTime);
+                            adobeUsedTime = usedDate.getTime()/1000;
+                        } catch (ParseException ex) {
+                        // catching error and displaying date that could not be parsed
+                        // we set the timestamp to 0 and continue on processing
+                            logger.log(Level.WARNING, String.format("Failed to parse date/time %s for adobe file artifact.", tokens[2]), ex); //NON-NLS
+                        }
+                    }
+                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                    attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), adobeUsedTime));
+                    BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                    if(bba != null) {
+                         bbartifacts.add(bba);
+                    }
+                    line = reader.readLine();
+                }
+                line = line.trim();
+            }
+            if (bbartifacts != null) {
+                postArtifacts(bbartifacts);
+            }
+        }
+    }
+    
     /**
      * Create the shellbag artifacts from the list of ShellBag objects.
      *
