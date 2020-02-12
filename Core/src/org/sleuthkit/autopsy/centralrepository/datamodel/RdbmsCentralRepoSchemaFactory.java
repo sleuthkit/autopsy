@@ -39,7 +39,6 @@ public class RdbmsCentralRepoSchemaFactory {
 
     // SQLite pragmas
     private final static String PRAGMA_SYNC_OFF = "PRAGMA synchronous = OFF";
-    private final static String PRAGMA_SYNC_NORMAL = "PRAGMA synchronous = NORMAL";
     private final static String PRAGMA_JOURNAL_WAL = "PRAGMA journal_mode = WAL";
     private final static String PRAGMA_READ_UNCOMMITTED_TRUE = "PRAGMA read_uncommitted = True";
     private final static String PRAGMA_ENCODING_UTF8 = "PRAGMA encoding = 'UTF-8'";
@@ -75,86 +74,7 @@ public class RdbmsCentralRepoSchemaFactory {
      * connectionPool object directly.
      */
     public boolean initializeDatabaseSchema() {
-        // The "id" column is an alias for the built-in 64-bit int "rowid" column.
-        // It is autoincrementing by default and must be of type "integer primary key".
-        // We've omitted the autoincrement argument because we are not currently
-        // using the id value to search for specific rows, so we do not care
-        // if a rowid is re-used after an existing rows was previously deleted.
-        StringBuilder createOrganizationsTable = new StringBuilder();
-        createOrganizationsTable.append("CREATE TABLE IF NOT EXISTS organizations (");
-
-        createOrganizationsTable.append(getNumericPrimaryKeyClause("id", selectedPlatform));
-        createOrganizationsTable.append("org_name text NOT NULL,");
-        createOrganizationsTable.append("poc_name text NOT NULL,");
-        createOrganizationsTable.append("poc_email text NOT NULL,");
-        createOrganizationsTable.append("poc_phone text NOT NULL,");
-        createOrganizationsTable.append("CONSTRAINT org_name_unique UNIQUE (org_name)");
-        createOrganizationsTable.append(")");
-
-        // NOTE: The organizations will only have a small number of rows, so
-        // an index is probably not worthwhile.
-        StringBuilder createCasesTable = new StringBuilder();
-        createCasesTable.append("CREATE TABLE IF NOT EXISTS cases (");
-        createCasesTable.append(getNumericPrimaryKeyClause("id", selectedPlatform));
-        createCasesTable.append("case_uid text NOT NULL,");
-        createCasesTable.append("org_id integer,");
-        createCasesTable.append("case_name text NOT NULL,");
-        createCasesTable.append("creation_date text NOT NULL,");
-        createCasesTable.append("case_number text,");
-        createCasesTable.append("examiner_name text,");
-        createCasesTable.append("examiner_email text,");
-        createCasesTable.append("examiner_phone text,");
-        createCasesTable.append("notes text,");
-        createCasesTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL,");
-        createCasesTable.append("CONSTRAINT case_uid_unique UNIQUE(case_uid)").append(getOnConflictIgnoreClause(selectedPlatform));
-        createCasesTable.append(")");
-
-        // NOTE: when there are few cases in the cases table, these indices may not be worthwhile
-        String casesIdx1 = "CREATE INDEX IF NOT EXISTS cases_org_id ON cases (org_id)";
-        String casesIdx2 = "CREATE INDEX IF NOT EXISTS cases_case_uid ON cases (case_uid)";
-
-        StringBuilder createReferenceSetsTable = new StringBuilder();
-        createReferenceSetsTable.append("CREATE TABLE IF NOT EXISTS reference_sets (");
-        createReferenceSetsTable.append(getNumericPrimaryKeyClause("id", selectedPlatform));
-        createReferenceSetsTable.append("org_id integer NOT NULL,");
-        createReferenceSetsTable.append("set_name text NOT NULL,");
-        createReferenceSetsTable.append("version text NOT NULL,");
-        createReferenceSetsTable.append("known_status integer NOT NULL,");
-        createReferenceSetsTable.append("read_only boolean NOT NULL,");
-        createReferenceSetsTable.append("type integer NOT NULL,");
-        createReferenceSetsTable.append("import_date text NOT NULL,");
-        createReferenceSetsTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL,");
-        createReferenceSetsTable.append("CONSTRAINT hash_set_unique UNIQUE (set_name, version)");
-        createReferenceSetsTable.append(")");
-
-        String referenceSetsIdx1 = "CREATE INDEX IF NOT EXISTS reference_sets_org_id ON reference_sets (org_id)";
-
-        // Each "%s" will be replaced with the relevant reference_TYPE table name.
-        StringBuilder createReferenceTypesTableTemplate = new StringBuilder();
-        createReferenceTypesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
-        createReferenceTypesTableTemplate.append(getNumericPrimaryKeyClause("id", selectedPlatform));
-        createReferenceTypesTableTemplate.append("reference_set_id integer,");
-        createReferenceTypesTableTemplate.append("value text NOT NULL,");
-        createReferenceTypesTableTemplate.append("known_status integer NOT NULL,");
-        createReferenceTypesTableTemplate.append("comment text,");
-        createReferenceTypesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(reference_set_id, value)").append(getOnConflictIgnoreClause(selectedPlatform)).append(",");
-        createReferenceTypesTableTemplate.append("foreign key (reference_set_id) references reference_sets(id) ON UPDATE SET NULL ON DELETE SET NULL");
-        createReferenceTypesTableTemplate.append(")");
-
-        // Each "%s" will be replaced with the relevant reference_TYPE table name.
-        String referenceTypesIdx1 = "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
-        String referenceTypesIdx2 = "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
-
-        StringBuilder createCorrelationTypesTable = new StringBuilder();
-        createCorrelationTypesTable.append("CREATE TABLE IF NOT EXISTS correlation_types (");
-        createCorrelationTypesTable.append(getNumericPrimaryKeyClause("id", selectedPlatform));
-        createCorrelationTypesTable.append("display_name text NOT NULL,");
-        createCorrelationTypesTable.append("db_table_name text NOT NULL,");
-        createCorrelationTypesTable.append("supported integer NOT NULL,");
-        createCorrelationTypesTable.append("enabled integer NOT NULL,");
-        createCorrelationTypesTable.append("CONSTRAINT correlation_types_names UNIQUE (display_name, db_table_name)");
-        createCorrelationTypesTable.append(")");
-
+       
         String createArtifactInstancesTableTemplate = getCreateArtifactInstancesTableTemplate(selectedPlatform);
 
         String instancesCaseIdIdx = getAddCaseIdIndexTemplate();
@@ -166,12 +86,14 @@ public class RdbmsCentralRepoSchemaFactory {
         // NOTE: the db_info table currenly only has 1 row, so having an index
         // provides no benefit.
         Connection conn = null;
+        Statement stmt = null;
         try {
             conn = rdbmsCentralRepo.getEphemeralConnection();
             if (null == conn) {
                 return false;
             }
-            Statement stmt = conn.createStatement();
+            
+            stmt = conn.createStatement();
 
             // these setting PRAGMAs are SQLIte spcific
             if (selectedPlatform == CentralRepoPlatforms.SQLITE) {
@@ -183,33 +105,24 @@ public class RdbmsCentralRepoSchemaFactory {
                 stmt.execute(PRAGMA_FOREIGN_KEYS_ON);
             }
 
-            stmt.execute(createOrganizationsTable.toString());
+            // Create Organizations table
+            stmt.execute(getCreateOrganizationsTableStatement(selectedPlatform));
 
-            stmt.execute(createCasesTable.toString());
-            stmt.execute(casesIdx1);
-            stmt.execute(casesIdx2);
+            // Create Cases table and indexes
+            stmt.execute(getCreateCasesTableStatement(selectedPlatform));
+            stmt.execute(getCasesOrgIdIndexStatement());
+            stmt.execute(getCasesCaseUidIndexStatement());
 
             stmt.execute(getCreateDataSourcesTableStatement(selectedPlatform));
             stmt.execute(getAddDataSourcesNameIndexStatement());
             stmt.execute(getAddDataSourcesObjectIdIndexStatement());
 
-            stmt.execute(createReferenceSetsTable.toString());
-            stmt.execute(referenceSetsIdx1);
+            stmt.execute(getCreateReferenceSetsTableStatement(selectedPlatform));
+            stmt.execute(getReferenceSetsOrgIdIndexTemplate());
 
-            stmt.execute(createCorrelationTypesTable.toString());
+            stmt.execute(getCreateCorrelationTypesTableStatement(selectedPlatform));
 
-            /*
-             * Note that the essentially useless id column in the following
-             * table is required for backwards compatibility. Otherwise, the
-             * name column could be the primary key.
-             */
-            StringBuilder dbInfoTable = new StringBuilder();
-            dbInfoTable.append("CREATE TABLE db_info (");
-            dbInfoTable.append(getNumericPrimaryKeyClause("id", selectedPlatform));
-            dbInfoTable.append("name TEXT UNIQUE NOT NULL,");
-            dbInfoTable.append("value TEXT NOT NULL )");
-
-            stmt.execute(dbInfoTable.toString());
+            stmt.execute(getCreateDbInfoTableStatement(selectedPlatform));
             stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
             stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
             stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
@@ -233,9 +146,9 @@ public class RdbmsCentralRepoSchemaFactory {
 
                 // FUTURE: allow more than the FILES type
                 if (type.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
-                    stmt.execute(String.format(createReferenceTypesTableTemplate.toString(), reference_type_dbname, reference_type_dbname));
-                    stmt.execute(String.format(referenceTypesIdx1, reference_type_dbname, reference_type_dbname));
-                    stmt.execute(String.format(referenceTypesIdx2, reference_type_dbname, reference_type_dbname));
+                    stmt.execute(String.format(getReferenceTypesTableTemplate(selectedPlatform), reference_type_dbname, reference_type_dbname));
+                    stmt.execute(String.format(getReferenceTypeValueIndexTemplate(), reference_type_dbname, reference_type_dbname));
+                    stmt.execute(String.format(getReferenceTypeValueKnownstatusIndexTemplate(), reference_type_dbname, reference_type_dbname));
                 }
             }
         } catch (SQLException ex) {
@@ -245,6 +158,13 @@ public class RdbmsCentralRepoSchemaFactory {
             LOGGER.log(Level.SEVERE, "Error getting default correlation types. Likely due to one or more Type's with an invalid db table name."); // NON-NLS
             return false;
         } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException ex2) {
+                     LOGGER.log(Level.SEVERE, "Error closing statement.", ex2);
+                }
+            }
             CentralRepoDbUtil.closeConnection(conn);
         }
         return true;
@@ -266,6 +186,157 @@ public class RdbmsCentralRepoSchemaFactory {
         return result;
     }
 
+    private static String getCreateDbInfoTableStatement(CentralRepoPlatforms selectedPlatform) {
+         /*
+             * Note that the essentially useless id column in the following
+             * table is required for backwards compatibility. Otherwise, the
+             * name column could be the primary key.
+             */
+           
+        return "CREATE TABLE db_info ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "name TEXT UNIQUE NOT NULL,"
+                + "value TEXT NOT NULL "
+                + ")";
+                    
+    }
+    /**
+     * Returns Create Table SQL for Organizations table.
+     * 
+     * @param selectedPlatform CR database platform.
+     * 
+     * @return SQL string to create Organizations table.
+     */
+    private static String getCreateOrganizationsTableStatement(CentralRepoPlatforms selectedPlatform) {
+        // The "id" column is an alias for the built-in 64-bit int "rowid" column.
+        // It is autoincrementing by default and must be of type "integer primary key".
+        // We've omitted the autoincrement argument because we are not currently
+        // using the id value to search for specific rows, so we do not care
+        // if a rowid is re-used after an existing rows was previously deleted.
+        
+        return "CREATE TABLE IF NOT EXISTS organizations ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "org_name text NOT NULL,"
+                + "poc_name text NOT NULL,"
+                + "poc_email text NOT NULL,"
+                + "poc_phone text NOT NULL,"
+                + "CONSTRAINT org_name_unique UNIQUE (org_name)"
+                + ")";
+    }
+    
+     /**
+     * Returns Create Table SQL for Cases table.
+     * 
+     * @param selectedPlatform CR database platform.
+     * 
+     * @return SQL string to create Cases table.
+     */
+    private static String getCreateCasesTableStatement(CentralRepoPlatforms selectedPlatform) {
+        
+        return ("CREATE TABLE IF NOT EXISTS cases (")
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "case_uid text NOT NULL,"
+                + "org_id integer,"
+                + "case_name text NOT NULL,"
+                + "creation_date text NOT NULL,"
+                + "case_number text,"
+                + "examiner_name text,"
+                + "examiner_email text,"
+                + "examiner_phone text,"
+                + "notes text,"
+                + "foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL,"
+                + "CONSTRAINT case_uid_unique UNIQUE(case_uid)" + getOnConflictIgnoreClause(selectedPlatform)
+                + ")";
+    }
+    
+    private static String getCasesOrgIdIndexStatement() {
+        return "CREATE INDEX IF NOT EXISTS cases_org_id ON cases (org_id)";
+    }
+    
+    private static String getCasesCaseUidIndexStatement() {
+        return "CREATE INDEX IF NOT EXISTS cases_case_uid ON cases (case_uid)";
+    }
+    
+    private static String getCreateReferenceSetsTableStatement(CentralRepoPlatforms selectedPlatform) {
+       
+        return "CREATE TABLE IF NOT EXISTS reference_sets ("
+            + getNumericPrimaryKeyClause("id", selectedPlatform)
+            + "org_id integer NOT NULL,"
+            + "set_name text NOT NULL,"
+            + "version text NOT NULL,"
+            + "known_status integer NOT NULL,"
+            + "read_only boolean NOT NULL,"
+            + "type integer NOT NULL,"
+            + "import_date text NOT NULL,"
+            + "foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL,"
+            + "CONSTRAINT hash_set_unique UNIQUE (set_name, version)"
+            + ")";
+        
+    }
+    
+    /**
+     * 
+     * @return 
+     */
+    private static String getReferenceSetsOrgIdIndexTemplate() {
+         return "CREATE INDEX IF NOT EXISTS reference_sets_org_id ON reference_sets (org_id)";
+    }
+    
+    /**
+     * Returns the template string to create reference_TYPE tables.
+     * 
+     * @param selectedPlatform CR database platform.
+     * 
+     * @return template string to create a reference_TYPE table.
+     */
+    private static String getReferenceTypesTableTemplate(CentralRepoPlatforms selectedPlatform) {
+        // Each "%s" will be replaced with the relevant reference_TYPE table name.
+
+        return "CREATE TABLE IF NOT EXISTS %s ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "reference_set_id integer,"
+                + "value text NOT NULL,"
+                + "known_status integer NOT NULL,"
+                + "comment text,"
+                + "CONSTRAINT %s_multi_unique UNIQUE(reference_set_id, value)" + getOnConflictIgnoreClause(selectedPlatform) + ","
+                + "foreign key (reference_set_id) references reference_sets(id) ON UPDATE SET NULL ON DELETE SET NULL"
+                + ")";
+    }
+        
+    /**
+     * Returns SQL string template to create a value index on 
+     * ReferenceType table.
+     */
+    private static String getReferenceTypeValueIndexTemplate() {
+        return "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
+    }
+    
+    /**
+     * Returns SQL string template to create a value/known_status index on 
+     * ReferenceType table.
+     */
+    private static String getReferenceTypeValueKnownstatusIndexTemplate() {
+        return "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
+    }
+    
+    /**
+     * Retunrs the SQL statemnt to create correlation_types table.
+     * 
+     * @param selectedPlatform CR database platform.
+     * 
+     * @return SQL string to create correlation_types table.
+     */
+    private static String getCreateCorrelationTypesTableStatement(CentralRepoPlatforms selectedPlatform) {
+
+        return "CREATE TABLE IF NOT EXISTS correlation_types ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "display_name text NOT NULL,"
+                + "db_table_name text NOT NULL,"
+                + "supported integer NOT NULL,"
+                + "enabled integer NOT NULL,"
+                + "CONSTRAINT correlation_types_names UNIQUE (display_name, db_table_name)"
+                + ")";
+    }
     /**
      * Get the template String for creating a new _instances table in a Sqlite
      * central repository. %s will exist in the template where the name of the
@@ -411,8 +482,10 @@ public class RdbmsCentralRepoSchemaFactory {
                 return String.format(" %s SERIAL PRIMARY KEY, ", pkName);
             case SQLITE:
                 return String.format(" %s integer primary key autoincrement NOT NULL ,", pkName);
+            default:
+                return "";
         }
-        return "";
+        
     }
 
     /**
@@ -427,7 +500,8 @@ public class RdbmsCentralRepoSchemaFactory {
                 return "";
             case SQLITE:
                 return " ON CONFLICT IGNORE ";
+            default:
+                return "";
         }
-        return "";
     }
 }
