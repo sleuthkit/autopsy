@@ -309,6 +309,8 @@
                 <package>net.sf.sevenzipjbinding.impl</package>
                 <package>net.sf.sevenzipjbinding.simple</package>
                 <package>net.sf.sevenzipjbinding.simple.impl</package>
+                <package>org.apache.tika</package>
+                <package>org.apache.tika.io</package>
                 <package>org.sleuthkit.autopsy.actions</package>
                 <package>org.sleuthkit.autopsy.appservices</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
