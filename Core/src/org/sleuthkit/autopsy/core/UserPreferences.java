@@ -56,6 +56,8 @@ public final class UserPreferences {
     public static final String EXTERNAL_DATABASE_TYPE = "ExternalDatabaseType"; //NON-NLS
     public static final String INDEXING_SERVER_HOST = "IndexingServerHost"; //NON-NLS
     public static final String INDEXING_SERVER_PORT = "IndexingServerPort"; //NON-NLS
+    public static final String ZK_SERVER_HOST = "ZookeeperServerHost"; //NON-NLS
+    public static final String ZK_SERVER_PORT = "ZookeeperServerPort"; //NON-NLS
     private static final String MESSAGE_SERVICE_PASSWORD = "MessageServicePassword"; //NON-NLS
     private static final String MESSAGE_SERVICE_USER = "MessageServiceUser"; //NON-NLS
     private static final String MESSAGE_SERVICE_HOST = "MessageServiceHost"; //NON-NLS
@@ -336,6 +338,22 @@ public final class UserPreferences {
 
     public static void setIndexingServerPort(int port) {
         preferences.putInt(INDEXING_SERVER_PORT, port);
+    }
+    
+    public static String getZkServerHost() {
+        return preferences.get(ZK_SERVER_HOST, "");
+    }
+
+    public static void setZkServerHost(String hostName) {
+        preferences.put(ZK_SERVER_HOST, hostName);
+    }
+
+    public static String getZkServerPort() {
+        return preferences.get(ZK_SERVER_PORT, "9983");
+    }
+
+    public static void setZkServerPort(int port) {
+        preferences.putInt(ZK_SERVER_PORT, port);
     }
 
     public static void setTextTranslatorName(String textTranslatorName) {
