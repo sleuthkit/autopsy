@@ -74,9 +74,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.summarizer.Summarizer;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
+import org.sleuthkit.autopsy.textsummarizer.TextSummarizer;
 
 /**
  * Main class to perform the file search.
@@ -91,7 +91,7 @@ class FileSearch {
             .maximumSize(MAXIMUM_CACHE_SIZE)
             .build();
     private static final int PREVIEW_SIZE = 256;
-    private static volatile Summarizer summarizerToUse = null;
+    private static volatile TextSummarizer summarizerToUse = null;
 
     /**
      * Run the file search and returns the SearchResults object for debugging.
@@ -248,7 +248,7 @@ class FileSearch {
     }
 
     /**
-     * Get a summary for the specified AbstractFile if no summarizers exist get
+     * Get a summary for the specified AbstractFile if no TextSummarizers exist get
      * the first bit of the file.
      *
      * @param file The AbstractFile to summarize.
@@ -258,7 +258,7 @@ class FileSearch {
     @NbBundle.Messages({"FileSearch.documentSummary.noPreview=No preview available.",
         "FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview."})
     static String summarize(AbstractFile file) {
-        Summarizer localSummarizer = summarizerToUse;
+        TextSummarizer localSummarizer = summarizerToUse;
         if (localSummarizer == null) {
             synchronized (searchCache) {
                 if (localSummarizer == null) {
@@ -304,15 +304,15 @@ class FileSearch {
     }
 
     /**
-     * Get the first summarizer found by a lookup of summarizers.
+     * Get the first TextSummarizer found by a lookup of TextSummarizers.
      *
-     * @return The first summarizer found by a lookup of summarizers.
+     * @return The first TextSummarizer found by a lookup of TextSummarizers.
      *
      * @throws IOException
      */
-    private static Summarizer getLocalSummarizer() throws IOException {
-        Collection<? extends Summarizer> summarizers
-                = Lookup.getDefault().lookupAll(Summarizer.class
+    private static TextSummarizer getLocalSummarizer() throws IOException {
+        Collection<? extends TextSummarizer> summarizers
+                = Lookup.getDefault().lookupAll(TextSummarizer.class
                 );
         if (!summarizers.isEmpty()) {
             summarizerToUse = summarizers.iterator().next();

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.summarizer;
+package org.sleuthkit.autopsy.textsummarizer;
 
 import java.io.IOException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -24,12 +24,12 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Interface for implementation of summarizers for documents.
  */
-public interface Summarizer {
+public interface TextSummarizer {
 
     /**
-     * Get the name of the summarizer for identification purposes.
+     * Get the name of the TextSummarizer for identification purposes.
      *
-     * @return The name of the summarizer.
+     * @return The name of the TextSummarizer.
      */
     String getName();
 
