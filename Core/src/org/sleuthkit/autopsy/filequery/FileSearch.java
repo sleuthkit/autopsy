@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,11 +25,13 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,6 +48,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -71,6 +74,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.summarizer.Summarizer;
+import org.sleuthkit.autopsy.textextractors.TextExtractor;
+import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 
 /**
  * Main class to perform the file search.
@@ -84,6 +90,8 @@ class FileSearch {
     private static final Cache<SearchKey, Map<GroupKey, List<ResultFile>>> searchCache = CacheBuilder.newBuilder()
             .maximumSize(MAXIMUM_CACHE_SIZE)
             .build();
+    private static final int PREVIEW_SIZE = 256;
+    private static volatile Summarizer summarizerToUse = null;
 
     /**
      * Run the file search and returns the SearchResults object for debugging.
@@ -237,6 +245,56 @@ class FileSearch {
             page.add(filesInGroup.get(i));
         }
         return page;
+    }
+
+    @NbBundle.Messages({"FileSearch.documentSummary.noPreview=No preview available.",
+        "FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview."})
+    static String summarize(AbstractFile file) {
+        Summarizer localSummarizer = summarizerToUse;
+        if (localSummarizer == null) {
+            synchronized (searchCache) {
+                if (localSummarizer == null) {
+                    try {
+                        localSummarizer = getLocalSummarizer();
+                    } catch (IOException ignored) {
+                        //no summarizers being present is not unexpected
+                    }
+                }
+            }
+        }
+        if (localSummarizer == null) {
+            return getFirstLines(file);
+        } else {
+            try {
+                return localSummarizer.summarize(file, 40);
+            } catch (IOException ex) {
+                return Bundle.FileSearch_documentSummary_noPreview();
+            }
+        }
+
+    }
+
+    private static String getFirstLines(AbstractFile file) {
+        try (Reader reader = TextExtractorFactory.getExtractor(file, null).getReader()) {
+            char[] cbuf = new char[PREVIEW_SIZE];
+            reader.read(cbuf, 0, PREVIEW_SIZE);
+            return Arrays.toString(cbuf);
+        } catch (IOException ex) {
+            return Bundle.FileSearch_documentSummary_noBytes();
+        } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
+            return Bundle.FileSearch_documentSummary_noPreview();
+        }
+    }
+
+    private static Summarizer getLocalSummarizer() throws IOException {
+        Collection<? extends Summarizer> summarizers
+                = Lookup.getDefault().lookupAll(Summarizer.class
+                );
+        if (!summarizers.isEmpty()) {
+            summarizerToUse = summarizers.iterator().next();
+            return summarizerToUse;
+        }
+        throw new IOException("No summarizers found");
     }
 
     /**
@@ -615,6 +673,7 @@ class FileSearch {
         videoThumbnails.add(ImageUtils.getDefaultThumbnail());
         videoThumbnails.add(ImageUtils.getDefaultThumbnail());
         return videoThumbnails;
+
     }
 
     private FileSearch() {

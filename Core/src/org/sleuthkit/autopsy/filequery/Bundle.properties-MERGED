@@ -24,6 +24,8 @@ FileGroup.groupSortingAlgorithm.groupSize.text=Group Size
 FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
 # {0} - Data source ID
 FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})
+FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview.
+FileSearch.documentSummary.noPreview=No preview available.
 FileSearch.FileTagGroupKey.noSets=None
 # {0} - file name
 FileSearch.genVideoThumb.progress.text=extracting temporary file {0}
@@ -185,8 +187,6 @@ ResultFile.score.taggedFile.description=At least one instance of the file has be
 # {1} - totalPages
 ResultsPanel.currentPage.displayValue=Page: {0} of {1}
 ResultsPanel.currentPageLabel.text=Page: -
-ResultsPanel.documentPreviewWorker.noBytes=No bytes read for document, unable to display preview.
-ResultsPanel.documentPreviewWorker.noPreview=No preview available.
 # {0} - selectedPage
 # {1} - maxPage
 ResultsPanel.invalidPageNumber.message=The selected page number {0} does not exist. Please select a value from 1 to {1}.

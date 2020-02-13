@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
@@ -38,14 +40,12 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionListener;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -748,7 +748,6 @@ public class ResultsPanel extends javax.swing.JPanel {
     private class DocumentPreviewWorker extends SwingWorker<Void, Void> {
 
         private final DocumentWrapper documentWrapper;
-        private static final int PREVIEW_SIZE = 256;
 
         /**
          * Construct a new DocumentPreviewWorker.
@@ -763,53 +762,23 @@ public class ResultsPanel extends javax.swing.JPanel {
 
         @Override
         protected Void doInBackground() throws Exception {
-            String preview = createPreview(documentWrapper.getResultFile().getFirstInstance());
+            String preview = FileSearch.summarize(documentWrapper.getResultFile().getFirstInstance());
             if (preview != null) {
                 documentWrapper.setPreview(preview);
             }
             return null;
         }
 
-        /**
-         * Create the string that will be used as the preview for the specified
-         * AbstractFile.
-         *
-         * @param file The AbstractFile to create the preview for.
-         *
-         * @return The String which is the preview for the specified
-         *         AbstractFile.
-         */
-        @Messages({"ResultsPanel.documentPreviewWorker.noPreview=No preview available.",
-            "ResultsPanel.documentPreviewWorker.noBytes=No bytes read for document, unable to display preview."})
-        private String createPreview(AbstractFile file) {
-            byte[] data = new byte[PREVIEW_SIZE];
-            int bytesRead = 0;
-            if (file.getSize() > 0) {
-                try {
-                    int length = PREVIEW_SIZE > file.getSize() ? (int) file.getSize() : PREVIEW_SIZE;  //if the size is less than the int it can be cast to an int
-                    bytesRead = file.read(data, 0, length); // read the data
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error while trying to show the String content.", ex); //NON-NLS
-                }
-            }
-            String text;
-            if (bytesRead > 0) {
-                StringExtract stringExtract = new StringExtract();
-                final StringExtract.StringExtractUnicodeTable.SCRIPT selScript = StringExtract.StringExtractUnicodeTable.SCRIPT.LATIN_1;
-                stringExtract.setEnabledScript(selScript);
-                StringExtract.StringExtractResult res = stringExtract.extract(data, bytesRead, 0);
-                text = res.getText();
-                if (StringUtils.isBlank(text)) {
-                    text = Bundle.ResultsPanel_documentPreviewWorker_noPreview();
-                }
-            } else {
-                text = Bundle.ResultsPanel_documentPreviewWorker_noBytes();
-            }
-            return text;
-        }
-
         @Override
         protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                documentWrapper.setPreview(ex.getMessage());
+                logger.log(Level.WARNING, "Document Worker Exception", ex);
+            } catch (CancellationException ex){
+                //ignore we want this to be cancelled sometimes
+            }
             documentPreviewViewer.repaint();
         }
 
