@@ -676,15 +676,15 @@ class ExtractRegistry extends Extract {
 
                                 switch (dataType) {
                                     case "recentdocs": //NON-NLS
-                                        try {
-                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
-                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, "RecentActivity", mtime));
+//                                        try {
+//                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+//                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, "RecentActivity", mtime));
 //                                          bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, "RecentActivity", mtimeItem));
-                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, "RecentActivity", value));
-                                            bbart.addAttributes(bbattributes);
-                                        } catch (TskCoreException ex) {
-                                            logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard.", ex); //NON-NLS
-                                        }
+//                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, "RecentActivity", value));
+//                                            bbart.addAttributes(bbattributes);
+//                                        } catch (TskCoreException ex) {
+//                                            logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard.", ex); //NON-NLS
+//                                        }
                                         break;
                                     case "usb": //NON-NLS
                                         try {
@@ -1177,6 +1177,10 @@ class ExtractRegistry extends Extract {
                     parseAdobeMRUList(regFileName, regFile, reader);
                 } else if (line.matches("^mpmru v.*")) {
                     parseMediaPlayerMRUList(regFileName, regFile, reader);
+                } else if (line.matches("^trustrecords v.*")) {
+                    parseTrustrecordsMRUList(regFileName, regFile, reader);
+                } else if (line.matches("^ArcHistory:")) {
+                    parseArchHistoryMRUList(regFileName, regFile, reader);
                 }
                 line = reader.readLine();
             }
@@ -1241,7 +1245,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }    
-        if (bbartifacts != null) {
+        if (bbartifacts.isEmpty()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1282,7 +1286,104 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (bbartifacts != null) {
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
+    }
+    
+     /**
+     * Create recently used artifacts from runmru ArcHistory records
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseArchHistoryMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String line = reader.readLine();
+        line = line.trim();
+        while (!line.contains("^PathHistory:") && !line.isEmpty()) {
+            // Columns are
+            // <fileName>
+            String fileName = line;
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
+            attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+            BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+            if(bba != null) {
+                 bbartifacts.add(bba);
+            }
+            line = reader.readLine();
+            line = line.trim();
+        }
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
+    }
+    
+    /**
+     * Create recently used artifacts from trustrecords records
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseTrustrecordsMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        String userProfile = regFile.getParentPath();
+        userProfile = userProfile.substring(0, userProfile.length() - 2);
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        SimpleDateFormat pluginDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy", US);
+        Long usedTime = Long.valueOf(0);
+        String line = reader.readLine();
+        while (!line.contains(SECTION_DIVIDER)) {
+            line = reader.readLine();
+            line = line.trim();
+            if (line.contains("**")) {
+                usedTime = Long.valueOf(0);
+            }
+            if (!line.contains("**") && !line.contains("----------") && !line.contains("LastWrite") 
+                 && !line.contains(SECTION_DIVIDER) && !line.isEmpty()) {
+                // Columns are
+                // Date : <File Name>/<Website>
+                // Split line on " : " which is the record delimiter between position and file
+                String fileName = null;
+                try {
+                String tokens[] = line.split(" : ");
+                fileName = tokens[1];
+                if (fileName.contains("%USERPROFILE%")) {
+                    fileName = fileName.replace("%USERPROFILE%", userProfile);
+                } 
+                // Time in the format of Wed May 31 14:33:03 2017 Z 
+                try {
+                    String fileUsedTime = tokens[0].replaceAll(" Z","");
+                    Date usedDate = pluginDateFormat.parse(fileUsedTime);
+                    usedTime = usedDate.getTime()/1000;
+                } catch (ParseException ex) {
+                // catching error and displaying date that could not be parsed
+                // we set the timestamp to 0 and continue on processing
+                    logger.log(Level.WARNING, String.format("Failed to parse date/time %s for adobe file artifact.", tokens[0]), ex); //NON-NLS
+                }
+                } catch (ArrayIndexOutOfBoundsException ex) {
+                    logger.log(Level.WARNING, "Failed to parse date/time %s for adobe file artifact.", ex); //NON-NLS                    
+                }
+                Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), usedTime));
+                BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                if(bba != null) {
+                     bbartifacts.add(bba);
+                }
+                line = line.trim();
+            }
+        }
+        if (!bbartifacts.isEmpty()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1488,7 +1589,7 @@ class ExtractRegistry extends Extract {
 
         return returnValue;
     }
-
+    
     @Override
     public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
