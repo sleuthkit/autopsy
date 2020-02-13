@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Coordinatio
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
+import org.sleuthkit.autopsy.centralrepository.optionspanel.EamDbSettingsDialog;
 
 /**
  *
@@ -177,8 +178,11 @@ public class CentralRepoDbUtil {
         "EamDbUtil.exclusiveLockAquisitionFailure.message=Unable to acquire exclusive lock for Central Repository."})
     public static void upgradeDatabase() throws CentralRepoException {
         if (!CentralRepository.isEnabled()) {
-            return;
+            EamDbSettingsDialog dialog = new EamDbSettingsDialog();
+            dialog.
+            promptUserForSetup();
         }
+        
         CentralRepository db = null;
         CoordinationService.Lock lock = null;
 
