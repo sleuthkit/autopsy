@@ -126,6 +126,7 @@ public class Route extends GeoPath{
      * 
      *  An exception will be thrown if longitude or latitude is null.
      *
+     * @param artifact
      * @param attributeMap Map of artifact attributes for this waypoint
      *
      * @return The end waypoint
