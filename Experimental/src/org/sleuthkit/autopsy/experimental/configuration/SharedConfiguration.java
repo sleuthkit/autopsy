@@ -1243,9 +1243,14 @@ public class SharedConfiguration {
             HashDbManager hashDbManager = HashDbManager.getInstance();
             hashDbManager.loadLastSavedConfiguration();
             for (HashDbManager.HashDb hashDb : hashDbManager.getAllHashSets()) {
-                if (hashDb.hasIndexOnly() && (!hashDb.getIndexPath().isEmpty())) {
+                // Central Repository hash sets have no path and don't need to be copied
+                if (hashDb.getIndexPath().isEmpty() && hashDb.getDatabasePath().isEmpty()) {
+                    continue;
+                }
+				
+                if (hashDb.hasIndexOnly()) {
                     results.add(hashDb.getIndexPath());
-                } else if (!hashDb.getDatabasePath().isEmpty()) {
+                } else {
                     results.add(hashDb.getDatabasePath());
                 }
             }
