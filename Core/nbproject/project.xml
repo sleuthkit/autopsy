@@ -343,9 +343,9 @@
                 <package>org.sleuthkit.autopsy.modules.vmextractor</package>
                 <package>org.sleuthkit.autopsy.progress</package>
                 <package>org.sleuthkit.autopsy.report</package>
-                <package>org.sleuthkit.autopsy.summarizer</package>
                 <package>org.sleuthkit.autopsy.textextractors</package>
                 <package>org.sleuthkit.autopsy.textextractors.configs</package>
+                <package>org.sleuthkit.autopsy.textsummarizer</package>
                 <package>org.sleuthkit.autopsy.texttranslation</package>
                 <package>org.sleuthkit.datamodel</package>
                 <package>org.sleuthkit.datamodel.blackboardutils</package>
