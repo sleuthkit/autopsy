@@ -37,8 +37,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizer;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
@@ -46,6 +45,7 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.corecomponents.TextPrompt;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 @Messages({
     "AllCasesSearchDialog.dialogTitle.text=Search All Cases",
@@ -103,8 +103,8 @@ final class AllCasesSearchDialog extends javax.swing.JDialog {
                 List<CorrelationAttributeInstance> correlationInstances = new ArrayList<>();
 
                 try {
-                    correlationInstances = EamDb.getInstance().getArtifactInstancesByTypeValue(type, value);
-                } catch (EamDbException ex) {
+                    correlationInstances = CentralRepository.getInstance().getArtifactInstancesByTypeValue(type, value);
+                } catch (CentralRepoException ex) {
                     logger.log(Level.SEVERE, "Unable to connect to the Central Repository database.", ex);
                 } catch (CorrelationAttributeNormalizationException ex) {
                     logger.log(Level.SEVERE, "Unable to retrieve data from the Central Repository.", ex);
@@ -336,12 +336,12 @@ final class AllCasesSearchDialog extends javax.swing.JDialog {
          * Add correlation types to the combo-box.
          */
         try {
-            EamDb dbManager = EamDb.getInstance();
+            CentralRepository dbManager = CentralRepository.getInstance();
             correlationTypes.clear();
             correlationTypes.addAll(dbManager.getDefinedCorrelationTypes());
             int numberOfCases = dbManager.getCases().size();
             casesLabel.setText(Bundle.AllCasesSearchDialog_caseLabel_text(numberOfCases));
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Unable to connect to the Central Repository database.", ex);
         }
 

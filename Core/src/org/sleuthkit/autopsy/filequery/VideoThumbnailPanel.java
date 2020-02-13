@@ -31,7 +31,6 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
-import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle.Messages;
 
 /**
@@ -42,13 +41,6 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     private static final int GAP_SIZE = 4;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
     private static final int BYTE_UNIT_CONVERSION = 1000;
-    private static final int ICON_SIZE = 16;
-    private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
-    private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
-    private static final String DELETE_ICON_PATH = "/org/sleuthkit/autopsy/images/file-icon-deleted.png";
-    private static final ImageIcon INTERESTING_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(YELLOW_CIRCLE_ICON_PATH, false));
-    private static final ImageIcon NOTABLE_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(RED_CIRCLE_ICON_PATH, false));
-    private static final ImageIcon DELETED_ICON = new ImageIcon(ImageUtilities.loadImage(DELETE_ICON_PATH, false));
     private static final long serialVersionUID = 1L;
 
     /**
@@ -117,14 +109,14 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         imagePanel.setLayout(new java.awt.GridBagLayout());
 
         scoreLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/red-circle-exclamation.png"))); // NOI18N
-        scoreLabel.setMaximumSize(new Dimension(ICON_SIZE,ICON_SIZE));
-        scoreLabel.setMinimumSize(new Dimension(ICON_SIZE,ICON_SIZE));
-        scoreLabel.setPreferredSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        scoreLabel.setMaximumSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
+        scoreLabel.setMinimumSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
+        scoreLabel.setPreferredSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
 
         deletedLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/file-icon-deleted.png"))); // NOI18N
-        deletedLabel.setMaximumSize(new Dimension(ICON_SIZE,ICON_SIZE));
-        deletedLabel.setMinimumSize(new Dimension(ICON_SIZE,ICON_SIZE));
-        deletedLabel.setPreferredSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        deletedLabel.setMaximumSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
+        deletedLabel.setMinimumSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
+        deletedLabel.setPreferredSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -179,26 +171,8 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         countLabel.setText(Bundle.VideoThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
         addThumbnails(value);
         imagePanel.setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
-        if (value.getResultFile().isDeleted()) {
-            deletedLabel.setIcon(DELETED_ICON);
-            deletedLabel.setToolTipText(Bundle.VideoThumbnailPanel_deleted_text());
-        } else {
-            deletedLabel.setIcon(null);
-            deletedLabel.setToolTipText("");
-        }
-        switch (value.getResultFile().getScore()) {
-            case NOTABLE_SCORE:
-                scoreLabel.setIcon(NOTABLE_SCORE_ICON);
-                break;
-            case INTERESTING_SCORE:
-                scoreLabel.setIcon(INTERESTING_SCORE_ICON);
-                break;
-            case NO_SCORE: // empty case - this is interpreted as an intentional fall-through
-            default:
-                scoreLabel.setIcon(null);
-                break;
-        }
-        scoreLabel.setToolTipText(value.getResultFile().getScoreDescription());
+        DiscoveryUiUtils.setDeletedIcon(value.getResultFile().isDeleted(), deletedLabel);
+        DiscoveryUiUtils.setScoreIcon(value.getResultFile(), scoreLabel);     
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
         return this;
     }
@@ -253,7 +227,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
             //gets tooltip of internal panel item mouse is over
             Point point = event.getPoint();
             for (Component comp : getComponents()) {
-                if (isPointOnIcon(comp, point)) {
+                if (DiscoveryUiUtils.isPointOnIcon(comp, point)) {
                     String toolTip = ((JComponent) comp).getToolTipText();
                     if (toolTip == null || toolTip.isEmpty()) {
                         return null;
@@ -266,15 +240,4 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         return null;
     }
 
-    /**
-     * Helper method to see if point is on the icon.
-     *
-     * @param comp  The component to check if the cursor is over the icon of
-     * @param point The point the cursor is at.
-     *
-     * @return True if the point is over the icon, false otherwise.
-     */
-    private boolean isPointOnIcon(Component comp, Point point) {
-        return comp instanceof JComponent && point.x >= comp.getX() && point.x <= comp.getX() + ICON_SIZE && point.y >= comp.getY() && point.y <= comp.getY() + ICON_SIZE;
-    }
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,35 +20,29 @@ package org.sleuthkit.autopsy.filequery;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileSize;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.autopsy.filequery.FileSearchData.Frequency;
 import org.sleuthkit.autopsy.filequery.FileSearchData.Score;
-
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Run various filters to return a subset of files from the current case.
  */
 class FileSearchFiltering {
-
-    private final static Logger logger = Logger.getLogger(FileSearchFiltering.class.getName());
 
     /**
      * Run the given filters to get a list of matching files.
@@ -60,19 +54,10 @@ class FileSearchFiltering {
      *
      * @return
      */
-    static List<ResultFile> runQueries(List<FileFilter> filters, SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
-
+    static List<ResultFile> runQueries(List<FileFilter> filters, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
         if (caseDb == null) {
             throw new FileSearchException("Case DB parameter is null"); // NON-NLS
         }
-
-        // Record the selected filters
-        String filterStr = "";
-        for (FileFilter filter : filters) {
-            filterStr += "  " + filter.getDesc() + "\n";
-        }
-        logger.log(Level.INFO, "Running filters:\n{0}", filterStr);
-
         // Combine all the SQL queries from the filters into one query
         String combinedQuery = "";
         for (FileFilter filter : filters) {
@@ -109,11 +94,9 @@ class FileSearchFiltering {
      * @throws TskCoreException
      * @throws FileSearchException
      */
-    private static List<ResultFile> getResultList(List<FileFilter> filters, String combinedQuery, SleuthkitCase caseDb, EamDb centralRepoDb) throws TskCoreException, FileSearchException {
+    private static List<ResultFile> getResultList(List<FileFilter> filters, String combinedQuery, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws TskCoreException, FileSearchException {
         // Get all matching abstract files
         List<ResultFile> resultList = new ArrayList<>();
-
-        logger.log(Level.INFO, "Running SQL query: {0}", combinedQuery);
         List<AbstractFile> sqlResults = caseDb.findAllFilesWhere(combinedQuery);
 
         // If there are no results, return now
@@ -178,7 +161,7 @@ class FileSearchFiltering {
          * @throws FileSearchException
          */
         List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
             return new ArrayList<>();
         }
 
@@ -579,7 +562,7 @@ class FileSearchFiltering {
 
         @Override
         List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             // We have to have run some kind of SQL filter before getting to this point,
             // and should have checked afterward to see if the results were empty.
@@ -912,7 +895,7 @@ class FileSearchFiltering {
 
         @Override
         List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             if (centralRepoDb == null) {
                 throw new FileSearchException("Can not run Previously Notable filter with null Central Repository DB"); // NON-NLS
@@ -941,7 +924,7 @@ class FileSearchFiltering {
                     }
                 }
                 return notableResults;
-            } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+            } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
                 throw new FileSearchException("Error querying central repository", ex); // NON-NLS
             }
         }

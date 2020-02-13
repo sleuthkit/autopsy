@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.geolocation;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -27,9 +28,9 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -49,9 +50,6 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.geolocation.GeoFilterPanel.GeoFilter;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
-import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
-import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder;
-import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder.WaypointFilterQueryCallBack;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -85,18 +83,21 @@ public final class GeolocationTopComponent extends TopComponent {
 
     // This is the hardcoded report name from KMLReport.java
     private static final String REPORT_KML = "ReportKML.kml";
-    
+
     private boolean mapInitalized = false;
 
     @Messages({
         "GLTopComponent_name=Geolocation",
-        "GLTopComponent_initilzation_error=An error occurred during waypoint initilization.  Geolocation data maybe incomplete."
+        "GLTopComponent_initilzation_error=An error occurred during waypoint initilization. Geolocation data maybe incomplete.",
+        "GLTopComponent_No_dataSource_message=There are no data sources with Geolocation artifacts found.",
+        "GLTopComponent_No_dataSource_Title=No Geolocation artifacts found"
     })
 
     /**
      * Constructs new GeoLocationTopComponent
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @SuppressWarnings("deprecation")
     public GeolocationTopComponent() {
         initComponents();
 
@@ -113,13 +114,14 @@ public final class GeolocationTopComponent extends TopComponent {
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()
-                        || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID())) {
+                        || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()
+                        || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID())) {
 
                     showRefreshPanel(true);
                 }
             }
         };
-        
+
         this.caseEventListener = pce -> {
             mapPanel.clearWaypoints();
             if (pce.getNewValue() != null) {
@@ -139,7 +141,6 @@ public final class GeolocationTopComponent extends TopComponent {
             public void actionPerformed(ActionEvent e) {
                 geoFilterPanel.updateDataSourceList();
                 mapPanel.clearWaypoints();
-                updateWaypoints();
                 showRefreshPanel(false);
             }
         });
@@ -148,9 +149,27 @@ public final class GeolocationTopComponent extends TopComponent {
         filterPane.setPanel(geoFilterPanel);
         geoFilterPanel.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {          
+            public void actionPerformed(ActionEvent e) {
                 updateWaypoints();
             }
+        });
+
+        geoFilterPanel.addPropertyChangeListener(GeoFilterPanel.INITPROPERTY, new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (geoFilterPanel.hasDataSources()) {
+                    updateWaypoints();
+                } else {
+                    geoFilterPanel.setEnabled(false);
+                    setWaypointLoading(false);
+                    JOptionPane.showMessageDialog(GeolocationTopComponent.this,
+                            Bundle.GLTopComponent_No_dataSource_message(),
+                            Bundle.GLTopComponent_No_dataSource_Title(),
+                            JOptionPane.ERROR_MESSAGE);
+
+                }
+            }
+
         });
 
         mapPanel.addPropertyChangeListener(MapPanel.CURRENT_MOUSE_GEOPOSITION, new PropertyChangeListener() {
@@ -186,7 +205,7 @@ public final class GeolocationTopComponent extends TopComponent {
     public void componentOpened() {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
-        
+
     }
 
     @Messages({
@@ -196,10 +215,7 @@ public final class GeolocationTopComponent extends TopComponent {
     @Override
     public void open() {
         super.open();
-        mapPanel.clearWaypoints();
-        geoFilterPanel.clearDataSourceList();
-        geoFilterPanel.updateDataSourceList();
-        
+
         // Let's make sure we only do this on the first open
         if (!mapInitalized) {
             try {
@@ -217,8 +233,12 @@ public final class GeolocationTopComponent extends TopComponent {
                 return; // Doen't set the waypoints.
             }
         }
-        mapPanel.setWaypoints(new ArrayList<>());
-        updateWaypoints();
+
+        mapPanel.clearWaypoints();
+        geoFilterPanel.clearDataSourceList();
+        geoFilterPanel.updateDataSourceList();
+        mapPanel.setWaypoints(new LinkedHashSet<>());
+
     }
 
     /**
@@ -227,12 +247,27 @@ public final class GeolocationTopComponent extends TopComponent {
      * @param show Whether to show or hide the panel.
      */
     private void showRefreshPanel(boolean show) {
-        if (show) {
-            mapPanel.add(refreshPanel, BorderLayout.NORTH);
-        } else {
-            mapPanel.remove(refreshPanel);
-        }
-        mapPanel.revalidate();
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                boolean isShowing = false;
+                Component[] comps = mapPanel.getComponents();
+                for (Component comp : comps) {
+                    if (comp.equals(refreshPanel)) {
+                        isShowing = true;
+                        break;
+                    }
+                }
+                if (show && !isShowing) {
+                    mapPanel.add(refreshPanel, BorderLayout.NORTH);
+                    mapPanel.revalidate();
+                } else if (!show && isShowing) {
+                    mapPanel.remove(refreshPanel);
+                    mapPanel.revalidate();
+                }
+            }
+        });
+
     }
 
     /**
@@ -242,7 +277,7 @@ public final class GeolocationTopComponent extends TopComponent {
     @Messages({
         "GeoTopComponent_no_waypoints_returned_mgs=Applied filter failed to find waypoints that matched criteria.\nRevise filter options and try again.",
         "GeoTopComponent_no_waypoints_returned_Title=No Waypoints Found",
-        "GeoTopComponent_filter_exception_msg=Exception occured during waypoint filtering.",
+        "GeoTopComponent_filter_exception_msg=Exception occurred during waypoint filtering.",
         "GeoTopComponent_filter_exception_Title=Filter Failure",
         "GeoTopComponent_filer_data_invalid_msg=Unable to run waypoint filter.\nPlease select one or more data sources.",
         "GeoTopComponent_filer_data_invalid_Title=Filter Failure"
@@ -264,8 +299,59 @@ public final class GeolocationTopComponent extends TopComponent {
         setWaypointLoading(true);
         geoFilterPanel.setEnabled(false);
 
-        Thread thread = new Thread(new WaypointRunner(filters));
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    (new WaypointFetcher(filters)).getWaypoints();
+                } catch (GeoLocationDataException ex) {
+                    logger.log(Level.SEVERE, "Failed to filter waypoints.", ex);
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            JOptionPane.showMessageDialog(GeolocationTopComponent.this,
+                                    Bundle.GeoTopComponent_filter_exception_Title(),
+                                    Bundle.GeoTopComponent_filter_exception_msg(),
+                                    JOptionPane.ERROR_MESSAGE);
+
+                            setWaypointLoading(false);
+                        }
+                    });
+
+                }
+            }
+
+        });
         thread.start();
+    }
+
+    /**
+     * Add the filtered set of waypoints to the map and set the various window
+     * components to their proper state.
+     *
+     * @param waypointList
+     */
+    void addWaypointsToMap(Set<MapWaypoint> waypointList) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                // If the list is empty, tell the user 
+                if (waypointList == null || waypointList.isEmpty()) {
+                    mapPanel.clearWaypoints();
+                    JOptionPane.showMessageDialog(GeolocationTopComponent.this,
+                            Bundle.GeoTopComponent_no_waypoints_returned_Title(),
+                            Bundle.GeoTopComponent_no_waypoints_returned_mgs(),
+                            JOptionPane.INFORMATION_MESSAGE);
+                    setWaypointLoading(false);
+                    geoFilterPanel.setEnabled(true);
+                    return;
+                }
+                mapPanel.clearWaypoints();
+                mapPanel.setWaypoints(waypointList);
+                setWaypointLoading(false);
+                geoFilterPanel.setEnabled(true);
+            }
+        });
     }
 
     /**
@@ -378,7 +464,7 @@ public final class GeolocationTopComponent extends TopComponent {
             String reportBaseDir = createReportDirectory();
 
             progressPanel.setLabels(REPORT_KML, reportBaseDir);
-            
+
             SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() throws Exception {
@@ -404,80 +490,18 @@ public final class GeolocationTopComponent extends TopComponent {
     // End of variables declaration//GEN-END:variables
 
     /**
-     * A runnable class for getting waypoints based on the current filters.
+     *  Extends AbstractWaypointFetcher to handle the returning of
+     *  the filters set of MapWaypoints.
      */
-    private class WaypointRunner implements Runnable {
+    final private class WaypointFetcher extends AbstractWaypointFetcher {
 
-        private final GeoFilter filters;
-
-        /**
-         * Constructs the Waypoint Runner
-         *
-         * @param filters
-         */
-        WaypointRunner(GeoFilter filters) {
-            this.filters = filters;
+        WaypointFetcher(GeoFilter filters) {
+            super(filters);
         }
 
         @Override
-        public void run() {
-            Case currentCase = Case.getCurrentCase();
-            try {
-                WaypointBuilder.getAllWaypoints(currentCase.getSleuthkitCase(),
-                        filters.getDataSources(),
-                        filters.showAllWaypoints(),
-                        filters.getMostRecentNumDays(),
-                        filters.showWaypointsWithoutTimeStamp(),
-                        new WaypointCallBack());
-
-            } catch (GeoLocationDataException ex) {
-                logger.log(Level.SEVERE, "Failed to filter waypoints.", ex);
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        JOptionPane.showMessageDialog(GeolocationTopComponent.this,
-                                Bundle.GeoTopComponent_filter_exception_Title(),
-                                Bundle.GeoTopComponent_filter_exception_msg(),
-                                JOptionPane.ERROR_MESSAGE);
-                        
-                        setWaypointLoading(false);
-                    }
-                });
-            }
-        }
-
-    }
-
-    /**
-     * Callback for getting waypoints.
-     */
-    private class WaypointCallBack implements WaypointFilterQueryCallBack {
-
-        @Override
-        public void process(final List<Waypoint> waypoints) {
-            // Make sure that the waypoints are added to the map panel in
-            // the correct thread.
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    // If the list is empty, tell the user and do not change 
-                    // the visible waypoints.
-                    if (waypoints == null || waypoints.isEmpty()) {
-                        mapPanel.clearWaypoints();
-                        JOptionPane.showMessageDialog(GeolocationTopComponent.this,
-                                Bundle.GeoTopComponent_no_waypoints_returned_Title(),
-                                Bundle.GeoTopComponent_no_waypoints_returned_mgs(),
-                                JOptionPane.INFORMATION_MESSAGE);
-                        setWaypointLoading(false);
-                        geoFilterPanel.setEnabled(true);
-                        return;
-                    }
-                    mapPanel.clearWaypoints();
-                    mapPanel.setWaypoints(MapWaypoint.getWaypoints(waypoints));
-                    setWaypointLoading(false);
-                    geoFilterPanel.setEnabled(true);
-                }
-            });
+        void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints) {
+            addWaypointsToMap(mapWaypoints);
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,8 +36,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.filequery.FileGroup.GroupSortingAlgorithm;
 import org.sleuthkit.autopsy.filequery.FileSearch.GroupingAttributeType;
@@ -52,6 +51,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Dialog to allow the user to choose filtering and grouping options.
@@ -461,7 +461,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         int[] selectedSizeIndices = {1, 2, 3, 4, 5};
         sizeFilterSettings(true, enabled, resetSelected || sizeCheckbox.isSelected(), resetSelected == true ? selectedSizeIndices : null);
         int[] selectedFrequencyIndices;
-        if (!EamDb.isEnabled()) {
+        if (!CentralRepository.isEnabled()) {
             selectedFrequencyIndices = new int[]{0};
         } else {
             selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
@@ -493,7 +493,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
         sizeFilterSettings(true, enabled, !resetSelected && sizeCheckbox.isSelected(), null);
         int[] selectedFrequencyIndices;
-        if (!EamDb.isEnabled()) {
+        if (!CentralRepository.isEnabled()) {
             selectedFrequencyIndices = new int[]{0};
         } else {
             selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
@@ -511,6 +511,38 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         notableFilterSettings(false, false, false);
     }
 
+        /**
+     * Set the UI elements available to be the set of UI elements available when
+     * a Document search is being performed.
+     *
+     * @param enabled       Boolean indicating if the filters present for documents
+     *                      should be enabled.
+     * @param resetSelected Boolean indicating if selection of the filters
+     *                      present for documents should be reset to their default
+     *                      status.
+     */
+    private void documentsSelected(boolean enabled, boolean resetSelected) {
+        dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
+        sizeFilterSettings(true, enabled, !resetSelected && sizeCheckbox.isSelected(), null);
+        int[] selectedFrequencyIndices;
+        if (!CentralRepository.isEnabled()) {
+            selectedFrequencyIndices = new int[]{0};
+        } else {
+            selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
+        }
+        crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
+        exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
+        objectsFilterSettings(false, false, false, null);
+        hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
+        interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
+        parentFilterSettings(true, enabled, !resetSelected && parentCheckbox.isSelected(), null);
+        scoreFilterSettings(false, false, false, null);
+        tagsFilterSettings(false, false, false, null);
+        keywordFilterSettings(false, false, false, null);
+        knownFilesFilterSettings(false, false, false);
+        notableFilterSettings(false, false, false);
+    }
+    
     /**
      * Set the type of search to perform.
      *
@@ -519,10 +551,20 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     void setSelectedType(FileType type) {
         fileType = type;
         setUpSizeFilter();
-        if (fileType == FileType.IMAGE) {
-            imagesSelected(true, true);
-        } else if (fileType == FileType.VIDEO) {
-            videosSelected(true, true);
+        if (null != fileType) {
+            switch (fileType) {
+                case IMAGE:
+                    imagesSelected(true, true);
+                    break;
+                case VIDEO:
+                    videosSelected(true, true);
+                    break;
+                case DOCUMENTS:
+                    documentsSelected(true, true);
+                    break;
+                default:
+                    break;
+            }
         }
         validateFields();
     }
@@ -553,7 +595,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         groupByCombobox.removeAllItems();
         // Set up the grouping attributes
         for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.getOptionsForGrouping()) {
-            if ((type != GroupingAttributeType.FREQUENCY || EamDb.isEnabled())
+            if ((type != GroupingAttributeType.FREQUENCY || CentralRepository.isEnabled())
                     && (type != GroupingAttributeType.OBJECT_DETECTED || objectsList.getModel().getSize() > 0)
                     && (type != GroupingAttributeType.INTERESTING_ITEM_SET || interestingItemsList.getModel().getSize() > 0)
                     && (type != GroupingAttributeType.HASH_LIST_NAME || hashSetList.getModel().getSize() > 0)) {
@@ -564,7 +606,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         orderByCombobox.removeAllItems();
         // Set up the file order list
         for (FileSorter.SortingMethod method : FileSorter.SortingMethod.getOptionsForOrdering()) {
-            if (method != SortingMethod.BY_FREQUENCY || EamDb.isEnabled()) {
+            if (method != SortingMethod.BY_FREQUENCY || CentralRepository.isEnabled()) {
                 orderByCombobox.addItem(method);
             }
         }
@@ -623,7 +665,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         int count = 0;
         DefaultListModel<FileSearchData.Frequency> frequencyListModel = (DefaultListModel<FileSearchData.Frequency>) crFrequencyList.getModel();
         frequencyListModel.removeAllElements();
-        if (!EamDb.isEnabled()) {
+        if (!CentralRepository.isEnabled()) {
             for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithoutCr()) {
                 frequencyListModel.add(count, freq);
             }
@@ -653,6 +695,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                     sizes = FileSearchData.FileSize.getOptionsForVideos();
                     break;
                 case IMAGE:
+                    sizes = FileSearchData.FileSize.getOptionsForImages();
+                    break;
+                case DOCUMENTS:
                     sizes = FileSearchData.FileSize.getOptionsForImages();
                     break;
                 default:
@@ -1739,11 +1784,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         // Get the file sorting method
         FileSorter.SortingMethod fileSort = getFileSortingMethod();
-        EamDb centralRepoDb = null;
-        if (EamDb.isEnabled()) {
+        CentralRepository centralRepoDb = null;
+        if (CentralRepository.isEnabled()) {
             try {
-                centralRepoDb = EamDb.getInstance();
-            } catch (EamDbException ex) {
+                centralRepoDb = CentralRepository.getInstance();
+            } catch (CentralRepoException ex) {
                 centralRepoDb = null;
                 logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for File Discovery", ex);
             }
@@ -1765,10 +1810,20 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         } else {
             DiscoveryTopComponent.getTopComponent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         }
-        if (fileType == FileType.IMAGE) {
-            imagesSelected(enabled, false);
-        } else if (fileType == FileType.VIDEO) {
-            videosSelected(enabled, false);
+        if (null != fileType) {
+            switch (fileType) {
+                case IMAGE:
+                    imagesSelected(enabled, false);
+                    break;
+                case VIDEO:
+                    videosSelected(enabled, false);
+                    break;
+                case DOCUMENTS:
+                    documentsSelected(enabled, false);
+                    break;
+                default:
+                    break;
+            }
         }
         searchButton.setEnabled(enabled);
         cancelButton.setEnabled(!enabled);

@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
+import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
 
 /**
  * The settings for an ingest job.

@@ -1,3 +1,5 @@
+# {0} - track name
+GEOTrack_point_label_header=Trackpoint for track: {0}
 LastKnownWaypoint_Label=Last Known Location
 Route_End_Label=End
 Route_Label=As-the-crow-flies Route

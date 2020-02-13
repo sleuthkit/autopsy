@@ -27,7 +27,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
-import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 
 /**
@@ -37,14 +36,6 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
 
     private static final long serialVersionUID = 1L;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
-    private static final int BYTE_UNIT_CONVERSION = 1000;
-    private static final int ICON_SIZE = 16;
-    private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
-    private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
-    private static final String DELETE_ICON_PATH = "/org/sleuthkit/autopsy/images/file-icon-deleted.png";
-    private static final ImageIcon INTERESTING_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(YELLOW_CIRCLE_ICON_PATH, false));
-    private static final ImageIcon NOTABLE_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(RED_CIRCLE_ICON_PATH, false));
-    private static final ImageIcon DELETED_ICON = new ImageIcon(ImageUtilities.loadImage(DELETE_ICON_PATH, false));
 
     /**
      * Creates new form ImageThumbnailPanel
@@ -83,16 +74,16 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
         countLabel.setPreferredSize(new java.awt.Dimension(159, 12));
 
         isDeletedLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/file-icon-deleted.png"))); // NOI18N
-        isDeletedLabel.setToolTipText("");
-        isDeletedLabel.setMaximumSize(new Dimension(ICON_SIZE,ICON_SIZE));
-        isDeletedLabel.setMinimumSize(new Dimension(ICON_SIZE,ICON_SIZE));
-        isDeletedLabel.setPreferredSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        isDeletedLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ImageThumbnailPanel.class, "ImageThumbnailPanel.isDeletedLabel.toolTipText")); // NOI18N
+        isDeletedLabel.setMaximumSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
+        isDeletedLabel.setMinimumSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
+        isDeletedLabel.setPreferredSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
 
         scoreLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/red-circle-exclamation.png"))); // NOI18N
         scoreLabel.setToolTipText("");
-        scoreLabel.setMaximumSize(new Dimension(ICON_SIZE,ICON_SIZE));
-        scoreLabel.setMinimumSize(new Dimension(ICON_SIZE,ICON_SIZE));
-        scoreLabel.setPreferredSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        scoreLabel.setMaximumSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
+        scoreLabel.setMinimumSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
+        scoreLabel.setPreferredSize(new Dimension(DiscoveryUiUtils.getIconSize(),DiscoveryUiUtils.getIconSize()));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -143,76 +134,14 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
         "ImageThumbnailPanel.isDeleted.text=All instances of file are deleted."})
     @Override
     public Component getListCellRendererComponent(JList<? extends ImageThumbnailWrapper> list, ImageThumbnailWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
-        fileSizeLabel.setText(getFileSizeString(value.getResultFile().getFirstInstance().getSize()));
+        fileSizeLabel.setText(DiscoveryUiUtils.getFileSizeString(value.getResultFile().getFirstInstance().getSize()));
         countLabel.setText(Bundle.ImageThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
         thumbnailLabel.setIcon(new ImageIcon(value.getThumbnail()));
-        if (value.getResultFile().isDeleted()) {
-            isDeletedLabel.setIcon(DELETED_ICON);
-            isDeletedLabel.setToolTipText(Bundle.ImageThumbnailPanel_isDeleted_text());
-        } else {
-            isDeletedLabel.setIcon(null);
-            isDeletedLabel.setToolTipText(null);
-        }
-        switch (value.getResultFile().getScore()) {
-            case NOTABLE_SCORE:
-                scoreLabel.setIcon(NOTABLE_SCORE_ICON);
-                break;
-            case INTERESTING_SCORE:
-                scoreLabel.setIcon(INTERESTING_SCORE_ICON);
-                break;
-            case NO_SCORE:  // empty case - this is interpreted as an intentional fall-through
-            default:
-                scoreLabel.setIcon(null);
-                break;
-        }
-        scoreLabel.setToolTipText(value.getResultFile().getScoreDescription());
+        DiscoveryUiUtils.setDeletedIcon(value.getResultFile().isDeleted(), isDeletedLabel);
+        DiscoveryUiUtils.setScoreIcon(value.getResultFile(), scoreLabel);     
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
 
         return this;
-    }
-
-    @NbBundle.Messages({"# {0} - fileSize",
-        "# {1} - units",
-        "ImageThumbnailPanel.sizeLabel.text=Size: {0} {1}",
-        "ImageThumbnailPanel.bytes.text=bytes",
-        "ImageThumbnailPanel.kiloBytes.text=KB",
-        "ImageThumbnailPanel.megaBytes.text=MB",
-        "ImageThumbnailPanel.gigaBytes.text=GB",
-        "ImageThumbnailPanel.terraBytes.text=TB"})
-    /**
-     * Convert a size in bytes to a string with representing the size in the
-     * largest units which represent the value as being greater than or equal to
-     * one. Result will be rounded down to the nearest whole number of those
-     * units.
-     *
-     * @param bytes Size in bytes.
-     */
-    private String getFileSizeString(long bytes) {
-        long size = bytes;
-        int unitsSwitchValue = 0;
-        while (size > BYTE_UNIT_CONVERSION && unitsSwitchValue < 4) {
-            size /= BYTE_UNIT_CONVERSION;
-            unitsSwitchValue++;
-        }
-        String units;
-        switch (unitsSwitchValue) {
-            case 1:
-                units = Bundle.ImageThumbnailPanel_kiloBytes_text();
-                break;
-            case 2:
-                units = Bundle.ImageThumbnailPanel_megaBytes_text();
-                break;
-            case 3:
-                units = Bundle.ImageThumbnailPanel_gigaBytes_text();
-                break;
-            case 4:
-                units = Bundle.ImageThumbnailPanel_terraBytes_text();
-                break;
-            default:
-                units = Bundle.ImageThumbnailPanel_bytes_text();
-                break;
-        }
-        return Bundle.ImageThumbnailPanel_sizeLabel_text(size, units);
     }
 
     @Override
@@ -221,7 +150,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
             //gets tooltip of internal panel item mouse is over
             Point point = event.getPoint();
             for (Component comp : getComponents()) {
-                if (isPointOnIcon(comp, point)) {
+                if (DiscoveryUiUtils.isPointOnIcon(comp, point)) {
                     String toolTip = ((JComponent) comp).getToolTipText();
                     if (toolTip == null || toolTip.isEmpty()) {
                         return null;
@@ -234,16 +163,5 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
         return null;
     }
 
-    /**
-     * Helper method to see if point is on the icon.
-     *
-     * @param comp  The component to check if the cursor is over the icon of
-     * @param point The point the cursor is at.
-     *
-     * @return True if the point is over the icon, false otherwise.
-     */
-    private boolean isPointOnIcon(Component comp, Point point) {
-        return comp instanceof JComponent && point.x >= comp.getX() && point.x <= comp.getX() + ICON_SIZE && point.y >= comp.getY() && point.y <= comp.getY() + ICON_SIZE;
-    }
 
 }

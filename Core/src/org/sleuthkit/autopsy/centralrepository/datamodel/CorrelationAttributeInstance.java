@@ -58,7 +58,7 @@ public class CorrelationAttributeInstance implements Serializable {
             String filePath,
             String comment,
             TskData.FileKnown knownStatus,
-            long fileObjectId) throws EamDbException, CorrelationAttributeNormalizationException {
+            long fileObjectId) throws CentralRepoException, CorrelationAttributeNormalizationException {
         this(correlationType, correlationValue, -1, eamCase, eamDataSource, filePath, comment, knownStatus, fileObjectId);
     }
 
@@ -72,9 +72,9 @@ public class CorrelationAttributeInstance implements Serializable {
             String comment,
             TskData.FileKnown knownStatus,
             Long fileObjectId
-    ) throws EamDbException, CorrelationAttributeNormalizationException {
+    ) throws CentralRepoException, CorrelationAttributeNormalizationException {
         if (filePath == null) {
-            throw new EamDbException("file path is null");
+            throw new CentralRepoException("file path is null");
         }
 
         this.correlationType = type;
@@ -224,7 +224,7 @@ public class CorrelationAttributeInstance implements Serializable {
     /**
      * Load the default correlation types
      *
-     * @throws EamDbException if the Type's dbTableName has invalid
+     * @throws CentralRepoException if the Type's dbTableName has invalid
      *                        characters/format
      */
     @Messages({"CorrelationType.FILES.displayName=Files",
@@ -237,7 +237,7 @@ public class CorrelationAttributeInstance implements Serializable {
         "CorrelationType.IMEI.displayName=IMEI Number",
         "CorrelationType.IMSI.displayName=IMSI Number",
         "CorrelationType.ICCID.displayName=ICCID Number"})
-    public static List<CorrelationAttributeInstance.Type> getDefaultCorrelationTypes() throws EamDbException {
+    public static List<CorrelationAttributeInstance.Type> getDefaultCorrelationTypes() throws CentralRepoException {
         List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, true)); // NON-NLS
@@ -278,9 +278,9 @@ public class CorrelationAttributeInstance implements Serializable {
          */
         @Messages({"CorrelationAttributeInstance.nullName.message=Database name is null.",
             "CorrelationAttributeInstance.invalidName.message=Invalid database table name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."})
-        public Type(int typeId, String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
+        public Type(int typeId, String displayName, String dbTableName, Boolean supported, Boolean enabled) throws CentralRepoException {
             if (dbTableName == null) {
-                throw new EamDbException("dbTableName is null", Bundle.CorrelationAttributeInstance_nullName_message());
+                throw new CentralRepoException("dbTableName is null", Bundle.CorrelationAttributeInstance_nullName_message());
             }
             this.typeId = typeId;
             this.displayName = displayName;
@@ -288,7 +288,7 @@ public class CorrelationAttributeInstance implements Serializable {
             this.supported = supported;
             this.enabled = enabled;
             if (!Pattern.matches(DB_NAMES_REGEX, dbTableName)) {
-                throw new EamDbException("Invalid database table name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'.", Bundle.CorrelationAttributeInstance_invalidName_message()); // NON-NLS
+                throw new CentralRepoException("Invalid database table name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'.", Bundle.CorrelationAttributeInstance_invalidName_message()); // NON-NLS
             }
         }
 
@@ -305,7 +305,7 @@ public class CorrelationAttributeInstance implements Serializable {
          * @param supported   Is this Type currently supported
          * @param enabled     Is this Type currently enabled.
          */
-        public Type(String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
+        public Type(String displayName, String dbTableName, Boolean supported, Boolean enabled) throws CentralRepoException {
             this(-1, displayName, dbTableName, supported, enabled);
         }
 
@@ -468,11 +468,11 @@ public class CorrelationAttributeInstance implements Serializable {
          *                    letter and can only contain lowercase letters,
          *                    numbers, and '_' characters.
          *
-         * @throws EamDbException if dbTableName contains invalid characters
+         * @throws CentralRepoException if dbTableName contains invalid characters
          */
-        public void setDbTableName(String dbTableName) throws EamDbException {
+        public void setDbTableName(String dbTableName) throws CentralRepoException {
             if (!Pattern.matches(DB_NAMES_REGEX, dbTableName)) {
-                throw new EamDbException("Invalid database table name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
+                throw new CentralRepoException("Invalid database table name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
             }
             this.dbTableName = dbTableName;
         }

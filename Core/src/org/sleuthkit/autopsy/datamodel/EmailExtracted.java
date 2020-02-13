@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2019 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -521,7 +521,11 @@ public class EmailExtracted implements AutopsyVisitableItem {
             if (skCase != null) {
                 emailResults.getArtifactIds(accountName, folderName).forEach((id) -> {
                     try {
-                        keys.add(skCase.getBlackboardArtifact(id));
+                        BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                        //Cache attributes while we are off the EDT.
+                        //See JIRA-5969
+                        art.getAttributes();
+                        keys.add(art);
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Error getting mail messages keys", ex); //NON-NLS
                     }

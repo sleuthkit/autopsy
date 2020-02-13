@@ -309,6 +309,8 @@
                 <package>net.sf.sevenzipjbinding.impl</package>
                 <package>net.sf.sevenzipjbinding.simple</package>
                 <package>net.sf.sevenzipjbinding.simple.impl</package>
+                <package>org.apache.tika</package>
+                <package>org.apache.tika.io</package>
                 <package>org.sleuthkit.autopsy.actions</package>
                 <package>org.sleuthkit.autopsy.appservices</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
@@ -346,6 +348,7 @@
                 <package>org.sleuthkit.autopsy.texttranslation</package>
                 <package>org.sleuthkit.datamodel</package>
                 <package>org.sleuthkit.datamodel.blackboardutils</package>
+                <package>org.sleuthkit.datamodel.blackboardutils.attributes</package>
             </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.8.1.jar</runtime-relative-path>
@@ -802,6 +805,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jutf7-1.0.0.jar</binary-origin>
+            </class-path-extension>
+			<class-path-extension>
+                <runtime-relative-path>ext/DatCon.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/DatCon.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

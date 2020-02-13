@@ -41,9 +41,9 @@ public class DataSourceUpdateService implements AutopsyService {
 
     @Override
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
-        if (EamDb.isEnabled()) {
+        if (CentralRepository.isEnabled()) {
             try {
-                EamDb centralRepository = EamDb.getInstance();
+                CentralRepository centralRepository = CentralRepository.getInstance();
                 CorrelationCase correlationCase = centralRepository.getCase(context.getCase());
                 //if the case isn't in the central repository yet there won't be data sources in it to update
                 if (correlationCase != null) {
@@ -59,7 +59,7 @@ public class DataSourceUpdateService implements AutopsyService {
                         }
                     }
                 }
-            } catch (EamDbException | TskCoreException ex) {
+            } catch (CentralRepoException | TskCoreException ex) {
                 throw new AutopsyServiceException("Unabe to update datasources in central repository", ex);
             }
         }

@@ -100,7 +100,7 @@ class RunExeIngestModule(DataSourceIngestModule):
 
     # Where any setup and configuration is done
     # 'context' is an instance of org.sleuthkit.autopsy.ingest.IngestJobContext.
-    # See: http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
+    # See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
     def startUp(self, context):
         self.context = context
         
@@ -111,11 +111,12 @@ class RunExeIngestModule(DataSourceIngestModule):
         self.pathToEXE = File(exe_path)
         if not self.pathToEXE.exists():
             raise IngestModuleException("EXE was not found in module folder")
+            
     # Where the analysis is done.
     # The 'dataSource' object being passed in is of type org.sleuthkit.datamodel.Content.
-    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.6.0/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html
+    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/latest/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html
     # 'progressBar' is of type org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress
-    # See: http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html
+    # See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html
     def process(self, dataSource, progressBar):
         
         # we don't know how much work there will be
@@ -135,21 +136,21 @@ class RunExeIngestModule(DataSourceIngestModule):
         
         # We'll save our output to a file in the reports folder, named based on EXE and data source ID
         reportFile = File(Case.getCurrentCase().getCaseDirectory() + "\\Reports" + "\\img_stat-" + str(dataSource.getId()) + ".txt")
-        # Run the EXE, saving output to the report
-        # Check if the ingest is terminated and delete the incomplete report file
-        # Do not add report to the case tree if the ingest is cancelled before finish.
-        # This can be done by using IngestJobContext.dataSourceIngestIsCancelled
-        # See: http://sleuthkit.org/autopsy/docs/api-docs/4.7.0/_ingest_job_context_8java.html
+        
+        # Run the EXE, saving output to reportFile
+        # We use ExecUtil because it will deal with the user cancelling the job
         self.log(Level.INFO, "Running program on data source")
         cmd = ArrayList()
         cmd.add(self.pathToEXE.toString())
+        # Add each argument in its own line.  I.e. "-f foo" would be two calls to .add()
         cmd.add(imagePaths[0])
         
         processBuilder = ProcessBuilder(cmd);
         processBuilder.redirectOutput(reportFile)
-        ExecUtil.execute(processBuilder,DataSourceIngestModuleProcessTerminator(self.context))
+        ExecUtil.execute(processBuilder, DataSourceIngestModuleProcessTerminator(self.context))
         
         # Add the report to the case, so it shows up in the tree
+        # Do not add report to the case tree if the ingest is cancelled before finish.
         if not self.context.dataSourceIngestIsCancelled():
             Case.getCurrentCase().addReport(reportFile.toString(), "Run EXE", "img_stat output")
         else:

@@ -23,9 +23,9 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * SwingWorker to retrieve the contents of a page.
@@ -42,7 +42,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
     private final int startingEntry;
     private final int pageSize;
     private final FileSearchData.FileType resultType;
-    private final EamDb centralRepo;
+    private final CentralRepository centralRepo;
     private final List<ResultFile> results = new ArrayList<>();
 
     /**
@@ -63,7 +63,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
      */
     PageWorker(List<FileSearchFiltering.FileFilter> searchfilters, FileSearch.AttributeType groupingAttribute,
             FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod, GroupKey groupKey,
-            int startingEntry, int pageSize, FileSearchData.FileType resultType, EamDb centralRepo) {
+            int startingEntry, int pageSize, FileSearchData.FileType resultType, CentralRepository centralRepo) {
         this.searchfilters = searchfilters;
         this.groupingAttribute = groupingAttribute;
         this.groupSort = groupSort;

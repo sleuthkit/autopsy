@@ -26,7 +26,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Action for accessing the Search Other Cases dialog.
@@ -39,7 +39,7 @@ public class AllCasesSearchAction extends CallableSystemAction {
 
     @Override
     public boolean isEnabled() {
-        return EamDb.isEnabled() && Case.isCaseOpen();
+        return CentralRepository.isEnabled() && Case.isCaseOpen();
     }
     
     @Override

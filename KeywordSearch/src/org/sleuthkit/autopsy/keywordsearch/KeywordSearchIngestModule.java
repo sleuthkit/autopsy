@@ -692,7 +692,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
                     return true;
                 }
-            } catch (IngesterException | IOException ex) {
+            } catch (IngesterException | IOException | TextExtractor.InitReaderException ex) {
                 logger.log(Level.WARNING, "Unable to index " + aFile.getName(), ex);
             }
             return false;
