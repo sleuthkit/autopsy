@@ -183,8 +183,10 @@ class ShellBagParser {
     /**
      * Return whether or not the given line is a plugin output separator.
      * 
+     * \verbatim
      * The format of the plugin output separators is:
      * ----------------------------------------
+     * \endverbatim
      * 
      * @param line
      * 

@@ -92,7 +92,7 @@ public final class CaseUcoReportGenerator {
      * @param directory Directory to write the CaseUCO report file. Assumes the
      * calling thread has write access to the directory and that the directory
      * exists.
-     * @param name Name of the CaseUCO report file.
+     * @param reportName Name of the CaseUCO report file.
      * @throws IOException If an I/O error occurs
      */
     public CaseUcoReportGenerator(Path directory, String reportName) throws IOException {
