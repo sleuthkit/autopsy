@@ -247,6 +247,14 @@ class FileSearch {
         return page;
     }
 
+    /**
+     * Get a summary for the specified AbstractFile if no summarizers exist get
+     * the first bit of the file.
+     *
+     * @param file The AbstractFile to summarize.
+     *
+     * @return The summary or first bit of the specified file as a String.
+     */
     @NbBundle.Messages({"FileSearch.documentSummary.noPreview=No preview available.",
         "FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview."})
     static String summarize(AbstractFile file) {
@@ -263,9 +271,11 @@ class FileSearch {
             }
         }
         if (localSummarizer == null) {
+            //no summarizer was found just grab the first bit of the file
             return getFirstLines(file);
         } else {
             try {
+                //a summary of length 40 seems to fit without vertical scroll bars
                 return localSummarizer.summarize(file, 40);
             } catch (IOException ex) {
                 return Bundle.FileSearch_documentSummary_noPreview();
@@ -274,6 +284,13 @@ class FileSearch {
 
     }
 
+    /**
+     * Get the first bit of text from the specified AbstractFile.
+     *
+     * @param file The AbstractFile to get text from.
+     *
+     * @return The first bit of text from the specified AbstractFile.
+     */
     private static String getFirstLines(AbstractFile file) {
         try (Reader reader = TextExtractorFactory.getExtractor(file, null).getReader()) {
             char[] cbuf = new char[PREVIEW_SIZE];
@@ -286,6 +303,13 @@ class FileSearch {
         }
     }
 
+    /**
+     * Get the first summarizer found by a lookup of summarizers.
+     *
+     * @return The first summarizer found by a lookup of summarizers.
+     *
+     * @throws IOException
+     */
     private static Summarizer getLocalSummarizer() throws IOException {
         Collection<? extends Summarizer> summarizers
                 = Lookup.getDefault().lookupAll(Summarizer.class
@@ -655,7 +679,6 @@ class FileSearch {
             int framePos = Integer.valueOf(FilenameUtils.getBaseName(fileName).substring(2));
             framePositions[thumbnailNumber] = framePos;
             thumbnailNumber++;
-
         }
         thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
     }
@@ -673,7 +696,6 @@ class FileSearch {
         videoThumbnails.add(ImageUtils.getDefaultThumbnail());
         videoThumbnails.add(ImageUtils.getDefaultThumbnail());
         return videoThumbnails;
-
     }
 
     private FileSearch() {

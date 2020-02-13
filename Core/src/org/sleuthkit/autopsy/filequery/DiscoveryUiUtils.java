@@ -95,8 +95,6 @@ final class DiscoveryUiUtils {
         return comp instanceof JComponent && point.x >= comp.getX() && point.x <= comp.getX() + ICON_SIZE && point.y >= comp.getY() && point.y <= comp.getY() + ICON_SIZE;
     }
 
-
-
     /**
      * Method to set the icon and tool tip text for a label to show deleted
      * status.
