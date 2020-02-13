@@ -1244,7 +1244,7 @@ class ExtractRegistry extends Extract {
     }
     
      /**
-     * Create recently used artifacts from mpmru records
+     * Create recently used artifacts to parse the mpmru records
      * 
      * @param regFileName name of the regripper output file
      * 
