@@ -34,8 +34,11 @@ public class RdbmsCentralRepoSchemaFactory {
 
     private final static Logger LOGGER = Logger.getLogger(RdbmsCentralRepoSchemaFactory.class.getName());
 
-    private final RdbmsCentralRepo rdbmsCentralRepo;
+   
     private final CentralRepoPlatforms selectedPlatform;
+    private final SqliteCentralRepoSettings sqliteCentralRepoSettings;
+    private final PostgresCentralRepoSettings postgresCentralRepoSettings;
+    
 
     // SQLite pragmas
     private final static String PRAGMA_SYNC_OFF = "PRAGMA synchronous = OFF";
@@ -46,21 +49,20 @@ public class RdbmsCentralRepoSchemaFactory {
     private final static String PRAGMA_FOREIGN_KEYS_ON = "PRAGMA foreign_keys = ON";
 
 
-    public RdbmsCentralRepoSchemaFactory(CentralRepoPlatforms selectedPlatform) throws CentralRepoException {
+    
+    public RdbmsCentralRepoSchemaFactory(CentralRepoPlatforms selectedPlatform, SqliteCentralRepoSettings repoSettings) throws CentralRepoException {
         this.selectedPlatform = selectedPlatform;
+        this.sqliteCentralRepoSettings = repoSettings;
+        this.postgresCentralRepoSettings =  null;
         
-        switch (selectedPlatform) {
-            case POSTGRESQL:
-                rdbmsCentralRepo = PostgresCentralRepo.getInstance();
-                break;
-            case SQLITE:
-                rdbmsCentralRepo = SqliteCentralRepo.getInstance();
-                break;
-            default:
-                throw new CentralRepoException("Central Repo platform disabled.");
-        }
     }
 
+     public RdbmsCentralRepoSchemaFactory(CentralRepoPlatforms selectedPlatform, PostgresCentralRepoSettings repoSettings) throws CentralRepoException {
+        this.selectedPlatform = selectedPlatform;
+        this.postgresCentralRepoSettings = repoSettings;
+        this.sqliteCentralRepoSettings =  null;
+    }
+     
 
     /**
      * Initialize the database schema.
@@ -88,8 +90,9 @@ public class RdbmsCentralRepoSchemaFactory {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = rdbmsCentralRepo.getEphemeralConnection();
+            conn = this.getEphemeralConnection();
             if (null == conn) {
+                LOGGER.log(Level.SEVERE, "Cannot initialize CR database, don't have a valid connection."); // NON-NLS
                 return false;
             }
             
@@ -176,7 +179,7 @@ public class RdbmsCentralRepoSchemaFactory {
      * @return True if success, False otherwise.
      */
     public boolean insertDefaultDatabaseContent() {
-        Connection conn = rdbmsCentralRepo.getEphemeralConnection();
+        Connection conn = this.getEphemeralConnection();
         if (null == conn) {
             return false;
         }
@@ -320,7 +323,7 @@ public class RdbmsCentralRepoSchemaFactory {
     }
     
     /**
-     * Retunrs the SQL statemnt to create correlation_types table.
+     * Returns the SQL statement to create correlation_types table.
      * 
      * @param selectedPlatform CR database platform.
      * 
@@ -354,7 +357,7 @@ public class RdbmsCentralRepoSchemaFactory {
                 + "file_path text NOT NULL,"
                 + "known_status integer NOT NULL,"
                 + "comment text,"
-                + "file_obj_id BIGINT,"
+                + "file_obj_id " + getBigIntType(selectedPlatform) + " ," 
                 + "CONSTRAINT %s_multi_unique UNIQUE(data_source_id, value, file_path)" + getOnConflictIgnoreClause(selectedPlatform) + ","
                 + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
                 + "foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL)";
@@ -373,7 +376,7 @@ public class RdbmsCentralRepoSchemaFactory {
                 + "case_id integer NOT NULL,"
                 + "device_id text NOT NULL,"
                 + "name text NOT NULL,"
-                + "datasource_obj_id integer," // RAMAN TBD: does integer suffice for PostGres.  Old code used integer in some places but used BIGINT in other.
+                + "datasource_obj_id " + getBigIntType(selectedPlatform) + " ," 
                 + "md5 text DEFAULT NULL,"
                 + "sha1 text DEFAULT NULL,"
                 + "sha256 text DEFAULT NULL,"
@@ -502,6 +505,40 @@ public class RdbmsCentralRepoSchemaFactory {
                 return " ON CONFLICT IGNORE ";
             default:
                 return "";
+        }
+    }
+    
+    /**
+     * Returns keyword for big integer for the specified database platform.
+     *
+     *
+     * @return SQL clause.
+     */
+    private static String getBigIntType(CentralRepoPlatforms selectedPlatform) {
+        switch (selectedPlatform) {
+            case POSTGRESQL:
+                return " BIGINT ";
+            case SQLITE:
+                return " INTEGER ";
+            default:
+                return "";
+        }
+    }
+    
+    
+    /**
+     * Returns an ephemeral connection to the CR database.
+     * 
+     * @return CR database connection
+     */
+    private Connection getEphemeralConnection() {
+        switch (selectedPlatform) {
+            case POSTGRESQL:
+                return this.postgresCentralRepoSettings.getEphemeralConnection(false);
+            case SQLITE:
+                return this.sqliteCentralRepoSettings.getEphemeralConnection();
+            default:
+                return null;
         }
     }
 }

@@ -3405,39 +3405,27 @@ abstract class RdbmsCentralRepo implements CentralRepository {
              */
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
                 final String addIntegerColumnTemplate = "ALTER TABLE %s ADD COLUMN %s INTEGER;";  //NON-NLS
-                final String addSsidTableTemplate;
-                final String addCaseIdIndexTemplate;
-                final String addDataSourceIdIndexTemplate;
-                final String addValueIndexTemplate;
-                final String addKnownStatusIndexTemplate;
-                final String addObjectIdIndexTemplate;
+                
+                final String addSsidTableTemplate = RdbmsCentralRepoSchemaFactory.getCreateArtifactInstancesTableTemplate(selectedPlatform);
+                final String addCaseIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddCaseIdIndexTemplate();
+                final String addDataSourceIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddDataSourceIdIndexTemplate();
+                final String addValueIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddValueIndexTemplate();
+                final String addKnownStatusIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddKnownStatusIndexTemplate();
+                final String addObjectIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddObjectIdIndexTemplate();
 
                 final String addAttributeSql;
                 //get the data base specific code for creating a new _instance table
                 switch (selectedPlatform) {
                     case POSTGRESQL:
                         addAttributeSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?) " + getConflictClause();  //NON-NLS
-
-                        addSsidTableTemplate = RdbmsCentralRepoSchemaFactory.getCreateArtifactInstancesTableTemplate(CentralRepoPlatforms.POSTGRESQL);
-                        addCaseIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddCaseIdIndexTemplate();
-                        addDataSourceIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddDataSourceIdIndexTemplate();
-                        addValueIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddValueIndexTemplate();
-                        addKnownStatusIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddKnownStatusIndexTemplate();
-                        addObjectIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddObjectIdIndexTemplate();
                         break;
                     case SQLITE:
                         addAttributeSql = "INSERT OR IGNORE INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";  //NON-NLS
-
-                        addSsidTableTemplate = RdbmsCentralRepoSchemaFactory.getCreateArtifactInstancesTableTemplate(CentralRepoPlatforms.SQLITE);
-                        addCaseIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddCaseIdIndexTemplate();
-                        addDataSourceIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddDataSourceIdIndexTemplate();
-                        addValueIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddValueIndexTemplate();
-                        addKnownStatusIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddKnownStatusIndexTemplate();
-                        addObjectIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddObjectIdIndexTemplate();
                         break;
                     default:
                         throw new CentralRepoException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.", Bundle.AbstractSqlEamDb_cannotUpgrage_message(selectedPlatform.name()));
                 }
+                
                 final String dataSourcesTableName = "data_sources";
                 final String dataSourceObjectIdColumnName = "datasource_obj_id";
                 if (!doesColumnExist(conn, dataSourcesTableName, dataSourceObjectIdColumnName)) {
