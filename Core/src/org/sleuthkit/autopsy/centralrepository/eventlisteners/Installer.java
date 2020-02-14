@@ -23,6 +23,7 @@ import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
@@ -59,7 +60,7 @@ public class Installer extends ModuleInstall {
 
         // Perform the database upgrade and inform the user if it fails
         try {
-            CentralRepoDbUtil.upgradeDatabase();
+            CentralRepoDbManager.upgradeDatabase();
         } catch (CentralRepoException ex) {
             if (RuntimeProperties.runningWithGUI()) {
                 WindowManager.getDefault().invokeWhenUIReady(() -> {

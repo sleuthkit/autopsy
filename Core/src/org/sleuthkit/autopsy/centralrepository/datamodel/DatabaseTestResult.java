@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.centralrepository.optionspanel;
+package org.sleuthkit.autopsy.centralrepository.datamodel;
 
-enum DatabaseTestResult {
+public enum DatabaseTestResult {
     UNTESTED,
     CONNECTION_FAILED,
     SCHEMA_INVALID,
