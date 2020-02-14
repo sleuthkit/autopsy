@@ -269,7 +269,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         String architectureFolder = PlatformUtil.is64BitOS() ? PLASO64 : PLASO32;
         String executableToFindName = Paths.get(PLASO, architectureFolder, executableName).toString();
 
-        File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, PlasoIngestModule.class.getPackage().getName(), false);
+        File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, "org.sleuthkit.autopsy.core", false);
         if (null == exeFile || exeFile.canExecute() == false) {
             throw new FileNotFoundException(executableName + " executable not found.");
         }
