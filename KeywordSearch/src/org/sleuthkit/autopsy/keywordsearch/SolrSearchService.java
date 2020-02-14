@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -164,10 +165,17 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         }
         try {
             // ELTODO solrServer = new HttpSolrClient.Builder("http://" + host + ":" + Integer.toString(port) + "/solr").build(); //NON-NLS
+            List<String> solrServerList = UserPreferences.getAllIndexingServers();
             List<String> solrUrls = new ArrayList<>();
-            solrUrls.add("http://" + host + ":" + port + "/solr");
-            solrUrls.add("http://review1:" + port + "/solr");
-            solrUrls.add("http://ingest9:" + port + "/solr");
+            for (String server : solrServerList) {
+                solrUrls.add("http://" + server + "/solr");
+            }
+            if (solrUrls.isEmpty()) {
+                solrUrls.add("http://" + host + ":" + port + "/solr");
+            }
+            //solrUrls.add("http://" + host + ":" + port + "/solr");
+            //solrUrls.add("http://review1:" + port + "/solr");
+            //solrUrls.add("http://ingest9:" + port + "/solr");
             solrServer = new CloudSolrClient.Builder(solrUrls).build();
             //solrServer = new CloudSolrClient.Builder().withZkHost(zkHosts).build();
             //solrServer.setZkClientTimeout(30000);

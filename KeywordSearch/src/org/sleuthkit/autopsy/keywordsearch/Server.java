@@ -794,11 +794,15 @@ public class Server {
         "# {0} - core name", "Server.deleteCore.exception.msg=Failed to delete Solr core {0}",})
     void deleteCore(String coreName, CaseMetadata metadata) throws KeywordSearchServiceException {
         try {
-            IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());
+            //IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());
+            List<String> solrServerList = UserPreferences.getAllIndexingServers();
             List<String> solrUrls = new ArrayList<>();
-            solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
+            for (String server : solrServerList) {
+                solrUrls.add("http://" + server + "/solr");
+            }
+            //solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
             CloudSolrClient solrServer = new CloudSolrClient.Builder(solrUrls).build();
-                
+            
             //HttpSolrClient solrServer;
             if (metadata.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 Integer localSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
@@ -863,11 +867,15 @@ public class Server {
                 
                 // ELTODO connectToEbmeddedSolrServer(currentSolrServer);                
             } else {
-                IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+                //IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+                List<String> solrServerList = UserPreferences.getAllIndexingServers();
                 List<String> solrUrls = new ArrayList<>();
-                solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
-                solrUrls.add("http://review1:" + properties.getPort() + "/solr");
-                solrUrls.add("http://ingest9:" + properties.getPort() + "/solr");
+                for (String server : solrServerList) {
+                    solrUrls.add("http://" + server + "/solr");
+                }
+                //solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
+                //solrUrls.add("http://review1:" + properties.getPort() + "/solr");
+                //solrUrls.add("http://ingest9:" + properties.getPort() + "/solr");
                 currentSolrServer = new CloudSolrClient.Builder(solrUrls).build(); // (new CloudSolrClient.Builder(solrUrls));
                 currentSolrServer.connect(10, TimeUnit.SECONDS);
                 //currentSolrServer.setZkClientTimeout(30000);
@@ -1695,11 +1703,15 @@ public class Server {
             // ELTODO get this from some configuration or UI
             //IndexingServerProperties properties = getMultiUserServerProperties(Case.getCurrentCase().getCaseDirectory());
            
-            IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+            //IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+            List<String> solrServerList = UserPreferences.getAllIndexingServers();
             List<String> solrUrls = new ArrayList<>();
-            solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
-            solrUrls.add("http://review1:" + properties.getPort() + "/solr");
-            solrUrls.add("http://ingest9:" + properties.getPort() + "/solr");
+            for (String server : solrServerList) {
+                solrUrls.add("http://" + server + "/solr");
+            }
+            //solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
+            //solrUrls.add("http://review1:" + properties.getPort() + "/solr");
+            //solrUrls.add("http://ingest9:" + properties.getPort() + "/solr");
             solrClient = new CloudSolrClient.Builder(solrUrls).build();
             solrClient.setDefaultCollection(name);
             solrClient.connect(10, TimeUnit.SECONDS);

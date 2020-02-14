@@ -19,6 +19,10 @@
 package org.sleuthkit.autopsy.core;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
 import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
@@ -56,6 +60,7 @@ public final class UserPreferences {
     public static final String EXTERNAL_DATABASE_TYPE = "ExternalDatabaseType"; //NON-NLS
     public static final String INDEXING_SERVER_HOST = "IndexingServerHost"; //NON-NLS
     public static final String INDEXING_SERVER_PORT = "IndexingServerPort"; //NON-NLS
+    public static final String INDEXING_SERVER_LIST = "IndexingServerList"; //NON-NLS
     public static final String ZK_SERVER_HOST = "ZookeeperServerHost"; //NON-NLS
     public static final String ZK_SERVER_PORT = "ZookeeperServerPort"; //NON-NLS
     private static final String MESSAGE_SERVICE_PASSWORD = "MessageServicePassword"; //NON-NLS
@@ -341,11 +346,22 @@ public final class UserPreferences {
     }
     
     public static String getZkServerHost() {
-        return preferences.get(ZK_SERVER_HOST, "");
+        return preferences.get(ZK_SERVER_HOST, "Ingest10"); // ELTODO change default
     }
-
+    
     public static void setZkServerHost(String hostName) {
         preferences.put(ZK_SERVER_HOST, hostName);
+    }
+
+    public static List<String> getAllIndexingServers() {
+        List<String> servers = new ArrayList<>();
+        String listOfServers = preferences.get(INDEXING_SERVER_LIST, "Solr1:8983,review1:8983,ingest9:8983"); // ELTODO change default
+        if (listOfServers.isEmpty()) {
+            return servers;
+        }
+        // servers are comma-separated
+        servers = Arrays.asList(listOfServers.split("\\s*,\\s*"));
+        return servers;
     }
 
     public static String getZkServerPort() {
