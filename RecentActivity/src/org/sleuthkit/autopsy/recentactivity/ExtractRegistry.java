@@ -676,15 +676,12 @@ class ExtractRegistry extends Extract {
 
                                 switch (dataType) {
                                     case "recentdocs": //NON-NLS
-//                                        try {
-//                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
-//                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, "RecentActivity", mtime));
-//                                          bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, "RecentActivity", mtimeItem));
-//                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, "RecentActivity", value));
-//                                            bbart.addAttributes(bbattributes);
-//                                        } catch (TskCoreException ex) {
-//                                            logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard.", ex); //NON-NLS
-//                                        }
+                                        // BlackboardArtifact bbart = tskCase.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+                                        // bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", dataType, mtime));
+                                        // bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", dataType, mtimeItem));
+                                        // bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", dataType, value));
+                                        // bbart.addAttributes(bbattributes);
+                                        // @@@ BC: Why are we ignoring this...
                                         break;
                                     case "usb": //NON-NLS
                                         try {
@@ -1181,6 +1178,14 @@ class ExtractRegistry extends Extract {
                     parseTrustrecordsMRUList(regFileName, regFile, reader);
                 } else if (line.matches("^ArcHistory:")) {
                     parseArchHistoryMRUList(regFileName, regFile, reader);
+                } else if (line.matches("^applets v.*")) {
+                    parseGenericMRUList(regFileName, regFile, reader);
+                } else if (line.matches("^mmc v.*")) {
+                    parseGenericMRUList(regFileName, regFile, reader);
+                } else if (line.matches("^winrar v.*")) {
+                    parseWinRARMRUList(regFileName, regFile, reader);
+                } else if (line.matches("^officedocs2010 v.*")) {
+                    parseOfficeDocs2010MRUList(regFileName, regFile, reader);
                 }
                 line = reader.readLine();
             }
@@ -1292,7 +1297,91 @@ class ExtractRegistry extends Extract {
     }
     
      /**
-     * Create recently used artifacts from runmru ArcHistory records
+     * Create recently used artifacts to parse the regripper output
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseGenericMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String line = reader.readLine();
+        while (!line.contains(SECTION_DIVIDER)) {
+            line = reader.readLine();
+            line = line.trim();
+            if (line.contains("LastWrite")) {
+                line = reader.readLine();
+                // Columns are
+                // FileX -> <Media file>
+                while (!line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("Applets")) {
+                    // Split line on "> " which is the record delimiter between position and file
+                    String tokens[] = line.split("> ");
+                    String fileName = tokens[1];
+                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                    attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                    BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                    if(bba != null) {
+                         bbartifacts.add(bba);
+                    }
+                    line = reader.readLine();
+                }
+                line = line.trim();
+            }
+        }
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
+    }
+    
+     /**
+     * Create recently used artifacts to parse the WinRAR output
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseWinRARMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String line = reader.readLine();
+        while (!line.contains(SECTION_DIVIDER)) {
+            line = reader.readLine();
+            line = line.trim();
+            if (line.contains("LastWrite")) {
+                line = reader.readLine();
+                // Columns are
+                // FileX -> <Media file>
+                if (!line.isEmpty()) {
+                    while (!line.contains(SECTION_DIVIDER)) {
+                        // Split line on "> " which is the record delimiter between position and file
+                        String tokens[] = line.split("> ");
+                        String fileName = tokens[1];
+                        Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                        attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                        BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                        if(bba != null) {
+                             bbartifacts.add(bba);
+                        }
+                        line = reader.readLine();
+                    }
+                }
+                line = line.trim();
+            }
+        }
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
+    }
+    
+     /**
+     * Create recently used artifacts to parse the runmru ArcHistory records
      * 
      * @param regFileName name of the regripper output file
      * 
@@ -1306,12 +1395,57 @@ class ExtractRegistry extends Extract {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         line = line.trim();
-        while (!line.contains("^PathHistory:") && !line.isEmpty()) {
-            // Columns are
-            // <fileName>
-            String fileName = line;
+        if (!line.contains("PathHistory:")) {
+            while (!line.contains("PathHistory:") && !line.isEmpty()) {
+                // Columns are
+                // <fileName>
+                String fileName = line;
+                Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                if (bba != null) {
+                     bbartifacts.add(bba);
+                }
+                line = reader.readLine();
+                line = line.trim();
+            }
+        }
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
+    }
+    
+     /**
+     * Create recently used artifacts to parse the Office Documents 2010 records
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseOfficeDocs2010MRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String line = reader.readLine();
+        line = line.trim();
+        // Reading to the SECTION DIVIDER to get next section of records to process.  Dates appear to have
+        // multiple spaces in them that makes it harder to parse so next section will be easier to parse 
+        while (!line.contains(SECTION_DIVIDER)) {
+            line = reader.readLine();
+        }
+        line = reader.readLine();
+        while (!line.contains(SECTION_DIVIDER)) {
+            // record has the following format
+            // 1294283922|REG|||OfficeDocs2010 - F:\Windows_time_Rules_xp.doc
+            String tokens[] = line.split("\\|");
+            Long docDate = Long.valueOf(tokens[0]); 
+            String fileNameTokens[] = tokens[4].split(" - ");
+            String fileName = fileNameTokens[1];
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), docDate));
             BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
             if(bba != null) {
                  bbartifacts.add(bba);
@@ -1324,8 +1458,9 @@ class ExtractRegistry extends Extract {
         }
     }
     
+    
     /**
-     * Create recently used artifacts from trustrecords records
+     * Create recently used artifacts to parse the trustrecords records
      * 
      * @param regFileName name of the regripper output file
      * 
