@@ -1186,7 +1186,7 @@ class ExtractRegistry extends Extract {
                     parseWinRARMRUList(regFileName, regFile, reader);
                 } else if (line.matches("^officedocs2010 v.*")) {
                     parseOfficeDocs2010MRUList(regFileName, regFile, reader);
-                }
+                } 
                 line = reader.readLine();
             }
         }     
@@ -1457,8 +1457,7 @@ class ExtractRegistry extends Extract {
             postArtifacts(bbartifacts);
         }
     }
-    
-    
+       
     /**
      * Create recently used artifacts to parse the trustrecords records
      * 
