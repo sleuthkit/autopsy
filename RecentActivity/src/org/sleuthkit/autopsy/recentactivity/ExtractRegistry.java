@@ -1176,10 +1176,22 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
 
                 if (line.matches("^adoberdr v.*")) {
-                    parseAdobeMRUList(regFileName, regFile, reader);
+                    parseAdobeMRUList(regFile, reader);
                 } else if (line.matches("^mpmru v.*")) {
-                    parseMediaPlayerMRUList(regFileName, regFile, reader);
-                }
+                    parseMediaPlayerMRUList(regFile, reader);
+                } else if (line.matches("^trustrecords v.*")) {
+                    parseTrustrecordsMRUList(regFile, reader);
+                } else if (line.matches("^ArcHistory:")) {
+                    parseArchHistoryMRUList(regFile, reader);
+                } else if (line.matches("^applets v.*")) {
+                    parseGenericMRUList(regFile, reader);
+                } else if (line.matches("^mmc v.*")) {
+                    parseGenericMRUList(regFile, reader);
+                } else if (line.matches("^winrar v.*")) {
+                    parseWinRARMRUList(regFile, reader);
+                } else if (line.matches("^officedocs2010 v.*")) {
+                    parseOfficeDocs2010MRUList(regFile, reader);
+                } 
                 line = reader.readLine();
             }
         }     
@@ -1196,7 +1208,7 @@ class ExtractRegistry extends Extract {
      * 
      * @throws FileNotFound and IOException
      */
-    private void parseAdobeMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseAdobeMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         SimpleDateFormat adobePluginDateFormat = new SimpleDateFormat("yyyyMMddHHmmssZ", US);
@@ -1243,7 +1255,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }    
-        if (bbartifacts != null) {
+        if (!bbartifacts.isEmpty()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1259,7 +1271,7 @@ class ExtractRegistry extends Extract {
      * 
      * @throws FileNotFound and IOException
      */
-    private void parseMediaPlayerMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseMediaPlayerMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         while (!line.contains(SECTION_DIVIDER)) {
@@ -1284,7 +1296,225 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (bbartifacts != null) {
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
+    }
+    
+     /**
+     * Create recently used artifacts to parse the regripper output
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseGenericMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String line = reader.readLine();
+        while (!line.contains(SECTION_DIVIDER)) {
+            line = reader.readLine();
+            line = line.trim();
+            if (line.contains("LastWrite")) {
+                line = reader.readLine();
+                // Columns are
+                // FileX -> <file>
+                while (!line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("Applets")) {
+                    // Split line on "> " which is the record delimiter between position and file
+                    String tokens[] = line.split("> ");
+                    String fileName = tokens[1];
+                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                    attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                    BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                    if(bba != null) {
+                         bbartifacts.add(bba);
+                    }
+                    line = reader.readLine();
+                }
+                line = line.trim();
+            }
+        }
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
+    }
+    
+     /**
+     * Create recently used artifacts to parse the WinRAR output
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseWinRARMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String line = reader.readLine();
+        while (!line.contains(SECTION_DIVIDER)) {
+            line = reader.readLine();
+            line = line.trim();
+            if (line.contains("LastWrite")) {
+                line = reader.readLine();
+                // Columns are
+                // FileX -> <Media file>
+                if (!line.isEmpty()) {
+                    while (!line.contains(SECTION_DIVIDER)) {
+                        // Split line on "> " which is the record delimiter between position and file
+                        String tokens[] = line.split("> ");
+                        String fileName = tokens[1];
+                        Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                        attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                        BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                        if(bba != null) {
+                             bbartifacts.add(bba);
+                        }
+                        line = reader.readLine();
+                    }
+                }
+                line = line.trim();
+            }
+        }
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
+    }
+    
+     /**
+     * Create recently used artifacts to parse the runmru ArcHistory records
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseArchHistoryMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String line = reader.readLine();
+        line = line.trim();
+        if (!line.contains("PathHistory:")) {
+            while (!line.contains("PathHistory:") && !line.isEmpty()) {
+                // Columns are
+                // <fileName>
+                String fileName = line;
+                Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                if (bba != null) {
+                     bbartifacts.add(bba);
+                }
+                line = reader.readLine();
+                line = line.trim();
+            }
+        }
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
+    }
+    
+     /**
+     * Create recently used artifacts to parse the Office Documents 2010 records
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseOfficeDocs2010MRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String line = reader.readLine();
+        line = line.trim();
+        // Reading to the SECTION DIVIDER to get next section of records to process.  Dates appear to have
+        // multiple spaces in them that makes it harder to parse so next section will be easier to parse 
+        while (!line.contains(SECTION_DIVIDER)) {
+            line = reader.readLine();
+        }
+        line = reader.readLine();
+        while (!line.contains(SECTION_DIVIDER)) {
+            // record has the following format
+            // 1294283922|REG|||OfficeDocs2010 - F:\Windows_time_Rules_xp.doc
+            String tokens[] = line.split("\\|");
+            Long docDate = Long.valueOf(tokens[0]); 
+            String fileNameTokens[] = tokens[4].split(" - ");
+            String fileName = fileNameTokens[1];
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
+            attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), docDate));
+            BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+            if(bba != null) {
+                 bbartifacts.add(bba);
+            }
+            line = reader.readLine();
+            line = line.trim();
+        }
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
+    }
+       
+    /**
+     * Create recently used artifacts to parse the trustrecords records
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseTrustrecordsMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        String userProfile = regFile.getParentPath();
+        userProfile = userProfile.substring(0, userProfile.length() - 2);
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        SimpleDateFormat pluginDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy", US);
+        Long usedTime = Long.valueOf(0);
+        String line = reader.readLine();
+        while (!line.contains(SECTION_DIVIDER)) {
+            line = reader.readLine();
+            line = line.trim();
+            usedTime = Long.valueOf(0);
+            if (!line.contains("**") && !line.contains("----------") && !line.contains("LastWrite") 
+                 && !line.contains(SECTION_DIVIDER) && !line.isEmpty()) {
+                // Columns are
+                // Date : <File Name>/<Website>
+                // Split line on " : " which is the record delimiter between position and file
+                String fileName = null;
+                String tokens[] = line.split(" : ");
+                fileName = tokens[1];
+                fileName = fileName.replace("%USERPROFILE%", userProfile);
+                // Time in the format of Wed May 31 14:33:03 2017 Z 
+                try {
+                    String fileUsedTime = tokens[0].replaceAll(" Z","");
+                    Date usedDate = pluginDateFormat.parse(fileUsedTime);
+                    usedTime = usedDate.getTime()/1000;
+                } catch (ParseException ex) {
+                // catching error and displaying date that could not be parsed
+                // we set the timestamp to 0 and continue on processing
+                    logger.log(Level.WARNING, String.format("Failed to parse date/time %s for TrustRecords artifact.", tokens[0]), ex); //NON-NLS
+                }
+                Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), usedTime));
+                BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                if(bba != null) {
+                     bbartifacts.add(bba);
+                }
+                line = line.trim();
+            }
+        }
+        if (!bbartifacts.isEmpty()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1490,7 +1720,7 @@ class ExtractRegistry extends Extract {
 
         return returnValue;
     }
-
+    
     @Override
     public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
