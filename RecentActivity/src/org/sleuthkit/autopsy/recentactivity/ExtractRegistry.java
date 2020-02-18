@@ -1316,7 +1316,7 @@ class ExtractRegistry extends Extract {
             if (line.contains("LastWrite")) {
                 line = reader.readLine();
                 // Columns are
-                // FileX -> <Media file>
+                // FileX -> <file>
                 while (!line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("Applets")) {
                     // Split line on "> " which is the record delimiter between position and file
                     String tokens[] = line.split("> ");
@@ -1479,21 +1479,16 @@ class ExtractRegistry extends Extract {
         while (!line.contains(SECTION_DIVIDER)) {
             line = reader.readLine();
             line = line.trim();
-            if (line.contains("**")) {
-                usedTime = Long.valueOf(0);
-            }
+            usedTime = Long.valueOf(0);
             if (!line.contains("**") && !line.contains("----------") && !line.contains("LastWrite") 
                  && !line.contains(SECTION_DIVIDER) && !line.isEmpty()) {
                 // Columns are
                 // Date : <File Name>/<Website>
                 // Split line on " : " which is the record delimiter between position and file
                 String fileName = null;
-                try {
                 String tokens[] = line.split(" : ");
                 fileName = tokens[1];
-                if (fileName.contains("%USERPROFILE%")) {
-                    fileName = fileName.replace("%USERPROFILE%", userProfile);
-                } 
+                fileName = fileName.replace("%USERPROFILE%", userProfile);
                 // Time in the format of Wed May 31 14:33:03 2017 Z 
                 try {
                     String fileUsedTime = tokens[0].replaceAll(" Z","");
@@ -1502,10 +1497,7 @@ class ExtractRegistry extends Extract {
                 } catch (ParseException ex) {
                 // catching error and displaying date that could not be parsed
                 // we set the timestamp to 0 and continue on processing
-                    logger.log(Level.WARNING, String.format("Failed to parse date/time %s for adobe file artifact.", tokens[0]), ex); //NON-NLS
-                }
-                } catch (ArrayIndexOutOfBoundsException ex) {
-                    logger.log(Level.WARNING, "Failed to parse date/time %s for adobe file artifact.", ex); //NON-NLS                    
+                    logger.log(Level.WARNING, String.format("Failed to parse date/time %s for TrustRecords artifact.", tokens[0]), ex); //NON-NLS
                 }
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
                 attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
