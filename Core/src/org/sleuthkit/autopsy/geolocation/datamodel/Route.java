@@ -20,13 +20,14 @@
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints.GeoWaypoints;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoint;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints.GeoWaypoint;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints;
 
 /**
  * A Route represents a TSK_GPS_ROUTE artifact which has a start and end point
@@ -117,9 +118,11 @@ public class Route extends GeoPath {
 
         if (attribute != null) {
             String value = attribute.getValueString();
-            List<GeoWaypoint> waypointList = GeoWaypoints.deserializePoints(value);
+           GeoWaypoints waypoints = GeoWaypoints.deserialize(value);
 
-            for (GeoWaypoint waypoint : waypointList) {
+            Iterator<GeoWaypoint> waypointIter = waypoints.iterator();
+            while(waypointIter.hasNext()) {
+                GeoWaypoint waypoint = waypointIter.next();
                 addToPath(new Waypoint(artifact, label, null, waypoint.getLatitude(), waypoint.getLongitude(), waypoint.getAltitude(), null, attributeMap, this));
             }
         } else {

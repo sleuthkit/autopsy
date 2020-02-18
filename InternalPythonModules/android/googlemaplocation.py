@@ -42,6 +42,7 @@ from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.blackboardutils import GeoArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils.attributes import GeoWaypointList
 
 import traceback
 import general
@@ -87,7 +88,7 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
 
         try:
             artifactHelper = GeoArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                    general.MODULE_NAME, abstractFile)
+                                    general.MODULE_NAME, self.PROGRAM_NAME, abstractFile)
             Class.forName("org.sqlite.JDBC") # load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
             statement = connection.createStatement()
@@ -113,8 +114,12 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                 dest_lng = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("dest_lng"))
                 source_lat = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("source_lat"))
                 source_lng = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("source_lng"))
+
+                waypointlist = GeoWaypointList()
+                waypointlist.addPoint(source_lat, source_lng, None, None)
+                waypointlist.addPoint(dest_lat, dest_lng, None, dest_address)
 				
-                artifactHelper.addRoute(dest_title, time, dest_address, self.PROGRAM_NAME, self.CAT_DESTINATION, source_lat, source_lng, dest_lat, dest_lng)
+                artifactHelper.addRoute(dest_title, time, waypointlist, None)
 
         except SQLException as ex:
             # Unable to execute Google map locations SQL query against database.

@@ -21,13 +21,14 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoint.GeoTrackPoint;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints.GeoTrackPoint;
 
 /**
  * A GPS track with which wraps the TSK_GPS_TRACK artifact.
@@ -59,11 +60,11 @@ public final class Track extends GeoPath{
     private Track(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         super(artifact, getTrackName(attributeMap));
 
-        List<GeoTrackPoint> points = getPointsList(attributeMap);
+        GeoTrackPoints points = getPointsList(attributeMap);
         buildPath(points);
 
-        startTimestamp = findStartTime(points);
-        endTimeStamp = findEndTime(points);
+        startTimestamp = points.getStartTime();
+        endTimeStamp = points.getEndTime();
     }
     
     /**
@@ -111,8 +112,10 @@ public final class Track extends GeoPath{
         "# {0} - track name",
         "GEOTrack_point_label_header=Trackpoint for track: {0}"
     })
-    private void buildPath(List<GeoTrackPoint> points) throws GeoLocationDataException {
-        for (GeoTrackPoint point : points) {
+    private void buildPath(GeoTrackPoints points) throws GeoLocationDataException {
+        Iterator<GeoTrackPoint> pointIter = points.iterator();
+        while(pointIter.hasNext()) {
+            GeoTrackPoint point = pointIter.next();
             addToPath(new TrackWaypoint(Bundle.GEOTrack_point_label_header(getLabel()), point));
         }
     }
@@ -125,52 +128,13 @@ public final class Track extends GeoPath{
      * 
      * @return GeoTrackPoint list empty list if the attribute was not found.
      */
-    private List<GeoTrackPoint> getPointsList(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) {
+    private GeoTrackPoints getPointsList(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) {
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_TRACKPOINTS);
         if (attribute != null) {
             String value = attribute.getValueString();
-            return GeoTrackPoints.deserializePoints(value);
+            return GeoTrackPoints.deserialize(value);
         }
 
-        return new ArrayList<>();
-    }
-
-    /**
-     * Return the start time for the track. Assumes the points are in time
-     * order.
-     *
-     * @param points List of GeoTrackPoints.
-     *
-     * @return First non-null time stamp or null, if one was not found.
-     */
-    private Long findStartTime(List<GeoTrackPoint> points) {
-        if (points != null) {
-            for (GeoTrackPoint point : points) {
-                if (point.getTimeStamp() != null) {
-                    return point.getTimeStamp();
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Return the ends time for the track. Assumes the points are in time
-     * order.
-     *
-     * @param points List of GeoTrackPoints.
-     *
-     * @return First non-null time stamp or null, if one was not found.
-     */
-    private Long findEndTime(List<GeoTrackPoint> points) {
-        if (points != null) {
-            for (int index = points.size() - 1; index >= 0; index--) {
-                GeoTrackPoint point = points.get(index);
-                if (point.getTimeStamp() != null) {
-                    return point.getTimeStamp();
-                }
-            }
-        }
         return null;
     }
 
@@ -234,12 +198,12 @@ public final class Track extends GeoPath{
 
             value = point.getDistanceTraveled();
             if (value != null) {
-                list.add(new Property(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_DISTANCE_TRAVELED.getDisplayName(), value.toString()));
+                list.add(new Property("", value.toString()));
             }
 
             value = point.getDistanceFromHP();
             if (value != null) {
-                list.add(new Property(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_DISTANCE_FROM_HOME_POINT.getDisplayName(), value.toString()));
+                list.add(new Property("", value.toString()));
             }
 
             return list;
