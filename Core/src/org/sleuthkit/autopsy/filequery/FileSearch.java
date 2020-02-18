@@ -248,12 +248,12 @@ class FileSearch {
     }
 
     /**
-     * Get a summary for the specified AbstractFile if no TextSummarizers exist get
-     * the first bit of the file.
+     * Get a summary for the specified AbstractFile. If no TextSummarizers exist get
+     * the beginning of the file.
      *
      * @param file The AbstractFile to summarize.
      *
-     * @return The summary or first bit of the specified file as a String.
+     * @return The summary or beginning of the specified file as a String.
      */
     @NbBundle.Messages({"FileSearch.documentSummary.noPreview=No preview available.",
         "FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview."})
@@ -271,7 +271,7 @@ class FileSearch {
             }
         }
         if (localSummarizer == null) {
-            //no summarizer was found just grab the first bit of the file
+            //no summarizer was found just grab the beginning of the file
             return getFirstLines(file);
         } else {
             try {
@@ -285,11 +285,11 @@ class FileSearch {
     }
 
     /**
-     * Get the first bit of text from the specified AbstractFile.
+     * Get the beginning of text from the specified AbstractFile.
      *
      * @param file The AbstractFile to get text from.
      *
-     * @return The first bit of text from the specified AbstractFile.
+     * @return The beginning of text from the specified AbstractFile.
      */
     private static String getFirstLines(AbstractFile file) {
         try (Reader reader = TextExtractorFactory.getExtractor(file, null).getReader()) {
