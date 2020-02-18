@@ -1171,21 +1171,21 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
 
                 if (line.matches("^adoberdr v.*")) {
-                    parseAdobeMRUList(regFileName, regFile, reader);
+                    parseAdobeMRUList(regFile, reader);
                 } else if (line.matches("^mpmru v.*")) {
-                    parseMediaPlayerMRUList(regFileName, regFile, reader);
+                    parseMediaPlayerMRUList(regFile, reader);
                 } else if (line.matches("^trustrecords v.*")) {
-                    parseTrustrecordsMRUList(regFileName, regFile, reader);
+                    parseTrustrecordsMRUList(regFile, reader);
                 } else if (line.matches("^ArcHistory:")) {
-                    parseArchHistoryMRUList(regFileName, regFile, reader);
+                    parseArchHistoryMRUList(regFile, reader);
                 } else if (line.matches("^applets v.*")) {
-                    parseGenericMRUList(regFileName, regFile, reader);
+                    parseGenericMRUList(regFile, reader);
                 } else if (line.matches("^mmc v.*")) {
-                    parseGenericMRUList(regFileName, regFile, reader);
+                    parseGenericMRUList(regFile, reader);
                 } else if (line.matches("^winrar v.*")) {
-                    parseWinRARMRUList(regFileName, regFile, reader);
+                    parseWinRARMRUList(regFile, reader);
                 } else if (line.matches("^officedocs2010 v.*")) {
-                    parseOfficeDocs2010MRUList(regFileName, regFile, reader);
+                    parseOfficeDocs2010MRUList(regFile, reader);
                 } 
                 line = reader.readLine();
             }
@@ -1203,7 +1203,7 @@ class ExtractRegistry extends Extract {
      * 
      * @throws FileNotFound and IOException
      */
-    private void parseAdobeMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseAdobeMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         SimpleDateFormat adobePluginDateFormat = new SimpleDateFormat("yyyyMMddHHmmssZ", US);
@@ -1250,7 +1250,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }    
-        if (bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1266,7 +1266,7 @@ class ExtractRegistry extends Extract {
      * 
      * @throws FileNotFound and IOException
      */
-    private void parseMediaPlayerMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseMediaPlayerMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         while (!line.contains(SECTION_DIVIDER)) {
@@ -1307,7 +1307,7 @@ class ExtractRegistry extends Extract {
      * 
      * @throws FileNotFound and IOException
      */
-    private void parseGenericMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseGenericMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         while (!line.contains(SECTION_DIVIDER)) {
@@ -1348,7 +1348,7 @@ class ExtractRegistry extends Extract {
      * 
      * @throws FileNotFound and IOException
      */
-    private void parseWinRARMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseWinRARMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         while (!line.contains(SECTION_DIVIDER)) {
@@ -1391,7 +1391,7 @@ class ExtractRegistry extends Extract {
      * 
      * @throws FileNotFound and IOException
      */
-    private void parseArchHistoryMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseArchHistoryMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         line = line.trim();
@@ -1426,7 +1426,7 @@ class ExtractRegistry extends Extract {
      * 
      * @throws FileNotFound and IOException
      */
-    private void parseOfficeDocs2010MRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseOfficeDocs2010MRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         line = line.trim();
@@ -1469,7 +1469,7 @@ class ExtractRegistry extends Extract {
      * 
      * @throws FileNotFound and IOException
      */
-    private void parseTrustrecordsMRUList(String regFileName, AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseTrustrecordsMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         String userProfile = regFile.getParentPath();
         userProfile = userProfile.substring(0, userProfile.length() - 2);
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
