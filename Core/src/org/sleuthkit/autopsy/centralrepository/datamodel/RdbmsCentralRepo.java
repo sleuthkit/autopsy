@@ -3406,12 +3406,12 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
                 final String addIntegerColumnTemplate = "ALTER TABLE %s ADD COLUMN %s INTEGER;";  //NON-NLS
                 
-                final String addSsidTableTemplate = RdbmsCentralRepoSchemaFactory.getCreateArtifactInstancesTableTemplate(selectedPlatform);
-                final String addCaseIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddCaseIdIndexTemplate();
-                final String addDataSourceIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddDataSourceIdIndexTemplate();
-                final String addValueIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddValueIndexTemplate();
-                final String addKnownStatusIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddKnownStatusIndexTemplate();
-                final String addObjectIdIndexTemplate = RdbmsCentralRepoSchemaFactory.getAddObjectIdIndexTemplate();
+                final String addSsidTableTemplate = RdbmsCentralRepoFactory.getCreateArtifactInstancesTableTemplate(selectedPlatform);
+                final String addCaseIdIndexTemplate = RdbmsCentralRepoFactory.getAddCaseIdIndexTemplate();
+                final String addDataSourceIdIndexTemplate = RdbmsCentralRepoFactory.getAddDataSourceIdIndexTemplate();
+                final String addValueIndexTemplate = RdbmsCentralRepoFactory.getAddValueIndexTemplate();
+                final String addKnownStatusIndexTemplate = RdbmsCentralRepoFactory.getAddKnownStatusIndexTemplate();
+                final String addObjectIdIndexTemplate = RdbmsCentralRepoFactory.getAddObjectIdIndexTemplate();
 
                 final String addAttributeSql;
                 //get the data base specific code for creating a new _instance table
@@ -3578,8 +3578,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                                 + "md5 text DEFAULT NULL,sha1 text DEFAULT NULL,sha256 text DEFAULT NULL,"
                                 + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
                                 + "CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id))");
-                        statement.execute(RdbmsCentralRepoSchemaFactory.getAddDataSourcesNameIndexStatement());
-                        statement.execute(RdbmsCentralRepoSchemaFactory.getAddDataSourcesObjectIdIndexStatement());
+                        statement.execute(RdbmsCentralRepoFactory.getAddDataSourcesNameIndexStatement());
+                        statement.execute(RdbmsCentralRepoFactory.getAddDataSourcesObjectIdIndexStatement());
                         statement.execute("INSERT INTO data_sources SELECT * FROM old_data_sources");
                         statement.execute("DROP TABLE old_data_sources");
                         break;

@@ -30,9 +30,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Creates the CR schema and populates it with initial data.
  *
  */
-public class RdbmsCentralRepoSchemaFactory {
+public class RdbmsCentralRepoFactory {
 
-    private final static Logger LOGGER = Logger.getLogger(RdbmsCentralRepoSchemaFactory.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(RdbmsCentralRepoFactory.class.getName());
 
    
     private final CentralRepoPlatforms selectedPlatform;
@@ -50,14 +50,14 @@ public class RdbmsCentralRepoSchemaFactory {
 
 
     
-    public RdbmsCentralRepoSchemaFactory(CentralRepoPlatforms selectedPlatform, SqliteCentralRepoSettings repoSettings) throws CentralRepoException {
+    public RdbmsCentralRepoFactory(CentralRepoPlatforms selectedPlatform, SqliteCentralRepoSettings repoSettings) throws CentralRepoException {
         this.selectedPlatform = selectedPlatform;
         this.sqliteCentralRepoSettings = repoSettings;
         this.postgresCentralRepoSettings =  null;
         
     }
 
-     public RdbmsCentralRepoSchemaFactory(CentralRepoPlatforms selectedPlatform, PostgresCentralRepoSettings repoSettings) throws CentralRepoException {
+     public RdbmsCentralRepoFactory(CentralRepoPlatforms selectedPlatform, PostgresCentralRepoSettings repoSettings) throws CentralRepoException {
         this.selectedPlatform = selectedPlatform;
         this.postgresCentralRepoSettings = repoSettings;
         this.sqliteCentralRepoSettings =  null;

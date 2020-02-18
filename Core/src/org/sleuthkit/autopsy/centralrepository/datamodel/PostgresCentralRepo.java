@@ -132,7 +132,7 @@ final class PostgresCentralRepo extends RdbmsCentralRepo {
         }
 
     
-        RdbmsCentralRepoSchemaFactory centralRepoSchemaFactory =  new RdbmsCentralRepoSchemaFactory(CentralRepoPlatforms.POSTGRESQL, dbSettings);
+        RdbmsCentralRepoFactory centralRepoSchemaFactory =  new RdbmsCentralRepoFactory(CentralRepoPlatforms.POSTGRESQL, dbSettings);
         centralRepoSchemaFactory.insertDefaultDatabaseContent();
     }
 

@@ -144,7 +144,7 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
                 CentralRepoDbUtil.closeConnection(conn);
             }
 
-            RdbmsCentralRepoSchemaFactory centralRepoSchemaFactory =  new RdbmsCentralRepoSchemaFactory(CentralRepoPlatforms.SQLITE, dbSettings);
+            RdbmsCentralRepoFactory centralRepoSchemaFactory =  new RdbmsCentralRepoFactory(CentralRepoPlatforms.SQLITE, dbSettings);
             centralRepoSchemaFactory.insertDefaultDatabaseContent();
         } finally {
             releaseExclusiveLock();

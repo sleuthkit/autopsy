@@ -45,7 +45,7 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatf
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepoSchemaFactory;
+import org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepoFactory;
 
 /**
  * Configuration dialog for Central Repository database settings.
@@ -449,7 +449,7 @@ public class EamDbSettingsDialog extends JDialog {
                 }
                 if (dbCreated) {
                     try {
-                        RdbmsCentralRepoSchemaFactory centralRepoSchemaFactory = new RdbmsCentralRepoSchemaFactory(selectedPlatform, dbSettingsPostgres);
+                        RdbmsCentralRepoFactory centralRepoSchemaFactory = new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsPostgres);
 
                         result = centralRepoSchemaFactory.initializeDatabaseSchema()
                                 && centralRepoSchemaFactory.insertDefaultDatabaseContent();
@@ -460,7 +460,7 @@ public class EamDbSettingsDialog extends JDialog {
                 if (!result) {
                     // Remove the incomplete database
                     if (dbCreated) {
-                        // RAMAN TBD: migrate  deleteDatabase() to RdbmsCentralRepoSchemaFactory
+                        // RAMAN TBD: migrate  deleteDatabase() to RdbmsCentralRepoFactory
                         dbSettingsPostgres.deleteDatabase();
                     }
 
@@ -478,7 +478,7 @@ public class EamDbSettingsDialog extends JDialog {
                 }
                 if (dbCreated) {
                     try {
-                        RdbmsCentralRepoSchemaFactory centralRepoSchemaFactory = new RdbmsCentralRepoSchemaFactory(selectedPlatform, dbSettingsSqlite);
+                        RdbmsCentralRepoFactory centralRepoSchemaFactory = new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsSqlite);
                         result = centralRepoSchemaFactory.initializeDatabaseSchema()
                                 && centralRepoSchemaFactory.insertDefaultDatabaseContent();
                     } catch (CentralRepoException ex) {
