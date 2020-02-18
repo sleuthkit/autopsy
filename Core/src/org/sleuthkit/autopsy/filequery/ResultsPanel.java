@@ -769,6 +769,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             return null;
         }
 
+        @Messages({"ResultsPanel.documentPreview.text=Document preview creation cancelled."})
         @Override
         protected void done() {
             try {
@@ -776,8 +777,9 @@ public class ResultsPanel extends javax.swing.JPanel {
             } catch (InterruptedException | ExecutionException ex) {
                 documentWrapper.setPreview(ex.getMessage());
                 logger.log(Level.WARNING, "Document Worker Exception", ex);
-            } catch (CancellationException ex){
-                //ignore we want this to be cancelled sometimes
+            } catch (CancellationException ignored) {
+                documentWrapper.setPreview(Bundle.ResultsPanel_documentPreview_text());
+                //we want to do nothing in response to this since we allow it to be cancelled
             }
             documentPreviewViewer.repaint();
         }

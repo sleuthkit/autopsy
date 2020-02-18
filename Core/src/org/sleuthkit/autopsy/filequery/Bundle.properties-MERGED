@@ -187,6 +187,7 @@ ResultFile.score.taggedFile.description=At least one instance of the file has be
 # {1} - totalPages
 ResultsPanel.currentPage.displayValue=Page: {0} of {1}
 ResultsPanel.currentPageLabel.text=Page: -
+ResultsPanel.documentPreview.text=Document preview creation cancelled.
 # {0} - selectedPage
 # {1} - maxPage
 ResultsPanel.invalidPageNumber.message=The selected page number {0} does not exist. Please select a value from 1 to {1}.
