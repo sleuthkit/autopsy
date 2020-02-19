@@ -295,7 +295,7 @@ class FileSearch {
         try (Reader reader = TextExtractorFactory.getExtractor(file, null).getReader()) {
             char[] cbuf = new char[PREVIEW_SIZE];
             reader.read(cbuf, 0, PREVIEW_SIZE);
-            return Arrays.toString(cbuf);
+            return new String(cbuf);
         } catch (IOException ex) {
             return Bundle.FileSearch_documentSummary_noBytes();
         } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
