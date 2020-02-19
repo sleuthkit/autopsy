@@ -35,7 +35,7 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.CloudSolrClient;
+// ELTODO import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -157,14 +157,14 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      */
     @Override
     public void tryConnect(String host, int port) throws KeywordSearchServiceException {
-        // ELTODO HttpSolrClient solrServer = null;
-        CloudSolrClient solrServer = null;
+        HttpSolrClient solrServer = null;
+        // ELTODO CloudSolrClient solrServer = null;
         if (host == null || host.isEmpty()) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingHostname")); //NON-NLS
         }
         try {
-            // ELTODO solrServer = new HttpSolrClient.Builder("http://" + host + ":" + Integer.toString(port) + "/solr").build(); //NON-NLS
-            List<String> solrUrls = new ArrayList<>();
+            solrServer = new HttpSolrClient.Builder("http://" + host + ":" + Integer.toString(port) + "/solr").build(); //NON-NLS
+            /*List<String> solrUrls = new ArrayList<>();
             solrUrls.add("http://" + host + ":" + port + "/solr");
             solrUrls.add("http://review1:" + port + "/solr");
             solrUrls.add("http://ingest9:" + port + "/solr");
@@ -172,10 +172,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             //solrServer = new CloudSolrClient.Builder().withZkHost(zkHosts).build();
             //solrServer.setZkClientTimeout(30000);
             //solrServer.setZkConnectTimeout(30000);
-            solrServer.connect(10, TimeUnit.SECONDS);
+            solrServer.connect(10, TimeUnit.SECONDS);*/
             
             //solrServer = new CloudSolrClient(zkHosts);
-            // ELTODO KeywordSearch.getServer().connectToSolrServer(solrServer);
+            KeywordSearch.getServer().connectToSolrServer(solrServer);
         /* ELTODO } catch (SolrServerException ex) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort")); //NON-NLS*/
         } catch (/*ELTODO IOException*/ Exception ex) {

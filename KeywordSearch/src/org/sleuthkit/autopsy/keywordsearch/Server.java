@@ -51,7 +51,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient; // for Single User mode
-import org.apache.solr.client.solrj.impl.CloudSolrClient; // for Solr Cloud mode
+// ELTODO import org.apache.solr.client.solrj.impl.CloudSolrClient; // for Solr Cloud mode
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
@@ -241,8 +241,8 @@ public class Server {
 
     // A reference to the Solr server we are currently connected to for the Case.
     // This could be a local or remote server.
-// ELTODO    private HttpSolrClient currentSolrServer;
-    private CloudSolrClient currentSolrServer;
+    private HttpSolrClient currentSolrServer;
+    //private CloudSolrClient currentSolrServer;
 
     private Collection currentCollection;
     private final ReentrantReadWriteLock currentCoreLock;
@@ -794,19 +794,19 @@ public class Server {
         "# {0} - core name", "Server.deleteCore.exception.msg=Failed to delete Solr core {0}",})
     void deleteCore(String coreName, CaseMetadata metadata) throws KeywordSearchServiceException {
         try {
-            IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());
+            /* ELTODO IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());
             List<String> solrUrls = new ArrayList<>();
             solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
-            CloudSolrClient solrServer = new CloudSolrClient.Builder(solrUrls).build();
+            CloudSolrClient solrServer = new CloudSolrClient.Builder(solrUrls).build();*/
                 
-            //HttpSolrClient solrServer;
+            HttpSolrClient solrServer;
             if (metadata.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 Integer localSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
-                // ELTODO solrServer = new HttpSolrClient.Builder("http://localhost:" + localSolrServerPort + "/solr").build(); //NON-NLS
+                solrServer = new HttpSolrClient.Builder("http://localhost:" + localSolrServerPort + "/solr").build(); //NON-NLS
             } else {
-                //IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());
+                IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());
                 // ELTODO solrServer = new CloudSolrClient.Builder().withZkHost(zkHosts).build();
-                // ELTODO solrServer = new HttpSolrClient.Builder("http://" + properties.getHost() + ":" + properties.getPort() + "/solr").build(); //NON-NLS
+                solrServer = new HttpSolrClient.Builder("http://" + properties.getHost() + ":" + properties.getPort() + "/solr").build(); //NON-NLS
             }
             connectToSolrServer(solrServer);
             
@@ -853,7 +853,7 @@ public class Server {
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 // ELTODO make embedded Solr work with localSolrServer
-                // currentSolrServer = this.localSolrServer;
+                currentSolrServer = this.localSolrServer;
 
                 // check if the embedded Solr server is running
                 if (!this.isEmbeddedSolrRunning()) {
@@ -864,24 +864,14 @@ public class Server {
                 // ELTODO connectToEbmeddedSolrServer(currentSolrServer);                
             } else {
                 IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
-                List<String> solrUrls = new ArrayList<>();
+                /* ELTODO List<String> solrUrls = new ArrayList<>();
                 solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
                 solrUrls.add("http://review1:" + properties.getPort() + "/solr");
                 solrUrls.add("http://ingest9:" + properties.getPort() + "/solr");
                 currentSolrServer = new CloudSolrClient.Builder(solrUrls).build(); // (new CloudSolrClient.Builder(solrUrls));
-                currentSolrServer.connect(10, TimeUnit.SECONDS);
-                //currentSolrServer.setZkClientTimeout(30000);
-                //currentSolrServer.setZkConnectTimeout(30000);
-                
-                /* ELTODO 
-                String zkHost = "localhost"; //properties.getHost();
-                String zkPort = "9983";
-                List<String> zkHosts = new ArrayList<>();
-                zkHosts.add(zkHost + ":" + zkPort);
-                currentSolrServer = new CloudSolrClient.Builder(zkHosts, Optional.empty()).build();
-                currentSolrServer.connect();*/
+                currentSolrServer.connect(10, TimeUnit.SECONDS);*/
 
-                //currentSolrServer = new HttpSolrClient.Builder("http://" + properties.getHost() + ":" + properties.getPort() + "/solr").build(); //NON-NLS
+                currentSolrServer = new HttpSolrClient.Builder("http://" + properties.getHost() + ":" + properties.getPort() + "/solr").build(); //NON-NLS
                 connectToSolrServer(currentSolrServer);
             }
         } catch (/* ELTODO SolrServerException | IOException*/ Exception ex) {
@@ -1554,8 +1544,8 @@ public class Server {
      * @throws SolrServerException
      * @throws IOException
      */
-    // ELTODO void connectToSolrServer(HttpSolrClient solrServer) throws SolrServerException, IOException {
-    void connectToSolrServer(CloudSolrClient solrServer) throws SolrServerException, IOException {
+    void connectToSolrServer(HttpSolrClient solrServer) throws SolrServerException, IOException {
+    // ELTODO void connectToSolrServer(CloudSolrClient solrServer) throws SolrServerException, IOException {
         TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
         CollectionAdminRequest.ClusterStatus statusRequest = CollectionAdminRequest.getClusterStatus();
         CollectionAdminResponse statusResponse = statusRequest.process(solrServer);
@@ -1683,7 +1673,7 @@ public class Server {
 
         // the server to access a collection needs to be built from a URL with the
         // collection in it, and is only good for collection-specific operations
-        private final CloudSolrClient solrClient;
+        private final HttpSolrClient solrClient;
 
         private final int QUERY_TIMEOUT_MILLISECONDS = 86400000; // 24 Hours = 86,400,000 Milliseconds
 
@@ -1695,25 +1685,25 @@ public class Server {
             // ELTODO get this from some configuration or UI
             //IndexingServerProperties properties = getMultiUserServerProperties(Case.getCurrentCase().getCaseDirectory());
            
-            IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+            /*IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
             List<String> solrUrls = new ArrayList<>();
             solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
             solrUrls.add("http://review1:" + properties.getPort() + "/solr");
             solrUrls.add("http://ingest9:" + properties.getPort() + "/solr");
             solrClient = new CloudSolrClient.Builder(solrUrls).build();
             solrClient.setDefaultCollection(name);
-            solrClient.connect(10, TimeUnit.SECONDS);
-            // ELTODO solrClient.withSocketTimeout(QUERY_TIMEOUT_MILLISECONDS);
-            // ELTODO solrClient.allowCompression(true);
-            /* ELTODO this.solrClient = new HttpSolrClient.Builder(currentSolrServer.getBaseURL() + "/" + name)
+            solrClient.connect(10, TimeUnit.SECONDS);*/
+
+            this.solrClient = new HttpSolrClient.Builder(currentSolrServer.getBaseURL() + "/" + name)
                     .withSocketTimeout(QUERY_TIMEOUT_MILLISECONDS)
                     .allowCompression(true) // allowCompression defaults to false. Server side must support gzip or deflate for this to have any effect.
                     .build(); //NON-NLS
-            */
+            // ELTODO solrClient.withSocketTimeout(QUERY_TIMEOUT_MILLISECONDS);
+            // ELTODO solrClient.allowCompression(true);            
 
             //TODO test these settings
             //solrCore.setConnectionTimeout(1000);
-            // ELTODO solrClient.setFollowRedirects(false);  // defaults to false
+            solrClient.setFollowRedirects(false);  // defaults to false
 
             solrClient.setParser(new XMLResponseParser()); // binary parser is used by default
 
