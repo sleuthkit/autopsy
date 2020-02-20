@@ -854,6 +854,7 @@ public class Server {
     })
     private Collection openCore(Case theCase, Index index) throws KeywordSearchModuleException {
 
+        List<String> solrUrls = new ArrayList<>();
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 // ELTODO make embedded Solr work with localSolrServer
@@ -869,9 +870,9 @@ public class Server {
             } else {
                 //IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
                 List<String> solrServerList = UserPreferences.getAllIndexingServers();
-                List<String> solrUrls = new ArrayList<>();
                 for (String server : solrServerList) {
                     solrUrls.add("http://" + server + "/solr");
+                    logger.log(Level.INFO, "Using Solr server: {0}", server);
                 }
                 //solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
                 //solrUrls.add("http://review1:" + properties.getPort() + "/solr");
@@ -914,7 +915,7 @@ public class Server {
                     for (int reTryAttempt = 0; reTryAttempt < NUM_RETRIES; reTryAttempt++) {
                         try {
                             doRetry = false;
-                            createMultiUserCollection(collectionName, dataDir.getAbsolutePath());
+                            createMultiUserCollection(collectionName, dataDir.getAbsolutePath(), solrUrls.size());
                         } catch (Exception ex) {
                             if (reTryAttempt >= NUM_RETRIES) {
                                 logger.log(Level.SEVERE, "Unable to create Solr collection " + collectionName, ex); //NON-NLS
@@ -966,7 +967,7 @@ public class Server {
         }
     }
     
-    private void createMultiUserCollection(String collectionName, String dataDirPath) throws KeywordSearchModuleException, SolrServerException, IOException {
+    private void createMultiUserCollection(String collectionName, String dataDirPath, int numShardsToUse) throws KeywordSearchModuleException, SolrServerException, IOException {
         /*
         * The core either does not exist or it is not loaded. Make a
         * request that will cause the core to be created if it does not
@@ -975,10 +976,12 @@ public class Server {
 
         Properties properties = new Properties(); 
         properties.setProperty("dataDir", dataDirPath);
+        logger.log(Level.INFO, "dataDirPath: {0}", dataDirPath);
         // properties.setProperty("transient", "true");
         // properties.setProperty("loadOnStartup", "false");
 
-        Integer numShards = 1;
+        Integer numShards = numShardsToUse;
+        logger.log(Level.INFO, "numShardsToUse: {0}", numShardsToUse);
         Integer numNrtReplicas = 1;
         Integer numTlogReplicas = 0;
         Integer numPullReplicas = 0;
@@ -1708,6 +1711,7 @@ public class Server {
             List<String> solrUrls = new ArrayList<>();
             for (String server : solrServerList) {
                 solrUrls.add("http://" + server + "/solr");
+                logger.log(Level.INFO, "Creating collection. Using Solr server: {0}", server);
             }
             //solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
             //solrUrls.add("http://review1:" + properties.getPort() + "/solr");
