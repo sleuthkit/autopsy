@@ -56,6 +56,7 @@ import org.xml.sax.SAXException;
 import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Collection;
 import java.util.Date;
@@ -66,6 +67,7 @@ import java.util.Set;
 import java.util.HashSet;
 import static java.util.Locale.US;
 import static java.util.TimeZone.getTimeZone;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
@@ -73,7 +75,9 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.recentactivity.ShellBagParser.ShellBag;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED;
@@ -1278,6 +1282,11 @@ class ExtractRegistry extends Extract {
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                     if(bba != null) {
                          bbartifacts.add(bba);
+                         bba = createAssociatedArtifact(fileName, bba);
+                         if (bba != null) {
+                             bbartifacts.add(bba);
+                         }
+
                     }
                     line = reader.readLine();
                 }
@@ -1287,6 +1296,35 @@ class ExtractRegistry extends Extract {
         if (bbartifacts != null) {
             postArtifacts(bbartifacts);
         }
+    }
+
+    private BlackboardArtifact createAssociatedArtifact(String filePathName, BlackboardArtifact bba) {
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
+        String fileName = FilenameUtils.getName(filePathName);
+        String filePath = FilenameUtils.getPath(filePathName);
+        List<AbstractFile> sourceFiles;
+        try {
+            sourceFiles = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS
+            if (!sourceFiles.isEmpty()) {
+                for (AbstractFile sourceFile : sourceFiles) {
+                    if (sourceFile.getParentPath().endsWith(filePath)) {
+                        Collection<BlackboardAttribute> bbattributes2 = new ArrayList<>();
+                           bbattributes2.addAll(Arrays.asList(
+                             new BlackboardAttribute(TSK_ASSOCIATED_ARTIFACT, this.getName(),
+                             bba.getArtifactID())));
+
+                        BlackboardArtifact associatedObjectBba = createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, sourceFile, bbattributes2);
+                        if (associatedObjectBba != null) {
+                            return associatedObjectBba;
+                        }
+                    }
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error finding lnk actual file."); //NON-NLS
+        }
+       
+        return null;
     }
     
     /**

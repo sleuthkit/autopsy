@@ -23,12 +23,14 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.JLNK;
 import org.sleuthkit.autopsy.coreutils.JLnkParser;
@@ -41,6 +43,8 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.*;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 
 /**
  * Recent documents class that will extract recent documents in the form of .lnk
@@ -107,7 +111,7 @@ class RecentDocumentsByLnk extends Extract {
             }
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-            String path = lnk.getBestPath();
+            String path = FilenameUtils.normalize(lnk.getBestPath(), true);
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                     NbBundle.getMessage(this.getClass(),
                             "RecentDocumentsByLnk.parentModuleName.noSpace"),
@@ -123,12 +127,47 @@ class RecentDocumentsByLnk extends Extract {
             BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
             if(bba != null) {
                 bbartifacts.add(bba);
+                bba = createAssociatedArtifact(path, bba);
+                if (bba != null) {
+                    bbartifacts.add(bba);
+                }
             }
         }
+        
+        
         
         postArtifacts(bbartifacts);
     }
 
+    private BlackboardArtifact createAssociatedArtifact(String filePathName, BlackboardArtifact bba) {
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
+        String fileName = FilenameUtils.getName(filePathName);
+        String filePath = FilenameUtils.getPath(filePathName);
+        List<AbstractFile> sourceFiles;
+        try {
+            sourceFiles = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS
+            if (!sourceFiles.isEmpty()) {
+                for (AbstractFile sourceFile : sourceFiles) {
+                    if (sourceFile.getParentPath().endsWith(filePath)) {
+                        Collection<BlackboardAttribute> bbattributes2 = new ArrayList<>();
+                           bbattributes2.addAll(Arrays.asList(
+                             new BlackboardAttribute(TSK_ASSOCIATED_ARTIFACT, this.getName(),
+                             bba.getArtifactID())));
+
+                        BlackboardArtifact associatedObjectBba = createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, sourceFile, bbattributes2);
+                        if (associatedObjectBba != null) {
+                            return associatedObjectBba;
+                        }
+                    }
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error finding lnk actual file."); //NON-NLS
+        }
+       
+        return null;
+    }
+    
     @Override
     public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
