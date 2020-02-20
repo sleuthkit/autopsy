@@ -45,6 +45,7 @@ import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
@@ -248,8 +249,8 @@ class FileSearch {
     }
 
     /**
-     * Get a summary for the specified AbstractFile. If no TextSummarizers exist get
-     * the beginning of the file.
+     * Get a summary for the specified AbstractFile. If no TextSummarizers exist
+     * get the beginning of the file.
      *
      * @param file The AbstractFile to summarize.
      *
@@ -258,6 +259,7 @@ class FileSearch {
     @NbBundle.Messages({"FileSearch.documentSummary.noPreview=No preview available.",
         "FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview."})
     static String summarize(AbstractFile file) {
+        String summary = null;
         TextSummarizer localSummarizer = summarizerToUse;
         if (localSummarizer == null) {
             synchronized (searchCache) {
@@ -270,18 +272,19 @@ class FileSearch {
                 }
             }
         }
-        if (localSummarizer == null) {
-            //no summarizer was found just grab the beginning of the file
-            return getFirstLines(file);
-        } else {
+        if (localSummarizer != null) {
             try {
                 //a summary of length 40 seems to fit without vertical scroll bars
-                return localSummarizer.summarize(file, 40);
+                summary = localSummarizer.summarize(file, 40);
             } catch (IOException ex) {
                 return Bundle.FileSearch_documentSummary_noPreview();
             }
         }
-
+        if (StringUtils.isBlank(summary)) {
+            //no summarizer was found or summary was empty just grab the beginning of the file
+            summary = getFirstLines(file);
+        }
+        return summary;
     }
 
     /**

@@ -760,12 +760,14 @@ public class ResultsPanel extends javax.swing.JPanel {
             documentPreviewViewer.addDocument(documentWrapper);
         }
 
+        @Messages({"ResultsPanel.unableToCreate.text=Unable to create summary."})
         @Override
         protected Void doInBackground() throws Exception {
             String preview = FileSearch.summarize(documentWrapper.getResultFile().getFirstInstance());
-            if (preview != null) {
-                documentWrapper.setPreview(preview);
+            if (preview == null) {
+                preview = Bundle.ResultsPanel_unableToCreate_text();
             }
+            documentWrapper.setPreview(preview);
             return null;
         }
 
