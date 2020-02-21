@@ -70,7 +70,6 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
 
         fileSizeLabel.setToolTipText("");
 
-        org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(ImageThumbnailPanel.class, "ImageThumbnailPanel.nameLabel.text")); // NOI18N
         nameLabel.setToolTipText("");
         nameLabel.setMaximumSize(new java.awt.Dimension(159, 12));
         nameLabel.setMinimumSize(new java.awt.Dimension(159, 12));

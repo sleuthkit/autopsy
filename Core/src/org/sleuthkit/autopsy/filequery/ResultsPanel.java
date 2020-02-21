@@ -702,6 +702,13 @@ public class ResultsPanel extends javax.swing.JPanel {
 
         @Override
         protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.WARNING, "Video Worker Exception for file: " + thumbnailWrapper.getResultFile().getFirstInstance().getId(), ex);
+            } catch (CancellationException ignored) {
+                //we want to do nothing in response to this since we allow it to be cancelled
+            }
             videoThumbnailViewer.repaint();
         }
     }
@@ -736,6 +743,13 @@ public class ResultsPanel extends javax.swing.JPanel {
 
         @Override
         protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.WARNING, "Image Worker Exception for file: " + thumbnailWrapper.getResultFile().getFirstInstance().getId(), ex);
+            } catch (CancellationException ignored) {
+                //we want to do nothing in response to this since we allow it to be cancelled
+            }
             imageThumbnailViewer.repaint();
         }
 
