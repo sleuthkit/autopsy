@@ -137,7 +137,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
     @Override
     public Component getListCellRendererComponent(JList<? extends ImageThumbnailWrapper> list, ImageThumbnailWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         fileSizeLabel.setText(DiscoveryUiUtils.getFileSizeString(value.getResultFile().getFirstInstance().getSize()));
-        String nameText = Paths.get(value.getResultFile().getFirstInstance().getParentPath(), value.getResultFile().getFirstInstance().getName()).toString();
+        String nameText = value.getResultFile().getFirstInstance().getParentPath() + value.getResultFile().getFirstInstance().getName();
         if (value.getResultFile().getAllInstances().size() > 1) {
             nameText += Bundle.ImageThumbnailPanel_nameLabel_more_text(value.getResultFile().getAllInstances().size() - 1);
         }
