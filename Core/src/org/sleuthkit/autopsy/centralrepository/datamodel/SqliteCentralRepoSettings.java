@@ -42,8 +42,8 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo
  */
 public final class SqliteCentralRepoSettings {
 
+    public final static String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
     private final static Logger LOGGER = Logger.getLogger(SqliteCentralRepoSettings.class.getName());
-    private final static String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
     private final static String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "central_repository"; // NON-NLS
     private final static String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
     private final static String JDBC_BASE_URI = "jdbc:sqlite:"; // NON-NLS
@@ -88,6 +88,14 @@ public final class SqliteCentralRepoSettings {
         } catch (NumberFormatException ex) {
             this.bulkThreshold = RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD;
         }
+    }
+    
+    /**
+     * sets database directory and name to defaults
+     */
+    public void setupDefaultSettings() {
+        dbName = DEFAULT_DBNAME;
+        dbDirectory = DEFAULT_DBDIRECTORY;
     }
 
     public void saveSettings() {

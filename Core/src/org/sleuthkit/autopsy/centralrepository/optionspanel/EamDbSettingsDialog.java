@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
 import org.sleuthkit.autopsy.centralrepository.datamodel.DatabaseTestResult;
+import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 
 /**
  * Configuration dialog for Central Repository database settings.
@@ -84,7 +85,7 @@ public class EamDbSettingsDialog extends JDialog {
                 if (pathname.isDirectory()) {
                     return true;
                 }
-                return  pathname.getName().equalsIgnoreCase(CentralRepoDbManager.getDefaultSqliteDbName());
+                return  pathname.getName().equalsIgnoreCase(SqliteCentralRepoSettings.DEFAULT_DBNAME);
             }
 
             @Override
@@ -500,7 +501,7 @@ public class EamDbSettingsDialog extends JDialog {
     }//GEN-LAST:event_cbDatabaseTypeActionPerformed
 
     private void updateFullDbPath() {
-        dataBaseFileTextArea.setText(tfDatabasePath.getText() + File.separator + manager.getDefaultSqliteDbName());
+        dataBaseFileTextArea.setText(tfDatabasePath.getText() + File.separator + SqliteCentralRepoSettings.DEFAULT_DBNAME);
         dataBaseFileTextArea.setCaretPosition(dataBaseFileTextArea.getText().length());
     }
 

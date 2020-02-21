@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * Install event listeners during module initialization
@@ -52,7 +53,14 @@ public class Installer extends ModuleInstall {
         super();
     }
 
-    @NbBundle.Messages({"Installer.centralRepoUpgradeFailed.title=Central repository disabled"})
+    @NbBundle.Messages({
+        "Installer.centralRepoUpgradeFailed.title=Central repository disabled",
+        "Installer.initialCreateSqlite.title=Create Sqlite Central Repository?",
+        "Installer.initialCreateSqlite.message=The central repository allows a user to find matching artifacts both across cases " +
+            "and across data sources in the same case. Having data in the central repository is useful for file discovery. Would you " +
+            "like to create the default Central Repository now? If you choose not to at this time, this setting can be changed in the " + 
+            "options panel."
+    })
     @Override
     public void restored() {
         Case.addPropertyChangeListener(pcl);
@@ -60,7 +68,29 @@ public class Installer extends ModuleInstall {
 
         // Perform the database upgrade and inform the user if it fails
         try {
-            CentralRepoDbManager.upgradeDatabase();
+            String initialized = ModuleSettings.getConfigSetting("CentralRepository", "initialized");
+            if (!Boolean.parseBoolean(initialized)) {
+                String dialogText = "<html><body><p style='max-width: 400px;'>" + 
+                                    NbBundle.getMessage(this.getClass(), "Installer.initialCreateSqlite.message") + 
+                                    "</p></body></html>";
+                
+                boolean setupSqlite = !RuntimeProperties.runningWithGUI() ||
+                    JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
+                        dialogText,
+                        NbBundle.getMessage(this.getClass(), "Installer.initialCreateSqlite.title"),
+                        JOptionPane.YES_NO_OPTION);
+                        
+                if (setupSqlite) {
+                    CentralRepoDbManager manager = new CentralRepoDbManager();
+                    manager.setupDefaultSqliteSettings();
+                    manager.saveNewCentralRepo();
+                }
+                
+                ModuleSettings.setConfigSetting("CentralRepository", "initialized", "true");
+            }
+            else {
+                CentralRepoDbManager.upgradeDatabase();
+            }
         } catch (CentralRepoException ex) {
             if (RuntimeProperties.runningWithGUI()) {
                 WindowManager.getDefault().invokeWhenUIReady(() -> {

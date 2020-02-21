@@ -18,16 +18,11 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 
-public class CentralRepoDbManager {
-    private static final String CENTRAL_REPO_DB_NAME = "central_repository";
-    private static final String CENTRAL_REPO_SQLITE_EXT = ".db";
-    
+public class CentralRepoDbManager {  
     private static final Logger logger = Logger.getLogger(CentralRepoDbManager.class.getName());
+    
+    private static final String CENTRAL_REPO_DB_NAME = "central_repository";
 
-    public static String getDefaultSqliteDbName() {
-        return CENTRAL_REPO_DB_NAME + CENTRAL_REPO_SQLITE_EXT;
-    }
-        
     /**
      * Upgrade the current Central Reposity schema to the newest version. If the
      * upgrade fails, the Central Repository will be disabled and the current
@@ -36,10 +31,9 @@ public class CentralRepoDbManager {
     @NbBundle.Messages(value = {"EamDbUtil.centralRepoDisabled.message= The Central Repository has been disabled.", "EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade Central Repository.", "EamDbUtil.centralRepoConnectionFailed.message=Unable to connect to Central Repository.", "EamDbUtil.exclusiveLockAquisitionFailure.message=Unable to acquire exclusive lock for Central Repository."})
     public static void upgradeDatabase() throws CentralRepoException {
         if (!CentralRepository.isEnabled()) {
-            // TODO
-//            EamDbSettingsDialog dialog = new EamDbSettingsDialog();
-//            dialog.promptUserForSetup();
+            return;
         }
+        
         CentralRepository db = null;
         CoordinationService.Lock lock = null;
         //get connection
@@ -127,6 +121,11 @@ public class CentralRepoDbManager {
 
     public SqliteCentralRepoSettings getDbSettingsSqlite() {
         return dbSettingsSqlite;
+    }
+    
+    public void setupDefaultSqliteSettings() {
+        selectedPlatform = CentralRepoPlatforms.SQLITE;
+        dbSettingsSqlite.setupDefaultSettings();
     }
     
     /**
@@ -313,7 +312,7 @@ public class CentralRepoDbManager {
                 break;
             case SQLITE:
                     File databasePath = new File(tfDatabasePath);
-                    dbSettingsSqlite.setDbName(getDefaultSqliteDbName());
+                    dbSettingsSqlite.setDbName(SqliteCentralRepoSettings.DEFAULT_DBNAME);
                     dbSettingsSqlite.setDbDirectory(databasePath.getPath());
                 break;
             default:
