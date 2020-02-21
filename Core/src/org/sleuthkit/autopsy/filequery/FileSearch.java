@@ -264,11 +264,7 @@ class FileSearch {
         if (localSummarizer == null) {
             synchronized (searchCache) {
                 if (localSummarizer == null) {
-                    try {
-                        localSummarizer = getLocalSummarizer();
-                    } catch (IOException ignored) {
-                        //no summarizers being present is not unexpected
-                    }
+                    localSummarizer = getLocalSummarizer();
                 }
             }
         }
@@ -313,7 +309,7 @@ class FileSearch {
      *
      * @throws IOException
      */
-    private static TextSummarizer getLocalSummarizer() throws IOException {
+    private static TextSummarizer getLocalSummarizer() {
         Collection<? extends TextSummarizer> summarizers
                 = Lookup.getDefault().lookupAll(TextSummarizer.class
                 );
@@ -321,7 +317,7 @@ class FileSearch {
             summarizerToUse = summarizers.iterator().next();
             return summarizerToUse;
         }
-        throw new IOException("No summarizers found");
+        return null;
     }
 
     /**

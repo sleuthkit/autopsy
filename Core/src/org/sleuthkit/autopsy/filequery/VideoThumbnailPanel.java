@@ -25,7 +25,6 @@ import java.awt.Image;
 import java.awt.GridBagConstraints;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
-import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
