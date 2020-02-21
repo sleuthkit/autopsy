@@ -255,6 +255,9 @@ public class CentralRepoDbManager {
                 break;
             case SQLITE:
                 // save the new SQLite settings
+                logger.info(String.format("Attempting to set up sqlite database at path: %s with filename: %s", 
+                    dbSettingsSqlite.getDbDirectory(), dbSettingsSqlite.getDbName()));
+                
                 dbSettingsSqlite.saveSettings();
                 // Load those newly saved settings into the sqlite db manager instance
                 //  in case we are still using the same instance.
