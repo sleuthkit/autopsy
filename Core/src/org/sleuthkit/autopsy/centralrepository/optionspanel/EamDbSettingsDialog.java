@@ -467,7 +467,7 @@ public class EamDbSettingsDialog extends JDialog {
             SwingUtilities.invokeLater(() -> {
                 JOptionPane.showMessageDialog(this,
                     Bundle.EamDbSettingsDialog_okButton_errorMsg_text(),
-                    EamDbSettingsDialog_okButton_errorTitle_text(),
+                    Bundle.EamDbSettingsDialog_okButton_errorTitle_text(),
                     JOptionPane.WARNING_MESSAGE);
             });
         }
@@ -478,6 +478,16 @@ public class EamDbSettingsDialog extends JDialog {
     }//GEN-LAST:event_bnOkActionPerformed
 
     
+    /**
+     * Returns if changes to the central repository configuration were
+     * successfully applied
+     *
+     * @return true if the database configuration was successfully changed false
+     * if it was not
+     */
+    public boolean wasConfigurationChanged() {
+        return manager.wasConfigurationChanged();
+    }
 
     private void bnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCancelActionPerformed
         dispose();

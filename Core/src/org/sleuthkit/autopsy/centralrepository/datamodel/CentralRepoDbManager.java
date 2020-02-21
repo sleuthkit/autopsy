@@ -129,6 +129,17 @@ public class CentralRepoDbManager {
         return dbSettingsSqlite;
     }
     
+    /**
+     * Returns if changes to the central repository configuration were
+     * successfully applied
+     *
+     * @return true if the database configuration was successfully changed false
+     * if it was not
+     */
+    public boolean wasConfigurationChanged() {
+        return configurationChanged;
+    }
+    
     public boolean createDb() throws CentralRepoException {
         boolean dbCreated = true;
         switch (selectedPlatform) {
@@ -347,17 +358,5 @@ public class CentralRepoDbManager {
         }
 
         return testingStatus;
-    }
-    
-    
-    /**
-     * Returns if changes to the central repository configuration were
-     * successfully applied
-     *
-     * @return true if the database configuration was successfully changed false
-     *         if it was not
-     */
-    boolean wasConfigurationChanged() {
-        return configurationChanged;
     }
 }
