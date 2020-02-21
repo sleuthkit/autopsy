@@ -66,6 +66,7 @@ import java.util.Set;
 import java.util.HashSet;
 import static java.util.Locale.US;
 import static java.util.TimeZone.getTimeZone;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
@@ -1229,6 +1230,7 @@ class ExtractRegistry extends Extract {
                     if (fileName.charAt(0) == '/') {
                         fileName = fileName.substring(1,fileName.length() - 1);
                         fileName = fileName.replaceFirst("/", ":/");
+                        fileName = FilenameUtils.normalize(fileName, true);
                     }
                     // Check to see if more then 2 tokens, Date may not be populated, will default to 0
                     if (tokens.length > 2) {
@@ -1285,6 +1287,7 @@ class ExtractRegistry extends Extract {
                     // Split line on "> " which is the record delimiter between position and file
                     String tokens[] = line.split("> ");
                     String fileName = tokens[1];
+                    fileName = FilenameUtils.normalize(fileName, true);
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
@@ -1326,6 +1329,7 @@ class ExtractRegistry extends Extract {
                     // Split line on "> " which is the record delimiter between position and file
                     String tokens[] = line.split("> ");
                     String fileName = tokens[1];
+                    fileName = FilenameUtils.normalize(fileName, true);
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
@@ -1368,6 +1372,7 @@ class ExtractRegistry extends Extract {
                         // Split line on "> " which is the record delimiter between position and file
                         String tokens[] = line.split("> ");
                         String fileName = tokens[1];
+                        fileName = FilenameUtils.normalize(fileName, true);
                         Collection<BlackboardAttribute> attributes = new ArrayList<>();
                         attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
                         BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
@@ -1405,6 +1410,7 @@ class ExtractRegistry extends Extract {
                 // Columns are
                 // <fileName>
                 String fileName = line;
+                fileName = FilenameUtils.normalize(fileName, true);
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
                 attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
                 BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
@@ -1448,6 +1454,7 @@ class ExtractRegistry extends Extract {
             Long docDate = Long.valueOf(tokens[0]); 
             String fileNameTokens[] = tokens[4].split(" - ");
             String fileName = fileNameTokens[1];
+            fileName = FilenameUtils.normalize(fileName, true);
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), docDate));
@@ -1494,6 +1501,7 @@ class ExtractRegistry extends Extract {
                 String tokens[] = line.split(" : ");
                 fileName = tokens[1];
                 fileName = fileName.replace("%USERPROFILE%", userProfile);
+                fileName = FilenameUtils.normalize(fileName, true);
                 // Time in the format of Wed May 31 14:33:03 2017 Z 
                 try {
                     String fileUsedTime = tokens[0].replaceAll(" Z","");
