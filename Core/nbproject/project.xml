@@ -345,6 +345,7 @@
                 <package>org.sleuthkit.autopsy.report</package>
                 <package>org.sleuthkit.autopsy.textextractors</package>
                 <package>org.sleuthkit.autopsy.textextractors.configs</package>
+                <package>org.sleuthkit.autopsy.textsummarizer</package>
                 <package>org.sleuthkit.autopsy.texttranslation</package>
                 <package>org.sleuthkit.datamodel</package>
                 <package>org.sleuthkit.datamodel.blackboardutils</package>
@@ -806,7 +807,7 @@
                 <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jutf7-1.0.0.jar</binary-origin>
             </class-path-extension>
-			<class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/DatCon.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/DatCon.jar</binary-origin>
             </class-path-extension>
