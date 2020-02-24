@@ -45,6 +45,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
 import org.sleuthkit.autopsy.centralrepository.datamodel.DatabaseTestResult;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepoFactory;
 
 /**
  * Configuration dialog for Central Repository database settings.
@@ -592,7 +594,7 @@ public class EamDbSettingsDialog extends JDialog {
      * Adds a change listener to a collection of text fields.
      *
      * @param textFields The text fields.
-     * @param listener   The change listener.
+     * @param listener The change listener.
      */
     private static void addDocumentListeners(Collection<JTextField> textFields, TextBoxChangedListener listener) {
         textFields.forEach((textField) -> {

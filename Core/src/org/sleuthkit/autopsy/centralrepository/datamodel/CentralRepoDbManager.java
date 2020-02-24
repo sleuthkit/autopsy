@@ -138,71 +138,67 @@ public class CentralRepoDbManager {
     public boolean wasConfigurationChanged() {
         return configurationChanged;
     }
-    
-    public boolean createDb() throws CentralRepoException {
-        boolean dbCreated = true;
+
+
+    private CentralRepoSettings getSelectedSettings() throws CentralRepoException {
         switch (selectedPlatform) {
-            case POSTGRESQL:
-                // if postgres database does not exist, attempt to create it
-                if (!dbSettingsPostgres.verifyDatabaseExists()) {
-                    dbCreated = dbSettingsPostgres.createDatabase();
-                }
-
-                // if the database still isn't created, we have a problem
-                if (!dbCreated) {
-                    logger.severe("Unable to create Postgres database for Central Repository at " + 
-                            dbSettingsPostgres.getHost() + ":" + dbSettingsPostgres.getPort() + " with db name: " + 
-                            dbSettingsPostgres.getDbName() + " and username: " + dbSettingsPostgres.getUserName());
-                    
-                    throw new CentralRepoException("Unable to create Postgres database for Central Repository.");
-                }
-                    
-                
-                boolean result = dbSettingsPostgres.initializeDatabaseSchema()
-                        && dbSettingsPostgres.insertDefaultDatabaseContent();
-
-                // if unable to initialize the schema, there's a problem as well
-                if (!result) {
-                    // Remove the incomplete database
-                    if (dbCreated) {
-                        dbSettingsPostgres.deleteDatabase();
-                    }
-
-                    String schemaError = "Unable to initialize database schema or insert contents into central repository.";
-                    logger.severe(schemaError);
-                    throw new CentralRepoException(schemaError);
-                }
-
-                break;
-            case SQLITE:
-                
-                // if sqlite db does not exist, try to creat it
-                if (!dbSettingsSqlite.dbDirectoryExists()) {
-                    dbCreated = dbSettingsSqlite.createDbDirectory();
-                }
-                
-                // if the database still isn't created, we have a problem
-                if (!dbCreated) {
-                    logger.severe("Unable to create Sqlite database for Central Repository at " + 
-                        dbSettingsSqlite.getDbDirectory());
-                    
-                    throw new CentralRepoException("Unable to create SQLite database for Central Repository.");
-                }
-                
-                result = dbSettingsSqlite.initializeDatabaseSchema()
-                        && dbSettingsSqlite.insertDefaultDatabaseContent();
-
-                if (!result) {
-                    if (dbCreated) {
-                        dbSettingsSqlite.deleteDatabase();
-                    }
-                    
-                    String schemaError = "Unable to initialize database schema or insert contents into central repository.";
-                    logger.severe(schemaError);
-                    throw new CentralRepoException(schemaError);
-                }
-                break;
+            case POSTGRESQL: return dbSettingsPostgres;
+            case SQLITE: return dbSettingsSqlite;
+            default: throw new CentralRepoException("Unknown database type: " + selectedPlatform);
         }
+    }
+
+    private RdbmsCentralRepoFactory getDbFactory() {
+        switch (selectedPlatform) {
+            case POSTGRESQL: return new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsPostgres);
+            case SQLITE: return new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsSqlite);
+            default: throw new CentralRepoException("Unknown database type: " + selectedPlatform);
+        }
+    }
+
+    public boolean createDb() throws CentralRepoException {
+        boolean result = false;
+        boolean dbCreated = true;
+
+        CentralRepoSettings selectedDbSettings = getSelectedSettings();
+
+        if (!selectedDbSettings.verifyDatabaseExists()) {
+            dbCreated = selectedDbSettings.createDatabase();
+        }
+        if (dbCreated) {
+            try {
+                RdbmsCentralRepoFactory centralRepoSchemaFactory = getDbFactory();
+
+                result = centralRepoSchemaFactory.initializeDatabaseSchema()
+                    && centralRepoSchemaFactory.insertDefaultDatabaseContent();
+            } catch (CentralRepoException ex) {
+                String message = "";
+                switch (selectedPlatform) {
+                    case POSTGRESQL: 
+                        message = String.format("Unable to create Postgres database for Central Repository at %s:%d with db name: %s and username %s", 
+                            dbSettingsPostgres.getHost(), dbSettingsPostgres.getPort(), dbSettingsPostgres.getDbName(), dbSettingsPostgres.getUserName());
+                        break;
+                    case SQLITE:
+                        message = "Unable to create Sqlite database for Central Repository at " + dbSettingsSqlite.getDbDirectory();
+                        break;
+                }
+
+                logger.log(Level.SEVERE, message, ex);
+                throw new CentralRepoException("Unable to create Postgres database for Central Repository.");
+            }
+        }
+        if (!result) {
+            // Remove the incomplete database
+            if (dbCreated) {
+                // RAMAN TBD: migrate  deleteDatabase() to RdbmsCentralRepoFactory
+                selectedDbSettings.deleteDatabase();
+            }
+
+            String schemaError = "Unable to initialize database schema or insert contents into central repository.";
+            logger.severe(schemaError);
+            throw new CentralRepoException(schemaError);
+        }
+
         testingStatus = DatabaseTestResult.TESTEDOK;
         return true;
     }
