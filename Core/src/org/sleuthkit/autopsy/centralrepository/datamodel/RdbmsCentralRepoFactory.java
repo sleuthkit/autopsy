@@ -19,12 +19,17 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.centralrepository.datamodel.Persona.Confidence;
+import org.sleuthkit.autopsy.centralrepository.datamodel.Persona.PersonaStatus;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.Account;
 
 /**
  * Creates the CR schema and populates it with initial data.
@@ -132,11 +137,11 @@ public class RdbmsCentralRepoFactory {
             stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
 
             // Create a separate instance and reference table for each artifact type
-            List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttributeInstance.getDefaultCorrelationTypes();
+            List<CorrelationAttributeInstance.Type> defaultCorrelationTypes = CorrelationAttributeInstance.getDefaultCorrelationTypes();
 
             String reference_type_dbname;
             String instance_type_dbname;
-            for (CorrelationAttributeInstance.Type type : DEFAULT_CORRELATION_TYPES) {
+            for (CorrelationAttributeInstance.Type type : defaultCorrelationTypes) {
                 reference_type_dbname = CentralRepoDbUtil.correlationTypeToReferenceTableName(type);
                 instance_type_dbname = CentralRepoDbUtil.correlationTypeToInstanceTableName(type);
 
@@ -154,6 +159,8 @@ public class RdbmsCentralRepoFactory {
                     stmt.execute(String.format(getReferenceTypeValueKnownstatusIndexTemplate(), reference_type_dbname, reference_type_dbname));
                 }
             }
+            
+            createPersonaTables(stmt);
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
             return false;
@@ -184,7 +191,11 @@ public class RdbmsCentralRepoFactory {
             return false;
         }
 
-        boolean result = CentralRepoDbUtil.insertDefaultCorrelationTypes(conn) && CentralRepoDbUtil.insertDefaultOrganization(conn);
+        boolean result = CentralRepoDbUtil.insertDefaultCorrelationTypes(conn) 
+                            && CentralRepoDbUtil.insertDefaultOrganization(conn) 
+                            && insertDefaultPersonaTablesContent(conn);
+        
+         
         CentralRepoDbUtil.closeConnection(conn);
         return result;
     }
@@ -413,7 +424,7 @@ public class RdbmsCentralRepoFactory {
     /**
      * Get the template for creating an index on the value column of an instance
      * table. %s will exist in the template where the name of the new table will
-     * be addedd.
+     * be added.
      *
      * @return a String which is a template for adding an index to the value
      * column of a _instances table
@@ -426,7 +437,7 @@ public class RdbmsCentralRepoFactory {
     /**
      * Get the template for creating an index on the known_status column of an
      * instance table. %s will exist in the template where the name of the new
-     * table will be addedd.
+     * table will be added.
      *
      * @return a String which is a template for adding an index to the
      * known_status column of a _instances table
@@ -439,7 +450,7 @@ public class RdbmsCentralRepoFactory {
     /**
      * Get the template for creating an index on the file_obj_id column of an
      * instance table. %s will exist in the template where the name of the new
-     * table will be addedd.
+     * table will be added.
      *
      * @return a String which is a template for adding an index to the
      * file_obj_id column of a _instances table
@@ -525,7 +536,16 @@ public class RdbmsCentralRepoFactory {
         }
     }
     
-    
+     private static String getOnConflictDoNothingClause(CentralRepoPlatforms selectedPlatform) {
+        switch (selectedPlatform) {
+            case POSTGRESQL:
+                return "ON CONFLICT DO NOTHING";
+            case SQLITE:
+                return "";
+            default:
+                return "";
+        }
+    }
     /**
      * Returns an ephemeral connection to the CR database.
      * 
@@ -540,5 +560,311 @@ public class RdbmsCentralRepoFactory {
             default:
                 return null;
         }
+    }
+    
+     /**
+     * Creates the tables for Persona.
+     * 
+     * @return True if success, False otherwise.
+     */
+    private boolean createPersonaTables(Statement stmt) throws SQLException {
+        
+        stmt.execute(getCreateAccountTypesTableStatement(selectedPlatform));
+        stmt.execute(getCreateConfidenceTableStatement(selectedPlatform));
+        stmt.execute(getCreateExaminersTableStatement(selectedPlatform));
+        stmt.execute(getCreatePersonaStatusTableStatement(selectedPlatform));
+        stmt.execute(getCreateAliasesTableStatement(selectedPlatform));
+        
+        stmt.execute(getCreateAccountsTableStatement(selectedPlatform));
+        stmt.execute(getCreatePersonasTableStatement(selectedPlatform));
+        stmt.execute(getCreatePersonaAliasTableStatement(selectedPlatform));
+        stmt.execute(getCreatePersonaMetadataTableStatement(selectedPlatform));
+        stmt.execute(getCreatePersonaAccountsTableStatement(selectedPlatform));
+        
+        return true;
+    }
+    
+    
+    /**
+     * Get the SQL string for creating a new account_types table in a central
+     * repository.
+     *
+     * @return SQL string for creating account_types table
+     */
+    static String getCreateAccountTypesTableStatement(CentralRepoPlatforms selectedPlatform) {
+       
+        return "CREATE TABLE IF NOT EXISTS account_types ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "type_name TEXT NOT NULL,"
+                + "display_name TEXT NOT NULL,"
+                + "correlation_type_id " + getBigIntType(selectedPlatform) + " ,"
+                + "CONSTRAINT type_name_unique UNIQUE (type_name),"
+                + "FOREIGN KEY (correlation_type_id) REFERENCES correlation_types(id)"
+                + ")";
+    }
+    
+    /**
+     * Get the SQL String for creating a new confidence table in a central
+     * repository.
+     *
+     * @return SQL string for creating confidence table
+     */
+    static String getCreateConfidenceTableStatement(CentralRepoPlatforms selectedPlatform) {
+
+        return "CREATE TABLE IF NOT EXISTS confidence ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "confidence_id integer NOT NULL,"
+                + "description TEXT,"
+                + "CONSTRAINT level_unique UNIQUE (confidence_id)"
+                + ")";
+    }
+
+    /**
+     * Get the SQL String for creating a new examiners table in a central
+     * repository.
+     *
+     * @return SQL string for creating examiners table
+     */
+    static String getCreateExaminersTableStatement(CentralRepoPlatforms selectedPlatform) {
+
+        return "CREATE TABLE IF NOT EXISTS examiners ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "login_name TEXT NOT NULL,"
+                + "display_name TEXT,"
+                + "CONSTRAINT login_name_unique UNIQUE(login_name)"
+                + ")";
+    }
+    
+    /**
+     * Get the SQL String for creating a new persona_status table in a central
+     * repository.
+     *
+     * @return SQL string for creating persona_status table
+     */
+    static String getCreatePersonaStatusTableStatement(CentralRepoPlatforms selectedPlatform) {
+
+        return "CREATE TABLE IF NOT EXISTS persona_status ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "status_id integer NOT NULL,"
+                + "status TEXT NOT NULL,"
+                + "CONSTRAINT status_unique UNIQUE(status_id)"
+                + ")";
+    }
+    
+    /**
+     * Get the SQL String for creating a new aliases table in a central
+     * repository.
+     *
+     * @return SQL string for creating aliases table
+     */
+    static String getCreateAliasesTableStatement(CentralRepoPlatforms selectedPlatform) {
+
+        return "CREATE TABLE IF NOT EXISTS aliases ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "alias TEXT NOT NULL,"
+                + "CONSTRAINT alias_unique UNIQUE(alias)"
+                + ")";
+    }
+    
+    /**
+     * Get the SQL String for creating a new accounts table in a central
+     * repository.
+     *
+     * @return SQL string for creating accounts table
+     */
+    static String getCreateAccountsTableStatement(CentralRepoPlatforms selectedPlatform) {
+
+        return "CREATE TABLE IF NOT EXISTS accounts ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "account_type_id integer NOT NULL,"
+                + "account_unique_identifier TEXT NOT NULL,"
+                + "CONSTRAINT account_unique UNIQUE(account_type_id, account_unique_identifier),"
+                + "FOREIGN KEY (account_type_id) REFERENCES account_types(id)"
+                + ")";
+    }
+    
+    /**
+     * Get the SQL String for creating a new personas table in a central
+     * repository.
+     *
+     * @return SQL string for creating personas table
+     */
+    static String getCreatePersonasTableStatement(CentralRepoPlatforms selectedPlatform) {
+
+        return "CREATE TABLE IF NOT EXISTS personas ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "uuid TEXT NOT NULL,"
+                + "comment TEXT NOT NULL,"
+                + "name TEXT NOT NULL,"
+                + "created_date " + getBigIntType(selectedPlatform) + " ,"
+                + "modified_date " + getBigIntType(selectedPlatform) + " ,"
+                + "status_id integer NOT NULL,"
+                + "CONSTRAINT uuid_unique UNIQUE(uuid),"
+                + "FOREIGN KEY (status_id) REFERENCES persona_status(status_id)"
+                + ")";
+    }
+    
+    /**
+     * Get the SQL String for creating a new persona_alias table in a central
+     * repository.
+     *
+     * @return SQL string for creating persona_alias table
+     */
+    static String getCreatePersonaAliasTableStatement(CentralRepoPlatforms selectedPlatform) {
+
+        return "CREATE TABLE IF NOT EXISTS persona_alias ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "persona_id " + getBigIntType(selectedPlatform) + " ,"
+                + "alias_id " + getBigIntType(selectedPlatform) + " ,"
+                + "justification TEXT NOT NULL,"
+                + "confidence_id integer NOT NULL,"
+                + "date_added " + getBigIntType(selectedPlatform) + " ,"
+                + "examiner_id integer NOT NULL,"
+                + "FOREIGN KEY (persona_id) REFERENCES personas(id),"
+                + "FOREIGN KEY (alias_id) REFERENCES aliases(id),"
+                + "FOREIGN KEY (confidence_id) REFERENCES confidence(confidence_id),"
+                + "FOREIGN KEY (examiner_id) REFERENCES examiners(id)"
+                + ")";
+    }
+    
+    /**
+     * Get the SQL String for creating a new persona_metadata table in a central
+     * repository.
+     *
+     * @return SQL string for creating persona_metadata table
+     */
+    static String getCreatePersonaMetadataTableStatement(CentralRepoPlatforms selectedPlatform) {
+
+        return "CREATE TABLE IF NOT EXISTS persona_metadata ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "persona_id " + getBigIntType(selectedPlatform) + " ,"
+                + "name TEXT NOT NULL,"
+                + "value TEXT NOT NULL,"
+                + "justification TEXT NOT NULL,"
+                + "confidence_id integer NOT NULL,"
+                + "date_added " + getBigIntType(selectedPlatform) + " ,"
+                + "examiner_id integer NOT NULL,"
+                + "CONSTRAINT unique_metadata UNIQUE(persona_id, name),"
+                + "FOREIGN KEY (persona_id) REFERENCES personas(id),"
+                + "FOREIGN KEY (confidence_id) REFERENCES confidence(confidence_id),"
+                + "FOREIGN KEY (examiner_id) REFERENCES examiners(id)"
+                + ")";
+    }
+     
+    /**
+     * Get the SQL String for creating a new persona_accounts table in a central
+     * repository.
+     *
+     * @return SQL string for creating persona_accounts table
+     */
+    static String getCreatePersonaAccountsTableStatement(CentralRepoPlatforms selectedPlatform) {
+
+        return "CREATE TABLE IF NOT EXISTS persona_accounts ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "persona_id " + getBigIntType(selectedPlatform) + " ,"
+                + "account_id " + getBigIntType(selectedPlatform) + " ,"
+                + "justification TEXT NOT NULL,"
+                + "confidence_id integer NOT NULL,"
+                + "date_added " + getBigIntType(selectedPlatform) + " ,"
+                + "examiner_id integer NOT NULL,"
+                + "FOREIGN KEY (persona_id) REFERENCES personas(id),"
+                + "FOREIGN KEY (account_id) REFERENCES accounts(id),"
+                + "FOREIGN KEY (confidence_id) REFERENCES confidence(confidence_id),"
+                + "FOREIGN KEY (examiner_id) REFERENCES examiners(id)"
+                + ")";
+    }
+
+    
+     /**
+      * Inserts the default content in persona related tables.
+      * 
+      * @param conn Database connection to use.
+      * 
+      * @return True if success, false otherwise.
+      */
+    private boolean insertDefaultPersonaTablesContent(Connection conn) {
+
+        Statement stmt = null;
+        try {
+            stmt = conn.createStatement();
+             
+            // populate the confidence table
+            for (Confidence confidence : Persona.Confidence.values()) {
+                String sqlString = "INSERT INTO confidence (confidence_id, description) VALUES ( " + confidence.getLevel() + ", '" + confidence.toString() + "')" //NON-NLS
+                        + getOnConflictDoNothingClause(selectedPlatform);
+                stmt.execute(sqlString);
+            }
+            
+            // populate the persona_status table
+            for (PersonaStatus status : Persona.PersonaStatus.values()) {
+                String sqlString = "INSERT INTO persona_status (status_id, status) VALUES ( " + status.getStatus() + ", '" + status.toString() + "')" //NON-NLS
+                        + getOnConflictDoNothingClause(selectedPlatform);
+                stmt.execute(sqlString);
+            }
+            
+            // Populate the account_types table
+            for (Account.Type type : Account.Type.PREDEFINED_ACCOUNT_TYPES) {
+                int correlationTypeId = getCorrelationTypeIdForAccountType(conn, type);
+                if (correlationTypeId > 0) {
+                    String sqlString = String.format("INSERT INTO account_types (type_name, display_name, correlation_type_id) VALUES ('%s', '%s', %d)" + getOnConflictDoNothingClause(selectedPlatform), 
+                                                        type.getTypeName(), type.getDisplayName(), correlationTypeId);
+                    stmt.execute(sqlString);
+                }
+            }
+            
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, String.format("Failed to populate default data in Persona tables."), ex);
+            return false;
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException ex2) {
+                     LOGGER.log(Level.SEVERE, "Error closing statement.", ex2);
+                }
+            }
+        }
+
+        return true;
+    }
+    
+    /**
+     * Returns the correlation type id for the given account type, 
+     * from the correlation_types table.
+     * 
+     * @param conn  Connection to use for database query.
+     * @param accountType Account type to look for.
+     * '
+     * @return correlation type id.
+     */
+    private int getCorrelationTypeIdForAccountType(Connection conn, Account.Type accountType) {
+
+        int typeId = -1;
+        if (accountType == Account.Type.EMAIL) {
+            typeId = CorrelationAttributeInstance.EMAIL_TYPE_ID;
+        } else if (accountType == Account.Type.PHONE) {
+            typeId = CorrelationAttributeInstance.PHONE_TYPE_ID;
+        } else {
+            ResultSet resultSet = null;
+
+            PreparedStatement preparedStatementQuery = null;
+            String querySql = "SELECT * FROM correlation_types WHERE display_name=?";
+            try {
+                preparedStatementQuery = conn.prepareStatement(querySql);
+                preparedStatementQuery.setString(1, accountType.getDisplayName());
+
+                resultSet = preparedStatementQuery.executeQuery();
+                if (resultSet.next()) {
+                    typeId = resultSet.getInt("id");
+                }
+            } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, String.format("Failed to get correlation typeId for account type %s.", accountType.getTypeName()), ex);
+            } finally {
+                CentralRepoDbUtil.closeStatement(preparedStatementQuery);
+                CentralRepoDbUtil.closeResultSet(resultSet);
+            }
+        }
+
+        return typeId;
     }
 }

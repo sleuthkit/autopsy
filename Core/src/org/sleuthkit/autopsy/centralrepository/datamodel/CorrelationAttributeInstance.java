@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -220,6 +221,9 @@ public class CorrelationAttributeInstance implements Serializable {
     public static final int IMEI_TYPE_ID = 7;
     public static final int IMSI_TYPE_ID = 8;
     public static final int ICCID_TYPE_ID = 9;
+    
+    // An offset to assign Ids for additional  correlation types.
+    public static final int ADDITIONAL_TYPES_BASE_ID = 1000;
 
     /**
      * Load the default correlation types
@@ -238,18 +242,30 @@ public class CorrelationAttributeInstance implements Serializable {
         "CorrelationType.IMSI.displayName=IMSI Number",
         "CorrelationType.ICCID.displayName=ICCID Number"})
     public static List<CorrelationAttributeInstance.Type> getDefaultCorrelationTypes() throws CentralRepoException {
-        List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(SSID_TYPE_ID, Bundle.CorrelationType_SSID_displayName(), "wireless_networks", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(MAC_TYPE_ID, Bundle.CorrelationType_MAC_displayName(), "mac_address", true, true)); //NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(IMEI_TYPE_ID, Bundle.CorrelationType_IMEI_displayName(), "imei_number", true, true)); //NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(IMSI_TYPE_ID, Bundle.CorrelationType_IMSI_displayName(), "imsi_number", true, true)); //NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(ICCID_TYPE_ID, Bundle.CorrelationType_ICCID_displayName(), "iccid_number", true, true)); //NON-NLS
-        return DEFAULT_CORRELATION_TYPES;
+        List<CorrelationAttributeInstance.Type> defaultCorrelationTypes = new ArrayList<>();
+        
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, true)); // NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address", true, true)); // NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number", true, true)); // NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, true)); // NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(SSID_TYPE_ID, Bundle.CorrelationType_SSID_displayName(), "wireless_networks", true, true)); // NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(MAC_TYPE_ID, Bundle.CorrelationType_MAC_displayName(), "mac_address", true, true)); //NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(IMEI_TYPE_ID, Bundle.CorrelationType_IMEI_displayName(), "imei_number", true, true)); //NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(IMSI_TYPE_ID, Bundle.CorrelationType_IMSI_displayName(), "imsi_number", true, true)); //NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(ICCID_TYPE_ID, Bundle.CorrelationType_ICCID_displayName(), "iccid_number", true, true)); //NON-NLS
+        
+        // Create Correlation Types for Accounts.
+        int correlationTypeId = ADDITIONAL_TYPES_BASE_ID;
+        for (Account.Type type : Account.Type.PREDEFINED_ACCOUNT_TYPES) {
+            // Skip Phone and Email accounts as there are already Correlation types defined for those.
+            if (type != Account.Type.EMAIL && type != Account.Type.PHONE) {
+                defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(correlationTypeId, type.getDisplayName(), type.getTypeName().toLowerCase(), true, true)); //NON-NLS
+                correlationTypeId++;
+            }
+        }
+
+        return defaultCorrelationTypes;
     }
 
     /**

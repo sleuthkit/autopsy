@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -255,7 +255,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         filterByDocuments = interCasePanel.documentsCheckboxIsSelected();
                     }
                     if (corType == null) {
-                        corType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
+                        corType = CentralRepository.getInstance().getCorrelationTypes().get(0);
                     }
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
                         builder = new AllInterCaseCommonAttributeSearcher(filterByMedia, filterByDocuments, corType, percentageThreshold);
@@ -366,7 +366,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         filterByDocuments = interCasePanel.documentsCheckboxIsSelected();
                     }
                     if (corType == null) {
-                        corType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
+                        corType = CentralRepository.getInstance().getCorrelationTypes().get(0);
                     }
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
                         builder = new AllInterCaseCommonAttributeSearcher(filterByMedia, filterByDocuments, corType, percentageThreshold);

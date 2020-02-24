@@ -460,7 +460,6 @@ public class EamDbSettingsDialog extends JDialog {
                 if (!result) {
                     // Remove the incomplete database
                     if (dbCreated) {
-                        // RAMAN TBD: migrate  deleteDatabase() to RdbmsCentralRepoFactory
                         dbSettingsPostgres.deleteDatabase();
                     }
 
