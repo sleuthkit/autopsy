@@ -151,13 +151,13 @@ public class CorrelationAttributeUtil {
                 }
             }
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error getting defined correlation types.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error getting defined correlation types", ex); // NON-NLS
             return correlationAttrs;
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting attribute while getting type from BlackboardArtifact.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error getting querying case database for artifact attribute", ex); // NON-NLS
             return correlationAttrs;
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
             return correlationAttrs;
         }
         return correlationAttrs;
