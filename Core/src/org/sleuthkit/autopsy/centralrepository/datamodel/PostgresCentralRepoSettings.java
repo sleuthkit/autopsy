@@ -64,6 +64,12 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbSettings 
         loadSettings();
     }
 
+    @Override
+    public String toString() {
+        return String.format("PostgresCentralRepoSettings: [db type: postgres, host: %s:%d, db name: %s, username: %s]",
+            getHost(), getPort(), getDbName(), getUserName());
+    }
+    
     public void loadSettings() {
         host = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.host"); // NON-NLS
         if (host == null || host.isEmpty()) {

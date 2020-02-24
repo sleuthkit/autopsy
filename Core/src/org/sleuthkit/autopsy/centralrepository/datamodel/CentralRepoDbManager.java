@@ -161,20 +161,6 @@ public class CentralRepoDbManager {
         }
     }
 
-    private String getCurrentSettingsString() throws CentralRepoException {
-        switch (selectedPlatform) {
-            case POSTGRESQL:
-                return String.format("[db type: postgres, host: %s:%d, db name: %s, username: %s]",
-                        dbSettingsPostgres.getHost(), dbSettingsPostgres.getPort(), dbSettingsPostgres.getDbName(), dbSettingsPostgres.getUserName());
-            case SQLITE:
-                return String.format("[db type: sqlite, directory: %s, name: %s]", dbSettingsSqlite.getDbDirectory(), dbSettingsSqlite.getDbName());
-            case DISABLED:
-                return "[db type: disabled]";
-            default:
-                throw new CentralRepoException("Unknown database type: " + selectedPlatform);
-        }
-    }
-
     public boolean createDb() throws CentralRepoException {
         boolean result = false;
         boolean dbCreated = true;
@@ -191,7 +177,7 @@ public class CentralRepoDbManager {
                 result = centralRepoSchemaFactory.initializeDatabaseSchema()
                         && centralRepoSchemaFactory.insertDefaultDatabaseContent();
             } catch (CentralRepoException ex) {
-                logger.log(Level.SEVERE, "Unable to create database for central repository " + getCurrentSettingsString(), ex);
+                logger.log(Level.SEVERE, "Unable to create database for central repository with settings " + selectedDbSettings, ex);
                 throw new CentralRepoException("Unable to create Postgres database for Central Repository.");
             }
         }
@@ -251,7 +237,7 @@ public class CentralRepoDbManager {
             case POSTGRESQL:
             case SQLITE:
                 try {
-                    logger.info("Creating central repo db with settings: " + getCurrentSettingsString());
+                    logger.info("Creating central repo db with settings: " + selectedDbSettings);
                     CentralRepository.getInstance().updateSettings();
                     configurationChanged = true;
                 } catch (CentralRepoException ex) {

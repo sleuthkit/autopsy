@@ -81,6 +81,10 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbSettings {
         }
     }
     
+    public String toString() {
+        return String.format("SqliteCentralRepoSettings: [db type: sqlite, directory: %s, name: %s]", getDbDirectory(), getDbName());
+    }
+    
     /**
      * sets database directory and name to defaults
      */
