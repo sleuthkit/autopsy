@@ -9,8 +9,10 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
  *
  * @author gregd
  */
-public interface CentralRepoSettings {
+public interface CentralRepoDbSettings {
 
+    public void saveSettings();
+    
     boolean createDatabase();
 
     boolean deleteDatabase();

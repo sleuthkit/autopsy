@@ -40,7 +40,7 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo
  * NOTE: This is public scope because the options panel calls it directly to
  * set/get
  */
-public final class PostgresCentralRepoSettings implements CentralRepoSettings {
+public final class PostgresCentralRepoSettings implements CentralRepoDbSettings {
 
     private final static Logger LOGGER = Logger.getLogger(PostgresCentralRepoSettings.class.getName());
     private final static String DEFAULT_HOST = ""; // NON-NLS

@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  * NOTE: This is public scope because the options panel calls it directly to
  * set/get
  */
-public final class SqliteCentralRepoSettings implements CentralRepoSettings {
+public final class SqliteCentralRepoSettings implements CentralRepoDbSettings {
 
     public final static String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
     private final static Logger LOGGER = Logger.getLogger(SqliteCentralRepoSettings.class.getName());

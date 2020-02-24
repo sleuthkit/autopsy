@@ -158,6 +158,8 @@ public class EamDbSettingsDialog extends JDialog {
                         Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
                         JOptionPane.WARNING_MESSAGE);
                 }
+                
+                valid();
             }
         }
 
@@ -456,7 +458,8 @@ public class EamDbSettingsDialog extends JDialog {
     private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         manager.testStatus();
-
+        valid();
+        
         boolean testedOk = promptTestStatusWarnings();
         if (!testedOk) {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));

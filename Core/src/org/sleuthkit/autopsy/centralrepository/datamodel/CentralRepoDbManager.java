@@ -17,10 +17,10 @@ import org.sleuthkit.autopsy.centralrepository.optionspanel.EamDbSettingsDialog;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+public class CentralRepoDbManager {
 
-public class CentralRepoDbManager {  
     private static final Logger logger = Logger.getLogger(CentralRepoDbManager.class.getName());
-    
+
     private static final String CENTRAL_REPO_DB_NAME = "central_repository";
 
     /**
@@ -33,7 +33,7 @@ public class CentralRepoDbManager {
         if (!CentralRepository.isEnabled()) {
             return;
         }
-        
+
         CentralRepository db = null;
         CoordinationService.Lock lock = null;
         //get connection
@@ -93,19 +93,15 @@ public class CentralRepoDbManager {
             throw ex;
         }
     }
-    
-    
-    
-    
+
     private DatabaseTestResult testingStatus;
     private CentralRepoPlatforms selectedPlatform;
 
     private PostgresCentralRepoSettings dbSettingsPostgres;
     private SqliteCentralRepoSettings dbSettingsSqlite;
-    
+
     private boolean configurationChanged = false;
-    
-    
+
     public CentralRepoDbManager() {
         dbSettingsPostgres = new PostgresCentralRepoSettings();
         dbSettingsSqlite = new SqliteCentralRepoSettings();
@@ -122,12 +118,12 @@ public class CentralRepoDbManager {
     public SqliteCentralRepoSettings getDbSettingsSqlite() {
         return dbSettingsSqlite;
     }
-    
+
     public void setupDefaultSqliteSettings() {
         selectedPlatform = CentralRepoPlatforms.SQLITE;
         dbSettingsSqlite.setupDefaultSettings();
     }
-    
+
     /**
      * Returns if changes to the central repository configuration were
      * successfully applied
@@ -139,20 +135,43 @@ public class CentralRepoDbManager {
         return configurationChanged;
     }
 
-
-    private CentralRepoSettings getSelectedSettings() throws CentralRepoException {
+    private CentralRepoDbSettings getSelectedSettings() throws CentralRepoException {
         switch (selectedPlatform) {
-            case POSTGRESQL: return dbSettingsPostgres;
-            case SQLITE: return dbSettingsSqlite;
-            default: throw new CentralRepoException("Unknown database type: " + selectedPlatform);
+            case POSTGRESQL:
+                return dbSettingsPostgres;
+            case SQLITE:
+                return dbSettingsSqlite;
+            case DISABLED:
+                return null;
+            default:
+                throw new CentralRepoException("Unknown database type: " + selectedPlatform);
         }
     }
 
     private RdbmsCentralRepoFactory getDbFactory() throws CentralRepoException {
         switch (selectedPlatform) {
-            case POSTGRESQL: return new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsPostgres);
-            case SQLITE: return new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsSqlite);
-            default: throw new CentralRepoException("Unknown database type: " + selectedPlatform);
+            case POSTGRESQL:
+                return new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsPostgres);
+            case SQLITE:
+                return new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsSqlite);
+            case DISABLED:
+                return null;
+            default:
+                throw new CentralRepoException("Unknown database type: " + selectedPlatform);
+        }
+    }
+
+    private String getCurrentSettingsString() throws CentralRepoException {
+        switch (selectedPlatform) {
+            case POSTGRESQL:
+                return String.format("[db type: postgres, host: %s:%d, db name: %s, username: %s]",
+                        dbSettingsPostgres.getHost(), dbSettingsPostgres.getPort(), dbSettingsPostgres.getDbName(), dbSettingsPostgres.getUserName());
+            case SQLITE:
+                return String.format("[db type: sqlite, directory: %s, name: %s]", dbSettingsSqlite.getDbDirectory(), dbSettingsSqlite.getDbName());
+            case DISABLED:
+                return "[db type: disabled]";
+            default:
+                throw new CentralRepoException("Unknown database type: " + selectedPlatform);
         }
     }
 
@@ -160,7 +179,7 @@ public class CentralRepoDbManager {
         boolean result = false;
         boolean dbCreated = true;
 
-        CentralRepoSettings selectedDbSettings = getSelectedSettings();
+        CentralRepoDbSettings selectedDbSettings = getSelectedSettings();
 
         if (!selectedDbSettings.verifyDatabaseExists()) {
             dbCreated = selectedDbSettings.createDatabase();
@@ -170,20 +189,9 @@ public class CentralRepoDbManager {
                 RdbmsCentralRepoFactory centralRepoSchemaFactory = getDbFactory();
 
                 result = centralRepoSchemaFactory.initializeDatabaseSchema()
-                    && centralRepoSchemaFactory.insertDefaultDatabaseContent();
+                        && centralRepoSchemaFactory.insertDefaultDatabaseContent();
             } catch (CentralRepoException ex) {
-                String message = "";
-                switch (selectedPlatform) {
-                    case POSTGRESQL: 
-                        message = String.format("Unable to create Postgres database for Central Repository at %s:%d with db name: %s and username %s", 
-                            dbSettingsPostgres.getHost(), dbSettingsPostgres.getPort(), dbSettingsPostgres.getDbName(), dbSettingsPostgres.getUserName());
-                        break;
-                    case SQLITE:
-                        message = "Unable to create Sqlite database for Central Repository at " + dbSettingsSqlite.getDbDirectory();
-                        break;
-                }
-
-                logger.log(Level.SEVERE, message, ex);
+                logger.log(Level.SEVERE, "Unable to create database for central repository " + getCurrentSettingsString(), ex);
                 throw new CentralRepoException("Unable to create Postgres database for Central Repository.");
             }
         }
@@ -203,7 +211,6 @@ public class CentralRepoDbManager {
         return true;
     }
 
-    
     /**
      * saves a new central repository based on current settings
      */
@@ -234,39 +241,23 @@ public class CentralRepoDbManager {
         CentralRepoPlatforms.setSelectedPlatform(selectedPlatform.name());
         CentralRepoPlatforms.saveSelectedPlatform();
 
+        CentralRepoDbSettings selectedDbSettings = getSelectedSettings();
+
+        // save the new settings
+        selectedDbSettings.saveSettings();
+        // Load those newly saved settings into the postgres db manager instance
+        //  in case we are still using the same instance.
         switch (selectedPlatform) {
             case POSTGRESQL:
-                // save the new PostgreSQL settings
-                dbSettingsPostgres.saveSettings();
-                // Load those newly saved settings into the postgres db manager instance
-                //  in case we are still using the same instance.
+            case SQLITE:
                 try {
+                    logger.info("Creating central repo db with settings: " + getCurrentSettingsString());
                     CentralRepository.getInstance().updateSettings();
                     configurationChanged = true;
                 } catch (CentralRepoException ex) {
                     logger.log(Level.SEVERE, Bundle.CentralRepoDbManager_connectionErrorMsg_text(), ex); //NON-NLS
                     return;
                 }
-
-                break;
-            case SQLITE:
-                // save the new SQLite settings
-                logger.info(String.format("Attempting to set up sqlite database at path: %s with filename: %s", 
-                    dbSettingsSqlite.getDbDirectory(), dbSettingsSqlite.getDbName()));
-                
-                dbSettingsSqlite.saveSettings();
-                // Load those newly saved settings into the sqlite db manager instance
-                //  in case we are still using the same instance.
-                try {
-                    CentralRepository.getInstance().updateSettings();
-                    configurationChanged = true;
-                } catch (CentralRepoException ex) {
-                    logger.log(Level.SEVERE, Bundle.CentralRepoDbManager_connectionErrorMsg_text(), ex);  //NON-NLS
-                    return;
-                }
-                break;
-            case DISABLED:
-                break;
         }
     }
 
@@ -282,42 +273,39 @@ public class CentralRepoDbManager {
         testingStatus = DatabaseTestResult.UNTESTED;
     }
 
-
-
     public void setSelectedPlatform(CentralRepoPlatforms newSelected) {
         selectedPlatform = newSelected;
         testingStatus = DatabaseTestResult.UNTESTED;
     }
-    
-    
+
     /**
      * Tests whether or not the database settings are valid.
      *
      * @return True or false.
      */
-    public boolean testDatabaseSettingsAreValid (
+    public boolean testDatabaseSettingsAreValid(
             String tbDbHostname, String tbDbPort, String tbDbUsername, String tfDatabasePath, String jpDbPassword) throws CentralRepoException, NumberFormatException {
-        
+
         boolean result = true;
         StringBuilder guidanceText = new StringBuilder();
 
         switch (selectedPlatform) {
             case POSTGRESQL:
-                    dbSettingsPostgres.setHost(tbDbHostname);
-                    dbSettingsPostgres.setPort(Integer.parseInt(tbDbPort));
-                    dbSettingsPostgres.setDbName(CENTRAL_REPO_DB_NAME);
-                    dbSettingsPostgres.setUserName(tbDbUsername);
-                    dbSettingsPostgres.setPassword(jpDbPassword);
+                dbSettingsPostgres.setHost(tbDbHostname);
+                dbSettingsPostgres.setPort(Integer.parseInt(tbDbPort));
+                dbSettingsPostgres.setDbName(CENTRAL_REPO_DB_NAME);
+                dbSettingsPostgres.setUserName(tbDbUsername);
+                dbSettingsPostgres.setPassword(jpDbPassword);
                 break;
             case SQLITE:
-                    File databasePath = new File(tfDatabasePath);
-                    dbSettingsSqlite.setDbName(SqliteCentralRepoSettings.DEFAULT_DBNAME);
-                    dbSettingsSqlite.setDbDirectory(databasePath.getPath());
+                File databasePath = new File(tfDatabasePath);
+                dbSettingsSqlite.setDbName(SqliteCentralRepoSettings.DEFAULT_DBNAME);
+                dbSettingsSqlite.setDbDirectory(databasePath.getPath());
                 break;
             default:
                 throw new IllegalStateException("Central Repo has an unknown selected platform: " + selectedPlatform);
         }
-        
+
         return result;
     }
 
