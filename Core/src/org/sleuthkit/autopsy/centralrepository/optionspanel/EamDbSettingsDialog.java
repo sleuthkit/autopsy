@@ -45,6 +45,7 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatf
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepoFactory;
 
 /**
  * Configuration dialog for Central Repository database settings.
@@ -447,12 +448,19 @@ public class EamDbSettingsDialog extends JDialog {
                     dbCreated = dbSettingsPostgres.createDatabase();
                 }
                 if (dbCreated) {
-                    result = dbSettingsPostgres.initializeDatabaseSchema()
-                            && dbSettingsPostgres.insertDefaultDatabaseContent();
+                    try {
+                        RdbmsCentralRepoFactory centralRepoSchemaFactory = new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsPostgres);
+
+                        result = centralRepoSchemaFactory.initializeDatabaseSchema()
+                                && centralRepoSchemaFactory.insertDefaultDatabaseContent();
+                    } catch (CentralRepoException ex) {
+                        logger.log(Level.SEVERE, "Unable to initialize database schema or insert contents into Postgres central repository.", ex);
+                    }
                 }
                 if (!result) {
                     // Remove the incomplete database
                     if (dbCreated) {
+                        // RAMAN TBD: migrate  deleteDatabase() to RdbmsCentralRepoFactory
                         dbSettingsPostgres.deleteDatabase();
                     }
 
@@ -469,8 +477,14 @@ public class EamDbSettingsDialog extends JDialog {
                     dbCreated = dbSettingsSqlite.createDbDirectory();
                 }
                 if (dbCreated) {
-                    result = dbSettingsSqlite.initializeDatabaseSchema()
-                            && dbSettingsSqlite.insertDefaultDatabaseContent();
+                    try {
+                        RdbmsCentralRepoFactory centralRepoSchemaFactory = new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsSqlite);
+                        result = centralRepoSchemaFactory.initializeDatabaseSchema()
+                                && centralRepoSchemaFactory.insertDefaultDatabaseContent();
+                    } catch (CentralRepoException ex) {
+                        logger.log(Level.SEVERE, "Unable to initialize database schema or insert contents into SQLite central repository.", ex);
+                    }
+
                 }
                 if (!result) {
                     if (dbCreated) {
@@ -495,7 +509,7 @@ public class EamDbSettingsDialog extends JDialog {
      * successfully applied
      *
      * @return true if the database configuration was successfully changed false
-     *         if it was not
+     * if it was not
      */
     boolean wasConfigurationChanged() {
         return configurationChanged;
@@ -709,7 +723,7 @@ public class EamDbSettingsDialog extends JDialog {
      * Adds a change listener to a collection of text fields.
      *
      * @param textFields The text fields.
-     * @param listener   The change listener.
+     * @param listener The change listener.
      */
     private static void addDocumentListeners(Collection<JTextField> textFields, TextBoxChangedListener listener) {
         textFields.forEach((textField) -> {

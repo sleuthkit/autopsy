@@ -457,7 +457,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     @Subscribe
     void handleNewArtifacts(Blackboard.ArtifactsPostedEvent event) {
         for (BlackboardArtifact artifact : event.getArtifacts()) {
-            if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) { //don't index KWH artifacts.
+            if ((artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) && // don't index KWH bc it's based on existing indexed text
+                    (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID())){ //don't index AO bc it has only an artifact ID - no useful text 
                 try {
                     index(artifact);
                 } catch (TskCoreException ex) {

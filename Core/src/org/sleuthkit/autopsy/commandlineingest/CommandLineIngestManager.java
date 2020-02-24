@@ -38,6 +38,7 @@ import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.LifecycleManager;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
@@ -157,7 +158,12 @@ public class CommandLineIngestManager {
                                     Map<String, String> inputs = command.getInputs();
                                     String baseCaseName = inputs.get(CommandLineCommand.InputType.CASE_NAME.name());
                                     String rootOutputDirectory = inputs.get(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name());
-                                    openCase(baseCaseName, rootOutputDirectory);
+                                    CaseType caseType = CaseType.SINGLE_USER_CASE;
+                                    String caseTypeString = inputs.get(CommandLineCommand.InputType.CASE_TYPE.name());
+                                    if (caseTypeString != null && caseTypeString.equalsIgnoreCase(CommandLineOptionProcessor.CASETYPE_MULTI)) {
+                                        caseType = CaseType.MULTI_USER_CASE;
+                                    }
+                                    openCase(baseCaseName, rootOutputDirectory, caseType);
 
                                     String outputDirPath = getOutputDirPath(caseForJob);
                                     OutputGenerator.saveCreateCaseOutput(caseForJob, outputDirPath, baseCaseName);
@@ -340,7 +346,7 @@ public class CommandLineIngestManager {
          *
          * @throws CaseActionException
          */
-        private void openCase(String baseCaseName, String rootOutputDirectory) throws CaseActionException {
+        private void openCase(String baseCaseName, String rootOutputDirectory, CaseType caseType) throws CaseActionException {
 
             LOGGER.log(Level.INFO, "Opening case {0} in directory {1}", new Object[]{baseCaseName, rootOutputDirectory});
             Path caseDirectoryPath = findCaseDirectory(Paths.get(rootOutputDirectory), baseCaseName);
@@ -355,7 +361,7 @@ public class CommandLineIngestManager {
                 Case.createCaseDirectory(caseDirectoryPath.toString(), Case.CaseType.SINGLE_USER_CASE);
 
                 CaseDetails caseDetails = new CaseDetails(baseCaseName);
-                Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, caseDirectoryPath.toString(), caseDetails);
+                Case.createAsCurrentCase(caseType, caseDirectoryPath.toString(), caseDetails);
             }
 
             caseForJob = Case.getCurrentCase();

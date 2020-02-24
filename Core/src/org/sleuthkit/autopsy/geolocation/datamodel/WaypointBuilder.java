@@ -175,6 +175,7 @@ public final class WaypointBuilder {
      *
      * @throws GeoLocationDataException
      */
+    @SuppressWarnings("deprecation")
     public static List<Waypoint> getTrackpointWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
         try {

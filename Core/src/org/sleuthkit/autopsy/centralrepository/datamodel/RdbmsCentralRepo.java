@@ -117,6 +117,10 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     protected abstract Connection connect() throws CentralRepoException;
 
     /**
+     * Get an ephemeral connection.
+     */
+    protected abstract Connection getEphemeralConnection();
+    /**
      * Add a new name/value pair in the db_info table.
      *
      * @param name  Key to set
@@ -3401,39 +3405,27 @@ abstract class RdbmsCentralRepo implements CentralRepository {
              */
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
                 final String addIntegerColumnTemplate = "ALTER TABLE %s ADD COLUMN %s INTEGER;";  //NON-NLS
-                final String addSsidTableTemplate;
-                final String addCaseIdIndexTemplate;
-                final String addDataSourceIdIndexTemplate;
-                final String addValueIndexTemplate;
-                final String addKnownStatusIndexTemplate;
-                final String addObjectIdIndexTemplate;
+                
+                final String addSsidTableTemplate = RdbmsCentralRepoFactory.getCreateArtifactInstancesTableTemplate(selectedPlatform);
+                final String addCaseIdIndexTemplate = RdbmsCentralRepoFactory.getAddCaseIdIndexTemplate();
+                final String addDataSourceIdIndexTemplate = RdbmsCentralRepoFactory.getAddDataSourceIdIndexTemplate();
+                final String addValueIndexTemplate = RdbmsCentralRepoFactory.getAddValueIndexTemplate();
+                final String addKnownStatusIndexTemplate = RdbmsCentralRepoFactory.getAddKnownStatusIndexTemplate();
+                final String addObjectIdIndexTemplate = RdbmsCentralRepoFactory.getAddObjectIdIndexTemplate();
 
                 final String addAttributeSql;
                 //get the data base specific code for creating a new _instance table
                 switch (selectedPlatform) {
                     case POSTGRESQL:
                         addAttributeSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?) " + getConflictClause();  //NON-NLS
-
-                        addSsidTableTemplate = PostgresCentralRepoSettings.getCreateArtifactInstancesTableTemplate();
-                        addCaseIdIndexTemplate = PostgresCentralRepoSettings.getAddCaseIdIndexTemplate();
-                        addDataSourceIdIndexTemplate = PostgresCentralRepoSettings.getAddDataSourceIdIndexTemplate();
-                        addValueIndexTemplate = PostgresCentralRepoSettings.getAddValueIndexTemplate();
-                        addKnownStatusIndexTemplate = PostgresCentralRepoSettings.getAddKnownStatusIndexTemplate();
-                        addObjectIdIndexTemplate = PostgresCentralRepoSettings.getAddObjectIdIndexTemplate();
                         break;
                     case SQLITE:
                         addAttributeSql = "INSERT OR IGNORE INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";  //NON-NLS
-
-                        addSsidTableTemplate = SqliteCentralRepoSettings.getCreateArtifactInstancesTableTemplate();
-                        addCaseIdIndexTemplate = SqliteCentralRepoSettings.getAddCaseIdIndexTemplate();
-                        addDataSourceIdIndexTemplate = SqliteCentralRepoSettings.getAddDataSourceIdIndexTemplate();
-                        addValueIndexTemplate = SqliteCentralRepoSettings.getAddValueIndexTemplate();
-                        addKnownStatusIndexTemplate = SqliteCentralRepoSettings.getAddKnownStatusIndexTemplate();
-                        addObjectIdIndexTemplate = SqliteCentralRepoSettings.getAddObjectIdIndexTemplate();
                         break;
                     default:
                         throw new CentralRepoException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.", Bundle.AbstractSqlEamDb_cannotUpgrage_message(selectedPlatform.name()));
                 }
+                
                 final String dataSourcesTableName = "data_sources";
                 final String dataSourceObjectIdColumnName = "datasource_obj_id";
                 if (!doesColumnExist(conn, dataSourcesTableName, dataSourceObjectIdColumnName)) {
@@ -3586,8 +3578,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                                 + "md5 text DEFAULT NULL,sha1 text DEFAULT NULL,sha256 text DEFAULT NULL,"
                                 + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
                                 + "CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id))");
-                        statement.execute(SqliteCentralRepoSettings.getAddDataSourcesNameIndexStatement());
-                        statement.execute(SqliteCentralRepoSettings.getAddDataSourcesObjectIdIndexStatement());
+                        statement.execute(RdbmsCentralRepoFactory.getAddDataSourcesNameIndexStatement());
+                        statement.execute(RdbmsCentralRepoFactory.getAddDataSourcesObjectIdIndexStatement());
                         statement.execute("INSERT INTO data_sources SELECT * FROM old_data_sources");
                         statement.execute("DROP TABLE old_data_sources");
                         break;

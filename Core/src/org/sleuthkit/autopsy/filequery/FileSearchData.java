@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -267,6 +268,30 @@ final class FileSearchData {
         }
     }
 
+    //File discovery uses a different list of document mime types than FileTypeUtils.FileTypeCategory.DOCUMENTS
+    private static final ImmutableSet<String> DOCUMENT_MIME_TYPES
+            = new ImmutableSet.Builder<String>()
+                    .add("text/html", //NON-NLS
+                            "text/csv", //NON-NLS
+                            "text/x-log", //NON-NLS
+                            "application/rtf", //NON-NLS
+                            "application/pdf", //NON-NLS
+                            "application/xhtml+xml", //NON-NLS
+                            "application/x-msoffice", //NON-NLS
+                            "application/msword", //NON-NLS
+                            "application/msword2", //NON-NLS
+                            "application/vnd.wordperfect", //NON-NLS
+                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
+                            "application/vnd.ms-powerpoint", //NON-NLS
+                            "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
+                            "application/vnd.ms-excel", //NON-NLS
+                            "application/vnd.ms-excel.sheet.4", //NON-NLS
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
+                            "application/vnd.oasis.opendocument.presentation", //NON-NLS
+                            "application/vnd.oasis.opendocument.spreadsheet", //NON-NLS
+                            "application/vnd.oasis.opendocument.text" //NON-NLS
+                    ).build();
+
     /**
      * Enum representing the file type. We don't simply use
      * FileTypeUtils.FileTypeCategory because: - Some file types categories
@@ -286,7 +311,7 @@ final class FileSearchData {
         AUDIO(1, Bundle.FileSearchData_FileType_Audio_displayName(), FileTypeUtils.FileTypeCategory.AUDIO.getMediaTypes()),
         VIDEO(2, Bundle.FileSearchData_FileType_Video_displayName(), FileTypeUtils.FileTypeCategory.VIDEO.getMediaTypes()),
         EXECUTABLE(3, Bundle.FileSearchData_FileType_Executables_displayName(), FileTypeUtils.FileTypeCategory.EXECUTABLE.getMediaTypes()),
-        DOCUMENTS(4, Bundle.FileSearchData_FileType_Documents_displayName(), FileTypeUtils.FileTypeCategory.DOCUMENTS.getMediaTypes()),
+        DOCUMENTS(4, Bundle.FileSearchData_FileType_Documents_displayName(), DOCUMENT_MIME_TYPES),
         OTHER(5, Bundle.FileSearchData_FileType_Other_displayName(), new ArrayList<>());
 
         private final int ranking;  // For ordering in the UI
