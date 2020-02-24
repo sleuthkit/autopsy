@@ -414,17 +414,13 @@ public class EamDbSettingsDialog extends JDialog {
         setTextPrompts();
         setTextBoxListeners();
         manager.clearStatus();
-        switch (manager.getSelectedPlatform()) {
-            case SQLITE:
-                updatePostgresFields(false);
-                updateSqliteFields(true);
-                break;
-            default:
-                POSTGRESQL:
-                updatePostgresFields(true);
-                updateSqliteFields(false);
-                break;
-
+        if (manager.getSelectedPlatform() == CentralRepoPlatforms.SQLITE) {
+            updatePostgresFields(false);
+            updateSqliteFields(true);
+        }
+        else {
+            updatePostgresFields(true);
+            updateSqliteFields(false);
         }
         displayDatabaseSettings(CentralRepoPlatforms.POSTGRESQL.equals(manager.getSelectedPlatform()));
     }
