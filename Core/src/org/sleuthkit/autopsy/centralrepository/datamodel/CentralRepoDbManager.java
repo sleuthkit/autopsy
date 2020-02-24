@@ -18,18 +18,16 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
-import java.awt.Cursor;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.logging.Level;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
-import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.centralrepository.optionspanel.EamDbSettingsDialog;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+/**
+ * Contains business logic for saving and validating settings for central repo
+ */
 public class CentralRepoDbManager {
 
     private static final Logger logger = Logger.getLogger(CentralRepoDbManager.class.getName());
@@ -49,69 +47,85 @@ public class CentralRepoDbManager {
 
         CentralRepository db = null;
         CoordinationService.Lock lock = null;
+        
         //get connection
         try {
+            db = CentralRepository.getInstance();
+        } catch (CentralRepoException ex) {
+            logger.log(Level.SEVERE, "Error updating central repository, unable to make connection", ex);
+            onUpgradeError("Error updating central repository, unable to make connection", 
+                Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+        }
+
+        //get lock necessary for upgrade
+        if (db != null) {
             try {
-                db = CentralRepository.getInstance();
+                // This may return null if locking isn't supported, which is fine. It will
+                // throw an exception if locking is supported but we can't get the lock
+                // (meaning the database is in use by another user)
+                lock = db.getExclusiveMultiUserDbLock();
+                //perform upgrade
             } catch (CentralRepoException ex) {
-                logger.log(Level.SEVERE, "Error updating central repository, unable to make connection", ex);
-                throw new CentralRepoException("Error updating central repository, unable to make connection", Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+                logger.log(Level.SEVERE, "Error updating central repository, unable to acquire exclusive lock", ex);
+                onUpgradeError("Error updating central repository, unable to acquire exclusive lock", 
+                    Bundle.EamDbUtil_exclusiveLockAquisitionFailure_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
             }
-            //get lock necessary for upgrade
-            if (db != null) {
-                try {
-                    // This may return null if locking isn't supported, which is fine. It will
-                    // throw an exception if locking is supported but we can't get the lock
-                    // (meaning the database is in use by another user)
-                    lock = db.getExclusiveMultiUserDbLock();
-                    //perform upgrade
-                } catch (CentralRepoException ex) {
-                    logger.log(Level.SEVERE, "Error updating central repository, unable to acquire exclusive lock", ex);
-                    throw new CentralRepoException("Error updating central repository, unable to acquire exclusive lock", Bundle.EamDbUtil_exclusiveLockAquisitionFailure_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
-                }
-                try {
-                    db.upgradeSchema();
-                } catch (CentralRepoException ex) {
-                    logger.log(Level.SEVERE, "Error updating central repository", ex);
-                    throw new CentralRepoException("Error updating central repository", ex.getUserMessage() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "Error updating central repository", ex);
-                    throw new CentralRepoException("Error updating central repository", Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
-                } catch (IncompatibleCentralRepoException ex) {
-                    logger.log(Level.SEVERE, "Error updating central repository", ex);
-                    throw new CentralRepoException("Error updating central repository", ex.getMessage() + "\n\n" + Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
-                } finally {
-                    if (lock != null) {
-                        try {
-                            lock.release();
-                        } catch (CoordinationService.CoordinationServiceException ex) {
-                            logger.log(Level.SEVERE, "Error releasing database lock", ex);
-                        }
+
+            try {
+                db.upgradeSchema();
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, "Error updating central repository", ex);
+                onUpgradeError("Error updating central repository", ex.getUserMessage() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+            } catch (SQLException ex) {
+                logger.log(Level.SEVERE, "Error updating central repository", ex);
+                onUpgradeError("Error updating central repository", 
+                    Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+            } catch (IncompatibleCentralRepoException ex) {
+                logger.log(Level.SEVERE, "Error updating central repository", ex);
+                onUpgradeError("Error updating central repository", 
+                    ex.getMessage() + "\n\n" + Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+            } finally {
+                if (lock != null) {
+                    try {
+                        lock.release();
+                    } catch (CoordinationService.CoordinationServiceException ex) {
+                        logger.log(Level.SEVERE, "Error releasing database lock", ex);
                     }
                 }
-            } else {
-                throw new CentralRepoException("Unable to connect to database", Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message());
             }
-        } catch (CentralRepoException ex) {
-            // Disable the central repo and clear the current settings.
-            try {
-                if (null != CentralRepository.getInstance()) {
-                    CentralRepository.getInstance().shutdownConnections();
-                }
-            } catch (CentralRepoException ex2) {
-                logger.log(Level.SEVERE, "Error shutting down central repo connection pool", ex2);
-            }
-            CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.DISABLED.name());
-            CentralRepoPlatforms.saveSelectedPlatform();
-            throw ex;
+        } else {
+            onUpgradeError("Unable to connect to database", 
+                Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), null);
         }
     }
+    
+    private static void onUpgradeError(String message, String desc, Exception innerException) throws CentralRepoException {
+        // Disable the central repo and clear the current settings.
+        try {
+            if (null != CentralRepository.getInstance()) {
+                CentralRepository.getInstance().shutdownConnections();
+            }
+        } catch (CentralRepoException ex2) {
+            logger.log(Level.SEVERE, "Error shutting down central repo connection pool", ex2);
+        }
+        CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.DISABLED.name());
+        CentralRepoPlatforms.saveSelectedPlatform();
+        if (innerException == null) {
+            throw new CentralRepoException(message, desc);   
+        }
+        else {
+            throw new CentralRepoException(message, desc, innerException);    
+        }
+    }
+    
+    
+    
 
     private DatabaseTestResult testingStatus;
     private CentralRepoPlatforms selectedPlatform;
 
-    private PostgresCentralRepoSettings dbSettingsPostgres;
-    private SqliteCentralRepoSettings dbSettingsSqlite;
+    private final PostgresCentralRepoSettings dbSettingsPostgres;
+    private final SqliteCentralRepoSettings dbSettingsSqlite;
 
     private boolean configurationChanged = false;
 
@@ -191,7 +205,7 @@ public class CentralRepoDbManager {
                         && centralRepoSchemaFactory.insertDefaultDatabaseContent();
             } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Unable to create database for central repository with settings " + selectedDbSettings, ex);
-                throw new CentralRepoException("Unable to create Postgres database for Central Repository.");
+                throw ex;
             }
         }
         if (!result) {
@@ -246,17 +260,15 @@ public class CentralRepoDbManager {
         selectedDbSettings.saveSettings();
         // Load those newly saved settings into the postgres db manager instance
         //  in case we are still using the same instance.
-        switch (selectedPlatform) {
-            case POSTGRESQL:
-            case SQLITE:
-                try {
-                    logger.info("Creating central repo db with settings: " + selectedDbSettings);
-                    CentralRepository.getInstance().updateSettings();
-                    configurationChanged = true;
-                } catch (CentralRepoException ex) {
-                    logger.log(Level.SEVERE, Bundle.CentralRepoDbManager_connectionErrorMsg_text(), ex); //NON-NLS
-                    return;
-                }
+        if (selectedPlatform == CentralRepoPlatforms.POSTGRESQL || selectedPlatform == CentralRepoPlatforms.SQLITE) {
+            try {
+                logger.info("Creating central repo db with settings: " + selectedDbSettings);
+                CentralRepository.getInstance().updateSettings();
+                configurationChanged = true;
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, Bundle.CentralRepoDbManager_connectionErrorMsg_text(), ex); //NON-NLS
+                return;
+            }
         }
     }
 
@@ -285,9 +297,6 @@ public class CentralRepoDbManager {
     public boolean testDatabaseSettingsAreValid(
             String tbDbHostname, String tbDbPort, String tbDbUsername, String tfDatabasePath, String jpDbPassword) throws CentralRepoException, NumberFormatException {
 
-        boolean result = true;
-        StringBuilder guidanceText = new StringBuilder();
-
         switch (selectedPlatform) {
             case POSTGRESQL:
                 dbSettingsPostgres.setHost(tbDbHostname);
@@ -305,41 +314,39 @@ public class CentralRepoDbManager {
                 throw new IllegalStateException("Central Repo has an unknown selected platform: " + selectedPlatform);
         }
 
-        return result;
+        return true;
     }
 
     public DatabaseTestResult testStatus() {
-        switch (selectedPlatform) {
-            case POSTGRESQL:
-                if (dbSettingsPostgres.verifyConnection()) {
-                    if (dbSettingsPostgres.verifyDatabaseExists()) {
-                        if (dbSettingsPostgres.verifyDatabaseSchema()) {
-                            testingStatus = DatabaseTestResult.TESTEDOK;
-                        } else {
-                            testingStatus = DatabaseTestResult.SCHEMA_INVALID;
-                        }
-                    } else {
-                        testingStatus = DatabaseTestResult.DB_DOES_NOT_EXIST;
-                    }
-                } else {
-                    testingStatus = DatabaseTestResult.CONNECTION_FAILED;
-                }
-                break;
-            case SQLITE:
-                if (dbSettingsSqlite.dbFileExists()) {
-                    if (dbSettingsSqlite.verifyConnection()) {
-                        if (dbSettingsSqlite.verifyDatabaseSchema()) {
-                            testingStatus = DatabaseTestResult.TESTEDOK;
-                        } else {
-                            testingStatus = DatabaseTestResult.SCHEMA_INVALID;
-                        }
+        if (selectedPlatform == CentralRepoPlatforms.POSTGRESQL) {
+            if (dbSettingsPostgres.verifyConnection()) {
+                if (dbSettingsPostgres.verifyDatabaseExists()) {
+                    if (dbSettingsPostgres.verifyDatabaseSchema()) {
+                        testingStatus = DatabaseTestResult.TESTEDOK;
                     } else {
                         testingStatus = DatabaseTestResult.SCHEMA_INVALID;
                     }
                 } else {
                     testingStatus = DatabaseTestResult.DB_DOES_NOT_EXIST;
                 }
-                break;
+            } else {
+                testingStatus = DatabaseTestResult.CONNECTION_FAILED;
+            }
+        }
+        else if (selectedPlatform == CentralRepoPlatforms.SQLITE) {
+            if (dbSettingsSqlite.dbFileExists()) {
+                if (dbSettingsSqlite.verifyConnection()) {
+                    if (dbSettingsSqlite.verifyDatabaseSchema()) {
+                        testingStatus = DatabaseTestResult.TESTEDOK;
+                    } else {
+                        testingStatus = DatabaseTestResult.SCHEMA_INVALID;
+                    }
+                } else {
+                    testingStatus = DatabaseTestResult.SCHEMA_INVALID;
+                }
+            } else {
+                testingStatus = DatabaseTestResult.DB_DOES_NOT_EXIST;
+            }
         }
 
         return testingStatus;

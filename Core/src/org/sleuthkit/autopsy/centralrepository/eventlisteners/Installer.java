@@ -23,7 +23,6 @@ import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.modules.ModuleInstall;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -99,7 +98,7 @@ public class Installer extends ModuleInstall {
                             reportUpgradeError(ex);
                         }
                     });
-                } catch (Exception ex) {
+                } catch (InterruptedException | InvocationTargetException ex) {
                     LOGGER.log(Level.SEVERE, "There was an error while running the swing utility invoke later while creating the central repository database", ex);
                 }
             } // if no GUI, just initialize
@@ -144,7 +143,7 @@ public class Installer extends ModuleInstall {
                                 "Installer.centralRepoUpgradeFailed.title"),
                         JOptionPane.ERROR_MESSAGE);
             });
-        } catch (Exception e) {
+        } catch (InterruptedException | InvocationTargetException e) {
             LOGGER.warning("There was an error while running the swing utility invoke later while displaying an error " + 
                 "for creating the central repository database: "
                 + e.getMessage() + System.lineSeparator() + e.getStackTrace());

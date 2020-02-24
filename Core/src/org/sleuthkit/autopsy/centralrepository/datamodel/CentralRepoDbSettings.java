@@ -24,7 +24,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
  */
 public interface CentralRepoDbSettings {
 
-    public void saveSettings();
+    void saveSettings();
     
     boolean createDatabase();
 

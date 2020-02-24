@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+/**
+ * provides the status of the database after attempting to validate central repo settings
+ */
 public enum DatabaseTestResult {
     UNTESTED,
     CONNECTION_FAILED,

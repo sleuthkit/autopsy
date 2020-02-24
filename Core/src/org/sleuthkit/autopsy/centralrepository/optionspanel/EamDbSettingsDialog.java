@@ -614,22 +614,15 @@ public class EamDbSettingsDialog extends JDialog {
     @Messages({"EamDbSettingsDialog.validation.incompleteFields=Fill in all values for the selected database."})
     private boolean databaseFieldsArePopulated() {
         boolean result = true;
-        switch (manager.getSelectedPlatform()) {
-            case POSTGRESQL:
-                result = !tbDbHostname.getText().trim().isEmpty()
-                        && !tbDbPort.getText().trim().isEmpty()
-                        //   && !tbDbName.getText().trim().isEmpty()
-                        && !tbDbUsername.getText().trim().isEmpty()
-                        && 0 < jpDbPassword.getPassword().length;
-
-                break;
-
-            case SQLITE:
-                result = !tfDatabasePath.getText().trim().isEmpty();
-                break;
+        if (manager.getSelectedPlatform() == CentralRepoPlatforms.POSTGRESQL) {
+            result = !tbDbHostname.getText().trim().isEmpty()
+                    && !tbDbPort.getText().trim().isEmpty()
+                    //   && !tbDbName.getText().trim().isEmpty()
+                    && !tbDbUsername.getText().trim().isEmpty()
+                    && 0 < jpDbPassword.getPassword().length;
         }
-
-        if (!result) {
+        else if (manager.getSelectedPlatform() == CentralRepoPlatforms.SQLITE) {
+            result = !tfDatabasePath.getText().trim().isEmpty();
         }
 
         return result;
@@ -688,7 +681,7 @@ public class EamDbSettingsDialog extends JDialog {
                     tfDatabasePath.getText().trim(), 
                     new String(jpDbPassword.getPassword()));
         }
-        catch (Exception e) {
+        catch (CentralRepoException | NumberFormatException | IllegalStateException e) {
             return false;
         }
         
