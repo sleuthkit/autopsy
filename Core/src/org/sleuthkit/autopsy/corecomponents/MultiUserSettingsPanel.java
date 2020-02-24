@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import java.awt.Cursor;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
@@ -683,6 +684,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         boolean isPwSet = (tbMsgPassword.getPassword().length != 0);
         return (isUserSet == isPwSet);
     }
+    
+    
 
     void store() {
 

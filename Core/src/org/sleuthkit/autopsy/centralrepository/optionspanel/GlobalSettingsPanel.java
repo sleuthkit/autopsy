@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.EventQueue;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -78,26 +79,77 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         ingestStateUpdated(Case.isCaseOpen());
     }
 
-    @Messages({"GlobalSettingsPanel.updateFailed.title=Central repository disabled"})
     private void updateDatabase() {
-
+        updateDatabase(this);
+    }
+    
+    private static boolean invokeCbChoice(Component parent) {
+        EamDbSettingsDialog dialog = new EamDbSettingsDialog();
+        if (dialog.wasConfigurationChanged()) {
+            updateDatabase(parent);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    
+    @NbBundle.Messages({
+        "GlobalSettingsPanel.onMultiUserChange.enable.title=Enable Central Repository?",
+        "GlobalSettingsPanel.onMultiUserChange.enable.description=Do you want to enable Central Repository using these settings?",
+        "GlobalSettingsPanel.onMultiUserChange.disabledMu.title=Central Repository Change Necessary",
+        "GlobalSettingsPanel.onMultiUserChange.disabledMu.description=Since mult-user cases have been disabled, 'PostgreSQL using multi-user settings' is no longer a valid option for Central Repository."
+    })
+    public static void onMultiUserChange(Component parent, boolean muPreviouslySelected, boolean muCurrentlySelected, boolean muChange) {
+        if (!muPreviouslySelected && muCurrentlySelected) {
+            if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(parent,
+                    NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.enable.description"),
+                    NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.enable.title"),
+                    JOptionPane.YES_NO_OPTION)) {
+                
+                // TODO: test and/or setup database for CR
+            }
+        }
+        // moving from selected to not selected && 'PostgreSQL using multi-user settings' is selected
+        else if (muPreviouslySelected && !muCurrentlySelected && crMultiUser) {
+            if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(parent,
+                    NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.description"),
+                    NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.title"),
+                    JOptionPane.YES_NO_OPTION)) {
+                
+                invokeCbChoice(parent);
+                // TODO: test and/or setup database for CR
+            }
+            else {
+                // TODO: disable central repository
+            }
+        }
+        // changing multi-user settings connection && 'PostgreSQL using multi-user settings' is selected
+        else if (muChange && crMultiUser) {
+            // todo test and/or setup database for CR
+        }
+    
+    }
+    
+    @Messages({"GlobalSettingsPanel.updateFailed.title=Central repository disabled"})
+    private static void updateDatabase(Component parent) {
         if (CentralRepoPlatforms.getSelectedPlatform().equals(DISABLED)) {
             return;
         }
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         try {
             CentralRepoDbManager.upgradeDatabase();
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         } catch (CentralRepoException ex) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            JOptionPane.showMessageDialog(this,
+            parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            JOptionPane.showMessageDialog(parent,
                     ex.getUserMessage(),
-                    NbBundle.getMessage(this.getClass(),
+                    NbBundle.getMessage(GlobalSettingsPanel.class,
                             "GlobalSettingsPanel.updateFailed.title"),
                     JOptionPane.WARNING_MESSAGE);
         } finally {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
     }
 
@@ -425,9 +477,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private void bnDbConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDbConfigureActionPerformed
         store();
-        EamDbSettingsDialog dialog = new EamDbSettingsDialog();
-        if (dialog.wasConfigurationChanged()) {
-            updateDatabase();
+        boolean changed = invokeCbChoice(this);
+        if (changed) {
             load(); // reload db settings content and update buttons
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
