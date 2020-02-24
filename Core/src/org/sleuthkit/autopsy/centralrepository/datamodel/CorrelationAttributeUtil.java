@@ -77,16 +77,16 @@ public class CorrelationAttributeUtil {
             }
 
             /*
-             * 
+             *
              */
             if (artToExamine != null) {
-                int artifactTypeID = artToExamine.getArtifactTypeID();                
+                int artifactTypeID = artToExamine.getArtifactTypeID();
                 if (artifactTypeID == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                     BlackboardAttribute setNameAttr = artToExamine.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
                     if (setNameAttr != null && CorrelationAttributeUtil.getEmailAddressAttrString().equals(setNameAttr.getValueString())) {
                         makeCorrAttrFromArtifactAttr(correlationAttrs, artToExamine, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, CorrelationAttributeInstance.EMAIL_TYPE_ID);
                     }
-                    
+
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
@@ -147,7 +147,7 @@ public class CorrelationAttributeUtil {
                     makeCorrAttrFromArtifactAttr(correlationAttrs, artToExamine, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, CorrelationAttributeInstance.EMAIL_TYPE_ID);
 
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
-                    // RJCTODO: Make a correlation attribute by switching on account type 
+                    makeAttributeFromAccountArtifact(correlationAttrs, artToExamine);
                 }
             }
         } catch (CentralRepoException ex) {
@@ -161,6 +161,21 @@ public class CorrelationAttributeUtil {
             return correlationAttrs;
         }
         return correlationAttrs;
+    }
+
+    /**
+     * Makes a correlation attribute instance for an account artifact.
+     *
+     * IMPORTANT: The correlation attribute instance is NOT added to the central
+     * repository by this method.
+     *
+     * @param acctArtifact An account artifact.
+     */
+    private static CorrelationAttributeInstance makeAttributeFromAccountArtifact(List<CorrelationAttributeInstance> correlationAttrs, BlackboardArtifact acctArtifact) {
+        // TODO: Convert TSK_ACCOUNT_TYPE attribute to correlation attribute type
+        // TODO: Extract TSK_ID as value
+        // return makeCorrelationAttributeInstanceUsingTypeValue(acctArtifact, null, "");
+        return null;
     }
 
     /**
