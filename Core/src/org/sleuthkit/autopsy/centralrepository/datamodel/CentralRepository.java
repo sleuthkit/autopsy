@@ -811,5 +811,5 @@ public interface CentralRepository {
     * @return  list of Correlation types  
     * @throws CentralRepoException 
     */
-    public List<CorrelationAttributeInstance.Type> getCorrelationTypes() throws CentralRepoException;
+    List<CorrelationAttributeInstance.Type> getCorrelationTypes() throws CentralRepoException;
 }
