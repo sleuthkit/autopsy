@@ -297,7 +297,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 return;
             }
 
-            List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeInstancesFromBlackboardArtifact(bbArtifact, true);
+            List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeAttrsForArtifact(bbArtifact);
             for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                 eamArtifact.setComment(comment);
                 try {
@@ -370,7 +370,7 @@ final class CaseEventListener implements PropertyChangeListener {
                     if (!hasTagWithConflictingKnownStatus) {
                         //Get the correlation atttributes that correspond to the current BlackboardArtifactTag if their status should be changed
                         //with the initial set of correlation attributes this should be a single correlation attribute
-                        List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeInstancesFromBlackboardArtifact(bbTag.getArtifact(), true);
+                        List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeAttrsForArtifact(bbTag.getArtifact());
                         for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                             CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
                         }

@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2017-2019 Basis Technology Corp.
+ * Copyright 2017-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -464,7 +464,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // correlate on blackboard artifact attributes if they exist and supported
         BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
         if (bbArtifact != null && CentralRepository.isEnabled()) {
-            ret.addAll(CorrelationAttributeUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false));
+            ret.addAll(CorrelationAttributeUtil.makeAttrsForArtifact(bbArtifact));
         }
 
         // we can correlate based on the MD5 if it is enabled      
