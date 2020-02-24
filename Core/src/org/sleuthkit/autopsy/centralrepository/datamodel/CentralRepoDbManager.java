@@ -148,7 +148,7 @@ public class CentralRepoDbManager {
         }
     }
 
-    private RdbmsCentralRepoFactory getDbFactory() {
+    private RdbmsCentralRepoFactory getDbFactory() throws CentralRepoException {
         switch (selectedPlatform) {
             case POSTGRESQL: return new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsPostgres);
             case SQLITE: return new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsSqlite);
