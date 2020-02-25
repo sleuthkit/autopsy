@@ -136,6 +136,10 @@ public class RdbmsCentralRepoFactory {
             stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
             stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
 
+            // Create account_types and accounts tab;es which are referred by X_instances tables
+            stmt.execute(getCreateAccountTypesTableStatement(selectedPlatform));
+            stmt.execute(getCreateAccountsTableStatement(selectedPlatform));
+            
             // Create a separate instance and reference table for each artifact type
             List<CorrelationAttributeInstance.Type> defaultCorrelationTypes = CorrelationAttributeInstance.getDefaultCorrelationTypes();
 
@@ -364,12 +368,14 @@ public class RdbmsCentralRepoFactory {
                 + getNumericPrimaryKeyClause("id", selectedPlatform)
                 + "case_id integer NOT NULL,"
                 + "data_source_id integer NOT NULL,"
+                + "account_id " + getBigIntType(selectedPlatform) + " DEFAULT NULL,"
                 + "value text NOT NULL,"
                 + "file_path text NOT NULL,"
                 + "known_status integer NOT NULL,"
                 + "comment text,"
                 + "file_obj_id " + getBigIntType(selectedPlatform) + " ," 
                 + "CONSTRAINT %s_multi_unique UNIQUE(data_source_id, value, file_path)" + getOnConflictIgnoreClause(selectedPlatform) + ","
+                + "foreign key (account_id) references accounts(id),"
                 + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
                 + "foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL)";
     }
@@ -569,13 +575,11 @@ public class RdbmsCentralRepoFactory {
      */
     private boolean createPersonaTables(Statement stmt) throws SQLException {
         
-        stmt.execute(getCreateAccountTypesTableStatement(selectedPlatform));
         stmt.execute(getCreateConfidenceTableStatement(selectedPlatform));
         stmt.execute(getCreateExaminersTableStatement(selectedPlatform));
         stmt.execute(getCreatePersonaStatusTableStatement(selectedPlatform));
         stmt.execute(getCreateAliasesTableStatement(selectedPlatform));
         
-        stmt.execute(getCreateAccountsTableStatement(selectedPlatform));
         stmt.execute(getCreatePersonasTableStatement(selectedPlatform));
         stmt.execute(getCreatePersonaAliasTableStatement(selectedPlatform));
         stmt.execute(getCreatePersonaMetadataTableStatement(selectedPlatform));
