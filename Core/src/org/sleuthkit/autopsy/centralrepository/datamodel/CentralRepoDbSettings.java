@@ -19,8 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 /**
- *
- * @author gregd
+ * common interface for settings pertaining to the database in central repository
  */
 public interface CentralRepoDbSettings {
 

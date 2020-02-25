@@ -144,9 +144,7 @@ public class Installer extends ModuleInstall {
                         JOptionPane.ERROR_MESSAGE);
             });
         } catch (InterruptedException | InvocationTargetException e) {
-            LOGGER.warning("There was an error while running the swing utility invoke later while displaying an error " + 
-                "for creating the central repository database: "
-                + e.getMessage() + System.lineSeparator() + e.getStackTrace());
+            LOGGER.log(Level.WARNING, e.getMessage(), e);
         }
 
     }
