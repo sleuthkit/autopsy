@@ -111,7 +111,7 @@ class RecentDocumentsByLnk extends Extract {
             }
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-            String path = FilenameUtils.normalize(lnk.getBestPath(), true);
+            String path = lnk.getBestPath();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                     NbBundle.getMessage(this.getClass(),
                             "RecentDocumentsByLnk.parentModuleName.noSpace"),
@@ -133,16 +133,24 @@ class RecentDocumentsByLnk extends Extract {
                 }
             }
         }
-        
-        
-        
+         
         postArtifacts(bbartifacts);
     }
 
+    /**
+     * Create associated artifacts using file name and path and the artifact it associates with
+     * 
+     * @param filePathName file and path of object being associated with
+     * 
+     * @param bba blackboard artifact to associate with
+     * 
+     * @returnv BlackboardArtifact or a null value 
+     */  
     private BlackboardArtifact createAssociatedArtifact(String filePathName, BlackboardArtifact bba) {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        String fileName = FilenameUtils.getName(filePathName);
-        String filePath = FilenameUtils.getPath(filePathName);
+        String normalizePathName = FilenameUtils.normalize(filePathName, true);
+        String fileName = FilenameUtils.getName(normalizePathName);
+        String filePath = FilenameUtils.getPath(normalizePathName);
         List<AbstractFile> sourceFiles;
         try {
             sourceFiles = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS
@@ -162,7 +170,7 @@ class RecentDocumentsByLnk extends Extract {
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error finding lnk actual file."); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error finding actual file %s. file may not exist", filePathName)); //NON-NLS
         }
        
         return null;
