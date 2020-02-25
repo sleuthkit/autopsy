@@ -690,7 +690,12 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
     void store() {
         boolean prevSelected = UserPreferences.getIsMultiUserModeEnabled();
-        CaseDbConnectionInfo prevConn = UserPreferences.getDatabaseConnectionInfo();
+        CaseDbConnectionInfo prevConn = null;
+        try {
+            prevConn = UserPreferences.getDatabaseConnectionInfo();
+        } catch (UserPreferencesException ex) {
+            logger.log(Level.SEVERE, "There was an error while fetching previous connection settings while trying to save", ex); //NON-NLS
+        }
 
         boolean multiUserCasesEnabled = cbEnableMultiUser.isSelected();
         UserPreferences.setIsMultiUserModeEnabled(multiUserCasesEnabled);
@@ -737,8 +742,9 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
         UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
 
-        boolean curSelected = UserPreferences.getIsMultiUserModeEnabled();
-        CaseDbConnectionInfo curConn = UserPreferences.getDatabaseConnectionInfo();
+        
+        boolean curSelected = multiUserCasesEnabled;
+        CaseDbConnectionInfo curConn = info;
         
         if (prevSelected != curSelected || !areCaseDbConnectionEqual(prevConn, curConn))
             GlobalSettingsPanel.onMultiUserChange(this, prevSelected, curSelected);
