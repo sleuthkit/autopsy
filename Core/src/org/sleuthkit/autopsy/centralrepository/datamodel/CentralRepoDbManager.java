@@ -142,7 +142,7 @@ public class CentralRepoDbManager {
         } catch (CentralRepoException ex2) {
             logger.log(Level.SEVERE, "Error shutting down central repo connection pool", ex2);
         }
-        CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.DISABLED.name());
+        CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.DISABLED);
         CentralRepoPlatforms.saveSelectedPlatform();
         if (innerException == null) {
             throw new CentralRepoException(message, desc);
@@ -281,7 +281,7 @@ public class CentralRepoDbManager {
         // Even if we fail to close the existing connections, make sure that we
         // save the new connection settings, so an Autopsy restart will correctly
         // start with the new settings.
-        CentralRepoPlatforms.setSelectedPlatform(selectedPlatform.name());
+        CentralRepoPlatforms.setSelectedPlatform(selectedPlatform);
         CentralRepoPlatforms.saveSelectedPlatform();
 
         CentralRepoDbSettings selectedDbSettings = getSelectedSettings();

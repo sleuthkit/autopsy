@@ -26,7 +26,8 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 public enum CentralRepoPlatforms {
     DISABLED("Disabled", true),
     SQLITE("SQLite", false),
-    POSTGRESQL("PostgreSQL", false);
+    POSTGRESQL_MULTIUSER("PostgreSQL using multi-user settings", false),
+    POSTGRESQL("Custom PostgreSQL", false);
 
     private final String platformName;
     private Boolean selected;
@@ -100,6 +101,10 @@ public enum CentralRepoPlatforms {
         for (CentralRepoPlatforms p : CentralRepoPlatforms.values()) {
             p.setSelected(p == pSelected);
         }
+    }
+
+    public static void setSelectedPlatform(CentralRepoPlatforms platform) {
+        setSelectedPlatform(platform.toString());
     }
 
     /**

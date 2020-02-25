@@ -27,6 +27,7 @@ import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
+import org.sleuthkit.autopsy.centralrepository.optionspanel.GlobalSettingsPanel;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -688,6 +689,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     
 
     void store() {
+        boolean prevSelected = UserPreferences.getIsMultiUserModeEnabled();
+        CaseDbConnectionInfo prevConn = UserPreferences.getDatabaseConnectionInfo();
 
         boolean multiUserCasesEnabled = cbEnableMultiUser.isSelected();
         UserPreferences.setIsMultiUserModeEnabled(multiUserCasesEnabled);
@@ -734,7 +737,41 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
         UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
 
+        boolean curSelected = UserPreferences.getIsMultiUserModeEnabled();
+        CaseDbConnectionInfo curConn = UserPreferences.getDatabaseConnectionInfo();
+        
+        if (prevSelected != curSelected || !areCaseDbConnectionEqual(prevConn, curConn))
+            GlobalSettingsPanel.onMultiUserChange(this, prevSelected, curSelected);
     }
+
+    private static boolean arePropsEqual(Object a, Object b) {
+        if (a == null || b == null) {
+            if (a == null && b == null)
+                return true;
+            else
+                return false;
+        }
+        else {
+            return a.equals(b);
+        }
+    }
+    
+	private static boolean areCaseDbConnectionEqual(CaseDbConnectionInfo a, CaseDbConnectionInfo b) {
+        if (a == null || b == null) {
+            if (a == null && b == null)
+                return true;
+            else
+                return false;
+        }
+
+        return 
+            arePropsEqual(a.getDbType(), b.getDbType()) &&
+            arePropsEqual(a.getHost(), b.getHost()) && 
+            arePropsEqual(a.getPassword(), b.getPassword()) &&
+            arePropsEqual(a.getPort(), b.getPort()) &&
+            arePropsEqual(a.getUserName(), b.getUserName());
+	}
+
 
     /**
      * Validates that the form is filled out correctly for our usage.

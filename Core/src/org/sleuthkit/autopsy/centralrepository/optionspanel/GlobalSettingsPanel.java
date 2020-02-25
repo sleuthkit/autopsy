@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.EventQueue;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -83,7 +82,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         updateDatabase(this);
     }
     
-    private static boolean invokeCbChoice(Component parent) {
+    private static boolean invokeCrChoice(Component parent) {
         EamDbSettingsDialog dialog = new EamDbSettingsDialog();
         if (dialog.wasConfigurationChanged()) {
             updateDatabase(parent);
@@ -94,20 +93,33 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }
     
     
+    /**
+     * when multi user settings are updated, this function triggers pertinent updates for central repository
+     * NOTE: if multi user settings were previously enabled and multi user settings are currently selected, this function assumes
+     *       there is a change in the postgres connectivity
+     * 
+     * @param parent                the swing component that serves as a parent for dialogs that may arise
+     * @param muPreviouslySelected  if multi user settings were previously enabled
+     * @param muCurrentlySelected   if multi user settings are currently enabled as of most recent change
+     */
     @NbBundle.Messages({
         "GlobalSettingsPanel.onMultiUserChange.enable.title=Enable Central Repository?",
         "GlobalSettingsPanel.onMultiUserChange.enable.description=Do you want to enable Central Repository using these settings?",
         "GlobalSettingsPanel.onMultiUserChange.disabledMu.title=Central Repository Change Necessary",
         "GlobalSettingsPanel.onMultiUserChange.disabledMu.description=Since mult-user cases have been disabled, 'PostgreSQL using multi-user settings' is no longer a valid option for Central Repository."
     })
-    public static void onMultiUserChange(Component parent, boolean muPreviouslySelected, boolean muCurrentlySelected, boolean muChange) {
+    public static void onMultiUserChange(Component parent, boolean muPreviouslySelected, boolean muCurrentlySelected) {
+        boolean crMultiUser = CentralRepoPlatforms.getSelectedPlatform() == CentralRepoPlatforms.POSTGRESQL_MULTIUSER;
+        
         if (!muPreviouslySelected && muCurrentlySelected) {
             if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(parent,
                     NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.enable.description"),
                     NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.enable.title"),
                     JOptionPane.YES_NO_OPTION)) {
                 
-                // TODO: test and/or setup database for CR
+                // setup database for CR
+                CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.POSTGRESQL_MULTIUSER);
+                updateDatabase(parent);
             }
         }
         // moving from selected to not selected && 'PostgreSQL using multi-user settings' is selected
@@ -117,18 +129,19 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                     NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.title"),
                     JOptionPane.YES_NO_OPTION)) {
                 
-                invokeCbChoice(parent);
-                // TODO: test and/or setup database for CR
+                // present user with central repository choice
+                invokeCrChoice(parent);
             }
             else {
-                // TODO: disable central repository
+                // disable central repository
+                CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.DISABLED);
             }
         }
         // changing multi-user settings connection && 'PostgreSQL using multi-user settings' is selected
-        else if (muChange && crMultiUser) {
-            // todo test and/or setup database for CR
+        else if (muPreviouslySelected && muCurrentlySelected && crMultiUser) {
+            // test databse for CR change
+            updateDatabase(parent);
         }
-    
     }
     
     @Messages({"GlobalSettingsPanel.updateFailed.title=Central repository disabled"})
@@ -477,7 +490,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private void bnDbConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDbConfigureActionPerformed
         store();
-        boolean changed = invokeCbChoice(this);
+        boolean changed = invokeCrChoice(this);
         if (changed) {
             load(); // reload db settings content and update buttons
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
