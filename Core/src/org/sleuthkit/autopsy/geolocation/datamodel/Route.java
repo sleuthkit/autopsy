@@ -26,8 +26,9 @@ import java.util.Map;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints.GeoWaypoint;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints;
+import org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoWaypointsUtil;
+import org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoWaypointsUtil.GeoWaypointList.GeoWaypoint;
+import org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoWaypointsUtil.GeoWaypointList;
 
 /**
  * A Route represents a TSK_GPS_ROUTE artifact which has a start and end point
@@ -42,6 +43,8 @@ public class Route extends GeoPath {
     // This list is not expected to change after construction so the 
     // constructor will take care of creating an unmodifiable List
     private final List<Waypoint.Property> propertiesList;
+    
+    private static final TskGeoWaypointsUtil attributeUtil = new TskGeoWaypointsUtil("");
 
     /**
      * Construct a route for the given artifact.
@@ -117,8 +120,7 @@ public class Route extends GeoPath {
         }
 
         if (attribute != null) {
-            String value = attribute.getValueString();
-           GeoWaypoints waypoints = GeoWaypoints.deserialize(value);
+           GeoWaypointList waypoints = attributeUtil.fromAttribute(attribute);
 
             Iterator<GeoWaypoint> waypointIter = waypoints.iterator();
             while(waypointIter.hasNext()) {

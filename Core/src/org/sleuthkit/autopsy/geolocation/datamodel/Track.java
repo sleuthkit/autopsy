@@ -27,8 +27,9 @@ import java.util.Map;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints.GeoTrackPoint;
+import org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoTrackpointsUtil;
+import org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoTrackpointsUtil.GeoTrackPointList;
+import org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoTrackpointsUtil.GeoTrackPointList.GeoTrackPoint;
 
 /**
  * A GPS track with which wraps the TSK_GPS_TRACK artifact.
@@ -37,6 +38,8 @@ public final class Track extends GeoPath{
 
     private final Long startTimestamp;
     private final Long endTimeStamp;
+  
+    private static final TskGeoTrackpointsUtil attributeUtil = new TskGeoTrackpointsUtil("");
 
     /**
      * Construct a new Track for the given artifact.
@@ -60,7 +63,7 @@ public final class Track extends GeoPath{
     private Track(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         super(artifact, getTrackName(attributeMap));
 
-        GeoTrackPoints points = getPointsList(attributeMap);
+        GeoTrackPointList points = getPointsList(attributeMap);
         buildPath(points);
 
         startTimestamp = points.getStartTime();
@@ -112,8 +115,8 @@ public final class Track extends GeoPath{
         "# {0} - track name",
         "GEOTrack_point_label_header=Trackpoint for track: {0}"
     })
-    private void buildPath(GeoTrackPoints points) throws GeoLocationDataException {
-        Iterator<GeoTrackPoint> pointIter = points.iterator();
+    private void buildPath(GeoTrackPointList points) throws GeoLocationDataException {
+        Iterator<GeoTrackPointList.GeoTrackPoint> pointIter = points.iterator();
         while(pointIter.hasNext()) {
             GeoTrackPoint point = pointIter.next();
             addToPath(new TrackWaypoint(Bundle.GEOTrack_point_label_header(getLabel()), point));
@@ -128,11 +131,10 @@ public final class Track extends GeoPath{
      * 
      * @return GeoTrackPoint list empty list if the attribute was not found.
      */
-    private GeoTrackPoints getPointsList(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) {
+    private GeoTrackPointList getPointsList(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) {
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_TRACKPOINTS);
         if (attribute != null) {
-            String value = attribute.getValueString();
-            return GeoTrackPoints.deserialize(value);
+            return attributeUtil.fromAttribute(attribute);
         }
 
         return null;

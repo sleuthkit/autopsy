@@ -41,11 +41,11 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPointList.GeoTrackPoint;
+import org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoTrackpointsUtil.GeoTrackPointList.GeoTrackPoint;
 import org.sleuthkit.datamodel.blackboardutils.GeoArtifactsHelper;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPointList;
+import org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoTrackpointsUtil.GeoTrackPointList;
 
 /**
  * Extract drone position data from DJI Phantom drones.
