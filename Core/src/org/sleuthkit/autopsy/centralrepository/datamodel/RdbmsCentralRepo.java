@@ -3332,7 +3332,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             conn = connect(false);
             conn.setAutoCommit(false);
             statement = conn.createStatement();
-            selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
+            selectedPlatform = CentralRepoDbManager.getSavedDbChoice().getDbPlatform();
             int minorVersion = 0;
             String minorVersionStr = null;
             resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + RdbmsCentralRepo.SCHEMA_MINOR_VERSION_KEY + "'");

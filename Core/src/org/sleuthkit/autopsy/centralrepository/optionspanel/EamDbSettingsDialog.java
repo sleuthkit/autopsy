@@ -38,11 +38,11 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.corecomponents.TextPrompt;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
 import org.sleuthkit.autopsy.centralrepository.datamodel.DatabaseTestResult;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
@@ -95,11 +95,20 @@ public class EamDbSettingsDialog extends JDialog {
                 return "Directories and Central Repository databases";
             }
         });
-        cbDatabaseType.setSelectedItem(manager.getSelectedPlatform());
+        
+        setSelectedChoice(manager);
         customizeComponents();
         valid();
         display();
+    }
 
+    private void setSelectedChoice(CentralRepoDbManager manager) {
+        CentralRepoDbChoice toSelect = 
+            (Arrays.asList(CentralRepoDbChoice.DB_CHOICES).contains(manager.getSelectedDbChoice())) ?
+            manager.getSelectedDbChoice() :
+            CentralRepoDbChoice.DB_CHOICES[0];
+
+        cbDatabaseType.setSelectedItem(toSelect);
     }
     
     
@@ -281,7 +290,7 @@ public class EamDbSettingsDialog extends JDialog {
 
         jpDbPassword.setPreferredSize(new java.awt.Dimension(509, 20));
 
-        cbDatabaseType.setModel(new javax.swing.DefaultComboBoxModel<>(new CentralRepoPlatforms[]{CentralRepoPlatforms.POSTGRESQL, CentralRepoPlatforms.SQLITE}));
+        cbDatabaseType.setModel(new javax.swing.DefaultComboBoxModel<>(org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice.DB_CHOICES));
         cbDatabaseType.setPreferredSize(new java.awt.Dimension(120, 20));
         cbDatabaseType.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -323,17 +332,17 @@ public class EamDbSettingsDialog extends JDialog {
                     .addComponent(lbUserName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lbPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(pnSQLiteSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(lbDatabaseDesc, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lbDatabaseDesc, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 94, Short.MAX_VALUE)
                         .addComponent(lbUserPassword, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addGap(10, 10, 10)
-                .addGroup(pnSQLiteSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(pnSQLiteSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(pnSQLiteSettingsLayout.createSequentialGroup()
                         .addComponent(tfDatabasePath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(bnDatabasePathFileOpen))
                     .addGroup(pnSQLiteSettingsLayout.createSequentialGroup()
                         .addComponent(cbDatabaseType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(lbSingleUserSqLite, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jpDbPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(tbDbUsername, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -414,15 +423,20 @@ public class EamDbSettingsDialog extends JDialog {
         setTextPrompts();
         setTextBoxListeners();
         manager.clearStatus();
-        if (manager.getSelectedPlatform() == CentralRepoPlatforms.SQLITE) {
+        if (manager.getSelectedDbChoice() == CentralRepoDbChoice.SQLITE) {
             updatePostgresFields(false);
             updateSqliteFields(true);
         }
-        else {
+        else if (manager.getSelectedDbChoice() == CentralRepoDbChoice.POSTGRESQL_CUSTOM) {
             updatePostgresFields(true);
             updateSqliteFields(false);
         }
-        displayDatabaseSettings(CentralRepoPlatforms.POSTGRESQL.equals(manager.getSelectedPlatform()));
+        else {
+            updatePostgresFields(false);
+            updateSqliteFields(false);
+        }
+
+        displayDatabaseSettings(CentralRepoDbChoice.POSTGRESQL_CUSTOM.equals(manager.getSelectedDbChoice()));
     }
 
     private void display() {
@@ -497,7 +511,7 @@ public class EamDbSettingsDialog extends JDialog {
 
 
     private void cbDatabaseTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbDatabaseTypeActionPerformed
-        manager.setSelectedPlatform((CentralRepoPlatforms) cbDatabaseType.getSelectedItem());
+        manager.setSelctedDbChoice((CentralRepoDbChoice) cbDatabaseType.getSelectedItem());
         customizeComponents();
     }//GEN-LAST:event_cbDatabaseTypeActionPerformed
 
@@ -610,14 +624,14 @@ public class EamDbSettingsDialog extends JDialog {
     @Messages({"EamDbSettingsDialog.validation.incompleteFields=Fill in all values for the selected database."})
     private boolean databaseFieldsArePopulated() {
         boolean result = true;
-        if (manager.getSelectedPlatform() == CentralRepoPlatforms.POSTGRESQL) {
+        if (manager.getSelectedDbChoice() == CentralRepoDbChoice.POSTGRESQL_CUSTOM) {
             result = !tbDbHostname.getText().trim().isEmpty()
                     && !tbDbPort.getText().trim().isEmpty()
                     //   && !tbDbName.getText().trim().isEmpty()
                     && !tbDbUsername.getText().trim().isEmpty()
                     && 0 < jpDbPassword.getPassword().length;
         }
-        else if (manager.getSelectedPlatform() == CentralRepoPlatforms.SQLITE) {
+        else if (manager.getSelectedDbChoice() == CentralRepoDbChoice.SQLITE) {
             result = !tfDatabasePath.getText().trim().isEmpty();
         }
 
@@ -722,7 +736,7 @@ public class EamDbSettingsDialog extends JDialog {
     private javax.swing.JButton bnDatabasePathFileOpen;
     private javax.swing.ButtonGroup bnGrpDatabasePlatforms;
     private javax.swing.JButton bnOk;
-    private javax.swing.JComboBox<CentralRepoPlatforms> cbDatabaseType;
+    private javax.swing.JComboBox<org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice> cbDatabaseType;
     private javax.swing.JScrollPane dataBaseFileScrollPane;
     private javax.swing.JTextArea dataBaseFileTextArea;
     private javax.swing.JFileChooser fcDatabasePath;

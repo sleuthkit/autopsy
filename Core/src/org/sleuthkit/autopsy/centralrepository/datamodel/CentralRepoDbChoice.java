@@ -21,31 +21,49 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 /**
  * 
  */
-public enum CentralRepoDbChoice {
-    DISABLED("Disabled"),
-    SQLITE("SQLite"),
-    POSTGRESQL_MULTIUSER("PostgreSQL_Multiuser", "PostgreSQL using multi-user settings"),
-    POSTGRESQL("PostgreSQL", "Custom PostgreSQL");
+public class CentralRepoDbChoice {
+    public static final CentralRepoDbChoice DISABLED = new CentralRepoDbChoice("Disabled", null);
 
-    private final String key;
+    public static final CentralRepoDbChoice SQLITE = new CentralRepoDbChoice("Sqlite", CentralRepoPlatforms.SQLITE);
+
+    public static final CentralRepoDbChoice POSTGRESQL_MULTIUSER = 
+        new CentralRepoDbChoice("PostgreSQL_Multiuser", "PostgreSQL using multi-user settings", CentralRepoPlatforms.POSTGRESQL);
+
+    public static final CentralRepoDbChoice POSTGRESQL_CUSTOM = 
+        new CentralRepoDbChoice("PostgreSQL", "Custom PostgreSQL", CentralRepoPlatforms.POSTGRESQL);
+
+    public static final CentralRepoDbChoice[] CHOICES = new CentralRepoDbChoice[]{
+        DISABLED, SQLITE, POSTGRESQL_MULTIUSER, POSTGRESQL_CUSTOM
+    };
+
+    public static final CentralRepoDbChoice[] DB_CHOICES = new CentralRepoDbChoice[]{
+        SQLITE, POSTGRESQL_MULTIUSER, POSTGRESQL_CUSTOM
+    };
+
+
+    private final String settingKey;
     private final String title;
+    private final CentralRepoPlatforms platform;
 
-    CentralRepoDbChoice(String key, String title) {
-        this.key = key;
+    CentralRepoDbChoice(String key, String title, CentralRepoPlatforms platform) {
+        this.settingKey = key;
         this.title = title;
+        this.platform = platform;
     }
     
-    CentralRepoDbChoice(String key) {
-        this(key, key);
+    CentralRepoDbChoice(String key, CentralRepoPlatforms platform) {
+        this(key, key, platform);
     }
 
-    public String getKey() {
-        return key;
+    public String getSettingKey() {
+        return settingKey;
     }
 
     public String getTitle() {
         return title;
     }
-    
-    
+
+    public CentralRepoPlatforms getDbPlatform() {
+        return platform;
+    }
 }

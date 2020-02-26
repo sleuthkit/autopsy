@@ -34,6 +34,45 @@ public class CentralRepoDbManager {
 
     private static final String CENTRAL_REPO_DB_NAME = "central_repository";
 
+
+
+    private static CentralRepoDbChoice SAVED_CHOICE = null;
+
+    /**
+     * Save the selected platform to the config file.
+     */
+    public static CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice) {
+        choice = (choice == null) ? CentralRepoDbChoice.DISABLED : choice;
+        SAVED_CHOICE = choice;
+        ModuleSettings.setConfigSetting("CentralRepository", "db.selectedPlatform", choice.getSettingKey());
+        return choice;
+    }
+
+    /**
+     * Load the selectedPlatform boolean from the config file, if it is set.
+     */
+    public static CentralRepoDbChoice getSavedDbChoice() {
+        if (SAVED_CHOICE == null) {
+            String selectedPlatformString = ModuleSettings.getConfigSetting("CentralRepository", "db.selectedPlatform"); // NON-NLS
+            SAVED_CHOICE = fromKey(selectedPlatformString);    
+        }
+
+        return SAVED_CHOICE;
+    }
+
+
+    private static CentralRepoDbChoice fromKey(String keyName) {
+        for (CentralRepoDbChoice dbChoice : CentralRepoDbChoice.CHOICES) {
+            if (dbChoice.getSettingKey().equalsIgnoreCase(keyName)) {
+                return dbChoice;
+            }
+        }
+
+        return CentralRepoDbChoice.DISABLED;
+    }
+
+
+    
     /**
      * obtains the database connectivity for central repository
      *
@@ -142,8 +181,7 @@ public class CentralRepoDbManager {
         } catch (CentralRepoException ex2) {
             logger.log(Level.SEVERE, "Error shutting down central repo connection pool", ex2);
         }
-        CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.DISABLED);
-        CentralRepoPlatforms.saveSelectedPlatform();
+        saveDbChoice(CentralRepoDbChoice.DISABLED);
         if (innerException == null) {
             throw new CentralRepoException(message, desc);
         } else {
@@ -152,7 +190,7 @@ public class CentralRepoDbManager {
     }
 
     private DatabaseTestResult testingStatus;
-    private CentralRepoPlatforms selectedPlatform;
+    private CentralRepoDbChoice selectedDbChoice;
 
     private final PostgresCentralRepoSettings dbSettingsPostgres;
     private final SqliteCentralRepoSettings dbSettingsSqlite;
@@ -162,13 +200,7 @@ public class CentralRepoDbManager {
     public CentralRepoDbManager() {
         dbSettingsPostgres = new PostgresCentralRepoSettings();
         dbSettingsSqlite = new SqliteCentralRepoSettings();
-        selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
-        
-        // set the default selected platform for displaying in the ui of EamDbSettingsDialog 
-        // if selected option is not applicable
-        if (selectedPlatform == null || selectedPlatform.equals(CentralRepoPlatforms.DISABLED)) {
-            selectedPlatform = CentralRepoPlatforms.POSTGRESQL;
-        }
+        selectedDbChoice = getSavedDbChoice();
     }
 
     public PostgresCentralRepoSettings getDbSettingsPostgres() {
@@ -185,7 +217,7 @@ public class CentralRepoDbManager {
      */
     public void setupDefaultSqliteDb() throws CentralRepoException {
         // change in-memory settings to default sqlite
-        selectedPlatform = CentralRepoPlatforms.SQLITE;
+        selectedDbChoice = CentralRepoDbChoice.SQLITE;
         dbSettingsSqlite.setupDefaultSettings();
 
         // if db is not present, attempt to create it
@@ -217,7 +249,7 @@ public class CentralRepoDbManager {
     }
 
     private CentralRepoDbSettings getSelectedSettings() throws CentralRepoException {
-        switch (selectedPlatform) {
+        switch (selectedDbChoice) {
             case POSTGRESQL:
                 return dbSettingsPostgres;
             case SQLITE:
@@ -225,20 +257,20 @@ public class CentralRepoDbManager {
             case DISABLED:
                 return null;
             default:
-                throw new CentralRepoException("Unknown database type: " + selectedPlatform);
+                throw new CentralRepoException("Unknown database type: " + selectedDbChoice);
         }
     }
 
     private RdbmsCentralRepoFactory getDbFactory() throws CentralRepoException {
-        switch (selectedPlatform) {
+        switch (selectedDbChoice) {
             case POSTGRESQL:
-                return new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsPostgres);
+                return new RdbmsCentralRepoFactory(selectedDbChoice, dbSettingsPostgres);
             case SQLITE:
-                return new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsSqlite);
+                return new RdbmsCentralRepoFactory(selectedDbChoice, dbSettingsSqlite);
             case DISABLED:
                 return null;
             default:
-                throw new CentralRepoException("Unknown database type: " + selectedPlatform);
+                throw new CentralRepoException("Unknown database type: " + selectedDbChoice);
         }
     }
 
@@ -305,8 +337,7 @@ public class CentralRepoDbManager {
         // Even if we fail to close the existing connections, make sure that we
         // save the new connection settings, so an Autopsy restart will correctly
         // start with the new settings.
-        CentralRepoPlatforms.setSelectedPlatform(selectedPlatform);
-        CentralRepoPlatforms.saveSelectedPlatform();
+        saveDbChoice(selectedDbChoice);
 
         CentralRepoDbSettings selectedDbSettings = getSelectedSettings();
 
@@ -314,7 +345,7 @@ public class CentralRepoDbManager {
         selectedDbSettings.saveSettings();
         // Load those newly saved settings into the postgres db manager instance
         //  in case we are still using the same instance.
-        if (selectedPlatform == CentralRepoPlatforms.POSTGRESQL || selectedPlatform == CentralRepoPlatforms.SQLITE) {
+        if (selectedDbChoice != null && selectedDbSettings != CentralRepoDbChoice.DISABLED) {
             try {
                 logger.info("Creating central repo db with settings: " + selectedDbSettings);
                 CentralRepository.getInstance().updateSettings();
@@ -330,16 +361,16 @@ public class CentralRepoDbManager {
         return testingStatus;
     }
 
-    public CentralRepoPlatforms getSelectedPlatform() {
-        return selectedPlatform;
+    public CentralRepoDbChoice getSelectedDbChoice() {
+        return selectedDbChoice;
     }
 
     public void clearStatus() {
         testingStatus = DatabaseTestResult.UNTESTED;
     }
 
-    public void setSelectedPlatform(CentralRepoPlatforms newSelected) {
-        selectedPlatform = newSelected;
+    public void setSelctedDbChoice(CentralRepoDbChoice newSelected) {
+        selectedDbChoice = newSelected;
         testingStatus = DatabaseTestResult.UNTESTED;
     }
 
@@ -351,7 +382,7 @@ public class CentralRepoDbManager {
     public boolean testDatabaseSettingsAreValid(
             String tbDbHostname, String tbDbPort, String tbDbUsername, String tfDatabasePath, String jpDbPassword) throws CentralRepoException, NumberFormatException {
 
-        switch (selectedPlatform) {
+        switch (selectedDbChoice) {
             case POSTGRESQL:
                 dbSettingsPostgres.setHost(tbDbHostname);
                 dbSettingsPostgres.setPort(Integer.parseInt(tbDbPort));
@@ -365,14 +396,14 @@ public class CentralRepoDbManager {
                 dbSettingsSqlite.setDbDirectory(databasePath.getPath());
                 break;
             default:
-                throw new IllegalStateException("Central Repo has an unknown selected platform: " + selectedPlatform);
+                throw new IllegalStateException("Central Repo has an unknown selected platform: " + selectedDbChoice);
         }
 
         return true;
     }
 
     public DatabaseTestResult testStatus() {
-        if (selectedPlatform == CentralRepoPlatforms.POSTGRESQL) {
+        if (selectedDbChoice == CentralRepoPlatforms.POSTGRESQL) {
             if (dbSettingsPostgres.verifyConnection()) {
                 if (dbSettingsPostgres.verifyDatabaseExists()) {
                     if (dbSettingsPostgres.verifyDatabaseSchema()) {
@@ -386,7 +417,7 @@ public class CentralRepoDbManager {
             } else {
                 testingStatus = DatabaseTestResult.CONNECTION_FAILED;
             }
-        } else if (selectedPlatform == CentralRepoPlatforms.SQLITE) {
+        } else if (selectedDbChoice == CentralRepoPlatforms.SQLITE) {
             if (dbSettingsSqlite.dbFileExists()) {
                 if (dbSettingsSqlite.verifyConnection()) {
                     if (dbSettingsSqlite.verifyDatabaseSchema()) {

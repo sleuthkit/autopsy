@@ -33,12 +33,12 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms.DISABLED;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
@@ -110,7 +110,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         "GlobalSettingsPanel.onMultiUserChange.disabledMu.description=Since mult-user cases have been disabled, 'PostgreSQL using multi-user settings' is no longer a valid option for Central Repository."
     })
     public static void onMultiUserChange(Component parent, boolean muPreviouslySelected, boolean muCurrentlySelected) {
-        boolean crMultiUser = CentralRepoPlatforms.getSelectedPlatform() == CentralRepoPlatforms.POSTGRESQL_MULTIUSER;
+        boolean crMultiUser = CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
         
         if (!muPreviouslySelected && muCurrentlySelected) {
             if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(parent,
@@ -119,7 +119,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                     JOptionPane.YES_NO_OPTION)) {
                 
                 // setup database for CR
-                CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.POSTGRESQL_MULTIUSER);
+                CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.POSTGRESQL_MULTIUSER);
                 updateDatabase(parent);
             }
         }
@@ -135,7 +135,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             }
             else {
                 // disable central repository
-                CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.DISABLED);
+                CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
             }
         }
         // changing multi-user settings connection && 'PostgreSQL using multi-user settings' is selected
@@ -147,7 +147,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     
     @Messages({"GlobalSettingsPanel.updateFailed.title=Central repository disabled"})
     private static void updateDatabase(Component parent) {
-        if (CentralRepoPlatforms.getSelectedPlatform().equals(DISABLED)) {
+        if (CentralRepoDbManager.getSelectedChoice().equals(CentralRepoDbChoice.DISABLED)) {
             return;
         }
         parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -522,31 +522,30 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     public void load() {
         tbOops.setText("");
         enableButtonSubComponents(false);
-        CentralRepoPlatforms selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
+        CentralRepoDbChoice selectedChoice = CentralRepoDbManager.getSavedDbChoice();
         cbUseCentralRepo.setSelected(CentralRepoDbUtil.allowUseOfCentralRepository()); // NON-NLS
-        switch (selectedPlatform) {
-            case POSTGRESQL:
+
+        lbDbPlatformValue.setText(selectedChoice.getTitle());
+        CentralRepoPlatforms selectedDb = selectedChoice.getDbPlatform();
+
+        if (selectedChoice == null || selectedDb == CentralRepoPlatforms.DISABLED) {
+            lbDbNameValue.setText("");
+            lbDbLocationValue.setText("");
+            tbOops.setText(Bundle.GlobalSettingsPanel_validationerrMsg_mustConfigure());
+        }
+        else {
+            enableButtonSubComponents(cbUseCentralRepo.isSelected());
+            if (selectedDb == CentralRepoPlatforms.POSTGRESQL) {
                 PostgresCentralRepoSettings dbSettingsPg = new PostgresCentralRepoSettings();
-                lbDbPlatformValue.setText(CentralRepoPlatforms.POSTGRESQL.toString());
                 lbDbNameValue.setText(dbSettingsPg.getDbName());
                 lbDbLocationValue.setText(dbSettingsPg.getHost());
-                enableButtonSubComponents(cbUseCentralRepo.isSelected());
-                break;
-            case SQLITE:
+            }
+            else if (selectedDb == CentralRepoPlatforms.SQLITE) {
                 SqliteCentralRepoSettings dbSettingsSqlite = new SqliteCentralRepoSettings();
-                lbDbPlatformValue.setText(CentralRepoPlatforms.SQLITE.toString());
                 lbDbNameValue.setText(dbSettingsSqlite.getDbName());
                 lbDbLocationValue.setText(dbSettingsSqlite.getDbDirectory());
-                enableButtonSubComponents(cbUseCentralRepo.isSelected());
-                break;
-            default:
-                lbDbPlatformValue.setText(CentralRepoPlatforms.DISABLED.toString());
-                lbDbNameValue.setText("");
-                lbDbLocationValue.setText("");
-                tbOops.setText(Bundle.GlobalSettingsPanel_validationerrMsg_mustConfigure());
-                break;
+            }
         }
-
     }
 
     @Override
