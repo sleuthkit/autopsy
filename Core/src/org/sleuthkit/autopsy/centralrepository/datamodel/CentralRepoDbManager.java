@@ -35,12 +35,12 @@ public class CentralRepoDbManager {
     private static final String CENTRAL_REPO_DB_NAME = "central_repository";
 
     /**
-     * attains the database connectivity for central repository
+     * obtains the database connectivity for central repository
      *
      * @return the CentralRepository object to connect to
      * @throws CentralRepoException
      */
-    private static CentralRepository attainCentralRepository() throws CentralRepoException {
+    private static CentralRepository obtainCentralRepository() throws CentralRepoException {
         //get connection
         try {
             return CentralRepository.getInstance();
@@ -55,13 +55,13 @@ public class CentralRepoDbManager {
     }
 
     /**
-     * attains central repository lock
+     * obtains central repository lock
      *
      * @param db the database connection
      * @return the lock if acquired
      * @throws CentralRepoException
      */
-    private static CoordinationService.Lock attainCentralRepoLock(CentralRepository db) throws CentralRepoException {
+    private static CoordinationService.Lock obtainCentralRepoLock(CentralRepository db) throws CentralRepoException {
         try {
             // This may return null if locking isn't supported, which is fine. It will
             // throw an exception if locking is supported but we can't get the lock
@@ -121,11 +121,11 @@ public class CentralRepoDbManager {
             return;
         }
 
-        CentralRepository db = attainCentralRepository();
+        CentralRepository db = obtainCentralRepository();
 
         //get lock necessary for upgrade
         if (db != null) {
-            CoordinationService.Lock lock = attainCentralRepoLock(db);
+            CoordinationService.Lock lock = obtainCentralRepoLock(db);
             updatedDbSchema(db, lock);
         } else {
             onUpgradeError("Unable to connect to database",
@@ -163,6 +163,9 @@ public class CentralRepoDbManager {
         dbSettingsPostgres = new PostgresCentralRepoSettings();
         dbSettingsSqlite = new SqliteCentralRepoSettings();
         selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
+        
+        // set the default selected platform for displaying in the ui of EamDbSettingsDialog 
+        // if selected option is not applicable
         if (selectedPlatform == null || selectedPlatform.equals(CentralRepoPlatforms.DISABLED)) {
             selectedPlatform = CentralRepoPlatforms.POSTGRESQL;
         }
@@ -176,9 +179,30 @@ public class CentralRepoDbManager {
         return dbSettingsSqlite;
     }
 
-    public void setupDefaultSqliteSettings() {
+    /**
+     * setup sqlite db with default settings
+     * @throws CentralRepoException     if unable to successfully set up database
+     */
+    public void setupDefaultSqliteDb() throws CentralRepoException {
+        // change in-memory settings to default sqlite
         selectedPlatform = CentralRepoPlatforms.SQLITE;
         dbSettingsSqlite.setupDefaultSettings();
+
+        // if db is not present, attempt to create it
+        DatabaseTestResult curStatus = testStatus();
+        if (curStatus == DatabaseTestResult.DB_DOES_NOT_EXIST) {
+            createDb();
+            curStatus = testStatus();
+        }
+        
+        // the only successful setup status is tested ok
+        if (curStatus != DatabaseTestResult.TESTEDOK) {
+            throw new CentralRepoException("Unable to successfully create sqlite database");
+        }
+        
+        // if successfully got here, then save the settings
+        CentralRepoDbUtil.setUseCentralRepo(true);
+        saveNewCentralRepo();
     }
 
     /**
