@@ -169,7 +169,7 @@ public class CorrelationAttributeUtil {
     }
 
     /**
-     * Make a correlation attribute instance from a phone number attribute of an
+     * Makes a correlation attribute instance from a phone number attribute of an
      * artifact.
      *
      * @param artifact An artifact with a phone number attribute.
