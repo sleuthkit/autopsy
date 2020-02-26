@@ -43,7 +43,6 @@ class CommandLinePanel extends JPanel {
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(403, 65));
 
-        jLabel1.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(CommandLinePanel.class, "CommandLinePanel.jLabel1.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -60,7 +59,7 @@ class CommandLinePanel extends JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1)
-                .addContainerGap(27, Short.MAX_VALUE))
+                .addContainerGap(40, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

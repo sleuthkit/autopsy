@@ -51,9 +51,7 @@ public final class TextPrompt extends JLabel
         component.removeAll();
         setShow(show);
         document = component.getDocument();
-
         setText(text);
-        setFont(component.getFont());
         setForeground(component.getForeground());
         setBorder(new EmptyBorder(component.getInsets()));
         setHorizontalAlignment(JLabel.LEADING);

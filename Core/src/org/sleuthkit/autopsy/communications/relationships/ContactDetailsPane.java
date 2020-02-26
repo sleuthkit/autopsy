@@ -131,7 +131,6 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
 
         setLayout(new java.awt.GridBagLayout());
 
-        nameLabel.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(ContactDetailsPane.class, "ContactDetailsPane.nameLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;

@@ -484,7 +484,6 @@ final class ReportVisualPanel2 extends JPanel {
             if (value != null) {
                 setEnabled(list.isEnabled());
                 setSelected(tagStates.get(value));
-                setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
                 setText(value);

@@ -116,10 +116,6 @@ final class HexView extends JPanel {
         JScrollPane scroller = new JScrollPane(panes);
         this.add(scroller, BorderLayout.CENTER);
 
-        offsetView.setFont(font);
-        hexViewTextArea.setFont(font);
-        asciiViewTextArea.setFont(font);
-
         StringBuilder offsetSB = new StringBuilder();
         StringBuilder hexSB = new StringBuilder();
         StringBuilder asciiSB = new StringBuilder();

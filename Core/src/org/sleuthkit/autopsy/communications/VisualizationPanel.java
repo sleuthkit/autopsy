@@ -586,9 +586,6 @@ final public class VisualizationPanel extends JPanel {
         "VisualizationPanel.layoutFail.text={0} layout failed. Try a different layout."})
     private void applyLayout(NamedGraphLayout layout) {
         currentLayout = layout;
-        layoutButtons.forEach((layoutKey, button)
-                -> button.setFont(button.getFont().deriveFont(layoutKey == layout ? Font.BOLD : Font.PLAIN)));
-
         ModalDialogProgressIndicator progressIndicator = new ModalDialogProgressIndicator(windowAncestor, Bundle.VisualizationPanel_computingLayout());
         progressIndicator.start(Bundle.VisualizationPanel_computingLayout());
 

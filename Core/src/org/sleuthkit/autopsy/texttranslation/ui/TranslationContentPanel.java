@@ -63,8 +63,6 @@ public class TranslationContentPanel extends javax.swing.JPanel {
     public void display(String text, ComponentOrientation direction, int font) {
         DISPLAY_PANE.setComponentOrientation(direction);
         DISPLAY_PANE.setText(text);
-        DISPLAY_PANE.setFont(new Font(DISPLAY_PANE.getFont().getName(),
-                font, DISPLAY_PANE.getFont().getSize()));
         DISPLAY_PANE.setCaretPosition(0);
     }
 

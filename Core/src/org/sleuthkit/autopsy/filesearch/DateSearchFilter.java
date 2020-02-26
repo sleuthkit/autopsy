@@ -238,7 +238,6 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
             }
-            setFont(list.getFont());
             setText(str);
             return this;
         }

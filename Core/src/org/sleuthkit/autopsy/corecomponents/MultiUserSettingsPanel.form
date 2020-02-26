@@ -136,11 +136,6 @@
               <SubComponents>
                 <Component class="javax.swing.JTextField" name="tbDbHostname">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="tbDbHostname" property="font" relativeSize="false" size="12"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbDbHostname.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -151,11 +146,6 @@
                 </Component>
                 <Component class="javax.swing.JTextField" name="tbDbPort">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="tbDbPort" property="font" relativeSize="false" size="12"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbDbPort.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -166,11 +156,6 @@
                 </Component>
                 <Component class="javax.swing.JTextField" name="tbDbUsername">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="tbDbUsername" property="font" relativeSize="false" size="12"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbDbUsername.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -181,11 +166,6 @@
                 </Component>
                 <Component class="javax.swing.JPasswordField" name="tbDbPassword">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="tbDbPassword" property="font" relativeSize="false" size="12"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbDbPassword.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -196,11 +176,6 @@
                 </Component>
                 <Component class="javax.swing.JLabel" name="lbDatabaseSettings">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="lbDatabaseSettings" property="font" relativeSize="false" size="12"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbDatabaseSettings.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -209,11 +184,6 @@
                 </Component>
                 <Component class="javax.swing.JButton" name="bnTestDatabase">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="bnTestDatabase" property="font" relativeSize="false" size="11"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.bnTestDatabase.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -300,11 +270,6 @@
               <SubComponents>
                 <Component class="javax.swing.JLabel" name="lbSolrSettings">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="lbSolrSettings" property="font" relativeSize="false" size="12"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbSolrSettings.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -312,11 +277,6 @@
                 </Component>
                 <Component class="javax.swing.JTextField" name="tbSolrHostname">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="tbSolrHostname" property="font" relativeSize="false" size="12"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbSolrHostname.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -324,11 +284,6 @@
                 </Component>
                 <Component class="javax.swing.JTextField" name="tbSolrPort">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="tbSolrPort" property="font" relativeSize="false" size="12"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbSolrPort.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -336,11 +291,6 @@
                 </Component>
                 <Component class="javax.swing.JButton" name="bnTestSolr">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="bnTestSolr" property="font" relativeSize="false" size="11"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.bnTestSolr.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -432,11 +382,6 @@
               <SubComponents>
                 <Component class="javax.swing.JLabel" name="lbMessageServiceSettings">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="lbMessageServiceSettings" property="font" relativeSize="false" size="12"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbMessageServiceSettings.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -444,11 +389,6 @@
                 </Component>
                 <Component class="javax.swing.JTextField" name="tbMsgHostname">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="tbMsgHostname" property="font" relativeSize="false" size="12"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbMsgHostname.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -459,11 +399,6 @@
                 </Component>
                 <Component class="javax.swing.JTextField" name="tbMsgUsername">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="tbMsgUsername" property="font" relativeSize="false" size="12"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbMsgUsername.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -474,11 +409,6 @@
                 </Component>
                 <Component class="javax.swing.JTextField" name="tbMsgPort">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="tbMsgPort" property="font" relativeSize="false" size="12"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbMsgPort.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -489,11 +419,6 @@
                 </Component>
                 <Component class="javax.swing.JPasswordField" name="tbMsgPassword">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="tbMsgPassword" property="font" relativeSize="false" size="12"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbMsgPassword.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -504,11 +429,6 @@
                 </Component>
                 <Component class="javax.swing.JButton" name="bnTestMessageService">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="bnTestMessageService" property="font" relativeSize="false" size="11"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.bnTestMessageService.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -538,11 +458,6 @@
             </Container>
             <Component class="javax.swing.JCheckBox" name="cbEnableMultiUser">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                  <FontInfo relative="true">
-                    <Font bold="false" component="cbEnableMultiUser" property="font" relativeSize="false" size="11"/>
-                  </FontInfo>
-                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.cbEnableMultiUser.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -554,11 +469,6 @@
             <Component class="javax.swing.JTextField" name="tbOops">
               <Properties>
                 <Property name="editable" type="boolean" value="false"/>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                  <FontInfo relative="true">
-                    <Font bold="true" component="tbOops" property="font" relativeSize="false" size="12"/>
-                  </FontInfo>
-                </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="0" green="0" red="ff" type="rgb"/>
                 </Property>

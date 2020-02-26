@@ -144,7 +144,6 @@ final class OccurrencePanel extends javax.swing.JPanel {
     private void addInstanceDetails() {
         javax.swing.JLabel commonPropertiesLabel = new javax.swing.JLabel();
         org.openide.awt.Mnemonics.setLocalizedText(commonPropertiesLabel, Bundle.OccurrencePanel_commonProperties_text());
-        commonPropertiesLabel.setFont(commonPropertiesLabel.getFont().deriveFont(Font.BOLD, commonPropertiesLabel.getFont().getSize()));
         addItemToBag(gridY, 0, TOP_INSET, 0, commonPropertiesLabel);
         gridY++;
         //for each other occurrence
@@ -234,7 +233,6 @@ final class OccurrencePanel extends javax.swing.JPanel {
         if (!filePath.isEmpty()) {
             javax.swing.JLabel fileDetailsLabel = new javax.swing.JLabel();
             org.openide.awt.Mnemonics.setLocalizedText(fileDetailsLabel, Bundle.OccurrencePanel_fileDetails_text());
-            fileDetailsLabel.setFont(fileDetailsLabel.getFont().deriveFont(Font.BOLD, fileDetailsLabel.getFont().getSize()));
             addItemToBag(gridY, 0, TOP_INSET, 0, fileDetailsLabel);
             gridY++;
             javax.swing.JLabel filePathLabel = new javax.swing.JLabel();
@@ -268,7 +266,6 @@ final class OccurrencePanel extends javax.swing.JPanel {
         if (!dataSourceName.isEmpty()) {
             javax.swing.JLabel dataSourceDetailsLabel = new javax.swing.JLabel();
             org.openide.awt.Mnemonics.setLocalizedText(dataSourceDetailsLabel, Bundle.OccurrencePanel_dataSourceDetails_text());
-            dataSourceDetailsLabel.setFont(dataSourceDetailsLabel.getFont().deriveFont(Font.BOLD, dataSourceDetailsLabel.getFont().getSize()));
             addItemToBag(gridY, 0, TOP_INSET, 0, dataSourceDetailsLabel);
             gridY++;
             javax.swing.JLabel dataSourceNameLabel = new javax.swing.JLabel();
@@ -292,7 +289,6 @@ final class OccurrencePanel extends javax.swing.JPanel {
     private void addCaseDetails() {
         javax.swing.JLabel caseDetailsLabel = new javax.swing.JLabel();
         org.openide.awt.Mnemonics.setLocalizedText(caseDetailsLabel, Bundle.OccurrencePanel_caseDetails_text());
-        caseDetailsLabel.setFont(caseDetailsLabel.getFont().deriveFont(Font.BOLD, caseDetailsLabel.getFont().getSize()));
         addItemToBag(gridY, 0, TOP_INSET, 0, caseDetailsLabel);
         gridY++;
         String caseName = caseNamesAndDates.keySet().size() > 1 ? "" : caseNamesAndDates.keySet().iterator().next();

@@ -34,7 +34,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="lbServicesStatus" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
-                      <Component id="tbServicesStatusMessage" pref="871" max="32767" attributes="0"/>
+                      <Component id="tbServicesStatusMessage" pref="881" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <Group type="103" groupAlignment="1" attributes="0">
@@ -44,10 +44,7 @@
                       </Group>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="refreshButton" min="-2" pref="100" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
-                  </Group>
+                  <Component id="refreshButton" alignment="0" min="-2" pref="100" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
           </Group>
@@ -68,11 +65,11 @@
               <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
               <Component id="lbRunning" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
-              <Component id="runningScrollPane" pref="133" max="32767" attributes="0"/>
+              <Component id="runningScrollPane" pref="135" max="32767" attributes="0"/>
               <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
               <Component id="lbCompleted" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Component id="completedScrollPane" pref="179" max="32767" attributes="0"/>
+              <Component id="completedScrollPane" pref="181" max="32767" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="refreshButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -112,9 +109,6 @@
     </Container>
     <Component class="javax.swing.JLabel" name="lbPending">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Tahoma" size="14" style="0"/>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.lbPending.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -122,9 +116,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lbRunning">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Tahoma" size="14" style="0"/>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.lbRunning.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -132,9 +123,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lbCompleted">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Tahoma" size="14" style="0"/>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.lbCompleted.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -155,9 +143,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lbServicesStatus">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Tahoma" size="14" style="0"/>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.lbServicesStatus.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -166,9 +151,6 @@
     <Component class="javax.swing.JTextField" name="tbServicesStatusMessage">
       <Properties>
         <Property name="editable" type="boolean" value="false"/>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Tahoma" size="12" style="1"/>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.tbServicesStatusMessage.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>

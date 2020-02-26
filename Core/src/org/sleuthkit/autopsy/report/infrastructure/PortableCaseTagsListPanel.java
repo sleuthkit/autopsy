@@ -200,7 +200,6 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
             if (value != null) {
                 setEnabled(list.isEnabled());
                 setSelected(tagNameSelections.get(value));
-                setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
                 setText(value + " (" + tagCounts.get(value) + ")"); // NON-NLS

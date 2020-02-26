@@ -204,7 +204,6 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
             if (value != null) {
                 setEnabled(list.isEnabled());
                 setSelected(setNameSelections.get(value));
-                setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
                 setText(value + " (" + setCounts.get(value) + ")"); // NON-NLS
