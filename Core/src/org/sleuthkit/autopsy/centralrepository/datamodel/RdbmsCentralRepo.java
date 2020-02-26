@@ -3194,26 +3194,19 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         
         // clear out the cache
         typeCache.invalidateAll();
-
-        Connection conn = connect();
-        PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
         
         String sql = "SELECT * FROM correlation_types";
-        try {
-            preparedStatement = conn.prepareStatement(sql);
-            resultSet = preparedStatement.executeQuery();
+        try ( Connection conn = connect();
+              PreparedStatement preparedStatement = conn.prepareStatement(sql);
+              ResultSet resultSet = preparedStatement.executeQuery();) {
+
             while (resultSet.next()) {
                 CorrelationAttributeInstance.Type aType = getCorrelationTypeFromResultSet(resultSet);
                 typeCache.put(aType.getId(), aType);
             }
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting correlation types.", ex); // NON-NLS
-        } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
-            CentralRepoDbUtil.closeResultSet(resultSet);
-            CentralRepoDbUtil.closeConnection(conn);
-        }
+        } 
     }
     
     /**

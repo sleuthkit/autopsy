@@ -81,7 +81,7 @@ public class RdbmsCentralRepoFactory {
      * connectionPool object directly.
      */
     public boolean initializeDatabaseSchema() {
-       
+
         String createArtifactInstancesTableTemplate = getCreateArtifactInstancesTableTemplate(selectedPlatform);
 
         String instancesCaseIdIdx = getAddCaseIdIndexTemplate();
@@ -92,95 +92,88 @@ public class RdbmsCentralRepoFactory {
 
         // NOTE: the db_info table currenly only has 1 row, so having an index
         // provides no benefit.
-        Connection conn = null;
-        Statement stmt = null;
-        try {
-            conn = this.getEphemeralConnection();
+        try (Connection conn = this.getEphemeralConnection();) {
+
             if (null == conn) {
                 LOGGER.log(Level.SEVERE, "Cannot initialize CR database, don't have a valid connection."); // NON-NLS
                 return false;
             }
-            
-            stmt = conn.createStatement();
 
-            // these setting PRAGMAs are SQLIte spcific
-            if (selectedPlatform == CentralRepoPlatforms.SQLITE) {
-                stmt.execute(PRAGMA_JOURNAL_WAL);
-                stmt.execute(PRAGMA_SYNC_OFF);
-                stmt.execute(PRAGMA_READ_UNCOMMITTED_TRUE);
-                stmt.execute(PRAGMA_ENCODING_UTF8);
-                stmt.execute(PRAGMA_PAGE_SIZE_4096);
-                stmt.execute(PRAGMA_FOREIGN_KEYS_ON);
-            }
+            try (Statement stmt = conn.createStatement();) {
 
-            // Create Organizations table
-            stmt.execute(getCreateOrganizationsTableStatement(selectedPlatform));
-
-            // Create Cases table and indexes
-            stmt.execute(getCreateCasesTableStatement(selectedPlatform));
-            stmt.execute(getCasesOrgIdIndexStatement());
-            stmt.execute(getCasesCaseUidIndexStatement());
-
-            stmt.execute(getCreateDataSourcesTableStatement(selectedPlatform));
-            stmt.execute(getAddDataSourcesNameIndexStatement());
-            stmt.execute(getAddDataSourcesObjectIdIndexStatement());
-
-            stmt.execute(getCreateReferenceSetsTableStatement(selectedPlatform));
-            stmt.execute(getReferenceSetsOrgIdIndexTemplate());
-
-            stmt.execute(getCreateCorrelationTypesTableStatement(selectedPlatform));
-
-            stmt.execute(getCreateDbInfoTableStatement(selectedPlatform));
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
-
-            // Create account_types and accounts tab;es which are referred by X_instances tables
-            stmt.execute(getCreateAccountTypesTableStatement(selectedPlatform));
-            stmt.execute(getCreateAccountsTableStatement(selectedPlatform));
-            
-            // Create a separate instance and reference table for each artifact type
-            List<CorrelationAttributeInstance.Type> defaultCorrelationTypes = CorrelationAttributeInstance.getDefaultCorrelationTypes();
-
-            String reference_type_dbname;
-            String instance_type_dbname;
-            for (CorrelationAttributeInstance.Type type : defaultCorrelationTypes) {
-                reference_type_dbname = CentralRepoDbUtil.correlationTypeToReferenceTableName(type);
-                instance_type_dbname = CentralRepoDbUtil.correlationTypeToInstanceTableName(type);
-
-                stmt.execute(String.format(createArtifactInstancesTableTemplate, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesCaseIdIdx, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesDatasourceIdIdx, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesValueIdx, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesKnownStatusIdx, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesObjectIdIdx, instance_type_dbname, instance_type_dbname));
-
-                // FUTURE: allow more than the FILES type
-                if (type.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
-                    stmt.execute(String.format(getReferenceTypesTableTemplate(selectedPlatform), reference_type_dbname, reference_type_dbname));
-                    stmt.execute(String.format(getReferenceTypeValueIndexTemplate(), reference_type_dbname, reference_type_dbname));
-                    stmt.execute(String.format(getReferenceTypeValueKnownstatusIndexTemplate(), reference_type_dbname, reference_type_dbname));
+                // these setting PRAGMAs are SQLIte spcific
+                if (selectedPlatform == CentralRepoPlatforms.SQLITE) {
+                    stmt.execute(PRAGMA_JOURNAL_WAL);
+                    stmt.execute(PRAGMA_SYNC_OFF);
+                    stmt.execute(PRAGMA_READ_UNCOMMITTED_TRUE);
+                    stmt.execute(PRAGMA_ENCODING_UTF8);
+                    stmt.execute(PRAGMA_PAGE_SIZE_4096);
+                    stmt.execute(PRAGMA_FOREIGN_KEYS_ON);
                 }
+
+                // Create Organizations table
+                stmt.execute(getCreateOrganizationsTableStatement(selectedPlatform));
+
+                // Create Cases table and indexes
+                stmt.execute(getCreateCasesTableStatement(selectedPlatform));
+                stmt.execute(getCasesOrgIdIndexStatement());
+                stmt.execute(getCasesCaseUidIndexStatement());
+
+                stmt.execute(getCreateDataSourcesTableStatement(selectedPlatform));
+                stmt.execute(getAddDataSourcesNameIndexStatement());
+                stmt.execute(getAddDataSourcesObjectIdIndexStatement());
+
+                stmt.execute(getCreateReferenceSetsTableStatement(selectedPlatform));
+                stmt.execute(getReferenceSetsOrgIdIndexTemplate());
+
+                stmt.execute(getCreateCorrelationTypesTableStatement(selectedPlatform));
+
+                stmt.execute(getCreateDbInfoTableStatement(selectedPlatform));
+                stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
+                stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
+                stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
+                stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
+
+                // Create account_types and accounts tab;es which are referred by X_instances tables
+                stmt.execute(getCreateAccountTypesTableStatement(selectedPlatform));
+                stmt.execute(getCreateAccountsTableStatement(selectedPlatform));
+
+                // Create a separate instance and reference table for each artifact type
+                List<CorrelationAttributeInstance.Type> defaultCorrelationTypes = CorrelationAttributeInstance.getDefaultCorrelationTypes();
+
+                String reference_type_dbname;
+                String instance_type_dbname;
+                for (CorrelationAttributeInstance.Type type : defaultCorrelationTypes) {
+                    reference_type_dbname = CentralRepoDbUtil.correlationTypeToReferenceTableName(type);
+                    instance_type_dbname = CentralRepoDbUtil.correlationTypeToInstanceTableName(type);
+
+                    stmt.execute(String.format(createArtifactInstancesTableTemplate, instance_type_dbname, instance_type_dbname));
+                    stmt.execute(String.format(instancesCaseIdIdx, instance_type_dbname, instance_type_dbname));
+                    stmt.execute(String.format(instancesDatasourceIdIdx, instance_type_dbname, instance_type_dbname));
+                    stmt.execute(String.format(instancesValueIdx, instance_type_dbname, instance_type_dbname));
+                    stmt.execute(String.format(instancesKnownStatusIdx, instance_type_dbname, instance_type_dbname));
+                    stmt.execute(String.format(instancesObjectIdIdx, instance_type_dbname, instance_type_dbname));
+
+                    // FUTURE: allow more than the FILES type
+                    if (type.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
+                        stmt.execute(String.format(getReferenceTypesTableTemplate(selectedPlatform), reference_type_dbname, reference_type_dbname));
+                        stmt.execute(String.format(getReferenceTypeValueIndexTemplate(), reference_type_dbname, reference_type_dbname));
+                        stmt.execute(String.format(getReferenceTypeValueKnownstatusIndexTemplate(), reference_type_dbname, reference_type_dbname));
+                    }
+                }
+                createPersonaTables(stmt);
+            } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
+                return false;
+            } catch (CentralRepoException ex) {
+                LOGGER.log(Level.SEVERE, "Error getting default correlation types. Likely due to one or more Type's with an invalid db table name."); // NON-NLS
+                return false;
             }
-            
-            createPersonaTables(stmt);
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error connecting to database.", ex); // NON-NLS
             return false;
-        } catch (CentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting default correlation types. Likely due to one or more Type's with an invalid db table name."); // NON-NLS
-            return false;
-        } finally {
-            if (stmt != null) {
-                try {
-                    stmt.close();
-                } catch (SQLException ex2) {
-                     LOGGER.log(Level.SEVERE, "Error closing statement.", ex2);
-                }
-            }
-            CentralRepoDbUtil.closeConnection(conn);
         }
+
         return true;
     }
 
@@ -190,17 +183,22 @@ public class RdbmsCentralRepoFactory {
      * @return True if success, False otherwise.
      */
     public boolean insertDefaultDatabaseContent() {
-        Connection conn = this.getEphemeralConnection();
-        if (null == conn) {
+
+        boolean result;
+        try (Connection conn = this.getEphemeralConnection();) {
+            if (null == conn) {
+                return false;
+            }
+
+            result = CentralRepoDbUtil.insertDefaultCorrelationTypes(conn)
+                    && CentralRepoDbUtil.insertDefaultOrganization(conn)
+                    && insertDefaultPersonaTablesContent(conn);
+
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, String.format("Failed to populate default data in CR tables."), ex);
             return false;
         }
 
-        boolean result = CentralRepoDbUtil.insertDefaultCorrelationTypes(conn) 
-                            && CentralRepoDbUtil.insertDefaultOrganization(conn) 
-                            && insertDefaultPersonaTablesContent(conn);
-        
-         
-        CentralRepoDbUtil.closeConnection(conn);
         return result;
     }
 
@@ -849,24 +847,17 @@ public class RdbmsCentralRepoFactory {
         } else if (accountType == Account.Type.PHONE) {
             typeId = CorrelationAttributeInstance.PHONE_TYPE_ID;
         } else {
-            ResultSet resultSet = null;
-
-            PreparedStatement preparedStatementQuery = null;
             String querySql = "SELECT * FROM correlation_types WHERE display_name=?";
-            try {
-                preparedStatementQuery = conn.prepareStatement(querySql);
+            try ( PreparedStatement preparedStatementQuery = conn.prepareStatement(querySql)) {
                 preparedStatementQuery.setString(1, accountType.getDisplayName());
-
-                resultSet = preparedStatementQuery.executeQuery();
-                if (resultSet.next()) {
-                    typeId = resultSet.getInt("id");
+                try (ResultSet resultSet = preparedStatementQuery.executeQuery();) {
+                    if (resultSet.next()) {
+                        typeId = resultSet.getInt("id");
+                    }
                 }
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Failed to get correlation typeId for account type %s.", accountType.getTypeName()), ex);
-            } finally {
-                CentralRepoDbUtil.closeStatement(preparedStatementQuery);
-                CentralRepoDbUtil.closeResultSet(resultSet);
-            }
+            } 
         }
 
         return typeId;
