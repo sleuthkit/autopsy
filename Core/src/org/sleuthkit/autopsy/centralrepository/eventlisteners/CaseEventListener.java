@@ -197,7 +197,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 }
             }
 
-            final CorrelationAttributeInstance eamArtifact = CorrelationAttributeUtil.makeInstanceFromContent(af);
+            final CorrelationAttributeInstance eamArtifact = CorrelationAttributeUtil.makeCorrAttrFromFile(af);
 
             if (eamArtifact != null) {
                 // send update to Central Repository db
@@ -297,7 +297,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 return;
             }
 
-            List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeAttrsForArtifact(bbArtifact);
+            List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsFromArtifact(bbArtifact);
             for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                 eamArtifact.setComment(comment);
                 try {
@@ -370,7 +370,7 @@ final class CaseEventListener implements PropertyChangeListener {
                     if (!hasTagWithConflictingKnownStatus) {
                         //Get the correlation atttributes that correspond to the current BlackboardArtifactTag if their status should be changed
                         //with the initial set of correlation attributes this should be a single correlation attribute
-                        List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeAttrsForArtifact(bbTag.getArtifact());
+                        List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsFromArtifact(bbTag.getArtifact());
                         for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                             CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
                         }
@@ -406,9 +406,12 @@ final class CaseEventListener implements PropertyChangeListener {
                     }
                     //if the file will have no tags with a status which would prevent the current status from being changed 
                     if (!hasTagWithConflictingKnownStatus) {
-                        final CorrelationAttributeInstance eamArtifact = CorrelationAttributeUtil.makeInstanceFromContent(contentTag.getContent());
-                        if (eamArtifact != null) {
-                            CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
+                        Content taggedContent = contentTag.getContent();
+                        if (taggedContent instanceof AbstractFile) {                            
+                            final CorrelationAttributeInstance eamArtifact = CorrelationAttributeUtil.makeCorrAttrFromFile((AbstractFile)taggedContent);
+                            if (eamArtifact != null) {
+                                CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
+                            }
                         }
                     }
                 }
@@ -455,7 +458,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 }
             } catch (CentralRepoException ex) {
                 LOGGER.log(Level.SEVERE, "Error adding new data source to the central repository", ex); //NON-NLS
-            } 
+            }
         } // DATA_SOURCE_ADDED
     }
 
@@ -495,7 +498,7 @@ final class CaseEventListener implements PropertyChangeListener {
             }
         } // CURRENT_CASE
     }
-    
+
     private final class DataSourceNameChangedTask implements Runnable {
 
         private final CentralRepository dbManager;
@@ -508,12 +511,12 @@ final class CaseEventListener implements PropertyChangeListener {
 
         @Override
         public void run() {
-            
+
             final DataSourceNameChangedEvent dataSourceNameChangedEvent = (DataSourceNameChangedEvent) event;
             Content dataSource = dataSourceNameChangedEvent.getDataSource();
             String newName = (String) event.getNewValue();
-            
-            if (! StringUtils.isEmpty(newName)) {
+
+            if (!StringUtils.isEmpty(newName)) {
 
                 if (!CentralRepository.isEnabled()) {
                     return;

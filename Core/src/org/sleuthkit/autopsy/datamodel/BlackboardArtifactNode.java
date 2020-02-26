@@ -605,8 +605,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     @Override
     protected final CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance correlationAttribute = null;
-        if (CentralRepository.isEnabled()) {
-            correlationAttribute = CorrelationAttributeUtil.getInstanceFromContent(associated);
+        if (CentralRepository.isEnabled() && associated instanceof AbstractFile) {
+            correlationAttribute = CorrelationAttributeUtil.getCorrAttrForFile((AbstractFile)associated);
         }
         return correlationAttribute;
     }

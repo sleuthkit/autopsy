@@ -456,7 +456,7 @@ public class IngestEventsListener {
 
             for (BlackboardArtifact bbArtifact : bbArtifacts) {
                 // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
-                List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeAttrsForArtifact(bbArtifact);
+                List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsFromArtifact(bbArtifact);
                 for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                     try {
                         // Only do something with this artifact if it's unique within the job

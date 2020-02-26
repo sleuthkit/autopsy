@@ -464,7 +464,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // correlate on blackboard artifact attributes if they exist and supported
         BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
         if (bbArtifact != null && CentralRepository.isEnabled()) {
-            ret.addAll(CorrelationAttributeUtil.makeAttrsForArtifact(bbArtifact));
+            ret.addAll(CorrelationAttributeUtil.makeCorrAttrsFromArtifact(bbArtifact));
         }
 
         // we can correlate based on the MD5 if it is enabled      

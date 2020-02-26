@@ -549,7 +549,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance attribute = null;
         if (CentralRepository.isEnabled() && !UserPreferences.getHideSCOColumns()) {
-            attribute = CorrelationAttributeUtil.getInstanceFromContent(content);
+            attribute = CorrelationAttributeUtil.getCorrAttrForFile(content);
         }
         return attribute;
     }
