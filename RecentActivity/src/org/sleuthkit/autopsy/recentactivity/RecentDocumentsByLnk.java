@@ -154,18 +154,16 @@ class RecentDocumentsByLnk extends Extract {
         List<AbstractFile> sourceFiles;
         try {
             sourceFiles = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS
-            if (!sourceFiles.isEmpty()) {
-                for (AbstractFile sourceFile : sourceFiles) {
-                    if (sourceFile.getParentPath().endsWith(filePath)) {
-                        Collection<BlackboardAttribute> bbattributes2 = new ArrayList<>();
-                           bbattributes2.addAll(Arrays.asList(
-                             new BlackboardAttribute(TSK_ASSOCIATED_ARTIFACT, this.getName(),
-                             bba.getArtifactID())));
+            for (AbstractFile sourceFile : sourceFiles) {
+                if (sourceFile.getParentPath().endsWith(filePath)) {
+                    Collection<BlackboardAttribute> bbattributes2 = new ArrayList<>();
+                    bbattributes2.addAll(Arrays.asList(
+                         new BlackboardAttribute(TSK_ASSOCIATED_ARTIFACT, this.getName(),
+                         bba.getArtifactID())));
 
-                        BlackboardArtifact associatedObjectBba = createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, sourceFile, bbattributes2);
-                        if (associatedObjectBba != null) {
-                            return associatedObjectBba;
-                        }
+                    BlackboardArtifact associatedObjectBba = createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, sourceFile, bbattributes2);
+                    if (associatedObjectBba != null) {
+                        return associatedObjectBba;
                     }
                 }
             }
