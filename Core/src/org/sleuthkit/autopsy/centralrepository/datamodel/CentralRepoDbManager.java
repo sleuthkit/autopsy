@@ -179,9 +179,30 @@ public class CentralRepoDbManager {
         return dbSettingsSqlite;
     }
 
-    public void setupDefaultSqliteSettings() {
+    /**
+     * setup sqlite db with default settings
+     * @throws CentralRepoException     if unable to successfully set up database
+     */
+    public void setupDefaultSqliteDb() throws CentralRepoException {
+        // change in-memory settings to default sqlite
         selectedPlatform = CentralRepoPlatforms.SQLITE;
         dbSettingsSqlite.setupDefaultSettings();
+
+        // if db is not present, attempt to create it
+        DatabaseTestResult curStatus = testStatus();
+        if (curStatus == DatabaseTestResult.DB_DOES_NOT_EXIST) {
+            createDb();
+            curStatus = testStatus();
+        }
+        
+        // the only successful setup status is tested ok
+        if (curStatus != DatabaseTestResult.TESTEDOK) {
+            throw new CentralRepoException("Unable to successfully create sqlite database");
+        }
+        
+        // if successfully got here, then save the settings
+        CentralRepoDbUtil.setUseCentralRepo(true);
+        saveNewCentralRepo();
     }
 
     /**

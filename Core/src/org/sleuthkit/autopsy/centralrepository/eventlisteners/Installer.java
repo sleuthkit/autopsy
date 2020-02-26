@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -57,7 +58,6 @@ public class Installer extends ModuleInstall {
     }
 
     @NbBundle.Messages({
-        "Installer.centralRepoUpgradeFailed.title=Central repository disabled",
         "Installer.initialCreateSqlite.title=Enable Central Repository?",
         "Installer.initialCreateSqlite.messageHeader=The Central Repository is not enabled. Would you like to?",
         "Installer.initialCreateSqlite.messageDesc=It will store information about all hashes and identifiers that you process. " +
@@ -127,21 +127,19 @@ public class Installer extends ModuleInstall {
     }
 
     private void setupDefaultSqlite() throws CentralRepoException {
-        CentralRepoDbUtil.setUseCentralRepo(true);
         CentralRepoDbManager manager = new CentralRepoDbManager();
-        manager.setupDefaultSqliteSettings();
-        manager.createDb();
-        manager.saveNewCentralRepo();
+        manager.setupDefaultSqliteDb();
     }
 
+    @NbBundle.Messages({ "Installer.centralRepoUpgradeFailed.title=Central repository disabled" })
     private void reportUpgradeError(CentralRepoException ex) {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 JOptionPane.showMessageDialog(null,
-                        ex.getUserMessage(),
-                        NbBundle.getMessage(this.getClass(),
-                                "Installer.centralRepoUpgradeFailed.title"),
-                        JOptionPane.ERROR_MESSAGE);
+                    ex.getUserMessage(),
+                    NbBundle.getMessage(this.getClass(),
+                        "Installer.centralRepoUpgradeFailed.title"),
+                    JOptionPane.ERROR_MESSAGE);
             });
         } catch (InterruptedException | InvocationTargetException e) {
             LOGGER.log(Level.WARNING, e.getMessage(), e);
