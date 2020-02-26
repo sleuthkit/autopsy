@@ -1251,6 +1251,7 @@ class ExtractRegistry extends Extract {
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                     if(bba != null) {
                          bbartifacts.add(bba);
+                         fileName = fileName.replace("\0", "");
                          bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
                          if (bba != null) {
                              bbartifacts.add(bba);
