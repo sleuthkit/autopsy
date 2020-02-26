@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * Contains business logic for saving and validating settings for central repo
@@ -249,29 +250,25 @@ public class CentralRepoDbManager {
     }
 
     private CentralRepoDbSettings getSelectedSettings() throws CentralRepoException {
-        switch (selectedDbChoice) {
-            case POSTGRESQL:
-                return dbSettingsPostgres;
-            case SQLITE:
-                return dbSettingsSqlite;
-            case DISABLED:
-                return null;
-            default:
-                throw new CentralRepoException("Unknown database type: " + selectedDbChoice);
-        }
+        if (selectedDbChoice == CentralRepoDbChoice.POSTGRESQL_CUSTOM)
+            return dbSettingsPostgres;
+        if (selectedDbChoice == CentralRepoDbChoice.SQLITE)
+            return dbSettingsSqlite;
+        if (selectedDbChoice == CentralRepoDbChoice.DISABLED)
+            return null;
+        
+        throw new CentralRepoException("Unknown database type: " + selectedDbChoice);
     }
 
     private RdbmsCentralRepoFactory getDbFactory() throws CentralRepoException {
-        switch (selectedDbChoice) {
-            case POSTGRESQL:
-                return new RdbmsCentralRepoFactory(selectedDbChoice, dbSettingsPostgres);
-            case SQLITE:
-                return new RdbmsCentralRepoFactory(selectedDbChoice, dbSettingsSqlite);
-            case DISABLED:
-                return null;
-            default:
-                throw new CentralRepoException("Unknown database type: " + selectedDbChoice);
-        }
+        if (selectedDbChoice == CentralRepoDbChoice.POSTGRESQL_CUSTOM)
+            return new RdbmsCentralRepoFactory(CentralRepoPlatforms.POSTGRESQL, dbSettingsPostgres);
+        if (selectedDbChoice == CentralRepoDbChoice.SQLITE)
+            return new RdbmsCentralRepoFactory(CentralRepoPlatforms.SQLITE, dbSettingsSqlite);
+        if (selectedDbChoice == CentralRepoDbChoice.DISABLED)
+            return null;
+        
+        throw new CentralRepoException("Unknown database type: " + selectedDbChoice);
     }
 
     public boolean createDb() throws CentralRepoException {
@@ -382,28 +379,27 @@ public class CentralRepoDbManager {
     public boolean testDatabaseSettingsAreValid(
             String tbDbHostname, String tbDbPort, String tbDbUsername, String tfDatabasePath, String jpDbPassword) throws CentralRepoException, NumberFormatException {
 
-        switch (selectedDbChoice) {
-            case POSTGRESQL:
-                dbSettingsPostgres.setHost(tbDbHostname);
-                dbSettingsPostgres.setPort(Integer.parseInt(tbDbPort));
-                dbSettingsPostgres.setDbName(CENTRAL_REPO_DB_NAME);
-                dbSettingsPostgres.setUserName(tbDbUsername);
-                dbSettingsPostgres.setPassword(jpDbPassword);
-                break;
-            case SQLITE:
-                File databasePath = new File(tfDatabasePath);
-                dbSettingsSqlite.setDbName(SqliteCentralRepoSettings.DEFAULT_DBNAME);
-                dbSettingsSqlite.setDbDirectory(databasePath.getPath());
-                break;
-            default:
-                throw new IllegalStateException("Central Repo has an unknown selected platform: " + selectedDbChoice);
+        if (selectedDbChoice == CentralRepoDbChoice.POSTGRESQL_CUSTOM) {
+            dbSettingsPostgres.setHost(tbDbHostname);
+            dbSettingsPostgres.setPort(Integer.parseInt(tbDbPort));
+            dbSettingsPostgres.setDbName(CENTRAL_REPO_DB_NAME);
+            dbSettingsPostgres.setUserName(tbDbUsername);
+            dbSettingsPostgres.setPassword(jpDbPassword);
+        }
+        else if (selectedDbChoice == CentralRepoDbChoice.SQLITE) {
+            File databasePath = new File(tfDatabasePath);
+            dbSettingsSqlite.setDbName(SqliteCentralRepoSettings.DEFAULT_DBNAME);
+            dbSettingsSqlite.setDbDirectory(databasePath.getPath());
+        }
+        else {
+            throw new IllegalStateException("Central Repo has an unknown selected platform: " + selectedDbChoice);
         }
 
         return true;
     }
 
     public DatabaseTestResult testStatus() {
-        if (selectedDbChoice == CentralRepoPlatforms.POSTGRESQL) {
+        if (selectedDbChoice == CentralRepoDbChoice.POSTGRESQL_CUSTOM) {
             if (dbSettingsPostgres.verifyConnection()) {
                 if (dbSettingsPostgres.verifyDatabaseExists()) {
                     if (dbSettingsPostgres.verifyDatabaseSchema()) {
@@ -417,7 +413,7 @@ public class CentralRepoDbManager {
             } else {
                 testingStatus = DatabaseTestResult.CONNECTION_FAILED;
             }
-        } else if (selectedDbChoice == CentralRepoPlatforms.SQLITE) {
+        } else if (selectedDbChoice == CentralRepoDbChoice.SQLITE) {
             if (dbSettingsSqlite.dbFileExists()) {
                 if (dbSettingsSqlite.verifyConnection()) {
                     if (dbSettingsSqlite.verifyDatabaseSchema()) {

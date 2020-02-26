@@ -23,6 +23,7 @@ import java.awt.Cursor;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.JDialog;
@@ -43,6 +44,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.corecomponents.TextPrompt;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
 import org.sleuthkit.autopsy.centralrepository.datamodel.DatabaseTestResult;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
@@ -149,17 +151,15 @@ public class EamDbSettingsDialog extends JDialog {
                 }
                 catch (CentralRepoException e) {
                     // in the event that there is a failure to connect, notify user with corresponding message
-                    String errorMessage;
-                    switch (manager.getSelectedPlatform()) {
-                        case POSTGRESQL:
-                            errorMessage = Bundle.EamDbSettingsDialog_okButton_createPostgresDbError_message();
-                            break;
-                        case SQLITE:
-                            errorMessage = Bundle.EamDbSettingsDialog_okButton_createSQLiteDbError_message();
-                            break;
-                        default:
-                            errorMessage = "";
-                            break;
+                    String errorMessage = "";
+                    if (manager == null || manager.getSelectedDbChoice() == null) {
+                        errorMessage = "";
+                    }
+                    else if (manager.getSelectedDbChoice().getDbPlatform() == CentralRepoPlatforms.POSTGRESQL) {
+                        errorMessage = Bundle.EamDbSettingsDialog_okButton_createPostgresDbError_message();
+                    }
+                    else if (manager.getSelectedDbChoice().getDbPlatform() == CentralRepoPlatforms.SQLITE) {
+                        errorMessage = Bundle.EamDbSettingsDialog_okButton_createSQLiteDbError_message();
                     }
                     
                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),

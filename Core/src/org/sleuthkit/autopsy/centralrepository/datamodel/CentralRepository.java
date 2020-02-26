@@ -92,7 +92,7 @@ public interface CentralRepository {
      */
     static boolean isEnabled() {
         return CentralRepoDbUtil.allowUseOfCentralRepository()
-                && CentralRepoPlatforms.getSelectedPlatform() != CentralRepoPlatforms.DISABLED;
+                && CentralRepoDbManager.getSavedDbChoice() != CentralRepoDbChoice.DISABLED;
     }
 
     /**

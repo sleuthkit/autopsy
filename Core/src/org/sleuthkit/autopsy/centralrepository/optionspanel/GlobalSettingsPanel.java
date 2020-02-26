@@ -147,7 +147,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     
     @Messages({"GlobalSettingsPanel.updateFailed.title=Central repository disabled"})
     private static void updateDatabase(Component parent) {
-        if (CentralRepoDbManager.getSelectedChoice().equals(CentralRepoDbChoice.DISABLED)) {
+        if (CentralRepoDbChoice.DISABLED.equals(CentralRepoDbManager.getSavedDbChoice())) {
             return;
         }
         parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -559,7 +559,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return true if it's okay, false otherwise.
      */
     public boolean valid() {
-        return !cbUseCentralRepo.isSelected() || !lbDbPlatformValue.getText().equals(DISABLED.toString());
+        return !cbUseCentralRepo.isSelected() || !lbDbPlatformValue.getText().equals(CentralRepoDbChoice.DISABLED.toString());
     }
 
     @Override
