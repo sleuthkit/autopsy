@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.openide.util.NbBundle.Messages;
@@ -183,6 +182,10 @@ public final class Track extends GeoPath{
          * 
          * @return A list of Waypoint.properies.
          */
+        @Messages({
+            "Track_distanceTraveled_displayName=Distance traveled",
+            "Track_distanceFromHome_displayName=Distance from home point"
+        })
         private List<Waypoint.Property> createPropertyList(GeoTrackPoint point) {
             List<Waypoint.Property> list = new ArrayList<>();
 
@@ -198,12 +201,12 @@ public final class Track extends GeoPath{
 
             value = point.getDistanceTraveled();
             if (value != null) {
-                list.add(new Property("", value.toString()));
+                list.add(new Property(Bundle.Track_distanceTraveled_displayName(), value.toString()));
             }
 
             value = point.getDistanceFromHP();
             if (value != null) {
-                list.add(new Property("", value.toString()));
+                list.add(new Property(Bundle.Track_distanceFromHome_displayName(), value.toString()));
             }
 
             return list;
