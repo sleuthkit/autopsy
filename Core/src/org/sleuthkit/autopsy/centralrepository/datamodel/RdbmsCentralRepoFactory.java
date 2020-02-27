@@ -701,8 +701,10 @@ public class RdbmsCentralRepoFactory {
                 + "created_date " + getBigIntType(selectedPlatform) + " ,"
                 + "modified_date " + getBigIntType(selectedPlatform) + " ,"
                 + "status_id integer NOT NULL,"
+                 + "examiner_id integer NOT NULL,"
                 + "CONSTRAINT uuid_unique UNIQUE(uuid),"
-                + "FOREIGN KEY (status_id) REFERENCES persona_status(status_id)"
+                + "FOREIGN KEY (status_id) REFERENCES persona_status(status_id), "
+                + "FOREIGN KEY (examiner_id) REFERENCES examiners(id)"
                 + ")";
     }
     
