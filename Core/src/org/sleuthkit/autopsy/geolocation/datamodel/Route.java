@@ -20,7 +20,6 @@
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.openide.util.NbBundle.Messages;
@@ -122,9 +121,7 @@ public class Route extends GeoPath {
         if (attribute != null) {
            GeoWaypointList waypoints = attributeUtil.fromAttribute(attribute);
 
-            Iterator<GeoWaypoint> waypointIter = waypoints.iterator();
-            while(waypointIter.hasNext()) {
-                GeoWaypoint waypoint = waypointIter.next();
+            for(GeoWaypoint waypoint: waypoints) {
                 addToPath(new Waypoint(artifact, label, null, waypoint.getLatitude(), waypoint.getLongitude(), waypoint.getAltitude(), null, attributeMap, this));
             }
         } else {

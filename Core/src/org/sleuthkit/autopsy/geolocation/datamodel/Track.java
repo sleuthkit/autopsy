@@ -116,9 +116,7 @@ public final class Track extends GeoPath{
         "GEOTrack_point_label_header=Trackpoint for track: {0}"
     })
     private void buildPath(GeoTrackPointList points) throws GeoLocationDataException {
-        Iterator<GeoTrackPointList.GeoTrackPoint> pointIter = points.iterator();
-        while(pointIter.hasNext()) {
-            GeoTrackPoint point = pointIter.next();
+        for(GeoTrackPoint point: points) {
             addToPath(new TrackWaypoint(Bundle.GEOTrack_point_label_header(getLabel()), point));
         }
     }
