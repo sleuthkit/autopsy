@@ -52,6 +52,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
     private final CheckBoxListPanel<DataSource> checkboxPanel;
 
     // Make sure to update if 
+    @SuppressWarnings("deprecation")
     private static final BlackboardArtifact.ARTIFACT_TYPE[] GPS_ARTIFACT_TYPES = {
         BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK,
         BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION,

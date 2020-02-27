@@ -1373,6 +1373,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         }
 
         synchronized (bulkArtifacts) {
+            if (bulkArtifacts.get(CentralRepoDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType())) == null) {
+                  bulkArtifacts.put(CentralRepoDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType()), new ArrayList<>());
+            }
             bulkArtifacts.get(CentralRepoDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType())).add(eamArtifact);
             bulkArtifactsCount++;
 
@@ -2845,6 +2848,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             typeId = newCorrelationTypeKnownId(newType);
         }
 
+        typeCache.put(newType.getId(), newType);
         return typeId;
     }
 
@@ -3106,6 +3110,45 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
 
     /**
+     * Returns a list of all correlation types. It uses the cache to build the
+     * list. If the cache is empty, it reads from the database and loads up the
+     * cache.
+     *
+     * @return List of correlation types.
+     * @throws CentralRepoException
+     */
+    @Override
+    public List<CorrelationAttributeInstance.Type> getCorrelationTypes() throws CentralRepoException {
+
+        if (typeCache.size() == 0) {
+            getCorrelationTypesFromCr();
+        }
+
+        return new ArrayList<>(typeCache.asMap().values());
+    }
+    
+    /**
+     * Gets a Correlation type with the specified name.
+     *
+     * @param correlationtypeName Correlation type name
+     * @return Correlation type matching the given name, null if none matches.
+     * 
+     * @throws CentralRepoException
+     */
+    public CorrelationAttributeInstance.Type getCorrelationTypeByName(String correlationtypeName) throws CentralRepoException {
+        List<CorrelationAttributeInstance.Type> correlationTypesList = getCorrelationTypes();
+
+        CorrelationAttributeInstance.Type correlationType
+                = correlationTypesList.stream()
+                        .filter(x -> correlationtypeName.equalsIgnoreCase(x.getDisplayName()))
+                        .findAny()
+                        .orElse(null);
+
+        return null;
+    }
+
+    
+    /**
      * Get the EamArtifact.Type that has the given Type.Id from the central repo
      *
      * @param typeId Type.Id of Correlation Type to get
@@ -3142,6 +3185,30 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         }
     }
 
+    /**
+     * Reads the correlation types from the database and loads them up in the cache.
+     * 
+     * @throws CentralRepoException If there is an error.
+     */
+    private void getCorrelationTypesFromCr() throws CentralRepoException {
+        
+        // clear out the cache
+        typeCache.invalidateAll();
+        
+        String sql = "SELECT * FROM correlation_types";
+        try ( Connection conn = connect();
+              PreparedStatement preparedStatement = conn.prepareStatement(sql);
+              ResultSet resultSet = preparedStatement.executeQuery();) {
+
+            while (resultSet.next()) {
+                CorrelationAttributeInstance.Type aType = getCorrelationTypeFromResultSet(resultSet);
+                typeCache.put(aType.getId(), aType);
+            }
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error getting correlation types.", ex); // NON-NLS
+        } 
+    }
+    
     /**
      * Convert a ResultSet to a EamCase object
      *
