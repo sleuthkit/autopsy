@@ -69,7 +69,7 @@ public class PlatformUtil {
      * @return absolute path string to the install root dir
      */
     public static String getInstallPath() {
-        File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false); //NON-NLS
+        File coreFolder = InstalledFileLocator.getDefault().locate("core", "org.sleuthkit.autopsy.core", false); //NON-NLS
         File rootPath = coreFolder.getParentFile().getParentFile();
         return rootPath.getAbsolutePath();
     }

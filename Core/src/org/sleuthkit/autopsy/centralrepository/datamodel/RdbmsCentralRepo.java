@@ -117,6 +117,10 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     protected abstract Connection connect() throws CentralRepoException;
 
     /**
+     * Get an ephemeral connection.
+     */
+    protected abstract Connection getEphemeralConnection();
+    /**
      * Add a new name/value pair in the db_info table.
      *
      * @param name  Key to set
@@ -1369,6 +1373,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         }
 
         synchronized (bulkArtifacts) {
+            if (bulkArtifacts.get(CentralRepoDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType())) == null) {
+                  bulkArtifacts.put(CentralRepoDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType()), new ArrayList<>());
+            }
             bulkArtifacts.get(CentralRepoDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType())).add(eamArtifact);
             bulkArtifactsCount++;
 
@@ -2841,6 +2848,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             typeId = newCorrelationTypeKnownId(newType);
         }
 
+        typeCache.put(newType.getId(), newType);
         return typeId;
     }
 
@@ -3102,6 +3110,45 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
 
     /**
+     * Returns a list of all correlation types. It uses the cache to build the
+     * list. If the cache is empty, it reads from the database and loads up the
+     * cache.
+     *
+     * @return List of correlation types.
+     * @throws CentralRepoException
+     */
+    @Override
+    public List<CorrelationAttributeInstance.Type> getCorrelationTypes() throws CentralRepoException {
+
+        if (typeCache.size() == 0) {
+            getCorrelationTypesFromCr();
+        }
+
+        return new ArrayList<>(typeCache.asMap().values());
+    }
+    
+    /**
+     * Gets a Correlation type with the specified name.
+     *
+     * @param correlationtypeName Correlation type name
+     * @return Correlation type matching the given name, null if none matches.
+     * 
+     * @throws CentralRepoException
+     */
+    public CorrelationAttributeInstance.Type getCorrelationTypeByName(String correlationtypeName) throws CentralRepoException {
+        List<CorrelationAttributeInstance.Type> correlationTypesList = getCorrelationTypes();
+
+        CorrelationAttributeInstance.Type correlationType
+                = correlationTypesList.stream()
+                        .filter(x -> correlationtypeName.equalsIgnoreCase(x.getDisplayName()))
+                        .findAny()
+                        .orElse(null);
+
+        return null;
+    }
+
+    
+    /**
      * Get the EamArtifact.Type that has the given Type.Id from the central repo
      *
      * @param typeId Type.Id of Correlation Type to get
@@ -3138,6 +3185,30 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         }
     }
 
+    /**
+     * Reads the correlation types from the database and loads them up in the cache.
+     * 
+     * @throws CentralRepoException If there is an error.
+     */
+    private void getCorrelationTypesFromCr() throws CentralRepoException {
+        
+        // clear out the cache
+        typeCache.invalidateAll();
+        
+        String sql = "SELECT * FROM correlation_types";
+        try ( Connection conn = connect();
+              PreparedStatement preparedStatement = conn.prepareStatement(sql);
+              ResultSet resultSet = preparedStatement.executeQuery();) {
+
+            while (resultSet.next()) {
+                CorrelationAttributeInstance.Type aType = getCorrelationTypeFromResultSet(resultSet);
+                typeCache.put(aType.getId(), aType);
+            }
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error getting correlation types.", ex); // NON-NLS
+        } 
+    }
+    
     /**
      * Convert a ResultSet to a EamCase object
      *
@@ -3401,39 +3472,27 @@ abstract class RdbmsCentralRepo implements CentralRepository {
              */
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
                 final String addIntegerColumnTemplate = "ALTER TABLE %s ADD COLUMN %s INTEGER;";  //NON-NLS
-                final String addSsidTableTemplate;
-                final String addCaseIdIndexTemplate;
-                final String addDataSourceIdIndexTemplate;
-                final String addValueIndexTemplate;
-                final String addKnownStatusIndexTemplate;
-                final String addObjectIdIndexTemplate;
+                
+                final String addSsidTableTemplate = RdbmsCentralRepoFactory.getCreateArtifactInstancesTableTemplate(selectedPlatform);
+                final String addCaseIdIndexTemplate = RdbmsCentralRepoFactory.getAddCaseIdIndexTemplate();
+                final String addDataSourceIdIndexTemplate = RdbmsCentralRepoFactory.getAddDataSourceIdIndexTemplate();
+                final String addValueIndexTemplate = RdbmsCentralRepoFactory.getAddValueIndexTemplate();
+                final String addKnownStatusIndexTemplate = RdbmsCentralRepoFactory.getAddKnownStatusIndexTemplate();
+                final String addObjectIdIndexTemplate = RdbmsCentralRepoFactory.getAddObjectIdIndexTemplate();
 
                 final String addAttributeSql;
                 //get the data base specific code for creating a new _instance table
                 switch (selectedPlatform) {
                     case POSTGRESQL:
                         addAttributeSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?) " + getConflictClause();  //NON-NLS
-
-                        addSsidTableTemplate = PostgresCentralRepoSettings.getCreateArtifactInstancesTableTemplate();
-                        addCaseIdIndexTemplate = PostgresCentralRepoSettings.getAddCaseIdIndexTemplate();
-                        addDataSourceIdIndexTemplate = PostgresCentralRepoSettings.getAddDataSourceIdIndexTemplate();
-                        addValueIndexTemplate = PostgresCentralRepoSettings.getAddValueIndexTemplate();
-                        addKnownStatusIndexTemplate = PostgresCentralRepoSettings.getAddKnownStatusIndexTemplate();
-                        addObjectIdIndexTemplate = PostgresCentralRepoSettings.getAddObjectIdIndexTemplate();
                         break;
                     case SQLITE:
                         addAttributeSql = "INSERT OR IGNORE INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";  //NON-NLS
-
-                        addSsidTableTemplate = SqliteCentralRepoSettings.getCreateArtifactInstancesTableTemplate();
-                        addCaseIdIndexTemplate = SqliteCentralRepoSettings.getAddCaseIdIndexTemplate();
-                        addDataSourceIdIndexTemplate = SqliteCentralRepoSettings.getAddDataSourceIdIndexTemplate();
-                        addValueIndexTemplate = SqliteCentralRepoSettings.getAddValueIndexTemplate();
-                        addKnownStatusIndexTemplate = SqliteCentralRepoSettings.getAddKnownStatusIndexTemplate();
-                        addObjectIdIndexTemplate = SqliteCentralRepoSettings.getAddObjectIdIndexTemplate();
                         break;
                     default:
                         throw new CentralRepoException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.", Bundle.AbstractSqlEamDb_cannotUpgrage_message(selectedPlatform.name()));
                 }
+                
                 final String dataSourcesTableName = "data_sources";
                 final String dataSourceObjectIdColumnName = "datasource_obj_id";
                 if (!doesColumnExist(conn, dataSourcesTableName, dataSourceObjectIdColumnName)) {
@@ -3586,8 +3645,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                                 + "md5 text DEFAULT NULL,sha1 text DEFAULT NULL,sha256 text DEFAULT NULL,"
                                 + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
                                 + "CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id))");
-                        statement.execute(SqliteCentralRepoSettings.getAddDataSourcesNameIndexStatement());
-                        statement.execute(SqliteCentralRepoSettings.getAddDataSourcesObjectIdIndexStatement());
+                        statement.execute(RdbmsCentralRepoFactory.getAddDataSourcesNameIndexStatement());
+                        statement.execute(RdbmsCentralRepoFactory.getAddDataSourcesObjectIdIndexStatement());
                         statement.execute("INSERT INTO data_sources SELECT * FROM old_data_sources");
                         statement.execute("DROP TABLE old_data_sources");
                         break;
