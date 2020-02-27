@@ -26,11 +26,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 import java.util.logging.Level;
-import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.TextConverter;
-import org.sleuthkit.autopsy.coreutils.TextConverterException;
 
 /**
  * Settings for the Postgres implementation of the Central Repository database
@@ -46,12 +42,34 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbConnectiv
     private final static String JDBC_DRIVER = "org.postgresql.Driver"; // NON-NLS
     
     
-    private final PostgresConnectionSettings connSettings;
+    private final PostgresSettingsLoader loader;
+    private PostgresConnectionSettings connSettings;
     
-    public PostgresCentralRepoSettings(PostgresConnectionSettings connSettings) {
-        this.connSettings = connSettings;
+    
+    public PostgresCentralRepoSettings(PostgresSettingsLoader loader) {
+        this.loader = loader;
+        loadSettings();
+    }
+    
+    /**
+     * default constructor that loads custom postgres settings from 
+     */
+    public PostgresCentralRepoSettings() {
+        this(PostgresSettingsLoader.CUSTOM_LOADER);
     }
 
+    
+    @Override
+    public void loadSettings() {
+        this.connSettings = loader.loadSettings();
+    }
+
+    @Override
+    public void saveSettings() {
+        loader.saveSettings(connSettings);
+    }
+    
+    
     @Override
     public String toString() {
         return String.format("PostgresCentralRepoSettings: [db type: postgres, host: %s:%d, db name: %s, username: %s]",

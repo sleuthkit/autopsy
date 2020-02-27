@@ -21,8 +21,8 @@ import org.sleuthkit.datamodel.CaseDbConnectionInfo;
  *
  * @author gregd
  */
-public class CentralRepoPostgresSettingsManager {
-    private final static Logger LOGGER = Logger.getLogger(CentralRepoPostgresSettingsManager.class.getName());
+public class CentralRepoPostgresSettingsUtil {
+    private final static Logger LOGGER = Logger.getLogger(CentralRepoPostgresSettingsUtil.class.getName());
     
     private final static String DEFAULT_HOST = ""; // NON-NLS
     private final static int DEFAULT_PORT = 5432;
@@ -102,7 +102,7 @@ public class CentralRepoPostgresSettingsManager {
     }
     
     
-    public static PostgresConnectionSettings loadSettings() {
+    public static PostgresConnectionSettings loadCustomSettings() {
         PostgresConnectionSettings settings = new PostgresConnectionSettings();
         Map<String, String> keyVals = ModuleSettings.getConfigSettings(MODULE_KEY);
         
@@ -129,7 +129,7 @@ public class CentralRepoPostgresSettingsManager {
         return settings;
     }
 
-    public static void saveSettings(PostgresConnectionSettings settings) {
+    public static void saveCustomSettings(PostgresConnectionSettings settings) {
         Map<String, String> map = new HashMap<String, String>();
         map.put(HOST_KEY, settings.getHost());
         map.put(PORT_KEY, Integer.toString(settings.getPort()));
@@ -145,9 +145,13 @@ public class CentralRepoPostgresSettingsManager {
         ModuleSettings.setConfigSettings(MODULE_KEY, map);
     }
 
-    
-    public static boolean isChanged(PostgresConnectionSettings settings) {
-        PostgresConnectionSettings saved = loadSettings();
+    /**
+     * checks if saved settings differ from the in-memory object provided in the 'settings' parameter
+     * @param settings  the in-memory object
+     * @return  whether or not settings parameter differs from saved custom settings
+     */
+    public static boolean areCustomSettingsChanged(PostgresConnectionSettings settings) {
+        PostgresConnectionSettings saved = loadCustomSettings();
         return saved.equals(settings);
     }
 }

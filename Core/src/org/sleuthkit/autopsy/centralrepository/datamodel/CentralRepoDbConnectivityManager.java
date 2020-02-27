@@ -22,7 +22,10 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
  * common interface for settings pertaining to the database in central repository
  */
 public interface CentralRepoDbConnectivityManager {
-
+    void loadSettings();
+    
+    void saveSettings();
+        
     boolean createDatabase();
 
     boolean deleteDatabase();
