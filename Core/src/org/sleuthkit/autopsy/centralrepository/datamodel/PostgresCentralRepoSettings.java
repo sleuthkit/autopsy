@@ -24,7 +24,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -32,7 +31,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
 import org.sleuthkit.autopsy.coreutils.TextConverterException;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
 
 /**
  * Settings for the Postgres implementation of the Central Repository database
@@ -40,28 +38,18 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo
  * NOTE: This is public scope because the options panel calls it directly to
  * set/get
  */
-public final class PostgresCentralRepoSettings implements CentralRepoDbSettings {
+public final class PostgresCentralRepoSettings implements CentralRepoDbConnectivityManager {
 
     private final static Logger LOGGER = Logger.getLogger(PostgresCentralRepoSettings.class.getName());
-    private final static String DEFAULT_HOST = ""; // NON-NLS
-    private final static int DEFAULT_PORT = 5432;
-    private final static String DEFAULT_DBNAME = "central_repository"; // NON-NLS
-    private final static String DEFAULT_USERNAME = "";
-    private final static String DEFAULT_PASSWORD = "";
     private final static String VALIDATION_QUERY = "SELECT version()"; // NON-NLS
     private final static String JDBC_BASE_URI = "jdbc:postgresql://"; // NON-NLS
     private final static String JDBC_DRIVER = "org.postgresql.Driver"; // NON-NLS
-    private final static String DB_NAMES_REGEX = "[a-z][a-z0-9_]*"; // only lower case
-    private final static String DB_USER_NAMES_REGEX = "[a-zA-Z]\\w*";
-    private String host;
-    private int port;
-    private String dbName;
-    private int bulkThreshold;
-    private String userName;
-    private String password;
-
-    public PostgresCentralRepoSettings() {
-        loadSettings();
+    
+    
+    private final PostgresConnectionSettings connSettings;
+    
+    public PostgresCentralRepoSettings(PostgresConnectionSettings connSettings) {
+        this.connSettings = connSettings;
     }
 
     @Override
@@ -70,76 +58,29 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbSettings 
             getHost(), getPort(), getDbName(), getUserName());
     }
     
-    public void loadSettings() {
-        host = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.host"); // NON-NLS
-        if (host == null || host.isEmpty()) {
-            host = DEFAULT_HOST;
-        }
-
-        try {
-            String portString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.port"); // NON-NLS
-            if (portString == null || portString.isEmpty()) {
-                port = DEFAULT_PORT;
-            } else {
-                port = Integer.parseInt(portString);
-                if (port < 0 || port > 65535) {
-                    port = DEFAULT_PORT;
-                }
-            }
-        } catch (NumberFormatException ex) {
-            port = DEFAULT_PORT;
-        }
-
-        dbName = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.dbName"); // NON-NLS
-        if (dbName == null || dbName.isEmpty()) {
-            dbName = DEFAULT_DBNAME;
-        }
-
-        try {
-            String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.bulkThreshold"); // NON-NLS
-            if (bulkThresholdString == null || bulkThresholdString.isEmpty()) {
-                this.bulkThreshold = RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD;
-            } else {
-                this.bulkThreshold = Integer.parseInt(bulkThresholdString);
-                if (getBulkThreshold() <= 0) {
-                    this.bulkThreshold = RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD;
-                }
-            }
-        } catch (NumberFormatException ex) {
-            this.bulkThreshold = RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD;
-        }
-
-        userName = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.user"); // NON-NLS
-        if (userName == null || userName.isEmpty()) {
-            userName = DEFAULT_USERNAME;
-        }
-
-        password = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.password"); // NON-NLS
-        if (password == null || password.isEmpty()) {
-            password = DEFAULT_PASSWORD;
-        } else {
-            try {
-                password = TextConverter.convertHexTextToText(password);
-            } catch (TextConverterException ex) {
-                LOGGER.log(Level.WARNING, "Failed to convert password from hex text to text.", ex);
-                password = DEFAULT_PASSWORD;
-            }
-        }
+    
+    /**
+     * @return the VALIDATION_QUERY
+     */
+    String getValidationQuery() {
+        return VALIDATION_QUERY;
     }
 
-    public void saveSettings() {
-        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.host", getHost()); // NON-NLS
-        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.port", Integer.toString(port)); // NON-NLS
-        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.dbName", getDbName()); // NON-NLS
-        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
-        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.user", getUserName()); // NON-NLS
-        try {
-            ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.password", TextConverter.convertTextToHexText(getPassword())); // NON-NLS
-        } catch (TextConverterException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to convert password from text to hex text.", ex);
-        }
+    /**
+     * @return the POSTGRES_DRIVER
+     */
+    String getDriver() {
+        return JDBC_DRIVER;
     }
 
+    /**
+     * @return the JDBC_BASE_URI
+     */
+    String getJDBCBaseURI() {
+        return JDBC_BASE_URI;
+    }
+
+    
     /**
      * Get the full connection URL as a String
      *
@@ -301,73 +242,33 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbSettings 
 
     }
 
-   
-
-
-
-   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    boolean isChanged() {
-        String hostString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.host"); // NON-NLS
-        String portString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.port"); // NON-NLS
-        String dbNameString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.dbName"); // NON-NLS
-        String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.bulkThreshold"); // NON-NLS
-        String userNameString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.user"); // NON-NLS
-        String userPasswordString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.password"); // NON-NLS
-
-        return !host.equals(hostString) || !Integer.toString(port).equals(portString)
-                || !dbName.equals(dbNameString) || !Integer.toString(bulkThreshold).equals(bulkThresholdString)
-                || !userName.equals(userNameString) || !password.equals(userPasswordString);
-    }
 
     /**
      * @return the host
      */
     public String getHost() {
-        return host;
+        return connSettings.getHost();
     }
 
     /**
      * @param host the host to set
      */
     public void setHost(String host) throws CentralRepoException {
-        if (null != host && !host.isEmpty()) {
-            this.host = host;
-        } else {
-            throw new CentralRepoException("Invalid host name. Cannot be empty."); // NON-NLS
-        }
+        connSettings.setHost(host);
     }
 
     /**
      * @return the port
      */
     public int getPort() {
-        return port;
+        return connSettings.getPort();
     }
 
     /**
      * @param port the port to set
      */
     public void setPort(int port) throws CentralRepoException {
-        if (port > 0 && port < 65535) {
-            this.port = port;
-        } else {
-            throw new CentralRepoException("Invalid port. Must be a number greater than 0."); // NON-NLS
-        }
+        connSettings.setPort(port);
     }
 
     /**
@@ -377,95 +278,55 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbSettings 
      * @return the dbName
      */
     public String getDbName() {
-        return dbName.toLowerCase();
+        return connSettings.getDbName() == null ? null : connSettings.getDbName().toLowerCase();
     }
 
     /**
      * @param dbName the dbName to set
      */
     public void setDbName(String dbName) throws CentralRepoException {
-        if (dbName == null || dbName.isEmpty()) {
-            throw new CentralRepoException("Invalid database name. Cannot be empty."); // NON-NLS
-        } else if (!Pattern.matches(DB_NAMES_REGEX, dbName)) {
-            throw new CentralRepoException("Invalid database name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
-        }
-
-        this.dbName = dbName.toLowerCase();
+        connSettings.setDbName(dbName);
     }
 
     /**
      * @return the bulkThreshold
      */
     int getBulkThreshold() {
-        return bulkThreshold;
+        return connSettings.getBulkThreshold();
     }
 
     /**
      * @param bulkThreshold the bulkThreshold to set
      */
     public void setBulkThreshold(int bulkThreshold) throws CentralRepoException {
-        if (bulkThreshold > 0) {
-            this.bulkThreshold = bulkThreshold;
-        } else {
-            throw new CentralRepoException("Invalid bulk threshold."); // NON-NLS
-        }
+        connSettings.setBulkThreshold(bulkThreshold);
     }
 
     /**
      * @return the userName
      */
     public String getUserName() {
-        return userName;
+        return connSettings.getUserName();
     }
 
     /**
      * @param userName the userName to set
      */
     public void setUserName(String userName) throws CentralRepoException {
-        if (userName == null || userName.isEmpty()) {
-            throw new CentralRepoException("Invalid user name. Cannot be empty."); // NON-NLS
-        } else if (!Pattern.matches(DB_USER_NAMES_REGEX, userName)) {
-            throw new CentralRepoException("Invalid user name. Name must start with a letter and can only contain letters, numbers, and '_'."); // NON-NLS
-        }
-        this.userName = userName;
+        connSettings.setUserName(userName);
     }
 
     /**
      * @return the password
      */
     public String getPassword() {
-        return password;
+        return connSettings.getPassword();
     }
 
     /**
      * @param password the password to set
      */
     public void setPassword(String password) throws CentralRepoException {
-        if (password == null || password.isEmpty()) {
-            throw new CentralRepoException("Invalid user password. Cannot be empty."); // NON-NLS
-        }
-        this.password = password;
+        connSettings.setPassword(password);
     }
-
-    /**
-     * @return the VALIDATION_QUERY
-     */
-    String getValidationQuery() {
-        return VALIDATION_QUERY;
-    }
-
-    /**
-     * @return the POSTGRES_DRIVER
-     */
-    String getDriver() {
-        return JDBC_DRIVER;
-    }
-
-    /**
-     * @return the JDBC_BASE_URI
-     */
-    String getJDBCBaseURI() {
-        return JDBC_BASE_URI;
-    }
-
 }

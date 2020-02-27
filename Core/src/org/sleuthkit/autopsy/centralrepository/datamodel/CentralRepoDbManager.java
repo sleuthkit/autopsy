@@ -249,7 +249,7 @@ public class CentralRepoDbManager {
         return configurationChanged;
     }
 
-    private CentralRepoDbSettings getSelectedSettings() throws CentralRepoException {
+    private CentralRepoDbConnectivityManager getSelectedSettings() throws CentralRepoException {
         if (selectedDbChoice == CentralRepoDbChoice.POSTGRESQL_CUSTOM)
             return dbSettingsPostgres;
         if (selectedDbChoice == CentralRepoDbChoice.SQLITE)
@@ -275,7 +275,7 @@ public class CentralRepoDbManager {
         boolean result = false;
         boolean dbCreated = true;
 
-        CentralRepoDbSettings selectedDbSettings = getSelectedSettings();
+        CentralRepoDbConnectivityManager selectedDbSettings = getSelectedSettings();
 
         if (!selectedDbSettings.verifyDatabaseExists()) {
             dbCreated = selectedDbSettings.createDatabase();
@@ -336,7 +336,7 @@ public class CentralRepoDbManager {
         // start with the new settings.
         saveDbChoice(selectedDbChoice);
 
-        CentralRepoDbSettings selectedDbSettings = getSelectedSettings();
+        CentralRepoDbConnectivityManager selectedDbSettings = getSelectedSettings();
 
         // save the new settings
         selectedDbSettings.saveSettings();
