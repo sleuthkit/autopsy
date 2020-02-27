@@ -391,7 +391,7 @@ public class CentralRepoDbManager {
             dbSettingsSqlite.setDbName(SqliteCentralRepoSettings.DEFAULT_DBNAME);
             dbSettingsSqlite.setDbDirectory(databasePath.getPath());
         }
-        else {
+        else if (selectedDbChoice != CentralRepoDbChoice.POSTGRESQL_MULTIUSER) {
             throw new IllegalStateException("Central Repo has an unknown selected platform: " + selectedDbChoice);
         }
 

@@ -113,6 +113,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         boolean crMultiUser = CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
         
         if (!muPreviouslySelected && muCurrentlySelected) {
+            SwingUtilities.invokeLater(() -> {
             if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(parent,
                     NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.enable.description"),
                     NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.enable.title"),
@@ -122,21 +123,24 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.POSTGRESQL_MULTIUSER);
                 updateDatabase(parent);
             }
+            });
         }
         // moving from selected to not selected && 'PostgreSQL using multi-user settings' is selected
         else if (muPreviouslySelected && !muCurrentlySelected && crMultiUser) {
-            if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(parent,
-                    NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.description"),
-                    NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.title"),
-                    JOptionPane.YES_NO_OPTION)) {
-                
-                // present user with central repository choice
-                invokeCrChoice(parent);
-            }
-            else {
-                // disable central repository
-                CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
-            }
+            SwingUtilities.invokeLater(() -> {
+                if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(parent,
+                        NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.description"),
+                        NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.title"),
+                        JOptionPane.YES_NO_OPTION)) {
+
+                    // present user with central repository choice
+                    invokeCrChoice(parent);
+                }
+                else {
+                    // disable central repository
+                    CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
+                }
+            });
         }
         // changing multi-user settings connection && 'PostgreSQL using multi-user settings' is selected
         else if (muPreviouslySelected && muCurrentlySelected && crMultiUser) {

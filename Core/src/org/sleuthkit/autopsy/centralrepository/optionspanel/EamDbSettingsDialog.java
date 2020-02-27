@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.io.File;
 import java.io.IOException;
@@ -29,12 +30,14 @@ import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -49,6 +52,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.DatabaseTestResult;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepoFactory;
+import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * Configuration dialog for Central Repository database settings.
@@ -59,11 +63,38 @@ public class EamDbSettingsDialog extends JDialog {
     private static final Logger logger = Logger.getLogger(EamDbSettingsDialog.class.getName());
     
     private static final long serialVersionUID = 1L;
+    private static final DbChoiceRenderer DB_CHOICE_RENDERER = new DbChoiceRenderer();
+
+    private static boolean isDbChoiceSelectable(CentralRepoDbChoice item) {
+        if (item == CentralRepoDbChoice.POSTGRESQL_MULTIUSER && !UserPreferences.getIsMultiUserModeEnabled()) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+    
+    private static class DbChoiceRenderer extends BasicComboBoxRenderer {
+
+        public Component getListCellRendererComponent(JList list, Object value,
+                int index, boolean isSelected, boolean cellHasFocus) {
+
+            CentralRepoDbChoice item = (CentralRepoDbChoice) value;
+
+            // disable cell if it is the db connection from multi user settings 
+            // and that option is not enabled in multi user settings
+            setText(item.getTitle());
+            setEnabled(isDbChoiceSelectable(item));
+            return this;
+        }
+    }
+    
+    
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
     private final CentralRepoDbManager manager = new CentralRepoDbManager();
 
-
+    
     /**
      * Creates new form EamDbSettingsDialog
      */
@@ -98,19 +129,24 @@ public class EamDbSettingsDialog extends JDialog {
             }
         });
         
-        setSelectedChoice(manager);
+        setupDbChoice();
         customizeComponents();
         valid();
         display();
     }
-
-    private void setSelectedChoice(CentralRepoDbManager manager) {
+    
+    
+    private void setupDbChoice() {
+        // setup initially selected item
         CentralRepoDbChoice toSelect = 
             (Arrays.asList(CentralRepoDbChoice.DB_CHOICES).contains(manager.getSelectedDbChoice())) ?
             manager.getSelectedDbChoice() :
             CentralRepoDbChoice.DB_CHOICES[0];
 
         cbDatabaseType.setSelectedItem(toSelect);
+        
+        // set the renderer so item is unselectable if inappropriate
+        cbDatabaseType.setRenderer(DB_CHOICE_RENDERER);
     }
     
     
@@ -436,7 +472,7 @@ public class EamDbSettingsDialog extends JDialog {
             updateSqliteFields(false);
         }
 
-        displayDatabaseSettings(CentralRepoDbChoice.POSTGRESQL_CUSTOM.equals(manager.getSelectedDbChoice()));
+        displayDatabaseSettings(manager.getSelectedDbChoice());
     }
 
     private void display() {
@@ -511,7 +547,14 @@ public class EamDbSettingsDialog extends JDialog {
 
 
     private void cbDatabaseTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbDatabaseTypeActionPerformed
-        manager.setSelctedDbChoice((CentralRepoDbChoice) cbDatabaseType.getSelectedItem());
+        CentralRepoDbChoice selectedItem = (CentralRepoDbChoice) cbDatabaseType.getSelectedItem();
+        if (isDbChoiceSelectable(selectedItem)) {
+            manager.setSelctedDbChoice(selectedItem);
+        }
+        else {
+            cbDatabaseType.setSelectedItem(manager.getSelectedDbChoice());
+        }
+        
         customizeComponents();
     }//GEN-LAST:event_cbDatabaseTypeActionPerformed
 
@@ -520,13 +563,17 @@ public class EamDbSettingsDialog extends JDialog {
         dataBaseFileTextArea.setCaretPosition(dataBaseFileTextArea.getText().length());
     }
 
-    private void displayDatabaseSettings(boolean isPostgres) {
-        lbDatabasePath.setVisible(!isPostgres);
-        tfDatabasePath.setVisible(!isPostgres);
-        lbDatabaseDesc.setVisible(!isPostgres);
-        dataBaseFileTextArea.setVisible(!isPostgres);
-        lbSingleUserSqLite.setVisible(!isPostgres);
-        bnDatabasePathFileOpen.setVisible(!isPostgres);
+    private void displayDatabaseSettings(CentralRepoDbChoice choice) {
+        boolean isSqlite = choice == CentralRepoDbChoice.SQLITE;
+        boolean isPostgres = choice == CentralRepoDbChoice.POSTGRESQL_CUSTOM;
+        
+        lbDatabasePath.setVisible(isSqlite);
+        tfDatabasePath.setVisible(isSqlite);
+        lbDatabaseDesc.setVisible(isSqlite);
+        dataBaseFileTextArea.setVisible(isSqlite);
+        lbSingleUserSqLite.setVisible(isSqlite);
+        bnDatabasePathFileOpen.setVisible(isSqlite);
+        
         lbHostName.setVisible(isPostgres);
         tbDbHostname.setVisible(isPostgres);
         lbPort.setVisible(isPostgres);
