@@ -194,14 +194,21 @@ public class CentralRepoDbManager {
     private CentralRepoDbChoice selectedDbChoice;
 
     private final PostgresCentralRepoSettings dbSettingsPostgres;
+    private final PostgresCentralRepoSettings dbSettingsMultiUser;
     private final SqliteCentralRepoSettings dbSettingsSqlite;
 
     private boolean configurationChanged = false;
 
     public CentralRepoDbManager() {
-        dbSettingsPostgres = new PostgresCentralRepoSettings();
-        dbSettingsSqlite = new SqliteCentralRepoSettings();
         selectedDbChoice = getSavedDbChoice();
+        dbSettingsPostgres = new PostgresCentralRepoSettings(PostgresSettingsLoader.CUSTOM_LOADER);
+        dbSettingsMultiUser = new PostgresCentralRepoSettings(PostgresSettingsLoader.MULTIUSER_LOADER);
+        dbSettingsSqlite = new SqliteCentralRepoSettings();
+    }
+
+    
+    public PostgresCentralRepoSettings getDbSettingsMultiUser() {
+        return dbSettingsMultiUser;
     }
 
     public PostgresCentralRepoSettings getDbSettingsPostgres() {
@@ -250,6 +257,8 @@ public class CentralRepoDbManager {
     }
 
     private CentralRepoDbConnectivityManager getSelectedSettings() throws CentralRepoException {
+        if (selectedDbChoice == CentralRepoDbChoice.POSTGRESQL_MULTIUSER)
+            return dbSettingsMultiUser;
         if (selectedDbChoice == CentralRepoDbChoice.POSTGRESQL_CUSTOM)
             return dbSettingsPostgres;
         if (selectedDbChoice == CentralRepoDbChoice.SQLITE)
@@ -257,10 +266,12 @@ public class CentralRepoDbManager {
         if (selectedDbChoice == CentralRepoDbChoice.DISABLED)
             return null;
         
-        throw new CentralRepoException("Unknown database type: " + selectedDbChoice);
+            throw new CentralRepoException("Unknown database type: " + selectedDbChoice);
     }
 
     private RdbmsCentralRepoFactory getDbFactory() throws CentralRepoException {
+        if (selectedDbChoice == CentralRepoDbChoice.POSTGRESQL_MULTIUSER)
+            return new RdbmsCentralRepoFactory(CentralRepoPlatforms.POSTGRESQL, dbSettingsMultiUser);
         if (selectedDbChoice == CentralRepoDbChoice.POSTGRESQL_CUSTOM)
             return new RdbmsCentralRepoFactory(CentralRepoPlatforms.POSTGRESQL, dbSettingsPostgres);
         if (selectedDbChoice == CentralRepoDbChoice.SQLITE)
@@ -271,12 +282,19 @@ public class CentralRepoDbManager {
         throw new CentralRepoException("Unknown database type: " + selectedDbChoice);
     }
 
+    /**
+     * create central repo database if it does not already exist
+     * @return      true if successful; false if unsuccessful
+     * @throws CentralRepoException     if 
+     */
     public boolean createDb() throws CentralRepoException {
         boolean result = false;
         boolean dbCreated = true;
 
         CentralRepoDbConnectivityManager selectedDbSettings = getSelectedSettings();
-
+        if (selectedDbSettings == null)
+            throw new CentralRepoException("Unable to derive connectivity manager from settings: " + selectedDbChoice);
+        
         if (!selectedDbSettings.verifyDatabaseExists()) {
             dbCreated = selectedDbSettings.createDatabase();
         }
@@ -294,7 +312,6 @@ public class CentralRepoDbManager {
         if (!result) {
             // Remove the incomplete database
             if (dbCreated) {
-                // RAMAN TBD: migrate  deleteDatabase() to RdbmsCentralRepoFactory
                 selectedDbSettings.deleteDatabase();
             }
 
@@ -344,7 +361,7 @@ public class CentralRepoDbManager {
         //  in case we are still using the same instance.
         if (selectedDbChoice != null && selectedDbSettings != CentralRepoDbChoice.DISABLED) {
             try {
-                logger.info("Creating central repo db with settings: " + selectedDbSettings);
+                logger.info("Saving central repo settings for db: " + selectedDbSettings);
                 CentralRepository.getInstance().updateSettings();
                 configurationChanged = true;
             } catch (CentralRepoException ex) {
@@ -399,7 +416,7 @@ public class CentralRepoDbManager {
     }
 
     public DatabaseTestResult testStatus() {
-        if (selectedDbChoice == CentralRepoDbChoice.POSTGRESQL_CUSTOM) {
+        if (selectedDbChoice.getDbPlatform() == CentralRepoPlatforms.POSTGRESQL) {
             if (dbSettingsPostgres.verifyConnection()) {
                 if (dbSettingsPostgres.verifyDatabaseExists()) {
                     if (dbSettingsPostgres.verifyDatabaseSchema()) {
@@ -413,7 +430,7 @@ public class CentralRepoDbManager {
             } else {
                 testingStatus = DatabaseTestResult.CONNECTION_FAILED;
             }
-        } else if (selectedDbChoice == CentralRepoDbChoice.SQLITE) {
+        } else if (selectedDbChoice.getDbPlatform() == CentralRepoPlatforms.SQLITE) {
             if (dbSettingsSqlite.dbFileExists()) {
                 if (dbSettingsSqlite.verifyConnection()) {
                     if (dbSettingsSqlite.verifyDatabaseSchema()) {

@@ -145,9 +145,9 @@
                           <Component id="bnDatabasePathFileOpen" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
-                          <Component id="cbDatabaseType" min="-2" max="-2" attributes="0"/>
+                          <Component id="cbDatabaseType" min="-2" pref="210" max="-2" attributes="0"/>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="lbSingleUserSqLite" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbSingleUserSqLite" pref="0" max="32767" attributes="0"/>
                       </Group>
                       <Component id="jpDbPassword" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Component id="tbDbUsername" alignment="0" min="-2" max="-2" attributes="0"/>
