@@ -142,7 +142,7 @@ class Chrome extends Extract {
         
         progressBar.progress(Bundle.Progress_Message_Chrome_Cache());
         ChromeCacheExtractor chromeCacheExtractor = new ChromeCacheExtractor(dataSource, context, progressBar);
-        chromeCacheExtractor.getCaches();
+        chromeCacheExtractor.processCaches();
     }
 
     /**

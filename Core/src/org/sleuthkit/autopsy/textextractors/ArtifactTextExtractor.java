@@ -46,16 +46,6 @@ class ArtifactTextExtractor implements TextExtractor {
         // "content" string to be indexed.
         StringBuilder artifactContents = new StringBuilder();
 
-        Content dataSource = null;
-        try {
-            dataSource = artifact.getDataSource();
-        } catch (TskCoreException tskCoreException) {
-            throw new InitReaderException("Unable to get datasource for artifact: " + artifact.toString(), tskCoreException);
-        }
-        if (dataSource == null) {
-            throw new InitReaderException("Datasource was null for artifact: " + artifact.toString());
-        }
-
         try {
             for (BlackboardAttribute attribute : artifact.getAttributes()) {
                 artifactContents.append(attribute.getAttributeType().getDisplayName());
@@ -67,7 +57,7 @@ class ArtifactTextExtractor implements TextExtractor {
                 // in the Autopsy datamodel.
                 switch (attribute.getValueType()) {
                     case DATETIME:
-                        artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), dataSource));
+                        artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), artifact));
                         break;
                     default:
                         artifactContents.append(attribute.getDisplayString());

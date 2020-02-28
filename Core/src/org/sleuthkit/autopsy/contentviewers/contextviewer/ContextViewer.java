@@ -287,7 +287,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      */
     @NbBundle.Messages({
         "ContextViewer.attachmentSource=Attached to: ",
-        "ContextViewer.downloadSource=Downloaded from: "
+        "ContextViewer.downloadSource=Downloaded from: ",
+        "ContextViewer.recentDocs=Recent Documents: "
     })
     private void setSourceFields(BlackboardArtifact associatedArtifact) throws TskCoreException {
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == associatedArtifact.getArtifactTypeID()
@@ -301,6 +302,10 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
             setSourceName(Bundle.ContextViewer_downloadSource());
             setSourceText(webDownloadArtifactToString(associatedArtifact));
+        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == associatedArtifact.getArtifactTypeID()) {
+            setSourceName(Bundle.ContextViewer_recentDocs());
+            setSourceText(recentDocArtifactToString(associatedArtifact));
+            
         }
     }
 
@@ -351,6 +356,31 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == artifact.getArtifactTypeID()) {
             appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL, attributesMap, Bundle.ContextViewer_downloadURL());
             appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, attributesMap, Bundle.ContextViewer_downloadedOn());
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Returns a display string with recent Doc
+     * artifact.
+     *
+     * @param artifact artifact to get doc from.
+     *
+     * @return Display string with download URL and date/time.
+     *
+     * @throws TskCoreException
+     */
+    @NbBundle.Messages({
+        "ContextViewer.file=File",
+        "ContextViewer.on=On"
+    })
+    private String recentDocArtifactToString(BlackboardArtifact artifact) throws TskCoreException {
+        StringBuilder sb = new StringBuilder(ARTIFACT_STR_MAX_LEN);
+        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
+        
+        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == artifact.getArtifactTypeID()) {
+            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH, attributesMap, Bundle.ContextViewer_file());
+            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, attributesMap, Bundle.ContextViewer_on());
         }
         return sb.toString();
     }

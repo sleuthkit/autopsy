@@ -62,7 +62,7 @@ import gpxpy.parser
 # to create instances of the modules that will do the analysis.
 class GPXParserDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
 
-    moduleName = "GPX Parser Module"
+    moduleName = "GPX Parser"
 
     # True - Verbose debugging messages sent to log file.
     # False - Verbose debugging turned off.
