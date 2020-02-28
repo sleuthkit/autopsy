@@ -58,13 +58,6 @@ public class CentralRepoDbManager {
             String selectedPlatformString = ModuleSettings.getConfigSetting("CentralRepository", "db.selectedPlatform"); // NON-NLS
             SAVED_CHOICE = fromKey(selectedPlatformString);
         }
-        
-        // do a sanity check: if loading multi user postgres connection, make sure setting is enabled.
-        // if not, disable central repo
-        if (SAVED_CHOICE == CentralRepoDbChoice.POSTGRESQL_MULTIUSER && !UserPreferences.getIsMultiUserModeEnabled()) {
-            CentralRepoDbUtil.setUseCentralRepo(false);
-            SAVED_CHOICE = CentralRepoDbChoice.DISABLED;
-        }
 
         return SAVED_CHOICE;
     }
