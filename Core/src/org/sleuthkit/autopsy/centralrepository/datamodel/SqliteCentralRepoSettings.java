@@ -45,7 +45,7 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
     private final static String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
     private final static String JDBC_BASE_URI = "jdbc:sqlite:"; // NON-NLS
     private final static String VALIDATION_QUERY = "SELECT count(*) from sqlite_master"; // NON-NLS
-   
+
     private final static String DB_NAMES_REGEX = "[a-z][a-z0-9_]*(\\.db)?";
     private String dbName;
     private String dbDirectory;
@@ -80,11 +80,11 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
             this.bulkThreshold = RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD;
         }
     }
-    
+
     public String toString() {
         return String.format("SqliteCentralRepoSettings: [db type: sqlite, directory: %s, name: %s]", getDbDirectory(), getDbName());
     }
-    
+
     /**
      * sets database directory and name to defaults
      */
@@ -115,13 +115,11 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
         return (!dbFile.isDirectory());
     }
 
-    
     @Override
     public boolean verifyDatabaseExists() {
         return dbDirectoryExists();
     }
 
-    
     /**
      * Verify that the db directory path exists.
      *
@@ -143,6 +141,7 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
 
     /**
      * creates database directory for sqlite database if it does not exist
+     *
      * @return whether or not operation occurred successfully
      */
     @Override
@@ -150,7 +149,6 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
         return createDbDirectory();
     }
 
-    
     /**
      * Create the db directory if it does not exist.
      *
@@ -353,5 +351,22 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
      */
     String getJDBCBaseURI() {
         return JDBC_BASE_URI;
+    }
+
+    @Override
+    public DatabaseTestResult testStatus() {
+        if (dbFileExists()) {
+            if (verifyConnection()) {
+                if (verifyDatabaseSchema()) {
+                    return DatabaseTestResult.TESTEDOK;
+                } else {
+                    return DatabaseTestResult.SCHEMA_INVALID;
+                }
+            } else {
+                return DatabaseTestResult.SCHEMA_INVALID;
+            }
+        } else {
+            return DatabaseTestResult.DB_DOES_NOT_EXIST;
+        }
     }
 }

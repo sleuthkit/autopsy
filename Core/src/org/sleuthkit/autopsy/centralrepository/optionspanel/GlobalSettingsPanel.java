@@ -43,6 +43,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.logging.Level;
 
 /**
  * Main settings panel for the Central Repository
@@ -50,17 +53,37 @@ import java.awt.Component;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
+    private static interface OnSettingsChangeListener {
+        void onSettingsChange();
+    }
+    
+    private static OnSettingsChangeListener listener = null;
+    
+    private static void onSettingsChange() {
+        if (listener != null)
+            listener.onSettingsChange();
+    }
+    
+    private static void setSettingsChangeListener(OnSettingsChangeListener newListener) {
+        listener = newListener;
+    }
+    
+    
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(GlobalSettingsPanel.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.STARTED, IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
     private final IngestJobEventPropertyChangeListener ingestJobEventListener;
-
+    
+    
+    
     /**
      * Creates new form EamOptionsPanel
      */
     public GlobalSettingsPanel() {
         ingestJobEventListener = new IngestJobEventPropertyChangeListener();
-
+        
+        // most recently created panel will receive update events
+        GlobalSettingsPanel.setSettingsChangeListener(() -> GlobalSettingsPanel.this.load());
         initComponents();
         customizeComponents();
         addIngestJobEventsListener();
@@ -69,7 +92,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             ingestStateUpdated(evt.getNewValue() != null);
         });
     }
-
+    
+      
     private void customizeComponents() {
         setName(NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.pnCorrelationProperties.border.title"));
     }
@@ -107,7 +131,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         "GlobalSettingsPanel.onMultiUserChange.enable.title=Enable Central Repository?",
         "GlobalSettingsPanel.onMultiUserChange.enable.description=Do you want to enable Central Repository using these settings?",
         "GlobalSettingsPanel.onMultiUserChange.disabledMu.title=Central Repository Change Necessary",
-        "GlobalSettingsPanel.onMultiUserChange.disabledMu.description=Since mult-user cases have been disabled, 'PostgreSQL using multi-user settings' is no longer a valid option for Central Repository."
+        "GlobalSettingsPanel.onMultiUserChange.disabledMu.description=Since mult-user cases have been disabled, 'PostgreSQL using multi-user settings' is no longer a valid option for Central Repository.  Would you like to choose another Central Repository database?"
     })
     public static void onMultiUserChange(Component parent, boolean muPreviouslySelected, boolean muCurrentlySelected) {
         boolean crMultiUser = CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
@@ -122,6 +146,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 // setup database for CR
                 CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.POSTGRESQL_MULTIUSER);
                 updateDatabase(parent);
+                GlobalSettingsPanel.onSettingsChange();
             }
             });
         }
@@ -129,7 +154,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         else if (muPreviouslySelected && !muCurrentlySelected && crMultiUser) {
             SwingUtilities.invokeLater(() -> {
                 if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(parent,
-                        NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.description"),
+                        "<html><body>" + 
+                            "<div style='width: 400px;'>" +
+                                "<p>" + NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.description") + "</p>" +
+                            "</div>" +
+                        "</body></html>",
                         NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.title"),
                         JOptionPane.YES_NO_OPTION)) {
 
@@ -138,14 +167,17 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 }
                 else {
                     // disable central repository
+                    CentralRepoDbUtil.setUseCentralRepo(false);
                     CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
                 }
+                GlobalSettingsPanel.onSettingsChange();
             });
         }
         // changing multi-user settings connection && 'PostgreSQL using multi-user settings' is selected
         else if (muPreviouslySelected && muCurrentlySelected && crMultiUser) {
             // test databse for CR change
             updateDatabase(parent);
+            GlobalSettingsPanel.onSettingsChange();
         }
     }
     
@@ -540,9 +572,14 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         else {
             enableButtonSubComponents(cbUseCentralRepo.isSelected());
             if (selectedDb == CentralRepoPlatforms.POSTGRESQL) {
-                PostgresCentralRepoSettings dbSettingsPg = new PostgresCentralRepoSettings();
-                lbDbNameValue.setText(dbSettingsPg.getDbName());
-                lbDbLocationValue.setText(dbSettingsPg.getHost());
+                try {
+                    PostgresCentralRepoSettings dbSettingsPg = new PostgresCentralRepoSettings();                        
+                    lbDbNameValue.setText(dbSettingsPg.getDbName());
+                    lbDbLocationValue.setText(dbSettingsPg.getHost());
+                }
+                catch (CentralRepoException e) {
+                    logger.log(Level.WARNING, "Unable to load settings into global panel for postgres settings", e);
+                }
             }
             else if (selectedDb == CentralRepoPlatforms.SQLITE) {
                 SqliteCentralRepoSettings dbSettingsSqlite = new SqliteCentralRepoSettings();

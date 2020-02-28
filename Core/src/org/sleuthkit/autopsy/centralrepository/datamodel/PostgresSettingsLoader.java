@@ -15,7 +15,7 @@ public interface PostgresSettingsLoader {
     
     public static PostgresSettingsLoader CUSTOM_LOADER = new Custom();
     public static PostgresSettingsLoader MULTIUSER_LOADER = new MultiUser();
-    
+
     
     static class Custom implements PostgresSettingsLoader {
         @Override

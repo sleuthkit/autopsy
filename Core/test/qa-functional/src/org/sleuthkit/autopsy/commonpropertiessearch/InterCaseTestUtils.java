@@ -47,6 +47,8 @@ import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
@@ -303,8 +305,7 @@ class InterCaseTestUtils {
         centralRepoSchemaFactory.insertDefaultDatabaseContent();
         
         crSettings.saveSettings();
-        CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.SQLITE.name());
-        CentralRepoPlatforms.saveSelectedPlatform();
+        CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.SQLITE);
     }
 
     /**

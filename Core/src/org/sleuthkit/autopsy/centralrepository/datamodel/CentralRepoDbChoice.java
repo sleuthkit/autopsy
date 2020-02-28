@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
  * 
  */
 public class CentralRepoDbChoice {
-    public static final CentralRepoDbChoice DISABLED = new CentralRepoDbChoice("Disabled", null);
+    public static final CentralRepoDbChoice DISABLED = new CentralRepoDbChoice("Disabled", CentralRepoPlatforms.DISABLED);
 
     public static final CentralRepoDbChoice SQLITE = new CentralRepoDbChoice("Sqlite", CentralRepoPlatforms.SQLITE);
 

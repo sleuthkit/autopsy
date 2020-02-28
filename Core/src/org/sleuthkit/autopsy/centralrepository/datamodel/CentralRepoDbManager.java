@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
@@ -55,7 +56,14 @@ public class CentralRepoDbManager {
     public static CentralRepoDbChoice getSavedDbChoice() {
         if (SAVED_CHOICE == null) {
             String selectedPlatformString = ModuleSettings.getConfigSetting("CentralRepository", "db.selectedPlatform"); // NON-NLS
-            SAVED_CHOICE = fromKey(selectedPlatformString);    
+            SAVED_CHOICE = fromKey(selectedPlatformString);
+        }
+        
+        // do a sanity check: if loading multi user postgres connection, make sure setting is enabled.
+        // if not, disable central repo
+        if (SAVED_CHOICE == CentralRepoDbChoice.POSTGRESQL_MULTIUSER && !UserPreferences.getIsMultiUserModeEnabled()) {
+            CentralRepoDbUtil.setUseCentralRepo(false);
+            SAVED_CHOICE = CentralRepoDbChoice.DISABLED;
         }
 
         return SAVED_CHOICE;
@@ -416,36 +424,15 @@ public class CentralRepoDbManager {
     }
 
     public DatabaseTestResult testStatus() {
-        if (selectedDbChoice.getDbPlatform() == CentralRepoPlatforms.POSTGRESQL) {
-            if (dbSettingsPostgres.verifyConnection()) {
-                if (dbSettingsPostgres.verifyDatabaseExists()) {
-                    if (dbSettingsPostgres.verifyDatabaseSchema()) {
-                        testingStatus = DatabaseTestResult.TESTEDOK;
-                    } else {
-                        testingStatus = DatabaseTestResult.SCHEMA_INVALID;
-                    }
-                } else {
-                    testingStatus = DatabaseTestResult.DB_DOES_NOT_EXIST;
-                }
-            } else {
-                testingStatus = DatabaseTestResult.CONNECTION_FAILED;
-            }
-        } else if (selectedDbChoice.getDbPlatform() == CentralRepoPlatforms.SQLITE) {
-            if (dbSettingsSqlite.dbFileExists()) {
-                if (dbSettingsSqlite.verifyConnection()) {
-                    if (dbSettingsSqlite.verifyDatabaseSchema()) {
-                        testingStatus = DatabaseTestResult.TESTEDOK;
-                    } else {
-                        testingStatus = DatabaseTestResult.SCHEMA_INVALID;
-                    }
-                } else {
-                    testingStatus = DatabaseTestResult.SCHEMA_INVALID;
-                }
-            } else {
-                testingStatus = DatabaseTestResult.DB_DOES_NOT_EXIST;
-            }
+        try {
+            CentralRepoDbConnectivityManager manager = getSelectedSettings();
+            if (manager != null)
+                testingStatus = manager.testStatus();
         }
-
+        catch (CentralRepoException e) {
+            logger.log(Level.WARNING, "unable to test status of db connection in central repo", e);
+        }
+        
         return testingStatus;
     }
 }

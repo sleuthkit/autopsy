@@ -45,6 +45,15 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbConnectiv
     private final PostgresSettingsLoader loader;
     private PostgresConnectionSettings connSettings;
     
+    private static PostgresSettingsLoader getLoaderFromSaved() throws CentralRepoException {
+        CentralRepoDbChoice choice = CentralRepoDbManager.getSavedDbChoice();
+        if (choice == CentralRepoDbChoice.POSTGRESQL_CUSTOM)
+            return PostgresSettingsLoader.CUSTOM_LOADER;
+        else if (choice == CentralRepoDbChoice.POSTGRESQL_MULTIUSER)
+            return PostgresSettingsLoader.MULTIUSER_LOADER;
+        else
+            throw new CentralRepoException("cannot load or save postgres settings for selection: " + choice);
+    }
     
     public PostgresCentralRepoSettings(PostgresSettingsLoader loader) {
         this.loader = loader;
@@ -52,10 +61,10 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbConnectiv
     }
     
     /**
-     * default constructor that loads custom postgres settings from 
+     * default constructor that loads settings from selected db choice 
      */
-    public PostgresCentralRepoSettings() {
-        this(PostgresSettingsLoader.CUSTOM_LOADER);
+    public PostgresCentralRepoSettings() throws CentralRepoException {
+        this(getLoaderFromSaved());
     }
 
     
@@ -346,5 +355,22 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbConnectiv
      */
     public void setPassword(String password) throws CentralRepoException {
         connSettings.setPassword(password);
+    }
+
+    @Override
+    public DatabaseTestResult testStatus() {
+        if (verifyConnection()) {
+            if (verifyDatabaseExists()) {
+                if (verifyDatabaseSchema()) {
+                    return DatabaseTestResult.TESTEDOK;
+                } else {
+                    return DatabaseTestResult.SCHEMA_INVALID;
+                }
+            } else {
+                return DatabaseTestResult.DB_DOES_NOT_EXIST;
+            }
+        } else {
+            return DatabaseTestResult.CONNECTION_FAILED;
+        }
     }
 }

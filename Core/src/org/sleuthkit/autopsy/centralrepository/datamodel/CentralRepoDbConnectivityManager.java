@@ -53,4 +53,6 @@ public interface CentralRepoDbConnectivityManager {
      */
     boolean verifyDatabaseSchema();
     
+    DatabaseTestResult testStatus();
+    
 }

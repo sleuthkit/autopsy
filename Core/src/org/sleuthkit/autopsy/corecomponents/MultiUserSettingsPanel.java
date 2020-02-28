@@ -699,55 +699,54 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         boolean multiUserCasesEnabled = cbEnableMultiUser.isSelected();
         UserPreferences.setIsMultiUserModeEnabled(multiUserCasesEnabled);
-        if (multiUserCasesEnabled == false) {
-            return;
-        }
-
-        /*
-         * Currently only supporting multi-user cases with PostgreSQL case
-         * databases.
-         */
-        DbType dbType = DbType.POSTGRESQL;
-        CaseDbConnectionInfo info = new CaseDbConnectionInfo(
-                tbDbHostname.getText().trim(),
-                tbDbPort.getText().trim(),
-                tbDbUsername.getText().trim(),
-                new String(tbDbPassword.getPassword()),
-                dbType);
-        try {
-            UserPreferences.setDatabaseConnectionInfo(info);
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error saving case database connection info", ex); //NON-NLS
-        }
-
-        int msgServicePort = 0;
-        try {
-            msgServicePort = Integer.parseInt(this.tbMsgPort.getText().trim());
-        } catch (NumberFormatException ex) {
-            logger.log(Level.SEVERE, "Could not parse messaging service port setting", ex);
-        }
-
-        MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
-                tbMsgHostname.getText().trim(),
-                msgServicePort,
-                tbMsgUsername.getText().trim(),
-                new String(tbMsgPassword.getPassword()));
-
-        try {
-            UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
-        }
-
-        UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
-        UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
-
         
-        boolean curSelected = multiUserCasesEnabled;
-        CaseDbConnectionInfo curConn = info;
+        CaseDbConnectionInfo info = null;
         
-        if (prevSelected != curSelected || !areCaseDbConnectionEqual(prevConn, curConn))
-            GlobalSettingsPanel.onMultiUserChange(this, prevSelected, curSelected);
+        if (multiUserCasesEnabled == true) {
+
+            /*
+             * Currently only supporting multi-user cases with PostgreSQL case
+             * databases.
+             */
+            DbType dbType = DbType.POSTGRESQL;
+            info = new CaseDbConnectionInfo(
+                    tbDbHostname.getText().trim(),
+                    tbDbPort.getText().trim(),
+                    tbDbUsername.getText().trim(),
+                    new String(tbDbPassword.getPassword()),
+                    dbType);
+            try {
+                UserPreferences.setDatabaseConnectionInfo(info);
+            } catch (UserPreferencesException ex) {
+                logger.log(Level.SEVERE, "Error saving case database connection info", ex); //NON-NLS
+            }
+
+            int msgServicePort = 0;
+            try {
+                msgServicePort = Integer.parseInt(this.tbMsgPort.getText().trim());
+            } catch (NumberFormatException ex) {
+                logger.log(Level.SEVERE, "Could not parse messaging service port setting", ex);
+            }
+
+            MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
+                    tbMsgHostname.getText().trim(),
+                    msgServicePort,
+                    tbMsgUsername.getText().trim(),
+                    new String(tbMsgPassword.getPassword()));
+
+            try {
+                UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
+            } catch (UserPreferencesException ex) {
+                logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
+            }
+
+            UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
+            UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
+        }
+
+        // trigger changes to whether or not user can use multi user settings for central repository
+        if (prevSelected != multiUserCasesEnabled || !areCaseDbConnectionEqual(prevConn, info))
+            GlobalSettingsPanel.onMultiUserChange(this, prevSelected, multiUserCasesEnabled);
     }
 
     private static boolean arePropsEqual(Object a, Object b) {

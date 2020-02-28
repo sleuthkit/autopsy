@@ -63,9 +63,9 @@ DataContentViewerHex.totalPageLabel.text_1=100
 DataContentViewerHex.pageLabel2.text=Page
 
 # Product Information panel
-LBL_Description=<div style=\"font-size: 12pt; font-family: Verdana, 'Verdana CE',  Arial, 'Arial CE', 'Lucida Grande CE', lucida, 'Helvetica CE', sans-serif;\">\n    <b>Product Version:</b> {0} ({9}) <br><b>Sleuth Kit Version:</b> {7} <br><b>Netbeans RCP Build:</b> {8} <br> <b>Java:</b> {1}; {2}<br> <b>System:</b> {3}; {4}; {5}<br><b>Userdir:</b> {6}</div>
+LBL_Description=<div style="font-size: 12pt; font-family: Verdana, 'Verdana CE',  Arial, 'Arial CE', 'Lucida Grande CE', lucida, 'Helvetica CE', sans-serif;">\n    <b>Product Version:</b> {0} ({9}) <br><b>Sleuth Kit Version:</b> {7} <br><b>Netbeans RCP Build:</b> {8} <br> <b>Java:</b> {1}; {2}<br> <b>System:</b> {3}; {4}; {5}<br><b>Userdir:</b> {6}</div>
 Format_OperatingSystem_Value={0} version {1} running on {2}
-LBL_Copyright=<div style\="font-size: 12pt; font-family: Verdana, 'Verdana CE',  Arial, 'Arial CE', 'Lucida Grande CE', lucida, 'Helvetica CE', sans-serif; ">Autopsy&trade; is a digital forensics platform based on The Sleuth Kit&trade; and other tools. <br><ul><li>General Information: <a style\="color: \#1E2A60;" href\="http://www.sleuthkit.org">http://www.sleuthkit.org</a>.</li><li>Training: <a style\="color: \#1E2A60;" href\="http://www.basistech.com/autopsy-training">http://www.basistech.com/autopsy-training</a></li><li>Commercial Support: <a style\="color: \#1E2A60;" href\="http://www.basistech.com/digital-forensics/autopsy/support/">http://www.basistech.com/digital-forensics/autopsy/support/</a></li></ul>Copyright &copy; 2003-2018. </div>
+LBL_Copyright=<div style="font-size: 12pt; font-family: Verdana, 'Verdana CE',  Arial, 'Arial CE', 'Lucida Grande CE', lucida, 'Helvetica CE', sans-serif; ">Autopsy&trade; is a digital forensics platform based on The Sleuth Kit&trade; and other tools. <br><ul><li>General Information: <a style="color: #1E2A60;" href="http://www.sleuthkit.org">http://www.sleuthkit.org</a>.</li><li>Training: <a style="color: #1E2A60;" href="http://www.basistech.com/autopsy-training">http://www.basistech.com/autopsy-training</a></li><li>Commercial Support: <a style="color: #1E2A60;" href="http://www.basistech.com/digital-forensics/autopsy/support/">http://www.basistech.com/digital-forensics/autopsy/support/</a></li></ul>Copyright &copy; 2003-2018. </div>
 SortChooser.dialogTitle=Choose Sort Criteria
 ThumbnailViewChildren.progress.cancelling=(Cancelling)
 # {0} - file name
@@ -95,7 +95,7 @@ DataResultViewerThumbnail.pageNextButton.text=
 DataResultViewerThumbnail.imagesLabel.text=Images:
 DataResultViewerThumbnail.imagesRangeLabel.text=-
 DataResultViewerThumbnail.pageNumLabel.text=-
-DataResultViewerThumbnail.filePathLabel.text=\ \ \ 
+DataResultViewerThumbnail.filePathLabel.text=\   
 DataResultViewerThumbnail.goToPageLabel.text=Go to Page:
 DataResultViewerThumbnail.goToPageField.text=
 AdvancedConfigurationDialog.cancelButton.text=Cancel
