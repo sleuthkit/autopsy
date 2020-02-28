@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -28,8 +29,6 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -68,10 +67,25 @@ public class Installer extends ModuleInstall {
         Case.addPropertyChangeListener(pcl);
         ieListener.installListeners();
 
-        String initialized = ModuleSettings.getConfigSetting("CentralRepository", "initialized");
+        
+        Map<String, String> centralRepoSettings = ModuleSettings.getConfigSettings("CentralRepository");
+        String initializedStr = centralRepoSettings.get("initialized");
+        
+        // check to see if the repo has been initialized asking to setup cr
+        boolean initialized = Boolean.parseBoolean(initializedStr);
+        
+        // if it hasn't received that flag, check for a previous install where cr is already setup
+        if (!initialized) {
+            boolean prevRepo = Boolean.parseBoolean(centralRepoSettings.get("db.useCentralRepo"));
+            // if it has been previously set up and is in use, mark as previously initialized and save the settings
+            if (prevRepo) {
+                initialized = true;
+                ModuleSettings.setConfigSetting("CentralRepository", "initialized", "true");
+            }
+        }
 
         // if central repository hasn't been previously initialized, initialize it
-        if (!Boolean.parseBoolean(initialized)) {
+        if (!initialized) {
             // if running with a GUI, prompt the user
             if (RuntimeProperties.runningWithGUI()) {
                 try {

@@ -260,7 +260,7 @@ public class CorrelationAttributeInstance implements Serializable {
         for (Account.Type type : Account.Type.PREDEFINED_ACCOUNT_TYPES) {
             // Skip Phone and Email accounts as there are already Correlation types defined for those.
             if (type != Account.Type.EMAIL && type != Account.Type.PHONE) {
-                defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(correlationTypeId, type.getDisplayName(), type.getTypeName().toLowerCase(), true, true)); //NON-NLS
+                defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(correlationTypeId, type.getDisplayName(), type.getTypeName().toLowerCase() + "_acct", true, true)); //NON-NLS
                 correlationTypeId++;
             }
         }
