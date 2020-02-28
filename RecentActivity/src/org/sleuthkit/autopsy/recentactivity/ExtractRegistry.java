@@ -67,7 +67,6 @@ import java.util.Set;
 import java.util.HashSet;
 import static java.util.Locale.US;
 import static java.util.TimeZone.getTimeZone;
-import org.apache.commons.io.FilenameUtils;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
