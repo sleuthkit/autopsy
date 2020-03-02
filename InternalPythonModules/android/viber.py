@@ -268,8 +268,8 @@ class ViberContactsParser(TskContactsParser):
     def __init__(self, contact_db):
         super(ViberContactsParser, self).__init__(contact_db.runQuery(
                  """
-                      SELECT C.display_name AS name, 
-                             D.data2        AS number 
+                      SELECT C.display_name AS name,                      
+                             coalesce(D.data2, D.data1, D.data3) AS number 
                       FROM   phonebookcontact AS C 
                              JOIN phonebookdata AS D 
                                ON C._id = D.contact_id
