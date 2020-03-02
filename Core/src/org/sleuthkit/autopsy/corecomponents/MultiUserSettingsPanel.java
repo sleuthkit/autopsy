@@ -34,7 +34,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import java.awt.Cursor;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
-import javax.swing.JOptionPane;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
@@ -763,10 +762,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     
 	private static boolean areCaseDbConnectionEqual(CaseDbConnectionInfo a, CaseDbConnectionInfo b) {
         if (a == null || b == null) {
-            if (a == null && b == null)
-                return true;
-            else
-                return false;
+            return (a == null && b == null);
         }
 
         return 

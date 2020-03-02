@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.centralrepository.optionspanel;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.HeadlessException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,8 +51,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
 import org.sleuthkit.autopsy.centralrepository.datamodel.DatabaseTestResult;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepoFactory;
 import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
@@ -66,16 +65,15 @@ public class EamDbSettingsDialog extends JDialog {
     private static final DbChoiceRenderer DB_CHOICE_RENDERER = new DbChoiceRenderer();
 
     private static boolean isDbChoiceSelectable(CentralRepoDbChoice item) {
-        if (item == CentralRepoDbChoice.POSTGRESQL_MULTIUSER && !UserPreferences.getIsMultiUserModeEnabled()) {
-            return false;
-        }
-        else {
-            return true;
-        }
+        return (item != CentralRepoDbChoice.POSTGRESQL_MULTIUSER || UserPreferences.getIsMultiUserModeEnabled());
     }
     
+    /**
+     * handles displaying and rendering drop down menu for database choices in central repo
+     */
     private static class DbChoiceRenderer extends BasicComboBoxRenderer {
-
+        private static final long serialVersionUID = 1L;
+        
         public Component getListCellRendererComponent(JList list, Object value,
                 int index, boolean isSelected, boolean cellHasFocus) {
 
@@ -94,6 +92,9 @@ public class EamDbSettingsDialog extends JDialog {
     private final TextBoxChangedListener textBoxChangedListener;
     private final CentralRepoDbManager manager = new CentralRepoDbManager();
 
+    public EamDbSettingsDialog() {
+        this(null);
+    }
     
     /**
      * Creates new form EamDbSettingsDialog
@@ -102,7 +103,7 @@ public class EamDbSettingsDialog extends JDialog {
         "EamDbSettingsDialog.lbSingleUserSqLite.text=SQLite should only be used by one examiner at a time.",
         "EamDbSettingsDialog.lbDatabaseType.text=Database Type :",
         "EamDbSettingsDialog.fcDatabasePath.title=Select location for central_repository.db"})
-    public EamDbSettingsDialog() {
+    public EamDbSettingsDialog(CentralRepoDbChoice initialMenuItem) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.EamDbSettingsDialog_title_text(),
                 true);
@@ -129,24 +130,24 @@ public class EamDbSettingsDialog extends JDialog {
             }
         });
         
-        setupDbChoice();
-        customizeComponents();
+        setupDbChoice(initialMenuItem);
         valid();
         display();
     }
     
     
-    private void setupDbChoice() {
+    private void setupDbChoice(CentralRepoDbChoice initialMenuItem) {
         // setup initially selected item
-        CentralRepoDbChoice toSelect = 
+        CentralRepoDbChoice toSelect = (initialMenuItem == null) ?  
             (Arrays.asList(CentralRepoDbChoice.DB_CHOICES).contains(manager.getSelectedDbChoice())) ?
             manager.getSelectedDbChoice() :
-            CentralRepoDbChoice.DB_CHOICES[0];
-
-        cbDatabaseType.setSelectedItem(toSelect);
+            CentralRepoDbChoice.DB_CHOICES[0] :
+            initialMenuItem;
         
         // set the renderer so item is unselectable if inappropriate
         cbDatabaseType.setRenderer(DB_CHOICE_RENDERER);
+        
+        changeDbSelection(toSelect);
     }
     
     
@@ -188,22 +189,7 @@ public class EamDbSettingsDialog extends JDialog {
                     manager.createDb();
                 }
                 catch (CentralRepoException e) {
-                    // in the event that there is a failure to connect, notify user with corresponding message
-                    String errorMessage = "";
-                    if (manager == null || manager.getSelectedDbChoice() == null) {
-                        errorMessage = "";
-                    }
-                    else if (manager.getSelectedDbChoice().getDbPlatform() == CentralRepoPlatforms.POSTGRESQL) {
-                        errorMessage = Bundle.EamDbSettingsDialog_okButton_createPostgresDbError_message();
-                    }
-                    else if (manager.getSelectedDbChoice().getDbPlatform() == CentralRepoPlatforms.SQLITE) {
-                        errorMessage = Bundle.EamDbSettingsDialog_okButton_createSQLiteDbError_message();
-                    }
-                    
-                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                        errorMessage,
-                        Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
-                        JOptionPane.WARNING_MESSAGE);
+                    onPromptStatusError(manager);
                 }
                 
                 if (dialog != null)
@@ -213,6 +199,28 @@ public class EamDbSettingsDialog extends JDialog {
 
         return (manager.getStatus() == DatabaseTestResult.TESTEDOK);
     }   
+
+    
+    /**
+     * when an error occurs while going through promptTestStatusWarning, this method is called
+     * @param manager1          the manager to use as service class
+     * @throws HeadlessException 
+     */
+    private static void onPromptStatusError(CentralRepoDbManager manager1) {
+        // in the event that there is a failure to connect, notify user with corresponding message
+        String errorMessage = "";
+        if (manager1 == null || manager1.getSelectedDbChoice() == null) {
+            errorMessage = "";
+        } else if (manager1.getSelectedDbChoice().getDbPlatform() == CentralRepoPlatforms.POSTGRESQL) {
+            errorMessage = Bundle.EamDbSettingsDialog_okButton_createPostgresDbError_message();
+        } else if (manager1.getSelectedDbChoice().getDbPlatform() == CentralRepoPlatforms.SQLITE) {
+            errorMessage = Bundle.EamDbSettingsDialog_okButton_createSQLiteDbError_message();
+        }
+        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                errorMessage,
+                Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
+                JOptionPane.WARNING_MESSAGE);
+    }
     
 
     /**
@@ -575,15 +583,20 @@ public class EamDbSettingsDialog extends JDialog {
 
     private void cbDatabaseTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbDatabaseTypeActionPerformed
         CentralRepoDbChoice selectedItem = (CentralRepoDbChoice) cbDatabaseType.getSelectedItem();
+        changeDbSelection(selectedItem);
+    }//GEN-LAST:event_cbDatabaseTypeActionPerformed
+
+    private void changeDbSelection(CentralRepoDbChoice selectedItem) {
         if (isDbChoiceSelectable(selectedItem)) {
             manager.setSelctedDbChoice(selectedItem);
+            cbDatabaseType.setSelectedItem(selectedItem);
         }
         else {
             cbDatabaseType.setSelectedItem(manager.getSelectedDbChoice());
         }
         
         customizeComponents();
-    }//GEN-LAST:event_cbDatabaseTypeActionPerformed
+    }
 
     private void updateFullDbPath() {
         dataBaseFileTextArea.setText(tfDatabasePath.getText() + File.separator + SqliteCentralRepoSettings.DEFAULT_DBNAME);

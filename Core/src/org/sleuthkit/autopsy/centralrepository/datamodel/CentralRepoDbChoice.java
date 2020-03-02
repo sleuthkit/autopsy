@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 /**
- * 
+ * the database choices available for central repo
  */
 public class CentralRepoDbChoice {
     public static final CentralRepoDbChoice DISABLED = new CentralRepoDbChoice("Disabled", CentralRepoPlatforms.DISABLED);

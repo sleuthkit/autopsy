@@ -1,14 +1,30 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ *
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2012-2020 Basis Technology Corp.
+ *
+ * Copyright 2012 42six Solutions.
+ * Contact: aebadirad <at> 42six <dot> com
+ * Project Contact/Architect: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -18,8 +34,7 @@ import org.sleuthkit.autopsy.coreutils.TextConverterException;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 
 /**
- *
- * @author gregd
+ * handles saving and loading of postgres settings for central repo
  */
 public class CentralRepoPostgresSettingsUtil {
     private final static Logger LOGGER = Logger.getLogger(CentralRepoPostgresSettingsUtil.class.getName());
@@ -68,13 +83,18 @@ public class CentralRepoPostgresSettingsUtil {
     
     private static void handleTry(TryHandler handler) {
         try {
-            handler.op();
+            handler.operation();
         }
-        catch (CentralRepoException e) {}
+        catch (CentralRepoException e) {
+            LOGGER.log(Level.WARNING, "There was an error in converting central repo postgres settings", e);
+        }
     }
     
+    /**
+     * an action that potentially throws an exception
+     */
     private interface TryHandler {
-        public void op() throws CentralRepoException;
+        void operation() throws CentralRepoException;
     }
     
     

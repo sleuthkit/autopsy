@@ -43,8 +43,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.HeadlessException;
+import java.util.MissingResourceException;
 import java.util.logging.Level;
 
 /**
@@ -53,7 +53,10 @@ import java.util.logging.Level;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
-    private static interface OnSettingsChangeListener {
+    /**
+     * listener to handle when settings change and an instance of this class needs to be notified.
+     */
+    private interface OnSettingsChangeListener {
         void onSettingsChange();
     }
     
@@ -83,7 +86,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         ingestJobEventListener = new IngestJobEventPropertyChangeListener();
         
         // most recently created panel will receive update events
-        GlobalSettingsPanel.setSettingsChangeListener(() -> GlobalSettingsPanel.this.load());
+        GlobalSettingsPanel.setSettingsChangeListener(() -> load());
         initComponents();
         customizeComponents();
         addIngestJobEventsListener();
@@ -107,8 +110,18 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         updateDatabase(this);
     }
     
-    private static boolean invokeCrChoice(Component parent) {
-        EamDbSettingsDialog dialog = new EamDbSettingsDialog();
+    /**
+     * invokes central repository database choice selection as well as input for necessary configuration
+     * @param parent            the parent component for displaying dialogs
+     * @param initialSelection  if non-null, the menu item will be set to this choice; if null, 
+     *                          the currently selected db choice will be selected
+     * @return                  true if there was a change
+     */
+    private static boolean invokeCrChoice(Component parent, CentralRepoDbChoice initialSelection) {
+        EamDbSettingsDialog dialog = (initialSelection != null) ? 
+            new EamDbSettingsDialog(initialSelection) : 
+            new EamDbSettingsDialog();
+        
         if (dialog.wasConfigurationChanged()) {
             updateDatabase(parent);
             return true;
@@ -128,8 +141,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @param muCurrentlySelected   if multi user settings are currently enabled as of most recent change
      */
     @NbBundle.Messages({
-        "GlobalSettingsPanel.onMultiUserChange.enable.title=Enable Central Repository?",
-        "GlobalSettingsPanel.onMultiUserChange.enable.description=Do you want to enable Central Repository using these settings?",
+        "GlobalSettingsPanel.onMultiUserChange.enable.title=Use with Central Repository?",
+        "GlobalSettingsPanel.onMultiUserChange.enable.description=Do you want to update the Central Repository to use this PostgreSQL database?",
+        "GlobalSettingsPanel.onMultiUserChange.enable.description2=The Central Repository stores hash values and accounts from past cases.",
         "GlobalSettingsPanel.onMultiUserChange.disabledMu.title=Central Repository Change Necessary",
         "GlobalSettingsPanel.onMultiUserChange.disabledMu.description=Since mult-user cases have been disabled, 'PostgreSQL using multi-user settings' is no longer a valid option for Central Repository.  Would you like to choose another Central Repository database?"
     })
@@ -139,48 +153,77 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         if (!muPreviouslySelected && muCurrentlySelected) {
             SwingUtilities.invokeLater(() -> {
             if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(parent,
-                    NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.enable.description"),
+                    "<html><body>" + 
+                        "<div style='width: 400px;'>" +
+                            "<p>" + NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.enable.description") + "</p>" +
+                            "<p style='margin-top: 10px'>" + NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.enable.description2") + "</p>" +
+                        "</div>" +
+                    "</body></html>",
                     NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.enable.title"),
                     JOptionPane.YES_NO_OPTION)) {
                 
                 // setup database for CR
                 CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.POSTGRESQL_MULTIUSER);
-                HandleDbChange(parent);
+                handleDbChange(parent);
             }
             });
         }
         // moving from selected to not selected && 'PostgreSQL using multi-user settings' is selected
         else if (muPreviouslySelected && !muCurrentlySelected && crMultiUser) {
             SwingUtilities.invokeLater(() -> {
-                if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(parent,
-                        "<html><body>" + 
-                            "<div style='width: 400px;'>" +
-                                "<p>" + NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.description") + "</p>" +
-                            "</div>" +
-                        "</body></html>",
-                        NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.title"),
-                        JOptionPane.YES_NO_OPTION)) {
-
-                    // present user with central repository choice
-                    invokeCrChoice(parent);
-                }
-                else {
-                    // disable central repository
-                    CentralRepoDbUtil.setUseCentralRepo(false);
-                    CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
-                }
-                GlobalSettingsPanel.onSettingsChange();
+                askForCentralRepoDbChoice(parent);
             });
         }
         // changing multi-user settings connection && 'PostgreSQL using multi-user settings' is selected
         else if (muPreviouslySelected && muCurrentlySelected && crMultiUser) {
             // test databse for CR change
-            HandleDbChange(parent);
+            handleDbChange(parent);
         }
+    }
+
+    
+    /**
+     * when a user must select a new database other than using database from multi user settings
+     * @param parent    the parent component to use for displaying dialogs in reference
+     */
+    private static void askForCentralRepoDbChoice(Component parent) {
+        // disable central repository until user makes choice
+        CentralRepoDbUtil.setUseCentralRepo(false);
+        CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
+            
+        Object[] options = {
+            "Use SQLite",
+            "Configure PostgreSQL",
+            "Disable Central Repository"
+        };
+        
+        int result = JOptionPane.showOptionDialog(
+                parent,
+                "<html><body>" +
+                        "<div style='width: 400px;'>" +
+                        "<p>" + NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.description") + "</p>" +
+                                "</div>" +
+                                "</body></html>",
+                NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.title"),
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                options,
+                options[0]
+        );
+        
+        if (JOptionPane.YES_OPTION == result) {
+            invokeCrChoice(parent, CentralRepoDbChoice.SQLITE);
+        }
+        else if (JOptionPane.NO_OPTION == result) {
+            invokeCrChoice(parent, CentralRepoDbChoice.POSTGRESQL_CUSTOM);
+        }
+        
+        GlobalSettingsPanel.onSettingsChange();
     }
     
     
-    private static void HandleDbChange(Component parent) {
+    private static void handleDbChange(Component parent) {
         boolean successful = EamDbSettingsDialog.testStatusAndCreate(parent, new CentralRepoDbManager());
         if (successful) {
             updateDatabase(parent);
@@ -540,7 +583,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private void bnDbConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDbConfigureActionPerformed
         store();
-        boolean changed = invokeCrChoice(this);
+        boolean changed = invokeCrChoice(this, null);
         if (changed) {
             load(); // reload db settings content and update buttons
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);

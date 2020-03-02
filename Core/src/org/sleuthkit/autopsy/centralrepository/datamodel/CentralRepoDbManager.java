@@ -23,7 +23,6 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
@@ -38,12 +37,12 @@ public class CentralRepoDbManager {
 
 
 
-    private static CentralRepoDbChoice SAVED_CHOICE = null;
+    private static volatile CentralRepoDbChoice SAVED_CHOICE = null;
 
     /**
      * Save the selected platform to the config file.
      */
-    public static CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice) {
+    public static synchronized CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice) {
         choice = (choice == null) ? CentralRepoDbChoice.DISABLED : choice;
         SAVED_CHOICE = choice;
         ModuleSettings.setConfigSetting("CentralRepository", "db.selectedPlatform", choice.getSettingKey());
@@ -53,7 +52,7 @@ public class CentralRepoDbManager {
     /**
      * Load the selectedPlatform boolean from the config file, if it is set.
      */
-    public static CentralRepoDbChoice getSavedDbChoice() {
+    public static synchronized CentralRepoDbChoice getSavedDbChoice() {
         if (SAVED_CHOICE == null) {
             String selectedPlatformString = ModuleSettings.getConfigSetting("CentralRepository", "db.selectedPlatform"); // NON-NLS
             SAVED_CHOICE = fromKey(selectedPlatformString);
@@ -352,6 +351,7 @@ public class CentralRepoDbManager {
         // Even if we fail to close the existing connections, make sure that we
         // save the new connection settings, so an Autopsy restart will correctly
         // start with the new settings.
+        CentralRepoDbUtil.setUseCentralRepo(selectedDbChoice != CentralRepoDbChoice.DISABLED);
         saveDbChoice(selectedDbChoice);
 
         CentralRepoDbConnectivityManager selectedDbSettings = getSelectedSettings();

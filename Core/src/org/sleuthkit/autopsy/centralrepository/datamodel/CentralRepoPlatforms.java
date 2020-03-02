@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 /**
- *
+ * describes the possible database types for central repo
  */
 public enum CentralRepoPlatforms {
     DISABLED,
