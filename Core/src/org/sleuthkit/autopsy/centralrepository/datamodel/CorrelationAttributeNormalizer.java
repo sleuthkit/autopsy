@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.EmailValidator;
-import org.openide.util.Exceptions;
 
 /**
  * Provides functions for normalizing data by attribute type before insertion or
@@ -91,7 +90,7 @@ final public class CorrelationAttributeNormalizer {
                             attributeType.getDisplayName());
                     throw new CorrelationAttributeNormalizationException(errorMessage);
                 } catch (CentralRepoException ex) {
-                    throw new CorrelationAttributeNormalizationException(ex.getMessage());
+                    throw new CorrelationAttributeNormalizationException("Failed to get default correlation types.", ex);
                 }
             }
     }
