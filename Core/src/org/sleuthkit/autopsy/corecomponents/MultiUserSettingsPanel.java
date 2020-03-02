@@ -750,10 +750,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
     private static boolean arePropsEqual(Object a, Object b) {
         if (a == null || b == null) {
-            if (a == null && b == null)
-                return true;
-            else
-                return false;
+            return (a == null && b == null);
         }
         else {
             return a.equals(b);

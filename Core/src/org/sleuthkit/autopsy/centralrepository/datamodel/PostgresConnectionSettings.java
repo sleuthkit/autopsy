@@ -135,14 +135,19 @@ public class PostgresConnectionSettings {
         validateStr(password, "Invalid user password. Cannot be empty.");
         this.password = password;
     }
-    
-    
-    
+
     @Override
     public int hashCode() {
-        int hash = 3;
+        int hash = 7;
+        hash = 43 * hash + Objects.hashCode(this.host);
+        hash = 43 * hash + this.port;
+        hash = 43 * hash + Objects.hashCode(this.dbName);
+        hash = 43 * hash + this.bulkThreshold;
+        hash = 43 * hash + Objects.hashCode(this.userName);
+        hash = 43 * hash + Objects.hashCode(this.password);
         return hash;
     }
+    
 
     @Override
     public boolean equals(Object obj) {

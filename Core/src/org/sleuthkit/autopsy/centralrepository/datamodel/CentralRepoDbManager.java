@@ -288,12 +288,12 @@ public class CentralRepoDbManager {
      * @throws CentralRepoException     if 
      */
     public boolean createDb() throws CentralRepoException {
-        boolean result = false;
-        boolean dbCreated = true;
-
         CentralRepoDbConnectivityManager selectedDbSettings = getSelectedSettings();
         if (selectedDbSettings == null)
             throw new CentralRepoException("Unable to derive connectivity manager from settings: " + selectedDbChoice);
+
+        boolean result = false;
+        boolean dbCreated = true;
         
         if (!selectedDbSettings.verifyDatabaseExists()) {
             dbCreated = selectedDbSettings.createDatabase();

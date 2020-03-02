@@ -43,8 +43,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import java.awt.Component;
-import java.awt.HeadlessException;
-import java.util.MissingResourceException;
 import java.util.logging.Level;
 
 /**
