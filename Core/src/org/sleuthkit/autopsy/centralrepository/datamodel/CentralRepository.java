@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CRAccount.CRAccountType;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 
 /**
@@ -808,8 +809,32 @@ public interface CentralRepository {
    /**
     * Returns list of all correlation types. 
     * 
-    * @return  list of Correlation types  
+    * @return  list of Correlation types
     * @throws CentralRepoException 
     */
     List<CorrelationAttributeInstance.Type> getCorrelationTypes() throws CentralRepoException;
+    
+    
+    /**
+     * Get CR account type by type name.
+     * 
+     * @param accountTypeName account type name to look for
+     * @return CR account type
+     * @throws CentralRepoException 
+     */
+    CRAccountType getCRAccountTypeByName(String accountTypeName) throws CentralRepoException;
+     
+    /**
+     * Get an account from the accounts table matching the given type/ID.  
+     * Inserts a row if one doesn't exists.
+     * 
+     * @param crAccountType CR account type to look for or create
+     * @param accountUniqueID type specific unique account id
+     * @return CR account
+     * 
+     * @throws CentralRepoException 
+     */
+    CRAccount getOrCreateCRAccount(CRAccount.CRAccountType crAccountType, String accountUniqueID) throws CentralRepoException;
+    
+             
 }

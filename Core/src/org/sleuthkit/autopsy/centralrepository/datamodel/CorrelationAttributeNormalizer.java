@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.openide.util.Exceptions;
 
 /**
  * Provides functions for normalizing data by attribute type before insertion or
@@ -76,11 +77,23 @@ final public class CorrelationAttributeNormalizer {
                 return normalizeIccid(trimmedData);
 
             default:
-                final String errorMessage = String.format(
-                        "Validator function not found for attribute type: %s",
-                        attributeType.getDisplayName());
-                throw new CorrelationAttributeNormalizationException(errorMessage);
-        }
+                try {
+                    // If the atttribute is not one of the above 
+                    // but is one of the other default correlation types, then let the data go as is
+                    List<CorrelationAttributeInstance.Type> defaultCorrelationTypes = CorrelationAttributeInstance.getDefaultCorrelationTypes();
+                    for (CorrelationAttributeInstance.Type defaultCorrelationType : defaultCorrelationTypes) {
+                        if (defaultCorrelationType.getId() == attributeType.getId()) {
+                            return trimmedData;
+                        }
+                    }
+                    final String errorMessage = String.format(
+                            "Validator function not found for attribute type: %s",
+                            attributeType.getDisplayName());
+                    throw new CorrelationAttributeNormalizationException(errorMessage);
+                } catch (CentralRepoException ex) {
+                    throw new CorrelationAttributeNormalizationException(ex.getMessage());
+                }
+            }
     }
 
     /**
