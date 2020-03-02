@@ -145,8 +145,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 
                 // setup database for CR
                 CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.POSTGRESQL_MULTIUSER);
-                updateDatabase(parent);
-                GlobalSettingsPanel.onSettingsChange();
+                HandleDbChange(parent);
             }
             });
         }
@@ -176,10 +175,24 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         // changing multi-user settings connection && 'PostgreSQL using multi-user settings' is selected
         else if (muPreviouslySelected && muCurrentlySelected && crMultiUser) {
             // test databse for CR change
-            updateDatabase(parent);
-            GlobalSettingsPanel.onSettingsChange();
+            HandleDbChange(parent);
         }
     }
+    
+    
+    private static void HandleDbChange(Component parent) {
+        boolean successful = EamDbSettingsDialog.testStatusAndCreate(parent, new CentralRepoDbManager());
+        if (successful) {
+            updateDatabase(parent);
+            onSettingsChange();            
+        }
+        else {
+            // disable central repository
+            CentralRepoDbUtil.setUseCentralRepo(false);
+            CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
+        }
+    }
+    
     
     @Messages({"GlobalSettingsPanel.updateFailed.title=Central repository disabled"})
     private static void updateDatabase(Component parent) {

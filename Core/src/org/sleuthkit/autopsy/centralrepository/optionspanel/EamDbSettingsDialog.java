@@ -153,6 +153,8 @@ public class EamDbSettingsDialog extends JDialog {
     
      /**
      * prompts user based on testing status (i.e. failure to connect, invalid schema, db does not exist, etc.)
+     * @param manager   the manager to use when setting up the database
+     * @param dialog    if non-null value, validates settings and updates 'okay' button enabled state
      * @return whether or not the ultimate status after prompts is okay to continue
      */
     @NbBundle.Messages({"EamDbSettingsDialog.okButton.corruptDatabaseExists.title=Error Loading Database",
@@ -164,7 +166,7 @@ public class EamDbSettingsDialog extends JDialog {
         "EamDbSettingsDialog.okButton.createSQLiteDbError.message=Unable to create SQLite Database, please ensure location exists and you have write permissions and try again.",
         "EamDbSettingsDialog.okButton.createPostgresDbError.message=Unable to create Postgres Database, please ensure address, port, and login credentials are correct for Postgres server and try again.",
         "EamDbSettingsDialog.okButton.createDbError.title=Unable to Create Database"})
-    private boolean promptTestStatusWarnings() {
+    private static boolean promptTestStatusWarnings(CentralRepoDbManager manager, EamDbSettingsDialog dialog) {
         if (manager.getStatus() == DatabaseTestResult.CONNECTION_FAILED) {
             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                     Bundle.EamDbSettingsDialog_okButton_databaseConnectionFailed_message(),
@@ -204,7 +206,8 @@ public class EamDbSettingsDialog extends JDialog {
                         JOptionPane.WARNING_MESSAGE);
                 }
                 
-                valid();
+                if (dialog != null)
+                    dialog.valid();
             }
         }
 
@@ -502,14 +505,40 @@ public class EamDbSettingsDialog extends JDialog {
         "EamDbSettingsDialog.okButton.errorMsg.text=Please restart Autopsy to begin using the new database platform.",
         "EamDbSettingsDialog.okButton.connectionErrorMsg.text=Failed to connect to central repository database."})
     private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        testStatusAndCreate(this, manager, this);
+        dispose();
+    }//GEN-LAST:event_bnOkActionPerformed
+
+    
+        /**
+     * tests status for central repo db / creation and prompts user accordingly
+     * @param parent        the parent component (the anchor for displaying dialogs)
+     * @param manager       the central repo db manager with settings to be tested and saved
+     * @return              whether or not central repo db was successfully be created or found
+     */
+    public static boolean testStatusAndCreate(Component parent, CentralRepoDbManager manager) {
+        return testStatusAndCreate(parent, manager, null);
+    }
+    
+    
+    /**
+     * tests status for central repo db / creation and prompts user accordingly
+     * @param parent        the parent component (the anchor for displaying dialogs)
+     * @param manager       the central repo db manager with settings to be tested and saved
+     * @param dialog        the db settings dialog; if non-null, will validate okay button state
+     * @return              whether or not central repo db was successfully be created or found
+     */
+    private static boolean testStatusAndCreate(Component parent, CentralRepoDbManager manager, EamDbSettingsDialog dialog) {
+        parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         manager.testStatus();
-        valid();
         
-        boolean testedOk = promptTestStatusWarnings();
+        if (dialog != null)
+            dialog.valid();
+        
+        boolean testedOk = promptTestStatusWarnings(manager, dialog);
         if (!testedOk) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            return;
+            parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            return false;
         }
         
         try{
@@ -517,18 +546,16 @@ public class EamDbSettingsDialog extends JDialog {
         }
         catch (CentralRepoException e) {
             SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(this,
+                JOptionPane.showMessageDialog(parent,
                     Bundle.EamDbSettingsDialog_okButton_errorMsg_text(),
                     Bundle.EamDbSettingsDialog_okButton_errorTitle_text(),
                     JOptionPane.WARNING_MESSAGE);
             });
         }
-        
 
-        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        dispose();
-    }//GEN-LAST:event_bnOkActionPerformed
-
+        parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        return true;
+    }
     
     /**
      * Returns if changes to the central repository configuration were
