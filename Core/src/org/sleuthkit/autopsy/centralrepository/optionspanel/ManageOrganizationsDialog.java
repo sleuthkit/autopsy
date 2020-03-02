@@ -172,7 +172,6 @@ public final class ManageOrganizationsDialog extends JDialog {
         orgDescriptionTextArea.setEditable(false);
         orgDescriptionTextArea.setBackground(new java.awt.Color(240, 240, 240));
         orgDescriptionTextArea.setColumns(20);
-        orgDescriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         orgDescriptionTextArea.setLineWrap(true);
         orgDescriptionTextArea.setRows(3);
         orgDescriptionTextArea.setText(org.openide.util.NbBundle.getMessage(ManageOrganizationsDialog.class, "ManageOrganizationsDialog.orgDescriptionTextArea.text")); // NOI18N

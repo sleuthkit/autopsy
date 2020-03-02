@@ -390,7 +390,6 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
     private synchronized void addSpecificLabel(String labelText, double labelWidth, double labelX, boolean bold) {
         Text label = new Text(" " + labelText + " "); //NON-NLS
         label.setTextAlignment(TextAlignment.CENTER);
-        label.setFont(Font.font(null, bold ? FontWeight.BOLD : FontWeight.NORMAL, 10));
         //position label accounting for width
         label.relocate(labelX + labelWidth / 2 - label.getBoundsInLocal().getWidth() / 2, 0);
         label.autosize();
@@ -422,7 +421,6 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
         Label label = new Label(labelText);
         label.setAlignment(Pos.CENTER);
         label.setTextAlignment(TextAlignment.CENTER);
-        label.setFont(Font.font(10));
         //use a leading ellipse since that is the lowest frequency part,
         //and can be infered more easily from other surrounding labels
         label.setTextOverrun(OverrunStyle.LEADING_ELLIPSIS);

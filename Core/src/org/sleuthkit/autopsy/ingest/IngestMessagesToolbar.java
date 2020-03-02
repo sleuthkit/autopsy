@@ -175,7 +175,6 @@ class IngestMessagesToolbar extends javax.swing.JPanel {
             Font messagesFont = g.getFont().deriveFont(Font.PLAIN, FONT_SIZE);
             String messageStr = Integer.toString(messages);
             final int len = messageStr.length();
-            g.setFont(messagesFont);
 
             int dx = len * 5 + 5;
             int x = getSize().width - dx;

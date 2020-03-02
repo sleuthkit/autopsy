@@ -294,7 +294,6 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
                 Text text = new Text(Bundle.CountsViewPane_scaleHelpLog());
                 Text text2 = new Text(Bundle.CountsViewPane_scaleHelpLog2());
                 Font baseFont = text.getFont();
-                text2.setFont(Font.font(baseFont.getFamily(), FontWeight.BOLD, FontPosture.ITALIC, baseFont.getSize()));
                 Text text3 = new Text(Bundle.CountsViewPane_scaleHelpLog3());
                 showPopoverHelp(logImageView,
                         Bundle.CountsViewPane_logRadio_text(),

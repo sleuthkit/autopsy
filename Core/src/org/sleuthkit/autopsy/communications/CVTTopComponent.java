@@ -116,28 +116,36 @@ public final class CVTTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        filterTabPane = new JTabbedPane();
+        filterTabbedPane = new JTabbedPane();
         filterTabPanel = new JPanel();
         filtersPane = new FiltersPanel();
         splitPane = new JSplitPane();
         browseVisualizeTabPane = new JTabbedPane();
+        accountsBrowser = new AccountsBrowser(relationshipBrowser);
+        vizPanel = new VisualizationPanel(relationshipBrowser);
 
         setLayout(new BorderLayout());
 
-        filterTabPane.addMouseListener(new MouseAdapter() {
+        filterTabbedPane.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
-                filterTabPaneMouseClicked(evt);
+                filterTabbedPaneMouseClicked(evt);
             }
         });
 
-        filterTabPanel.add(filtersPane);
+		filterTabPanel.setLayout(new BorderLayout());
+        filterTabPanel.add(filtersPane, BorderLayout.CENTER);
 
-        filterTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.filterTabPanel.TabConstraints.tabTitle"), filterTabPanel); // NOI18N
+        filterTabbedPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.filterTabPanel.TabConstraints.tabTitle"), filterTabPanel); // NOI18N
 
-        add(filterTabPane, BorderLayout.WEST);
+        add(filterTabbedPane, BorderLayout.WEST);
 
         splitPane.setDividerLocation(1);
         splitPane.setResizeWeight(0.25);
+
+        browseVisualizeTabPane.setFont(new Font("Tahoma", 0, 18)); // NOI18N
+        browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
+        browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.vizPanel.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), vizPanel); // NOI18N
+
         splitPane.setLeftComponent(browseVisualizeTabPane);
         browseVisualizeTabPane.getAccessibleContext().setAccessibleName(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.browseVisualizeTabPane.AccessibleContext.accessibleName")); // NOI18N
 
@@ -163,11 +171,13 @@ public final class CVTTopComponent extends TopComponent {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private AccountsBrowser accountsBrowser;
     private JTabbedPane browseVisualizeTabPane;
-    private JTabbedPane filterTabPane;
+    private JTabbedPane filterTabbedPane;
     private JPanel filterTabPanel;
     private FiltersPanel filtersPane;
     private JSplitPane splitPane;
+    private VisualizationPanel vizPanel;
     // End of variables declaration//GEN-END:variables
 
     @Override
