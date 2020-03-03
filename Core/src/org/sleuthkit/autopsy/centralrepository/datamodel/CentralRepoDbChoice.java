@@ -24,7 +24,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 public class CentralRepoDbChoice {
     public static final CentralRepoDbChoice DISABLED = new CentralRepoDbChoice("Disabled", CentralRepoPlatforms.DISABLED);
 
-    public static final CentralRepoDbChoice SQLITE = new CentralRepoDbChoice("Sqlite", CentralRepoPlatforms.SQLITE);
+    public static final CentralRepoDbChoice SQLITE = new CentralRepoDbChoice("Sqlite", "SQLite", CentralRepoPlatforms.SQLITE);
 
     public static final CentralRepoDbChoice POSTGRESQL_MULTIUSER = 
         new CentralRepoDbChoice("PostgreSQL_Multiuser", "PostgreSQL using multi-user settings", CentralRepoPlatforms.POSTGRESQL);

@@ -141,9 +141,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     @NbBundle.Messages({
         "GlobalSettingsPanel.onMultiUserChange.enable.title=Use with Central Repository?",
         "GlobalSettingsPanel.onMultiUserChange.enable.description=Do you want to update the Central Repository to use this PostgreSQL database?",
-        "GlobalSettingsPanel.onMultiUserChange.enable.description2=The Central Repository stores hash values and accounts from past cases.",
-        "GlobalSettingsPanel.onMultiUserChange.disabledMu.title=Central Repository Change Necessary",
-        "GlobalSettingsPanel.onMultiUserChange.disabledMu.description=Since mult-user cases have been disabled, 'PostgreSQL using multi-user settings' is no longer a valid option for Central Repository.  Would you like to choose another Central Repository database?"
+        "GlobalSettingsPanel.onMultiUserChange.enable.description2=The Central Repository stores hash values and accounts from past cases."
     })
     public static void onMultiUserChange(Component parent, boolean muPreviouslySelected, boolean muCurrentlySelected) {
         boolean crMultiUser = CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
@@ -184,6 +182,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * when a user must select a new database other than using database from multi user settings
      * @param parent    the parent component to use for displaying dialogs in reference
      */
+    @NbBundle.Messages({
+        "GlobalSettingsPanel.onMultiUserChange.disabledMu.title=Central Repository Change Necessary",
+        "GlobalSettingsPanel.onMultiUserChange.disabledMu.description=The Central Repository will be reconfigured to use a local SQLite database.",
+        "GlobalSettingsPanel.onMultiUserChange.disabledMu.description2=Press Configure PostgreSQL to change to a PostgreSQL database."
+    })
     private static void askForCentralRepoDbChoice(Component parent) {
         // disable central repository until user makes choice
         CentralRepoDbUtil.setUseCentralRepo(false);
@@ -198,10 +201,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         int result = JOptionPane.showOptionDialog(
                 parent,
                 "<html><body>" +
-                        "<div style='width: 400px;'>" +
+                    "<div style='width: 400px;'>" +
                         "<p>" + NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.description") + "</p>" +
-                                "</div>" +
-                                "</body></html>",
+                        "<p style='margin-top: 10px'>" + NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.description2") + "</p>" +
+                    "</div>" +
+                "</body></html>",
                 NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.title"),
                 JOptionPane.YES_NO_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE,
