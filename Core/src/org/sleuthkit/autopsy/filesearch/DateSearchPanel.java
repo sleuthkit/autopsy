@@ -196,10 +196,8 @@ class DateSearchPanel extends javax.swing.JPanel {
         });
 
         jLabel3.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.jLabel3.text")); // NOI18N
-        jLabel3.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
 
         jLabel2.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.jLabel2.text")); // NOI18N
-        jLabel2.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
 
         modifiedCheckBox.setSelected(true);
         modifiedCheckBox.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.modifiedCheckBox.text")); // NOI18N

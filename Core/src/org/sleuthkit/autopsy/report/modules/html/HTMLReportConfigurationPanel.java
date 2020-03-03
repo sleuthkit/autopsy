@@ -74,8 +74,6 @@ final class HTMLReportConfigurationPanel extends javax.swing.JPanel {
         headerTextField = new javax.swing.JTextField();
         footerTextField = new javax.swing.JTextField();
 
-        setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-
         org.openide.awt.Mnemonics.setLocalizedText(headerLabel, org.openide.util.NbBundle.getMessage(HTMLReportConfigurationPanel.class, "HTMLReportConfigurationPanel.headerLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(footerLabel, org.openide.util.NbBundle.getMessage(HTMLReportConfigurationPanel.class, "HTMLReportConfigurationPanel.footerLabel.text")); // NOI18N

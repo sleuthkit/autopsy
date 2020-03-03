@@ -647,7 +647,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         nodePanel.setMinimumSize(new java.awt.Dimension(100, 100));
 
         tbOops.setEditable(false);
-        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
         tbOops.setForeground(new java.awt.Color(255, 0, 0));
         tbOops.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
@@ -781,10 +780,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
         pnTestMultiUser.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        lbTestMultiUserText.setFont(lbTestMultiUserText.getFont().deriveFont(lbTestMultiUserText.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
         org.openide.awt.Mnemonics.setLocalizedText(lbTestMultiUserText, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestMultiUserText.text")); // NOI18N
 
-        bnTestMultiUser.setFont(bnTestMultiUser.getFont().deriveFont(bnTestMultiUser.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(bnTestMultiUser, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnTestMultiUser.text")); // NOI18N
         bnTestMultiUser.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

@@ -144,7 +144,6 @@ class SelectDriveDialog extends javax.swing.JDialog {
 
         jTextArea1.setBackground(new java.awt.Color(240, 240, 240));
         jTextArea1.setColumns(20);
-        jTextArea1.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         jTextArea1.setRows(5);
         jTextArea1.setText(org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.jTextArea1.text")); // NOI18N
         jTextArea1.setBorder(null);

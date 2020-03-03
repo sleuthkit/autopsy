@@ -101,7 +101,6 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
             }
         });
 
-        nodeStatusTableTitle.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(nodeStatusTableTitle, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.nodeStatusTableTitle.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(healthMonitorButton, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.healthMonitorButton.text")); // NOI18N

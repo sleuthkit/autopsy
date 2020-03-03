@@ -151,18 +151,14 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
 
         org.openide.awt.Mnemonics.setLocalizedText(selectedModulesLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.selectedModulesLabel.text")); // NOI18N
 
-        ingestWarningLabel.setFont(ingestWarningLabel.getFont().deriveFont(ingestWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         ingestWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(ingestWarningLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.ingestWarningLabel.text")); // NOI18N
 
         jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        jScrollPane2.setFont(jScrollPane2.getFont().deriveFont(jScrollPane2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-
         infoTextArea.setEditable(false);
         infoTextArea.setBackground(new java.awt.Color(240, 240, 240));
         infoTextArea.setColumns(20);
-        infoTextArea.setFont(infoTextArea.getFont().deriveFont(infoTextArea.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         infoTextArea.setLineWrap(true);
         infoTextArea.setRows(3);
         infoTextArea.setText(org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.infoTextArea.text")); // NOI18N
@@ -310,7 +306,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(profileListLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(profileListPane, javax.swing.GroupLayout.DEFAULT_SIZE, 332, Short.MAX_VALUE)))
+                                .addComponent(profileListPane, javax.swing.GroupLayout.DEFAULT_SIZE, 323, Short.MAX_VALUE)))
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(11, 11, 11)

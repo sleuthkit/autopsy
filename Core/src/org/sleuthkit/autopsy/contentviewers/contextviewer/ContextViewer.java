@@ -93,7 +93,6 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             }
         });
 
-        jSourceLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jSourceLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceNameLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceNameLabel.text")); // NOI18N
@@ -131,7 +130,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                     .addComponent(jSourceTextLabel))
                 .addGap(18, 18, 18)
                 .addComponent(jSourceGoToResultButton)
-                .addGap(0, 203, Short.MAX_VALUE))
+                .addGap(0, 208, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

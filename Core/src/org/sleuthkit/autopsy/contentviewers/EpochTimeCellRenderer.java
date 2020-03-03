@@ -75,7 +75,6 @@ class EpochTimeCellRenderer extends DefaultTableCellRenderer {
                     long epochTime = Long.parseUnsignedLong(textStr);
                     if (epochTime > 0 ) {
                         Font font = getFont();
-                        setFont(font.deriveFont(font.getStyle() | Font.ITALIC));
                         setText(DATE_FORMAT.format(new Date(epochTime)));
                     }
                     else {

@@ -56,37 +56,26 @@ class VolumeDetailsPanel extends javax.swing.JPanel {
         flagsLabel = new javax.swing.JLabel();
         OKButton = new javax.swing.JButton();
 
-        flagsValue.setFont(flagsValue.getFont().deriveFont(flagsValue.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         flagsValue.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.flagsValue.text")); // NOI18N
 
-        descValue.setFont(descValue.getFont().deriveFont(descValue.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         descValue.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.descValue.text")); // NOI18N
 
-        lengthValue.setFont(lengthValue.getFont().deriveFont(lengthValue.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         lengthValue.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.lengthValue.text")); // NOI18N
 
-        startValue.setFont(startValue.getFont().deriveFont(startValue.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         startValue.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.startValue.text")); // NOI18N
 
-        startLabel.setFont(startLabel.getFont().deriveFont(startLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         startLabel.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.startLabel.text")); // NOI18N
 
-        lengthLabel.setFont(lengthLabel.getFont().deriveFont(lengthLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         lengthLabel.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.lengthLabel.text")); // NOI18N
 
-        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD, 18));
         jLabel1.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.jLabel1.text")); // NOI18N
 
-        volumeIDLabel.setFont(volumeIDLabel.getFont().deriveFont(volumeIDLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         volumeIDLabel.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.volumeIDLabel.text")); // NOI18N
 
-        volumeIDValue.setFont(volumeIDValue.getFont().deriveFont(volumeIDValue.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         volumeIDValue.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.volumeIDValue.text")); // NOI18N
 
-        descLabel.setFont(descLabel.getFont().deriveFont(descLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         descLabel.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.descLabel.text")); // NOI18N
 
-        flagsLabel.setFont(flagsLabel.getFont().deriveFont(flagsLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         flagsLabel.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.flagsLabel.text")); // NOI18N
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -113,7 +102,7 @@ class VolumeDetailsPanel extends javax.swing.JPanel {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(59, 59, 59)
                         .addComponent(jLabel1)))
-                .addContainerGap(58, Short.MAX_VALUE))
+                .addContainerGap(147, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -143,10 +132,9 @@ class VolumeDetailsPanel extends javax.swing.JPanel {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(descValue)
                         .addGap(25, 25, 25)))
-                .addContainerGap(29, Short.MAX_VALUE))
+                .addContainerGap(37, Short.MAX_VALUE))
         );
 
-        OKButton.setFont(OKButton.getFont().deriveFont(OKButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         OKButton.setText(org.openide.util.NbBundle.getMessage(VolumeDetailsPanel.class, "VolumeDetailsPanel.OKButton.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

@@ -92,11 +92,6 @@
       <SubComponents>
         <Component class="javax.swing.JLabel" name="caseNumberLabel">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="caseNumberLabel" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="OptionalCasePropertiesPanel.caseNumberLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -112,21 +107,9 @@
           </Properties>
         </Component>
         <Component class="javax.swing.JTextField" name="caseNumberTextField">
-          <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="caseNumberTextField" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
-          </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="caseDisplayNameLabel">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="caseDisplayNameLabel" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="OptionalCasePropertiesPanel.caseDisplayNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -143,13 +126,6 @@
           </Properties>
         </Component>
         <Component class="javax.swing.JTextField" name="caseDisplayNameTextField">
-          <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="caseDisplayNameTextField" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
-          </Properties>
         </Component>
       </SubComponents>
     </Container>
@@ -261,9 +237,6 @@
             <Component class="javax.swing.JTextArea" name="taNotesText">
               <Properties>
                 <Property name="columns" type="int" value="20"/>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Tahoma" size="11" style="0"/>
-                </Property>
                 <Property name="lineWrap" type="boolean" value="true"/>
                 <Property name="rows" type="int" value="2"/>
                 <Property name="wrapStyleWord" type="boolean" value="true"/>
@@ -277,13 +250,6 @@
         <Component class="javax.swing.JTextField" name="tfExaminerEmailText">
         </Component>
         <Component class="javax.swing.JTextField" name="examinerTextField">
-          <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="examinerTextField" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
-          </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="lbExaminerEmailLabel">
           <Properties>
@@ -303,11 +269,6 @@
         </Component>
         <Component class="javax.swing.JLabel" name="examinerLabel">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="examinerLabel" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="OptionalCasePropertiesPanel.examinerLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>

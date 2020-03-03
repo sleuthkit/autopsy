@@ -284,7 +284,6 @@ class ArtifactSelectionDialog extends javax.swing.JDialog {
             if (value != null) {
                 setEnabled(list.isEnabled());
                 setSelected(artifactTypeSelections.get(value));
-                setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
                 setText(value.getDisplayName());

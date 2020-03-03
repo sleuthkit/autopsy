@@ -65,8 +65,6 @@ public final class HidingPane extends JTabbedPane {
         tabLabel.setUI(new VerticalLabelUI(true));
         tabLabel.setOpaque(false);
         Font font = tabLabel.getFont().deriveFont(18).deriveFont(Font.BOLD);
-        tabLabel.setFont(font);
-        
         addTab(null, panel);
         setTabComponentAt(0, tabLabel);
         

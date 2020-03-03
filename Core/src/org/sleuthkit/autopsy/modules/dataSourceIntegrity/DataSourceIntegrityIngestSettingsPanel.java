@@ -75,7 +75,6 @@ final class DataSourceIntegrityIngestSettingsPanel extends IngestModuleIngestJob
 
         org.openide.awt.Mnemonics.setLocalizedText(verifyHashesCheckbox, org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.verifyHashesCheckbox.text")); // NOI18N
 
-        jLabel3.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.jLabel3.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.jLabel1.text")); // NOI18N

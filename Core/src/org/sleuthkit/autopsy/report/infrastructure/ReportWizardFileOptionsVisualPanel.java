@@ -270,7 +270,6 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
                 FileReportDataTypes col = value;
                 setEnabled(list.isEnabled());
                 setSelected(optionStates.get(col));
-                setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
                 setText(col.getName());

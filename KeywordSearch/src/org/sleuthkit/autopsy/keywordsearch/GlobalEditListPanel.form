@@ -192,11 +192,6 @@
         </Component>
         <Component class="javax.swing.JLabel" name="ingestWarningLabel">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="ingestWarningLabel" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/org/sleuthkit/autopsy/modules/hashdatabase/warning16.png"/>
             </Property>

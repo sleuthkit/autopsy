@@ -250,7 +250,6 @@ public class EamDbSettingsDialog extends JDialog {
         dataBaseFileTextArea.setEditable(false);
         dataBaseFileTextArea.setBackground(new java.awt.Color(240, 240, 240));
         dataBaseFileTextArea.setColumns(20);
-        dataBaseFileTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         dataBaseFileTextArea.setLineWrap(true);
         dataBaseFileTextArea.setRows(3);
         dataBaseFileScrollPane.setViewportView(dataBaseFileTextArea);
