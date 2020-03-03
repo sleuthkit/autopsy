@@ -84,7 +84,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         ingestJobEventListener = new IngestJobEventPropertyChangeListener();
         
         // most recently created panel will receive update events
-        GlobalSettingsPanel.setSettingsChangeListener(() -> load());
+        GlobalSettingsPanel.setSettingsChangeListener(() -> ingestStateUpdated(Case.isCaseOpen()));
         initComponents();
         customizeComponents();
         addIngestJobEventsListener();
@@ -144,7 +144,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         "GlobalSettingsPanel.onMultiUserChange.enable.description2=The Central Repository stores hash values and accounts from past cases."
     })
     public static void onMultiUserChange(Component parent, boolean muPreviouslySelected, boolean muCurrentlySelected) {
-        boolean crMultiUser = CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
+        boolean crMultiUser = CentralRepoDbUtil.allowUseOfCentralRepository() &&
+            CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
         
         if (!muPreviouslySelected && muCurrentlySelected) {
             SwingUtilities.invokeLater(() -> {
@@ -159,6 +160,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                     JOptionPane.YES_NO_OPTION)) {
                 
                 // setup database for CR
+                CentralRepoDbUtil.setUseCentralRepo(true);
                 CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.POSTGRESQL_MULTIUSER);
                 handleDbChange(parent);
             }
@@ -226,16 +228,19 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     
     
     private static void handleDbChange(Component parent) {
-        boolean successful = EamDbSettingsDialog.testStatusAndCreate(parent, new CentralRepoDbManager());
-        if (successful) {
-            updateDatabase(parent);
-            onSettingsChange();            
-        }
-        else {
-            // disable central repository
-            CentralRepoDbUtil.setUseCentralRepo(false);
-            CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
-        }
+        SwingUtilities.invokeLater(() -> {
+            boolean successful = EamDbSettingsDialog.testStatusAndCreate(parent, new CentralRepoDbManager());
+            if (successful) {
+                updateDatabase(parent);
+                onSettingsChange();            
+            }
+            else {
+                // disable central repository
+                CentralRepoDbUtil.setUseCentralRepo(false);
+                CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
+                GlobalSettingsPanel.onSettingsChange();
+            }
+        });
     }
     
     
