@@ -44,7 +44,7 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CRAccount.CRAccountType;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
@@ -75,8 +75,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     private static final int CASE_CACHE_TIMEOUT = 5;
     private static final int DATA_SOURCE_CACHE_TIMEOUT = 5;
     private static final int ACCOUNTS_CACHE_TIMEOUT = 5;
-    private static final Cache<String, CRAccountType> accountTypesCache = CacheBuilder.newBuilder().build();
-    private static final Cache<Pair<CRAccountType, String>, CRAccount> accountsCache = CacheBuilder.newBuilder()
+    private static final Cache<String, CentralRepoAccountType> accountTypesCache = CacheBuilder.newBuilder().build();
+    private static final Cache<Pair<CentralRepoAccountType, String>, CentralRepoAccount> accountsCache = CacheBuilder.newBuilder()
             .expireAfterWrite(ACCOUNTS_CACHE_TIMEOUT, TimeUnit.MINUTES).
             build();
     
@@ -1047,7 +1047,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
 
   	/**
-	 * Gets the CR account for the given account type and account ID. 
+	 * Gets the Central Repo account for the given account type and account ID. 
          * Create a new account first, if one doesn't exist
 	 *
 	 * @param accountType     account type
@@ -1059,15 +1059,15 @@ abstract class RdbmsCentralRepo implements CentralRepository {
 	 *                          within TSK core
 	 */
     @Override
-    public CRAccount getOrCreateCRAccount(CRAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
+    public CentralRepoAccount getOrCreateAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
         // Get the account fom the accounts table
-        CRAccount account = getCRAccount(crAccountType, accountUniqueID);
+        CentralRepoAccount account = getAccount(crAccountType, accountUniqueID);
 
         // account not found in the table, create it
         if (null == account) {
 
             String query = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
-                    + "VALUES ( " + crAccountType.getCRAccountTypeId() + ", '"
+                    + "VALUES ( " + crAccountType.getAccountTypeId() + ", '"
                     + accountUniqueID + "' )";
 
             try (Connection connection = connect();
@@ -1075,7 +1075,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
 
                 s.execute(query);
                 // get the account from the db - should exist now.
-                account = getCRAccount(crAccountType, accountUniqueID);
+                account = getAccount(crAccountType, accountUniqueID);
             } catch (SQLException ex) {
                 throw new CentralRepoException("Error adding an account to CR database.", ex);
             }
@@ -1086,7 +1086,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     
 
     @Override
-    public CRAccountType getCRAccountTypeByName(String accountTypeName) throws CentralRepoException {
+    public CentralRepoAccountType getAccountTypeByName(String accountTypeName) throws CentralRepoException {
         try {
             return accountTypesCache.get(accountTypeName, () -> getCRAccountTypeFromDb(accountTypeName));
         } catch (CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
@@ -1103,7 +1103,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      * 
      * @throws CentralRepoException 
      */
-    private CRAccountType getCRAccountTypeFromDb(String accountTypeName) throws CentralRepoException {
+    private CentralRepoAccountType getCRAccountTypeFromDb(String accountTypeName) throws CentralRepoException {
 
         String sql = "SELECT * FROM account_types WHERE type_name = ?";
         try ( Connection conn = connect();
@@ -1113,7 +1113,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             try (ResultSet resultSet = preparedStatement.executeQuery();) {
                 if (resultSet.next()) {
                     Account.Type acctType = new Account.Type(accountTypeName, resultSet.getString("display_name"));
-                    CRAccountType crAccountType = new CRAccountType(resultSet.getInt("id"), acctType, resultSet.getInt("correlation_type_id"));
+                    CentralRepoAccountType crAccountType = new CentralRepoAccountType(resultSet.getInt("id"), acctType, resultSet.getInt("correlation_type_id"));
                     accountTypesCache.put(accountTypeName, crAccountType);
                     return crAccountType;
                 } else {
@@ -1134,13 +1134,13 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      * 
      * @param crAccountType account type to look for
      * @param accountUniqueID unique account id
-     * @return CRAccount for the give type/id.  May return null if not found.
+     * @return CentralRepoAccount for the give type/id.  May return null if not found.
      * 
      * @throws CentralRepoException 
      */
-    private CRAccount getCRAccount(CRAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
+    private CentralRepoAccount getAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
         
-        CRAccount crAccount = accountsCache.getIfPresent(Pair.of(crAccountType, accountUniqueID));
+        CentralRepoAccount crAccount = accountsCache.getIfPresent(Pair.of(crAccountType, accountUniqueID));
         if (crAccount == null) {
             crAccount = getCRAccountFromDb(crAccountType, accountUniqueID);
             if (crAccount != null) {
@@ -1164,20 +1164,20 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      * @throws TskCoreException exception thrown if a critical error occurs
      * within TSK core
      */
-    private CRAccount getCRAccountFromDb(CRAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
+    private CentralRepoAccount getCRAccountFromDb(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
 
-        CRAccount account = null;
+        CentralRepoAccount account = null;
 
         String sql = "SELECT * FROM accounts WHERE account_type_id =  ? AND account_unique_identifier = ?";
         try ( Connection connection = connect();
               PreparedStatement preparedStatement = connection.prepareStatement(sql);) {
 
-            preparedStatement.setInt(1, crAccountType.getCRAccountTypeId());
+            preparedStatement.setInt(1, crAccountType.getAccountTypeId());
             preparedStatement.setString(2, accountUniqueID);
 
             try (ResultSet resultSet = preparedStatement.executeQuery();) {
                 if (resultSet.next()) {
-                    account = new CRAccount(resultSet.getInt("id"), crAccountType, resultSet.getString("account_unique_identifier"));   //NON-NLS
+                    account = new CentralRepoAccount(resultSet.getInt("id"), crAccountType, resultSet.getString("account_unique_identifier"));   //NON-NLS
                 }
             }
         } catch (SQLException ex) {

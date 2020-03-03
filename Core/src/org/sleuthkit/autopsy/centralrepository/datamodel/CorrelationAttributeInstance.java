@@ -242,7 +242,7 @@ public class CorrelationAttributeInstance implements Serializable {
      * Set the accountId of the account associated with this correlation
      * attribute.
      */
-    public void setAccountId(Long accountId) {
+    void setAccountId(Long accountId) {
         this.accountId = accountId;
     }
     

@@ -24,7 +24,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CRAccount.CRAccountType;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -248,8 +248,8 @@ public class CorrelationAttributeUtil {
         BlackboardAttribute accountTypeAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
         String accountTypeStr = accountTypeAttribute.getValueString();
 
-        // Get the corresponding CRAccountType from the database.
-        CRAccountType crAccountType = CentralRepository.getInstance().getCRAccountTypeByName(accountTypeStr);
+        // Get the corresponding CentralRepoAccountType from the database.
+        CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
 
         int corrTypeId = crAccountType.getCorrelationTypeId();
         CorrelationAttributeInstance.Type corrType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
@@ -258,13 +258,13 @@ public class CorrelationAttributeUtil {
         BlackboardAttribute accountIdAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID));
         String accountIdStr = accountIdAttribute.getValueString();
         
-        // add/get the account and get its account_id.
-        CRAccount crAccount = CentralRepository.getInstance().getOrCreateCRAccount(crAccountType, accountIdStr);
+        // add/get the account and get its accountId.
+        CentralRepoAccount crAccount = CentralRepository.getInstance().getOrCreateAccount(crAccountType, accountIdStr);
         
         CorrelationAttributeInstance corrAttr = makeCorrAttr(acctArtifact, corrType, accountIdStr);
         if (corrAttr != null) {
             // set the account_id in correlation attribute
-            corrAttr.setAccountId(crAccount.getAccountID());
+            corrAttr.setAccountId(crAccount.getAccountId());
             corrAttrInstances.add(corrAttr);
         }
     }

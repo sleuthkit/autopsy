@@ -24,29 +24,30 @@ import org.sleuthkit.datamodel.Account;
 /**
  * This class abstracts an Account as stored in the CR database.
  */
-public final class CRAccount {
+public final class CentralRepoAccount {
     
 	// primary key in the Accounts table in CR database
-	private final long account_id;
+	private final long accountId;
 
-	private final CRAccountType crAccountType;
-	private final String typeSpecificID;
+	private final CentralRepoAccountType accountType;
+        // type specifc unique account id
+	private final String typeSpecificId;
         
     /**
-     * A CRAccounType encapsulates an account type and the correlation type
+     * Encapsulates a central repo account type and the correlation type
      * that it maps to.
      */
-    public static final class CRAccountType {
+    public static final class CentralRepoAccountType {
 
         // id is the primary key in the account_types table
-        private final int crAccountTypeID;
+        private final int accountTypeId;
         private final Account.Type acctType;
-        private final int correlationTypeID;
+        private final int correlationTypeId;
 
-        CRAccountType(int acctTypeID, Account.Type acctType, int correlation_type_id) {
+        CentralRepoAccountType(int acctTypeID, Account.Type acctType, int correlationTypeId) {
             this.acctType = acctType;
-            this.correlationTypeID = correlation_type_id;
-            this.crAccountTypeID = acctTypeID;
+            this.correlationTypeId = correlationTypeId;
+            this.accountTypeId = acctTypeID;
         }
         
 
@@ -58,18 +59,18 @@ public final class CRAccount {
         }
 
         public int getCorrelationTypeId() {
-            return this.correlationTypeID;
+            return this.correlationTypeId;
         }
 
-        public int getCRAccountTypeId() {
-            return this.crAccountTypeID;
+        public int getAccountTypeId() {
+            return this.accountTypeId;
         }
     }
     
-    public CRAccount(long account_id, CRAccountType accountType, String typeSpecificId) {
-		this.account_id = account_id;
-		this.crAccountType = accountType;
-		this.typeSpecificID = typeSpecificId;
+    public CentralRepoAccount(long accountId, CentralRepoAccountType accountType, String typeSpecificId) {
+		this.accountId = accountId;
+		this.accountType = accountType;
+		this.typeSpecificId = typeSpecificId;
 	}
 
 	/**
@@ -78,8 +79,8 @@ public final class CRAccount {
 	 *
 	 * @return type specific account id.
 	 */
-	public String getTypeSpecificID() {
-		return this.typeSpecificID;
+	public String getTypeSpecificId() {
+		return this.typeSpecificId;
 	}
 
 	/**
@@ -87,8 +88,8 @@ public final class CRAccount {
 	 *
 	 * @return account type
 	 */
-	public CRAccountType getAccountType() {
-		return this.crAccountType;
+	public CentralRepoAccountType getAccountType() {
+		return this.accountType;
 	}
 
 	/**
@@ -96,16 +97,16 @@ public final class CRAccount {
 	 *
 	 * @return unique row id.
 	 */
-	public long getAccountID() {
-		return this.account_id;
+	public long getAccountId() {
+		return this.accountId;
 	}
 
 	@Override
 	public int hashCode() {
 		int hash = 5;
-		hash = 43 * hash + (int) (this.account_id ^ (this.account_id >>> 32));
-		hash = 43 * hash + (this.crAccountType != null ? this.crAccountType.hashCode() : 0);
-		hash = 43 * hash + (this.typeSpecificID != null ? this.typeSpecificID.hashCode() : 0);
+		hash = 43 * hash + (int) (this.accountId ^ (this.accountId >>> 32));
+		hash = 43 * hash + (this.accountType != null ? this.accountType.hashCode() : 0);
+		hash = 43 * hash + (this.typeSpecificId != null ? this.typeSpecificId.hashCode() : 0);
 		return hash;
 	}
 
@@ -120,14 +121,14 @@ public final class CRAccount {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final CRAccount other = (CRAccount) obj;
-		if (this.account_id != other.getAccountID()) {
+		final CentralRepoAccount other = (CentralRepoAccount) obj;
+		if (this.accountId != other.getAccountId()) {
 			return false;
 		}
-		if ((this.typeSpecificID == null) ? (other.getTypeSpecificID() != null) : !this.typeSpecificID.equals(other.getTypeSpecificID())) {
+		if ((this.typeSpecificId == null) ? (other.getTypeSpecificId() != null) : !this.typeSpecificId.equals(other.getTypeSpecificId())) {
 			return false;
 		}
-		if (this.crAccountType != other.getAccountType() && (this.crAccountType == null || !this.crAccountType.equals(other.getAccountType()))) {
+		if (this.accountType != other.getAccountType() && (this.accountType == null || !this.accountType.equals(other.getAccountType()))) {
 			return false;
 		}
 		return true;

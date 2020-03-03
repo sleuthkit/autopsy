@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CRAccount.CRAccountType;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 
 /**
@@ -816,13 +816,13 @@ public interface CentralRepository {
     
     
     /**
-     * Get CR account type by type name.
+     * Get account type by type name.
      * 
      * @param accountTypeName account type name to look for
      * @return CR account type
      * @throws CentralRepoException 
      */
-    CRAccountType getCRAccountTypeByName(String accountTypeName) throws CentralRepoException;
+    CentralRepoAccountType getAccountTypeByName(String accountTypeName) throws CentralRepoException;
      
     /**
      * Get an account from the accounts table matching the given type/ID.  
@@ -834,7 +834,7 @@ public interface CentralRepository {
      * 
      * @throws CentralRepoException 
      */
-    CRAccount getOrCreateCRAccount(CRAccount.CRAccountType crAccountType, String accountUniqueID) throws CentralRepoException;
+    CentralRepoAccount getOrCreateAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException;
     
              
 }
