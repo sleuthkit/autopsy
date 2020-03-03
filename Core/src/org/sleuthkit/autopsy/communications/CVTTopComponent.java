@@ -87,6 +87,10 @@ public final class CVTTopComponent extends TopComponent {
             relationshipBrowser.setSelectionInfo(new SelectionInfo(new HashSet<>(), new HashSet<>(), currentFilter));
         });
 
+        filterTabPanel.setLayout(new BorderLayout());
+        filterTabPanel.add(filtersPane, BorderLayout.CENTER);
+        browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
+        browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.vizPanel.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), vizPanel); // NOI18N
         /*
          * Connect the filtersPane to the accountsBrowser and visualizaionPanel
          * via an Eventbus
@@ -98,6 +102,7 @@ public final class CVTTopComponent extends TopComponent {
 
         filterTabbedPane.setIconAt(0, new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-left.png")));
         filterTabbedPane.setTitleAt(0, "");
+
     }
 
     @Subscribe
