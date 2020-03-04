@@ -58,4 +58,11 @@ public class TextSummary {
         return sampleImage;
     }
 
+    /**
+     * @return the numberOfImages
+     */
+    int getNumberOfImages() {
+        return numberOfImages;
+    }
+
 }
