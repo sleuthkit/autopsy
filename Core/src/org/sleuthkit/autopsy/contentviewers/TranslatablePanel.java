@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,56 +18,137 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import java.awt.Component;
 import org.apache.commons.lang.StringUtils;
-import org.openide.util.NbBundle;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import org.openide.util.NbBundle.Messages;
 
 /**
- * A JPanel used by TranslatedContentViewer to display machine translation of
- * text.
+ * A panel for translation with a subcomponent that allows for translation
  */
-@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class TranslatablePanel extends JPanel {
-    private static final long serialVersionUID = 1L;
-    private int lastSelectedIndex = 0;
-    private final TranslatableJPanel contentPanel;
-    private final String origOptionText;
-    private final String translatedOptionText;
-    
-    static abstract class TranslatableJPanel extends JPanel {
-        protected abstract String onTranslateChange(boolean translate);
+    /**
+     * an option in drop down of whether or not to translate
+     */
+    private class TranslateOption {
+        private final String text;
+        private final boolean translate;
+
+        public TranslateOption(String text, boolean translate) {
+            this.text = text;
+            this.translate = translate;
+        }
+
+        public String getText() {
+            return text;
+        }
+        
+        @Override
+        public String toString() {
+            return text;
+        }
+
+        public boolean shouldTranslate() {
+            return translate;
+        }
     }
     
+    
+    /**
+     * describes a component that will allow for translation that has String-based content
+     */
+    interface TranslatableComponent {
+        /**
+         * @return the underlying component to be added to TranslatablePanel as a parent
+         */
+        Component getComponent();
+        
+        
+        /**
+         * set the content for this subcomponent
+         * @param content the original content for the component; when this is reset, there is no translation initially
+         * @return        if non-null string, this string will appear as error message
+         */
+        String setContent(String content);
+        String getContent();
+        
+        
+        /**
+         * sets the state of this component to translated
+         * @param translate     whether or not to translate this component
+         * @return              if non-null string, this string will appear as error message
+         */
+        String setTranslated(boolean translate);
+        boolean isTranslated();
+    }
+    
+    
+    
+    private static final long serialVersionUID = 1L;
+    
+    private final TranslatableComponent subcomponent;
+    private final String origOptionText;
+    private final String translatedOptionText;
+
+
+    @Messages({"TranslatablePanel.comboBoxOption.originalText=Original Text",
+        "TranslatablePanel.comboBoxOption.translatedText=Translated Text"}) 
+    TranslatablePanel(TranslatableComponent subcomponent) {
+        this(
+            subcomponent, 
+            Bundle.TranslatablePanel_comboBoxOption_originalText(), 
+            Bundle.TranslatablePanel_comboBoxOption_translatedText(), 
+            null);
+    }
+        
     /**
      * Creates new form TranslatedContentPanel
      */
-    TranslatablePanel(TranslatableJPanel contentPanel, String origOptionText, String translatedOptionText) {
-        this.contentPanel = contentPanel;
+    TranslatablePanel(TranslatableComponent subcomponent, String origOptionText, String translatedOptionText, String origContent) {
+        this.subcomponent = subcomponent;
         this.origOptionText = origOptionText;
         this.translatedOptionText = translatedOptionText;
         
         initComponents();
-        add(this.contentPanel, java.awt.BorderLayout.CENTER);
-        reset();
-        
+        additionalInit(origContent);
     }
 
     
-    void setWarningLabelMsg(String msg) {
+    
+    private void setWarningLabelMsg(String msg) {
         warningLabel.setText(msg);
         warningLabel.setVisible(StringUtils.isEmpty(msg));
     }
 
-//        @Messages({"TranslatedContentPanel.comboBoxOption.originalText=Original Text (Up to 25KB)",
-//        "TranslatedContentPanel.comboBoxOption.translatedText=Translated Text"})
+    void reset() {
+        setContent(null);
+    }
+    
+    void setContent(String content) {
+        this.translateComboBox.setSelectedIndex(0);
+        SwingUtilities.invokeLater(() -> {
+            String errMess = this.subcomponent.setContent(content);
+            setWarningLabelMsg(errMess);
+        });
+    }
 
-        
-    //@NbBundle.Messages({"TranslationContentPanel.autoDetectOCR=Autodetect language"})
-    final void reset() {
+    
+
+    private void additionalInit(String origContent) {
+        add(this.subcomponent.getComponent(), java.awt.BorderLayout.CENTER);
         setWarningLabelMsg(null);
-        displayTextComboBox.removeAllItems();
-        displayTextComboBox.addItem(this.origOptionText);
-        displayTextComboBox.addItem(this.translatedOptionText);
+        translateComboBox.removeAllItems();
+        translateComboBox.addItem(new TranslateOption(this.origOptionText, false));
+        translateComboBox.addItem(new TranslateOption(this.translatedOptionText, true));
+        this.subcomponent.setContent(origContent);
+    }
+    
+    private void handleComboBoxChange(TranslateOption translateOption) {
+        SwingUtilities.invokeLater(() -> {
+           String errMess = this.subcomponent.setTranslated(translateOption.shouldTranslate());
+           setWarningLabelMsg(errMess);
+        });
     }
     
 
@@ -82,7 +163,7 @@ final class TranslatablePanel extends JPanel {
         java.awt.GridBagConstraints gridBagConstraints;
 
         jPanel1 = new javax.swing.JPanel();
-        displayTextComboBox = new javax.swing.JComboBox<>();
+        translateComboBox = new javax.swing.JComboBox<>();
         warningLabel = new javax.swing.JLabel();
         showLabel = new javax.swing.JLabel();
 
@@ -98,8 +179,13 @@ final class TranslatablePanel extends JPanel {
         jPanel1.setPreferredSize(new java.awt.Dimension(182, 24));
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
-        displayTextComboBox.setMinimumSize(new java.awt.Dimension(43, 20));
-        displayTextComboBox.setPreferredSize(new java.awt.Dimension(43, 20));
+        translateComboBox.setMinimumSize(new java.awt.Dimension(43, 20));
+        translateComboBox.setPreferredSize(new java.awt.Dimension(43, 20));
+        translateComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                translateComboBoxActionPerformed(evt);
+            }
+        });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 0;
@@ -107,7 +193,7 @@ final class TranslatablePanel extends JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
-        jPanel1.add(displayTextComboBox, gridBagConstraints);
+        jPanel1.add(translateComboBox, gridBagConstraints);
 
         warningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/warning16.png"))); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -127,10 +213,14 @@ final class TranslatablePanel extends JPanel {
         add(jPanel1, java.awt.BorderLayout.NORTH);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void translateComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_translateComboBoxActionPerformed
+        handleComboBoxChange((TranslateOption) translateComboBox.getSelectedItem());
+    }//GEN-LAST:event_translateComboBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<String> displayTextComboBox;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JLabel showLabel;
+    private javax.swing.JComboBox<TranslateOption> translateComboBox;
     private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables
 }

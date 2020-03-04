@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.text.JTextComponent;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -41,12 +43,16 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.contentviewers.TranslatablePanel.TranslatableComponent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
+import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
@@ -83,7 +89,106 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.URL
 @ServiceProvider(service = DataContentViewer.class, position = 5)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class MessageContentViewer extends javax.swing.JPanel implements DataContentViewer {
+    private static boolean tryHandle(Runnable runnable, String logErrorMessage) {
+        try {
+            runnable.run();
+        }
+        catch (Exception e) {
+            LOGGER.log(Level.WARNING, logErrorMessage, e);
+            return false;
+        }
+        
+        return true;
+    }
+        
+    /**
+     * provides the interface to be injected into the TranslatablePanel and displays text
+     */
+    static class TextTranslatableComponent implements TranslatableComponent {
+        private final Component parentComponent;
+        private final JTextArea textComponent;
+        private final TextTranslationService translationService;
+        
+        private boolean translate = false;
+        private String translated = null;
+        private String origContent = "";
+        
 
+        TextTranslatableComponent() {
+            JTextArea textComponent = new JTextArea();
+            textComponent.setEditable(false);
+            textComponent.setLineWrap(true);
+            textComponent.setRows(5);
+            textComponent.setWrapStyleWord(true);
+
+            JScrollPane parentComponent = new JScrollPane();
+            parentComponent.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            parentComponent.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+            parentComponent.setViewportView(textComponent);
+
+            this.parentComponent = parentComponent;
+            this.textComponent = textComponent;
+            this.translationService = TextTranslationService.getInstance();
+        }
+        
+        TextTranslatableComponent(Component parentComponent, JTextArea textComponent, TextTranslationService translationService) {
+            this.parentComponent = parentComponent;
+            this.textComponent = textComponent;
+            this.translationService = translationService;
+        }
+        
+        public Component getComponent() { 
+            return parentComponent; 
+        }
+        
+        public String getContent() { 
+            return origContent;
+        }
+        
+        public boolean isTranslated() { 
+            return translate; 
+        }
+
+        private boolean setPanelContent(String content) {
+            return tryHandle(() -> {
+                textComponent.setText(content == null ? "" : content);
+            }, "There was an error in setting up the text for MessageContentViewer text panel"); 
+
+        }
+
+        @NbBundle.Messages("TextTranslatableComponent.setPanelContent.onSetContentError=Unable to display text at this time.")        
+        private String onErr(boolean success) {
+            return (success) ? null : Bundle.MessageContentViewer_initTextPane_onError();
+        }
+
+        public String setContent(String content) { 
+            this.origContent = content;
+            this.translated = null;
+            this.translate = false;
+            return onErr(setPanelContent(content));
+        }
+
+        @NbBundle.Messages("TextTranslatableComponent.setTranslated.onTranslateError=Unable to translate text at this time.") 
+        public String setTranslated(boolean translate) {
+            this.translate = translate;
+            if (this.translate) {
+                if (this.translated == null) {
+                    try {
+                        this.translated = this.translationService.translate(this.origContent);
+                    } catch (NoServiceProviderException | TranslationException ex) {
+                        LOGGER.log(Level.WARNING, "Unable to translate text with translation service", ex);
+                        return Bundle.TextTranslatableComponent_setTranslated_onTranslateError();
+                    }
+                }
+                return onErr(setPanelContent(this.translated == null ? "" : this.translated));        
+            }
+            else {
+                return onErr(setPanelContent(this.origContent));   
+            }
+        }
+    }
+    
+    
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(MessageContentViewer.class.getName());
     private static final BlackboardAttribute.Type TSK_ASSOCIATED_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
@@ -94,8 +199,12 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private static final int RTF_TAB_INDEX = 3;
     private static final int ATTM_TAB_INDEX = 4;
 
+
+    
+    
     private final List<JTextComponent> textAreas;
     private final org.sleuthkit.autopsy.contentviewers.HtmlPanel htmlPanel = new org.sleuthkit.autopsy.contentviewers.HtmlPanel();
+    private final TranslatablePanel textPanel = new TranslatablePanel(new TextTranslatableComponent());
     /**
      * Artifact currently being displayed
      */
@@ -113,13 +222,21 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         envelopePanel.setBackground(new Color(0, 0, 0, 38));
         drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageContentViewer_AtrachmentsPanel_title(), "", new TableFilterNode(Node.EMPTY, false), 0, null);
         attachmentsScrollPane.setViewportView(drp);
+        
+        msgbodyTabbedPane.insertTab(
+            NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle"),
+            null,
+            textPanel,
+            null,
+            TEXT_TAB_INDEX);
+        
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, true);
 
         /*
          * HTML tab uses the HtmlPanel instead of an internal text pane, so we
          * use 'null' for that index.
          */
-        textAreas = Arrays.asList(headersTextArea, textbodyTextArea, null, rtfbodyTextPane);
+        textAreas = Arrays.asList(headersTextArea, null, null, rtfbodyTextPane);
 
         Utilities.configureTextPaneAsRtf(rtfbodyTextPane);
         resetComponent();
@@ -135,6 +252,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         drpExplorerManager.addPropertyChangeListener(evt
                 -> viewInNewWindowButton.setEnabled(drpExplorerManager.getSelectedNodes().length == 1));
     }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -159,8 +277,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         msgbodyTabbedPane = new javax.swing.JTabbedPane();
         headersScrollPane = new javax.swing.JScrollPane();
         headersTextArea = new javax.swing.JTextArea();
-        textbodyScrollPane = new javax.swing.JScrollPane();
-        textbodyTextArea = new javax.swing.JTextArea();
         htmlPane = new javax.swing.JPanel();
         rtfbodyScrollPane = new javax.swing.JScrollPane();
         rtfbodyTextPane = new javax.swing.JTextPane();
@@ -263,17 +379,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.headersScrollPane.TabConstraints.tabTitle"), headersScrollPane); // NOI18N
 
-        textbodyScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        textbodyScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
-        textbodyTextArea.setEditable(false);
-        textbodyTextArea.setLineWrap(true);
-        textbodyTextArea.setRows(5);
-        textbodyTextArea.setWrapStyleWord(true);
-        textbodyScrollPane.setViewportView(textbodyTextArea);
-
-        msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle"), textbodyScrollPane); // NOI18N
-
         htmlPane.setLayout(new java.awt.BorderLayout());
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.htmlPane.TabConstraints.tabTitle"), htmlPane); // NOI18N
 
@@ -335,6 +440,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 .addComponent(msgbodyTabbedPane)
                 .addGap(5, 5, 5))
         );
+
+        msgbodyTabbedPane.getAccessibleContext().setAccessibleParent(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void viewInNewWindowButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewInNewWindowButtonActionPerformed
@@ -360,8 +467,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private javax.swing.JTextPane rtfbodyTextPane;
     private javax.swing.JLabel subjectLabel;
     private javax.swing.JLabel subjectText;
-    private javax.swing.JScrollPane textbodyScrollPane;
-    private javax.swing.JTextArea textbodyTextArea;
     private javax.swing.JLabel toLabel;
     private javax.swing.JLabel toText;
     private javax.swing.JButton viewInNewWindowButton;
@@ -462,7 +567,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         headersTextArea.setText("");
         rtfbodyTextPane.setText("");
         htmlPanel.reset();
-        textbodyTextArea.setText("");
+        textPanel.reset();
         msgbodyTabbedPane.setEnabled(false);
         drp.setNode(null);
     }
@@ -570,6 +675,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         if (index == HTML_TAB_INDEX && StringUtils.isNotBlank(attributeText)) {
             htmlPanel.setHtmlText(attributeText);
+        } else if (index == TEXT_TAB_INDEX && StringUtils.isNotBlank(attributeText)) {
+            textPanel.setContent(attributeText);
         } else {
             JTextComponent textComponent = textAreas.get(index);
             if (textComponent != null) {
