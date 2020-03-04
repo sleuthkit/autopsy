@@ -134,7 +134,7 @@ public class RdbmsCentralRepoFactory {
                 stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
                 stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + RdbmsCentralRepo.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
 
-                // Create account_types and accounts tab;es which are referred by X_instances tables
+                // Create account_types and accounts tables which are referred by X_instances tables
                 stmt.execute(getCreateAccountTypesTableStatement(selectedPlatform));
                 stmt.execute(getCreateAccountsTableStatement(selectedPlatform));
 
@@ -161,7 +161,8 @@ public class RdbmsCentralRepoFactory {
                         stmt.execute(String.format(getReferenceTypeValueKnownstatusIndexTemplate(), reference_type_dbname, reference_type_dbname));
                     }
                 }
-                createPersonaTables(stmt);
+                // @TODO: uncomment this when ready to create Persona tables.
+                //createPersonaTables(stmt);
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
                 return false;
@@ -191,8 +192,9 @@ public class RdbmsCentralRepoFactory {
             }
 
             result = CentralRepoDbUtil.insertDefaultCorrelationTypes(conn)
-                    && CentralRepoDbUtil.insertDefaultOrganization(conn)
-                    && insertDefaultPersonaTablesContent(conn);
+                    && CentralRepoDbUtil.insertDefaultOrganization(conn);
+                    // @TODO: uncomment when ready to create/populate persona tables
+                   // && insertDefaultPersonaTablesContent(conn);
 
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, String.format("Failed to populate default data in CR tables."), ex);
@@ -576,7 +578,6 @@ public class RdbmsCentralRepoFactory {
         stmt.execute(getCreateConfidenceTableStatement(selectedPlatform));
         stmt.execute(getCreateExaminersTableStatement(selectedPlatform));
         stmt.execute(getCreatePersonaStatusTableStatement(selectedPlatform));
-        stmt.execute(getCreateAliasesTableStatement(selectedPlatform));
         
         stmt.execute(getCreatePersonasTableStatement(selectedPlatform));
         stmt.execute(getCreatePersonaAliasTableStatement(selectedPlatform));
@@ -653,20 +654,6 @@ public class RdbmsCentralRepoFactory {
                 + ")";
     }
     
-    /**
-     * Get the SQL String for creating a new aliases table in a central
-     * repository.
-     *
-     * @return SQL string for creating aliases table
-     */
-    static String getCreateAliasesTableStatement(CentralRepoPlatforms selectedPlatform) {
-
-        return "CREATE TABLE IF NOT EXISTS aliases ("
-                + getNumericPrimaryKeyClause("id", selectedPlatform)
-                + "alias TEXT NOT NULL,"
-                + "CONSTRAINT alias_unique UNIQUE(alias)"
-                + ")";
-    }
     
     /**
      * Get the SQL String for creating a new accounts table in a central
@@ -719,13 +706,12 @@ public class RdbmsCentralRepoFactory {
         return "CREATE TABLE IF NOT EXISTS persona_alias ("
                 + getNumericPrimaryKeyClause("id", selectedPlatform)
                 + "persona_id " + getBigIntType(selectedPlatform) + " ,"
-                + "alias_id " + getBigIntType(selectedPlatform) + " ,"
+                + "alias TEXT NOT NULL, "
                 + "justification TEXT NOT NULL,"
                 + "confidence_id integer NOT NULL,"
                 + "date_added " + getBigIntType(selectedPlatform) + " ,"
                 + "examiner_id integer NOT NULL,"
                 + "FOREIGN KEY (persona_id) REFERENCES personas(id),"
-                + "FOREIGN KEY (alias_id) REFERENCES aliases(id),"
                 + "FOREIGN KEY (confidence_id) REFERENCES confidence(confidence_id),"
                 + "FOREIGN KEY (examiner_id) REFERENCES examiners(id)"
                 + ")";
