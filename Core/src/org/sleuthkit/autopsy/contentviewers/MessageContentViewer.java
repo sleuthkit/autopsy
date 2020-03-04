@@ -158,7 +158,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         @NbBundle.Messages("TextTranslatableComponent.setPanelContent.onSetContentError=Unable to display text at this time.")        
         private String onErr(boolean success) {
-            return (success) ? null : Bundle.MessageContentViewer_initTextPane_onError();
+            return (success) ? null : Bundle.TextTranslatableComponent_setPanelContent_onSetContentError();
         }
 
         public String setContent(String content) { 
