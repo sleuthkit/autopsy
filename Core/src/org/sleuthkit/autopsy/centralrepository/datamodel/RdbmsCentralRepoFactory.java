@@ -192,7 +192,8 @@ public class RdbmsCentralRepoFactory {
             }
 
             result = CentralRepoDbUtil.insertDefaultCorrelationTypes(conn)
-                    && CentralRepoDbUtil.insertDefaultOrganization(conn);
+                    && CentralRepoDbUtil.insertDefaultOrganization(conn) &&
+                    insertDefaultAccountsTablesContent(conn);
                     // @TODO: uncomment when ready to create/populate persona tables
                    // && insertDefaultPersonaTablesContent(conn);
 
@@ -766,6 +767,43 @@ public class RdbmsCentralRepoFactory {
 
     
      /**
+      * Inserts the default content in accounts related tables.
+      * 
+      * @param conn Database connection to use.
+      * 
+      * @return True if success, false otherwise.
+      */
+    private boolean insertDefaultAccountsTablesContent(Connection conn) {
+          Statement stmt = null;
+        try {
+            stmt = conn.createStatement();
+             
+            // Populate the account_types table
+            for (Account.Type type : Account.Type.PREDEFINED_ACCOUNT_TYPES) {
+                int correlationTypeId = getCorrelationTypeIdForAccountType(conn, type);
+                if (correlationTypeId > 0) {
+                    String sqlString = String.format("INSERT INTO account_types (type_name, display_name, correlation_type_id) VALUES ('%s', '%s', %d)" + getOnConflictDoNothingClause(selectedPlatform), 
+                                                        type.getTypeName(), type.getDisplayName(), correlationTypeId);
+                    stmt.execute(sqlString);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, String.format("Failed to populate default data in Accounts tables."), ex);
+            return false;
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException ex2) {
+                     LOGGER.log(Level.SEVERE, "Error closing statement.", ex2);
+                }
+            }
+        }
+
+        return true;
+    }
+    
+     /**
       * Inserts the default content in persona related tables.
       * 
       * @param conn Database connection to use.
@@ -790,16 +828,6 @@ public class RdbmsCentralRepoFactory {
                 String sqlString = "INSERT INTO persona_status (status_id, status) VALUES ( " + status.getStatus() + ", '" + status.toString() + "')" //NON-NLS
                         + getOnConflictDoNothingClause(selectedPlatform);
                 stmt.execute(sqlString);
-            }
-            
-            // Populate the account_types table
-            for (Account.Type type : Account.Type.PREDEFINED_ACCOUNT_TYPES) {
-                int correlationTypeId = getCorrelationTypeIdForAccountType(conn, type);
-                if (correlationTypeId > 0) {
-                    String sqlString = String.format("INSERT INTO account_types (type_name, display_name, correlation_type_id) VALUES ('%s', '%s', %d)" + getOnConflictDoNothingClause(selectedPlatform), 
-                                                        type.getTypeName(), type.getDisplayName(), correlationTypeId);
-                    stmt.execute(sqlString);
-                }
             }
             
         } catch (SQLException ex) {
