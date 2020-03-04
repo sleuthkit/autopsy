@@ -50,8 +50,7 @@ final class TextTranslatableComponent implements TranslatablePanel.TranslatableC
         
         JScrollPane parentComponent = new JScrollPane();
         parentComponent.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        parentComponent.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        //parentComponent.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        parentComponent.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         parentComponent.setViewportView(textComponent);
         this.parentComponent = parentComponent;
         this.textComponent = textComponent;
