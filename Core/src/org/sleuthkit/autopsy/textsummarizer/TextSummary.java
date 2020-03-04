@@ -61,7 +61,7 @@ public class TextSummary {
     /**
      * @return the numberOfImages
      */
-    int getNumberOfImages() {
+    public int getNumberOfImages() {
         return numberOfImages;
     }
 
