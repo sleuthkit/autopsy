@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.textsummarizer;
 
 import java.awt.Image;
-import java.util.List;
 
 /**
  * Class to contain all information necessary to display a summary for a file.s
