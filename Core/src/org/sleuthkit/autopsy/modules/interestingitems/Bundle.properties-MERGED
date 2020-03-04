@@ -2,6 +2,7 @@ FilesIdentifierIngestJobSettingsPanel.getError=Error getting interesting files s
 FilesIdentifierIngestJobSettingsPanel.updateError=Error updating interesting files sets settings file.
 FilesIdentifierIngestModule.getFilesError=Error getting interesting files sets from file.
 FilesIdentifierIngestModule.indexError.message=Failed to index interesting file hit artifact for keyword search.
+# {0} - daysIncluded
 FilesSet.rule.dateRule.toString=(modified within {0} day(s))
 FilesSetDefsPanel.bytes=Bytes
 FilesSetDefsPanel.cancelImportMsg=Cancel import
