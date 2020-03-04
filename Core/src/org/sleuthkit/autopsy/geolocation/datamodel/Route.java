@@ -43,7 +43,7 @@ public class Route extends GeoPath {
     // constructor will take care of creating an unmodifiable List
     private final List<Waypoint.Property> propertiesList;
     
-    private static final TskGeoWaypointsUtil attributeUtil = new TskGeoWaypointsUtil("");
+    private static final TskGeoWaypointsUtil attributeUtil = new TskGeoWaypointsUtil();
 
     /**
      * Construct a route for the given artifact.

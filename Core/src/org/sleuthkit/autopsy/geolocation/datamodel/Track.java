@@ -38,7 +38,7 @@ public final class Track extends GeoPath{
     private final Long startTimestamp;
     private final Long endTimeStamp;
   
-    private static final TskGeoTrackpointsUtil attributeUtil = new TskGeoTrackpointsUtil("");
+    private static final TskGeoTrackpointsUtil attributeUtil = new TskGeoTrackpointsUtil();
 
     /**
      * Construct a new Track for the given artifact.
@@ -204,7 +204,7 @@ public final class Track extends GeoPath{
                 list.add(new Property(Bundle.Track_distanceTraveled_displayName(), value.toString()));
             }
 
-            value = point.getDistanceFromHP();
+            value = point.getDistanceFromHomePoint();
             if (value != null) {
                 list.add(new Property(Bundle.Track_distanceFromHome_displayName(), value.toString()));
             }
