@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import org.sleuthkit.autopsy.datamodel.AttachmentNode;
 import com.google.gson.Gson;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.util.Arrays;
@@ -131,6 +132,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageContentViewer_AtrachmentsPanel_title(), "", new TableFilterNode(Node.EMPTY, false), 0, null);
         attachmentsScrollPane.setViewportView(drp);
         
+        //textPanel.setLayout(new BorderLayout());
         msgbodyTabbedPane.insertTab(
             NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle"),
             null,

@@ -47,9 +47,11 @@ final class TextTranslatableComponent implements TranslatablePanel.TranslatableC
         textComponent.setLineWrap(true);
         textComponent.setRows(5);
         textComponent.setWrapStyleWord(true);
+        
         JScrollPane parentComponent = new JScrollPane();
         parentComponent.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         parentComponent.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        //parentComponent.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         parentComponent.setViewportView(textComponent);
         this.parentComponent = parentComponent;
         this.textComponent = textComponent;
@@ -77,6 +79,7 @@ final class TextTranslatableComponent implements TranslatablePanel.TranslatableC
     private boolean setPanelContent(String content) {
         try {
             textComponent.setText(content == null ? "" : content);
+            textComponent.setCaretPosition(0);
             return true;
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "There was an error in setting up the text for MessageContentViewer text panel", e);

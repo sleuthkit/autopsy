@@ -19,15 +19,19 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
+import javax.swing.ImageIcon;
 import org.apache.commons.lang.StringUtils;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 
 /**
  * A panel for translation with a subcomponent that allows for translation
  */
 final class TranslatablePanel extends JPanel {
+
+
     /**
      * an option in drop down of whether or not to translate
      */
@@ -86,11 +90,12 @@ final class TranslatablePanel extends JPanel {
     
     
     private static final long serialVersionUID = 1L;
+    private final ImageIcon warningIcon = new ImageIcon(TranslatablePanel.class.getResource("/org/sleuthkit/autopsy/images/warning16.png"));
     
     private final TranslatableComponent subcomponent;
     private final String origOptionText;
     private final String translatedOptionText;
-
+    private final TextTranslationService translationService;
 
     @Messages({"TranslatablePanel.comboBoxOption.originalText=Original Text",
         "TranslatablePanel.comboBoxOption.translatedText=Translated Text"}) 
@@ -99,29 +104,40 @@ final class TranslatablePanel extends JPanel {
             subcomponent, 
             Bundle.TranslatablePanel_comboBoxOption_originalText(), 
             Bundle.TranslatablePanel_comboBoxOption_translatedText(), 
-            null);
+            null,
+            TextTranslationService.getInstance());
     }
         
     /**
      * Creates new form TranslatedContentPanel
      */
-    TranslatablePanel(TranslatableComponent subcomponent, String origOptionText, String translatedOptionText, String origContent) {
+    TranslatablePanel(TranslatableComponent subcomponent, String origOptionText, String translatedOptionText, String origContent, 
+            TextTranslationService translationService) {
         this.subcomponent = subcomponent;
         this.origOptionText = origOptionText;
         this.translatedOptionText = translatedOptionText;
+        this.translationService = translationService;
         
         initComponents();
-        additionalInit(origContent);
+        additionalInit();
+        setTranslationBarVisible();
+        setContent(origContent);
     }
 
     
     
     private void setWarningLabelMsg(String msg) {
-        warningLabel.setText(msg);
-        warningLabel.setVisible(StringUtils.isEmpty(msg));
+        boolean hasWarning = !StringUtils.isEmpty(msg);
+        warningLabel.setText(hasWarning ? msg : "");
+        warningLabel.setIcon(hasWarning ? warningIcon : null);
     }
 
+    private void setTranslationBarVisible() {
+        translationBar.setVisible(this.translationService.hasProvider());
+    }
+    
     void reset() {
+        setTranslationBarVisible();
         setContent(null);
     }
     
@@ -135,13 +151,12 @@ final class TranslatablePanel extends JPanel {
 
     
 
-    private void additionalInit(String origContent) {
+    private void additionalInit() {
         add(this.subcomponent.getComponent(), java.awt.BorderLayout.CENTER);
         setWarningLabelMsg(null);
         translateComboBox.removeAllItems();
         translateComboBox.addItem(new TranslateOption(this.origOptionText, false));
         translateComboBox.addItem(new TranslateOption(this.translatedOptionText, true));
-        this.subcomponent.setContent(origContent);
     }
     
     private void handleComboBoxChange(TranslateOption translateOption) {
@@ -160,9 +175,8 @@ final class TranslatablePanel extends JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
 
-        jPanel1 = new javax.swing.JPanel();
+        translationBar = new javax.swing.JPanel();
         translateComboBox = new javax.swing.JComboBox<>();
         warningLabel = new javax.swing.JLabel();
 
@@ -173,37 +187,26 @@ final class TranslatablePanel extends JPanel {
         setVerifyInputWhenFocusTarget(false);
         setLayout(new java.awt.BorderLayout());
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        jPanel1.setMaximumSize(new java.awt.Dimension(182, 24));
-        jPanel1.setPreferredSize(new java.awt.Dimension(182, 24));
-        jPanel1.setLayout(new java.awt.GridBagLayout());
+        translationBar.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        translationBar.setMaximumSize(new java.awt.Dimension(182, 24));
+        translationBar.setPreferredSize(new java.awt.Dimension(182, 24));
+        translationBar.setLayout(new java.awt.BorderLayout());
 
-        translateComboBox.setMinimumSize(new java.awt.Dimension(43, 20));
-        translateComboBox.setPreferredSize(new java.awt.Dimension(43, 20));
+        translateComboBox.setMaximumSize(new java.awt.Dimension(200, 20));
+        translateComboBox.setMinimumSize(new java.awt.Dimension(200, 20));
+        translateComboBox.setName(""); // NOI18N
+        translateComboBox.setPreferredSize(new java.awt.Dimension(200, 20));
         translateComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 translateComboBoxActionPerformed(evt);
             }
         });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 3;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
-        jPanel1.add(translateComboBox, gridBagConstraints);
+        translationBar.add(translateComboBox, java.awt.BorderLayout.LINE_END);
 
-        warningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/warning16.png"))); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-        gridBagConstraints.weightx = 0.25;
-        jPanel1.add(warningLabel, gridBagConstraints);
+        warningLabel.setMaximumSize(new java.awt.Dimension(32767, 32767));
+        translationBar.add(warningLabel, java.awt.BorderLayout.CENTER);
 
-        add(jPanel1, java.awt.BorderLayout.NORTH);
+        add(translationBar, java.awt.BorderLayout.NORTH);
     }// </editor-fold>//GEN-END:initComponents
 
     private void translateComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_translateComboBoxActionPerformed
@@ -211,8 +214,8 @@ final class TranslatablePanel extends JPanel {
     }//GEN-LAST:event_translateComboBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JComboBox<TranslateOption> translateComboBox;
+    private javax.swing.JPanel translationBar;
     private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables
 }
