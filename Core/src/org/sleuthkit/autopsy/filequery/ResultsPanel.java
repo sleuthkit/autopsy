@@ -780,7 +780,7 @@ public class ResultsPanel extends javax.swing.JPanel {
         protected Void doInBackground() throws Exception {
             TextSummary preview = FileSearch.summarize(documentWrapper.getResultFile().getFirstInstance());
             if (preview == null) {
-                preview = new TextSummary(Bundle.ResultsPanel_unableToCreate_text(), null);
+                preview = new TextSummary(Bundle.ResultsPanel_unableToCreate_text(), null, 0);
             }
             documentWrapper.setPreview(preview.getSummaryText());
             return null;

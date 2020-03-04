@@ -274,12 +274,12 @@ class FileSearch {
                 //a summary of length 40 seems to fit without vertical scroll bars
                 summary = localSummarizer.summarize(file, 40);
             } catch (IOException ex) {
-                return new TextSummary(Bundle.FileSearch_documentSummary_noPreview(), null);
+                return new TextSummary(Bundle.FileSearch_documentSummary_noPreview(), null, 0);
             }
         }
         if (summary == null || StringUtils.isBlank(summary.getSummaryText())) {
             //summary text was empty grab the beginning of the file 
-            summary = new TextSummary(getFirstLines(file), null);
+            summary = new TextSummary(getFirstLines(file), null, 0);
         }
         return summary;
     }

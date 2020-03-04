@@ -33,30 +33,15 @@ public class TextSummary {
     /**
      * Create a new TextSummary object.
      *
-     * @param summary - The text portion of the summary.
-     * @param images  - The Image portion of the summary
+     * @param summary       - The text portion of the summary.
+     * @param image         - The Image portion of the summary
+     * @param countOfImages - The number of images including the one provided in
+     *                      the document.
      */
-    public TextSummary(String summary, List<Image> images) {
+    public TextSummary(String summary, Image image, int countOfImages) {
         summaryText = summary;
-        if (images == null || images.isEmpty()) {
-            sampleImage = null;
-            numberOfImages = 0;
-        } else {
-            sampleImage = selectSummaryImage(images);
-            numberOfImages = images.size();
-        }
-    }
-
-    /**
-     * Get the Image from the available images to include as part of the
-     * summary.
-     *
-     * @param images - The list of Images available to choose from.
-     *
-     * @return The selected image to include in the summary.
-     */
-    private Image selectSummaryImage(List<Image> images) {
-        return images.get(0);
+        sampleImage = image;
+        numberOfImages = countOfImages;
     }
 
     /**
