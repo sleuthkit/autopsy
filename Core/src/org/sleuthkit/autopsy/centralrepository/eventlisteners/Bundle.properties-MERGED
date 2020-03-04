@@ -7,3 +7,6 @@ IngestEventsListener.prevCount.text=Number of previous {0}: {1}
 IngestEventsListener.prevExists.text=Previously Seen Devices (Central Repository)
 IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)
 Installer.centralRepoUpgradeFailed.title=Central repository disabled
+Installer.initialCreateSqlite.messageDesc=It will store information about all hashes and identifiers that you process. You can use this to ignore previously seen files and make connections between cases.
+Installer.initialCreateSqlite.messageHeader=The Central Repository is not enabled. Would you like to?
+Installer.initialCreateSqlite.title=Enable Central Repository?

@@ -35,14 +35,15 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.corecomponents.TextPrompt;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms.SQLITE;
-import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSettings;
+import org.sleuthkit.autopsy.centralrepository.datamodel.DatabaseTestResult;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepoFactory;
@@ -54,17 +55,12 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepoFactory
 public class EamDbSettingsDialog extends JDialog {
 
     private static final Logger logger = Logger.getLogger(EamDbSettingsDialog.class.getName());
-    private static final String CENTRAL_REPO_DB_NAME = "central_repository";
-    private static final String CENTRAL_REPO_SQLITE_EXT = ".db";
+    
     private static final long serialVersionUID = 1L;
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
+    private final CentralRepoDbManager manager = new CentralRepoDbManager();
 
-    private final PostgresCentralRepoSettings dbSettingsPostgres;
-    private final SqliteCentralRepoSettings dbSettingsSqlite;
-    private DatabaseTestResult testingStatus;
-    private CentralRepoPlatforms selectedPlatform;
-    private boolean configurationChanged = false;
 
     /**
      * Creates new form EamDbSettingsDialog
@@ -73,7 +69,6 @@ public class EamDbSettingsDialog extends JDialog {
         "EamDbSettingsDialog.lbSingleUserSqLite.text=SQLite should only be used by one examiner at a time.",
         "EamDbSettingsDialog.lbDatabaseType.text=Database Type :",
         "EamDbSettingsDialog.fcDatabasePath.title=Select location for central_repository.db"})
-
     public EamDbSettingsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.EamDbSettingsDialog_title_text(),
@@ -81,12 +76,6 @@ public class EamDbSettingsDialog extends JDialog {
 
         textBoxes = new ArrayList<>();
         textBoxChangedListener = new TextBoxChangedListener();
-        dbSettingsPostgres = new PostgresCentralRepoSettings();
-        dbSettingsSqlite = new SqliteCentralRepoSettings();
-        selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
-        if (selectedPlatform == null || selectedPlatform.equals(CentralRepoPlatforms.DISABLED)) {
-            selectedPlatform = CentralRepoPlatforms.POSTGRESQL;
-        }
 
         initComponents();
         fcDatabasePath.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
@@ -98,7 +87,7 @@ public class EamDbSettingsDialog extends JDialog {
                 if (pathname.isDirectory()) {
                     return true;
                 }
-                return pathname.getName().toLowerCase().equals((CENTRAL_REPO_DB_NAME + CENTRAL_REPO_SQLITE_EXT).toLowerCase());
+                return  pathname.getName().equalsIgnoreCase(SqliteCentralRepoSettings.DEFAULT_DBNAME);
             }
 
             @Override
@@ -106,12 +95,77 @@ public class EamDbSettingsDialog extends JDialog {
                 return "Directories and Central Repository databases";
             }
         });
-        cbDatabaseType.setSelectedItem(selectedPlatform);
+        cbDatabaseType.setSelectedItem(manager.getSelectedPlatform());
         customizeComponents();
         valid();
         display();
 
     }
+    
+    
+    
+     /**
+     * prompts user based on testing status (i.e. failure to connect, invalid schema, db does not exist, etc.)
+     * @return whether or not the ultimate status after prompts is okay to continue
+     */
+    @NbBundle.Messages({"EamDbSettingsDialog.okButton.corruptDatabaseExists.title=Error Loading Database",
+        "EamDbSettingsDialog.okButton.corruptDatabaseExists.message=Database exists but is not the right format. Manually delete it or choose a different path (if applicable).",
+        "EamDbSettingsDialog.okButton.createDbDialog.title=Database Does Not Exist",
+        "EamDbSettingsDialog.okButton.createDbDialog.message=Database does not exist, would you like to create it?",
+        "EamDbSettingsDialog.okButton.databaseConnectionFailed.title=Database Connection Failed",
+        "EamDbSettingsDialog.okButton.databaseConnectionFailed.message=Unable to connect to database please check your settings and try again.",
+        "EamDbSettingsDialog.okButton.createSQLiteDbError.message=Unable to create SQLite Database, please ensure location exists and you have write permissions and try again.",
+        "EamDbSettingsDialog.okButton.createPostgresDbError.message=Unable to create Postgres Database, please ensure address, port, and login credentials are correct for Postgres server and try again.",
+        "EamDbSettingsDialog.okButton.createDbError.title=Unable to Create Database"})
+    private boolean promptTestStatusWarnings() {
+        if (manager.getStatus() == DatabaseTestResult.CONNECTION_FAILED) {
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                    Bundle.EamDbSettingsDialog_okButton_databaseConnectionFailed_message(),
+                    Bundle.EamDbSettingsDialog_okButton_databaseConnectionFailed_title(),
+                    JOptionPane.WARNING_MESSAGE);
+        } else if (manager.getStatus() == DatabaseTestResult.SCHEMA_INVALID) {
+            // There's an existing database or file, but it's not in our format. 
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                    Bundle.EamDbSettingsDialog_okButton_corruptDatabaseExists_message(),
+                    Bundle.EamDbSettingsDialog_okButton_corruptDatabaseExists_title(),
+                    JOptionPane.WARNING_MESSAGE);
+        } else if (manager.getStatus() == DatabaseTestResult.DB_DOES_NOT_EXIST) {
+            //database doesn't exist. do you want to create?
+            if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
+                    Bundle.EamDbSettingsDialog_okButton_createDbDialog_message(),
+                    Bundle.EamDbSettingsDialog_okButton_createDbDialog_title(),
+                    JOptionPane.YES_NO_OPTION)) {
+                try {
+                    manager.createDb();
+                }
+                catch (CentralRepoException e) {
+                    // in the event that there is a failure to connect, notify user with corresponding message
+                    String errorMessage;
+                    switch (manager.getSelectedPlatform()) {
+                        case POSTGRESQL:
+                            errorMessage = Bundle.EamDbSettingsDialog_okButton_createPostgresDbError_message();
+                            break;
+                        case SQLITE:
+                            errorMessage = Bundle.EamDbSettingsDialog_okButton_createSQLiteDbError_message();
+                            break;
+                        default:
+                            errorMessage = "";
+                            break;
+                    }
+                    
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                        errorMessage,
+                        Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
+                        JOptionPane.WARNING_MESSAGE);
+                }
+                
+                valid();
+            }
+        }
+
+        return (manager.getStatus() == DatabaseTestResult.TESTEDOK);
+    }   
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -359,21 +413,16 @@ public class EamDbSettingsDialog extends JDialog {
     private void customizeComponents() {
         setTextPrompts();
         setTextBoxListeners();
-        switch (selectedPlatform) {
-            case SQLITE:
-                testingStatus = DatabaseTestResult.UNTESTED;
-                updatePostgresFields(false);
-                updateSqliteFields(true);
-                break;
-            default:
-                POSTGRESQL:
-                testingStatus = DatabaseTestResult.UNTESTED;
-                updatePostgresFields(true);
-                updateSqliteFields(false);
-                break;
-
+        manager.clearStatus();
+        if (manager.getSelectedPlatform() == CentralRepoPlatforms.SQLITE) {
+            updatePostgresFields(false);
+            updateSqliteFields(true);
         }
-        displayDatabaseSettings(selectedPlatform.equals(CentralRepoPlatforms.POSTGRESQL));
+        else {
+            updatePostgresFields(true);
+            updateSqliteFields(false);
+        }
+        displayDatabaseSettings(CentralRepoPlatforms.POSTGRESQL.equals(manager.getSelectedPlatform()));
     }
 
     private void display() {
@@ -383,7 +432,7 @@ public class EamDbSettingsDialog extends JDialog {
 
     @Messages({"EamDbSettingsDialog.chooserPath.failedToGetDbPathMsg=Selected database path is invalid. Try again."})
     private void bnDatabasePathFileOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDatabasePathFileOpenActionPerformed
-        fcDatabasePath.setSelectedFile(new File(dbSettingsSqlite.getDbDirectory()));
+        fcDatabasePath.setSelectedFile(new File(manager.getDbSettingsSqlite().getDbDirectory()));
         if (fcDatabasePath.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fcDatabasePath.getSelectedFile();
             if (databaseFile.isFile()) {
@@ -399,110 +448,38 @@ public class EamDbSettingsDialog extends JDialog {
         }
     }//GEN-LAST:event_bnDatabasePathFileOpenActionPerformed
 
-    private void testDbSettings() {
-        switch (selectedPlatform) {
-            case POSTGRESQL:
-                if (dbSettingsPostgres.verifyConnection()) {
-                    if (dbSettingsPostgres.verifyDatabaseExists()) {
-                        if (dbSettingsPostgres.verifyDatabaseSchema()) {
-                            testingStatus = DatabaseTestResult.TESTEDOK;
-                        } else {
-                            testingStatus = DatabaseTestResult.SCHEMA_INVALID;
-                        }
-                    } else {
-                        testingStatus = DatabaseTestResult.DB_DOES_NOT_EXIST;
-                    }
-                } else {
-                    testingStatus = DatabaseTestResult.CONNECTION_FAILED;
-                }
-                break;
-            case SQLITE:
-                if (dbSettingsSqlite.dbFileExists()) {
-                    if (dbSettingsSqlite.verifyConnection()) {
-                        if (dbSettingsSqlite.verifyDatabaseSchema()) {
-                            testingStatus = DatabaseTestResult.TESTEDOK;
-                        } else {
-                            testingStatus = DatabaseTestResult.SCHEMA_INVALID;
-                        }
-                    } else {
-                        testingStatus = DatabaseTestResult.SCHEMA_INVALID;
-                    }
-                } else {
-                    testingStatus = DatabaseTestResult.DB_DOES_NOT_EXIST;
-                }
-                break;
-        }
-
+    @NbBundle.Messages({"EamDbSettingsDialog.okButton.errorTitle.text=Restart Required.",
+        "EamDbSettingsDialog.okButton.errorMsg.text=Please restart Autopsy to begin using the new database platform.",
+        "EamDbSettingsDialog.okButton.connectionErrorMsg.text=Failed to connect to central repository database."})
+    private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        manager.testStatus();
         valid();
-    }
-
-    @Messages({"EamDbSettingsDialog.okButton.createDbError.title=Unable to Create Database",
-        "EamDbSettingsDialog.okButton.createSQLiteDbError.message=Unable to create SQLite Database, please ensure location exists and you have write permissions and try again.",
-        "EamDbSettingsDialog.okButton.createPostgresDbError.message=Unable to create Postgres Database, please ensure address, port, and login credentials are correct for Postgres server and try again."})
-    private void createDb() {
-        boolean result = false;
-        boolean dbCreated = true;
-        switch (selectedPlatform) {
-            case POSTGRESQL:
-                if (!dbSettingsPostgres.verifyDatabaseExists()) {
-                    dbCreated = dbSettingsPostgres.createDatabase();
-                }
-                if (dbCreated) {
-                    try {
-                        RdbmsCentralRepoFactory centralRepoSchemaFactory = new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsPostgres);
-
-                        result = centralRepoSchemaFactory.initializeDatabaseSchema()
-                                && centralRepoSchemaFactory.insertDefaultDatabaseContent();
-                    } catch (CentralRepoException ex) {
-                        logger.log(Level.SEVERE, "Unable to initialize database schema or insert contents into Postgres central repository.", ex);
-                    }
-                }
-                if (!result) {
-                    // Remove the incomplete database
-                    if (dbCreated) {
-                        dbSettingsPostgres.deleteDatabase();
-                    }
-
-                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                            Bundle.EamDbSettingsDialog_okButton_createPostgresDbError_message(),
-                            Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
-                            JOptionPane.WARNING_MESSAGE);
-                    logger.severe("Unable to initialize database schema or insert contents into central repository.");
-                    return;
-                }
-                break;
-            case SQLITE:
-                if (!dbSettingsSqlite.dbDirectoryExists()) {
-                    dbCreated = dbSettingsSqlite.createDbDirectory();
-                }
-                if (dbCreated) {
-                    try {
-                        RdbmsCentralRepoFactory centralRepoSchemaFactory = new RdbmsCentralRepoFactory(selectedPlatform, dbSettingsSqlite);
-                        result = centralRepoSchemaFactory.initializeDatabaseSchema()
-                                && centralRepoSchemaFactory.insertDefaultDatabaseContent();
-                    } catch (CentralRepoException ex) {
-                        logger.log(Level.SEVERE, "Unable to initialize database schema or insert contents into SQLite central repository.", ex);
-                    }
-
-                }
-                if (!result) {
-                    if (dbCreated) {
-                        dbSettingsSqlite.deleteDatabase();
-                    }
-
-                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                            Bundle.EamDbSettingsDialog_okButton_createSQLiteDbError_message(),
-                            Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
-                            JOptionPane.WARNING_MESSAGE);
-                    logger.severe("Unable to initialize database schema or insert contents into central repository.");
-                    return;
-                }
-                break;
+        
+        boolean testedOk = promptTestStatusWarnings();
+        if (!testedOk) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            return;
         }
-        testingStatus = DatabaseTestResult.TESTEDOK;
-        valid();
-    }
+        
+        try{
+            manager.saveNewCentralRepo();
+        }
+        catch (CentralRepoException e) {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(this,
+                    Bundle.EamDbSettingsDialog_okButton_errorMsg_text(),
+                    Bundle.EamDbSettingsDialog_okButton_errorTitle_text(),
+                    JOptionPane.WARNING_MESSAGE);
+            });
+        }
+        
 
+        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        dispose();
+    }//GEN-LAST:event_bnOkActionPerformed
+
+    
     /**
      * Returns if changes to the central repository configuration were
      * successfully applied
@@ -510,115 +487,9 @@ public class EamDbSettingsDialog extends JDialog {
      * @return true if the database configuration was successfully changed false
      * if it was not
      */
-    boolean wasConfigurationChanged() {
-        return configurationChanged;
+    public boolean wasConfigurationChanged() {
+        return manager.wasConfigurationChanged();
     }
-
-    @Messages({"EamDbSettingsDialog.okButton.errorTitle.text=Restart Required.",
-        "EamDbSettingsDialog.okButton.errorMsg.text=Please restart Autopsy to begin using the new database platform.",
-        "EamDbSettingsDialog.okButton.connectionErrorMsg.text=Failed to connect to central repository database.",
-        "EamDbSettingsDialog.okButton.corruptDatabaseExists.title=Error Loading Database",
-        "EamDbSettingsDialog.okButton.corruptDatabaseExists.message=Database exists but is not the right format. Manually delete it or choose a different path (if applicable).",
-        "EamDbSettingsDialog.okButton.createDbDialog.title=Database Does Not Exist",
-        "EamDbSettingsDialog.okButton.createDbDialog.message=Database does not exist, would you like to create it?",
-        "EamDbSettingsDialog.okButton.databaseConnectionFailed.title=Database Connection Failed",
-        "EamDbSettingsDialog.okButton.databaseConnectionFailed.message=Unable to connect to database please check your settings and try again."})
-    private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        testDbSettings();
-        if (testingStatus == DatabaseTestResult.CONNECTION_FAILED) {
-            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                    Bundle.EamDbSettingsDialog_okButton_databaseConnectionFailed_message(),
-                    Bundle.EamDbSettingsDialog_okButton_databaseConnectionFailed_title(),
-                    JOptionPane.WARNING_MESSAGE);
-        } else if (testingStatus == DatabaseTestResult.SCHEMA_INVALID) {
-            // There's an existing database or file, but it's not in our format. 
-            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                    Bundle.EamDbSettingsDialog_okButton_corruptDatabaseExists_message(),
-                    Bundle.EamDbSettingsDialog_okButton_corruptDatabaseExists_title(),
-                    JOptionPane.WARNING_MESSAGE);
-        } else if (testingStatus == DatabaseTestResult.DB_DOES_NOT_EXIST) {
-            //database doesn't exist do you want to create
-            if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
-                    Bundle.EamDbSettingsDialog_okButton_createDbDialog_message(),
-                    Bundle.EamDbSettingsDialog_okButton_createDbDialog_title(),
-                    JOptionPane.YES_NO_OPTION)) {
-                createDb();
-            }
-        }
-
-        if (testingStatus != DatabaseTestResult.TESTEDOK) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            return;
-        }
-
-        /**
-         * We have to shutdown the previous platform's connection pool first;
-         * assuming it wasn't DISABLED. This will close any existing idle
-         * connections.
-         *
-         * The next use of an EamDb API method will start a new connection pool
-         * using those new settings.
-         */
-        try {
-            CentralRepository previousDbManager = CentralRepository.getInstance();
-            if (null != previousDbManager) {
-                // NOTE: do not set/save the seleted platform before calling this.
-                CentralRepository.getInstance().shutdownConnections();
-            }
-        } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Failed to close database connections in previously selected platform.", ex); // NON-NLS
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(this,
-                        Bundle.EamDbSettingsDialog_okButton_errorMsg_text(),
-                        Bundle.EamDbSettingsDialog_okButton_errorTitle_text(),
-                        JOptionPane.WARNING_MESSAGE);
-            });
-        }
-
-        // Even if we fail to close the existing connections, make sure that we
-        // save the new connection settings, so an Autopsy restart will correctly
-        // start with the new settings.
-        CentralRepoPlatforms.setSelectedPlatform(selectedPlatform.name());
-        CentralRepoPlatforms.saveSelectedPlatform();
-
-        switch (selectedPlatform) {
-            case POSTGRESQL:
-                // save the new PostgreSQL settings
-                dbSettingsPostgres.saveSettings();
-                // Load those newly saved settings into the postgres db manager instance
-                //  in case we are still using the same instance.
-                try {
-                    CentralRepository.getInstance().updateSettings();
-                    configurationChanged = true;
-                } catch (CentralRepoException ex) {
-                    logger.log(Level.SEVERE, Bundle.EamDbSettingsDialog_okButton_connectionErrorMsg_text(), ex); //NON-NLS
-                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    return;
-                }
-
-                break;
-            case SQLITE:
-                // save the new SQLite settings
-                dbSettingsSqlite.saveSettings();
-                // Load those newly saved settings into the sqlite db manager instance
-                //  in case we are still using the same instance.
-                try {
-                    CentralRepository.getInstance().updateSettings();
-                    configurationChanged = true;
-                } catch (CentralRepoException ex) {
-                    logger.log(Level.SEVERE, Bundle.EamDbSettingsDialog_okButton_connectionErrorMsg_text(), ex);  //NON-NLS
-                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    return;
-                }
-                break;
-            case DISABLED:
-                break;
-        }
-
-        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        dispose();
-    }//GEN-LAST:event_bnOkActionPerformed
 
     private void bnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCancelActionPerformed
         dispose();
@@ -626,12 +497,12 @@ public class EamDbSettingsDialog extends JDialog {
 
 
     private void cbDatabaseTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbDatabaseTypeActionPerformed
-        selectedPlatform = (CentralRepoPlatforms) cbDatabaseType.getSelectedItem();
+        manager.setSelectedPlatform((CentralRepoPlatforms) cbDatabaseType.getSelectedItem());
         customizeComponents();
     }//GEN-LAST:event_cbDatabaseTypeActionPerformed
 
     private void updateFullDbPath() {
-        dataBaseFileTextArea.setText(tfDatabasePath.getText() + File.separator + CENTRAL_REPO_DB_NAME + CENTRAL_REPO_SQLITE_EXT);
+        dataBaseFileTextArea.setText(tfDatabasePath.getText() + File.separator + SqliteCentralRepoSettings.DEFAULT_DBNAME);
         dataBaseFileTextArea.setCaretPosition(dataBaseFileTextArea.getText().length());
     }
 
@@ -669,13 +540,13 @@ public class EamDbSettingsDialog extends JDialog {
     }
 
     private void updatePostgresFields(boolean enabled) {
-        tbDbHostname.setText(enabled ? dbSettingsPostgres.getHost() : "");
+        tbDbHostname.setText(enabled ? manager.getDbSettingsPostgres().getHost() : "");
         tbDbHostname.setEnabled(enabled);
-        tbDbPort.setText(enabled ? Integer.toString(dbSettingsPostgres.getPort()) : "");
+        tbDbPort.setText(enabled ? Integer.toString(manager.getDbSettingsPostgres().getPort()) : "");
         tbDbPort.setEnabled(enabled);
-        tbDbUsername.setText(enabled ? dbSettingsPostgres.getUserName() : "");
+        tbDbUsername.setText(enabled ? manager.getDbSettingsPostgres().getUserName() : "");
         tbDbUsername.setEnabled(enabled);
-        jpDbPassword.setText(enabled ? dbSettingsPostgres.getPassword() : "");
+        jpDbPassword.setText(enabled ? manager.getDbSettingsPostgres().getPassword() : "");
         jpDbPassword.setEnabled(enabled);
     }
 
@@ -686,7 +557,7 @@ public class EamDbSettingsDialog extends JDialog {
      * @param enabled
      */
     private void updateSqliteFields(boolean enabled) {
-        tfDatabasePath.setText(enabled ? dbSettingsSqlite.getDbDirectory() : "");
+        tfDatabasePath.setText(enabled ? manager.getDbSettingsSqlite().getDbDirectory() : "");
         tfDatabasePath.setEnabled(enabled);
         bnDatabasePathFileOpen.setEnabled(enabled);
     }
@@ -739,22 +610,15 @@ public class EamDbSettingsDialog extends JDialog {
     @Messages({"EamDbSettingsDialog.validation.incompleteFields=Fill in all values for the selected database."})
     private boolean databaseFieldsArePopulated() {
         boolean result = true;
-        switch (selectedPlatform) {
-            case POSTGRESQL:
-                result = !tbDbHostname.getText().trim().isEmpty()
-                        && !tbDbPort.getText().trim().isEmpty()
-                        //   && !tbDbName.getText().trim().isEmpty()
-                        && !tbDbUsername.getText().trim().isEmpty()
-                        && 0 < jpDbPassword.getPassword().length;
-
-                break;
-
-            case SQLITE:
-                result = !tfDatabasePath.getText().trim().isEmpty();
-                break;
+        if (manager.getSelectedPlatform() == CentralRepoPlatforms.POSTGRESQL) {
+            result = !tbDbHostname.getText().trim().isEmpty()
+                    && !tbDbPort.getText().trim().isEmpty()
+                    //   && !tbDbName.getText().trim().isEmpty()
+                    && !tbDbUsername.getText().trim().isEmpty()
+                    && 0 < jpDbPassword.getPassword().length;
         }
-
-        if (!result) {
+        else if (manager.getSelectedPlatform() == CentralRepoPlatforms.SQLITE) {
+            result = !tfDatabasePath.getText().trim().isEmpty();
         }
 
         return result;
@@ -770,66 +634,6 @@ public class EamDbSettingsDialog extends JDialog {
                 && databaseSettingsAreValid();
     }
 
-    /**
-     * Tests whether or not the database settings are valid.
-     *
-     * @return True or false.
-     */
-    private boolean databaseSettingsAreValid() {
-        boolean result = true;
-        StringBuilder guidanceText = new StringBuilder();
-
-        switch (selectedPlatform) {
-            case POSTGRESQL:
-                try {
-                    dbSettingsPostgres.setHost(tbDbHostname.getText().trim());
-                } catch (CentralRepoException ex) {
-                    guidanceText.append(ex.getMessage());
-                    result = false;
-                }
-
-                try {
-                    dbSettingsPostgres.setPort(Integer.valueOf(tbDbPort.getText().trim()));
-                } catch (NumberFormatException | CentralRepoException ex) {
-                    guidanceText.append(ex.getMessage());
-                    result = false;
-                }
-
-                try {
-                    dbSettingsPostgres.setDbName(CENTRAL_REPO_DB_NAME);
-                } catch (CentralRepoException ex) {
-                    guidanceText.append(ex.getMessage());
-                    result = false;
-                }
-
-                try {
-                    dbSettingsPostgres.setUserName(tbDbUsername.getText().trim());
-                } catch (CentralRepoException ex) {
-                    guidanceText.append(ex.getMessage());
-                    result = false;
-                }
-
-                try {
-                    dbSettingsPostgres.setPassword(new String(jpDbPassword.getPassword()));
-                } catch (CentralRepoException ex) {
-                    guidanceText.append(ex.getMessage());
-                    result = false;
-                }
-                break;
-            case SQLITE:
-                try {
-                    File databasePath = new File(tfDatabasePath.getText());
-                    dbSettingsSqlite.setDbName(CENTRAL_REPO_DB_NAME + CENTRAL_REPO_SQLITE_EXT);
-                    dbSettingsSqlite.setDbDirectory(databasePath.getPath());
-                } catch (CentralRepoException ex) {
-                    guidanceText.append(ex.getMessage());
-                    result = false;
-                }
-                break;
-        }
-
-        return result;
-    }
 
     /**
      * Validates that the form is filled out correctly for our usage.
@@ -856,6 +660,29 @@ public class EamDbSettingsDialog extends JDialog {
         return true;
 
     }
+    
+    
+    
+    /**
+     * Tests whether or not the database settings are valid.
+     *
+     * @return True or false.
+     */
+    private boolean databaseSettingsAreValid() {
+        try {
+            manager.testDatabaseSettingsAreValid(
+                    tbDbHostname.getText().trim(), 
+                    tbDbPort.getText().trim(), 
+                    tbDbUsername.getText().trim(), 
+                    tfDatabasePath.getText().trim(), 
+                    new String(jpDbPassword.getPassword()));
+        }
+        catch (CentralRepoException | NumberFormatException | IllegalStateException e) {
+            return false;
+        }
+        
+        return true;
+    }
 
     /**
      * Used to listen for changes in text boxes. It lets the panel know things
@@ -866,7 +693,7 @@ public class EamDbSettingsDialog extends JDialog {
         @Override
         public void changedUpdate(DocumentEvent e) {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-            testingStatus = DatabaseTestResult.UNTESTED;
+            manager.clearStatus();
             updateFullDbPath();
             valid();
         }
@@ -874,7 +701,7 @@ public class EamDbSettingsDialog extends JDialog {
         @Override
         public void insertUpdate(DocumentEvent e) {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-            testingStatus = DatabaseTestResult.UNTESTED;
+            manager.clearStatus();
             updateFullDbPath();
             valid();
         }
@@ -882,20 +709,13 @@ public class EamDbSettingsDialog extends JDialog {
         @Override
         public void removeUpdate(DocumentEvent e) {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-            testingStatus = DatabaseTestResult.UNTESTED;
+            manager.clearStatus();
             updateFullDbPath();
             valid();
 
         }
     }
 
-    private enum DatabaseTestResult {
-        UNTESTED,
-        CONNECTION_FAILED,
-        SCHEMA_INVALID,
-        DB_DOES_NOT_EXIST,
-        TESTEDOK;
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnCancel;
