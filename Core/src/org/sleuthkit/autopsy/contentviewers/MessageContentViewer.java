@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.text.JTextComponent;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -43,16 +41,12 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.contentviewers.TranslatablePanel.TranslatableComponent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
-import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
-import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
@@ -101,92 +95,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         return true;
     }
         
-    /**
-     * provides the interface to be injected into the TranslatablePanel and displays text
-     */
-    static class TextTranslatableComponent implements TranslatableComponent {
-        private final Component parentComponent;
-        private final JTextArea textComponent;
-        private final TextTranslationService translationService;
-        
-        private boolean translate = false;
-        private String translated = null;
-        private String origContent = "";
-        
-
-        TextTranslatableComponent() {
-            JTextArea textComponent = new JTextArea();
-            textComponent.setEditable(false);
-            textComponent.setLineWrap(true);
-            textComponent.setRows(5);
-            textComponent.setWrapStyleWord(true);
-
-            JScrollPane parentComponent = new JScrollPane();
-            parentComponent.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-            parentComponent.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-            parentComponent.setViewportView(textComponent);
-
-            this.parentComponent = parentComponent;
-            this.textComponent = textComponent;
-            this.translationService = TextTranslationService.getInstance();
-        }
-        
-        TextTranslatableComponent(Component parentComponent, JTextArea textComponent, TextTranslationService translationService) {
-            this.parentComponent = parentComponent;
-            this.textComponent = textComponent;
-            this.translationService = translationService;
-        }
-        
-        public Component getComponent() { 
-            return parentComponent; 
-        }
-        
-        public String getContent() { 
-            return origContent;
-        }
-        
-        public boolean isTranslated() { 
-            return translate; 
-        }
-
-        private boolean setPanelContent(String content) {
-            return tryHandle(() -> {
-                textComponent.setText(content == null ? "" : content);
-            }, "There was an error in setting up the text for MessageContentViewer text panel"); 
-
-        }
-
-        @NbBundle.Messages("TextTranslatableComponent.setPanelContent.onSetContentError=Unable to display text at this time.")        
-        private String onErr(boolean success) {
-            return (success) ? null : Bundle.TextTranslatableComponent_setPanelContent_onSetContentError();
-        }
-
-        public String setContent(String content) { 
-            this.origContent = content;
-            this.translated = null;
-            this.translate = false;
-            return onErr(setPanelContent(content));
-        }
-
-        @NbBundle.Messages("TextTranslatableComponent.setTranslated.onTranslateError=Unable to translate text at this time.") 
-        public String setTranslated(boolean translate) {
-            this.translate = translate;
-            if (this.translate) {
-                if (this.translated == null) {
-                    try {
-                        this.translated = this.translationService.translate(this.origContent);
-                    } catch (NoServiceProviderException | TranslationException ex) {
-                        LOGGER.log(Level.WARNING, "Unable to translate text with translation service", ex);
-                        return Bundle.TextTranslatableComponent_setTranslated_onTranslateError();
-                    }
-                }
-                return onErr(setPanelContent(this.translated == null ? "" : this.translated));        
-            }
-            else {
-                return onErr(setPanelContent(this.origContent));   
-            }
-        }
-    }
     
     
     private static final long serialVersionUID = 1L;

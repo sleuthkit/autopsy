@@ -165,7 +165,6 @@ final class TranslatablePanel extends JPanel {
         jPanel1 = new javax.swing.JPanel();
         translateComboBox = new javax.swing.JComboBox<>();
         warningLabel = new javax.swing.JLabel();
-        showLabel = new javax.swing.JLabel();
 
         setMaximumSize(new java.awt.Dimension(2000, 2000));
         setMinimumSize(new java.awt.Dimension(2, 2));
@@ -204,12 +203,6 @@ final class TranslatablePanel extends JPanel {
         gridBagConstraints.weightx = 0.25;
         jPanel1.add(warningLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(showLabel, org.openide.util.NbBundle.getMessage(TranslatablePanel.class, "TranslatablePanel.showLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 0;
-        jPanel1.add(showLabel, gridBagConstraints);
-
         add(jPanel1, java.awt.BorderLayout.NORTH);
     }// </editor-fold>//GEN-END:initComponents
 
@@ -219,7 +212,6 @@ final class TranslatablePanel extends JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JLabel showLabel;
     private javax.swing.JComboBox<TranslateOption> translateComboBox;
     private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables
