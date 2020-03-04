@@ -41,10 +41,11 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoint.GeoTrackPoint;
+import org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoTrackpointsUtil.GeoTrackPointList.GeoTrackPoint;
 import org.sleuthkit.datamodel.blackboardutils.GeoArtifactsHelper;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
+import org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoTrackpointsUtil.GeoTrackPointList;
 
 /**
  * Extract drone position data from DJI Phantom drones.
@@ -110,10 +111,10 @@ final class DATExtractor extends DroneExtractor {
                     }
 
                     // Process the csv file
-                    List<GeoTrackPoint> trackPoints = processCSVFile(context, DATFile, csvFilePath);
+                    GeoTrackPointList trackPoints = processCSVFile(context, DATFile, csvFilePath);
 
                     if (trackPoints != null && !trackPoints.isEmpty()) {
-                        (new GeoArtifactsHelper(getSleuthkitCase(), getName(), DATFile)).addTrack(DATFile.getName(), trackPoints);
+                        (new GeoArtifactsHelper(getSleuthkitCase(), getName(), "DatCon", DATFile)).addTrack(DATFile.getName(), trackPoints, null);
                     } else {
                         logger.log(Level.INFO, String.format("No trackpoints with valid longitude or latitude found in %s", DATFile.getName())); //NON-NLS
                     }
@@ -187,8 +188,8 @@ final class DATExtractor extends DroneExtractor {
      *
      * @throws DroneIngestException
      */
-    private List<GeoTrackPoint> processCSVFile(IngestJobContext context, AbstractFile DATFile, String csvFilePath) throws DroneIngestException {
-        List<GeoTrackPoint> trackPoints = new ArrayList<>();
+    private GeoTrackPointList processCSVFile(IngestJobContext context, AbstractFile DATFile, String csvFilePath) throws DroneIngestException {
+        GeoTrackPointList trackPoints = new GeoTrackPointList();
         try (BufferedReader reader = new BufferedReader(new FileReader(new File(csvFilePath)))) {
             // First read in the header line and process
             String line = reader.readLine();
@@ -202,7 +203,7 @@ final class DATExtractor extends DroneExtractor {
                 String[] values = line.split(","); //NON-NLS
                 GeoTrackPoint point = createTrackPoint(headerMap, values);
                 if (point != null) {
-                    trackPoints.add(point);
+                    trackPoints.addPoint(point);
                 }
             }
 
@@ -258,6 +259,7 @@ final class DATExtractor extends DroneExtractor {
         return new GeoTrackPoint(latitude,
                 longitude,
                 getDoubleValue(columnLookup.get(HEADER_ALTITUDE), values),
+                null,
                 getDoubleValue(columnLookup.get(HEADER_VELOCITY), values),
                 getDoubleValue(columnLookup.get(HEADER_DISTANCE_FROM_HP), values),
                 getDoubleValue(columnLookup.get(HEADER_DISTANCE_TRAVELED), values),
