@@ -49,10 +49,7 @@ ImportCentralRepoDbProgressDialog.errorParsingFile.message=Error parsing hash se
 ImportCentralRepoDbProgressDialog.linesProcessed.message=\ hashes processed
 ImportCentralRepoDbProgressDialog.title.text=Central Repository Import Progress
 OpenIDE-Module-Display-Category=Ingest Module
-OpenIDE-Module-Long-Description=\
-    Hash Set ingest module.  \n\n\
-    The ingest module analyzes files in the disk image and marks them as "known" (based on NSRL hashset lookup for "known" files) and "bad / interesting" (based on one or more hash sets supplied by the user).\n\n\
-    The module also contains additional non-ingest tools that are integrated in the GUI, such as file lookup by hash and hash set configuration.
+OpenIDE-Module-Long-Description=Hash Set ingest module.  \n\nThe ingest module analyzes files in the disk image and marks them as "known" (based on NSRL hashset lookup for "known" files) and "bad / interesting" (based on one or more hash sets supplied by the user).\n\nThe module also contains additional non-ingest tools that are integrated in the GUI, such as file lookup by hash and hash set configuration.
 OpenIDE-Module-Name=HashDatabases
 OptionsCategory_Name_HashDatabase=Hash Sets
 OptionsCategory_Keywords_HashDatabase=Hash Sets
@@ -181,10 +178,7 @@ HashDbSearchThread.name.searching=Searching
 HashDbSearchThread.noMoreFilesWithMD5Msg=No other files with the same MD5 hash were found.
 ModalNoButtons.indexingDbsTitle=Indexing hash sets
 ModalNoButtons.indexingDbTitle=Indexing hash set
-ModalNoButtons.exitHashDbIndexingMsg=You are about to exit out of indexing your hash sets. \n\
-The generated index will be left unusable. If you choose to continue,\n\
- please delete the corresponding -md5.idx file in the hash folder.\n\
-                                                Exit indexing?
+ModalNoButtons.exitHashDbIndexingMsg=You are about to exit out of indexing your hash sets. \nThe generated index will be left unusable. If you choose to continue,\nplease delete the corresponding -md5.idx file in the hash folder.\nExit indexing?
 ModalNoButtons.dlgTitle.unfinishedIndexing=Unfinished Indexing
 ModalNoButtons.indexThis.currentlyIndexing1Db=Currently indexing 1 hash set
 ModalNoButtons.indexThese.currentlyIndexing1OfNDbs=Currently indexing 1 of {0}
