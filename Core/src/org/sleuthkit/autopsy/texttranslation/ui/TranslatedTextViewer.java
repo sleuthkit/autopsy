@@ -184,7 +184,7 @@ public final class TranslatedTextViewer implements TextViewer {
         })
         protected String retrieveText() throws IOException, InterruptedException, IllegalStateException {
             SwingUtilities.invokeLater(() -> {
-                onTextDisplay(Bundle.TranslatedContentViewer_extractingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
+                onProgressDisplay(Bundle.TranslatedContentViewer_extractingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
             });
 
             try {

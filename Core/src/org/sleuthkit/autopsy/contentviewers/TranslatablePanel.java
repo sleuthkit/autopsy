@@ -18,26 +18,37 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
+import java.awt.Font;
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import javax.swing.ImageIcon;
-import org.apache.commons.lang.StringUtils;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
+import org.sleuthkit.autopsy.texttranslation.TranslationException;
+import org.sleuthkit.autopsy.texttranslation.ui.TranslateTextTask;
 
 /**
  * A panel for translation with a subcomponent that allows for translation
  */
 final class TranslatablePanel extends JPanel {
+
+    
     interface ContentSetter {
-        void set(String content) throws Exception;
+        void set(String content, ComponentOrientation orientation, int font) throws Exception;
     }
 
     /**
      * an option in drop down of whether or not to translate
      */
-    private class TranslateOption {
+    private static class TranslateOption {
         private final String text;
         private final boolean translate;
 
@@ -60,9 +71,65 @@ final class TranslatablePanel extends JPanel {
         }
     }
     
+    private static class TranslatedText {
+        private final String text;
+        private final ComponentOrientation orientation;
+
+        public TranslatedText(String text, ComponentOrientation orientation) {
+            this.text = text;
+            this.orientation = orientation;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public ComponentOrientation getOrientation() {
+            return orientation;
+        }
+    }
+    
+    private class OnTranslation extends TranslateTextTask {
+        public OnTranslation() {
+            super(true, contentDescriptor == null ? "" : contentDescriptor);
+        }
+        
+        @Override
+        protected String translate(String input) throws NoServiceProviderException, TranslationException {
+            // defer to outer class method so that it can be overridden for items like html, rtf, etc.
+            return retrieveTranslation(input);
+        }
+
+        @Override
+        protected void onProgressDisplay(String text, ComponentOrientation orientation, int font) {
+            setStatus(text, false);
+        }
+
+        @Override
+        protected void onErrorDisplay(String text, ComponentOrientation orientation, int font) {
+            setStatus(text, true);
+        }
+
+        @Override
+        protected String retrieveText() throws IOException, InterruptedException, IllegalStateException {
+            return content == null ? "" : content;
+        }
+
+        @Override
+        protected void onTextDisplay(String text, ComponentOrientation orientation, int font) {
+            // on successful acquire cache the result and set the text
+            setCachedTranslated(new TranslatedText(text, orientation));
+            setSubcomponentContent(text, orientation, font);
+        }        
+    }
+    
     
     
     private static final long serialVersionUID = 1L;
+    private static final ComponentOrientation DEFAULT_ORIENTATION = ComponentOrientation.LEFT_TO_RIGHT;
+    private static final int DEFAULT_FONT = Font.PLAIN;
+    
+    
     private final ImageIcon warningIcon = new ImageIcon(TranslatablePanel.class.getResource("/org/sleuthkit/autopsy/images/warning16.png"));
     
     private final ContentSetter onContent;
@@ -70,6 +137,16 @@ final class TranslatablePanel extends JPanel {
     private final String origOptionText;
     private final String translatedOptionText;
     private final TextTranslationService translationService;
+    private final ThreadFactory translationThreadFactory = new ThreadFactoryBuilder().setNameFormat("translatable-panel-%d").build();
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor(translationThreadFactory);
+    
+    
+    private String content;
+    private String contentDescriptor;
+    private volatile TranslatedText cachedTranslated;
+    private volatile OnTranslation backgroundTask = null;
+    
+    
 
     @Messages({"TranslatablePanel.comboBoxOption.originalText=Original Text",
         "TranslatablePanel.comboBoxOption.translatedText=Translated Text"}) 
@@ -97,48 +174,115 @@ final class TranslatablePanel extends JPanel {
         initComponents();
         additionalInit();
         setTranslationBarVisible();
-        setContent(origContent);
+        reset();
     }
 
+    private TranslatedText getCachedTranslated() {
+        synchronized(cachedTranslated) {
+            return cachedTranslated;    
+        }
+    }
+
+    private void setCachedTranslated(TranslatedText translated) {
+        synchronized(cachedTranslated) {
+            this.cachedTranslated = translated;
+        }   
+    }
+    
+    private synchronized void cancelPendingTranslation() {
+        if (backgroundTask != null && !backgroundTask.isDone()) {
+            backgroundTask.cancel(true);
+        }
+        backgroundTask = null;
+    }
+    
+    private synchronized void runTranslationTask() {
+        cancelPendingTranslation();
+        backgroundTask = new OnTranslation(); 
+
+        //Pass the background task to a single threaded pool to keep
+        //the number of jobs running to one.
+        executorService.execute(backgroundTask);
+    }
+ 
+    
+    void reset() {
+        setTranslationBarVisible();
+        setContent(null, null);
+    }
+    
+    void setContent(String content, String contentDescriptor) {
+        cancelPendingTranslation();
+        this.translateComboBox.setSelectedIndex(0);
+        this.content = content;
+        this.contentDescriptor = contentDescriptor;
+        setStatus(null, false);
+        setCachedTranslated(null);
+        setSubcomponentContent(content);
+    }
     
     
-    private void setWarningLabelMsg(String msg) {
-        boolean hasWarning = !StringUtils.isEmpty(msg);
-        warningLabel.setText(hasWarning ? msg : "");
-        warningLabel.setIcon(hasWarning ? warningIcon : null);
+    /**
+     * where actual translation takes place
+     * allowed to be overridden for the sake of varying translatable content (i.e. html, rtf, etc)
+     * @param input         the input content
+     * @return              the result of translation
+     * @throws TranslationException
+     * @throws NoServiceProviderException 
+     */
+    protected String retrieveTranslation(String input) throws TranslationException, NoServiceProviderException  {
+        return translationService.translate(input);
+    }
+    
+    
+    
+    private void setStatus(String msg, boolean showWarningIcon) {
+        statusLabel.setText(msg);
+        statusLabel.setIcon(showWarningIcon ? warningIcon : null);
     }
 
     private void setTranslationBarVisible() {
         translationBar.setVisible(this.translationService.hasProvider());
     }
     
-    void reset() {
-        setTranslationBarVisible();
-        setContent(null);
+    private void setSubcomponentContent(String content) {
+        setSubcomponentContent(content, DEFAULT_ORIENTATION, DEFAULT_FONT);
     }
     
-    void setContent(String content) {
-        this.translateComboBox.setSelectedIndex(0);
+    @Messages({"# {0} - exception message", "TranslatablePanel.onSetContentError.text=There was an error displaying the text: {0}"}) 
+    private void setSubcomponentContent(String content, ComponentOrientation orientation, int font) {
         SwingUtilities.invokeLater(() -> {
-            String errMess = this.onContent.set(content);
-            setWarningLabelMsg(errMess);
+            try {
+                this.onContent.set(content, orientation, font);
+            } catch (Exception ex) {
+                setStatus(Bundle.TranslatablePanel_onSetContentError_text(ex.getMessage()), true);
+            }
         });
     }
 
-    
-
     private void additionalInit() {
         add(this.subcomponent, java.awt.BorderLayout.CENTER);
-        setWarningLabelMsg(null);
+        setStatus(null, false);
         translateComboBox.removeAllItems();
         translateComboBox.addItem(new TranslateOption(this.origOptionText, false));
         translateComboBox.addItem(new TranslateOption(this.translatedOptionText, true));
     }
     
     private void handleComboBoxChange(TranslateOption translateOption) {
+        cancelPendingTranslation();
         SwingUtilities.invokeLater(() -> {
-           String errMess = this.onContent.set(translateOption.shouldTranslate());
-           setWarningLabelMsg(errMess);
+            if (translateOption.shouldTranslate()) {
+                TranslatedText translated = getCachedTranslated();
+                if (translated != null) {
+                    setSubcomponentContent(translated.getText(), translated.getOrientation(), DEFAULT_FONT);
+                }
+                else {
+                    runTranslationTask();
+                }
+            }
+            else {
+                setSubcomponentContent(content);
+            }
         });
     }
     
@@ -154,7 +298,7 @@ final class TranslatablePanel extends JPanel {
 
         translationBar = new javax.swing.JPanel();
         translateComboBox = new javax.swing.JComboBox<>();
-        warningLabel = new javax.swing.JLabel();
+        statusLabel = new javax.swing.JLabel();
 
         setMaximumSize(new java.awt.Dimension(2000, 2000));
         setMinimumSize(new java.awt.Dimension(2, 2));
@@ -179,8 +323,8 @@ final class TranslatablePanel extends JPanel {
         });
         translationBar.add(translateComboBox, java.awt.BorderLayout.LINE_END);
 
-        warningLabel.setMaximumSize(new java.awt.Dimension(32767, 32767));
-        translationBar.add(warningLabel, java.awt.BorderLayout.CENTER);
+        statusLabel.setMaximumSize(new java.awt.Dimension(32767, 32767));
+        translationBar.add(statusLabel, java.awt.BorderLayout.CENTER);
 
         add(translationBar, java.awt.BorderLayout.NORTH);
     }// </editor-fold>//GEN-END:initComponents
@@ -190,8 +334,8 @@ final class TranslatablePanel extends JPanel {
     }//GEN-LAST:event_translateComboBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel statusLabel;
     private javax.swing.JComboBox<TranslateOption> translateComboBox;
     private javax.swing.JPanel translationBar;
-    private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables
 }
