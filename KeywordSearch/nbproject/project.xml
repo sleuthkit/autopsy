@@ -276,8 +276,8 @@
                 <binary-origin>release/modules/ext/icu4j-3.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-17.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-17.0.jar</binary-origin>
+                <runtime-relative-path>ext/guava-19.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-19.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/language-detector-0.6.jar</runtime-relative-path>
