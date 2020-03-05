@@ -291,13 +291,21 @@ class FileSearch {
      * @return The beginning of text from the specified AbstractFile.
      */
     private static String getFirstLines(AbstractFile file) {
-        try (Reader reader = TextExtractorFactory.getExtractor(file, null).getReader()) {
+        TextExtractor extractor;
+        try {
+            extractor = TextExtractorFactory.getExtractor(file, null);
+        } catch (TextExtractorFactory.NoTextExtractorFound ignored) {
+            //no extractor found, use Strings Extractor
+            extractor = TextExtractorFactory.getStringsExtractor(file, null);
+        }
+
+        try (Reader reader = extractor.getReader()) {
             char[] cbuf = new char[PREVIEW_SIZE];
             reader.read(cbuf, 0, PREVIEW_SIZE);
             return new String(cbuf);
         } catch (IOException ex) {
             return Bundle.FileSearch_documentSummary_noBytes();
-        } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
+        } catch (TextExtractor.InitReaderException ex) {
             return Bundle.FileSearch_documentSummary_noPreview();
         }
     }
