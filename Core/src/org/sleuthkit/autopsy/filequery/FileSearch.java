@@ -79,6 +79,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.autopsy.textsummarizer.TextSummarizer;
+import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
 /**
  * Main class to perform the file search.
@@ -259,8 +260,8 @@ class FileSearch {
      */
     @NbBundle.Messages({"FileSearch.documentSummary.noPreview=No preview available.",
         "FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview."})
-    static String summarize(AbstractFile file) {
-        String summary = null;
+    static TextSummary summarize(AbstractFile file) {
+        TextSummary summary = null;
         TextSummarizer localSummarizer = summarizerToUse;
         if (localSummarizer == null) {
             synchronized (searchCache) {
@@ -274,12 +275,12 @@ class FileSearch {
                 //a summary of length 40 seems to fit without vertical scroll bars
                 summary = localSummarizer.summarize(file, 40);
             } catch (IOException ex) {
-                return Bundle.FileSearch_documentSummary_noPreview();
+                return new TextSummary(Bundle.FileSearch_documentSummary_noPreview(), null, 0);
             }
         }
-        if (StringUtils.isBlank(summary)) {
-            //no summarizer was found or summary was empty just grab the beginning of the file
-            summary = getFirstLines(file);
+        if (summary == null || StringUtils.isBlank(summary.getSummaryText())) {
+            //summary text was empty grab the beginning of the file 
+            summary = new TextSummary(getFirstLines(file), null, 0);
         }
         return summary;
     }
