@@ -30,7 +30,9 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
  * A panel for translation with a subcomponent that allows for translation
  */
 final class TranslatablePanel extends JPanel {
-
+    interface ContentSetter {
+        void set(String content) throws Exception;
+    }
 
     /**
      * an option in drop down of whether or not to translate

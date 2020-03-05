@@ -160,112 +160,13 @@ public final class TranslatedTextViewer implements TextViewer {
     /**
      * Extracts text from a file and optionally translates it.
      */
-    private class ExtractAndTranslateTextTask extends SwingWorker<String, Void> {
+    private class ExtractAndTranslateTextTask extends TranslateTextTask {
 
         private final AbstractFile file;
-        private final boolean translateText;
 
         private ExtractAndTranslateTextTask(AbstractFile file, boolean translateText) {
+            super(translateText, String.format("%s (objId=%d)", file.getName(), file.getId()));
             this.file = file;
-            this.translateText = translateText;
-        }
-
-        @NbBundle.Messages({
-            "TranslatedContentViewer.extractingText=Extracting text, please wait...",
-            "TranslatedContentViewer.translatingText=Translating text, please wait...",
-            "# {0} - exception message", "TranslatedContentViewer.errorExtractingText=An error occurred while extracting the text ({0}).",
-            "TranslatedContentViewer.fileHasNoText=File has no text.",
-            "TranslatedContentViewer.noServiceProvider=The machine translation software was not found.",
-            "# {0} - exception message", "TranslatedContentViewer.translationException=An error occurred while translating the text ({0})."
-        })
-        @Override
-        public String doInBackground() throws InterruptedException {
-            if (this.isCancelled()) {
-                throw new InterruptedException();
-            }
-
-            SwingUtilities.invokeLater(() -> {
-                panel.display(Bundle.TranslatedContentViewer_extractingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
-            });
-            String fileText;
-            try {
-                fileText = getFileText(file);
-            } catch (IOException | TextExtractor.InitReaderException ex) {
-                logger.log(Level.WARNING, String.format("Error extracting text for file %s (objId=%d)", file.getName(), file.getId()), ex);
-                return Bundle.TranslatedContentViewer_errorExtractingText(ex.getMessage());
-            }
-
-            if (this.isCancelled()) {
-                throw new InterruptedException();
-            }
-
-            if (fileText == null || fileText.isEmpty()) {
-                return Bundle.TranslatedContentViewer_fileHasNoText();
-            }
-
-            if (!this.translateText) {
-                return fileText;
-            }
-
-            SwingUtilities.invokeLater(() -> {
-                panel.display(Bundle.TranslatedContentViewer_translatingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
-            });
-            String translation;
-            try {
-                translation = translate(fileText);
-            } catch (NoServiceProviderException ex) {
-                logger.log(Level.WARNING, String.format("Error translating text for file %s (objId=%d)", file.getName(), file.getId()), ex);
-                translation = Bundle.TranslatedContentViewer_noServiceProvider();
-            } catch (TranslationException ex) {
-                logger.log(Level.WARNING, String.format("Error translating text for file %s (objId=%d)", file.getName(), file.getId()), ex);
-                translation = Bundle.TranslatedContentViewer_translationException(ex.getMessage());
-            }
-
-            if (this.isCancelled()) {
-                throw new InterruptedException();
-            }
-
-            return translation;
-        }
-
-        @Override
-        public void done() {
-            try {
-                String result = get();
-                if (this.isCancelled()) {
-                    throw new InterruptedException();
-                }
-                int len = result.length();
-                int maxOrientChars = Math.min(len, 1024);
-                String orientDetectSubstring = result.substring(0, maxOrientChars);
-                ComponentOrientation orientation = TextUtil.getTextDirection(orientDetectSubstring);
-                panel.display(result, orientation, Font.PLAIN);
-
-            } catch (InterruptedException | CancellationException ignored) {
-                // Task cancelled, no error.
-            } catch (ExecutionException ex) {
-                logger.log(Level.WARNING, String.format("Error occurred during background task execution for file %s (objId=%d)", file.getName(), file.getId()), ex);
-                panel.display(Bundle.TranslatedContentViewer_translationException(ex.getMessage()), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
-            }
-        }
-
-        /**
-         * Pass the translation off to the Translation service provider.
-         *
-         * @param input Text to be translated
-         *
-         * @return Translated text or error message
-         */
-        @NbBundle.Messages({
-            "TranslatedContentViewer.emptyTranslation=The machine translation software did not return any text."
-        })
-        private String translate(String input) throws NoServiceProviderException, TranslationException {
-            TextTranslationService translatorInstance = TextTranslationService.getInstance();
-            String translatedResult = translatorInstance.translate(input);
-            if (translatedResult.isEmpty()) {
-                return Bundle.TranslatedContentViewer_emptyTranslation();
-            }
-            return translatedResult;
         }
 
         /**
@@ -275,13 +176,9 @@ public final class TranslatedTextViewer implements TextViewer {
          *
          * @return Extracted text
          *
-         * @throws IOException
-         * @throws InterruptedException
-         * @throws
-         * org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException
+         * @throws Exception
          */
-        private String getFileText(AbstractFile file) throws IOException,
-                InterruptedException, TextExtractor.InitReaderException {
+        protected String retrieveText() throws Exception {
 
             final boolean isImage = file.getMIMEType().toLowerCase().startsWith("image/"); // NON-NLS
             String result;
@@ -382,7 +279,14 @@ public final class TranslatedTextViewer implements TextViewer {
                 return TextExtractorFactory.getStringsExtractor(file, context).getReader();
             }
         }
+
+
+        @Override
+        protected void onTextDisplay(String text, ComponentOrientation orientation, int font) {
+            panel.display(text, orientation, font);
+        }
     }
+
 
     /**
      * Listens for drop-down selection changes and pushes processing off of the

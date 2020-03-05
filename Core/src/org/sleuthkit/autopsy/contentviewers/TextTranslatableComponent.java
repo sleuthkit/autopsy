@@ -110,7 +110,7 @@ final class TextTranslatableComponent implements TranslatablePanel.TranslatableC
                         this.translated = this.translationService.translate(originalContent);
                     } catch (NoServiceProviderException | TranslationException ex) {
                         LOGGER.log(Level.WARNING, "Unable to translate text with translation service", ex);
-                        return Bundle.TextTranslatableComponent_setTranslated_onTranslateError();
+                        //return Bundle.TextTranslatableComponent_setTranslated_onTranslateError();
                     }
                 });
             }
