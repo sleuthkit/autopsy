@@ -178,8 +178,38 @@ public final class TranslatedTextViewer implements TextViewer {
          *
          * @throws Exception
          */
-        protected String retrieveText() throws Exception {
+        @NbBundle.Messages({
+            "TranslatedContentViewer.extractingText=Extracting text, please wait...",
+            "# {0} - exception message", "TranslatedContentViewer.errorExtractingText=An error occurred while extracting the text ({0}).",
+        })
+        protected String retrieveText() throws IOException, InterruptedException, IllegalStateException {
+            SwingUtilities.invokeLater(() -> {
+                onTextDisplay(Bundle.TranslatedContentViewer_extractingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
+            });
 
+            try {
+                return getFileText(file);
+            } catch (IOException | TextExtractor.InitReaderException ex) {
+                logger.log(Level.WARNING, String.format("Error extracting text for file %s (objId=%d)", file.getName(), file.getId()), ex);
+                // throw new exception with message to be displayed to user
+                throw new IllegalStateException(Bundle.TranslatedContentViewer_errorExtractingText(ex.getMessage()), ex);
+            }
+        }
+            
+            
+        /**
+         * Extracts text from the given node
+         *
+         * @param file Selected node in UI
+         *
+         * @return Extracted text
+         *
+         * @throws IOException
+         * @throws InterruptedException
+         * @throws
+         * org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException
+         */
+        private String getFileText(AbstractFile file) throws IOException, InterruptedException, TextExtractor.InitReaderException {
             final boolean isImage = file.getMIMEType().toLowerCase().startsWith("image/"); // NON-NLS
             String result;
             if (isImage) {

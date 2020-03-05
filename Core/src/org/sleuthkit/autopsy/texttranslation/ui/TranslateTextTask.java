@@ -20,11 +20,13 @@ package org.sleuthkit.autopsy.texttranslation.ui;
 
 import java.awt.ComponentOrientation;
 import java.awt.Font;
+import java.io.IOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
@@ -35,17 +37,39 @@ import org.sleuthkit.autopsy.texttranslation.TranslationException;
 /**
 * abstract class for translating text and displaying to the user
 */
-public abstract class TranslateTextTask extends SwingWorker<String, Void> {
+public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Result, Void> {
    private static final Logger logger = Logger.getLogger(TranslatedTextViewer.class.getName());
 
    private final boolean translateText;
    private final String contentDescriptor;
    
+   /**
+    * as a result of running and processing the translation
+    */
+   static class Result {
+       public final String errorMessage;
+       public final String result;
+       public final boolean successful;
+       
+       public static Result error(String message) {
+           return new Result(null, message, false);
+       }
+       
+       public static Result success(String content) {
+           return new Result(content, null, true);
+       }
+       
+        private Result(String result, String errorMessage, boolean successful) {
+            this.successful = successful;
+            this.errorMessage = errorMessage;
+            this.result = result;
+        }
+   }
 
    /**
     * 
     * @param translateText      whether or not to translate text
-    * @param contentDescriptor     the content descriptor for the item being translated (used for logging errors)
+    * @param contentDescriptor  the content descriptor for the item being translated (used for logging errors)
     */
     public TranslateTextTask(boolean translateText, String fileDescriptor) {
         this.translateText = translateText;
@@ -53,36 +77,31 @@ public abstract class TranslateTextTask extends SwingWorker<String, Void> {
     }
 
    
-    protected abstract String retrieveText() throws Exception;
+    protected abstract String retrieveText() throws IOException, InterruptedException, IllegalStateException;
     
     protected abstract void onTextDisplay(String text, ComponentOrientation orientation, int font);
 
+    protected void onErrorDisplay(String text, ComponentOrientation orientation, int font) {
+        onTextDisplay(text, orientation, font);
+    }
+
    @NbBundle.Messages({
-       "TranslatedContentViewer.extractingText=Extracting text, please wait...",
        "TranslatedContentViewer.translatingText=Translating text, please wait...",
-       "# {0} - exception message", "TranslatedContentViewer.errorExtractingText=An error occurred while extracting the text ({0}).",
        "TranslatedContentViewer.fileHasNoText=File has no text.",
        "TranslatedContentViewer.noServiceProvider=The machine translation software was not found.",
        "# {0} - exception message", "TranslatedContentViewer.translationException=An error occurred while translating the text ({0})."
    })
    @Override
-   public String doInBackground() throws InterruptedException {
-       if (this.isCancelled()) {
+   public Result doInBackground() throws InterruptedException {
+        if (this.isCancelled()) {
            throw new InterruptedException();
        }
-
-       SwingUtilities.invokeLater(() -> {
-           onTextDisplay(Bundle.TranslatedContentViewer_extractingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
-       });
-       String fileText;
+       
+        String fileText;
        try {
            fileText = retrieveText();
-       } catch (InterruptedException | CancellationException e) {
-           // bubble up cancellation instead of continuing
-           throw e;
-       } catch (Exception ex) {
-           logger.log(Level.WARNING, "Error extracting text for file " + this.contentDescriptor, ex);
-           return Bundle.TranslatedContentViewer_errorExtractingText(ex.getMessage());
+       } catch (IOException | IllegalStateException ex) {
+           return Result.error(ex.getMessage());
        }
 
        if (this.isCancelled()) {
@@ -90,52 +109,58 @@ public abstract class TranslateTextTask extends SwingWorker<String, Void> {
        }
 
        if (fileText == null || fileText.isEmpty()) {
-           return Bundle.TranslatedContentViewer_fileHasNoText();
+           return Result.error(Bundle.TranslatedContentViewer_fileHasNoText());
        }
 
        if (!this.translateText) {
-           return fileText;
+           return Result.success(fileText);
        }
 
        SwingUtilities.invokeLater(() -> {
            onTextDisplay(Bundle.TranslatedContentViewer_translatingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
        });
-       String translation;
+       Result translationResult;
        try {
-           translation = translate(fileText);
+           translationResult = translate(fileText);
        } catch (NoServiceProviderException ex) {
            logger.log(Level.WARNING, "Error translating text for file " + this.contentDescriptor, ex);
-           translation = Bundle.TranslatedContentViewer_noServiceProvider();
+           translationResult = Result.error(Bundle.TranslatedContentViewer_noServiceProvider());
        } catch (TranslationException ex) {
            logger.log(Level.WARNING, "Error translating text for file " + this.contentDescriptor, ex);
-           translation = Bundle.TranslatedContentViewer_translationException(ex.getMessage());
+           translationResult = Result.error(Bundle.TranslatedContentViewer_translationException(ex.getMessage()));
        }
 
        if (this.isCancelled()) {
            throw new InterruptedException();
        }
 
-       return translation;
+       return translationResult;
    }
 
    @Override
    public void done() {
        try {
-           String result = get();
+           Result executionResult = get();
            if (this.isCancelled()) {
                throw new InterruptedException();
            }
-           int len = result.length();
-           int maxOrientChars = Math.min(len, 1024);
-           String orientDetectSubstring = result.substring(0, maxOrientChars);
-           ComponentOrientation orientation = TextUtil.getTextDirection(orientDetectSubstring);
-           onTextDisplay(result, orientation, Font.PLAIN);
-
+           
+           if (executionResult.successful) {
+               String result = executionResult.result;
+                int len = result.length();
+                int maxOrientChars = Math.min(len, 1024);
+                String orientDetectSubstring = result.substring(0, maxOrientChars);
+                ComponentOrientation orientation = TextUtil.getTextDirection(orientDetectSubstring);
+                onTextDisplay(result, orientation, Font.PLAIN);
+           }
+           else {
+               onErrorDisplay(executionResult.errorMessage, ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
+           }
        } catch (InterruptedException | CancellationException ignored) {
            // Task cancelled, no error.
        } catch (ExecutionException ex) {
            logger.log(Level.WARNING, "Error occurred during background task execution for file " + this.contentDescriptor, ex);
-           onTextDisplay(Bundle.TranslatedContentViewer_translationException(ex.getMessage()), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
+           onErrorDisplay(Bundle.TranslatedContentViewer_translationException(ex.getMessage()), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
        }
    }
 
@@ -149,12 +174,12 @@ public abstract class TranslateTextTask extends SwingWorker<String, Void> {
    @NbBundle.Messages({
        "TranslatedContentViewer.emptyTranslation=The machine translation software did not return any text."
    })
-   private String translate(String input) throws NoServiceProviderException, TranslationException {
+   private Result translate(String input) throws NoServiceProviderException, TranslationException {
        TextTranslationService translatorInstance = TextTranslationService.getInstance();
        String translatedResult = translatorInstance.translate(input);
        if (translatedResult.isEmpty()) {
-           return Bundle.TranslatedContentViewer_emptyTranslation();
+           return Result.error(Bundle.TranslatedContentViewer_emptyTranslation());
        }
-       return translatedResult;
+       return Result.success(translatedResult);
    }
 }

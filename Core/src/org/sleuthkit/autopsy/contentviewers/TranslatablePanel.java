@@ -61,49 +61,22 @@ final class TranslatablePanel extends JPanel {
     }
     
     
-    /**
-     * describes a component that will allow for translation that has String-based content
-     */
-    interface TranslatableComponent {
-        /**
-         * @return the underlying component to be added to TranslatablePanel as a parent
-         */
-        Component getComponent();
-        
-        
-        /**
-         * set the content for this subcomponent
-         * @param content the original content for the component; when this is reset, there is no translation initially
-         * @return        if non-null string, this string will appear as error message
-         */
-        String setContent(String content);
-        String getContent();
-        
-        
-        /**
-         * sets the state of this component to translated
-         * @param translate     whether or not to translate this component
-         * @return              if non-null string, this string will appear as error message
-         */
-        String setTranslated(boolean translate);
-        boolean isTranslated();
-    }
-    
-    
     
     private static final long serialVersionUID = 1L;
     private final ImageIcon warningIcon = new ImageIcon(TranslatablePanel.class.getResource("/org/sleuthkit/autopsy/images/warning16.png"));
     
-    private final TranslatableComponent subcomponent;
+    private final ContentSetter onContent;
+    private final Component subcomponent;
     private final String origOptionText;
     private final String translatedOptionText;
     private final TextTranslationService translationService;
 
     @Messages({"TranslatablePanel.comboBoxOption.originalText=Original Text",
         "TranslatablePanel.comboBoxOption.translatedText=Translated Text"}) 
-    TranslatablePanel(TranslatableComponent subcomponent) {
+    TranslatablePanel(Component subcomponent, ContentSetter onContent) {
         this(
-            subcomponent, 
+            subcomponent,
+            onContent,
             Bundle.TranslatablePanel_comboBoxOption_originalText(), 
             Bundle.TranslatablePanel_comboBoxOption_translatedText(), 
             null,
@@ -113,9 +86,10 @@ final class TranslatablePanel extends JPanel {
     /**
      * Creates new form TranslatedContentPanel
      */
-    TranslatablePanel(TranslatableComponent subcomponent, String origOptionText, String translatedOptionText, String origContent, 
+    TranslatablePanel(Component subcomponent, ContentSetter onContent, String origOptionText, String translatedOptionText, String origContent, 
             TextTranslationService translationService) {
         this.subcomponent = subcomponent;
+        this.onContent = onContent;
         this.origOptionText = origOptionText;
         this.translatedOptionText = translatedOptionText;
         this.translationService = translationService;
@@ -146,7 +120,7 @@ final class TranslatablePanel extends JPanel {
     void setContent(String content) {
         this.translateComboBox.setSelectedIndex(0);
         SwingUtilities.invokeLater(() -> {
-            String errMess = this.subcomponent.setContent(content);
+            String errMess = this.onContent.set(content);
             setWarningLabelMsg(errMess);
         });
     }
@@ -154,7 +128,7 @@ final class TranslatablePanel extends JPanel {
     
 
     private void additionalInit() {
-        add(this.subcomponent.getComponent(), java.awt.BorderLayout.CENTER);
+        add(this.subcomponent, java.awt.BorderLayout.CENTER);
         setWarningLabelMsg(null);
         translateComboBox.removeAllItems();
         translateComboBox.addItem(new TranslateOption(this.origOptionText, false));
@@ -163,7 +137,7 @@ final class TranslatablePanel extends JPanel {
     
     private void handleComboBoxChange(TranslateOption translateOption) {
         SwingUtilities.invokeLater(() -> {
-           String errMess = this.subcomponent.setTranslated(translateOption.shouldTranslate());
+           String errMess = this.onContent.set(translateOption.shouldTranslate());
            setWarningLabelMsg(errMess);
         });
     }
