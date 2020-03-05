@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.contentviewers;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
-import java.awt.Font;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,17 +37,30 @@ import org.sleuthkit.autopsy.texttranslation.ui.TranslateTextTask;
 /**
  * A panel for translation with a subcomponent that allows for translation
  */
-final class TranslatablePanel extends JPanel {
+class TranslatablePanel extends JPanel {
 
-    
-    interface ContentSetter {
-        void set(String content, ComponentOrientation orientation, int font) throws Exception;
+    static interface ContentComponent {
+        /**
+         * gets root component of the translation panel
+         * @return      the root component to insert into the translatable panel
+         */
+        Component getRootComponent();
+
+        /**
+         * sets the content of the component to the provided content
+         * @param content       the content to be displayed
+         * @param orientation   how it should be displayed
+         * @throws Exception    if there is an error in rendering the content
+         */
+        void setContent(String content, ComponentOrientation orientation) throws Exception;
     }
-
+    
+    
     /**
      * an option in drop down of whether or not to translate
      */
     private static class TranslateOption {
+
         private final String text;
         private final boolean translate;
 
@@ -60,7 +72,7 @@ final class TranslatablePanel extends JPanel {
         public String getText() {
             return text;
         }
-        
+
         @Override
         public String toString() {
             return text;
@@ -70,8 +82,9 @@ final class TranslatablePanel extends JPanel {
             return translate;
         }
     }
-    
+
     private static class TranslatedText {
+
         private final String text;
         private final ComponentOrientation orientation;
 
@@ -88,12 +101,13 @@ final class TranslatablePanel extends JPanel {
             return orientation;
         }
     }
-    
+
     private class OnTranslation extends TranslateTextTask {
+
         public OnTranslation() {
             super(true, contentDescriptor == null ? "" : contentDescriptor);
         }
-        
+
         @Override
         protected String translate(String input) throws NoServiceProviderException, TranslationException {
             // defer to outer class method so that it can be overridden for items like html, rtf, etc.
@@ -119,123 +133,129 @@ final class TranslatablePanel extends JPanel {
         protected void onTextDisplay(String text, ComponentOrientation orientation, int font) {
             // on successful acquire cache the result and set the text
             setCachedTranslated(new TranslatedText(text, orientation));
-            setSubcomponentContent(text, orientation, font);
-        }        
+            setChildComponentContent(text, orientation);
+
+            // clear any status
+            clearStatus();
+        }
     }
-    
-    
-    
+
     private static final long serialVersionUID = 1L;
     private static final ComponentOrientation DEFAULT_ORIENTATION = ComponentOrientation.LEFT_TO_RIGHT;
-    private static final int DEFAULT_FONT = Font.PLAIN;
-    
-    
+
     private final ImageIcon warningIcon = new ImageIcon(TranslatablePanel.class.getResource("/org/sleuthkit/autopsy/images/warning16.png"));
-    
-    private final ContentSetter onContent;
-    private final Component subcomponent;
+
+    private final ContentComponent contentComponent;
+    private final Component rootComponent;
     private final String origOptionText;
     private final String translatedOptionText;
     private final TextTranslationService translationService;
     private final ThreadFactory translationThreadFactory = new ThreadFactoryBuilder().setNameFormat("translatable-panel-%d").build();
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(translationThreadFactory);
-    
-    
+
+    private final Object cachedTranslatedLock = new Object();
+    private final Object backgroundTaskLock = new Object();
+
     private String content;
     private String contentDescriptor;
+
     private volatile TranslatedText cachedTranslated;
     private volatile OnTranslation backgroundTask = null;
-    
-    
 
     @Messages({"TranslatablePanel.comboBoxOption.originalText=Original Text",
-        "TranslatablePanel.comboBoxOption.translatedText=Translated Text"}) 
-    TranslatablePanel(Component subcomponent, ContentSetter onContent) {
+        "TranslatablePanel.comboBoxOption.translatedText=Translated Text"})
+    TranslatablePanel(ContentComponent contentComponent) {
         this(
-            subcomponent,
-            onContent,
-            Bundle.TranslatablePanel_comboBoxOption_originalText(), 
-            Bundle.TranslatablePanel_comboBoxOption_translatedText(), 
+            contentComponent,
+            Bundle.TranslatablePanel_comboBoxOption_originalText(),
+            Bundle.TranslatablePanel_comboBoxOption_translatedText(),
             null,
             TextTranslationService.getInstance());
     }
-        
+
     /**
      * Creates new form TranslatedContentPanel
      */
-    TranslatablePanel(Component subcomponent, ContentSetter onContent, String origOptionText, String translatedOptionText, String origContent, 
+    TranslatablePanel(ContentComponent contentComponent, String origOptionText, String translatedOptionText, String origContent,
             TextTranslationService translationService) {
-        this.subcomponent = subcomponent;
-        this.onContent = onContent;
+        this.contentComponent = contentComponent;
+        this.rootComponent = contentComponent.getRootComponent();
         this.origOptionText = origOptionText;
         this.translatedOptionText = translatedOptionText;
         this.translationService = translationService;
-        
+
         initComponents();
         additionalInit();
         setTranslationBarVisible();
         reset();
     }
+    
+
 
     private TranslatedText getCachedTranslated() {
-        synchronized(cachedTranslated) {
-            return cachedTranslated;    
+        synchronized (cachedTranslatedLock) {
+            return cachedTranslated;
         }
     }
 
     private void setCachedTranslated(TranslatedText translated) {
-        synchronized(cachedTranslated) {
+        synchronized (cachedTranslatedLock) {
             this.cachedTranslated = translated;
-        }   
-    }
-    
-    private synchronized void cancelPendingTranslation() {
-        if (backgroundTask != null && !backgroundTask.isDone()) {
-            backgroundTask.cancel(true);
         }
-        backgroundTask = null;
     }
-    
-    private synchronized void runTranslationTask() {
-        cancelPendingTranslation();
-        backgroundTask = new OnTranslation(); 
 
-        //Pass the background task to a single threaded pool to keep
-        //the number of jobs running to one.
-        executorService.execute(backgroundTask);
+    private void cancelPendingTranslation() {
+        synchronized (backgroundTaskLock) {
+            if (backgroundTask != null && !backgroundTask.isDone()) {
+                backgroundTask.cancel(true);
+            }
+            backgroundTask = null;
+        }
     }
- 
-    
+
+    private void runTranslationTask() {
+        synchronized (backgroundTaskLock) {
+            cancelPendingTranslation();
+            backgroundTask = new OnTranslation();
+
+            //Pass the background task to a single threaded pool to keep
+            //the number of jobs running to one.
+            executorService.execute(backgroundTask);
+        }
+    }
+
     void reset() {
         setTranslationBarVisible();
         setContent(null, null);
     }
-    
+
     void setContent(String content, String contentDescriptor) {
         cancelPendingTranslation();
         this.translateComboBox.setSelectedIndex(0);
         this.content = content;
         this.contentDescriptor = contentDescriptor;
-        setStatus(null, false);
+        clearStatus();
         setCachedTranslated(null);
-        setSubcomponentContent(content);
+        setChildComponentContent(content);
     }
-    
-    
+
     /**
-     * where actual translation takes place
-     * allowed to be overridden for the sake of varying translatable content (i.e. html, rtf, etc)
-     * @param input         the input content
-     * @return              the result of translation
+     * where actual translation takes place allowed to be overridden for the
+     * sake of varying translatable content (i.e. html, rtf, etc)
+     *
+     * @param input the input content
+     * @return the result of translation
      * @throws TranslationException
-     * @throws NoServiceProviderException 
+     * @throws NoServiceProviderException
      */
-    protected String retrieveTranslation(String input) throws TranslationException, NoServiceProviderException  {
+    protected String retrieveTranslation(String input) throws TranslationException, NoServiceProviderException {
         return translationService.translate(input);
     }
-    
-    
-    
+
+    private void clearStatus() {
+        setStatus(null, false);
+    }
+
     private void setStatus(String msg, boolean showWarningIcon) {
         statusLabel.setText(msg);
         statusLabel.setIcon(showWarningIcon ? warningIcon : null);
@@ -244,16 +264,16 @@ final class TranslatablePanel extends JPanel {
     private void setTranslationBarVisible() {
         translationBar.setVisible(this.translationService.hasProvider());
     }
-    
-    private void setSubcomponentContent(String content) {
-        setSubcomponentContent(content, DEFAULT_ORIENTATION, DEFAULT_FONT);
+
+    private void setChildComponentContent(String content) {
+        setChildComponentContent(content, DEFAULT_ORIENTATION);
     }
-    
-    @Messages({"# {0} - exception message", "TranslatablePanel.onSetContentError.text=There was an error displaying the text: {0}"}) 
-    private void setSubcomponentContent(String content, ComponentOrientation orientation, int font) {
+
+    @Messages({"# {0} - exception message", "TranslatablePanel.onSetContentError.text=There was an error displaying the text: {0}"})
+    private void setChildComponentContent(String content, ComponentOrientation orientation) {
         SwingUtilities.invokeLater(() -> {
             try {
-                this.onContent.set(content, orientation, font);
+                contentComponent.setContent(content, orientation);
             } catch (Exception ex) {
                 setStatus(Bundle.TranslatablePanel_onSetContentError_text(ex.getMessage()), true);
             }
@@ -261,31 +281,27 @@ final class TranslatablePanel extends JPanel {
     }
 
     private void additionalInit() {
-        add(this.subcomponent, java.awt.BorderLayout.CENTER);
-        setStatus(null, false);
+        add(this.rootComponent, java.awt.BorderLayout.CENTER);
         translateComboBox.removeAllItems();
         translateComboBox.addItem(new TranslateOption(this.origOptionText, false));
         translateComboBox.addItem(new TranslateOption(this.translatedOptionText, true));
     }
-    
+
     private void handleComboBoxChange(TranslateOption translateOption) {
         cancelPendingTranslation();
-        SwingUtilities.invokeLater(() -> {
-            if (translateOption.shouldTranslate()) {
-                TranslatedText translated = getCachedTranslated();
-                if (translated != null) {
-                    setSubcomponentContent(translated.getText(), translated.getOrientation(), DEFAULT_FONT);
-                }
-                else {
-                    runTranslationTask();
-                }
+        clearStatus();
+
+        if (translateOption.shouldTranslate()) {
+            TranslatedText translated = getCachedTranslated();
+            if (translated != null) {
+                setChildComponentContent(translated.getText(), translated.getOrientation());
+            } else {
+                runTranslationTask();
             }
-            else {
-                setSubcomponentContent(content);
-            }
-        });
+        } else {
+            setChildComponentContent(content);
+        }
     }
-    
 
     /**
      * This method is called from within the constructor to initialize the form.

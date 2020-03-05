@@ -20,9 +20,9 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import org.sleuthkit.autopsy.datamodel.AttachmentNode;
 import com.google.gson.Gson;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.swing.JScrollPane;
 import javax.swing.text.JTextComponent;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -39,10 +40,12 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -84,20 +87,36 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.URL
 @ServiceProvider(service = DataContentViewer.class, position = 5)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class MessageContentViewer extends javax.swing.JPanel implements DataContentViewer {
-    private static boolean tryHandle(Runnable runnable, String logErrorMessage) {
-        try {
-            runnable.run();
+
+    class TextComponent implements TranslatablePanel.ContentComponent {
+
+        private final Component rootComponent;
+        private final AutoWrappingJTextPane textComponent;
+
+        TextComponent() {
+            textComponent = new AutoWrappingJTextPane();
+            textComponent.setEditable(false);
+
+            JScrollPane parentComponent = new JScrollPane();
+            parentComponent.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            parentComponent.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+            parentComponent.setViewportView(textComponent);
+            rootComponent = parentComponent;
         }
-        catch (Exception e) {
-            LOGGER.log(Level.WARNING, logErrorMessage, e);
-            return false;
+
+        @Override
+        public Component getRootComponent() {
+            return rootComponent;
         }
-        
-        return true;
+
+        @Override
+        public void setContent(String content, ComponentOrientation orientation) throws Exception {
+            textComponent.setText(content == null ? "" : content);
+            textComponent.setComponentOrientation(orientation);
+            textComponent.setCaretPosition(0);
+        }
     }
-        
-    
-    
+
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(MessageContentViewer.class.getName());
     private static final BlackboardAttribute.Type TSK_ASSOCIATED_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
@@ -108,12 +127,9 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private static final int RTF_TAB_INDEX = 3;
     private static final int ATTM_TAB_INDEX = 4;
 
-
-    
-    
     private final List<JTextComponent> textAreas;
     private final org.sleuthkit.autopsy.contentviewers.HtmlPanel htmlPanel = new org.sleuthkit.autopsy.contentviewers.HtmlPanel();
-    private final TranslatablePanel textPanel = new TranslatablePanel(new TextTranslatableComponent());
+    private final TranslatablePanel textPanel = new TranslatablePanel(new TextComponent());
     /**
      * Artifact currently being displayed
      */
@@ -131,15 +147,15 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         envelopePanel.setBackground(new Color(0, 0, 0, 38));
         drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageContentViewer_AtrachmentsPanel_title(), "", new TableFilterNode(Node.EMPTY, false), 0, null);
         attachmentsScrollPane.setViewportView(drp);
-        
+
         //textPanel.setLayout(new BorderLayout());
         msgbodyTabbedPane.insertTab(
-            NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle"),
-            null,
-            textPanel,
-            null,
-            TEXT_TAB_INDEX);
-        
+                NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle"),
+                null,
+                textPanel,
+                null,
+                TEXT_TAB_INDEX);
+
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, true);
 
         /*
@@ -162,7 +178,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         drpExplorerManager.addPropertyChangeListener(evt
                 -> viewInNewWindowButton.setEnabled(drpExplorerManager.getSelectedNodes().length == 1));
     }
-
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -422,11 +437,11 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      * Get the artifact associated with the given artifact, if there is one.
      *
      * @param artifact The artifact to get the associated artifact from. Must
-     *                 not be null
+     * not be null
      *
      * @throws TskCoreException If there is a critical error querying the DB.
      * @return An optional containing the artifact associated with the given
-     *         artifact, if there is one.
+     * artifact, if there is one.
      */
     private static Optional<BlackboardArtifact> getAssociatedArtifact(final BlackboardArtifact artifact) throws TskCoreException {
         BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_TYPE);
@@ -506,10 +521,10 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      * Is the given artifact one that can be shown in this viewer?
      *
      * @param nodeArtifact An artifact that might be a message. Must not be
-     *                     null.
+     * null.
      *
      * @return True if the given artifact can be shown as a message in this
-     *         viewer.
+     * viewer.
      */
     private static boolean isMessageArtifact(BlackboardArtifact nodeArtifact) {
         final int artifactTypeID = nodeArtifact.getArtifactTypeID();
@@ -555,14 +570,14 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         return nodeArtifact;
     }
-    
+
     @Override
     public int isPreferred(Node node) {
         // For message artifacts this is a high priority viewer, 
         // but for attachment files, this a lower priority vewer.
         if (isSupported(node)) {
             BlackboardArtifact nodeArtifact = node.getLookup().lookup(BlackboardArtifact.class);
-            if (nodeArtifact != null) { 
+            if (nodeArtifact != null) {
                 return 7;
             } else {
                 return 1;
@@ -575,7 +590,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      * Configure the text area at the given index to show the content of the
      * given type.
      *
-     * @param type  The ATTRIBUT_TYPE to show in the indexed tab.
+     * @param type The ATTRIBUT_TYPE to show in the indexed tab.
      * @param index The index of the text area to configure.
      *
      * @throws TskCoreException
@@ -586,7 +601,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         if (index == HTML_TAB_INDEX && StringUtils.isNotBlank(attributeText)) {
             htmlPanel.setHtmlText(attributeText);
         } else if (index == TEXT_TAB_INDEX && StringUtils.isNotBlank(attributeText)) {
-            textPanel.setContent(attributeText);
+            textPanel.setContent(attributeText, artifact.toString());
         } else {
             JTextComponent textComponent = textAreas.get(index);
             if (textComponent != null) {
@@ -612,34 +627,34 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     }
 
     private void configureAttachments() throws TskCoreException {
-        
+
         final Set<Attachment> attachments;
-        
+
         //  Attachments are specified in an attribute TSK_ATTACHMENTS as JSON attribute
         BlackboardAttribute attachmentsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
-        if(attachmentsAttr != null) {
-           
+        if (attachmentsAttr != null) {
+
             attachments = new HashSet<>();
-            String jsonVal = attachmentsAttr.getValueString();	                            
+            String jsonVal = attachmentsAttr.getValueString();
             MessageAttachments msgAttachments = new Gson().fromJson(jsonVal, MessageAttachments.class);
-            
+
             Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
-            for (FileAttachment fileAttachment: fileAttachments) {
+            for (FileAttachment fileAttachment : fileAttachments) {
                 attachments.add(fileAttachment);
             }
             Collection<URLAttachment> urlAttachments = msgAttachments.getUrlAttachments();
-            for (URLAttachment urlAttachment: urlAttachments) {
+            for (URLAttachment urlAttachment : urlAttachments) {
                 attachments.add(urlAttachment);
             }
         } else {    // For backward compatibility - email attachements are derived files and children of the email message artifact
-                attachments = new HashSet<>();
-                for (Content child: artifact.getChildren()) {
-                    if (child instanceof AbstractFile) {
-                        attachments.add(new FileAttachment((AbstractFile)child));
-                    }
+            attachments = new HashSet<>();
+            for (Content child : artifact.getChildren()) {
+                if (child instanceof AbstractFile) {
+                    attachments.add(new FileAttachment((AbstractFile) child));
                 }
+            }
         }
-                
+
         final int numberOfAttachments = attachments.size();
 
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, numberOfAttachments > 0);
@@ -727,9 +742,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         return doc.html();
     }
 
-    
     /**
-     * Creates child nodes for message attachments. 
+     * Creates child nodes for message attachments.
      */
     private static class AttachmentsChildren extends Children.Keys<Attachment> {
 
