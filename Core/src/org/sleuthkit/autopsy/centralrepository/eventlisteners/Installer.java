@@ -18,15 +18,20 @@
  */
 package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * Install event listeners during module initialization
@@ -51,26 +56,109 @@ public class Installer extends ModuleInstall {
         super();
     }
 
-    @NbBundle.Messages({"Installer.centralRepoUpgradeFailed.title=Central repository disabled"})
+    @NbBundle.Messages({
+        "Installer.initialCreateSqlite.title=Enable Central Repository?",
+        "Installer.initialCreateSqlite.messageHeader=The Central Repository is not enabled. Would you like to enable it?",
+        "Installer.initialCreateSqlite.messageDesc=It will store information about all hashes and identifiers that you process. " +
+            "You can use this to ignore previously seen files and make connections between cases."
+    })
     @Override
     public void restored() {
         Case.addPropertyChangeListener(pcl);
         ieListener.installListeners();
 
-        // Perform the database upgrade and inform the user if it fails
-        try {
-            CentralRepoDbUtil.upgradeDatabase();
-        } catch (CentralRepoException ex) {
-            if (RuntimeProperties.runningWithGUI()) {
-                WindowManager.getDefault().invokeWhenUIReady(() -> {
-                    JOptionPane.showMessageDialog(null,
-                            ex.getUserMessage(),
-                            NbBundle.getMessage(this.getClass(),
-                                    "Installer.centralRepoUpgradeFailed.title"),
-                            JOptionPane.ERROR_MESSAGE);
-                });
+        
+        Map<String, String> centralRepoSettings = ModuleSettings.getConfigSettings("CentralRepository");
+        String initializedStr = centralRepoSettings.get("initialized");
+        
+        // check to see if the repo has been initialized asking to setup cr
+        boolean initialized = Boolean.parseBoolean(initializedStr);
+        
+        // if it hasn't received that flag, check for a previous install where cr is already setup
+        if (!initialized) {
+            boolean prevRepo = Boolean.parseBoolean(centralRepoSettings.get("db.useCentralRepo"));
+            // if it has been previously set up and is in use, mark as previously initialized and save the settings
+            if (prevRepo) {
+                initialized = true;
+                ModuleSettings.setConfigSetting("CentralRepository", "initialized", "true");
             }
         }
+
+        // if central repository hasn't been previously initialized, initialize it
+        if (!initialized) {
+            // if running with a GUI, prompt the user
+            if (RuntimeProperties.runningWithGUI()) {
+                try {
+                    SwingUtilities.invokeAndWait(() -> {
+                        try {
+                            String dialogText = 
+                                "<html><body>" + 
+                                    "<div style='width: 400px;'>" +
+                                        "<p>" + NbBundle.getMessage(this.getClass(), "Installer.initialCreateSqlite.messageHeader") + "</p>" +
+                                        "<p style='margin-top: 10px'>" + NbBundle.getMessage(this.getClass(), "Installer.initialCreateSqlite.messageDesc") + "</p>" +
+                                    "</div>" +
+                                "</body></html>";
+
+                            if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
+                                    dialogText,
+                                    NbBundle.getMessage(this.getClass(), "Installer.initialCreateSqlite.title"),
+                                    JOptionPane.YES_NO_OPTION)) {
+
+                                setupDefaultSqlite();
+                            }
+                        } catch (CentralRepoException ex) {
+                            LOGGER.log(Level.SEVERE, "There was an error while initializing the central repository database", ex);
+
+                            reportUpgradeError(ex);
+                        }
+                    });
+                } catch (InterruptedException | InvocationTargetException ex) {
+                    LOGGER.log(Level.SEVERE, "There was an error while running the swing utility invoke later while creating the central repository database", ex);
+                }
+            } // if no GUI, just initialize
+            else {
+                try {
+                    setupDefaultSqlite();
+                } catch (CentralRepoException ex) {
+                     LOGGER.log(Level.SEVERE, "There was an error while initializing the central repository database", ex);
+
+                    reportUpgradeError(ex);
+                }
+            }
+
+            ModuleSettings.setConfigSetting("CentralRepository", "initialized", "true");
+        } 
+        
+        // now run regular module startup code
+        try {
+            CentralRepoDbManager.upgradeDatabase();
+        } catch (CentralRepoException ex) {
+            LOGGER.log(Level.SEVERE, "There was an error while upgrading the central repository database", ex);
+            if (RuntimeProperties.runningWithGUI()) {
+                reportUpgradeError(ex);
+            }
+        }
+    }
+
+    private void setupDefaultSqlite() throws CentralRepoException {
+        CentralRepoDbManager manager = new CentralRepoDbManager();
+        manager.setupDefaultSqliteDb();
+    }
+
+    @NbBundle.Messages({ "Installer.centralRepoUpgradeFailed.title=Central repository disabled" })
+    private void reportUpgradeError(CentralRepoException ex) {
+        try {
+            SwingUtilities.invokeAndWait(() -> {
+                JOptionPane.showMessageDialog(null,
+                    ex.getUserMessage(),
+                    NbBundle.getMessage(this.getClass(),
+                        "Installer.centralRepoUpgradeFailed.title"),
+                    JOptionPane.ERROR_MESSAGE);
+            });
+        } catch (InterruptedException | InvocationTargetException e) {
+            LOGGER.log(Level.WARNING, e.getMessage(), e);
+        }
+
     }
 
     @Override
