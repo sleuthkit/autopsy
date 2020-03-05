@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -222,6 +223,8 @@ public class CorrelationAttributeUtil {
 
     /**
      * Makes a correlation attribute instance for an account artifact.
+     * 
+     * Also creates an account in the CR DB if it doesn't exist.
      *
      * IMPORTANT: The correlation attribute instance is NOT added to the central
      * repository by this method.
@@ -239,13 +242,31 @@ public class CorrelationAttributeUtil {
      *
      * @return The correlation attribute instance.
      */
-    private static void makeCorrAttrFromAcctArtifact(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact acctArtifact) {
-        // RAMAN TODO: Convert TSK_ACCOUNT_TYPE attribute to correlation attribute type
-        // RAMAN TODO: Extract TSK_ID as value
-//        CorrelationAttributeInstance corrAttr = makeCorrAttr(acctArtifact, corrType, corrAttrValue);
-//        if (corrAttr != null) {
-//            corrAttrInstances.add(corrAttr);
-//        }
+    private static void makeCorrAttrFromAcctArtifact(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact acctArtifact) throws TskCoreException, CentralRepoException {
+       
+        // Get the account type from the artifact
+        BlackboardAttribute accountTypeAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
+        String accountTypeStr = accountTypeAttribute.getValueString();
+
+        // Get the corresponding CentralRepoAccountType from the database.
+        CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
+
+        int corrTypeId = crAccountType.getCorrelationTypeId();
+        CorrelationAttributeInstance.Type corrType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
+        
+        // Get the account identifier
+        BlackboardAttribute accountIdAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID));
+        String accountIdStr = accountIdAttribute.getValueString();
+        
+        // add/get the account and get its accountId.
+        CentralRepoAccount crAccount = CentralRepository.getInstance().getOrCreateAccount(crAccountType, accountIdStr);
+        
+        CorrelationAttributeInstance corrAttr = makeCorrAttr(acctArtifact, corrType, accountIdStr);
+        if (corrAttr != null) {
+            // set the account_id in correlation attribute
+            corrAttr.setAccountId(crAccount.getAccountId());
+            corrAttrInstances.add(corrAttr);
+        }
     }
 
     /**

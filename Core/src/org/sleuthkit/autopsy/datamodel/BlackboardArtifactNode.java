@@ -323,7 +323,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
         if (displayName.isEmpty() && artifact != null) {
             try {
-                displayName = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(this.artifact.getObjectID()).getName();
+                Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(this.artifact.getObjectID());
+                displayName = (content == null) ? artifact.getName() : content.getName();
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 displayName = artifact.getName();
             }

@@ -43,7 +43,7 @@ public class Waypoint {
     final private String label;
     final private AbstractFile image;
     final private BlackboardArtifact artifact;
-    final private GeoPath path;
+    final private GeoPath parentGeoPath;
 
     final private List<Waypoint.Property> propertiesList;
 
@@ -78,7 +78,7 @@ public class Waypoint {
      * @throws GeoLocationDataException Exception will be thrown if artifact did
      *                                  not have a valid longitude and latitude.
      */
-    Waypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap, GeoPath path) throws GeoLocationDataException {
+    Waypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap, GeoPath parentGeoPath) throws GeoLocationDataException {
         if (longitude == null || latitude == null) {
             throw new GeoLocationDataException("Invalid waypoint, null value passed for longitude or latitude");
         }
@@ -90,7 +90,7 @@ public class Waypoint {
         this.longitude = longitude;
         this.latitude = latitude;
         this.altitude = altitude;
-        this.path = path;
+        this.parentGeoPath = parentGeoPath;
 
         propertiesList = createGeolocationProperties(attributeMap);
     }
@@ -173,13 +173,13 @@ public class Waypoint {
     }
 
     /**
-     * Returns the route that this waypoint is apart of .
+     * Returns the GeoPath that this waypoint is apart of .
      *
      * @return The waypoint route or null if the waypoint is not apart of a
      *         route.
      */
-    public GeoPath getPath() {
-        return path;
+    public GeoPath getParentGeoPath() {
+        return parentGeoPath;
     }
 
     /**
@@ -231,6 +231,10 @@ public class Waypoint {
             }
 
             for (BlackboardAttribute.ATTRIBUTE_TYPE type : keys) {
+                // Don't add JSON properties to this list.
+                if (type.getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON) {
+                    continue;
+                }
                 String key = type.getDisplayName();
                 String value = attributeMap.get(type).getDisplayString();
 
