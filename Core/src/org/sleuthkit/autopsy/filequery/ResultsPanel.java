@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.AddContentToHashDbAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
 /**
  * Panel for displaying of file discovery results and handling the paging of
@@ -777,11 +778,11 @@ public class ResultsPanel extends javax.swing.JPanel {
         @Messages({"ResultsPanel.unableToCreate.text=Unable to create summary."})
         @Override
         protected Void doInBackground() throws Exception {
-            String preview = FileSearch.summarize(documentWrapper.getResultFile().getFirstInstance());
+            TextSummary preview = FileSearch.summarize(documentWrapper.getResultFile().getFirstInstance());
             if (preview == null) {
-                preview = Bundle.ResultsPanel_unableToCreate_text();
+                preview = new TextSummary(Bundle.ResultsPanel_unableToCreate_text(), null, 0);
             }
-            documentWrapper.setPreview(preview);
+            documentWrapper.setPreview(preview.getSummaryText());
             return null;
         }
 
