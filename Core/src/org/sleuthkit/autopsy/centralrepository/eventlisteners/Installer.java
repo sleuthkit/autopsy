@@ -58,7 +58,7 @@ public class Installer extends ModuleInstall {
 
     @NbBundle.Messages({
         "Installer.initialCreateSqlite.title=Enable Central Repository?",
-        "Installer.initialCreateSqlite.messageHeader=The Central Repository is not enabled. Would you like to?",
+        "Installer.initialCreateSqlite.messageHeader=The Central Repository is not enabled. Would you like to enable it?",
         "Installer.initialCreateSqlite.messageDesc=It will store information about all hashes and identifiers that you process. " +
             "You can use this to ignore previously seen files and make connections between cases."
     })
