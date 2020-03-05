@@ -8,7 +8,9 @@ Autopsy tries its best to extract the maximum amount of text from the files bein
 
 Autopsy ships with some built-in lists that define regular expressions and enable the user to search for Phone Numbers, IP addresses, URLs and E-mail addresses. However, enabling some of these very general lists can produce a very large number of hits, and many of them can be false-positives. Regular expressions can potentially take a long time to complete.
 
-Once files are placed in the Solr index, they can be searched quickly for specific keywords, regular expressions, or keyword search lists that can contain a mixture of keywords and regular expressions. Search queries can be executed automatically during the ingest run or at the end of the ingest, depending on the current settings and the time it takes to ingest the image.
+Once files are placed in the Solr index, they can be searched quickly for specific keywords, regular expressions, or keyword search lists that can contain a mixture of keywords and regular expressions. Search queries can be executed automatically during the ingest run or at the end of the ingest, depending on the current settings and the time it takes to ingest the image.  
+
+Refer to \ref ad_hoc_keyword_search_page for more details on specifying regular expressions and other types of searches. 
 
 \section keyword_search_configuration_dialog Keyword Search Configuration Dialog
 
