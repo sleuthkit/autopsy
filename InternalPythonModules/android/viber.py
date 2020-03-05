@@ -117,13 +117,28 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
         try:
             contacts_parser = ViberContactsParser(contacts_db)
             while contacts_parser.next():
-                helper.addContact( 
-                    contacts_parser.get_contact_name(), 
-                    contacts_parser.get_phone(),
-                    contacts_parser.get_home_phone(),
-                    contacts_parser.get_mobile_phone(),
-                    contacts_parser.get_email()
-                )
+                if contacts_parser.get_phone() is not None:
+                    helper.addContact( 
+                        contacts_parser.get_contact_name(), 
+                        contacts_parser.get_phone(),
+                        contacts_parser.get_home_phone(),
+                        contacts_parser.get_mobile_phone(),
+                        contacts_parser.get_email()
+                    )
+                else:
+                    current_case = Case.getCurrentCase().getSleuthkitCase()
+                    attributes = ArrayList()
+                    artifact = contacts_db.getDBFile().newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), self._PARSER_NAME, contacts_parser.get_contact_name()))
+                    artifact.addAttributes(attributes)
+                    
+                    try:
+                    # Post the artifact to blackboard
+                       current_case.getBlackboard().postArtifact(artifact, self._PARSER_NAME)
+                    except Blackboard.BlackboardException as e:
+                        self.log(Level.WARNING, "Error adding viber contacts artifact to case database.", ex )
+                        self._logger.log(Level.WARNING, traceback.format_exc())
+
             contacts_parser.close()
         except SQLException as ex:
             self._logger.log(Level.WARNING, "Error querying the viber database for contacts.", ex)
