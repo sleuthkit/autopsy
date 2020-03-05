@@ -774,10 +774,8 @@ public class RdbmsCentralRepoFactory {
       * @return True if success, false otherwise.
       */
     private boolean insertDefaultAccountsTablesContent(Connection conn) {
-          Statement stmt = null;
-        try {
-            stmt = conn.createStatement();
-             
+       
+        try (Statement stmt = conn.createStatement()) {
             // Populate the account_types table
             for (Account.Type type : Account.Type.PREDEFINED_ACCOUNT_TYPES) {
                 int correlationTypeId = getCorrelationTypeIdForAccountType(conn, type);
@@ -790,16 +788,8 @@ public class RdbmsCentralRepoFactory {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, String.format("Failed to populate default data in Accounts tables."), ex);
             return false;
-        } finally {
-            if (stmt != null) {
-                try {
-                    stmt.close();
-                } catch (SQLException ex2) {
-                     LOGGER.log(Level.SEVERE, "Error closing statement.", ex2);
-                }
-            }
-        }
-
+        } 
+        
         return true;
     }
     
@@ -812,10 +802,7 @@ public class RdbmsCentralRepoFactory {
       */
     private boolean insertDefaultPersonaTablesContent(Connection conn) {
 
-        Statement stmt = null;
-        try {
-            stmt = conn.createStatement();
-             
+        try (Statement stmt = conn.createStatement()) {
             // populate the confidence table
             for (Confidence confidence : Persona.Confidence.values()) {
                 String sqlString = "INSERT INTO confidence (confidence_id, description) VALUES ( " + confidence.getLevel() + ", '" + confidence.toString() + "')" //NON-NLS
@@ -833,16 +820,8 @@ public class RdbmsCentralRepoFactory {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, String.format("Failed to populate default data in Persona tables."), ex);
             return false;
-        } finally {
-            if (stmt != null) {
-                try {
-                    stmt.close();
-                } catch (SQLException ex2) {
-                     LOGGER.log(Level.SEVERE, "Error closing statement.", ex2);
-                }
-            }
-        }
-
+        } 
+        
         return true;
     }
     
