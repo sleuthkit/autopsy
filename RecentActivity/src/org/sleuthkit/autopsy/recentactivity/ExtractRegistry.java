@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2019 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -69,11 +69,14 @@ import java.util.HashSet;
 import static java.util.Locale.US;
 import static java.util.TimeZone.getTimeZone;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.recentactivity.ShellBagParser.ShellBag;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -944,7 +947,7 @@ class ExtractRegistry extends Extract {
                         Map<String, String> userInfo = userInfoMap.remove(userID);
                         //if the existing user id matches a user id which we parsed information for check if that information exists and if it doesn't add it
                         if (userInfo != null) {
-                            osAccount.addAttributes(getAttributesForAccount(userInfo, groupMap.get(userID), true));
+                            osAccount.addAttributes(getAttributesForAccount(userInfo, groupMap.get(userID), true, regAbstractFile));
                         }
                     }
                 }
@@ -953,7 +956,7 @@ class ExtractRegistry extends Extract {
             //add remaining userinfos as accounts;
             for (Map<String, String> userInfo : userInfoMap.values()) {
                 BlackboardArtifact bbart = regAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-                bbart.addAttributes(getAttributesForAccount(userInfo, groupMap.get(userInfo.get(SID_KEY)), false));
+                bbart.addAttributes(getAttributesForAccount(userInfo, groupMap.get(userInfo.get(SID_KEY)), false, regAbstractFile));
                 // index the artifact for keyword search
                 newArtifacts.add(bbart);
             }
@@ -983,7 +986,7 @@ class ExtractRegistry extends Extract {
      * 
      * @throws ParseException 
      */
-    Collection<BlackboardAttribute> getAttributesForAccount(Map<String, String> userInfo, List<String> groupList, boolean existingUser) throws ParseException {
+    Collection<BlackboardAttribute> getAttributesForAccount(Map<String, String> userInfo, List<String> groupList, boolean existingUser, AbstractFile regAbstractFile) throws ParseException {
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
         SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'");
@@ -1035,6 +1038,20 @@ class ExtractRegistry extends Extract {
 
         value = userInfo.get(INTERNET_NAME_KEY);
         if (value != null && !value.isEmpty()) {
+            try {
+                // Create an account for this email, if it doesn't already exist.
+                Case.getCurrentCaseThrows()
+                        .getSleuthkitCase()
+                        .getCommunicationsManager()
+                        .createAccountFileInstance(Account.Type.EMAIL,
+                                value, getRAModuleName(), regAbstractFile);
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.SEVERE, 
+                        String.format("Error adding email account with value "
+                                + "%s, to the case database for file %s [objId=%d]", 
+                                value, regAbstractFile.getName(), regAbstractFile.getId()), ex);
+            }
+            
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL,
                     getRAModuleName(), value));
         }
