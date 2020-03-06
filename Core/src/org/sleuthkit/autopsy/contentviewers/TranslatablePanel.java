@@ -38,8 +38,24 @@ import org.sleuthkit.autopsy.texttranslation.ui.TranslateTextTask;
  * A panel for translation with a subcomponent that allows for translation
  */
 class TranslatablePanel extends JPanel {
+    
+    class TranslatablePanelException extends Exception {
 
-    static interface ContentComponent {
+        TranslatablePanelException(String message) {
+            super(message);
+        }
+
+        TranslatablePanelException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+    
+
+    /**
+     * describes a child component to be placed as a child of this panel.  the child received
+     * from getRootComponent() will listen for content updates from setContent()
+     */
+    interface ContentComponent {
         /**
          * gets root component of the translation panel
          * @return      the root component to insert into the translatable panel
@@ -52,7 +68,7 @@ class TranslatablePanel extends JPanel {
          * @param orientation   how it should be displayed
          * @throws Exception    if there is an error in rendering the content
          */
-        void setContent(String content, ComponentOrientation orientation) throws Exception;
+        void setContent(String content, ComponentOrientation orientation) throws TranslatablePanelException;
     }
     
     
@@ -64,12 +80,12 @@ class TranslatablePanel extends JPanel {
         private final String text;
         private final boolean translate;
 
-        public TranslateOption(String text, boolean translate) {
+        TranslateOption(String text, boolean translate) {
             this.text = text;
             this.translate = translate;
         }
 
-        public String getText() {
+        String getText() {
             return text;
         }
 
@@ -78,33 +94,39 @@ class TranslatablePanel extends JPanel {
             return text;
         }
 
-        public boolean shouldTranslate() {
+        boolean shouldTranslate() {
             return translate;
         }
     }
 
+    /**
+     * the cached result of translating the current content
+     */
     private static class TranslatedText {
 
         private final String text;
         private final ComponentOrientation orientation;
 
-        public TranslatedText(String text, ComponentOrientation orientation) {
+        TranslatedText(String text, ComponentOrientation orientation) {
             this.text = text;
             this.orientation = orientation;
         }
 
-        public String getText() {
+        String getText() {
             return text;
         }
 
-        public ComponentOrientation getOrientation() {
+        ComponentOrientation getOrientation() {
             return orientation;
         }
     }
 
+    /**
+     * connects the swing worker specified by TranslateTextTask to this component
+     */
     private class OnTranslation extends TranslateTextTask {
 
-        public OnTranslation() {
+        OnTranslation() {
             super(true, contentDescriptor == null ? "" : contentDescriptor);
         }
 
@@ -224,7 +246,7 @@ class TranslatablePanel extends JPanel {
         }
     }
 
-    void reset() {
+    final void reset() {
         setTranslationBarVisible();
         setContent(null, null);
     }
@@ -274,7 +296,7 @@ class TranslatablePanel extends JPanel {
         SwingUtilities.invokeLater(() -> {
             try {
                 contentComponent.setContent(content, orientation);
-            } catch (Exception ex) {
+            } catch (TranslatablePanelException ex) {
                 setStatus(Bundle.TranslatablePanel_onSetContentError_text(ex.getMessage()), true);
             }
         });

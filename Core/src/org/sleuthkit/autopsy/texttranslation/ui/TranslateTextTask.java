@@ -136,6 +136,10 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Re
             return Result.success(fileText);
         }
 
+        return translateRetrievedText(fileText);
+    }
+
+    private Result translateRetrievedText(String fileText) throws InterruptedException {
         SwingUtilities.invokeLater(() -> {
             onProgressDisplay(Bundle.TranslatedContentViewer_translatingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
         });
@@ -160,6 +164,7 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Re
             return Result.error(Bundle.TranslatedContentViewer_translationException(ex.getMessage()));
         }
     }
+    
 
     @Override
     public void done() {

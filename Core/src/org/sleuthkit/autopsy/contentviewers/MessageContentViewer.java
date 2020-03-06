@@ -40,10 +40,10 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.contentviewers.TranslatablePanel.TranslatablePanelException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
@@ -88,19 +88,22 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.URL
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class MessageContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
+    /**
+     * a text component viewer to be a child component to be placed in a translatablepanel.  
+     */
     class TextComponent implements TranslatablePanel.ContentComponent {
 
         private final Component rootComponent;
-        private final AutoWrappingJTextPane textComponent;
+        private final AutoWrappingJTextPane childTextComponent;
 
         TextComponent() {
-            textComponent = new AutoWrappingJTextPane();
-            textComponent.setEditable(false);
+            childTextComponent = new AutoWrappingJTextPane();
+            childTextComponent.setEditable(false);
 
             JScrollPane parentComponent = new JScrollPane();
             parentComponent.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             parentComponent.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-            parentComponent.setViewportView(textComponent);
+            parentComponent.setViewportView(childTextComponent);
             rootComponent = parentComponent;
         }
 
@@ -110,10 +113,10 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         }
 
         @Override
-        public void setContent(String content, ComponentOrientation orientation) throws Exception {
-            textComponent.setText(content == null ? "" : content);
-            textComponent.setComponentOrientation(orientation);
-            textComponent.setCaretPosition(0);
+        public void setContent(String content, ComponentOrientation orientation) throws TranslatablePanelException {
+            childTextComponent.setText(content == null ? "" : content);
+            childTextComponent.setComponentOrientation(orientation);
+            childTextComponent.setCaretPosition(0);
         }
     }
 
