@@ -50,6 +50,7 @@ public class CorrelationAttributeInstance implements Serializable {
     private String comment;
     private TskData.FileKnown knownStatus;
     private Long objectId;
+    private Long accountId;
 
     public CorrelationAttributeInstance(
             CorrelationAttributeInstance.Type correlationType,
@@ -74,6 +75,20 @@ public class CorrelationAttributeInstance implements Serializable {
             TskData.FileKnown knownStatus,
             Long fileObjectId
     ) throws CentralRepoException, CorrelationAttributeNormalizationException {
+         this(type, value, -1, eamCase, eamDataSource, filePath, comment, knownStatus, fileObjectId, (long)-1);
+    }
+    CorrelationAttributeInstance(
+            Type type,
+            String value,
+            int instanceId,
+            CorrelationCase eamCase,
+            CorrelationDataSource eamDataSource,
+            String filePath,
+            String comment,
+            TskData.FileKnown knownStatus,
+            Long fileObjectId,
+            Long accountId
+    ) throws CentralRepoException, CorrelationAttributeNormalizationException {
         if (filePath == null) {
             throw new CentralRepoException("file path is null");
         }
@@ -88,6 +103,7 @@ public class CorrelationAttributeInstance implements Serializable {
         this.comment = comment;
         this.knownStatus = knownStatus;
         this.objectId = fileObjectId;
+        this.accountId = accountId;
     }
 
     public Boolean equals(CorrelationAttributeInstance otherInstance) {
@@ -98,7 +114,8 @@ public class CorrelationAttributeInstance implements Serializable {
                 && (this.getCorrelationDataSource().equals(otherInstance.getCorrelationDataSource()))
                 && (this.getFilePath().equals(otherInstance.getFilePath()))
                 && (this.getKnownStatus().equals(otherInstance.getKnownStatus()))
-                && (this.getComment().equals(otherInstance.getComment())));
+                && (this.getComment().equals(otherInstance.getComment()))
+                && (this.getAccountId().equals(otherInstance.getAccountId())));
     }
 
     @Override
@@ -106,6 +123,7 @@ public class CorrelationAttributeInstance implements Serializable {
         return this.getID()
                 + this.getCorrelationCase().getCaseUUID()
                 + this.getCorrelationDataSource().getDeviceID()
+                + this.getAccountId()
                 + this.getFilePath()
                 + this.getCorrelationType().toString()
                 + this.getCorrelationValue()
@@ -210,6 +228,24 @@ public class CorrelationAttributeInstance implements Serializable {
         return objectId;
     }
 
+    /**
+     * Get the accountId of the account associated with the correlation
+     * attribute.
+     *
+     * @return the accountId of the account
+     */
+    public Long getAccountId() {
+        return accountId;
+    }
+
+    /**
+     * Set the accountId of the account associated with this correlation
+     * attribute.
+     */
+    void setAccountId(Long accountId) {
+        this.accountId = accountId;
+    }
+    
     // Type ID's for Default Correlation Types
     public static final int FILES_TYPE_ID = 0;
     public static final int DOMAIN_TYPE_ID = 1;

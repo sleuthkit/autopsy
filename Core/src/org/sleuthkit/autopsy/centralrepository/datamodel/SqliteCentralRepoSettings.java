@@ -37,10 +37,10 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  * NOTE: This is public scope because the options panel calls it directly to
  * set/get
  */
-public final class SqliteCentralRepoSettings {
+public final class SqliteCentralRepoSettings implements CentralRepoDbSettings {
 
+    public final static String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
     private final static Logger LOGGER = Logger.getLogger(SqliteCentralRepoSettings.class.getName());
-    private final static String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
     private final static String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "central_repository"; // NON-NLS
     private final static String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
     private final static String JDBC_BASE_URI = "jdbc:sqlite:"; // NON-NLS
@@ -80,6 +80,18 @@ public final class SqliteCentralRepoSettings {
             this.bulkThreshold = RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD;
         }
     }
+    
+    public String toString() {
+        return String.format("SqliteCentralRepoSettings: [db type: sqlite, directory: %s, name: %s]", getDbDirectory(), getDbName());
+    }
+    
+    /**
+     * sets database directory and name to defaults
+     */
+    public void setupDefaultSettings() {
+        dbName = DEFAULT_DBNAME;
+        dbDirectory = DEFAULT_DBDIRECTORY;
+    }
 
     public void saveSettings() {
         createDbDirectory();
@@ -103,6 +115,13 @@ public final class SqliteCentralRepoSettings {
         return (!dbFile.isDirectory());
     }
 
+    
+    @Override
+    public boolean verifyDatabaseExists() {
+        return dbDirectoryExists();
+    }
+
+    
     /**
      * Verify that the db directory path exists.
      *
@@ -122,6 +141,16 @@ public final class SqliteCentralRepoSettings {
 
     }
 
+    /**
+     * creates database directory for sqlite database if it does not exist
+     * @return whether or not operation occurred successfully
+     */
+    @Override
+    public boolean createDatabase() {
+        return createDbDirectory();
+    }
+
+    
     /**
      * Create the db directory if it does not exist.
      *
@@ -325,5 +354,4 @@ public final class SqliteCentralRepoSettings {
     String getJDBCBaseURI() {
         return JDBC_BASE_URI;
     }
-
 }
