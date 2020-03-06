@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
@@ -58,6 +59,8 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
         nameLabel = new javax.swing.JLabel();
         javax.swing.JScrollPane previewScrollPane = new javax.swing.JScrollPane();
         previewTextArea = new javax.swing.JTextArea();
+        sampleImageLabel = new javax.swing.JLabel();
+        numberOfImagesLabel = new javax.swing.JLabel();
 
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -88,6 +91,11 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
         previewTextArea.setMaximumSize(new java.awt.Dimension(164, 94));
         previewScrollPane.setViewportView(previewTextArea);
 
+        sampleImageLabel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        sampleImageLabel.setMaximumSize(new java.awt.Dimension(120, 120));
+        sampleImageLabel.setMinimumSize(new java.awt.Dimension(120, 120));
+        sampleImageLabel.setPreferredSize(new java.awt.Dimension(120, 120));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -96,22 +104,32 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(fileSizeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(fileSizeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 648, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(isDeletedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(scoreLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(previewScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 649, Short.MAX_VALUE)
-                    .addComponent(nameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(previewScrollPane)
+                            .addComponent(nameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(sampleImageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(numberOfImagesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(nameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(numberOfImagesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 17, Short.MAX_VALUE)
+                    .addComponent(nameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(previewScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(sampleImageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(previewScrollPane))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(scoreLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -126,12 +144,19 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
     private javax.swing.JLabel fileSizeLabel;
     private javax.swing.JLabel isDeletedLabel;
     private javax.swing.JLabel nameLabel;
+    private javax.swing.JLabel numberOfImagesLabel;
     private javax.swing.JTextArea previewTextArea;
+    private javax.swing.JLabel sampleImageLabel;
     private javax.swing.JLabel scoreLabel;
     // End of variables declaration//GEN-END:variables
 
-    @Messages({"# {0} - otherInstanceCount",
-        "DocumentPanel.nameLabel.more.text= and {0} more"})
+    @Messages({
+        "# {0} - otherInstanceCount",
+        "DocumentPanel.nameLabel.more.text= and {0} more",
+        "# {0} - numberOfImages",
+        "DocumentPanel.numberOfImages.text=1 of {0} images",
+        "DocumentPanel.numberOfImages.noImages=No images"})
+
     @Override
     public Component getListCellRendererComponent(JList<? extends DocumentWrapper> list, DocumentWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         fileSizeLabel.setText(DiscoveryUiUtils.getFileSizeString(value.getResultFile().getFirstInstance().getSize()));
@@ -139,8 +164,15 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
         if (value.getResultFile().getAllInstances().size() > 1) {
             nameText += Bundle.DocumentPanel_nameLabel_more_text(value.getResultFile().getAllInstances().size() - 1);
         }
+        if (value.getSummary().getNumberOfImages() > 0) {
+            numberOfImagesLabel.setText(Bundle.DocumentPanel_numberOfImages_text(value.getSummary().getNumberOfImages()));
+            sampleImageLabel.setIcon(new ImageIcon(value.getSummary().getSampleImage()));
+        } else {
+            numberOfImagesLabel.setText(Bundle.DocumentPanel_numberOfImages_noImages());
+            sampleImageLabel.setIcon(null);
+        }
         nameLabel.setText(nameText);
-        previewTextArea.setText(value.getPreview());
+        previewTextArea.setText(value.getSummary().getSummaryText());
         previewTextArea.setCaretPosition(0);
         DiscoveryUiUtils.setDeletedIcon(value.getResultFile().isDeleted(), isDeletedLabel);
         DiscoveryUiUtils.setScoreIcon(value.getResultFile(), scoreLabel);

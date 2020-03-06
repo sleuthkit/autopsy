@@ -50,6 +50,7 @@ import org.imgscalr.Scalr;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -280,9 +281,31 @@ class FileSearch {
         }
         if (summary == null || StringUtils.isBlank(summary.getSummaryText())) {
             //summary text was empty grab the beginning of the file 
-            summary = new TextSummary(getFirstLines(file), null, 0);
+            summary = getDefaultSummary(file);
         }
         return summary;
+    }
+
+    private static TextSummary getDefaultSummary(AbstractFile file) {
+        Image image = null;
+        int countOfImages = 0;
+        try {
+            Content largestChild = null;
+            for (Content child : file.getChildren()) {
+                if (child instanceof AbstractFile && ImageUtils.isImageThumbnailSupported((AbstractFile) child)) {
+                    countOfImages++;
+                    if (largestChild == null || child.getSize() > largestChild.getSize()) {
+                        largestChild = child;
+                    }
+                }
+            }
+            if (largestChild != null) {
+                image = ImageUtils.getThumbnail(largestChild, ImageUtils.ICON_SIZE_LARGE);
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting children for file: " + file.getId(), ex);        
+        }
+        return new TextSummary(getFirstLines(file), image, countOfImages);
     }
 
     /**
