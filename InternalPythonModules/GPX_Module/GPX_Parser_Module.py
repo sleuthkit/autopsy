@@ -87,11 +87,8 @@ class GPXParserDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
 # Data Source-level ingest module. One gets created per data source.
 class GPXParserDataSourceIngestModule(DataSourceIngestModule):
 
-    # True - Verbose debugging messages sent to log file.
-    # False - Verbose debugging turned off.
-    writeDebugMsgs = True
-
     logger = Logger.getLogger(GPXParserDataSourceIngestModuleFactory.moduleName)
+    writeDebugMsgs = True
 
     def log(self, level, msg):
         self.logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
