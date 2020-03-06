@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,14 +28,20 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQueries;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper;
+import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper.CallMediaType;
+import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper.CommunicationDirection;
 
 /**
  * Parses XRY Calls files and creates artifacts.
@@ -58,13 +64,13 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
      */
     private enum XryKey {
         NAME_MATCHED("name (matched)", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME),
-        TIME("time", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME),
-        DIRECTION("direction", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION),
+        TIME("time", null),
+        DIRECTION("direction", null),
         CALL_TYPE("call type", null),
         NUMBER("number", null),
         TEL("tel", null),
-        TO("to", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO),
-        FROM("from", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM),
+        TO("to", null),
+        FROM("from", null),
         DELETED("deleted", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ISDELETED),
         DURATION("duration", null),
         STORAGE("storage", null),
@@ -175,74 +181,153 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
     }
 
     @Override
-    void makeArtifact(List<XRYKeyValuePair> keyValuePairs, Content parent) throws TskCoreException {
-        List<BlackboardAttribute> attributes = new ArrayList<>();
-        for(XRYKeyValuePair pair : keyValuePairs) {
-            Optional<BlackboardAttribute> attribute = getBlackboardAttribute(pair);
-            if(attribute.isPresent()) {
-                attributes.add(attribute.get());
-            }
-        }
-        if(!attributes.isEmpty()) {
-            BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG);
-            artifact.addAttributes(attributes);
-        }
-    }
-    
-    /**
-     * Creates the appropriate blackboard attribute given a single XRY Key Value
-     * pair, if any. Most XRY keys are mapped to an attribute type in the enum above.
-     */
-    private Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
-        XryKey xryKey = XryKey.fromDisplayName(pair.getKey());
-        XryNamespace xryNamespace = XryNamespace.NONE;
-        if (XryNamespace.contains(pair.getNamespace())) {
-            xryNamespace = XryNamespace.fromDisplayName(pair.getNamespace());
-        }
+    void makeArtifact(List<XRYKeyValuePair> keyValuePairs, Content parent, SleuthkitCase currentCase) throws TskCoreException, BlackboardException {
+        // Transform all the data from XRY land into the appropriate CommHelper
+        // data types.
+        String callerId = null;
+        final Collection<String> calleeList = new ArrayList<>();
+        CommunicationDirection direction = CommunicationDirection.UNKNOWN;
+        long startTime = 0L;
+        final long endTime = 0L;
+        final CallMediaType callType = CallMediaType.UNKNOWN;
+        final Collection<BlackboardAttribute> otherAttributes = new ArrayList<>();
 
-        switch (xryKey) {
-            case TEL:
-            case NUMBER:
-                //Apply the namespace
-                switch (xryNamespace) {
-                    case FROM:
-                        return Optional.of(new BlackboardAttribute(
+        for (XRYKeyValuePair pair : keyValuePairs) {
+            XryKey xryKey = XryKey.fromDisplayName(pair.getKey());
+            XryNamespace xryNamespace = XryNamespace.NONE;
+            if (XryNamespace.contains(pair.getNamespace())) {
+                xryNamespace = XryNamespace.fromDisplayName(pair.getNamespace());
+            }
+
+            switch (xryKey) {
+                case TEL:
+                case NUMBER:
+                    //Apply the namespace
+                    switch (xryNamespace) {
+                        case FROM:
+                            if (callerId != null) {
+                                otherAttributes.add(new BlackboardAttribute(
+                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM,
+                                        PARSER_NAME, pair.getValue()));
+                            } else {
+                                callerId = pair.getValue();
+                            }
+                            break;
+                        case TO:
+                            calleeList.add(pair.getValue());
+                            break;
+                        default:
+                            otherAttributes.add(new BlackboardAttribute(
+                                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
+                                    PARSER_NAME, pair.getValue()));
+                    }
+                    break;
+                //Although confusing, as these are also 'name spaces', it appears
+                //later versions of XRY realized having standardized lines was easier
+                //to read.
+                case TO:
+                    calleeList.add(pair.getValue());
+                    break;
+                case FROM:
+                    if (callerId != null) {
+                        otherAttributes.add(new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM,
                                 PARSER_NAME, pair.getValue()));
-                    case TO:
-                        return Optional.of(new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO,
+                    } else {
+                        callerId = pair.getValue();
+                    }
+                    break;
+                case TIME:
+                    try {
+                        //Tranform value to seconds since epoch
+                        long dateTimeSinceEpoch = calculateSecondsSinceEpoch(pair.getValue());
+                        startTime = dateTimeSinceEpoch;
+                    } catch (DateTimeParseException ex) {
+                        logger.log(Level.WARNING, String.format("[XRY DSP] Assumption"
+                                + " about the date time formatting of call logs is "
+                                + "not right. Here is the value [ %s ]", pair.getValue()), ex);
+                    }
+                    break;
+                case DIRECTION:
+                    String directionString = pair.getValue().toLowerCase();
+                    if (directionString.equals("incoming")) {
+                        direction = CommunicationDirection.INCOMING;
+                    } else {
+                        direction = CommunicationDirection.OUTGOING;
+                    }
+                    break;
+                default:
+                    //Otherwise, the XryKey enum contains the correct BlackboardAttribute
+                    //type.
+                    if (xryKey.getType() != null) {
+                        otherAttributes.add(new BlackboardAttribute(xryKey.getType(),
                                 PARSER_NAME, pair.getValue()));
-                    default:
-                        return Optional.of(new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
-                                PARSER_NAME, pair.getValue()));
-                }
-            case TIME:
-                try {
-                    //Tranform value to seconds since epoch
-                    long dateTimeSinceEpoch = calculateSecondsSinceEpoch(pair.getValue());
-                    return Optional.of(new BlackboardAttribute(xryKey.getType(),
-                            PARSER_NAME, dateTimeSinceEpoch));
-                } catch (DateTimeParseException ex) {
-                    logger.log(Level.WARNING, String.format("[XRY DSP] Assumption"
-                            + " about the date time formatting of call logs is "
-                            + "not right. Here is the value [ %s ]", pair.getValue()), ex);
-                    return Optional.empty();
-                }
-            default:
-                //Otherwise, the XryKey enum contains the correct BlackboardAttribute
-                //type.
-                if (xryKey.getType() != null) {
-                    return Optional.of(new BlackboardAttribute(xryKey.getType(),
-                            PARSER_NAME, pair.getValue()));
-                }
+                    }
 
-                logger.log(Level.INFO, String.format("[XRY DSP] Key value pair "
-                        + "(in brackets) [ %s ] was recognized but "
-                        + "more data or time is needed to finish implementation. Discarding... ",
-                        pair));
-                return Optional.empty();
+                    logger.log(Level.INFO, String.format("[XRY DSP] Key value pair "
+                            + "(in brackets) [ %s ] was recognized but "
+                            + "more data or time is needed to finish implementation. Discarding... ",
+                            pair));
+            }
+        }
+
+        // Make sure we have the required fields, otherwise the CommHelper will
+        // complain about illegal arguments.
+        
+        // These are all the invalid combinations.
+        if (callerId == null && calleeList.isEmpty()
+                || direction == CommunicationDirection.INCOMING && callerId == null
+                || direction == CommunicationDirection.OUTGOING && calleeList.isEmpty()) {
+
+            // If the combo is invalid, just make an artifact with what we've got.
+            if (direction != CommunicationDirection.UNKNOWN) {
+                otherAttributes.add(new BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION,
+                        PARSER_NAME, direction.getDisplayName()));
+            }
+
+            if (startTime > 0L) {
+                otherAttributes.add(new BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START,
+                        PARSER_NAME, startTime));
+            }
+
+            // If the DIRECTION check failed, just manually create accounts
+            // for these phones. Note, there is no need to create relationships.
+            // If both callerId and calleeList were non-null/non-empty, then 
+            // the check above would have directed us to the else block.
+            if (callerId != null) {
+                currentCase.getCommunicationsManager().createAccountFileInstance(
+                        Account.Type.PHONE, callerId, PARSER_NAME, parent);
+
+                otherAttributes.add(new BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
+                        PARSER_NAME, callerId));
+            }
+
+            for (String phone : calleeList) {
+                currentCase.getCommunicationsManager().createAccountFileInstance(
+                        Account.Type.PHONE, phone, PARSER_NAME, parent);
+
+                otherAttributes.add(new BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
+                        PARSER_NAME, phone));
+            }
+
+            if (!otherAttributes.isEmpty()) {
+                BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG);
+                artifact.addAttributes(otherAttributes);
+
+                currentCase.getBlackboard().postArtifact(artifact, PARSER_NAME);
+            }
+        } else {
+
+            // Otherwise we can safely use the helper.
+            CommunicationArtifactsHelper helper = new CommunicationArtifactsHelper(
+                    currentCase, PARSER_NAME, parent, Account.Type.PHONE);
+
+            helper.addCalllog(direction, callerId, calleeList, startTime,
+                    endTime, callType, otherAttributes);
         }
     }
 
