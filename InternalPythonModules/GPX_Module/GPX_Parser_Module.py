@@ -88,7 +88,7 @@ class GPXParserDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
 class GPXParserDataSourceIngestModule(DataSourceIngestModule):
 
     logger = Logger.getLogger(GPXParserDataSourceIngestModuleFactory.moduleName)
-    writeDebugMsgs = True
+    writeDebugMsgs = False
 
     def log(self, level, msg):
         self.logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
