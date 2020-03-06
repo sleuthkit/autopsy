@@ -256,7 +256,7 @@ class TranslatablePanel extends JPanel {
         setStatus(null, false);
     }
 
-    private void setStatus(String msg, boolean showWarningIcon) {
+    private synchronized void setStatus(String msg, boolean showWarningIcon) {
         statusLabel.setText(msg);
         statusLabel.setIcon(showWarningIcon ? warningIcon : null);
     }
@@ -270,7 +270,7 @@ class TranslatablePanel extends JPanel {
     }
 
     @Messages({"# {0} - exception message", "TranslatablePanel.onSetContentError.text=There was an error displaying the text: {0}"})
-    private void setChildComponentContent(String content, ComponentOrientation orientation) {
+    private synchronized void setChildComponentContent(String content, ComponentOrientation orientation) {
         SwingUtilities.invokeLater(() -> {
             try {
                 contentComponent.setContent(content, orientation);
