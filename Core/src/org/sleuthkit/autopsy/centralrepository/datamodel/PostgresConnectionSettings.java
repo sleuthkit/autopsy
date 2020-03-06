@@ -87,7 +87,7 @@ public class PostgresConnectionSettings {
 
 
     /**
-     * @param port the port to set
+     * @param port the port to set (must be [1,65535])
      */
     public void setPort(int port) throws CentralRepoException {
         validateNum(port, 1, 65535, "Invalid port. Must be a number greater than 0.");
@@ -96,7 +96,7 @@ public class PostgresConnectionSettings {
 
 
     /**
-     * @param dbName the dbName to set
+     * @param dbName the dbName to set 
      */
     public void setDbName(String dbName) throws CentralRepoException {
         validateStr(dbName, "Invalid database name. Cannot be empty."); // NON-NLS
@@ -108,7 +108,7 @@ public class PostgresConnectionSettings {
 
     
     /**
-     * @param bulkThreshold the bulkThreshold to set
+     * @param bulkThreshold the bulkThreshold to set (must be greater than 0)
      */
     public void setBulkThreshold(int bulkThreshold) throws CentralRepoException {
         validateNum(bulkThreshold, 1, null, "Invalid bulk threshold.");
