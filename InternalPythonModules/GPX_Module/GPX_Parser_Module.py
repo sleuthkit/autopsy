@@ -178,7 +178,7 @@ class GPXParserDataSourceIngestModule(DataSourceIngestModule):
                                 if (point.time != None):
                                     timeStamp = long(time.mktime(point.time.timetuple()))                                    
                             except Exception as e:                            
-                                self.log(Level.WARNING, "Error getting track timestamp from " + file.getUniquePath() + " (objID = " + str(file.getId()) + "):" + e)
+                                self.log(Level.WARNING, "Error getting track timestamp from " + file.getUniquePath() + " (objID = " + str(file.getId()) + "):" + str(e))
 
                             geoPointList.addPoint(GeoTrackPoint(point.latitude, point.longitude, elevation, None, 0, 0, 0, timeStamp))
                                                                                                              
