@@ -124,7 +124,7 @@ class GPXParserDataSourceIngestModule(DataSourceIngestModule):
         # Get the module name, it will be needed for adding attributes
         moduleName = GPXParserDataSourceIngestModuleFactory.moduleName
 
-        # Check if a folder for this is present in the case Temp directory. 
+        # Check if a folder for this module is present in the case Temp directory. 
         # If not, create it.
         dirName = os.path.join(Case.getCurrentCase().getTempDirectory(), "GPX_Parser_Module")
         try:
