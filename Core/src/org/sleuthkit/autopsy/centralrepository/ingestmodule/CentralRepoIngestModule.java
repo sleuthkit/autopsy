@@ -67,7 +67,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
 
     static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = true;
-    static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = true;
+    static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = false;
     static final boolean DEFAULT_CREATE_CR_PROPERTIES = true;
 
     private final static Logger logger = Logger.getLogger(CentralRepoIngestModule.class.getName());
