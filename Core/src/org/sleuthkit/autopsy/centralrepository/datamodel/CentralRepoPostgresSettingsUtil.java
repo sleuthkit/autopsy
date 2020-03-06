@@ -38,12 +38,6 @@ import org.sleuthkit.datamodel.CaseDbConnectionInfo;
  */
 public class CentralRepoPostgresSettingsUtil {
     private final static Logger LOGGER = Logger.getLogger(CentralRepoPostgresSettingsUtil.class.getName());
-    
-    private final static String DEFAULT_HOST = ""; // NON-NLS
-    private final static int DEFAULT_PORT = 5432;
-    private final static String DEFAULT_DBNAME = "central_repository"; // NON-NLS
-    private final static String DEFAULT_USERNAME = "";
-    private final static String DEFAULT_PASSWORD = "";
 
     private static final String PASSWORD_KEY = "db.postgresql.password";
     private static final String BULK_THRESHOLD_KEY = "db.postgresql.bulkThreshold";
@@ -56,36 +50,11 @@ public class CentralRepoPostgresSettingsUtil {
 
     
     
-    private static String valOrDefault(String val, String defaultVal) {
-        if (val == null || val.isEmpty())
-            return defaultVal;
-        
-        return val;
-    }
-    
-    private static int valOrDefault(String val, int defaultVal, Integer min, Integer max) {
-        try {
-            if (val == null || val.isEmpty()) {
-                return defaultVal;
-            } else {
-                int retVal = Integer.parseInt(val);
-                if ((min != null && retVal < min) || (max != null && retVal > max)) {
-                    return defaultVal;
-                }
-                else {
-                    return retVal;
-                }
-            }
-        } catch (NumberFormatException ex) {
-            return defaultVal;
-        }
-    }
-    
     private static void logException(TryHandler handler) {
         try {
             handler.operation();
         }
-        catch (CentralRepoException e) {
+        catch (CentralRepoException | NumberFormatException e) {
             LOGGER.log(Level.WARNING, "There was an error in converting central repo postgres settings", e);
         }
     }
@@ -94,7 +63,7 @@ public class CentralRepoPostgresSettingsUtil {
      * an action that potentially throws an exception
      */
     private interface TryHandler {
-        void operation() throws CentralRepoException;
+        void operation() throws CentralRepoException, NumberFormatException;
     }
     
     
@@ -109,14 +78,14 @@ public class CentralRepoPostgresSettingsUtil {
             return settings;
         }
         
-        logException(() -> settings.setHost(valOrDefault(muConn.getHost(), DEFAULT_HOST)));
-        logException(() -> settings.setDbName(DEFAULT_DBNAME));
-        logException(() -> settings.setUserName(valOrDefault(muConn.getUserName(), DEFAULT_USERNAME)));
+        logException(() -> settings.setHost(muConn.getHost()));
+        logException(() -> settings.setDbName(PostgresConnectionSettings.DEFAULT_DBNAME));
+        logException(() -> settings.setUserName(muConn.getUserName()));
         
-        logException(() -> settings.setPort(valOrDefault(muConn.getPort(), DEFAULT_PORT, 1, 65535)));
+        logException(() -> settings.setPort(Integer.parseInt(muConn.getPort())));
         logException(() -> settings.setBulkThreshold(RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD));
         
-        logException(() -> settings.setPassword(valOrDefault(muConn.getPassword(), DEFAULT_PASSWORD)));
+        logException(() -> settings.setPassword(muConn.getPassword()));
         
         return settings;
     }
@@ -127,12 +96,12 @@ public class CentralRepoPostgresSettingsUtil {
         Map<String, String> keyVals = ModuleSettings.getConfigSettings(MODULE_KEY);
         
         
-        logException(() -> settings.setHost(valOrDefault(keyVals.get(HOST_KEY), DEFAULT_HOST)));
-        logException(() -> settings.setDbName(valOrDefault(keyVals.get(DBNAME_KEY), DEFAULT_DBNAME)));
-        logException(() -> settings.setUserName(valOrDefault(keyVals.get(USER_KEY), DEFAULT_USERNAME)));
+        logException(() -> settings.setHost(keyVals.get(HOST_KEY)));
+        logException(() -> settings.setDbName(keyVals.get(DBNAME_KEY)));
+        logException(() -> settings.setUserName(keyVals.get(USER_KEY)));
         
-        logException(() -> settings.setPort(valOrDefault(keyVals.get(PORT_KEY), DEFAULT_PORT, 1, 65535)));
-        logException(() -> settings.setBulkThreshold(valOrDefault(keyVals.get(BULK_THRESHOLD_KEY), RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD, 1, null)));
+        logException(() -> settings.setPort(Integer.parseInt(keyVals.get(PORT_KEY))));
+        logException(() -> settings.setBulkThreshold(Integer.parseInt(keyVals.get((BULK_THRESHOLD_KEY)))));
         
         String passwordHex = keyVals.get(PASSWORD_KEY);
         String password;
@@ -140,11 +109,10 @@ public class CentralRepoPostgresSettingsUtil {
             password = TextConverter.convertHexTextToText(passwordHex);
         } catch (TextConverterException ex) {
             LOGGER.log(Level.WARNING, "Failed to convert password from hex text to text.", ex);
-            password = DEFAULT_PASSWORD;
+            password = null;
         }
         
         final String finalPassword = password;
-        
         logException(() -> settings.setPassword(finalPassword));
         return settings;
     }

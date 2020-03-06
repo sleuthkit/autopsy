@@ -29,13 +29,35 @@ public class PostgresConnectionSettings {
     private final static String DB_NAMES_REGEX = "[a-z][a-z0-9_]*"; // only lower case
     private final static String DB_USER_NAMES_REGEX = "[a-zA-Z]\\w*";
     
-    private String host;
-    private int port;
-    private String dbName;
-    private int bulkThreshold;
-    private String userName;
-    private String password;
+    public final static String DEFAULT_HOST = ""; // NON-NLS
+    public final static int DEFAULT_PORT = 5432;
+    public final static String DEFAULT_DBNAME = "central_repository"; // NON-NLS
+    public final static String DEFAULT_USERNAME = "";
+    public final static String DEFAULT_PASSWORD = "";
+    
+    private static void validateStr(String s, String errMessage) throws CentralRepoException {
+        if (null == s || s.isEmpty())
+            throw new CentralRepoException(errMessage);
+    }
+    
+    private static void validateRegex(String s, String pattern, String errMessage) throws CentralRepoException {
+        if (!Pattern.matches(pattern, s))
+            throw new CentralRepoException(errMessage);
+    }
+    
+    private static void validateNum(int num, Integer min, Integer max, String errMessage) throws CentralRepoException {
+        if ((min != null && num < min) || (max != null && num > max))
+            throw new CentralRepoException(errMessage);
+    }
+    
+    private String host = DEFAULT_HOST;
+    private int port = DEFAULT_PORT;
+    private String dbName = DEFAULT_DBNAME;
+    private int bulkThreshold = RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD;
+    private String userName = DEFAULT_USERNAME;
+    private String password = DEFAULT_PASSWORD;
 
+    
     public String getHost() {
         return host;
     }
@@ -60,23 +82,7 @@ public class PostgresConnectionSettings {
         return password;
     }
     
-    
-    private static void validateStr(String s, String errMessage) throws CentralRepoException {
-        if (null == s || s.isEmpty())
-            throw new CentralRepoException(errMessage);
-    }
-    
-    private static void validateRegex(String s, String pattern, String errMessage) throws CentralRepoException {
-        if (!Pattern.matches(pattern, s))
-            throw new CentralRepoException(errMessage);
-    }
-    
-    private static void validateNum(int num, Integer min, Integer max, String errMessage) throws CentralRepoException {
-        if ((min != null && num < min) || (max != null && num > max))
-            throw new CentralRepoException(errMessage);
-    }
-    
-    
+ 
     /**
      * @param host the host to set
      */
