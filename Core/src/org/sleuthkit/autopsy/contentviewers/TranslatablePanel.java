@@ -39,7 +39,13 @@ import org.sleuthkit.autopsy.texttranslation.ui.TranslateTextTask;
  */
 class TranslatablePanel extends JPanel {
     
+    /**
+     * an exception that can occur during the normal operation of the translatable panel
+     * for instance, this exception can be thrown if it is not possible to set the child
+     * content to the provided content string
+     */
     class TranslatablePanelException extends Exception {
+        public static final long serialVersionUID = 1L;
 
         TranslatablePanelException(String message) {
             super(message);
@@ -168,9 +174,6 @@ class TranslatablePanel extends JPanel {
     private final ImageIcon warningIcon = new ImageIcon(TranslatablePanel.class.getResource("/org/sleuthkit/autopsy/images/warning16.png"));
 
     private final ContentComponent contentComponent;
-    private final Component rootComponent;
-    private final String origOptionText;
-    private final String translatedOptionText;
     private final TextTranslationService translationService;
     private final ThreadFactory translationThreadFactory = new ThreadFactoryBuilder().setNameFormat("translatable-panel-%d").build();
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(translationThreadFactory);
@@ -180,6 +183,7 @@ class TranslatablePanel extends JPanel {
 
     private String content;
     private String contentDescriptor;
+    private boolean prevTranslateSelection;
 
     private volatile TranslatedText cachedTranslated;
     private volatile OnTranslation backgroundTask = null;
@@ -201,31 +205,37 @@ class TranslatablePanel extends JPanel {
     TranslatablePanel(ContentComponent contentComponent, String origOptionText, String translatedOptionText, String origContent,
             TextTranslationService translationService) {
         this.contentComponent = contentComponent;
-        this.rootComponent = contentComponent.getRootComponent();
-        this.origOptionText = origOptionText;
-        this.translatedOptionText = translatedOptionText;
         this.translationService = translationService;
 
         initComponents();
-        additionalInit();
+        additionalInit(contentComponent.getRootComponent(), origOptionText, translatedOptionText);
         setTranslationBarVisible();
         reset();
     }
     
 
 
+    /**
+     * @return  the cached translated text or returns null
+     */
     private TranslatedText getCachedTranslated() {
         synchronized (cachedTranslatedLock) {
             return cachedTranslated;
         }
     }
 
+    /**
+     * @param translated    the translated text to be cached
+     */
     private void setCachedTranslated(TranslatedText translated) {
         synchronized (cachedTranslatedLock) {
             this.cachedTranslated = translated;
         }
     }
 
+    /**
+     * if a translation worker is running, this is called to cancel the worker
+     */
     private void cancelPendingTranslation() {
         synchronized (backgroundTaskLock) {
             if (backgroundTask != null && !backgroundTask.isDone()) {
@@ -235,6 +245,9 @@ class TranslatablePanel extends JPanel {
         }
     }
 
+    /**
+     * runs a translation worker to translate the text
+     */
     private void runTranslationTask() {
         synchronized (backgroundTaskLock) {
             cancelPendingTranslation();
@@ -246,14 +259,24 @@ class TranslatablePanel extends JPanel {
         }
     }
 
+    /**
+     * resets the component to an empty state and sets the translation bar visibility
+     * based on whether there is a provider
+     */
     final void reset() {
         setTranslationBarVisible();
         setContent(null, null);
     }
 
+    /**
+     * sets the content for the component; this also clears the status
+     * @param content               the content for the panel
+     * @param contentDescriptor     the content descriptor to be used in error messages
+     */
     void setContent(String content, String contentDescriptor) {
         cancelPendingTranslation();
         this.translateComboBox.setSelectedIndex(0);
+        this.prevTranslateSelection = false;
         this.content = content;
         this.contentDescriptor = contentDescriptor;
         clearStatus();
@@ -274,23 +297,43 @@ class TranslatablePanel extends JPanel {
         return translationService.translate(input);
     }
 
+    /**
+     * clears the status bar
+     */
     private void clearStatus() {
         setStatus(null, false);
     }
 
+    /**
+     * sets the status bar message
+     * @param msg               the status bar message to show
+     * @param showWarningIcon   whether that status is a warning
+     */
     private synchronized void setStatus(String msg, boolean showWarningIcon) {
         statusLabel.setText(msg);
         statusLabel.setIcon(showWarningIcon ? warningIcon : null);
     }
 
+    /**
+     * sets the translation bar visibility based on whether or not there is a provided
+     */
     private void setTranslationBarVisible() {
         translationBar.setVisible(this.translationService.hasProvider());
     }
 
+    /**
+     * the child component provided in the constructor will have its content set to the string provided
+     * @param content   the content to display in the child component
+     */
     private void setChildComponentContent(String content) {
         setChildComponentContent(content, DEFAULT_ORIENTATION);
     }
 
+    /**
+     * the child component provided in the constructor will have its content set to the string provided
+     * @param content   the content to display in the child component
+     * @param orientation the orientation for the text
+     */
     @Messages({"# {0} - exception message", "TranslatablePanel.onSetContentError.text=There was an error displaying the text: {0}"})
     private synchronized void setChildComponentContent(String content, ComponentOrientation orientation) {
         SwingUtilities.invokeLater(() -> {
@@ -302,26 +345,38 @@ class TranslatablePanel extends JPanel {
         });
     }
 
-    private void additionalInit() {
-        add(this.rootComponent, java.awt.BorderLayout.CENTER);
+    /**
+     * items that are programmatically initialized
+     */
+    private void additionalInit(Component rootComponent, String origOptionText, String translatedOptionText) {
+        add(rootComponent, java.awt.BorderLayout.CENTER);
         translateComboBox.removeAllItems();
-        translateComboBox.addItem(new TranslateOption(this.origOptionText, false));
-        translateComboBox.addItem(new TranslateOption(this.translatedOptionText, true));
+        translateComboBox.addItem(new TranslateOption(origOptionText, false));
+        translateComboBox.addItem(new TranslateOption(translatedOptionText, true));
     }
 
+    /**
+     * when the combo box choice is selected, this method is fired
+     * @param translateOption   the current translate option
+     */
     private void handleComboBoxChange(TranslateOption translateOption) {
-        cancelPendingTranslation();
-        clearStatus();
+        boolean curTranslateSelection = translateOption.shouldTranslate();
+        if (curTranslateSelection != this.prevTranslateSelection) {
+            this.prevTranslateSelection = curTranslateSelection;
+            
+            cancelPendingTranslation();
+            clearStatus();
 
-        if (translateOption.shouldTranslate()) {
-            TranslatedText translated = getCachedTranslated();
-            if (translated != null) {
-                setChildComponentContent(translated.getText(), translated.getOrientation());
+            if (curTranslateSelection) {
+                TranslatedText translated = getCachedTranslated();
+                if (translated != null) {
+                    setChildComponentContent(translated.getText(), translated.getOrientation());
+                } else {
+                    runTranslationTask();
+                }
             } else {
-                runTranslationTask();
-            }
-        } else {
-            setChildComponentContent(content);
+                setChildComponentContent(content);
+            }    
         }
     }
 

@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.texttranslation.TranslationException;
 /**
  * abstract class for translating text and displaying to the user
  */
-public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Result, Void> {
+public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.TranslateResult, Void> {
 
     private static final Logger logger = Logger.getLogger(TranslatedTextViewer.class.getName());
 
@@ -46,21 +46,21 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Re
     /**
      * as a result of running and processing the translation
      */
-    public static class Result {
+    public static class TranslateResult {
 
         private final String errorMessage;
         private final String result;
         private final boolean successful;
 
-        public static Result error(String message) {
-            return new Result(null, message, false);
+        public static TranslateResult error(String message) {
+            return new TranslateResult(null, message, false);
         }
 
-        public static Result success(String content) {
-            return new Result(content, null, true);
+        public static TranslateResult success(String content) {
+            return new TranslateResult(content, null, true);
         }
 
-        private Result(String result, String errorMessage, boolean successful) {
+        private TranslateResult(String result, String errorMessage, boolean successful) {
             this.successful = successful;
             this.errorMessage = errorMessage;
             this.result = result;
@@ -91,15 +91,42 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Re
         this.contentDescriptor = fileDescriptor;
     }
 
+    /**
+     * retrieves the original text content to be translated
+     * @return      the original text content
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws IllegalStateException 
+     */
     protected abstract String retrieveText() throws IOException, InterruptedException, IllegalStateException;
 
+    /**
+     * method to be overridden when a translated text result is received
+     * @param text          the text to display
+     * @param orientation   the orientation of the text
+     * @param font          the font style (returns plain)
+     */
     protected abstract void onTextDisplay(String text, ComponentOrientation orientation, int font);
 
+    /**
+     * when a progress result is received, this method is called
+     * this method can be overridden depending on the scenario but defaults to just displaying using onTextDisplay
+     * @param text          the text of the status update
+     * @param orientation   the orientation for the status
+     * @param font          the font style of the status
+     */
     protected void onProgressDisplay(String text, ComponentOrientation orientation, int font) {
         // default to normal display unless overridden
         onTextDisplay(text, orientation, font);
     }
 
+    /**
+     * when an error result is received, this method is called
+     * this method can be overridden depending on the scenario but defaults to just displaying using onTextDisplay
+     * @param text          the text of the error
+     * @param orientation   the orientation for the error
+     * @param font          the font style of the error
+     */
     protected void onErrorDisplay(String text, ComponentOrientation orientation, int font) {
         // default to normal display unless overridden
         onTextDisplay(text, orientation, font);
@@ -112,7 +139,7 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Re
         "# {0} - exception message", "TranslatedContentViewer.translationException=An error occurred while translating the text ({0})."
     })
     @Override
-    public Result doInBackground() throws InterruptedException {
+    public TranslateResult doInBackground() throws InterruptedException {
         if (this.isCancelled()) {
             throw new InterruptedException();
         }
@@ -121,7 +148,7 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Re
         try {
             fileText = retrieveText();
         } catch (IOException | IllegalStateException ex) {
-            return Result.error(ex.getMessage());
+            return TranslateResult.error(ex.getMessage());
         }
 
         if (this.isCancelled()) {
@@ -129,17 +156,23 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Re
         }
 
         if (fileText == null || fileText.isEmpty()) {
-            return Result.error(Bundle.TranslatedContentViewer_fileHasNoText());
+            return TranslateResult.error(Bundle.TranslatedContentViewer_fileHasNoText());
         }
 
         if (!this.translateText) {
-            return Result.success(fileText);
+            return TranslateResult.success(fileText);
         }
 
         return translateRetrievedText(fileText);
     }
 
-    private Result translateRetrievedText(String fileText) throws InterruptedException {
+    /**
+     * final step in translation swing worker prior to being done(); translates the text if needed
+     * @param fileText          the text to translate
+     * @return                  the translated text
+     * @throws InterruptedException     if operation is canclled, an interrupted exception is thrown
+     */
+    private TranslateResult translateRetrievedText(String fileText) throws InterruptedException {
         SwingUtilities.invokeLater(() -> {
             onProgressDisplay(Bundle.TranslatedContentViewer_translatingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
         });
@@ -151,17 +184,17 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Re
             }
 
             if (translation == null || translation.isEmpty()) {
-                return Result.error(Bundle.TranslatedContentViewer_emptyTranslation());
+                return TranslateResult.error(Bundle.TranslatedContentViewer_emptyTranslation());
             } else {
-                return Result.success(translation);
+                return TranslateResult.success(translation);
             }
 
         } catch (NoServiceProviderException ex) {
             logger.log(Level.WARNING, "Error translating text for file " + this.contentDescriptor, ex);
-            return Result.error(Bundle.TranslatedContentViewer_noServiceProvider());
+            return TranslateResult.error(Bundle.TranslatedContentViewer_noServiceProvider());
         } catch (TranslationException ex) {
             logger.log(Level.WARNING, "Error translating text for file " + this.contentDescriptor, ex);
-            return Result.error(Bundle.TranslatedContentViewer_translationException(ex.getMessage()));
+            return TranslateResult.error(Bundle.TranslatedContentViewer_translationException(ex.getMessage()));
         }
     }
     
@@ -169,7 +202,7 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Re
     @Override
     public void done() {
         try {
-            Result executionResult = get();
+            TranslateResult executionResult = get();
             if (this.isCancelled()) {
                 throw new InterruptedException();
             }
