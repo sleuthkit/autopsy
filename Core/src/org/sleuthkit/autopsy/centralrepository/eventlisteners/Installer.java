@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
  * Install event listeners during module initialization
@@ -59,21 +60,38 @@ public class Installer extends ModuleInstall {
     @NbBundle.Messages({
         "Installer.initialCreateSqlite.title=Enable Central Repository?",
         "Installer.initialCreateSqlite.messageHeader=The Central Repository is not enabled. Would you like to enable it?",
-        "Installer.initialCreateSqlite.messageDesc=It will store information about all hashes and identifiers that you process. " +
-            "You can use this to ignore previously seen files and make connections between cases."
+        "Installer.initialCreateSqlite.messageDesc=It will store information about all hashes and identifiers that you process. "
+        + "You can use this to ignore previously seen files and make connections between cases."
     })
     @Override
     public void restored() {
         Case.addPropertyChangeListener(pcl);
         ieListener.installListeners();
+        if (Version.getBuildType() == Version.Type.RELEASE) {
+            centralRepoCheckAndSetup();
+        }
+        // now run regular module startup code
+        try {
+            CentralRepoDbManager.upgradeDatabase();
+        } catch (CentralRepoException ex) {
+            LOGGER.log(Level.SEVERE, "There was an error while upgrading the central repository database", ex);
+            if (RuntimeProperties.runningWithGUI()) {
+                reportUpgradeError(ex);
+            }
+        }
+    }
 
-        
+    /**
+     * Check if CR has been previously configured or initialized and if not
+     * prompt user to set up.
+     */
+    private void centralRepoCheckAndSetup() {
         Map<String, String> centralRepoSettings = ModuleSettings.getConfigSettings("CentralRepository");
         String initializedStr = centralRepoSettings.get("initialized");
-        
+
         // check to see if the repo has been initialized asking to setup cr
         boolean initialized = Boolean.parseBoolean(initializedStr);
-        
+
         // if it hasn't received that flag, check for a previous install where cr is already setup
         if (!initialized) {
             boolean prevRepo = Boolean.parseBoolean(centralRepoSettings.get("db.useCentralRepo"));
@@ -91,13 +109,13 @@ public class Installer extends ModuleInstall {
                 try {
                     SwingUtilities.invokeAndWait(() -> {
                         try {
-                            String dialogText = 
-                                "<html><body>" + 
-                                    "<div style='width: 400px;'>" +
-                                        "<p>" + NbBundle.getMessage(this.getClass(), "Installer.initialCreateSqlite.messageHeader") + "</p>" +
-                                        "<p style='margin-top: 10px'>" + NbBundle.getMessage(this.getClass(), "Installer.initialCreateSqlite.messageDesc") + "</p>" +
-                                    "</div>" +
-                                "</body></html>";
+                            String dialogText
+                                    = "<html><body>"
+                                    + "<div style='width: 400px;'>"
+                                    + "<p>" + NbBundle.getMessage(this.getClass(), "Installer.initialCreateSqlite.messageHeader") + "</p>"
+                                    + "<p style='margin-top: 10px'>" + NbBundle.getMessage(this.getClass(), "Installer.initialCreateSqlite.messageDesc") + "</p>"
+                                    + "</div>"
+                                    + "</body></html>";
 
                             if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
                                     dialogText,
@@ -120,23 +138,13 @@ public class Installer extends ModuleInstall {
                 try {
                     setupDefaultSqlite();
                 } catch (CentralRepoException ex) {
-                     LOGGER.log(Level.SEVERE, "There was an error while initializing the central repository database", ex);
+                    LOGGER.log(Level.SEVERE, "There was an error while initializing the central repository database", ex);
 
                     reportUpgradeError(ex);
                 }
             }
 
             ModuleSettings.setConfigSetting("CentralRepository", "initialized", "true");
-        } 
-        
-        // now run regular module startup code
-        try {
-            CentralRepoDbManager.upgradeDatabase();
-        } catch (CentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, "There was an error while upgrading the central repository database", ex);
-            if (RuntimeProperties.runningWithGUI()) {
-                reportUpgradeError(ex);
-            }
         }
     }
 
@@ -145,15 +153,15 @@ public class Installer extends ModuleInstall {
         manager.setupDefaultSqliteDb();
     }
 
-    @NbBundle.Messages({ "Installer.centralRepoUpgradeFailed.title=Central repository disabled" })
+    @NbBundle.Messages({"Installer.centralRepoUpgradeFailed.title=Central repository disabled"})
     private void reportUpgradeError(CentralRepoException ex) {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 JOptionPane.showMessageDialog(null,
-                    ex.getUserMessage(),
-                    NbBundle.getMessage(this.getClass(),
-                        "Installer.centralRepoUpgradeFailed.title"),
-                    JOptionPane.ERROR_MESSAGE);
+                        ex.getUserMessage(),
+                        NbBundle.getMessage(this.getClass(),
+                                "Installer.centralRepoUpgradeFailed.title"),
+                        JOptionPane.ERROR_MESSAGE);
             });
         } catch (InterruptedException | InvocationTargetException e) {
             LOGGER.log(Level.WARNING, e.getMessage(), e);
