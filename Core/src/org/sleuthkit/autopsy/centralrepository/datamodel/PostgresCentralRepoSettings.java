@@ -48,9 +48,9 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbConnectiv
     private static PostgresSettingsLoader getLoaderFromSaved() throws CentralRepoException {
         CentralRepoDbChoice choice = CentralRepoDbManager.getSavedDbChoice();
         if (choice == CentralRepoDbChoice.POSTGRESQL_CUSTOM)
-            return PostgresSettingsLoader.CUSTOM_LOADER;
+            return PostgresSettingsLoader.CUSTOM_SETTINGS_LOADER;
         else if (choice == CentralRepoDbChoice.POSTGRESQL_MULTIUSER)
-            return PostgresSettingsLoader.MULTIUSER_LOADER;
+            return PostgresSettingsLoader.MULTIUSER_SETTINGS_LOADER;
         else
             throw new CentralRepoException("cannot load or save postgres settings for selection: " + choice);
     }
@@ -362,7 +362,7 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbConnectiv
         if (verifyConnection()) {
             if (verifyDatabaseExists()) {
                 if (verifyDatabaseSchema()) {
-                    return DatabaseTestResult.TESTEDOK;
+                    return DatabaseTestResult.TESTED_OK;
                 } else {
                     return DatabaseTestResult.SCHEMA_INVALID;
                 }

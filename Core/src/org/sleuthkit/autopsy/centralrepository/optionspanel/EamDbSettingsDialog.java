@@ -197,7 +197,7 @@ public class EamDbSettingsDialog extends JDialog {
             }
         }
 
-        return (manager.getStatus() == DatabaseTestResult.TESTEDOK);
+        return (manager.getStatus() == DatabaseTestResult.TESTED_OK);
     }   
 
     

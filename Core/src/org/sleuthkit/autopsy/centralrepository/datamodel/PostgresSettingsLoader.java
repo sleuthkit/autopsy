@@ -25,8 +25,8 @@ public interface PostgresSettingsLoader {
     PostgresConnectionSettings loadSettings();
     void saveSettings(PostgresConnectionSettings settings);
     
-    PostgresSettingsLoader CUSTOM_LOADER = new Custom();
-    PostgresSettingsLoader MULTIUSER_LOADER = new MultiUser();
+    PostgresSettingsLoader CUSTOM_SETTINGS_LOADER = new Custom();
+    PostgresSettingsLoader MULTIUSER_SETTINGS_LOADER = new MultiUser();
 
     
     /**

@@ -81,7 +81,7 @@ public class CentralRepoPostgresSettingsUtil {
         }
     }
     
-    private static void handleTry(TryHandler handler) {
+    private static void logException(TryHandler handler) {
         try {
             handler.operation();
         }
@@ -109,14 +109,14 @@ public class CentralRepoPostgresSettingsUtil {
             return settings;
         }
         
-        handleTry(() -> settings.setHost(valOrDefault(muConn.getHost(), DEFAULT_HOST)));
-        handleTry(() -> settings.setDbName(DEFAULT_DBNAME));
-        handleTry(() -> settings.setUserName(valOrDefault(muConn.getUserName(), DEFAULT_USERNAME)));
+        logException(() -> settings.setHost(valOrDefault(muConn.getHost(), DEFAULT_HOST)));
+        logException(() -> settings.setDbName(DEFAULT_DBNAME));
+        logException(() -> settings.setUserName(valOrDefault(muConn.getUserName(), DEFAULT_USERNAME)));
         
-        handleTry(() -> settings.setPort(valOrDefault(muConn.getPort(), DEFAULT_PORT, 1, 65535)));
-        handleTry(() -> settings.setBulkThreshold(RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD));
+        logException(() -> settings.setPort(valOrDefault(muConn.getPort(), DEFAULT_PORT, 1, 65535)));
+        logException(() -> settings.setBulkThreshold(RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD));
         
-        handleTry(() -> settings.setPassword(valOrDefault(muConn.getPassword(), DEFAULT_PASSWORD)));
+        logException(() -> settings.setPassword(valOrDefault(muConn.getPassword(), DEFAULT_PASSWORD)));
         
         return settings;
     }
@@ -127,12 +127,12 @@ public class CentralRepoPostgresSettingsUtil {
         Map<String, String> keyVals = ModuleSettings.getConfigSettings(MODULE_KEY);
         
         
-        handleTry(() -> settings.setHost(valOrDefault(keyVals.get(HOST_KEY), DEFAULT_HOST)));
-        handleTry(() -> settings.setDbName(valOrDefault(keyVals.get(DBNAME_KEY), DEFAULT_DBNAME)));
-        handleTry(() -> settings.setUserName(valOrDefault(keyVals.get(USER_KEY), DEFAULT_USERNAME)));
+        logException(() -> settings.setHost(valOrDefault(keyVals.get(HOST_KEY), DEFAULT_HOST)));
+        logException(() -> settings.setDbName(valOrDefault(keyVals.get(DBNAME_KEY), DEFAULT_DBNAME)));
+        logException(() -> settings.setUserName(valOrDefault(keyVals.get(USER_KEY), DEFAULT_USERNAME)));
         
-        handleTry(() -> settings.setPort(valOrDefault(keyVals.get(PORT_KEY), DEFAULT_PORT, 1, 65535)));
-        handleTry(() -> settings.setBulkThreshold(valOrDefault(keyVals.get(BULK_THRESHOLD_KEY), RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD, 1, null)));
+        logException(() -> settings.setPort(valOrDefault(keyVals.get(PORT_KEY), DEFAULT_PORT, 1, 65535)));
+        logException(() -> settings.setBulkThreshold(valOrDefault(keyVals.get(BULK_THRESHOLD_KEY), RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD, 1, null)));
         
         String passwordHex = keyVals.get(PASSWORD_KEY);
         String password;
@@ -145,7 +145,7 @@ public class CentralRepoPostgresSettingsUtil {
         
         final String finalPassword = password;
         
-        handleTry(() -> settings.setPassword(finalPassword));
+        logException(() -> settings.setPassword(finalPassword));
         return settings;
     }
 

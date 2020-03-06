@@ -37,14 +37,14 @@ public class CentralRepoDbManager {
 
 
 
-    private static volatile CentralRepoDbChoice SAVED_CHOICE = null;
+    private static volatile CentralRepoDbChoice savedChoice = null;
 
     /**
      * Save the selected platform to the config file.
      */
     public static synchronized CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice) {
         choice = (choice == null) ? CentralRepoDbChoice.DISABLED : choice;
-        SAVED_CHOICE = choice;
+        savedChoice = choice;
         ModuleSettings.setConfigSetting("CentralRepository", "db.selectedPlatform", choice.getSettingKey());
         return choice;
     }
@@ -53,17 +53,17 @@ public class CentralRepoDbManager {
      * Load the selectedPlatform boolean from the config file, if it is set.
      */
     public static synchronized CentralRepoDbChoice getSavedDbChoice() {
-        if (SAVED_CHOICE == null) {
+        if (savedChoice == null) {
             String selectedPlatformString = ModuleSettings.getConfigSetting("CentralRepository", "db.selectedPlatform"); // NON-NLS
-            SAVED_CHOICE = fromKey(selectedPlatformString);
+            savedChoice = fromKey(selectedPlatformString);
         }
 
-        return SAVED_CHOICE;
+        return savedChoice;
     }
 
 
     private static CentralRepoDbChoice fromKey(String keyName) {
-        for (CentralRepoDbChoice dbChoice : CentralRepoDbChoice.CHOICES) {
+        for (CentralRepoDbChoice dbChoice : CentralRepoDbChoice.values()) {
             if (dbChoice.getSettingKey().equalsIgnoreCase(keyName)) {
                 return dbChoice;
             }
@@ -201,8 +201,8 @@ public class CentralRepoDbManager {
 
     public CentralRepoDbManager() {
         selectedDbChoice = getSavedDbChoice();
-        dbSettingsPostgres = new PostgresCentralRepoSettings(PostgresSettingsLoader.CUSTOM_LOADER);
-        dbSettingsMultiUser = new PostgresCentralRepoSettings(PostgresSettingsLoader.MULTIUSER_LOADER);
+        dbSettingsPostgres = new PostgresCentralRepoSettings(PostgresSettingsLoader.CUSTOM_SETTINGS_LOADER);
+        dbSettingsMultiUser = new PostgresCentralRepoSettings(PostgresSettingsLoader.MULTIUSER_SETTINGS_LOADER);
         dbSettingsSqlite = new SqliteCentralRepoSettings();
     }
 
@@ -236,7 +236,7 @@ public class CentralRepoDbManager {
         }
         
         // the only successful setup status is tested ok
-        if (curStatus != DatabaseTestResult.TESTEDOK) {
+        if (curStatus != DatabaseTestResult.TESTED_OK) {
             throw new CentralRepoException("Unable to successfully create sqlite database");
         }
         
@@ -320,7 +320,7 @@ public class CentralRepoDbManager {
             throw new CentralRepoException(schemaError);
         }
 
-        testingStatus = DatabaseTestResult.TESTEDOK;
+        testingStatus = DatabaseTestResult.TESTED_OK;
         return true;
     }
 
@@ -360,7 +360,7 @@ public class CentralRepoDbManager {
         selectedDbSettings.saveSettings();
         // Load those newly saved settings into the postgres db manager instance
         //  in case we are still using the same instance.
-        if (selectedDbChoice != null && selectedDbSettings != CentralRepoDbChoice.DISABLED) {
+        if (selectedDbChoice != null && selectedDbChoice != CentralRepoDbChoice.DISABLED) {
             try {
                 logger.info("Saving central repo settings for db: " + selectedDbSettings);
                 CentralRepository.getInstance().updateSettings();

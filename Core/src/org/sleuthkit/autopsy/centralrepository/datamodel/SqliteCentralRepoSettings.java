@@ -358,7 +358,7 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
         if (dbFileExists()) {
             if (verifyConnection()) {
                 if (verifyDatabaseSchema()) {
-                    return DatabaseTestResult.TESTEDOK;
+                    return DatabaseTestResult.TESTED_OK;
                 } else {
                     return DatabaseTestResult.SCHEMA_INVALID;
                 }

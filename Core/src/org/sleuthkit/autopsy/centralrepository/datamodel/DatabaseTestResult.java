@@ -26,6 +26,6 @@ public enum DatabaseTestResult {
     CONNECTION_FAILED,
     SCHEMA_INVALID,
     DB_DOES_NOT_EXIST,
-    TESTEDOK;
+    TESTED_OK;
 }
     

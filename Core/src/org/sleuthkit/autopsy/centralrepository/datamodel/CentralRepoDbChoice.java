@@ -18,23 +18,22 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import org.openide.util.NbBundle.Messages;
+
 /**
  * the database choices available for central repo
  */
-public class CentralRepoDbChoice {
-    public static final CentralRepoDbChoice DISABLED = new CentralRepoDbChoice("Disabled", CentralRepoPlatforms.DISABLED);
-
-    public static final CentralRepoDbChoice SQLITE = new CentralRepoDbChoice("Sqlite", "SQLite", CentralRepoPlatforms.SQLITE);
-
-    public static final CentralRepoDbChoice POSTGRESQL_MULTIUSER = 
-        new CentralRepoDbChoice("PostgreSQL_Multiuser", "PostgreSQL using multi-user settings", CentralRepoPlatforms.POSTGRESQL);
-
-    public static final CentralRepoDbChoice POSTGRESQL_CUSTOM = 
-        new CentralRepoDbChoice("PostgreSQL", "Custom PostgreSQL", CentralRepoPlatforms.POSTGRESQL);
-
-    public static final CentralRepoDbChoice[] CHOICES = new CentralRepoDbChoice[]{
-        DISABLED, SQLITE, POSTGRESQL_MULTIUSER, POSTGRESQL_CUSTOM
-    };
+@Messages({
+    "CentralRepoDbChoice.Disabled.Text=Disabled",
+    "CentralRepoDbChoice.Sqlite.Text=SQLite",
+    "CentralRepoDbChoice.PostgreSQL_Multiuser.Text=PostgreSQL using multi-user settings",
+    "CentralRepoDbChoice.PostgreSQL.Text=Custom PostgreSQL",
+})
+public enum CentralRepoDbChoice {
+    DISABLED("Disabled", Bundle.CentralRepoDbChoice_Disabled_Text(), CentralRepoPlatforms.DISABLED),
+    SQLITE("Sqlite", Bundle.CentralRepoDbChoice_Sqlite_Text(), CentralRepoPlatforms.SQLITE),
+    POSTGRESQL_MULTIUSER("PostgreSQL_Multiuser", Bundle.CentralRepoDbChoice_PostgreSQL_Multiuser_Text(), CentralRepoPlatforms.POSTGRESQL),
+    POSTGRESQL_CUSTOM("PostgreSQL", Bundle.CentralRepoDbChoice_PostgreSQL_Text(), CentralRepoPlatforms.POSTGRESQL);
 
     public static final CentralRepoDbChoice[] DB_CHOICES = new CentralRepoDbChoice[]{
         SQLITE, POSTGRESQL_MULTIUSER, POSTGRESQL_CUSTOM
@@ -49,10 +48,6 @@ public class CentralRepoDbChoice {
         this.settingKey = key;
         this.title = title;
         this.platform = platform;
-    }
-    
-    CentralRepoDbChoice(String key, CentralRepoPlatforms platform) {
-        this(key, key, platform);
     }
 
     public String getSettingKey() {
