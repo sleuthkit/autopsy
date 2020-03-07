@@ -1,7 +1,7 @@
 /*
- * Central Repository
+ * Autopsy Forensic Browser
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2017-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,17 +35,37 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
- * Install event listeners during module initialization
+ * Adds/removes application event listeners responsible for adding data to the
+ * central repository, sets up a default, single-user SQLite central repository
+ * if no central repository is configured, and updates the central repository
+ * schema as required.
+ *
+ * TODO (Jira-6108): At first glance, this package seems to have become a rather
+ * strange package for the "package installer" for the CR to reside in. The
+ * org.sleuthkit.autopsy.centralrepository package would seem to be more
+ * appropriate with so much going on. However, having a central repository
+ * schema update occur in a "package installer" with no user feedback is not
+ * optimal. Furthermore, for a multi-user (collaborative) installation, a schema
+ * update should be done in a more controlled way by acquiring an exclusive
+ * coordination service lock and requiring shared locks to be acquired by nodes
+ * with open cases.
  */
 public class Installer extends ModuleInstall {
 
-    private static final Logger LOGGER = Logger.getLogger(Installer.class.getName());
+    private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static final long serialVersionUID = 1L;
-    private final CaseEventListener pcl = new CaseEventListener();
-    private final IngestEventsListener ieListener = new IngestEventsListener();
-
     private static Installer instance;
+    private final CaseEventListener caseEventListener = new CaseEventListener();
+    private final IngestEventsListener ingestEventListener = new IngestEventsListener();
 
+    /**
+     * Gets the singleton "package installer" used by the registered Installer
+     * for the Autopsy-Core module located in the org.sleuthkit.autopsy.core
+     * package.
+     *
+     * @return The "package installer" singleton for the
+     *         org.sleuthkit.autopsy.centralrepository.eventlisteners package.
+     */
     public synchronized static Installer getDefault() {
         if (instance == null) {
             instance = new Installer();
@@ -53,10 +73,25 @@ public class Installer extends ModuleInstall {
         return instance;
     }
 
+    /**
+     * Constructs the singleton "package installer" used by the registered
+     * Installer for the Autopsy-Core module located in the
+     * org.sleuthkit.autopsy.core package.
+     */
     private Installer() {
         super();
     }
 
+    /*
+     * Adds/removes application event listeners responsible for adding data to
+     * the central repository, sets up a default, single-user SQLite central
+     * repository if no central repository is configured, and updates the
+     * central repository schema as required.
+     *
+     * Called by the registered Installer for the Autopsy-Core module located in
+     * the org.sleuthkit.autopsy.core package when the already installed
+     * Autopsy-Core module is restored (during application startup).
+     */
     @NbBundle.Messages({
         "Installer.initialCreateSqlite.title=Enable Central Repository?",
         "Installer.initialCreateSqlite.messageHeader=The Central Repository is not enabled. Would you like to enable it?",
@@ -65,27 +100,31 @@ public class Installer extends ModuleInstall {
     })
     @Override
     public void restored() {
-        Case.addPropertyChangeListener(pcl);
-        ieListener.installListeners();
+        addApplicationEventListeners();
+
         if (Version.getBuildType() == Version.Type.RELEASE) {
-            centralRepoCheckAndSetup();
+            setupDefaultCentralRepository();
         }
-        // now run regular module startup code
-        try {
-            CentralRepoDbManager.upgradeDatabase();
-        } catch (CentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, "There was an error while upgrading the central repository database", ex);
-            if (RuntimeProperties.runningWithGUI()) {
-                reportUpgradeError(ex);
-            }
-        }
+
+        updateCentralRepoSchema();
     }
 
     /**
-     * Check if CR has been previously configured or initialized and if not
-     * prompt user to set up.
+     * Adds the application event listeners responsible for adding data to the
+     * central repository.
      */
-    private void centralRepoCheckAndSetup() {
+    private void addApplicationEventListeners() {
+        Case.addPropertyChangeListener(caseEventListener);
+        ingestEventListener.installListeners();
+    }
+
+    /**
+     * Checks if the central repository has been set up and configured. If not,
+     * either offers to perform set up (running with a GUI) or does the set up
+     * unconditionally (not running with a GUI, e.g., in an automated ingest
+     * node).
+     */
+    private void setupDefaultCentralRepository() {
         Map<String, String> centralRepoSettings = ModuleSettings.getConfigSettings("CentralRepository");
         String initializedStr = centralRepoSettings.get("initialized");
 
@@ -122,25 +161,25 @@ public class Installer extends ModuleInstall {
                                     NbBundle.getMessage(this.getClass(), "Installer.initialCreateSqlite.title"),
                                     JOptionPane.YES_NO_OPTION)) {
 
-                                setupDefaultSqlite();
+                                setupDefaultSqliteCentralRepo();
                             }
                         } catch (CentralRepoException ex) {
-                            LOGGER.log(Level.SEVERE, "There was an error while initializing the central repository database", ex);
+                            logger.log(Level.SEVERE, "There was an error while initializing the central repository database", ex);
 
-                            reportUpgradeError(ex);
+                            doMessageBoxIfRunningInGUI(ex);
                         }
                     });
                 } catch (InterruptedException | InvocationTargetException ex) {
-                    LOGGER.log(Level.SEVERE, "There was an error while running the swing utility invoke later while creating the central repository database", ex);
+                    logger.log(Level.SEVERE, "There was an error while running the swing utility invoke later while creating the central repository database", ex);
                 }
             } // if no GUI, just initialize
             else {
                 try {
-                    setupDefaultSqlite();
+                    setupDefaultSqliteCentralRepo();
                 } catch (CentralRepoException ex) {
-                    LOGGER.log(Level.SEVERE, "There was an error while initializing the central repository database", ex);
+                    logger.log(Level.SEVERE, "There was an error while initializing the central repository database", ex);
 
-                    reportUpgradeError(ex);
+                    doMessageBoxIfRunningInGUI(ex);
                 }
             }
 
@@ -148,43 +187,75 @@ public class Installer extends ModuleInstall {
         }
     }
 
-    private void setupDefaultSqlite() throws CentralRepoException {
+    /**
+     * Sets up a default single-user SQLite central repository.
+     *
+     * @throws CentralRepoException If there is an error setting up teh central
+     *                              repository.
+     */
+    private void setupDefaultSqliteCentralRepo() throws CentralRepoException {
         CentralRepoDbManager manager = new CentralRepoDbManager();
         manager.setupDefaultSqliteDb();
     }
 
-    @NbBundle.Messages({"Installer.centralRepoUpgradeFailed.title=Central repository disabled"})
-    private void reportUpgradeError(CentralRepoException ex) {
+    /**
+     * Update the central repository schema.
+     */
+    private void updateCentralRepoSchema() {
         try {
-            SwingUtilities.invokeAndWait(() -> {
-                JOptionPane.showMessageDialog(null,
-                        ex.getUserMessage(),
-                        NbBundle.getMessage(this.getClass(),
-                                "Installer.centralRepoUpgradeFailed.title"),
-                        JOptionPane.ERROR_MESSAGE);
-            });
-        } catch (InterruptedException | InvocationTargetException e) {
-            LOGGER.log(Level.WARNING, e.getMessage(), e);
+            CentralRepoDbManager.upgradeDatabase();
+        } catch (CentralRepoException ex) {
+            logger.log(Level.SEVERE, "An error occurred updating the central repository schema", ex);
+            if (RuntimeProperties.runningWithGUI()) {
+                doMessageBoxIfRunningInGUI(ex);
+            }
         }
-
     }
 
-    @Override
-    public boolean closing() {
-        //platform about to close
-
-        return true;
+    /**
+     * Display a central repository exception in a message box if running with a
+     * GUI.
+     *
+     * @param ex The exception.
+     */
+    @NbBundle.Messages({"Installer.centralRepoUpgradeFailed.title=Central repository disabled"})
+    private void doMessageBoxIfRunningInGUI(CentralRepoException ex) {
+        if (RuntimeProperties.runningWithGUI()) {
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    JOptionPane.showMessageDialog(null,
+                            ex.getUserMessage(),
+                            NbBundle.getMessage(this.getClass(), "Installer.centralRepoUpgradeFailed.title"),
+                            JOptionPane.ERROR_MESSAGE);
+                });
+            } catch (InterruptedException | InvocationTargetException e) {
+                logger.log(Level.WARNING, e.getMessage(), e);
+            }
+        }
     }
 
     @Override
     public void uninstalled() {
-        //module is being unloaded
-
-        Case.removePropertyChangeListener(pcl);
-        pcl.shutdown();
-        ieListener.shutdown();
-        ieListener.uninstallListeners();
-
-        // TODO: remove thread pool
+        /*
+         * TODO (Jira-6108): This code is erronoeous. As documented at
+         * http://bits.netbeans.org/dev/javadoc/org-openide-modules/org/openide/modules/ModuleInstall.html#uninstalled--
+         *
+         * "Called when the module is disabled while the application is still
+         * running. Should remove whatever functionality that it had registered
+         * in ModuleInstall.restored(). 
+         * 
+         * Beware: in practice there is no way to
+         * ensure that this method will really be called. The module might
+         * simply be deleted or disabled while the application is not running.
+         * In fact this is always the case in NetBeans 6.0; the Plugin Manager
+         * only uninstalls or disables modules between restarts. This method
+         * will still be called if you reload a module during development."
+         * 
+         * THIS CODE IS NEVER EXECUTED.
+         */
+        Case.removePropertyChangeListener(caseEventListener);
+        caseEventListener.shutdown();
+        ingestEventListener.shutdown();
+        ingestEventListener.uninstallListeners();
     }
 }
