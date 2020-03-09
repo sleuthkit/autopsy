@@ -50,7 +50,7 @@ public class CentralRepoPostgresSettingsUtil {
 
     private static CentralRepoPostgresSettingsUtil instance = null;
     
-    public static CentralRepoPostgresSettingsUtil getInstance() {
+    public static synchronized CentralRepoPostgresSettingsUtil getInstance() {
         if (instance == null)
             instance = new CentralRepoPostgresSettingsUtil();
         

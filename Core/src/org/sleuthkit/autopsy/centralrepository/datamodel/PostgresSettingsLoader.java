@@ -27,8 +27,7 @@ public interface PostgresSettingsLoader {
     
     PostgresSettingsLoader CUSTOM_SETTINGS_LOADER = new Custom();
     PostgresSettingsLoader MULTIUSER_SETTINGS_LOADER = new MultiUser();
-    
-    static final CentralRepoPostgresSettingsUtil SETTINGS_UTIL = CentralRepoPostgresSettingsUtil.getInstance();
+    CentralRepoPostgresSettingsUtil SETTINGS_UTIL = CentralRepoPostgresSettingsUtil.getInstance();
 
     
     /**
