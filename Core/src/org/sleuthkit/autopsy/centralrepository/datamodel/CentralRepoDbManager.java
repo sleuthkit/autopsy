@@ -43,10 +43,10 @@ public class CentralRepoDbManager {
      * Save the selected platform to the config file.
      */
     public static synchronized CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice) {
-        choice = (choice == null) ? CentralRepoDbChoice.DISABLED : choice;
-        savedChoice = choice;
-        ModuleSettings.setConfigSetting("CentralRepository", "db.selectedPlatform", choice.getSettingKey());
-        return choice;
+        CentralRepoDbChoice newChoice = (choice == null) ? CentralRepoDbChoice.DISABLED : choice;
+        savedChoice = newChoice;
+        ModuleSettings.setConfigSetting("CentralRepository", "db.selectedPlatform", newChoice.getSettingKey());
+        return newChoice;
     }
 
     /**
