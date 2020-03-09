@@ -144,7 +144,7 @@ public final class BackgroundTaskRunner {
 
         /**
          * Provides this Runnable with access to its Future when it has been
-         * submitted to an ExecutrService.
+         * submitted to an ExecutorService.
          *
          * @param future The Future.
          */
