@@ -532,7 +532,7 @@ public class RdbmsCentralRepoFactory {
      *
      * @return SQL clause.
      */
-    private static String getBigIntType(CentralRepoPlatforms selectedPlatform) {
+    static String getBigIntType(CentralRepoPlatforms selectedPlatform) {
         switch (selectedPlatform) {
             case POSTGRESQL:
                 return " BIGINT ";
@@ -800,7 +800,7 @@ public class RdbmsCentralRepoFactory {
       * 
       * @return True if success, false otherwise.
       */
-    private boolean insertDefaultPersonaTablesContent(Connection conn) {
+    private static boolean insertDefaultPersonaTablesContent(Connection conn, CentralRepoPlatforms selectedPlatform) {
 
         try (Statement stmt = conn.createStatement()) {
             // populate the confidence table
@@ -825,6 +825,35 @@ public class RdbmsCentralRepoFactory {
         return true;
     }
     
+      /**
+      * Inserts the default content in accounts related tables.
+      * 
+      * @param conn Database connection to use.
+      * 
+      * @return True if success, false otherwise.
+      */
+    static boolean insertDefaultAccountsTablesContent(Connection conn, CentralRepoPlatforms selectedPlatform) {
+
+        try (Statement stmt = conn.createStatement();) {
+
+            // Populate the account_types table
+            for (Account.Type type : Account.Type.PREDEFINED_ACCOUNT_TYPES) {
+                int correlationTypeId = getCorrelationTypeIdForAccountType(conn, type);
+                if (correlationTypeId > 0) {
+                    String sqlString = String.format("INSERT INTO account_types (type_name, display_name, correlation_type_id) VALUES ('%s', '%s', %d)" + getOnConflictDoNothingClause(selectedPlatform),
+                            type.getTypeName(), type.getDisplayName(), correlationTypeId);
+                    stmt.execute(sqlString);
+                }
+            }
+
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, String.format("Failed to populate default data in Persona tables."), ex);
+            return false;
+        }
+
+        return true;
+    }
+    
     /**
      * Returns the correlation type id for the given account type, 
      * from the correlation_types table.
@@ -834,7 +863,7 @@ public class RdbmsCentralRepoFactory {
      * '
      * @return correlation type id.
      */
-    private int getCorrelationTypeIdForAccountType(Connection conn, Account.Type accountType) {
+    static int getCorrelationTypeIdForAccountType(Connection conn, Account.Type accountType) {
 
         int typeId = -1;
         if (accountType == Account.Type.EMAIL) {
