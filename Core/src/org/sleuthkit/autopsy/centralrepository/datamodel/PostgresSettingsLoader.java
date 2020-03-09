@@ -27,6 +27,8 @@ public interface PostgresSettingsLoader {
     
     PostgresSettingsLoader CUSTOM_SETTINGS_LOADER = new Custom();
     PostgresSettingsLoader MULTIUSER_SETTINGS_LOADER = new MultiUser();
+    
+    static final CentralRepoPostgresSettingsUtil SETTINGS_UTIL = CentralRepoPostgresSettingsUtil.getInstance();
 
     
     /**
@@ -35,12 +37,12 @@ public interface PostgresSettingsLoader {
     class Custom implements PostgresSettingsLoader {
         @Override
         public PostgresConnectionSettings loadSettings() {
-            return CentralRepoPostgresSettingsUtil.loadCustomSettings();
+            return SETTINGS_UTIL.loadCustomSettings();
         }
 
         @Override
         public void saveSettings(PostgresConnectionSettings settings) {
-            CentralRepoPostgresSettingsUtil.saveCustomSettings(settings);
+            SETTINGS_UTIL.saveCustomSettings(settings);
         }
     }
     
@@ -53,11 +55,12 @@ public interface PostgresSettingsLoader {
 
         @Override
         public PostgresConnectionSettings loadSettings() {
-            return CentralRepoPostgresSettingsUtil.loadMultiUserSettings();
+            return SETTINGS_UTIL.loadMultiUserSettings();
         }
 
         /**
-         * no need to save since this is just a proxy to multi user settings
+         * NOTE: this action does not do anything.  There is no need to save since
+         * this is just a proxy to multi user settings.
          * @param settings  the settings to save
          */
         @Override

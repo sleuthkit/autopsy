@@ -185,20 +185,27 @@ public class EamDbSettingsDialog extends JDialog {
                     Bundle.EamDbSettingsDialog_okButton_createDbDialog_message(),
                     Bundle.EamDbSettingsDialog_okButton_createDbDialog_title(),
                     JOptionPane.YES_NO_OPTION)) {
-                try {
-                    manager.createDb();
-                }
-                catch (CentralRepoException e) {
-                    onPromptStatusError(manager);
-                }
-                
-                if (dialog != null)
-                    dialog.valid();
+                onUserPromptCreateDb(manager, dialog);
             }
         }
 
         return (manager.getStatus() == DatabaseTestResult.TESTED_OK);
     }   
+
+    /**
+     * when a new database needs to be created on user selecting cr, this code will be ran when user selects create cr
+     * @param manager       the manager handling the database creation
+     * @param dialog        the dialog that prompted database creation
+     */
+    private static void onUserPromptCreateDb(CentralRepoDbManager manager, EamDbSettingsDialog dialog) {
+        try {
+            manager.createDb();
+        } catch (CentralRepoException e) {
+            onPromptStatusError(manager);
+        }
+        if (dialog != null)
+            dialog.valid();
+    }
 
     
     /**

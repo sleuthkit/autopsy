@@ -48,9 +48,18 @@ public class CentralRepoPostgresSettingsUtil {
 
     private static final String MODULE_KEY = "CentralRepository";
 
+    private static CentralRepoPostgresSettingsUtil instance = null;
     
+    public static CentralRepoPostgresSettingsUtil getInstance() {
+        if (instance == null)
+            instance = new CentralRepoPostgresSettingsUtil();
+        
+        return instance;
+    }
     
-    private static void logException(TryHandler handler) {
+    private CentralRepoPostgresSettingsUtil() {}
+    
+    private void logException(TryHandler handler) {
         try {
             handler.operation();
         }
@@ -67,7 +76,7 @@ public class CentralRepoPostgresSettingsUtil {
     }
     
     
-    public static PostgresConnectionSettings loadMultiUserSettings() {
+    public PostgresConnectionSettings loadMultiUserSettings() {
         PostgresConnectionSettings settings = new PostgresConnectionSettings();
         
         CaseDbConnectionInfo muConn;
@@ -91,7 +100,7 @@ public class CentralRepoPostgresSettingsUtil {
     }
     
     
-    public static PostgresConnectionSettings loadCustomSettings() {
+    public PostgresConnectionSettings loadCustomSettings() {
         PostgresConnectionSettings settings = new PostgresConnectionSettings();
         Map<String, String> keyVals = ModuleSettings.getConfigSettings(MODULE_KEY);
         
@@ -117,7 +126,7 @@ public class CentralRepoPostgresSettingsUtil {
         return settings;
     }
 
-    public static void saveCustomSettings(PostgresConnectionSettings settings) {
+    public void saveCustomSettings(PostgresConnectionSettings settings) {
         Map<String, String> map = new HashMap<String, String>();
         map.put(HOST_KEY, settings.getHost());
         map.put(PORT_KEY, Integer.toString(settings.getPort()));
@@ -138,7 +147,7 @@ public class CentralRepoPostgresSettingsUtil {
      * @param settings  the in-memory object
      * @return  whether or not settings parameter differs from saved custom settings
      */
-    public static boolean areCustomSettingsChanged(PostgresConnectionSettings settings) {
+    public boolean areCustomSettingsChanged(PostgresConnectionSettings settings) {
         PostgresConnectionSettings saved = loadCustomSettings();
         return saved.equals(settings);
     }
