@@ -216,7 +216,7 @@ class GPXParserDataSourceIngestModule(DataSourceIngestModule):
                     geoWaypointList = TskGeoWaypointsUtil.GeoWaypointList()
 
                     for point in route.points:
-                        geoWaypointList.addPoint(GeoWaypoint(point.latitude, point.longitude, point.name))
+                        geoWaypointList.addPoint(GeoWaypoint(point.latitude, point.longitude, point.elevation, point.name))
                     
                     try:
                         geoArtifactHelper.addRoute(None, None, geoWaypointList, None)
