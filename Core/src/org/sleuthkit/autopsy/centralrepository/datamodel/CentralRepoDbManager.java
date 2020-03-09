@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -38,17 +40,39 @@ public class CentralRepoDbManager {
 
 
     private static volatile CentralRepoDbChoice savedChoice = null;
-
+    
+    private static final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(CentralRepoDbManager.class);
+    
     /**
      * Save the selected platform to the config file.
      */
     public static synchronized CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice) {
         CentralRepoDbChoice newChoice = (choice == null) ? CentralRepoDbChoice.DISABLED : choice;
+        CentralRepoDbChoice oldChoice = savedChoice;
         savedChoice = newChoice;
         ModuleSettings.setConfigSetting("CentralRepository", "db.selectedPlatform", newChoice.getSettingKey());
+        propertyChangeSupport.firePropertyChange("savedChoice", oldChoice, newChoice);
         return newChoice;
     }
 
+    /**
+     * adds a property change listener
+     * NOTE: currently only listening for changes in currently saved db choice
+     * 
+     * @param listener  the listener for the event
+     */
+    public static void addPropertyChangeListener(PropertyChangeListener listener) {
+         propertyChangeSupport.addPropertyChangeListener(listener);
+     }
+
+    /**
+     * removes a propert change listener 
+     * @param listener  the listener to remove
+     */
+     public static void removePropertyChangeListener(PropertyChangeListener listener) {
+         propertyChangeSupport.removePropertyChangeListener(listener);
+     }
+     
     /**
      * Load the selectedPlatform boolean from the config file, if it is set.
      */

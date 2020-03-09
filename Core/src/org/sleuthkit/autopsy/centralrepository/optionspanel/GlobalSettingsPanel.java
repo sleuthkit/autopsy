@@ -50,25 +50,6 @@ import java.util.logging.Level;
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
-
-    /**
-     * listener to handle when settings change and an instance of this class needs to be notified.
-     */
-    private interface OnSettingsChangeListener {
-        void onSettingsChange();
-    }
-    
-    private static OnSettingsChangeListener listener = null;
-    
-    private static void onSettingsChange() {
-        if (listener != null)
-            listener.onSettingsChange();
-    }
-    
-    private static void setSettingsChangeListener(OnSettingsChangeListener newListener) {
-        listener = newListener;
-    }
-    
     
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(GlobalSettingsPanel.class.getName());
@@ -83,8 +64,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     public GlobalSettingsPanel() {
         ingestJobEventListener = new IngestJobEventPropertyChangeListener();
         
-        // most recently created panel will receive update events
-        GlobalSettingsPanel.setSettingsChangeListener(() -> ingestStateUpdated(Case.isCaseOpen()));
+        // listen for change events in currently saved choice
+        CentralRepoDbManager.addPropertyChangeListener((PropertyChangeEvent evt) -> ingestStateUpdated(Case.isCaseOpen()));
         initComponents();
         customizeComponents();
         addIngestJobEventsListener();
@@ -222,8 +203,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         else if (JOptionPane.NO_OPTION == result) {
             invokeCrChoice(parent, CentralRepoDbChoice.POSTGRESQL_CUSTOM);
         }
-        
-        GlobalSettingsPanel.onSettingsChange();
     }
     
     
@@ -231,14 +210,12 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         SwingUtilities.invokeLater(() -> {
             boolean successful = EamDbSettingsDialog.testStatusAndCreate(parent, new CentralRepoDbManager());
             if (successful) {
-                updateDatabase(parent);
-                onSettingsChange();            
+                updateDatabase(parent);         
             }
             else {
                 // disable central repository
                 CentralRepoDbUtil.setUseCentralRepo(false);
                 CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
-                GlobalSettingsPanel.onSettingsChange();
             }
         });
     }
