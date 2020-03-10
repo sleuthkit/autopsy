@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSett
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import java.awt.Component;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * Main settings panel for the Central Repository
@@ -125,8 +126,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         "GlobalSettingsPanel.onMultiUserChange.enable.description2=The Central Repository stores hash values and accounts from past cases."
     })
     public static void onMultiUserChange(Component parent, boolean muPreviouslySelected, boolean muCurrentlySelected) {
-        boolean crMultiUser = CentralRepoDbUtil.allowUseOfCentralRepository() &&
-            CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
+        boolean crEnabled = CentralRepoDbUtil.allowUseOfCentralRepository();
+        boolean crMultiUser = CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
+        boolean crDisabledDueToFailure = CentralRepoDbManager.isDisabledDueToFailure();
         
         if (!muPreviouslySelected && muCurrentlySelected) {
             SwingUtilities.invokeLater(() -> {
@@ -148,14 +150,16 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             });
         }
         // moving from selected to not selected && 'PostgreSQL using multi-user settings' is selected
-        else if (muPreviouslySelected && !muCurrentlySelected && crMultiUser) {
+        else if (muPreviouslySelected && !muCurrentlySelected && crEnabled && crMultiUser) {
             SwingUtilities.invokeLater(() -> {
                 askForCentralRepoDbChoice(parent);
             });
         }
-        // changing multi-user settings connection && 'PostgreSQL using multi-user settings' is selected
-        else if (muPreviouslySelected && muCurrentlySelected && crMultiUser) {
+        // changing multi-user settings connection && 'PostgreSQL using multi-user settings' is selected && 
+        // central repo either enabled or was disabled due to error
+        else if (muPreviouslySelected && muCurrentlySelected && crMultiUser && (crEnabled || crDisabledDueToFailure)) {
             // test databse for CR change
+            CentralRepoDbUtil.setUseCentralRepo(true);
             handleDbChange(parent);
         }
     }
@@ -210,12 +214,14 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         SwingUtilities.invokeLater(() -> {
             boolean successful = EamDbSettingsDialog.testStatusAndCreate(parent, new CentralRepoDbManager());
             if (successful) {
+                // clear any error if there was one
+                CentralRepoDbManager.setDisabledDueToFailure(false);
                 updateDatabase(parent);         
             }
             else {
-                // disable central repository
+                // disable central repository due to error
+                CentralRepoDbManager.setDisabledDueToFailure(true);
                 CentralRepoDbUtil.setUseCentralRepo(false);
-                CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
             }
         });
     }
@@ -632,6 +638,14 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     @Override
     public void store() { // Click OK or Apply on Options Panel
         CentralRepoDbUtil.setUseCentralRepo(cbUseCentralRepo.isSelected());
+        
+        // if moving to using CR, multi-user mode is disabled and selection is multiuser settings, set to disabled
+        if (cbUseCentralRepo.isSelected() &&
+                !UserPreferences.getIsMultiUserModeEnabled() && 
+                CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER) {
+            
+            CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
+        }
     }
 
     /**

@@ -163,7 +163,7 @@ public class EamDbSettingsDialog extends JDialog {
         "EamDbSettingsDialog.okButton.createDbDialog.title=Database Does Not Exist",
         "EamDbSettingsDialog.okButton.createDbDialog.message=Database does not exist, would you like to create it?",
         "EamDbSettingsDialog.okButton.databaseConnectionFailed.title=Database Connection Failed",
-        "EamDbSettingsDialog.okButton.databaseConnectionFailed.message=Unable to connect to database please check your settings and try again.",
+        "EamDbSettingsDialog.okButton.databaseConnectionFailed.message=Unable to connect to database. Please check your settings and try again.",
         "EamDbSettingsDialog.okButton.createSQLiteDbError.message=Unable to create SQLite Database, please ensure location exists and you have write permissions and try again.",
         "EamDbSettingsDialog.okButton.createPostgresDbError.message=Unable to create Postgres Database, please ensure address, port, and login credentials are correct for Postgres server and try again.",
         "EamDbSettingsDialog.okButton.createDbError.title=Unable to Create Database"})
@@ -566,6 +566,9 @@ public class EamDbSettingsDialog extends JDialog {
                     Bundle.EamDbSettingsDialog_okButton_errorTitle_text(),
                     JOptionPane.WARNING_MESSAGE);
             });
+            
+            parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            return false;
         }
 
         parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
