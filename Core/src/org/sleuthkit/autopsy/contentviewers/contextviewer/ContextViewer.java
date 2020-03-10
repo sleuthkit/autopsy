@@ -20,10 +20,12 @@ package org.sleuthkit.autopsy.contentviewers.contextviewer;
 
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.swing.BoxLayout;
 import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
@@ -55,6 +57,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
     // defines a list of artifacts that provide context for a file
     private static final List<BlackboardArtifact.ARTIFACT_TYPE> SOURCE_CONTEXT_ARTIFACTS = new ArrayList<>();
+    private final List<javax.swing.JPanel> contextSourcePanels = new ArrayList<>();
+    private final List<javax.swing.JPanel> contextUsagePanels = new ArrayList<>();
 
     static {
         SOURCE_CONTEXT_ARTIFACTS.add(TSK_ASSOCIATED_OBJECT);
@@ -79,118 +83,22 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jSourceGoToResultButton = new javax.swing.JButton();
-        jSourceLabel = new javax.swing.JLabel();
-        jSourceNameLabel = new javax.swing.JLabel();
-        jSourceTextLabel = new javax.swing.JLabel();
-        jUsageGoToResultButton = new javax.swing.JButton();
-        jUsageLabel = new javax.swing.JLabel();
-        jUsageNameLabel = new javax.swing.JLabel();
-        jUsageTextLabel = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
 
         setBackground(new java.awt.Color(255, 255, 255));
-
-        org.openide.awt.Mnemonics.setLocalizedText(jSourceGoToResultButton, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceGoToResultButton.text")); // NOI18N
-        jSourceGoToResultButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jSourceGoToResultButtonActionPerformed(evt);
-            }
-        });
-
-        jSourceLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jSourceLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jSourceNameLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceNameLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jSourceTextLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceTextLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jUsageGoToResultButton, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageGoToResultButton.text")); // NOI18N
-        jUsageGoToResultButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jUsageGoToResultButtonActionPerformed(evt);
-            }
-        });
-
-        jUsageLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jUsageLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jUsageNameLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageNameLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jUsageTextLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageTextLabel.text")); // NOI18N
+        setPreferredSize(new java.awt.Dimension(495, 358));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSourceLabel)
-                    .addComponent(jUsageLabel)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(6, 6, 6)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jSourceNameLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jSourceTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 192, Short.MAX_VALUE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jUsageNameLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jUsageTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 192, Short.MAX_VALUE)))))
-                .addGap(36, 36, 36))
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(45, 45, 45)
-                        .addComponent(jUsageGoToResultButton))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(46, 46, 46)
-                        .addComponent(jSourceGoToResultButton)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 509, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jSourceLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jSourceNameLabel)
-                    .addComponent(jSourceTextLabel))
-                .addGap(18, 18, 18)
-                .addComponent(jSourceGoToResultButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jUsageLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jUsageNameLabel)
-                    .addComponent(jUsageTextLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jUsageGoToResultButton)
-                .addGap(0, 62, Short.MAX_VALUE))
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 335, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void jSourceGoToResultButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jSourceGoToResultButtonActionPerformed
-
-        final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
-
-        // Navigate to the source context artifact.
-        if (sourceContextArtifact != null) {
-            dtc.viewArtifact(sourceContextArtifact);
-        }
-
-    }//GEN-LAST:event_jSourceGoToResultButtonActionPerformed
-
-    private void jUsageGoToResultButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jUsageGoToResultButtonActionPerformed
-        final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
-
-        // Navigate to the source context artifact.
-        if (sourceContextArtifact != null) {
-            dtc.viewArtifact(sourceContextArtifact);
-        }
-    }//GEN-LAST:event_jUsageGoToResultButtonActionPerformed
 
     @Override
     public void setNode(Node selectedNode) {
@@ -234,9 +142,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
     @Override
     public void resetComponent() {
-        jSourceGoToResultButton.setVisible(false);
-        setSourceName("");
-        setSourceText("");
+        contextSourcePanels.clear();
+        contextUsagePanels.clear();
     }
 
     @Override
@@ -268,6 +175,9 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         return 1;
     }
 
+    @NbBundle.Messages({
+        "ContextViewer.unknownSource=Unknown ",
+    })
     /**
      * Looks for context providing artifacts for the given file and populates
      * the source context.
@@ -280,7 +190,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private void populateSourceContextData(AbstractFile sourceFile) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-
+        
         // Check for all context artifacts
         boolean foundASource = false;
         for (BlackboardArtifact.ARTIFACT_TYPE artifactType : SOURCE_CONTEXT_ARTIFACTS) {
@@ -291,15 +201,29 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                 addSourceEntry(contextArtifact);
             }
         }
-        jSourceGoToResultButton.setVisible(true);
-        jUsageGoToResultButton.setVisible(true);
-        if (foundASource == false) {
-            setSourceName("Unknown");
-            showSourceText(false);
-            setUsageName("Unknown");
-            showUsageText(false);
-        }
-
+        javax.swing.JPanel contextContainer = new javax.swing.JPanel();
+        contextContainer.setLayout(new BoxLayout(contextContainer, BoxLayout.Y_AXIS));
+        if (contextSourcePanels.isEmpty()) {
+            contextContainer.add(new ContextSourcePanel(Bundle.ContextViewer_unknownSource(), "", null));
+        } else
+            for (javax.swing.JPanel sourcePanel : contextSourcePanels) {
+                contextContainer.add(sourcePanel);
+            }
+        if (contextUsagePanels.isEmpty()) {
+            contextContainer.add(new ContextUsagePanel(Bundle.ContextViewer_unknownSource(), "", null));
+        } else
+            for (javax.swing.JPanel usagePanel : contextUsagePanels) {
+                contextContainer.add(usagePanel);
+            }
+        contextContainer.setEnabled(foundASource);
+        contextContainer.setVisible(foundASource);
+        jScrollPane1.getViewport().setView(contextContainer);
+        jScrollPane1.setEnabled(foundASource);
+        jScrollPane1.setVisible(foundASource);
+        jScrollPane1.repaint();
+        jScrollPane1.revalidate();
+        
+        
     }
 
     /**
@@ -312,10 +236,6 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      * @throws TskCoreException
      */
     private void addSourceEntry(BlackboardArtifact artifact) throws TskCoreException {
-        setSourceName("Unknown");
-        showSourceText(false);
-        setUsageName("Unknown");
-        showUsageText(false);
 
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID() == artifact.getArtifactTypeID()) {
             BlackboardAttribute associatedArtifactAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
@@ -347,72 +267,25 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private void setSourceFields(BlackboardArtifact associatedArtifact) throws TskCoreException {
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == associatedArtifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == associatedArtifact.getArtifactTypeID()) {
-
-            setSourceName(Bundle.ContextViewer_attachmentSource());
-            setSourceText(msgArtifactToAbbreviatedString(associatedArtifact));
+            String sourceName = Bundle.ContextViewer_attachmentSource();
+            String sourceText = msgArtifactToAbbreviatedString(associatedArtifact);
+            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact);
+            contextSourcePanels.add(sourcePanel);
 
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == associatedArtifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == associatedArtifact.getArtifactTypeID()) {
+            String sourceName = Bundle.ContextViewer_downloadSource();
+            String sourceText = webDownloadArtifactToString(associatedArtifact);
+            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact);
+            contextSourcePanels.add(sourcePanel);
 
-            setSourceName(Bundle.ContextViewer_downloadSource());
-            setSourceText(webDownloadArtifactToString(associatedArtifact));
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == associatedArtifact.getArtifactTypeID()) {
-            setUsageName(Bundle.ContextViewer_recentDocs());
-            setUsageText(recentDocArtifactToString(associatedArtifact));
+            String sourceName = Bundle.ContextViewer_recentDocs();
+            String sourceText = recentDocArtifactToString(associatedArtifact);
+            javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact);
+            contextUsagePanels.add(usagePanel);
             
         }
-    }
-
-    /**
-     * Sets the source label string.
-     *
-     * @param nameLabel String value for source label.
-     */
-    private void setSourceName(String nameLabel) {
-        jSourceNameLabel.setText(nameLabel);
-    }
-
-    /**
-     * Sets the usage label string.
-     *
-     * @param nameLabel String value for usage label.
-     */
-    private void setUsageName(String nameLabel) {
-        jUsageNameLabel.setText(nameLabel);
-    }
-
-    /**
-     * Sets the source text string.
-     *
-     * @param text String value for source text.
-     */
-    private void setSourceText(String text) {
-        jSourceTextLabel.setText(text);
-        showSourceText(!text.isEmpty());
-    }
-
-    private void showSourceText(boolean show) {
-        jSourceTextLabel.setVisible(show);
-        jSourceGoToResultButton.setEnabled(show);
-        jSourceLabel.setVisible(show);
-        jUsageLabel.setVisible(show);
-    }
-
-    /**
-     * Sets the Usage text string.
-     *
-     * @param text String value for Usage text.
-     */
-    private void setUsageText(String text) {
-        jUsageTextLabel.setText(text);
-        showUsageText(!text.isEmpty());
-    }
-
-    private void showUsageText(boolean show) {
-        jUsageTextLabel.setVisible(show);
-        jUsageGoToResultButton.setEnabled(show);
-        jUsageLabel.setVisible(show);
-        jSourceLabel.setVisible(show);
     }
 
     /**
@@ -554,13 +427,6 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jSourceGoToResultButton;
-    private javax.swing.JLabel jSourceLabel;
-    private javax.swing.JLabel jSourceNameLabel;
-    private javax.swing.JLabel jSourceTextLabel;
-    private javax.swing.JButton jUsageGoToResultButton;
-    private javax.swing.JLabel jUsageLabel;
-    private javax.swing.JLabel jUsageNameLabel;
-    private javax.swing.JLabel jUsageTextLabel;
+    private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
 }
