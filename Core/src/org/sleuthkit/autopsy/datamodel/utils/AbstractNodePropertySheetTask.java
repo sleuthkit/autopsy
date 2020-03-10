@@ -98,7 +98,11 @@ public abstract class AbstractNodePropertySheetTask implements Runnable {
      * results of the computation are returned as a PropertyChangeEvent which is
      * fired to the PropertyChangeEventListener of the node.
      *
-     * @param node The ABstractNode.
+     * IMPORTANT: Implementations of this method should check for cancellation
+     * by calling Thread.currentThread().isInterrupted() at approoraite
+     * intervals.
+     *
+     * @param node The AbstractNode.
      *
      * @return The result of the computation as a PropertyChangeEvent.
      */
@@ -109,7 +113,7 @@ public abstract class AbstractNodePropertySheetTask implements Runnable {
         try {
             AbstractNode node = this.weakNodeRef.get();
             PropertyChangeListener listener = this.weakListenerRef.get();
-            if (node == null || listener== null) {
+            if (node == null || listener == null) {
                 return;
             }
 
@@ -118,7 +122,7 @@ public abstract class AbstractNodePropertySheetTask implements Runnable {
             }
 
             PropertyChangeEvent changeEvent = computePropertyValue(node);
-            
+
             if (Thread.currentThread().isInterrupted()) {
                 return;
             }
