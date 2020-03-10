@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
  * relieve the AbstractNode from having to create a thread to block on the get()
  * method of the task Future.
  *
- * Only weak references to the AbstractNode and its ProeprtyChangeListener are
+ * Only weak references to the AbstractNode and its PropertyChangeListener are
  * held prior to task execution so that a queued task does not interfere with
  * garbage collection if the node has been destroyed by the NetBeans framework.
  *
@@ -77,7 +77,7 @@ public abstract class AbstractNodePropertySheetTask implements Runnable {
      * logging. These features relieve the AbstractNode from having to create a
      * thread to block on the get() method of the task Future.
      *
-     * Only weak references to the AbstractNode and its ProeprtyChangeListener
+     * Only weak references to the AbstractNode and its PropertyChangeListener
      * are held prior to task execution so that a queued task does not interfere
      * with garbage collection if the node has been destroyed by the NetBeans
      * framework.
