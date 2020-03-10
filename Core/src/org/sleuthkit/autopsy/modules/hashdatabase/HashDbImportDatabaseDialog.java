@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2014-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFile
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 
 /**
  * Instances of this class allow a user to select an existing hash database and
@@ -108,8 +109,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     
     private void enableComponents(){
         
-        
-        if(! CentralRepository.isEnabled()){
+        if(!CentralRepository.isEnabled() || !FeatureAccessUtils.canAddHashSetsToCentralRepo()){
             centralRepoRadioButton.setEnabled(false);
             fileTypeRadioButton.setSelected(true);
         } else {
