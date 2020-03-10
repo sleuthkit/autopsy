@@ -46,12 +46,12 @@ import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
  * A thread pool with descriptively named threads (node-background-task-N) is
  * provided for executing instances of the tasks.
  */
-public abstract class AbstractNodePropertySheetTask implements Runnable {
+public abstract class AbstractNodePropertySheetTask<T extends AbstractNode> implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(AbstractContentNode.class.getName());
     private static final Integer THREAD_POOL_SIZE = 10;
     private static final ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE, new ThreadFactoryBuilder().setNameFormat("node-background-task-%d").build());
-    private final WeakReference<AbstractNode> weakNodeRef;
+    private final WeakReference<T> weakNodeRef;
     private final WeakReference<PropertyChangeListener> weakListenerRef;
 
     /**
@@ -64,7 +64,7 @@ public abstract class AbstractNodePropertySheetTask implements Runnable {
      * @return The Future of the task, may be used for task cancellation by
      *         calling Future.cancel(true).
      */
-    public static Future<?> submitTask(AbstractNodePropertySheetTask task) {
+    public static Future<?> submitTask(AbstractNodePropertySheetTask<?> task) {
         return executor.submit(task);
     }
 
@@ -88,7 +88,7 @@ public abstract class AbstractNodePropertySheetTask implements Runnable {
      * @param node     The node.
      * @param listener A property change listener for the node.
      */
-    protected AbstractNodePropertySheetTask(AbstractNode node, PropertyChangeListener listener) {
+    protected AbstractNodePropertySheetTask(T node, PropertyChangeListener listener) {
         this.weakNodeRef = new WeakReference<>(node);
         this.weakListenerRef = new WeakReference<>(listener);
     }
@@ -99,19 +99,19 @@ public abstract class AbstractNodePropertySheetTask implements Runnable {
      * fired to the PropertyChangeEventListener of the node.
      *
      * IMPORTANT: Implementations of this method should check for cancellation
-     * by calling Thread.currentThread().isInterrupted() at approoraite
+     * by calling Thread.currentThread().isInterrupted() at appropriate
      * intervals.
      *
      * @param node The AbstractNode.
      *
      * @return The result of the computation as a PropertyChangeEvent.
      */
-    protected abstract PropertyChangeEvent computePropertyValue(AbstractNode node) throws Exception;
+    protected abstract PropertyChangeEvent computePropertyValue(T node) throws Exception;
 
     @Override
     final public void run() {
         try {
-            AbstractNode node = this.weakNodeRef.get();
+            T node = this.weakNodeRef.get();
             PropertyChangeListener listener = this.weakListenerRef.get();
             if (node == null || listener == null) {
                 return;
