@@ -82,6 +82,7 @@ public final class UserPreferences {
     public static final String SHOW_ONLY_CURRENT_USER_TAGS = "ShowOnlyCurrentUserTags";
     public static final String HIDE_SCO_COLUMNS = "HideCentralRepoCommentsAndOccurrences"; //The key for this setting pre-dates the settings current functionality //NON-NLS
     public static final String DISPLAY_TRANSLATED_NAMES = "DisplayTranslatedNames";
+    private static final boolean DISPLAY_TRANSLATED_NAMES_DEFAULT = true;
     public static final String EXTERNAL_HEX_EDITOR_PATH = "ExternalHexEditorPath";
     public static final String SOLR_MAX_JVM_SIZE = "SolrMaxJVMSize";
     public static final String RESULTS_TABLE_PAGE_SIZE = "ResultsTablePageSize";
@@ -272,7 +273,7 @@ public final class UserPreferences {
     }
 
     public static boolean displayTranslatedFileNames() {
-        return preferences.getBoolean(DISPLAY_TRANSLATED_NAMES, false);
+        return preferences.getBoolean(DISPLAY_TRANSLATED_NAMES, DISPLAY_TRANSLATED_NAMES_DEFAULT);
     }
 
     /**

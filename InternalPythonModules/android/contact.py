@@ -102,13 +102,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
             # get display_name, mimetype(email or phone number) and data1 (phonenumber or email address depending on mimetype)
             # sorted by name, so phonenumber/email would be consecutive for a person if they exist.
             # check if contacts.name_raw_contact_id exists. Modify the query accordingly.
-            columnFound = False
-            metadata = contactDb.getConnectionMetadata()
-            columnListResultSet = metadata.getColumns(None, None, "contacts", None)
-            while columnListResultSet.next():
-                if columnListResultSet.getString("COLUMN_NAME") == "name_raw_contact_id":
-                    columnFound = True
-                    break
+            columnFound = contactDb.columnExists("contacts", "name_raw_contact_id")
             if columnFound:
                 resultSet = contactDb.runQuery(
                     "SELECT mimetype, data1, name_raw_contact.display_name AS display_name \n"

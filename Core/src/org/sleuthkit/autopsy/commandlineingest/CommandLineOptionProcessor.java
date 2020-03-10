@@ -31,6 +31,7 @@ import org.netbeans.spi.sendopts.Env;
 import org.netbeans.spi.sendopts.Option;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 
 /**
  * This class can be used to add command line options to Autopsy
@@ -40,6 +41,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
     private static final Logger logger = Logger.getLogger(CommandLineOptionProcessor.class.getName());
     private final Option caseNameOption = Option.requiredArgument('n', "caseName");
+    private final Option caseTypeOption = Option.requiredArgument('t', "caseType");
     private final Option caseBaseDirOption = Option.requiredArgument('o', "caseBaseDir");
     private final Option createCaseCommandOption = Option.withoutArgument('c', "createCase");
     private final Option dataSourcePathOption = Option.requiredArgument('s', "dataSourcePath");
@@ -55,11 +57,15 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
     private final List<CommandLineCommand> commands = new ArrayList<>();
 
+    final static String CASETYPE_MULTI = "multi";
+    final static String CASETYPE_SINGLE = "single";
+    
     @Override
     protected Set<Option> getOptions() {
         Set<Option> set = new HashSet<>();
         set.add(createCaseCommandOption);
         set.add(caseNameOption);
+        set.add(caseTypeOption);
         set.add(caseBaseDirOption);
         set.add(dataSourcePathOption);
         set.add(addDataSourceCommandOption);
@@ -107,6 +113,37 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             }
         }
 
+        
+        String caseType = "";
+        if (values.containsKey(caseTypeOption)) {
+            argDirs = values.get(caseTypeOption);
+
+            if (argDirs.length < 1) {
+                logger.log(Level.SEVERE, "Missing argument 'caseType'");
+                System.err.println("Missing argument 'caseType'");
+                return;
+            }
+            caseType = argDirs[0];
+
+            if (caseType == null || caseType.isEmpty()) {
+                logger.log(Level.SEVERE, "'caseType' argument is empty");
+                System.err.println("'caseType' argument is empty");
+                return;
+            }
+
+            if (!caseType.equalsIgnoreCase(CASETYPE_MULTI) && !caseType.equalsIgnoreCase(CASETYPE_SINGLE)) {
+                logger.log(Level.SEVERE, "'caseType' argument is invalid");
+                System.err.println("'caseType' argument is invalid");
+                return;                
+            }
+            
+            if (caseType.equalsIgnoreCase(CASETYPE_MULTI) && !FeatureAccessUtils.canCreateMultiUserCases()) {
+                logger.log(Level.SEVERE, "Unable to create multi user case.");
+                System.err.println("Unable to create multi user case. Confirm that multi user settings are configured correctly.");
+                return;                                
+            }
+        }
+        
         String caseBaseDir = "";
         if (values.containsKey(caseBaseDirOption)) {
             argDirs = values.get(caseBaseDirOption);
@@ -241,6 +278,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.CREATE_CASE);
             newCommand.addInputValue(CommandLineCommand.InputType.CASE_NAME.name(), inputCaseName);
             newCommand.addInputValue(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name(), caseBaseDir);
+            newCommand.addInputValue(CommandLineCommand.InputType.CASE_TYPE.name(), caseType);
             commands.add(newCommand);
             runFromCommandLine = true;
         }

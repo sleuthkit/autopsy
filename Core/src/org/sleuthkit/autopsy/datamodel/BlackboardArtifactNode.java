@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -323,7 +323,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
         if (displayName.isEmpty() && artifact != null) {
             try {
-                displayName = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(this.artifact.getObjectID()).getName();
+                Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(this.artifact.getObjectID());
+                displayName = (content == null) ? artifact.getName() : content.getName();
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 displayName = artifact.getName();
             }
@@ -605,8 +606,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     @Override
     protected final CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance correlationAttribute = null;
-        if (CentralRepository.isEnabled()) {
-            correlationAttribute = CorrelationAttributeUtil.getInstanceFromContent(associated);
+        if (CentralRepository.isEnabled() && associated instanceof AbstractFile) {
+            correlationAttribute = CorrelationAttributeUtil.getCorrAttrForFile((AbstractFile)associated);
         }
         return correlationAttribute;
     }

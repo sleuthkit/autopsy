@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,11 +25,13 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,9 +45,11 @@ import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -71,6 +75,10 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.textextractors.TextExtractor;
+import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
+import org.sleuthkit.autopsy.textsummarizer.TextSummarizer;
+import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
 /**
  * Main class to perform the file search.
@@ -84,6 +92,8 @@ class FileSearch {
     private static final Cache<SearchKey, Map<GroupKey, List<ResultFile>>> searchCache = CacheBuilder.newBuilder()
             .maximumSize(MAXIMUM_CACHE_SIZE)
             .build();
+    private static final int PREVIEW_SIZE = 256;
+    private static volatile TextSummarizer summarizerToUse = null;
 
     /**
      * Run the file search and returns the SearchResults object for debugging.
@@ -237,6 +247,86 @@ class FileSearch {
             page.add(filesInGroup.get(i));
         }
         return page;
+    }
+
+    /**
+     * Get a summary for the specified AbstractFile. If no TextSummarizers exist
+     * get the beginning of the file.
+     *
+     * @param file The AbstractFile to summarize.
+     *
+     * @return The summary or beginning of the specified file as a String.
+     */
+    @NbBundle.Messages({"FileSearch.documentSummary.noPreview=No preview available.",
+        "FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview."})
+    static TextSummary summarize(AbstractFile file) {
+        TextSummary summary = null;
+        TextSummarizer localSummarizer = summarizerToUse;
+        if (localSummarizer == null) {
+            synchronized (searchCache) {
+                if (localSummarizer == null) {
+                    localSummarizer = getLocalSummarizer();
+                }
+            }
+        }
+        if (localSummarizer != null) {
+            try {
+                //a summary of length 40 seems to fit without vertical scroll bars
+                summary = localSummarizer.summarize(file, 40);
+            } catch (IOException ex) {
+                return new TextSummary(Bundle.FileSearch_documentSummary_noPreview(), null, 0);
+            }
+        }
+        if (summary == null || StringUtils.isBlank(summary.getSummaryText())) {
+            //summary text was empty grab the beginning of the file 
+            summary = new TextSummary(getFirstLines(file), null, 0);
+        }
+        return summary;
+    }
+
+    /**
+     * Get the beginning of text from the specified AbstractFile.
+     *
+     * @param file The AbstractFile to get text from.
+     *
+     * @return The beginning of text from the specified AbstractFile.
+     */
+    private static String getFirstLines(AbstractFile file) {
+        TextExtractor extractor;
+        try {
+            extractor = TextExtractorFactory.getExtractor(file, null);
+        } catch (TextExtractorFactory.NoTextExtractorFound ignored) {
+            //no extractor found, use Strings Extractor
+            extractor = TextExtractorFactory.getStringsExtractor(file, null);
+        }
+
+        try (Reader reader = extractor.getReader()) {
+            char[] cbuf = new char[PREVIEW_SIZE];
+            reader.read(cbuf, 0, PREVIEW_SIZE);
+            return new String(cbuf);
+        } catch (IOException ex) {
+            return Bundle.FileSearch_documentSummary_noBytes();
+        } catch (TextExtractor.InitReaderException ex) {
+            return Bundle.FileSearch_documentSummary_noPreview();
+        }
+    }
+
+    /**
+     * Get the first TextSummarizer found by a lookup of TextSummarizers.
+     *
+     * @return The first TextSummarizer found by a lookup of TextSummarizers.
+     *
+     * @throws IOException
+     */
+    private static TextSummarizer getLocalSummarizer() {
+        Collection<? extends TextSummarizer> summarizers
+                = Lookup.getDefault().lookupAll(TextSummarizer.class
+                );
+        if (!summarizers.isEmpty()) {
+            summarizerToUse = summarizers.iterator().next();
+            return summarizerToUse;
+        }
+        return null;
     }
 
     /**
@@ -597,7 +687,6 @@ class FileSearch {
             int framePos = Integer.valueOf(FilenameUtils.getBaseName(fileName).substring(2));
             framePositions[thumbnailNumber] = framePos;
             thumbnailNumber++;
-
         }
         thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
     }

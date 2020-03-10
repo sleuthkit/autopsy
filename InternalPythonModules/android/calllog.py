@@ -92,39 +92,41 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                         
                     for tableName in CallLogAnalyzer._tableNames:
                         try:
-                            resultSet = callLogDb.runQuery("SELECT number, date, duration, type, name FROM " + tableName + " ORDER BY date DESC;")
-                            self._logger.log(Level.INFO, "Reading call log from table {0} in db {1}", [tableName, callLogDb.getDBFile().getName()])
-                            if resultSet is not None:
-                                while resultSet.next():
-                                    direction = ""
-                                    callerId = None
-                                    calleeId = None
-                                    
-                                    timeStamp = resultSet.getLong("date") / 1000
-                                     
-                                    number = resultSet.getString("number")
-                                    duration = resultSet.getLong("duration") # duration of call is in seconds
-                                    name = resultSet.getString("name") # name of person dialed or called. None if unregistered
-
-                                    calltype = resultSet.getInt("type")
-                                    if calltype == 1 or calltype == 3:
-                                        direction = CommunicationDirection.INCOMING
-                                        callerId = number
-                                    elif calltype == 2 or calltype == 5:
-                                        direction = CommunicationDirection.OUTGOING
-                                        calleeId = number
-                                    else:
-                                        direction = CommunicationDirection.UNKNOWN
+                            tableFound = callLogDb.tableExists(tableName)
+                            if tableFound:
+                                resultSet = callLogDb.runQuery("SELECT number, date, duration, type, name FROM " + tableName + " ORDER BY date DESC;")
+                                self._logger.log(Level.INFO, "Reading call log from table {0} in db {1}", [tableName, callLogDb.getDBFile().getName()])
+                                if resultSet is not None:
+                                    while resultSet.next():
+                                        direction = ""
+                                        callerId = None
+                                        calleeId = None
                                         
+                                        timeStamp = resultSet.getLong("date") / 1000
+                                         
+                                        number = resultSet.getString("number")
+                                        duration = resultSet.getLong("duration") # duration of call is in seconds
+                                        name = resultSet.getString("name") # name of person dialed or called. None if unregistered
 
-                                    ## add a call log
-                                    if callerId is not None or calleeId is not None:
-                                        callLogArtifact = callLogDbHelper.addCalllog( direction,
-                                                                            callerId,
-                                                                            calleeId,
-                                                                            timeStamp,                      ## start time
-                                                                            timeStamp + duration * 1000,    ## end time
-                                                                            CallMediaType.AUDIO)
+                                        calltype = resultSet.getInt("type")
+                                        if calltype == 1 or calltype == 3:
+                                            direction = CommunicationDirection.INCOMING
+                                            callerId = number
+                                        elif calltype == 2 or calltype == 5:
+                                            direction = CommunicationDirection.OUTGOING
+                                            calleeId = number
+                                        else:
+                                            direction = CommunicationDirection.UNKNOWN
+                                            
+
+                                        ## add a call log
+                                        if callerId is not None or calleeId is not None:
+                                            callLogArtifact = callLogDbHelper.addCalllog( direction,
+                                                                                callerId,
+                                                                                calleeId,
+                                                                                timeStamp,                      ## start time
+                                                                                timeStamp + duration * 1000,    ## end time
+                                                                                CallMediaType.AUDIO)
 
                         except SQLException as ex:
                             self._logger.log(Level.WARNING, "Error processing query result for Android messages.", ex)

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,10 +61,10 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      */
     public AddEditCentralRepoCommentAction(AbstractFile file) {
         fileId = file.getId();
-        correlationAttributeInstance = CorrelationAttributeUtil.getInstanceFromContent(file);
+        correlationAttributeInstance = CorrelationAttributeUtil.getCorrAttrForFile(file);
         if (correlationAttributeInstance == null) {
             addToDatabase = true;
-            correlationAttributeInstance = CorrelationAttributeUtil.makeInstanceFromContent(file);
+            correlationAttributeInstance = CorrelationAttributeUtil.makeCorrAttrFromFile(file);
         }
         if (file.getSize() == 0) {
             putValue(Action.NAME, Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoCommentEmptyFile());

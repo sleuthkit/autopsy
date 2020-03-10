@@ -20,21 +20,21 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="thumbnailPanel" pref="201" max="32767" attributes="0"/>
-                      <Component id="fileSizeLabel" alignment="0" max="32767" attributes="0"/>
-                  </Group>
                   <Group type="102" attributes="0">
-                      <Component id="countLabel" max="-2" attributes="0"/>
+                      <Component id="fileSizeLabel" min="-2" pref="163" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="isDeletedLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Component id="scoreLabel" min="-2" max="-2" attributes="0"/>
                   </Group>
+                  <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                      <Component id="nameLabel" alignment="0" max="32767" attributes="0"/>
+                      <Component id="thumbnailPanel" alignment="0" pref="201" max="32767" attributes="0"/>
+                  </Group>
               </Group>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -42,14 +42,14 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
+              <Component id="nameLabel" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="thumbnailPanel" min="-2" pref="178" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="fileSizeLabel" min="-2" pref="16" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="scoreLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="isDeletedLabel" min="-2" max="-2" attributes="0"/>
-                  <Component id="countLabel" alignment="1" min="-2" max="-2" attributes="0"/>
+                  <Component id="fileSizeLabel" min="-2" pref="16" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -82,7 +82,7 @@
         <Property name="toolTipText" type="java.lang.String" value=""/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JLabel" name="countLabel">
+    <Component class="javax.swing.JLabel" name="nameLabel">
       <Properties>
         <Property name="toolTipText" type="java.lang.String" value=""/>
         <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
