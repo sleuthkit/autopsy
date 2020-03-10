@@ -1114,7 +1114,7 @@ public class Case {
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDetailsAction.class).setEnabled(true);
                 CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(FeatureAccessUtils.canDeleteCases());
+                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(FeatureAccessUtils.canDeleteCurrentCase());
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
                 CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(true);

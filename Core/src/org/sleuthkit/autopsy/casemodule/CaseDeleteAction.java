@@ -55,7 +55,7 @@ final class CaseDeleteAction extends CallableSystemAction {
             /*
              * A value of 'null' signifies that there is no case open.
              */
-            setEnabled(null != evt.getNewValue() && FeatureAccessUtils.canDeleteCases());
+            setEnabled(null != evt.getNewValue() && FeatureAccessUtils.canDeleteCurrentCase());
         });
     }
 

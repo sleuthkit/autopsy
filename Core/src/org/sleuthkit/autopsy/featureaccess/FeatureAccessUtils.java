@@ -78,7 +78,7 @@ final public class FeatureAccessUtils {
      *
      * @return True or false.
      */
-    public static boolean canDeleteCases() {
+    public static boolean canDeleteCurrentCase() {
         return currentCaseIsSingleUserCase() || multiUserCaseRestrictionsFileAbsent();
     }
 
