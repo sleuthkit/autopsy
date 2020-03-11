@@ -40,7 +40,7 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo
  * NOTE: This is public scope because the options panel calls it directly to
  * set/get
  */
-public final class PostgresCentralRepoSettings {
+public final class PostgresCentralRepoSettings implements CentralRepoDbSettings {
 
     private final static Logger LOGGER = Logger.getLogger(PostgresCentralRepoSettings.class.getName());
     private final static String DEFAULT_HOST = ""; // NON-NLS
@@ -64,6 +64,12 @@ public final class PostgresCentralRepoSettings {
         loadSettings();
     }
 
+    @Override
+    public String toString() {
+        return String.format("PostgresCentralRepoSettings: [db type: postgres, host: %s:%d, db name: %s, username: %s]",
+            getHost(), getPort(), getDbName(), getUserName());
+    }
+    
     public void loadSettings() {
         host = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.host"); // NON-NLS
         if (host == null || host.isEmpty()) {
@@ -187,6 +193,7 @@ public final class PostgresCentralRepoSettings {
      *
      * @return true if successfull connection, else false.
      */
+    @Override
     public boolean verifyConnection() {
         Connection conn = getEphemeralConnection(true);
         if (null == conn) {
@@ -203,6 +210,7 @@ public final class PostgresCentralRepoSettings {
      *
      * @return true if exists, else false
      */
+    @Override
     public boolean verifyDatabaseExists() {
         Connection conn = getEphemeralConnection(true);
         if (null == conn) {
@@ -236,6 +244,7 @@ public final class PostgresCentralRepoSettings {
      *
      * @return true if successful connection, else false.
      */
+    @Override
     public boolean verifyDatabaseSchema() {
         Connection conn = getEphemeralConnection(false);
         if (null == conn) {
@@ -248,6 +257,7 @@ public final class PostgresCentralRepoSettings {
         return result;
     }
 
+    @Override
     public boolean createDatabase() {
         Connection conn = getEphemeralConnection(true);
         if (null == conn) {
@@ -269,6 +279,7 @@ public final class PostgresCentralRepoSettings {
 
     }
 
+    @Override
     public boolean deleteDatabase() {
         Connection conn = getEphemeralConnection(true);
         if (null == conn) {

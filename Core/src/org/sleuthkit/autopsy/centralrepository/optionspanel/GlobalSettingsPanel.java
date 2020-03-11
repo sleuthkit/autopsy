@@ -31,6 +31,7 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -86,7 +87,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         try {
-            CentralRepoDbUtil.upgradeDatabase();
+            CentralRepoDbManager.upgradeDatabase();
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         } catch (CentralRepoException ex) {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));

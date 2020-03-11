@@ -83,6 +83,10 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         jSourceLabel = new javax.swing.JLabel();
         jSourceNameLabel = new javax.swing.JLabel();
         jSourceTextLabel = new javax.swing.JLabel();
+        jUsageGoToResultButton = new javax.swing.JButton();
+        jUsageLabel = new javax.swing.JLabel();
+        jUsageNameLabel = new javax.swing.JLabel();
+        jUsageTextLabel = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(255, 255, 255));
 
@@ -100,6 +104,20 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceTextLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceTextLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jUsageGoToResultButton, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageGoToResultButton.text")); // NOI18N
+        jUsageGoToResultButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jUsageGoToResultButtonActionPerformed(evt);
+            }
+        });
+
+        jUsageLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jUsageLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jUsageNameLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageNameLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jUsageTextLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageTextLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -107,18 +125,29 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jSourceLabel)
+                    .addComponent(jUsageLabel)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(6, 6, 6)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jSourceLabel)
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(6, 6, 6)
                                 .addComponent(jSourceNameLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jSourceTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 192, Short.MAX_VALUE)))
-                        .addGap(36, 36, 36))
+                                .addComponent(jSourceTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 192, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jUsageNameLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jUsageTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 192, Short.MAX_VALUE)))))
+                .addGap(36, 36, 36))
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jSourceGoToResultButton)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGap(45, 45, 45)
+                        .addComponent(jUsageGoToResultButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(46, 46, 46)
+                        .addComponent(jSourceGoToResultButton)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -131,7 +160,15 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                     .addComponent(jSourceTextLabel))
                 .addGap(18, 18, 18)
                 .addComponent(jSourceGoToResultButton)
-                .addGap(0, 203, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jUsageLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jUsageNameLabel)
+                    .addComponent(jUsageTextLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jUsageGoToResultButton)
+                .addGap(0, 62, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -145,6 +182,15 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         }
 
     }//GEN-LAST:event_jSourceGoToResultButtonActionPerformed
+
+    private void jUsageGoToResultButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jUsageGoToResultButtonActionPerformed
+        final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
+
+        // Navigate to the source context artifact.
+        if (sourceContextArtifact != null) {
+            dtc.viewArtifact(sourceContextArtifact);
+        }
+    }//GEN-LAST:event_jUsageGoToResultButtonActionPerformed
 
     @Override
     public void setNode(Node selectedNode) {
@@ -246,9 +292,12 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             }
         }
         jSourceGoToResultButton.setVisible(true);
+        jUsageGoToResultButton.setVisible(true);
         if (foundASource == false) {
             setSourceName("Unknown");
             showSourceText(false);
+            setUsageName("Unknown");
+            showUsageText(false);
         }
 
     }
@@ -263,6 +312,11 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      * @throws TskCoreException
      */
     private void addSourceEntry(BlackboardArtifact artifact) throws TskCoreException {
+        setSourceName("Unknown");
+        showSourceText(false);
+        setUsageName("Unknown");
+        showUsageText(false);
+
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID() == artifact.getArtifactTypeID()) {
             BlackboardAttribute associatedArtifactAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
             if (associatedArtifactAttribute != null) {
@@ -303,8 +357,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             setSourceName(Bundle.ContextViewer_downloadSource());
             setSourceText(webDownloadArtifactToString(associatedArtifact));
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == associatedArtifact.getArtifactTypeID()) {
-            setSourceName(Bundle.ContextViewer_recentDocs());
-            setSourceText(recentDocArtifactToString(associatedArtifact));
+            setUsageName(Bundle.ContextViewer_recentDocs());
+            setUsageText(recentDocArtifactToString(associatedArtifact));
             
         }
     }
@@ -316,6 +370,15 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      */
     private void setSourceName(String nameLabel) {
         jSourceNameLabel.setText(nameLabel);
+    }
+
+    /**
+     * Sets the usage label string.
+     *
+     * @param nameLabel String value for usage label.
+     */
+    private void setUsageName(String nameLabel) {
+        jUsageNameLabel.setText(nameLabel);
     }
 
     /**
@@ -331,6 +394,24 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private void showSourceText(boolean show) {
         jSourceTextLabel.setVisible(show);
         jSourceGoToResultButton.setEnabled(show);
+        jSourceLabel.setVisible(show);
+        jUsageLabel.setVisible(show);
+    }
+
+    /**
+     * Sets the Usage text string.
+     *
+     * @param text String value for Usage text.
+     */
+    private void setUsageText(String text) {
+        jUsageTextLabel.setText(text);
+        showUsageText(!text.isEmpty());
+    }
+
+    private void showUsageText(boolean show) {
+        jUsageTextLabel.setVisible(show);
+        jUsageGoToResultButton.setEnabled(show);
+        jUsageLabel.setVisible(show);
         jSourceLabel.setVisible(show);
     }
 
@@ -371,16 +452,21 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      * @throws TskCoreException
      */
     @NbBundle.Messages({
-        "ContextViewer.file=File",
-        "ContextViewer.on=On"
+        "ContextViewer.on=Opened at",
+        "ContextViewer.unknown=Opened at unknown time"
     })
     private String recentDocArtifactToString(BlackboardArtifact artifact) throws TskCoreException {
         StringBuilder sb = new StringBuilder(ARTIFACT_STR_MAX_LEN);
         Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
         
+        BlackboardAttribute attribute = attributesMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
+        
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == artifact.getArtifactTypeID()) {
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH, attributesMap, Bundle.ContextViewer_file());
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, attributesMap, Bundle.ContextViewer_on());
+            if (attribute.getValueLong() > 0) {
+                appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, attributesMap, Bundle.ContextViewer_on());
+            } else {
+                sb.append(Bundle.ContextViewer_unknown());
+            }
         }
         return sb.toString();
     }
@@ -472,5 +558,9 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private javax.swing.JLabel jSourceLabel;
     private javax.swing.JLabel jSourceNameLabel;
     private javax.swing.JLabel jSourceTextLabel;
+    private javax.swing.JButton jUsageGoToResultButton;
+    private javax.swing.JLabel jUsageLabel;
+    private javax.swing.JLabel jUsageNameLabel;
+    private javax.swing.JLabel jUsageTextLabel;
     // End of variables declaration//GEN-END:variables
 }

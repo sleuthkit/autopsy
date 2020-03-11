@@ -41,12 +41,15 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.TskData;
 
@@ -71,6 +74,12 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     private final Map<String, Collection<CorrelationAttributeInstance>> bulkArtifacts;
     private static final int CASE_CACHE_TIMEOUT = 5;
     private static final int DATA_SOURCE_CACHE_TIMEOUT = 5;
+    private static final int ACCOUNTS_CACHE_TIMEOUT = 5;
+    private static final Cache<String, CentralRepoAccountType> accountTypesCache = CacheBuilder.newBuilder().build();
+    private static final Cache<Pair<CentralRepoAccountType, String>, CentralRepoAccount> accountsCache = CacheBuilder.newBuilder()
+            .expireAfterWrite(ACCOUNTS_CACHE_TIMEOUT, TimeUnit.MINUTES).
+            build();
+    
     private static final Cache<Integer, CorrelationAttributeInstance.Type> typeCache = CacheBuilder.newBuilder().build();
     private static final Cache<String, CorrelationCase> caseCacheByUUID = CacheBuilder.newBuilder()
             .expireAfterWrite(CASE_CACHE_TIMEOUT, TimeUnit.MINUTES).
@@ -993,22 +1002,22 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     public void addArtifactInstance(CorrelationAttributeInstance eamArtifact) throws CentralRepoException {
         checkAddArtifactInstanceNulls(eamArtifact);
 
-        Connection conn = connect();
+        
 
-        PreparedStatement preparedStatement = null;
+        
 
         // @@@ We should cache the case and data source IDs in memory
         String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         String sql
                 = "INSERT INTO "
                 + tableName
-                + "(case_id, data_source_id, value, file_path, known_status, comment, file_obj_id) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?) "
+                + "(case_id, data_source_id, value, file_path, known_status, comment, file_obj_id, account_id) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
                 + getConflictClause();
 
-        try {
-            preparedStatement = conn.prepareStatement(sql);
-
+        try (Connection conn = connect();
+             PreparedStatement preparedStatement = conn.prepareStatement(sql);) {
+           
             if (!eamArtifact.getCorrelationValue().isEmpty()) {
                 preparedStatement.setInt(1, eamArtifact.getCorrelationCase().getID());
                 preparedStatement.setInt(2, eamArtifact.getCorrelationDataSource().getID());
@@ -1022,18 +1031,163 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                     preparedStatement.setString(6, eamArtifact.getComment());
                 }
                 preparedStatement.setLong(7, eamArtifact.getFileObjectId());
+                
+                if (eamArtifact.getAccountId() >= 0) {
+                    preparedStatement.setLong(8, eamArtifact.getAccountId());
+                } else {
+                     preparedStatement.setNull(8, Types.INTEGER);
+                }
 
                 preparedStatement.executeUpdate();
             }
 
         } catch (SQLException ex) {
             throw new CentralRepoException("Error inserting new artifact into artifacts table.", ex); // NON-NLS
-        } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
-            CentralRepoDbUtil.closeConnection(conn);
-        }
+        } 
     }
 
+  	/**
+	 * Gets the Central Repo account for the given account type and account ID. 
+         * Create a new account first, if one doesn't exist
+	 *
+	 * @param accountType     account type
+	 * @param accountUniqueID unique account identifier
+	 *
+	 * @return A matching account, either existing or newly created.
+	 *
+	 * @throws TskCoreException exception thrown if a critical error occurs
+	 *                          within TSK core
+	 */
+    @Override
+    public CentralRepoAccount getOrCreateAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
+        // Get the account fom the accounts table
+        CentralRepoAccount account = getAccount(crAccountType, accountUniqueID);
+
+        // account not found in the table, create it
+        if (null == account) {
+
+            String query = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
+                    + "VALUES ( " + crAccountType.getAccountTypeId() + ", '"
+                    + accountUniqueID + "' )";
+
+            try (Connection connection = connect();
+                    Statement s = connection.createStatement();) {
+
+                s.execute(query);
+                // get the account from the db - should exist now.
+                account = getAccount(crAccountType, accountUniqueID);
+            } catch (SQLException ex) {
+                throw new CentralRepoException("Error adding an account to CR database.", ex);
+            }
+        }
+
+        return account;
+    }
+    
+
+    @Override
+    public CentralRepoAccountType getAccountTypeByName(String accountTypeName) throws CentralRepoException {
+        try {
+            return accountTypesCache.get(accountTypeName, () -> getCRAccountTypeFromDb(accountTypeName));
+        } catch (CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
+           throw new CentralRepoException("Error looking up CR account type in cache.", ex);
+        } 
+    }
+        
+
+    /**
+     * Gets the CR account type for the specified type name.
+     * 
+     * @param accountTypeName account type name to look for
+     * @return CR account type
+     * 
+     * @throws CentralRepoException 
+     */
+    private CentralRepoAccountType getCRAccountTypeFromDb(String accountTypeName) throws CentralRepoException {
+
+        String sql = "SELECT * FROM account_types WHERE type_name = ?";
+        try ( Connection conn = connect();
+              PreparedStatement preparedStatement = conn.prepareStatement(sql);) {
+
+            preparedStatement.setString(1, accountTypeName);
+            try (ResultSet resultSet = preparedStatement.executeQuery();) {
+                if (resultSet.next()) {
+                    Account.Type acctType = new Account.Type(accountTypeName, resultSet.getString("display_name"));
+                    CentralRepoAccountType crAccountType = new CentralRepoAccountType(resultSet.getInt("id"), acctType, resultSet.getInt("correlation_type_id"));
+                    accountTypesCache.put(accountTypeName, crAccountType);
+                    return crAccountType;
+                } else {
+                    throw new CentralRepoException("Failed to find entry for account type = " + accountTypeName);
+                }
+            }
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error getting correlation type by id.", ex); // NON-NLS
+        } 
+    }
+    
+    /**
+     * Get the CR account with the given account type and the unique account identifier.
+     * Looks in the cache first.
+     * If not found in cache, reads from the database and saves in cache.
+     * 
+     * Returns null if the account is not found in the cache and not in the database.
+     * 
+     * @param crAccountType account type to look for
+     * @param accountUniqueID unique account id
+     * @return CentralRepoAccount for the give type/id.  May return null if not found.
+     * 
+     * @throws CentralRepoException 
+     */
+    private CentralRepoAccount getAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
+        
+        CentralRepoAccount crAccount = accountsCache.getIfPresent(Pair.of(crAccountType, accountUniqueID));
+        if (crAccount == null) {
+            crAccount = getCRAccountFromDb(crAccountType, accountUniqueID);
+            if (crAccount != null) {
+                accountsCache.put(Pair.of(crAccountType, accountUniqueID), crAccount);
+            }
+        }
+        
+        return crAccount;
+    }
+     
+        
+    /**
+     * Get the Account with the given account type and account identifier, 
+     * from the database.
+     *
+     * @param accountType account type
+     * @param accountUniqueID unique account identifier
+     *
+     * @return Account, returns NULL is no matching account found
+     *
+     * @throws TskCoreException exception thrown if a critical error occurs
+     * within TSK core
+     */
+    private CentralRepoAccount getCRAccountFromDb(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
+
+        CentralRepoAccount account = null;
+
+        String sql = "SELECT * FROM accounts WHERE account_type_id =  ? AND account_unique_identifier = ?";
+        try ( Connection connection = connect();
+              PreparedStatement preparedStatement = connection.prepareStatement(sql);) {
+
+            preparedStatement.setInt(1, crAccountType.getAccountTypeId());
+            preparedStatement.setString(2, accountUniqueID);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery();) {
+                if (resultSet.next()) {
+                    account = new CentralRepoAccount(resultSet.getInt("id"), crAccountType, resultSet.getString("account_unique_identifier"));   //NON-NLS
+                }
+            }
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error getting account type id", ex);
+        }
+
+        return account;
+    }
+        
+        
     private void checkAddArtifactInstanceNulls(CorrelationAttributeInstance eamArtifact) throws CentralRepoException {
         if (eamArtifact == null) {
             throw new CentralRepoException("CorrelationAttribute is null");

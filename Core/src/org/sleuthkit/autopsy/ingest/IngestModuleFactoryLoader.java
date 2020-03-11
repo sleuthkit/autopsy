@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2018 Basis Technology Corp.
+ * Copyright 2014-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,6 +51,7 @@ final class IngestModuleFactoryLoader {
     private static final Logger logger = Logger.getLogger(IngestModuleFactoryLoader.class.getName());
     private static final String SAMPLE_MODULE_FACTORY_CLASS_NAME = SampleIngestModuleFactory.class.getCanonicalName();
     private static final ArrayList<String> coreModuleOrdering = new ArrayList<String>() {
+        private static final long serialVersionUID = 1L;
         {
             // The ordering of the core ingest module factories implemented
             // using Java is hard-coded. 
@@ -79,7 +80,7 @@ final class IngestModuleFactoryLoader {
      * removed between invocations.
      *
      * @return A list of objects that implement the IngestModuleFactory
-     *    interface.
+     *         interface.
      */
     static List<IngestModuleFactory> getIngestModuleFactories() {
         // A hash set of display names and a hash map of class names to 
@@ -132,7 +133,7 @@ final class IngestModuleFactoryLoader {
                 factories.add(factory);
                 logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()}); //NON-NLS
             } else {
-                logger.log(Level.SEVERE, "Found duplicate ingest module display name (name = {0})", factory.getModuleDisplayName()); //NON-NLS
+                logger.log(Level.WARNING, "Found duplicate ingest module display name (name = {0})", factory.getModuleDisplayName()); //NON-NLS
                 DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
                         NbBundle.getMessage(IngestModuleFactoryLoader.class, "IngestModuleFactoryLoader.errorMessages.duplicateDisplayName", factory.getModuleDisplayName()),
                         NotifyDescriptor.ERROR_MESSAGE));
@@ -154,11 +155,14 @@ final class IngestModuleFactoryLoader {
             javaFactoriesByClass.put(factory.getClass().getCanonicalName(), factory);
             logger.log(Level.INFO, "Found ingest module factory: name = {0}, version = {1}", new Object[]{factory.getModuleDisplayName(), factory.getModuleVersionNumber()}); //NON-NLS
         } else {
-            logger.log(Level.SEVERE, "Found duplicate ingest module display name (name = {0})", factory.getModuleDisplayName()); //NON-NLS
-            DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
-                    NbBundle.getMessage(IngestModuleFactoryLoader.class, "IngestModuleFactoryLoader.errorMessages.duplicateDisplayName", factory.getModuleDisplayName()),
-                    NotifyDescriptor.ERROR_MESSAGE));
+            logger.log(Level.WARNING, "Found duplicate ingest module display name (name = {0})", factory.getModuleDisplayName()); //NON-NLS
         }
+    }
+
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private IngestModuleFactoryLoader() {
     }
 
 }
