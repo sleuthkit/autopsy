@@ -760,7 +760,6 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         descriptionTextArea.setEditable(false);
         descriptionTextArea.setBackground(new java.awt.Color(240, 240, 240));
         descriptionTextArea.setColumns(20);
-        descriptionTextArea.setFont(descriptionTextArea.getFont().deriveFont(descriptionTextArea.getFont().getSize()-2f));
         descriptionTextArea.setLineWrap(true);
         descriptionTextArea.setRows(3);
         descriptionTextArea.setText(org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.interesting.jTextArea1.text")); // NOI18N
