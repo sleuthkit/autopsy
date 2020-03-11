@@ -40,6 +40,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -313,37 +314,23 @@ final class XRYMessagesFileParser implements XRYFileParser {
                 switch (key) {
                     case TEL:
                     case NUMBER:
-                        switch (namespace) {
-                            case FROM:
-                                if(senderId != null) {
-                                    otherAttributes.add(new BlackboardAttribute(
-                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM,
-                                        PARSER_NAME, pair.getValue()));
-                                } else {
-                                    senderId = pair.getValue();
-                                }
-                                break;
-                            case TO:
-                            case PARTICIPANT:
-                                recipientIdsList.add(pair.getValue());
-                                break;
-                            default:
-                                otherAttributes.add(new BlackboardAttribute(
+                        // Apply namespace or direction
+                        if(namespace == XryNamespace.FROM || direction == CommunicationDirection.INCOMING) {
+                            senderId = pair.getValue();
+                        } else if(namespace == XryNamespace.TO || direction == CommunicationDirection.OUTGOING) {
+                            recipientIdsList.add(pair.getValue());
+                        } else {
+                            currentCase.getCommunicationsManager().createAccountFileInstance(
+                                Account.Type.PHONE, pair.getValue(), PARSER_NAME, parent);
+                            otherAttributes.add(new BlackboardAttribute(
                                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
                                         PARSER_NAME, pair.getValue()));
                         }
                         break;
-                    //Although confusing, as these are also 'name spaces', it appears
-                    //later versions of XRY realized having standardized lines was easier
-                    //to read.
+                    // Although confusing, as these are also 'name spaces', it appears
+                    // later versions of XRY just made these standardized lines.
                     case FROM:
-                        if(senderId != null) {
-                            otherAttributes.add(new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM,
-                                PARSER_NAME, pair.getValue()));
-                        } else {
-                            senderId = pair.getValue();
-                        }
+                        senderId = pair.getValue();
                         break;
                     case TO:
                         recipientIdsList.add(pair.getValue());
@@ -405,12 +392,16 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         text = pair.getValue();
                         break;
                     case DIRECTION:
-                        if (normalizedValue.equals("incoming")) {
-                            direction = CommunicationDirection.INCOMING;
-                        } else if (normalizedValue.equals("outgoing")) {
-                            direction = CommunicationDirection.OUTGOING;
-                        } else {
-                            direction = CommunicationDirection.UNKNOWN;
+                        switch (normalizedValue) {
+                            case "incoming":
+                                direction = CommunicationDirection.INCOMING;
+                                break;
+                            case "outgoing":
+                                direction = CommunicationDirection.OUTGOING;
+                                break;
+                            default:
+                                direction = CommunicationDirection.UNKNOWN;
+                                break;
                         }
                         break;
                     default:
@@ -428,11 +419,47 @@ final class XRYMessagesFileParser implements XRYFileParser {
                 }
             }
 
-            CommunicationArtifactsHelper helper = new CommunicationArtifactsHelper(
+            // Make sure we have the required fields.
+            // This combination is invalid.
+            if(senderId == null && recipientIdsList.isEmpty()) {
+                // Create the artifact manually..
+                if (direction != CommunicationDirection.UNKNOWN) {
+                    otherAttributes.add(new BlackboardAttribute(
+                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION,
+                            PARSER_NAME, direction.getDisplayName()));
+                }
+                
+                if (dateTime > 0L) {
+                    otherAttributes.add(new BlackboardAttribute(
+                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START,
+                            PARSER_NAME, dateTime));
+                }
+                
+                if(readStatus != MessageReadStatus.UNKNOWN) {
+                    otherAttributes.add(new BlackboardAttribute(
+                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS,
+                            PARSER_NAME, (readStatus == MessageReadStatus.READ) ? 1 : 0));
+                }
+                
+                if(text != null) {
+                    otherAttributes.add(new BlackboardAttribute(
+                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT,
+                            PARSER_NAME, text));
+                }
+                
+                if (!otherAttributes.isEmpty()) {
+                    BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE);
+                    artifact.addAttributes(otherAttributes);
+
+                    currentCase.getBlackboard().postArtifact(artifact, PARSER_NAME);
+                }
+            } else {
+                CommunicationArtifactsHelper helper = new CommunicationArtifactsHelper(
                     currentCase, PARSER_NAME, parent, Account.Type.PHONE);
 
-            helper.addMessage(messageType, direction, senderId, recipientIdsList, 
+                helper.addMessage(messageType, direction, senderId, recipientIdsList, 
                     dateTime, readStatus, subject, text, threadId, otherAttributes);
+            }
         }
     }
 

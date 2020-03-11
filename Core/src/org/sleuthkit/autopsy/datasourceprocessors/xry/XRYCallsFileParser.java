@@ -202,40 +202,24 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             switch (xryKey) {
                 case TEL:
                 case NUMBER:
-                    //Apply the namespace
-                    switch (xryNamespace) {
-                        case FROM:
-                            if (callerId != null) {
-                                otherAttributes.add(new BlackboardAttribute(
-                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM,
-                                        PARSER_NAME, pair.getValue()));
-                            } else {
-                                callerId = pair.getValue();
-                            }
-                            break;
-                        case TO:
-                            calleeList.add(pair.getValue());
-                            break;
-                        default:
-                            otherAttributes.add(new BlackboardAttribute(
-                                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
-                                    PARSER_NAME, pair.getValue()));
+                    // Apply namespace or direction
+                    if (xryNamespace == XryNamespace.FROM || direction == CommunicationDirection.INCOMING) {
+                        callerId = pair.getValue();
+                    } else if (xryNamespace == XryNamespace.TO || direction == CommunicationDirection.OUTGOING) {
+                        calleeList.add(pair.getValue());
+                    } else {
+                        otherAttributes.add(new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
+                                PARSER_NAME, pair.getValue()));
                     }
                     break;
-                //Although confusing, as these are also 'name spaces', it appears
-                //later versions of XRY realized having standardized lines was easier
-                //to read.
+                // Although confusing, as these are also 'name spaces', it appears
+                // later versions of XRY just made these standardized lines.
                 case TO:
                     calleeList.add(pair.getValue());
                     break;
                 case FROM:
-                    if (callerId != null) {
-                        otherAttributes.add(new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM,
-                                PARSER_NAME, pair.getValue()));
-                    } else {
-                        callerId = pair.getValue();
-                    }
+                    callerId = pair.getValue();
                     break;
                 case TIME:
                     try {
@@ -253,6 +237,14 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
                     if (directionString.equals("incoming")) {
                         direction = CommunicationDirection.INCOMING;
                     } else {
+                        direction = CommunicationDirection.OUTGOING;
+                    }
+                    break;
+                case TYPE:
+                    String typeString = pair.getValue();
+                    if (typeString.equalsIgnoreCase("received")) {
+                        direction = CommunicationDirection.INCOMING;
+                    } else if (typeString.equalsIgnoreCase("dialed")) {
                         direction = CommunicationDirection.OUTGOING;
                     }
                     break;
@@ -295,7 +287,7 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             // If the DIRECTION check failed, just manually create accounts
             // for these phones. Note, there is no need to create relationships.
             // If both callerId and calleeList were non-null/non-empty, then 
-            // the check above would have directed us to the else block.
+            // it would have been a valid combination.
             if (callerId != null) {
                 currentCase.getCommunicationsManager().createAccountFileInstance(
                         Account.Type.PHONE, callerId, PARSER_NAME, parent);
