@@ -97,7 +97,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             }
         });
 
-        jSourceLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jSourceLabel.setFont(jSourceLabel.getFont().deriveFont(jSourceLabel.getFont().getStyle() | java.awt.Font.BOLD, jSourceLabel.getFont().getSize()+3));
         org.openide.awt.Mnemonics.setLocalizedText(jSourceLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceNameLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceNameLabel.text")); // NOI18N
@@ -111,7 +111,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             }
         });
 
-        jUsageLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jUsageLabel.setFont(jUsageLabel.getFont().deriveFont(jUsageLabel.getFont().getStyle() | java.awt.Font.BOLD, jUsageLabel.getFont().getSize()+3));
         org.openide.awt.Mnemonics.setLocalizedText(jUsageLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jUsageNameLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageNameLabel.text")); // NOI18N
@@ -168,7 +168,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                     .addComponent(jUsageTextLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jUsageGoToResultButton)
-                .addGap(0, 62, Short.MAX_VALUE))
+                .addGap(0, 66, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

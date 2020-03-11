@@ -240,7 +240,6 @@ final class TagNameDialog extends javax.swing.JDialog {
         });
 
         descriptionTextArea.setColumns(20);
-        descriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         descriptionTextArea.setRows(3);
         descriptionScrollPane.setViewportView(descriptionTextArea);
 

@@ -79,7 +79,6 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
 
         previewTextArea.setEditable(false);
         previewTextArea.setColumns(20);
-        previewTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         previewTextArea.setLineWrap(true);
         previewTextArea.setRows(5);
         previewTextArea.setWrapStyleWord(true);

@@ -80,7 +80,7 @@
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jUsageGoToResultButton" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="0" pref="62" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="66" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -98,8 +98,10 @@
     </Component>
     <Component class="javax.swing.JLabel" name="jSourceLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="14" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="jSourceLabel" property="font" relativeSize="true" size="3"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/contentviewers/contextviewer/Bundle.properties" key="ContextViewer.jSourceLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -132,8 +134,10 @@
     </Component>
     <Component class="javax.swing.JLabel" name="jUsageLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="14" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="jUsageLabel" property="font" relativeSize="true" size="3"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/contentviewers/contextviewer/Bundle.properties" key="ContextViewer.jUsageLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
