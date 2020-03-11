@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.contentviewers.contextviewer;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
