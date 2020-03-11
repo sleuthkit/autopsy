@@ -264,7 +264,6 @@ class TranslatablePanel extends JPanel {
      * based on whether there is a provider.
      */
     final void reset() {
-        setTranslationEnabled();
         setContent(null, null);
     }
 
@@ -275,6 +274,7 @@ class TranslatablePanel extends JPanel {
      */
     void setContent(String content, String contentDescriptor) {
         cancelPendingTranslation();
+        setTranslationEnabled();
         this.translateComboBox.setSelectedIndex(0);
         this.prevTranslateSelection = false;
         this.content = content;
