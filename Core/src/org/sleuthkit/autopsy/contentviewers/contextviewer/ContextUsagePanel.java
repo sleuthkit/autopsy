@@ -18,27 +18,13 @@
  */
 package org.sleuthkit.autopsy.contentviewers.contextviewer;
 
-import java.awt.Component;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
-import org.apache.commons.lang.StringUtils;
-import org.openide.nodes.Node;
-import org.openide.util.NbBundle;
-import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Displays additional context for the selected file, such as its source, and
@@ -48,9 +34,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 public final class ContextUsagePanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(ContextUsagePanel.class.getName());
-    private static final int ARTIFACT_STR_MAX_LEN = 1024;
-    private static final int ATTRIBUTE_STR_MAX_LEN = 200;
 
     // defines a list of artifacts that provide context for a file
     private static final List<BlackboardArtifact.ARTIFACT_TYPE> SOURCE_CONTEXT_ARTIFACTS = new ArrayList<>();
@@ -58,7 +41,7 @@ public final class ContextUsagePanel extends javax.swing.JPanel {
         SOURCE_CONTEXT_ARTIFACTS.add(TSK_ASSOCIATED_OBJECT);
     }
 
-    private BlackboardArtifact sourceContextArtifact;
+    private final BlackboardArtifact sourceContextArtifact;
 
     /**
      * Creates new form ContextViewer

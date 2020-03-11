@@ -33,9 +33,6 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOC
 public final class ContextSourcePanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(ContextSourcePanel.class.getName());
-    private static final int ARTIFACT_STR_MAX_LEN = 1024;
-    private static final int ATTRIBUTE_STR_MAX_LEN = 200;
 
     // defines a list of artifacts that provide context for a file
     private static final List<BlackboardArtifact.ARTIFACT_TYPE> SOURCE_CONTEXT_ARTIFACTS = new ArrayList<>();
@@ -43,7 +40,7 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
         SOURCE_CONTEXT_ARTIFACTS.add(TSK_ASSOCIATED_OBJECT);
     }
 
-    private BlackboardArtifact sourceContextArtifact;
+    private final BlackboardArtifact sourceContextArtifact;
 
     /**
      * Creates new form ContextViewer
@@ -70,7 +67,7 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
         jSourceLabel = new javax.swing.JLabel();
         jSourceNameLabel = new javax.swing.JLabel();
         jSourceTextLabel = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
+        jBlankLabel = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(255, 255, 255));
         setPreferredSize(new java.awt.Dimension(495, 120));
@@ -89,7 +86,7 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceTextLabel, org.openide.util.NbBundle.getMessage(ContextSourcePanel.class, "ContextSourcePanel.jSourceTextLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(ContextSourcePanel.class, "ContextSourcePanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jBlankLabel, org.openide.util.NbBundle.getMessage(ContextSourcePanel.class, "ContextSourcePanel.jBlankLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -103,7 +100,7 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
                         .addGap(10, 10, 10)
                         .addComponent(jSourceNameLabel)
                         .addGap(5, 5, 5)
-                        .addComponent(jLabel1)
+                        .addComponent(jBlankLabel)
                         .addGap(36, 36, 36)
                         .addComponent(jSourceTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addGap(260, 260, 260))
@@ -121,7 +118,7 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jSourceNameLabel)
                     .addComponent(jSourceTextLabel)
-                    .addComponent(jLabel1))
+                    .addComponent(jBlankLabel))
                 .addGap(18, 18, 18)
                 .addComponent(jSourceGoToResultButton)
                 .addGap(0, 0, Short.MAX_VALUE))
@@ -174,7 +171,7 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jBlankLabel;
     private javax.swing.JButton jSourceGoToResultButton;
     private javax.swing.JLabel jSourceLabel;
     private javax.swing.JLabel jSourceNameLabel;
