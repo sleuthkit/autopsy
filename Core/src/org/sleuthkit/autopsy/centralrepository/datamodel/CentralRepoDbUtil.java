@@ -25,9 +25,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
-import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
@@ -166,80 +163,6 @@ public class CentralRepoDbUtil {
         return true;
     }
 
-    /**
-     * Upgrade the current Central Reposity schema to the newest version. If the
-     * upgrade fails, the Central Repository will be disabled and the current
-     * settings will be cleared.
-     */
-    @Messages({"EamDbUtil.centralRepoDisabled.message= The Central Repository has been disabled.",
-        "EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade Central Repository.",
-        "EamDbUtil.centralRepoConnectionFailed.message=Unable to connect to Central Repository.",
-        "EamDbUtil.exclusiveLockAquisitionFailure.message=Unable to acquire exclusive lock for Central Repository."})
-    public static void upgradeDatabase() throws CentralRepoException {
-        if (!CentralRepository.isEnabled()) {
-            return;
-        }
-        CentralRepository db = null;
-        CoordinationService.Lock lock = null;
-
-        //get connection
-        try {
-            try {
-                db = CentralRepository.getInstance();
-            } catch (CentralRepoException ex) {
-                LOGGER.log(Level.SEVERE, "Error updating central repository, unable to make connection", ex);
-                throw new CentralRepoException("Error updating central repository, unable to make connection", Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
-            }
-            //get lock necessary for upgrade
-            if (db != null) {
-                try {
-                    // This may return null if locking isn't supported, which is fine. It will
-                    // throw an exception if locking is supported but we can't get the lock
-                    // (meaning the database is in use by another user)
-                    lock = db.getExclusiveMultiUserDbLock();
-                    //perform upgrade         
-                } catch (CentralRepoException ex) {
-                    LOGGER.log(Level.SEVERE, "Error updating central repository, unable to acquire exclusive lock", ex);
-                    throw new CentralRepoException("Error updating central repository, unable to acquire exclusive lock", Bundle.EamDbUtil_exclusiveLockAquisitionFailure_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
-                }
-
-                try {
-                    db.upgradeSchema();
-                } catch (CentralRepoException ex) {
-                    LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
-                    throw new CentralRepoException("Error updating central repository", ex.getUserMessage() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
-                } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
-                    throw new CentralRepoException("Error updating central repository", Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
-                } catch (IncompatibleCentralRepoException ex) {
-                    LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
-                    throw new CentralRepoException("Error updating central repository", ex.getMessage() + "\n\n" + Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
-                } finally {
-                    if (lock != null) {
-                        try {
-                            lock.release();
-                        } catch (CoordinationServiceException ex) {
-                            LOGGER.log(Level.SEVERE, "Error releasing database lock", ex);
-                        }
-                    }
-                }
-            } else {
-                throw new CentralRepoException("Unable to connect to database", Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message());
-            }
-        } catch (CentralRepoException ex) {
-            // Disable the central repo and clear the current settings.
-            try {
-                if (null != CentralRepository.getInstance()) {
-                    CentralRepository.getInstance().shutdownConnections();
-                }
-            } catch (CentralRepoException ex2) {
-                LOGGER.log(Level.SEVERE, "Error shutting down central repo connection pool", ex2);
-            }
-            CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.DISABLED.name());
-            CentralRepoPlatforms.saveSelectedPlatform();
-            throw ex;
-        }
-    }
 
     /**
      * Get the default organization name
