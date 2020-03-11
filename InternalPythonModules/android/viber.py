@@ -117,7 +117,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
         try:
             contacts_parser = ViberContactsParser(contacts_db)
             while contacts_parser.next():
-                if contacts_parser.get_phone() is not None:
+                if (not(not contacts_parser.get_phone() or contacts_parser.get_phone().isspace())):
                     helper.addContact( 
                         contacts_parser.get_contact_name(), 
                         contacts_parser.get_phone(),
@@ -125,7 +125,8 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                         contacts_parser.get_mobile_phone(),
                         contacts_parser.get_email()
                     )
-                else:
+                # Check if contact_name is blank and if it is not create a TSK_CONTACT otherwise ignore as not Contact Info
+                elif (not(not contacts_parser.get_contact_name() or contacts_parser.get_contact_name().isspace())):
                     current_case = Case.getCurrentCase().getSleuthkitCase()
                     attributes = ArrayList()
                     artifact = contacts_db.getDBFile().newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
