@@ -37,7 +37,7 @@ public class ScalrWrapper {
         return Scalr.resize(input, size, Scalr.OP_ANTIALIAS);
     }
 
-    public static synchronized BufferedImage resize(BufferedImage bufferedImage, Method method, Scalr.Mode mode, int width, int height, BufferedImageOp... ops) {
+    public static synchronized BufferedImage resize(BufferedImage bufferedImage, Method method, Scalr.Mode mode, int width, int height, BufferedImageOp ...ops) {
         return Scalr.resize(bufferedImage, method, mode, width, height, ops);
     }
     
