@@ -89,7 +89,7 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.URL
 public class MessageContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
     /**
-     * a text component viewer to be a child component to be placed in a translatablepanel.  
+     * This is a text component viewer to be a child component to be placed in a {@link TranslatablePanel TranslatablePanel}.  
      */
     class TextComponent implements TranslatablePanel.ContentComponent {
 
@@ -151,7 +151,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageContentViewer_AtrachmentsPanel_title(), "", new TableFilterNode(Node.EMPTY, false), 0, null);
         attachmentsScrollPane.setViewportView(drp);
 
-        //textPanel.setLayout(new BorderLayout());
         msgbodyTabbedPane.insertTab(
                 NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle"),
                 null,

@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 
 /**
- * abstract class for translating text and displaying to the user
+ * This is an abstract class for translating text and displaying to the user.
  */
 public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.TranslateResult, Void> {
 
@@ -44,7 +44,7 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Tr
     private final String contentDescriptor;
 
     /**
-     * as a result of running and processing the translation
+     * This is a result of running and processing the translation.
      */
     public static class TranslateResult {
 
@@ -81,7 +81,7 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Tr
     }
 
     /**
-     *
+     * This is the main contructor for the TranslateTextTask.
      * @param translateText whether or not to translate text
      * @param contentDescriptor the content descriptor for the item being
      * translated (used for logging errors)
@@ -92,7 +92,7 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Tr
     }
 
     /**
-     * retrieves the original text content to be translated
+     * This method retrieves the original text content to be translated.
      * @return      the original text content
      * @throws IOException
      * @throws InterruptedException
@@ -101,7 +101,7 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Tr
     protected abstract String retrieveText() throws IOException, InterruptedException, IllegalStateException;
 
     /**
-     * method to be overridden when a translated text result is received
+     * This method should be overridden when a translated text result is received.
      * @param text          the text to display
      * @param orientation   the orientation of the text
      * @param font          the font style (returns plain)
@@ -109,26 +109,26 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Tr
     protected abstract void onTextDisplay(String text, ComponentOrientation orientation, int font);
 
     /**
-     * when a progress result is received, this method is called
-     * this method can be overridden depending on the scenario but defaults to just displaying using onTextDisplay
+     * When a progress result is received, this method is called.
+     * This method can be overridden depending on the scenario, but defaults to just displaying using onTextDisplay.
      * @param text          the text of the status update
      * @param orientation   the orientation for the status
      * @param font          the font style of the status
      */
     protected void onProgressDisplay(String text, ComponentOrientation orientation, int font) {
-        // default to normal display unless overridden
+        // This defaults to normal display unless overridden.
         onTextDisplay(text, orientation, font);
     }
 
     /**
-     * when an error result is received, this method is called
-     * this method can be overridden depending on the scenario but defaults to just displaying using onTextDisplay
+     * When an error result is received, this method is called. This method can be overridden depending on the 
+     * scenario but defaults to just displaying using onTextDisplay.
      * @param text          the text of the error
      * @param orientation   the orientation for the error
      * @param font          the font style of the error
      */
     protected void onErrorDisplay(String text, ComponentOrientation orientation, int font) {
-        // default to normal display unless overridden
+        // This defaults to normal display unless overridden.
         onTextDisplay(text, orientation, font);
     }
 
@@ -167,7 +167,7 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Tr
     }
 
     /**
-     * final step in translation swing worker prior to being done(); translates the text if needed
+     * This is the final step in the translation swing worker prior to being {@link #done() done()}; translates the text if needed.
      * @param fileText          the text to translate
      * @return                  the translated text
      * @throws InterruptedException     if operation is canclled, an interrupted exception is thrown
@@ -226,11 +226,11 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Tr
     }
 
     /**
-     * Pass the translation off to the Translation service provider.
+     * This method passes the translation off to the {@link org.sleuthkit.autopsy.texttranslation.TextTranslationService translation service provider}.
      *
-     * @param input Text to be translated
+     * @param input text to be translated
      *
-     * @return Translated text or error message
+     * @return translated text or error message
      */
     @NbBundle.Messages({
         "TranslatedContentViewer.emptyTranslation=The machine translation software did not return any text."

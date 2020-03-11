@@ -35,14 +35,14 @@ import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.autopsy.texttranslation.ui.TranslateTextTask;
 
 /**
- * A panel for translation with a subcomponent that allows for translation
+ * This is a panel for translation with a subcomponent that allows for translation.
  */
 class TranslatablePanel extends JPanel {
     
     /**
-     * an exception that can occur during the normal operation of the translatable panel
-     * for instance, this exception can be thrown if it is not possible to set the child
-     * content to the provided content string
+     * This is an exception that can occur during the normal operation of the translatable 
+     * panel. For instance, this exception can be thrown if it is not possible to set the child
+     * content to the provided content string.
      */
     class TranslatablePanelException extends Exception {
         public static final long serialVersionUID = 1L;
@@ -58,18 +58,18 @@ class TranslatablePanel extends JPanel {
     
 
     /**
-     * describes a child component to be placed as a child of this panel.  the child received
-     * from getRootComponent() will listen for content updates from setContent()
+     * This describes a child component to be placed as a child of this panel.  The child received
+     * from {@link #getRootComponent() getRootComponent() } will listen for content updates from setContent().
      */
     interface ContentComponent {
         /**
-         * gets root component of the translation panel
+         * This method gets root component of the translation panel.
          * @return      the root component to insert into the translatable panel
          */
         Component getRootComponent();
 
         /**
-         * sets the content of the component to the provided content
+         * This method sets the content of the component to the provided content.
          * @param content       the content to be displayed
          * @param orientation   how it should be displayed
          * @throws Exception    if there is an error in rendering the content
@@ -79,7 +79,7 @@ class TranslatablePanel extends JPanel {
     
     
     /**
-     * an option in drop down of whether or not to translate
+     * This is an option in drop down of whether or not to translate.
      */
     private static class TranslateOption {
 
@@ -106,7 +106,7 @@ class TranslatablePanel extends JPanel {
     }
 
     /**
-     * the cached result of translating the current content
+     * This represents the cached result of translating the current content.
      */
     private static class TranslatedText {
 
@@ -128,7 +128,8 @@ class TranslatablePanel extends JPanel {
     }
 
     /**
-     * connects the swing worker specified by TranslateTextTask to this component
+     * This connects the swing worker specified by 
+     * {@link org.sleuthkit.autopsy.texttranslation.ui.TranslateTextTask TranslateTextTask} to this component.
      */
     private class OnTranslation extends TranslateTextTask {
 
@@ -138,7 +139,7 @@ class TranslatablePanel extends JPanel {
 
         @Override
         protected String translate(String input) throws NoServiceProviderException, TranslationException {
-            // defer to outer class method so that it can be overridden for items like html, rtf, etc.
+            // This defers to the outer class method so that it can be overridden for items like html, rtf, etc.
             return retrieveTranslation(input);
         }
 
@@ -159,11 +160,11 @@ class TranslatablePanel extends JPanel {
 
         @Override
         protected void onTextDisplay(String text, ComponentOrientation orientation, int font) {
-            // on successful acquire cache the result and set the text
+            // On successful acquire, this caches the result and set the text.
             setCachedTranslated(new TranslatedText(text, orientation));
             setChildComponentContent(text, orientation);
 
-            // clear any status
+            // This clears any status that may be present.
             clearStatus();
         }
     }
@@ -200,7 +201,7 @@ class TranslatablePanel extends JPanel {
     }
 
     /**
-     * Creates new form TranslatedContentPanel
+     * This creates a new panel using @{link ContentPanel ContentPanel} as a child.
      */
     TranslatablePanel(ContentComponent contentComponent, String origOptionText, String translatedOptionText, String origContent,
             TextTranslationService translationService) {
@@ -209,7 +210,6 @@ class TranslatablePanel extends JPanel {
 
         initComponents();
         additionalInit(contentComponent.getRootComponent(), origOptionText, translatedOptionText);
-        setTranslationBarVisible();
         reset();
     }
     
@@ -234,7 +234,7 @@ class TranslatablePanel extends JPanel {
     }
 
     /**
-     * if a translation worker is running, this is called to cancel the worker
+     * If a translation worker is running, this is called to cancel the worker.
      */
     private void cancelPendingTranslation() {
         synchronized (backgroundTaskLock) {
@@ -246,7 +246,7 @@ class TranslatablePanel extends JPanel {
     }
 
     /**
-     * runs a translation worker to translate the text
+     * This runs a translation worker to translate the text.
      */
     private void runTranslationTask() {
         synchronized (backgroundTaskLock) {
@@ -260,16 +260,16 @@ class TranslatablePanel extends JPanel {
     }
 
     /**
-     * resets the component to an empty state and sets the translation bar visibility
-     * based on whether there is a provider
+     * This resets the component to an empty state and sets the translation bar visibility
+     * based on whether there is a provider.
      */
     final void reset() {
-        setTranslationBarVisible();
+        setTranslationEnabled();
         setContent(null, null);
     }
 
     /**
-     * sets the content for the component; this also clears the status
+     * This method sets the content for the component; this also clears the status.
      * @param content               the content for the panel
      * @param contentDescriptor     the content descriptor to be used in error messages
      */
@@ -285,8 +285,8 @@ class TranslatablePanel extends JPanel {
     }
 
     /**
-     * where actual translation takes place allowed to be overridden for the
-     * sake of varying translatable content (i.e. html, rtf, etc)
+     * This is where actual translation takes place allowed to be overridden for the
+     * sake of varying translatable content (i.e. html, rtf, etc).
      *
      * @param input the input content
      * @return the result of translation
@@ -298,14 +298,14 @@ class TranslatablePanel extends JPanel {
     }
 
     /**
-     * clears the status bar
+     * This method clears the status bar.
      */
     private void clearStatus() {
         setStatus(null, false);
     }
 
     /**
-     * sets the status bar message
+     * This sets the status bar message.
      * @param msg               the status bar message to show
      * @param showWarningIcon   whether that status is a warning
      */
@@ -315,14 +315,14 @@ class TranslatablePanel extends JPanel {
     }
 
     /**
-     * sets the translation bar visibility based on whether or not there is a provided
+     * This method sets the translation bar visibility based on whether or not there is a provided.
      */
-    private void setTranslationBarVisible() {
-        translationBar.setVisible(this.translationService.hasProvider());
+    private void setTranslationEnabled() {
+        translateComboBox.setEnabled(this.translationService.hasProvider());
     }
 
     /**
-     * the child component provided in the constructor will have its content set to the string provided
+     * The child component provided in the constructor will have its content set to the string provided.
      * @param content   the content to display in the child component
      */
     private void setChildComponentContent(String content) {
@@ -330,7 +330,7 @@ class TranslatablePanel extends JPanel {
     }
 
     /**
-     * the child component provided in the constructor will have its content set to the string provided
+     * The child component provided in the constructor will have its content set to the string provided.
      * @param content   the content to display in the child component
      * @param orientation the orientation for the text
      */
@@ -346,7 +346,7 @@ class TranslatablePanel extends JPanel {
     }
 
     /**
-     * items that are programmatically initialized
+     * This method is for items that are programmatically initialized.
      */
     private void additionalInit(Component rootComponent, String origOptionText, String translatedOptionText) {
         add(rootComponent, java.awt.BorderLayout.CENTER);
@@ -356,7 +356,7 @@ class TranslatablePanel extends JPanel {
     }
 
     /**
-     * when the combo box choice is selected, this method is fired
+     * When the combo box choice is selected, this method is fired.
      * @param translateOption   the current translate option
      */
     private void handleComboBoxChange(TranslateOption translateOption) {
