@@ -46,6 +46,7 @@ import javax.imageio.ImageIO;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
+import org.imgscalr.Scalr;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
@@ -642,7 +643,8 @@ class FileSearch {
                         }
                         return;
                     }
-                    BufferedImage thumbnail = ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE);
+                    BufferedImage thumbnail = ScalrWrapper.resize(bufferedImage, Scalr.Method.SPEED, Scalr.Mode.FIT_TO_HEIGHT, ImageUtils.ICON_SIZE_LARGE, ImageUtils.ICON_SIZE_MEDIUM, Scalr.OP_ANTIALIAS);
+                    //We are height limited here so it can be wider than it can be tall.Scalr maintains the aspect ratio.
                     videoThumbnails.add(thumbnail);
                     if (cacheDirectory != null) {
                         try {

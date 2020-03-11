@@ -26,7 +26,7 @@
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="imagePanel" alignment="0" pref="776" max="32767" attributes="0"/>
+                  <Component id="imagePanel" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="fileSizeLabel" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -46,7 +46,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="nameLabel" min="-2" pref="14" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="imagePanel" min="-2" pref="140" max="-2" attributes="0"/>
+              <Component id="imagePanel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
                   <Component id="deletedLabel" min="-2" max="-2" attributes="0"/>
@@ -60,6 +60,11 @@
   </Layout>
   <SubComponents>
     <Container class="javax.swing.JPanel" name="imagePanel">
+      <Properties>
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[776, 115]"/>
+        </Property>
+      </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout"/>
     </Container>
