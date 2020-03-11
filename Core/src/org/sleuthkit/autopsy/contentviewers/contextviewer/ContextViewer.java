@@ -204,13 +204,13 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         javax.swing.JPanel contextContainer = new javax.swing.JPanel();
         contextContainer.setLayout(new BoxLayout(contextContainer, BoxLayout.Y_AXIS));
         if (contextSourcePanels.isEmpty()) {
-            contextContainer.add(new ContextSourcePanel(Bundle.ContextViewer_unknownSource(), "", null));
+            contextContainer.add(new ContextSourcePanel(Bundle.ContextViewer_unknownSource(), "", null, true));
         } else
             for (javax.swing.JPanel sourcePanel : contextSourcePanels) {
                 contextContainer.add(sourcePanel);
             }
         if (contextUsagePanels.isEmpty()) {
-            contextContainer.add(new ContextUsagePanel(Bundle.ContextViewer_unknownSource(), "", null));
+            contextContainer.add(new ContextUsagePanel(Bundle.ContextViewer_unknownSource(), "", null, true));
         } else
             for (javax.swing.JPanel usagePanel : contextUsagePanels) {
                 contextContainer.add(usagePanel);
@@ -265,24 +265,35 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         "ContextViewer.recentDocs=Recent Documents: "
     })
     private void setSourceFields(BlackboardArtifact associatedArtifact) throws TskCoreException {
+        Boolean showHeading = true;
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == associatedArtifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_attachmentSource();
             String sourceText = msgArtifactToAbbreviatedString(associatedArtifact);
-            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact);
+            if (!contextUsagePanels.isEmpty()) {
+                showHeading = false;
+            }
+            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact, showHeading);
             contextSourcePanels.add(sourcePanel);
 
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == associatedArtifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_downloadSource();
             String sourceText = webDownloadArtifactToString(associatedArtifact);
-            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact);
+            if (!contextUsagePanels.isEmpty()) {
+                showHeading = false;
+            }
+            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact, showHeading);
             contextSourcePanels.add(sourcePanel);
 
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_recentDocs();
             String sourceText = recentDocArtifactToString(associatedArtifact);
-            javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact);
+            if (!contextUsagePanels.isEmpty()) {
+                showHeading = false;
+            }
+            javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, showHeading);        
+            
             contextUsagePanels.add(usagePanel);
             
         }

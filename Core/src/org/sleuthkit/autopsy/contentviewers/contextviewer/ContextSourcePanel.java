@@ -48,12 +48,13 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
     /**
      * Creates new form ContextViewer
      */
-    public ContextSourcePanel(String sourceName, String sourceText, BlackboardArtifact associatedArtifact) {
+    public ContextSourcePanel(String sourceName, String sourceText, BlackboardArtifact associatedArtifact, Boolean showSourceHeading) {
 
         initComponents();
         sourceContextArtifact = associatedArtifact;
         setSourceName(sourceName);
         setSourceText(sourceText);
+        showSourceLabel(showSourceHeading);
     }
 
     /**
@@ -69,6 +70,7 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
         jSourceLabel = new javax.swing.JLabel();
         jSourceNameLabel = new javax.swing.JLabel();
         jSourceTextLabel = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(255, 255, 255));
         setPreferredSize(new java.awt.Dimension(495, 120));
@@ -87,6 +89,8 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceTextLabel, org.openide.util.NbBundle.getMessage(ContextSourcePanel.class, "ContextSourcePanel.jSourceTextLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(ContextSourcePanel.class, "ContextSourcePanel.jLabel1.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -96,11 +100,13 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSourceLabel)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(6, 6, 6)
+                        .addGap(10, 10, 10)
                         .addComponent(jSourceNameLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSourceTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 257, Short.MAX_VALUE)))
-                .addGap(36, 36, 36))
+                        .addGap(5, 5, 5)
+                        .addComponent(jLabel1)
+                        .addGap(36, 36, 36)
+                        .addComponent(jSourceTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGap(260, 260, 260))
             .addGroup(layout.createSequentialGroup()
                 .addGap(64, 64, 64)
                 .addComponent(jSourceGoToResultButton)
@@ -114,10 +120,11 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jSourceNameLabel)
-                    .addComponent(jSourceTextLabel))
+                    .addComponent(jSourceTextLabel)
+                    .addComponent(jLabel1))
                 .addGap(18, 18, 18)
                 .addComponent(jSourceGoToResultButton)
-                .addGap(0, 16, Short.MAX_VALUE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -151,9 +158,15 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
         showSourceText(true);
     }
 
+    private void showSourceLabel(boolean show) {
+        if (!show) {
+            jSourceLabel.setText(" ");
+        }
+        jSourceLabel.setVisible(show);        
+    }
+    
     private void showSourceText(boolean show) {
         jSourceTextLabel.setVisible(show);
-        jSourceLabel.setVisible(show);
     }
     
     private void showSourceButton(boolean show) {
@@ -161,6 +174,7 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JButton jSourceGoToResultButton;
     private javax.swing.JLabel jSourceLabel;
     private javax.swing.JLabel jSourceNameLabel;
