@@ -67,7 +67,6 @@ public final class ContextUsagePanel extends javax.swing.JPanel {
         jUsageLabel = new javax.swing.JLabel();
         jUsageNameLabel = new javax.swing.JLabel();
         jUsageTextLabel = new javax.swing.JLabel();
-        jBlankLabel = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(255, 255, 255));
         setPreferredSize(new java.awt.Dimension(495, 120));
@@ -86,8 +85,6 @@ public final class ContextUsagePanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jUsageTextLabel, org.openide.util.NbBundle.getMessage(ContextUsagePanel.class, "ContextUsagePanel.jUsageTextLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jBlankLabel, org.openide.util.NbBundle.getMessage(ContextUsagePanel.class, "ContextUsagePanel.jBlankLabel.text")); // NOI18N
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -97,11 +94,10 @@ public final class ContextUsagePanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jUsageLabel)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jBlankLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(33, 33, 33)
                         .addComponent(jUsageNameLabel)
-                        .addGap(36, 36, 36)
-                        .addComponent(jUsageTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jUsageTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 231, Short.MAX_VALUE)))
                 .addGap(36, 36, 36))
             .addGroup(layout.createSequentialGroup()
                 .addGap(64, 64, 64)
@@ -111,13 +107,12 @@ public final class ContextUsagePanel extends javax.swing.JPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(18, 18, 18)
+                .addGap(1, 1, 1)
                 .addComponent(jUsageLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jUsageTextLabel)
-                    .addComponent(jUsageNameLabel)
-                    .addComponent(jBlankLabel))
+                    .addComponent(jUsageNameLabel, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jUsageGoToResultButton)
                 .addGap(0, 0, Short.MAX_VALUE))
@@ -165,11 +160,11 @@ public final class ContextUsagePanel extends javax.swing.JPanel {
     }
     
     private void showUsageButton(boolean show) {
+        jUsageGoToResultButton.setVisible(show);
         jUsageGoToResultButton.setEnabled(show);        
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jBlankLabel;
     private javax.swing.JButton jUsageGoToResultButton;
     private javax.swing.JLabel jUsageLabel;
     private javax.swing.JLabel jUsageNameLabel;

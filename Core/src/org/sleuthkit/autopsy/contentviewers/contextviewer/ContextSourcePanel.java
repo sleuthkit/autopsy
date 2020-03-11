@@ -66,7 +66,6 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
         jSourceLabel = new javax.swing.JLabel();
         jSourceNameLabel = new javax.swing.JLabel();
         jSourceTextLabel = new javax.swing.JLabel();
-        jBlankLabel = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(255, 255, 255));
         setPreferredSize(new java.awt.Dimension(495, 120));
@@ -85,8 +84,6 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceTextLabel, org.openide.util.NbBundle.getMessage(ContextSourcePanel.class, "ContextSourcePanel.jSourceTextLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jBlankLabel, org.openide.util.NbBundle.getMessage(ContextSourcePanel.class, "ContextSourcePanel.jBlankLabel.text")); // NOI18N
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -96,10 +93,8 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSourceLabel)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
+                        .addGap(23, 23, 23)
                         .addComponent(jSourceNameLabel)
-                        .addGap(5, 5, 5)
-                        .addComponent(jBlankLabel)
                         .addGap(36, 36, 36)
                         .addComponent(jSourceTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addGap(260, 260, 260))
@@ -116,9 +111,8 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jSourceNameLabel)
-                    .addComponent(jSourceTextLabel)
-                    .addComponent(jBlankLabel))
-                .addGap(18, 18, 18)
+                    .addComponent(jSourceTextLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSourceGoToResultButton)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
@@ -166,11 +160,11 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
     }
     
     private void showSourceButton(boolean show) {
+        jSourceGoToResultButton.setVisible(show);
         jSourceGoToResultButton.setEnabled(show);        
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jBlankLabel;
     private javax.swing.JButton jSourceGoToResultButton;
     private javax.swing.JLabel jSourceLabel;
     private javax.swing.JLabel jSourceNameLabel;
