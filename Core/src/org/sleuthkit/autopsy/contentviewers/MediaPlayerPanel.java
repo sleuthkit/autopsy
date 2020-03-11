@@ -74,7 +74,6 @@ import org.freedesktop.gstreamer.Format;
 import org.freedesktop.gstreamer.GstException;
 import org.freedesktop.gstreamer.event.SeekFlags;
 import org.freedesktop.gstreamer.event.SeekType;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * This is a video player that is part of the Media View layered pane. It uses
@@ -222,14 +221,6 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         //True for fairness. In other words,
         //acquire() calls are processed in order of invocation.
         sliderLock = new Semaphore(1, true);
-
-        /**
-         * See JIRA-5888 for details. Initializing gstreamer here is more stable
-         * on Windows.
-         */
-        if (PlatformUtil.isWindowsOS()) {
-            Gst.init();
-        }
     }
 
     private void customizeComponents() {
@@ -264,7 +255,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         //Manage the video while the user is performing actions on the track.
         progressSlider.addMouseListener(new MouseListener() {
             private State previousState = State.NULL;
-            
+
             @Override
             public void mousePressed(MouseEvent e) {
                 previousState = gstPlayBin.getState();
@@ -273,11 +264,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                if(previousState.equals(State.PLAYING)) {
+                if (previousState.equals(State.PLAYING)) {
                     gstPlayBin.play();
                 }
                 previousState = State.NULL;
             }
+
             @Override
             public void mouseClicked(MouseEvent e) {
             }
@@ -289,7 +281,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             @Override
             public void mouseExited(MouseEvent e) {
             }
-            
+
         });
         //Manage the audio level when the user is adjusting the volume slider
         audioSlider.addChangeListener((ChangeEvent event) -> {
@@ -389,6 +381,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             gstPlayBin.getBus().disconnect(endOfStreamListener);
             gstPlayBin.getBus().disconnect(stateChangeListener);
             gstPlayBin.getBus().disconnect(errorListener);
+            gstPlayBin.getBus().dispose();
             gstPlayBin.dispose();
             fxAppSink.clear();
             gstPlayBin = null;
@@ -548,10 +541,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
                 // Initialize Gstreamer. It is safe to call this for every file.
                 // It was moved here from the constructor because having it happen
-                // earlier resulted in conflicts on Linux. See JIRA-5888.
-                if (!PlatformUtil.isWindowsOS()) {
-                    Gst.init();
-                }
+                // earlier resulted in crashes on Linux. See JIRA-5888.
+                Gst.init();
 
                 //Video is ready for playback. Create new components
                 gstPlayBin = new PlayBin("VideoPlayer", tempFile.toURI());
@@ -599,23 +590,27 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         @Override
         public void actionPerformed(ActionEvent e) {
             if (!progressSlider.getValueIsAdjusting()) {
-                sliderLock.acquireUninterruptibly();
-                long position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
-                long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
-                /**
-                 * Duration may not be known until there is video data in the
-                 * pipeline. We start this updater when data-flow has just been
-                 * initiated so buffering may still be in progress.
-                 */
-                if (duration >= 0 && position >= 0) {
-                    double relativePosition = (double) position / duration;
-                    progressSlider.setValue((int) (relativePosition * PROGRESS_SLIDER_SIZE));
-                }
+                try {
+                    sliderLock.acquireUninterruptibly();
+                    long position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+                    long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
+                    /**
+                     * Duration may not be known until there is video data in
+                     * the pipeline. We start this updater when data-flow has
+                     * just been initiated so buffering may still be in
+                     * progress.
+                     */
+                    if (duration >= 0 && position >= 0) {
+                        double relativePosition = (double) position / duration;
+                        progressSlider.setValue((int) (relativePosition * PROGRESS_SLIDER_SIZE));
+                    }
 
-                SwingUtilities.invokeLater(() -> {
-                    updateTimeLabel(position, duration);
-                });
-                sliderLock.release();
+                    SwingUtilities.invokeLater(() -> {
+                        updateTimeLabel(position, duration);
+                    });
+                } finally {
+                    sliderLock.release();
+                }
             }
         }
     }
@@ -635,13 +630,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
          * thumb at the given width and height. It also paints the track blue as
          * the thumb progresses.
          *
-         * @param slider JSlider component
+         * @param slider         JSlider component
          * @param thumbDimension
          */
         public CircularJSliderUI(JSlider slider, Dimension thumbDimension) {
             super(slider);
             this.thumbDimension = thumbDimension;
-            
+
             //Configure track and thumb colors.
             Color lightBlue = new Color(0, 130, 255);
             thumbColor = lightBlue;
@@ -655,8 +650,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         }
 
         /**
-         * Modifies the View to be an oval rather than the underlying 
-         * rectangle Controller.
+         * Modifies the View to be an oval rather than the underlying rectangle
+         * Controller.
          */
         @Override
         public void paintThumb(Graphics graphic) {
@@ -705,12 +700,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         @Override
         protected TrackListener createTrackListener(JSlider slider) {
             /**
-            * This track listener will force the thumb to be snapped to the mouse
-            * location. This makes grabbing and dragging the JSlider much easier.
-            * Using the default track listener, the user would have to click
-            * exactly on the slider thumb to drag it. Now the thumb positions
-            * itself under the mouse so that it can always be dragged.
-            */
+             * This track listener will force the thumb to be snapped to the
+             * mouse location. This makes grabbing and dragging the JSlider much
+             * easier. Using the default track listener, the user would have to
+             * click exactly on the slider thumb to drag it. Now the thumb
+             * positions itself under the mouse so that it can always be
+             * dragged.
+             */
             return new TrackListener() {
                 @Override
                 public void mousePressed(MouseEvent e) {
@@ -1007,14 +1003,14 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         //Don't allow skipping within 2 seconds of video ending. Skipping right to
         //the end causes undefined behavior for some gstreamer plugins.
         long twoSecondsInNano = TimeUnit.NANOSECONDS.convert(2, TimeUnit.SECONDS);
-        if((duration - currentTime) <= twoSecondsInNano) {
+        if ((duration - currentTime) <= twoSecondsInNano) {
             return;
         }
-        
+
         long newTime;
         if (currentTime + fastForwardDelta >= duration) {
             //If there are less than 30 seconds left, only fast forward to the midpoint.
-            newTime = currentTime + (duration - currentTime)/2;
+            newTime = currentTime + (duration - currentTime) / 2;
         } else {
             newTime = currentTime + fastForwardDelta;
         }
