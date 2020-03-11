@@ -281,7 +281,7 @@ public class EamDbSettingsDialog extends JDialog {
 
         jpDbPassword.setPreferredSize(new java.awt.Dimension(509, 20));
 
-        cbDatabaseType.setModel(new javax.swing.DefaultComboBoxModel<>(new CentralRepoPlatforms[]{CentralRepoPlatforms.POSTGRESQL, CentralRepoPlatforms.SQLITE}));
+        cbDatabaseType.setModel(new javax.swing.DefaultComboBoxModel<>(new org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms[]{org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms.POSTGRESQL, org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms.SQLITE}));
         cbDatabaseType.setPreferredSize(new java.awt.Dimension(120, 20));
         cbDatabaseType.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -305,7 +305,6 @@ public class EamDbSettingsDialog extends JDialog {
         dataBaseFileTextArea.setEditable(false);
         dataBaseFileTextArea.setBackground(new java.awt.Color(240, 240, 240));
         dataBaseFileTextArea.setColumns(20);
-        dataBaseFileTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         dataBaseFileTextArea.setLineWrap(true);
         dataBaseFileTextArea.setRows(3);
         dataBaseFileScrollPane.setViewportView(dataBaseFileTextArea);
@@ -323,7 +322,7 @@ public class EamDbSettingsDialog extends JDialog {
                     .addComponent(lbUserName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lbPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(pnSQLiteSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(lbDatabaseDesc, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lbDatabaseDesc, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 94, Short.MAX_VALUE)
                         .addComponent(lbUserPassword, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addGap(10, 10, 10)
                 .addGroup(pnSQLiteSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -722,7 +721,7 @@ public class EamDbSettingsDialog extends JDialog {
     private javax.swing.JButton bnDatabasePathFileOpen;
     private javax.swing.ButtonGroup bnGrpDatabasePlatforms;
     private javax.swing.JButton bnOk;
-    private javax.swing.JComboBox<CentralRepoPlatforms> cbDatabaseType;
+    private javax.swing.JComboBox<org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms> cbDatabaseType;
     private javax.swing.JScrollPane dataBaseFileScrollPane;
     private javax.swing.JTextArea dataBaseFileTextArea;
     private javax.swing.JFileChooser fcDatabasePath;
