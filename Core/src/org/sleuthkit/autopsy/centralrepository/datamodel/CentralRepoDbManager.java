@@ -85,7 +85,9 @@ public class CentralRepoDbManager {
      */
     public static void setDisabledDueToFailure(boolean disabledDueToFailure) {
         synchronized(disabledDueToFailureLock) {
+            boolean oldValue = isDisabledDueToFailure();
             ModuleSettings.setConfigSetting(CENTRAL_REPOSITORY_SETTINGS_KEY, DISABLED_DUE_TO_FAILURE_KEY, Boolean.toString(disabledDueToFailure));
+            propertyChangeSupport.firePropertyChange("disabledDueToFailure", oldValue, disabledDueToFailure);
         }
     }
 

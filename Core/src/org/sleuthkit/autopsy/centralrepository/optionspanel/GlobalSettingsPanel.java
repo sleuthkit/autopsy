@@ -214,14 +214,14 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         SwingUtilities.invokeLater(() -> {
             boolean successful = EamDbSettingsDialog.testStatusAndCreate(parent, new CentralRepoDbManager());
             if (successful) {
+                updateDatabase(parent);     
                 // clear any error if there was one
                 CentralRepoDbManager.setDisabledDueToFailure(false);
-                updateDatabase(parent);         
             }
             else {
+                CentralRepoDbUtil.setUseCentralRepo(false);
                 // disable central repository due to error
                 CentralRepoDbManager.setDisabledDueToFailure(true);
-                CentralRepoDbUtil.setUseCentralRepo(false);
             }
         });
     }
