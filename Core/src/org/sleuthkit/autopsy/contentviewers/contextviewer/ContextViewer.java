@@ -82,20 +82,93 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
+        jSourcePanel = new javax.swing.JPanel();
+        jSourceLabel = new javax.swing.JLabel();
+        jUsagePanel = new javax.swing.JPanel();
+        jUsageLabel = new javax.swing.JLabel();
+        jUnknownPanel = new javax.swing.JPanel();
+        jUnknownLabel = new javax.swing.JLabel();
+        jScrollPane = new javax.swing.JScrollPane();
+
+        jSourcePanel.setBackground(javax.swing.UIManager.getDefaults().getColor("window"));
+
+        jSourceLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jSourceLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceLabel.text")); // NOI18N
+
+        javax.swing.GroupLayout jSourcePanelLayout = new javax.swing.GroupLayout(jSourcePanel);
+        jSourcePanel.setLayout(jSourcePanelLayout);
+        jSourcePanelLayout.setHorizontalGroup(
+            jSourcePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jSourcePanelLayout.createSequentialGroup()
+                .addGap(40, 40, 40)
+                .addComponent(jSourceLabel)
+                .addContainerGap(304, Short.MAX_VALUE))
+        );
+        jSourcePanelLayout.setVerticalGroup(
+            jSourcePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jSourcePanelLayout.createSequentialGroup()
+                .addGap(5, 5, 5)
+                .addComponent(jSourceLabel)
+                .addGap(2, 2, 2))
+        );
+
+        jUsagePanel.setBackground(javax.swing.UIManager.getDefaults().getColor("window"));
+
+        jUsageLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jUsageLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageLabel.text")); // NOI18N
+
+        javax.swing.GroupLayout jUsagePanelLayout = new javax.swing.GroupLayout(jUsagePanel);
+        jUsagePanel.setLayout(jUsagePanelLayout);
+        jUsagePanelLayout.setHorizontalGroup(
+            jUsagePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jUsagePanelLayout.createSequentialGroup()
+                .addGap(40, 40, 40)
+                .addComponent(jUsageLabel)
+                .addContainerGap(298, Short.MAX_VALUE))
+        );
+        jUsagePanelLayout.setVerticalGroup(
+            jUsagePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jUsagePanelLayout.createSequentialGroup()
+                .addGap(2, 2, 2)
+                .addComponent(jUsageLabel)
+                .addGap(2, 2, 2))
+        );
+
+        jUnknownPanel.setBackground(new java.awt.Color(255, 255, 255));
+
+        org.openide.awt.Mnemonics.setLocalizedText(jUnknownLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUnknownLabel.text")); // NOI18N
+
+        javax.swing.GroupLayout jUnknownPanelLayout = new javax.swing.GroupLayout(jUnknownPanel);
+        jUnknownPanel.setLayout(jUnknownPanelLayout);
+        jUnknownPanelLayout.setHorizontalGroup(
+            jUnknownPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jUnknownPanelLayout.createSequentialGroup()
+                .addGap(50, 50, 50)
+                .addComponent(jUnknownLabel)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jUnknownPanelLayout.setVerticalGroup(
+            jUnknownPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jUnknownPanelLayout.createSequentialGroup()
+                .addGap(2, 2, 2)
+                .addComponent(jUnknownLabel)
+                .addGap(2, 2, 2))
+        );
 
         setBackground(new java.awt.Color(255, 255, 255));
         setPreferredSize(new java.awt.Dimension(495, 358));
+
+        jScrollPane.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 509, Short.MAX_VALUE)
+            .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 509, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 335, Short.MAX_VALUE)
+            .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 335, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -201,26 +274,30 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             }
         }
         javax.swing.JPanel contextContainer = new javax.swing.JPanel();
+        contextContainer.add(jSourcePanel);
         contextContainer.setLayout(new BoxLayout(contextContainer, BoxLayout.Y_AXIS));
         if (contextSourcePanels.isEmpty()) {
-            contextContainer.add(new ContextSourcePanel(Bundle.ContextViewer_unknownSource(), "", null, true));
-        } else
+            contextContainer.add(jUnknownPanel);
+        } else {
             for (javax.swing.JPanel sourcePanel : contextSourcePanels) {
                 contextContainer.add(sourcePanel);
             }
+        }
+        contextContainer.add(jUsagePanel);
         if (contextUsagePanels.isEmpty()) {
-            contextContainer.add(new ContextUsagePanel(Bundle.ContextViewer_unknownSource(), "", null, true));
-        } else
+            contextContainer.add(jUnknownPanel);
+        } else {
             for (javax.swing.JPanel usagePanel : contextUsagePanels) {
                 contextContainer.add(usagePanel);
             }
+        }
         contextContainer.setEnabled(foundASource);
         contextContainer.setVisible(foundASource);
-        jScrollPane1.getViewport().setView(contextContainer);
-        jScrollPane1.setEnabled(foundASource);
-        jScrollPane1.setVisible(foundASource);
-        jScrollPane1.repaint();
-        jScrollPane1.revalidate();
+        jScrollPane.getViewport().setView(contextContainer);
+        jScrollPane.setEnabled(foundASource);
+        jScrollPane.setVisible(foundASource);
+        jScrollPane.repaint();
+        jScrollPane.revalidate();
         
         
     }
@@ -264,35 +341,24 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         "ContextViewer.recentDocs=Recent Documents: "
     })
     private void setSourceFields(BlackboardArtifact associatedArtifact) throws TskCoreException {
-        Boolean showHeading = true;
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == associatedArtifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_attachmentSource();
             String sourceText = msgArtifactToAbbreviatedString(associatedArtifact);
-            if (!contextUsagePanels.isEmpty()) {
-                showHeading = false;
-            }
-            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact, showHeading);
+            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact);
             contextSourcePanels.add(sourcePanel);
 
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == associatedArtifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_downloadSource();
             String sourceText = webDownloadArtifactToString(associatedArtifact);
-            if (!contextUsagePanels.isEmpty()) {
-                showHeading = false;
-            }
-            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact, showHeading);
+            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact);
             contextSourcePanels.add(sourcePanel);
 
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_recentDocs();
             String sourceText = recentDocArtifactToString(associatedArtifact);
-            if (!contextUsagePanels.isEmpty()) {
-                showHeading = false;
-            }
-            javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, showHeading);        
-            
+            javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact);        
             contextUsagePanels.add(usagePanel);
             
         }
@@ -437,6 +503,12 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane;
+    private javax.swing.JLabel jSourceLabel;
+    private javax.swing.JPanel jSourcePanel;
+    private javax.swing.JLabel jUnknownLabel;
+    private javax.swing.JPanel jUnknownPanel;
+    private javax.swing.JLabel jUsageLabel;
+    private javax.swing.JPanel jUsagePanel;
     // End of variables declaration//GEN-END:variables
 }

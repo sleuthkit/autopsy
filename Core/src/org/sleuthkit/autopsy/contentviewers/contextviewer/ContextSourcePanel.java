@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,13 +44,12 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
     /**
      * Creates new form ContextViewer
      */
-    public ContextSourcePanel(String sourceName, String sourceText, BlackboardArtifact associatedArtifact, Boolean showSourceHeading) {
+    public ContextSourcePanel(String sourceName, String sourceText, BlackboardArtifact associatedArtifact) {
 
         initComponents();
         sourceContextArtifact = associatedArtifact;
         setSourceName(sourceName);
         setSourceText(sourceText);
-        showSourceLabel(showSourceHeading);
     }
 
     /**
@@ -63,12 +62,11 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
     private void initComponents() {
 
         jSourceGoToResultButton = new javax.swing.JButton();
-        jSourceLabel = new javax.swing.JLabel();
         jSourceNameLabel = new javax.swing.JLabel();
         jSourceTextLabel = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(255, 255, 255));
-        setPreferredSize(new java.awt.Dimension(495, 120));
+        setPreferredSize(new java.awt.Dimension(495, 75));
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceGoToResultButton, org.openide.util.NbBundle.getMessage(ContextSourcePanel.class, "ContextSourcePanel.jSourceGoToResultButton.text")); // NOI18N
         jSourceGoToResultButton.addActionListener(new java.awt.event.ActionListener() {
@@ -76,9 +74,6 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
                 jSourceGoToResultButtonActionPerformed(evt);
             }
         });
-
-        jSourceLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jSourceLabel, org.openide.util.NbBundle.getMessage(ContextSourcePanel.class, "ContextSourcePanel.jSourceLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceNameLabel, org.openide.util.NbBundle.getMessage(ContextSourcePanel.class, "ContextSourcePanel.jSourceNameLabel.text")); // NOI18N
 
@@ -89,32 +84,26 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSourceLabel)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(23, 23, 23)
-                        .addComponent(jSourceNameLabel)
-                        .addGap(36, 36, 36)
-                        .addComponent(jSourceTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGap(50, 50, 50)
+                .addComponent(jSourceNameLabel)
+                .addGap(36, 36, 36)
+                .addComponent(jSourceTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(260, 260, 260))
             .addGroup(layout.createSequentialGroup()
-                .addGap(64, 64, 64)
+                .addGap(90, 90, 90)
                 .addComponent(jSourceGoToResultButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(18, 18, 18)
-                .addComponent(jSourceLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(2, 2, 2)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jSourceNameLabel)
                     .addComponent(jSourceTextLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSourceGoToResultButton)
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -148,13 +137,6 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
         showSourceText(true);
     }
 
-    private void showSourceLabel(boolean show) {
-        if (!show) {
-            jSourceLabel.setText(" ");
-        }
-        jSourceLabel.setVisible(show);        
-    }
-    
     private void showSourceText(boolean show) {
         jSourceTextLabel.setVisible(show);
     }
@@ -166,7 +148,6 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jSourceGoToResultButton;
-    private javax.swing.JLabel jSourceLabel;
     private javax.swing.JLabel jSourceNameLabel;
     private javax.swing.JLabel jSourceTextLabel;
     // End of variables declaration//GEN-END:variables
