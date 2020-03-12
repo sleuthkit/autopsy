@@ -343,6 +343,7 @@ public class CommandLineIngestManager {
          * @param baseCaseName        Case name
          * @param rootOutputDirectory Full path to directory in which case
          *                            output folder will be created
+         * @param caseType            Type of case being created 
          *
          * @throws CaseActionException
          */
