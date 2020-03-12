@@ -81,6 +81,16 @@ final public class FeatureAccessUtils {
     public static boolean canDeleteCurrentCase() {
         return currentCaseIsSingleUserCase() || multiUserCaseRestrictionsFileAbsent();
     }
+        
+    /**
+     * Indicates whether or not a user can add hash sets to the central
+     * repository.
+     *
+     * @return True or false.
+     */
+    public static boolean canAddHashSetsToCentralRepo() {
+        return multiUserCaseRestrictionsFileAbsent();
+    }
 
     /**
      * Indicates whether or not the current case is a single-user case.
