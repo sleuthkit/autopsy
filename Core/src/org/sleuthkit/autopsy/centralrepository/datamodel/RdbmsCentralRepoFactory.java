@@ -847,7 +847,7 @@ public class RdbmsCentralRepoFactory {
             }
 
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Failed to populate default data in Persona tables."), ex);
+            LOGGER.log(Level.SEVERE, String.format("Failed to populate default data in account_types table."), ex);
             return false;
         }
 

@@ -23,7 +23,7 @@ import java.sql.SQLException;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 
 /**
- * Common interface to upgrade central repository database schema
+ * Common interface to upgrade central repository database schema.
  */
 public interface CentralRepoDbUpgrader {
     
@@ -31,13 +31,11 @@ public interface CentralRepoDbUpgrader {
      * Updates the Central Repository schema using the given open connection.
      * 
      * @param dbSchemaVersion Current schema version.
-     * @param connection Connection to use for upgrade
-     * 
-     * @return New schema version.
+     * @param connection Connection to use for upgrade.
      * 
      * @throws CentralRepoException If there is an error in upgrade.
-     * @throws SQLException in case of any SQL errors.
+     * @throws SQLException If there is any SQL errors.
      */
-    CaseDbSchemaVersionNumber upgradeSchema(CaseDbSchemaVersionNumber dbSchemaVersion, Connection connection) throws CentralRepoException, SQLException;
+    void upgradeSchema(CaseDbSchemaVersionNumber dbSchemaVersion, Connection connection) throws CentralRepoException, SQLException;
     
 }

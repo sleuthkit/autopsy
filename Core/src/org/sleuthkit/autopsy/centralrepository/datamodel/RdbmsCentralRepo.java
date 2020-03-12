@@ -3810,7 +3810,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             }
 
             // Upgrade to 1.4
-            CaseDbSchemaVersionNumber newVer = new CentralRepoDbUpgrader13To14().upgradeSchema(dbSchemaVersion, conn);
+            (new CentralRepoDbUpgrader13To14()).upgradeSchema(dbSchemaVersion, conn);
 
             updateSchemaVersion(conn);
             conn.commit();

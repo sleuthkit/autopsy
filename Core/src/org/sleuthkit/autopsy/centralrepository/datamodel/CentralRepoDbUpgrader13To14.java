@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 public class CentralRepoDbUpgrader13To14 implements CentralRepoDbUpgrader {
 
     @Override
-    public CaseDbSchemaVersionNumber upgradeSchema(CaseDbSchemaVersionNumber dbSchemaVersion, Connection connection) throws CentralRepoException, SQLException {
+    public void upgradeSchema(CaseDbSchemaVersionNumber dbSchemaVersion, Connection connection) throws CentralRepoException, SQLException {
 
         if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 4)) < 0) {
 
@@ -68,6 +68,8 @@ public class CentralRepoDbUpgrader13To14 implements CentralRepoDbUpgrader {
                         statement.execute(sqlStr);
 
                         // SQLite does NOT allow adding a constraint with Alter Table statement.
+                        // The alternative would be to create new tables, copy all data over, and delete old tables - potentially a time consuming process. 
+                        // We decided to not add this constraint for SQLite, since there likely aren't many users using SQLite based Central Repo.
                         if (selectedPlatform == CentralRepoPlatforms.POSTGRESQL) {
                             sqlStr = String.format(getAlterArtifactInstancesAddAccountIdConstraintTemplate(), instance_type_dbname);
                             statement.execute(sqlStr);
@@ -75,12 +77,11 @@ public class CentralRepoDbUpgrader13To14 implements CentralRepoDbUpgrader {
                     }
                 }
 
-                // insert default data
+                // insert default accounts data
                 RdbmsCentralRepoFactory.insertDefaultAccountsTablesContent(connection, selectedPlatform);
             }
         }
 
-        return new CaseDbSchemaVersionNumber(1, 4);
     }
     
     /**
