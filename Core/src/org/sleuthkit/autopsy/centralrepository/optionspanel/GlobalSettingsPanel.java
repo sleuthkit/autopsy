@@ -44,7 +44,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSett
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import java.awt.Component;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * Main settings panel for the Central Repository

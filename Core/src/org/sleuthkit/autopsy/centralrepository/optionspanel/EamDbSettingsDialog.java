@@ -51,7 +51,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
 import org.sleuthkit.autopsy.centralrepository.datamodel.DatabaseTestResult;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
-import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * Configuration dialog for Central Repository database settings.
