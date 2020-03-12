@@ -177,7 +177,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private static void askForCentralRepoDbChoice(Component parent) {
         // disable central repository until user makes choice
         CentralRepoDbUtil.setUseCentralRepo(false);
-        CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
+        CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED, false);
             
         Object[] options = {
             "Use SQLite",
@@ -214,14 +214,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         SwingUtilities.invokeLater(() -> {
             boolean successful = EamDbSettingsDialog.testStatusAndCreate(parent, new CentralRepoDbManager());
             if (successful) {
-                updateDatabase(parent);     
-                // clear any error if there was one
-                CentralRepoDbManager.setDisabledDueToFailure(false);
+                updateDatabase(parent);
             }
             else {
-                CentralRepoDbUtil.setUseCentralRepo(false);
                 // disable central repository due to error
-                CentralRepoDbManager.setDisabledDueToFailure(true);
+                CentralRepoDbManager.disableDueToFailure();
             }
         });
     }
@@ -593,6 +590,16 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private void cbUseCentralRepoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbUseCentralRepoActionPerformed
         //if saved setting is disabled checkbox should be disabled already 
         store();
+        
+        // if moving to using CR, multi-user mode is disabled and selection is multiuser settings, set to disabled
+        if (cbUseCentralRepo.isSelected() &&
+                !CentralRepoDbManager.isPostgresMultiuserAllowed() && 
+                CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER) {
+            
+            CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
+        }
+        
+
         updateDatabase();
         load();
         this.ingestStateUpdated(Case.isCaseOpen());
@@ -638,14 +645,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     @Override
     public void store() { // Click OK or Apply on Options Panel
         CentralRepoDbUtil.setUseCentralRepo(cbUseCentralRepo.isSelected());
-        
-        // if moving to using CR, multi-user mode is disabled and selection is multiuser settings, set to disabled
-        if (cbUseCentralRepo.isSelected() &&
-                !UserPreferences.getIsMultiUserModeEnabled() && 
-                CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER) {
-            
-            CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
-        }
     }
 
     /**

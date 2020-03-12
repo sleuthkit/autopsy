@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
@@ -47,11 +48,30 @@ public class CentralRepoDbManager {
     private static final Object dbChoiceLock = new Object();
     private static final Object disabledDueToFailureLock = new Object();
     
+    
+    
     /**
-     * Save the selected platform to the config file.
+     * This saves the currently selected database choice and clears any disabledDueToFailure flag.
+     * @param choice        the choice to save.
+     * @return              the newly saved choice
      */
     public static CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice) {
+        return saveDbChoice(choice, true);
+    }
+    
+    /**
+     * This saves the currently selected database choice.
+     * @param choice        the choice to save.
+     * @param clearDisabledDueToError   whether or not to clear the 'disabledDueToFailure' settings key.
+     * @return              the newly saved choice
+     */
+    public static CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice, boolean clearDisabledDueToError) {
         synchronized(dbChoiceLock) {
+            // clear disabling due to a failure
+            if (clearDisabledDueToError)
+                setDisabledDueToFailure(false);
+            
+            // change the settings
             CentralRepoDbChoice newChoice = (choice == null) ? CentralRepoDbChoice.DISABLED : choice;
             CentralRepoDbChoice oldChoice = savedChoice;
             savedChoice = newChoice;
@@ -60,6 +80,22 @@ public class CentralRepoDbManager {
             return newChoice;
         }
 
+    }
+    
+    /**
+     * This method indicates whether or not 'PostgreSQL using multi-user settings' is a valid option.
+     * @return true if 'PostgreSQL using multi-user settings' is valid.
+     */
+    public static boolean isPostgresMultiuserAllowed() {
+        // if multi user mode is not enabled, then this cannot be used
+        if (!UserPreferences.getIsMultiUserModeEnabled())
+            return false;
+        
+        // also validate the connection as well
+        PostgresCentralRepoSettings multiUserSettings = 
+            new PostgresCentralRepoSettings(PostgresSettingsLoader.MULTIUSER_SETTINGS_LOADER);
+            
+        return multiUserSettings.testStatus() == DatabaseTestResult.TESTED_OK;
     }
 
          
@@ -78,12 +114,22 @@ public class CentralRepoDbManager {
     }
     
     /**
+     * disable the central repository and indicate through a flag that this was due to a failure during database setup.
+     * this is used when re-enabling multi-user as a flag to determine whether or not CR should be re-enabled.
+     * NOTE: cr is disabled while persisting database choice.
+     */
+    public static void disableDueToFailure() {
+        CentralRepoDbUtil.setUseCentralRepo(false);
+        setDisabledDueToFailure(true);
+    }
+    
+    /**
      * set whether or not the repository has been disabled due to a database setup issue;
      * this is used when re-enabling multi-user as a flag to determine whether or not CR should be re-enabled
      * 
      * @param disabledDueToFailure  whether or not the repository has been disabled due to a database setup issue
      */
-    public static void setDisabledDueToFailure(boolean disabledDueToFailure) {
+    private static void setDisabledDueToFailure(boolean disabledDueToFailure) {
         synchronized(disabledDueToFailureLock) {
             boolean oldValue = isDisabledDueToFailure();
             ModuleSettings.setConfigSetting(CENTRAL_REPOSITORY_SETTINGS_KEY, DISABLED_DUE_TO_FAILURE_KEY, Boolean.toString(disabledDueToFailure));
@@ -243,7 +289,7 @@ public class CentralRepoDbManager {
         } catch (CentralRepoException ex2) {
             logger.log(Level.SEVERE, "Error shutting down central repo connection pool", ex2);
         }
-        saveDbChoice(CentralRepoDbChoice.DISABLED);
+        saveDbChoice(CentralRepoDbChoice.DISABLED, false);
         if (innerException == null) {
             throw new CentralRepoException(message, desc);
         } else {

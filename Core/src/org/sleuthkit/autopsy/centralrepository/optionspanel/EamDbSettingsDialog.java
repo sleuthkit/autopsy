@@ -62,16 +62,11 @@ public class EamDbSettingsDialog extends JDialog {
     private static final Logger logger = Logger.getLogger(EamDbSettingsDialog.class.getName());
     
     private static final long serialVersionUID = 1L;
-    private static final DbChoiceRenderer DB_CHOICE_RENDERER = new DbChoiceRenderer();
-
-    private static boolean isDbChoiceSelectable(CentralRepoDbChoice item) {
-        return (item != CentralRepoDbChoice.POSTGRESQL_MULTIUSER || UserPreferences.getIsMultiUserModeEnabled());
-    }
     
     /**
      * handles displaying and rendering drop down menu for database choices in central repo
      */
-    private static class DbChoiceRenderer extends BasicComboBoxRenderer {
+    private class DbChoiceRenderer extends BasicComboBoxRenderer {
         private static final long serialVersionUID = 1L;
         
         public Component getListCellRendererComponent(JList list, Object value,
@@ -91,10 +86,17 @@ public class EamDbSettingsDialog extends JDialog {
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
     private final CentralRepoDbManager manager = new CentralRepoDbManager();
-
+    private final boolean isMultiUserSelectable = CentralRepoDbManager.isPostgresMultiuserAllowed();
+    private final DbChoiceRenderer DB_CHOICE_RENDERER = new DbChoiceRenderer();
+    
     public EamDbSettingsDialog() {
         this(null);
     }
+    
+    private boolean isDbChoiceSelectable(CentralRepoDbChoice item) {
+        return (item != CentralRepoDbChoice.POSTGRESQL_MULTIUSER || isMultiUserSelectable);
+    }
+    
     
     /**
      * Creates new form EamDbSettingsDialog
