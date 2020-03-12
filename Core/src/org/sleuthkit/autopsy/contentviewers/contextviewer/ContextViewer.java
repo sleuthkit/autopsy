@@ -33,7 +33,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
@@ -62,8 +61,6 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     static {
         SOURCE_CONTEXT_ARTIFACTS.add(TSK_ASSOCIATED_OBJECT);
     }
-
-    private BlackboardArtifact sourceContextArtifact;
 
     /**
      * Creates new form ContextViewer
@@ -318,9 +315,6 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             if (associatedArtifactAttribute != null) {
                 long artifactId = associatedArtifactAttribute.getValueLong();
                 BlackboardArtifact associatedArtifact = artifact.getSleuthkitCase().getBlackboardArtifact(artifactId);
-
-                //save the artifact for "Go to Result" button
-                sourceContextArtifact = associatedArtifact;
 
                 setSourceFields(associatedArtifact);
             }
