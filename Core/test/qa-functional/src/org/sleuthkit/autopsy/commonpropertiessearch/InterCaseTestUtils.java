@@ -58,7 +58,6 @@ import org.sleuthkit.autopsy.modules.dataSourceIntegrity.DataSourceIntegrityModu
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
 import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory;
-import org.sleuthkit.autopsy.modules.iOS.iOSModuleFactory;
 import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.vmextractor.VMExtractorIngestModuleFactory;
@@ -170,7 +169,6 @@ class InterCaseTestUtils {
         this.imageDSProcessor = new ImageDSProcessor();
 
         final IngestModuleTemplate exifTemplate = IngestUtils.getIngestModuleTemplate(new ExifParserModuleFactory());
-        final IngestModuleTemplate iOsTemplate = IngestUtils.getIngestModuleTemplate(new iOSModuleFactory());
         final IngestModuleTemplate embeddedFileExtractorTemplate = IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory());
         final IngestModuleTemplate interestingItemsTemplate = IngestUtils.getIngestModuleTemplate(new InterestingItemsIngestModuleFactory());
         final IngestModuleTemplate mimeTypeLookupTemplate = IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory());
@@ -204,7 +202,6 @@ class InterCaseTestUtils {
         //kitchen sink
         ArrayList<IngestModuleTemplate> kitchenSink = new ArrayList<>();
         kitchenSink.add(exifTemplate);
-        kitchenSink.add(iOsTemplate);
         kitchenSink.add(embeddedFileExtractorTemplate);
         kitchenSink.add(interestingItemsTemplate);
         kitchenSink.add(mimeTypeLookupTemplate);
