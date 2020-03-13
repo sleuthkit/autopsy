@@ -65,7 +65,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     static final String SCHEMA_MINOR_VERSION_KEY = "SCHEMA_MINOR_VERSION";
     static final String CREATION_SCHEMA_MAJOR_VERSION_KEY = "CREATION_SCHEMA_MAJOR_VERSION";
     static final String CREATION_SCHEMA_MINOR_VERSION_KEY = "CREATION_SCHEMA_MINOR_VERSION";
-    static final CaseDbSchemaVersionNumber SOFTWARE_CR_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 3);
+    static final CaseDbSchemaVersionNumber SOFTWARE_CR_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 4);
 
     protected final List<CorrelationAttributeInstance.Type> defaultCorrelationTypes;
 
@@ -3553,7 +3553,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             conn = connect(false);
             conn.setAutoCommit(false);
             statement = conn.createStatement();
-            selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
+            selectedPlatform = CentralRepoDbManager.getSavedDbChoice().getDbPlatform();
             int minorVersion = 0;
             String minorVersionStr = null;
             resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + RdbmsCentralRepo.SCHEMA_MINOR_VERSION_KEY + "'");
@@ -3808,6 +3808,10 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                         throw new CentralRepoException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.", Bundle.AbstractSqlEamDb_cannotUpgrage_message(selectedPlatform.name()));
                 }
             }
+
+            // Upgrade to 1.4
+            (new CentralRepoDbUpgrader13To14()).upgradeSchema(dbSchemaVersion, conn);
+
             updateSchemaVersion(conn);
             conn.commit();
             logger.log(Level.INFO, String.format("Central Repository schema updated to version %s", SOFTWARE_CR_DB_SCHEMA_VERSION));
