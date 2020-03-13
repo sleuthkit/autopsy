@@ -74,6 +74,25 @@ final public class FeatureAccessUtils {
     }
 
     /**
+     * Indicates whether or not a user can delete the current case.
+     *
+     * @return True or false.
+     */
+    public static boolean canDeleteCurrentCase() {
+        return currentCaseIsSingleUserCase() || multiUserCaseRestrictionsFileAbsent();
+    }
+        
+    /**
+     * Indicates whether or not a user can add hash sets to the central
+     * repository.
+     *
+     * @return True or false.
+     */
+    public static boolean canAddHashSetsToCentralRepo() {
+        return multiUserCaseRestrictionsFileAbsent();
+    }
+
+    /**
      * Indicates whether or not the current case is a single-user case.
      *
      * @return True or false.
@@ -83,12 +102,12 @@ final public class FeatureAccessUtils {
     }
 
     /**
-     * Indicates whether or not the current user is allowed to create or modify
-     * (add or delete data sources) multi-user cases.
+     * Indicates whether or not the multi-user case privileges restriction file
+     * is absent.
      *
      * @return True or false.
      */
-    public static boolean multiUserCaseRestrictionsFileAbsent() {
+    private static boolean multiUserCaseRestrictionsFileAbsent() {
         File accessLimitingFile = new File(MULTIUSER_CASE_RESTRICTED_FILE_PATH);
         return !accessLimitingFile.exists();
     }

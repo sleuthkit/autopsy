@@ -168,3 +168,7 @@ MediaPlayerPanel.playBackSpeedLabel.text=Speed:
 SQLiteViewer.readTable.errorText=Error getting rows for table: {0}
 # {0} - tableName
 SQLiteViewer.selectTable.errorText=Error getting row count for table: {0}
+TextTranslatableComponent.setPanelContent.onSetContentError=Unable to display text at this time.
+TextTranslatableComponent.setTranslated.onTranslateError=Unable to translate text at this time.
+TranslatablePanel.comboBoxOption.originalText=Original Text
+TranslatablePanel.comboBoxOption.translatedText=Translated Text
