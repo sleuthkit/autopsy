@@ -35,6 +35,8 @@ import org.sleuthkit.datamodel.Account;
  * Tests the Account APIs on the Central Repository.
  */
 public class CentralRepoAccountsTest extends TestCase {
+    
+    private final Path testDirectory = Paths.get(System.getProperty("java.io.tmpdir"), "CentralRepoDatamodelTest");
 
     // NbModuleSuite requires these tests use Junit 3.8
     // Extension of the TestCase class is how tests were defined and used
@@ -50,14 +52,9 @@ public class CentralRepoAccountsTest extends TestCase {
     // tests defined in this class are run.
     @Override
     public void setUp() throws CentralRepoException, IOException {
-        final Path testDirectory = Paths.get(System.getProperty("java.io.tmpdir"), "CentralRepoDatamodelTest");
-
-        // Delete the test directory, if it exists
+        // Tear down the previous run, if need be.
         if (Files.exists(testDirectory)) {
-            if (CentralRepository.isEnabled()) {
-                CentralRepository.getInstance().shutdownConnections();
-            }
-            FileUtils.deleteDirectory(testDirectory.toFile());
+            tearDown();
         }
 
         // Create the test directory
@@ -88,6 +85,17 @@ public class CentralRepoAccountsTest extends TestCase {
         if (!Files.exists(crDbFilePath)) {
             Assert.fail("Failed to create central repo database, should be located at + " + crDbFilePath);
         }
+    }
+    
+    // This function is run after every test, NOT after the entire collection of 
+    // tests defined in the class are run.
+    @Override
+    public void tearDown() throws CentralRepoException, IOException {
+        // Close and delete the test case and central repo db
+        if (CentralRepository.isEnabled()) {
+            CentralRepository.getInstance().shutdownConnections();
+        }
+        FileUtils.deleteDirectory(testDirectory.toFile());
     }
 
     public void testPredefinedAccountTypes() {
