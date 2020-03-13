@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 import org.openide.util.NbBundle.Messages;
 
 /**
- * the database choices available for central repo
+ * This represents a database choices available for central repo.
  */
 @Messages({
     "CentralRepoDbChoice.Disabled.Text=Disabled",
@@ -50,14 +50,26 @@ public enum CentralRepoDbChoice {
         this.platform = platform;
     }
 
+    /**
+     * This is the value of this setting when saved to central repo properties.
+     * @return      The value associated with this choice.
+     */
     public String getSettingKey() {
         return settingKey;
     }
 
+    /**
+     * This is the human-readable title for this choice.
+     * @return  The human-readable title for this choice.
+     */
     public String getTitle() {
         return title;
     }
 
+    /**
+     * This represents the database type (i.e. Postgres, SQLite) associated with this choice.
+     * @return  The database type associated with this choice.
+     */
     public CentralRepoPlatforms getDbPlatform() {
         return platform;
     }

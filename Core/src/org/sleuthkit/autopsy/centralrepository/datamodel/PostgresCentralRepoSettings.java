@@ -55,13 +55,17 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbConnectiv
             throw new CentralRepoException("cannot load or save postgres settings for selection: " + choice);
     }
     
+    /**
+     * This method loads the settings with a custom {@link PostgresSettingsLoader PostgresSettingsLoader} object.
+     * @param loader    The loader to be used.
+     */
     public PostgresCentralRepoSettings(PostgresSettingsLoader loader) {
         this.loader = loader;
         loadSettings();
     }
     
     /**
-     * default constructor that loads settings from selected db choice 
+     * This is the default constructor that loads settings from selected db choice.
      */
     public PostgresCentralRepoSettings() throws CentralRepoException {
         this(getLoaderFromSaved());

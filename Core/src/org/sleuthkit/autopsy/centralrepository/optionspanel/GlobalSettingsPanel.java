@@ -90,11 +90,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }
     
     /**
-     * invokes central repository database choice selection as well as input for necessary configuration
-     * @param parent            the parent component for displaying dialogs
-     * @param initialSelection  if non-null, the menu item will be set to this choice; if null, 
-     *                          the currently selected db choice will be selected
-     * @return                  true if there was a change
+     * This method invokes central repository database choice selection as well as input for necessary configuration.
+     * @param parent            The parent component for displaying dialogs.
+     * @param initialSelection  If non-null, the menu item will be set to this choice; if null, 
+     *                          the currently selected db choice will be selected.
+     * @return                  True if there was a change.
      */
     private static boolean invokeCrChoice(Component parent, CentralRepoDbChoice initialSelection) {
         EamDbSettingsDialog dialog = (initialSelection != null) ? 
@@ -111,13 +111,13 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     
     
     /**
-     * when multi user settings are updated, this function triggers pertinent updates for central repository
-     * NOTE: if multi user settings were previously enabled and multi user settings are currently selected, this function assumes
-     *       there is a change in the postgres connectivity
+     * When multi user settings are updated, this function triggers pertinent updates for central repository.
+     * NOTE: If multi user settings were previously enabled and multi user settings are currently selected, this function assumes
+     *       there is a change in the postgres connectivity.
      * 
-     * @param parent                the swing component that serves as a parent for dialogs that may arise
-     * @param muPreviouslySelected  if multi user settings were previously enabled
-     * @param muCurrentlySelected   if multi user settings are currently enabled as of most recent change
+     * @param parent                The swing component that serves as a parent for dialogs that may arise.
+     * @param muPreviouslySelected  If multi user settings were previously enabled.
+     * @param muCurrentlySelected   If multi user settings are currently enabled as of most recent change.
      */
     @NbBundle.Messages({
         "GlobalSettingsPanel.onMultiUserChange.enable.title=Use with Central Repository?",
@@ -165,8 +165,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     
     /**
-     * when a user must select a new database other than using database from multi user settings
-     * @param parent    the parent component to use for displaying dialogs in reference
+     * This method is called when a user must select a new database other than using database from multi user settings.
+     * @param parent    The parent component to use for displaying dialogs in reference.
      */
     @NbBundle.Messages({
         "GlobalSettingsPanel.onMultiUserChange.disabledMu.title=Central Repository Change Necessary",
@@ -647,9 +647,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }
 
     /**
-     * Validates that the dialog/panel is filled out correctly for our usage.
+     * This method validates that the dialog/panel is filled out correctly for our usage.
      *
-     * @return true if it's okay, false otherwise.
+     * @return True if it is okay, false otherwise.
      */
     public boolean valid() {
         return !cbUseCentralRepo.isSelected() || !lbDbPlatformValue.getText().equals(CentralRepoDbChoice.DISABLED.toString());

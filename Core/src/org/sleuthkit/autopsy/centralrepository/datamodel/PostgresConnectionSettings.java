@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 
 /**
  *
- * POJO for postgres settings
+ * This class is a POJO for postgres settings to be used with central repository.
  */
 public class PostgresConnectionSettings {
     private final static String DB_NAMES_REGEX = "[a-z][a-z0-9_]*"; // only lower case
@@ -57,33 +57,58 @@ public class PostgresConnectionSettings {
     private String userName = DEFAULT_USERNAME;
     private String password = DEFAULT_PASSWORD;
 
-    
+    /**
+     * This method retrieves the postgres host.
+     * @return  The host for these settings.
+     */
     public String getHost() {
         return host;
     }
 
+    /**
+     * This method returns the port number for these settings.
+     * @return  The port number for these settings.
+     */
     public int getPort() {
         return port;
     }
 
+    /**
+     * This method returns the database name for these settings.
+     * @return  The database name for these settings.
+     */
     public String getDbName() {
         return dbName;
     }
 
+    /**
+     * This method returns the bulk threshold.
+     * @return      The bulk threshold.
+     */
     public int getBulkThreshold() {
         return bulkThreshold;
     }
 
+    /**
+     * This method returns the username to use for this connection.
+     * @return      The username to use.
+     */
     public String getUserName() {
         return userName;
     }
 
+    /**
+     * This method returns the password to use for this connection.
+     * @return      The password to use for this connection.
+     */
     public String getPassword() {
         return password;
     }
     
  
     /**
+     * This method sets the host for this connection.
+     * NOTE: must be non-empty string.
      * @param host the host to set
      */
     public void setHost(String host) throws CentralRepoException {
@@ -93,7 +118,8 @@ public class PostgresConnectionSettings {
 
 
     /**
-     * @param port the port to set (must be [1,65535])
+     * This method sets the port for this connection.
+     * @param port  The port to set (must be [1,65535]).
      */
     public void setPort(int port) throws CentralRepoException {
         validateNum(port, 1, 65535, "Invalid port. Must be a number greater than 0.");
@@ -102,7 +128,9 @@ public class PostgresConnectionSettings {
 
 
     /**
-     * @param dbName the dbName to set 
+     * This methods sets the name of the database.
+     * NOTE: this name needs to be a valid postgres database name.
+     * @param dbName The database name.
      */
     public void setDbName(String dbName) throws CentralRepoException {
         validateStr(dbName, "Invalid database name. Cannot be empty."); // NON-NLS
@@ -114,7 +142,8 @@ public class PostgresConnectionSettings {
 
     
     /**
-     * @param bulkThreshold the bulkThreshold to set (must be greater than 0)
+     * This method sets the bulk threshold of this connection.
+     * @param bulkThreshold     The bulk threshold to set (must be greater than 0).
      */
     public void setBulkThreshold(int bulkThreshold) throws CentralRepoException {
         validateNum(bulkThreshold, 1, null, "Invalid bulk threshold.");
@@ -123,7 +152,9 @@ public class PostgresConnectionSettings {
 
     
     /**
-     * @param userName the userName to set
+     * This method sets the username for this connection.
+     * NOTE: must be a valid postgres username.
+     * @param userName  The user name to set.
      */
     public void setUserName(String userName) throws CentralRepoException {
         validateStr(userName, "Invalid user name. Cannot be empty."); // NON-NLS
@@ -135,7 +166,8 @@ public class PostgresConnectionSettings {
 
     
     /**
-     * @param password the password to set
+     * This method sets the password for this connection.
+     * @param password  The password to set.
      */
     public void setPassword(String password) throws CentralRepoException {
         validateStr(password, "Invalid user password. Cannot be empty.");

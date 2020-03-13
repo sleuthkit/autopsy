@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.coreutils.TextConverterException;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 
 /**
- * handles saving and loading of postgres settings for central repo
+ * This class handles saving and loading of postgres settings for central repository.
  */
 public class CentralRepoPostgresSettingsUtil {
     private final static Logger LOGGER = Logger.getLogger(CentralRepoPostgresSettingsUtil.class.getName());
@@ -50,6 +50,10 @@ public class CentralRepoPostgresSettingsUtil {
 
     private static CentralRepoPostgresSettingsUtil instance = null;
     
+    /**
+     * This method retrieves a singleton instance of this class.
+     * @return      The singleton instance of this class.
+     */
     public static synchronized CentralRepoPostgresSettingsUtil getInstance() {
         if (instance == null)
             instance = new CentralRepoPostgresSettingsUtil();
@@ -69,13 +73,18 @@ public class CentralRepoPostgresSettingsUtil {
     }
     
     /**
-     * an action that potentially throws an exception
+     * This interface represents an action that potentially throws an exception.
      */
     private interface TryHandler {
         void operation() throws CentralRepoException, NumberFormatException;
     }
     
-    
+    /**
+     * This method loads multi-user settings to be used as a postgres connection to central repository.  If
+     * settings could not be loaded, default values will be returned.
+     * 
+     * @return      The settings loaded from multi-user settings.
+     */
     public PostgresConnectionSettings loadMultiUserSettings() {
         PostgresConnectionSettings settings = new PostgresConnectionSettings();
         
@@ -100,6 +109,12 @@ public class CentralRepoPostgresSettingsUtil {
     }
     
     
+    /**
+     * This method loads the custom postgres settings for central repository.  If
+     * settings could not be loaded, default values will be returned.
+     * 
+     * @return      The settings loaded from custom postgres settings.
+     */
     public PostgresConnectionSettings loadCustomSettings() {
         PostgresConnectionSettings settings = new PostgresConnectionSettings();
         Map<String, String> keyVals = ModuleSettings.getConfigSettings(MODULE_KEY);
@@ -126,6 +141,10 @@ public class CentralRepoPostgresSettingsUtil {
         return settings;
     }
 
+    /**
+     * This method saves the settings for a custom postgres central repository connection.
+     * @param settings      The settings to save.
+     */
     public void saveCustomSettings(PostgresConnectionSettings settings) {
         Map<String, String> map = new HashMap<String, String>();
         map.put(HOST_KEY, settings.getHost());
@@ -143,9 +162,9 @@ public class CentralRepoPostgresSettingsUtil {
     }
 
     /**
-     * checks if saved settings differ from the in-memory object provided in the 'settings' parameter
-     * @param settings  the in-memory object
-     * @return  whether or not settings parameter differs from saved custom settings
+     * This method checks if saved settings differ from the in-memory object provided in the 'settings' parameter.
+     * @param settings  The in-memory object.
+     * @return  Whether or not settings parameter differs from saved custom settings.
      */
     public boolean areCustomSettingsChanged(PostgresConnectionSettings settings) {
         PostgresConnectionSettings saved = loadCustomSettings();

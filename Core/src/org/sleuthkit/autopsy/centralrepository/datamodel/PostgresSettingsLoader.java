@@ -19,10 +19,19 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 /**
- * interface to load or save postgres settings
+ * This is an interface to load or save postgres settings.
  */
 public interface PostgresSettingsLoader {
+    /**
+     * This method loads the current settings.
+     * @return      The settings that were loaded.
+     */
     PostgresConnectionSettings loadSettings();
+
+    /**
+     * This method saves the current settings.
+     * @param settings      The settings to save.
+     */
     void saveSettings(PostgresConnectionSettings settings);
     
     PostgresSettingsLoader CUSTOM_SETTINGS_LOADER = new Custom();
@@ -31,7 +40,7 @@ public interface PostgresSettingsLoader {
 
     
     /**
-     * loads and saves custom postgres settings
+     * This class loads and saves custom postgres settings.
      */
     class Custom implements PostgresSettingsLoader {
         @Override
@@ -47,8 +56,8 @@ public interface PostgresSettingsLoader {
     
     
     /**
-     * loads multi user postgres settings to be used with central repo
-     * NOTE: does not save settings on save operation as this is merely a proxy
+     * This class loads multi-user postgres settings to be used with central repo.
+     * NOTE: This class does not save settings on save operation as this is merely a proxy.
      */
     class MultiUser implements PostgresSettingsLoader {
 
@@ -58,9 +67,9 @@ public interface PostgresSettingsLoader {
         }
 
         /**
-         * NOTE: this action does not do anything.  There is no need to save since
+         * NOTE: This action does not do anything.  There is no need to save since
          * this is just a proxy to multi user settings.
-         * @param settings  the settings to save
+         * @param settings  The settings to save.
          */
         @Override
         public void saveSettings(PostgresConnectionSettings settings) {}

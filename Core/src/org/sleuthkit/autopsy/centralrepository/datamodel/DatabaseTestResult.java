@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 /**
- * provides the status of the database after attempting to validate central repo settings
+ * This enum provides the status of the database after attempting to validate central repo settings.
  */
 public enum DatabaseTestResult {
     UNTESTED,

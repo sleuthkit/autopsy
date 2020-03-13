@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
- * Contains business logic for saving and validating settings for central repo
+ * This class contains business logic for saving and validating settings for central repository.
  */
 public class CentralRepoDbManager {
 
@@ -52,8 +52,8 @@ public class CentralRepoDbManager {
     
     /**
      * This saves the currently selected database choice and clears any disabledDueToFailure flag.
-     * @param choice        the choice to save.
-     * @return              the newly saved choice
+     * @param choice        The choice to save.
+     * @return              The newly saved choice.
      */
     public static CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice) {
         return saveDbChoice(choice, true);
@@ -61,9 +61,9 @@ public class CentralRepoDbManager {
     
     /**
      * This saves the currently selected database choice.
-     * @param choice        the choice to save.
-     * @param clearDisabledDueToError   whether or not to clear the 'disabledDueToFailure' settings key.
-     * @return              the newly saved choice
+     * @param choice        The choice to save.
+     * @param clearDisabledDueToError   Whether or not to clear the 'disabledDueToFailure' settings key.
+     * @return              The newly saved choice.
      */
     public static CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice, boolean clearDisabledDueToError) {
         synchronized(dbChoiceLock) {
@@ -84,7 +84,7 @@ public class CentralRepoDbManager {
     
     /**
      * This method indicates whether or not 'PostgreSQL using multi-user settings' is a valid option.
-     * @return true if 'PostgreSQL using multi-user settings' is valid.
+     * @return  True if 'PostgreSQL using multi-user settings' is valid.
      */
     public static boolean isPostgresMultiuserAllowed() {
         // if multi user mode is not enabled, then this cannot be used
@@ -100,7 +100,7 @@ public class CentralRepoDbManager {
 
          
     /**
-     * Load the selectedPlatform boolean from the config file, if it is set.
+     * This method loads the selectedPlatform boolean from the config file if it is set.
      */
     public static CentralRepoDbChoice getSavedDbChoice() {
         synchronized(dbChoiceLock) {
@@ -114,9 +114,8 @@ public class CentralRepoDbManager {
     }
     
     /**
-     * disable the central repository and indicate through a flag that this was due to a failure during database setup.
-     * this is used when re-enabling multi-user as a flag to determine whether or not CR should be re-enabled.
-     * NOTE: cr is disabled while persisting database choice.
+     * This method disables the central repository and indicates through a flag that this was due to a failure during database setup.
+     * This is used when re-enabling multi-user as a flag to determine whether or not CR should be re-enabled.
      */
     public static void disableDueToFailure() {
         CentralRepoDbUtil.setUseCentralRepo(false);
@@ -124,10 +123,10 @@ public class CentralRepoDbManager {
     }
     
     /**
-     * set whether or not the repository has been disabled due to a database setup issue;
-     * this is used when re-enabling multi-user as a flag to determine whether or not CR should be re-enabled
+     * This method sets whether or not the repository has been disabled due to a database setup issue;
+     * This is used when re-enabling multi-user as a flag to determine whether or not CR should be re-enabled.
      * 
-     * @param disabledDueToFailure  whether or not the repository has been disabled due to a database setup issue
+     * @param disabledDueToFailure  Whether or not the repository has been disabled due to a database setup issue.
      */
     private static void setDisabledDueToFailure(boolean disabledDueToFailure) {
         synchronized(disabledDueToFailureLock) {
@@ -138,10 +137,10 @@ public class CentralRepoDbManager {
     }
 
     /**
-     * retrieves setting whether or not the repository has been disabled due to a database setup issue;
-     * this is used when re-enabling multi-user as a flag to determine whether or not CR should be re-enabled
+     * This method retrieves setting whether or not the repository has been disabled due to a database setup issue;
+     * this is used when re-enabling multi-user as a flag to determine whether or not CR should be re-enabled.
      * 
-     * @return whether or not the repository has been disabled due to a database setup issue
+     * @return  Whether or not the repository has been disabled due to a database setup issue.
      */
     public static boolean isDisabledDueToFailure() {
         synchronized(disabledDueToFailureLock) {
@@ -150,18 +149,18 @@ public class CentralRepoDbManager {
     }
 
     /**
-     * adds a property change listener
-     * NOTE: currently only listening for changes in currently saved db choice
+     * This method adds a property change listener.
+     * NOTE: currently only listening for changes in currently saved db choice and disabling due to failure.
      * 
-     * @param listener  the listener for the event
+     * @param listener      The listener for the event.
      */
     public static void addPropertyChangeListener(PropertyChangeListener listener) {
          propertyChangeSupport.addPropertyChangeListener(listener);
      }
 
     /**
-     * removes a propert change listener 
-     * @param listener  the listener to remove
+     * This method removes a propert change listener.
+     * @param listener  The listener to remove.
      */
      public static void removePropertyChangeListener(PropertyChangeListener listener) {
          propertyChangeSupport.removePropertyChangeListener(listener);
@@ -182,9 +181,9 @@ public class CentralRepoDbManager {
 
     
     /**
-     * obtains the database connectivity for central repository
+     * This method obtains the database connectivity for central repository.
      *
-     * @return the CentralRepository object to connect to
+     * @return The CentralRepository object that will be used for connection.
      * @throws CentralRepoException
      */
     private static CentralRepository obtainCentralRepository() throws CentralRepoException {
@@ -202,10 +201,10 @@ public class CentralRepoDbManager {
     }
 
     /**
-     * obtains central repository lock
+     * This method obtains a central repository lock.
      *
-     * @param db the database connection
-     * @return the lock if acquired
+     * @param db    The database connection.
+     * @return      The lock if acquired.
      * @throws CentralRepoException
      */
     private static CoordinationService.Lock obtainCentralRepoLock(CentralRepository db) throws CentralRepoException {
@@ -226,10 +225,10 @@ public class CentralRepoDbManager {
     }
 
     /**
-     * updates central repository schema if necessary
+     * This method updates the central repository schema if necessary.
      *
-     * @param db the database connectivity
-     * @param lock the acquired lock
+     * @param db    The database connectivity object.
+     * @param lock  The acquired lock.
      * @throws CentralRepoException
      */
     private static void updatedDbSchema(CentralRepository db, CoordinationService.Lock lock) throws CentralRepoException {
@@ -258,7 +257,7 @@ public class CentralRepoDbManager {
     }
 
     /**
-     * Upgrade the current Central Reposity schema to the newest version. If the
+     * This method upgrades the current Central Reposity schema to the newest version. If the
      * upgrade fails, the Central Repository will be disabled and the current
      * settings will be cleared.
      */
@@ -316,21 +315,33 @@ public class CentralRepoDbManager {
     }
 
     
+    /**
+     * This method retrieves the current multi-user database settings.
+     * @return  The current multi-user database settings.
+     */
     public PostgresCentralRepoSettings getDbSettingsMultiUser() {
         return dbSettingsMultiUser;
     }
 
+    /**
+     * This method retrieves the current custom postgres database settings.
+     * @return      The current custom postgres database settings.
+     */
     public PostgresCentralRepoSettings getDbSettingsPostgres() {
         return dbSettingsPostgres;
     }
 
+    /**
+     * This method returns the current SQLite database settings for central repository.
+     * @return      The current SQLite database settings
+     */
     public SqliteCentralRepoSettings getDbSettingsSqlite() {
         return dbSettingsSqlite;
     }
 
     /**
-     * setup sqlite db with default settings
-     * @throws CentralRepoException     if unable to successfully set up database
+     * This method sets up the sqlite database with default settings.
+     * @throws CentralRepoException     if unable to successfully set up database.
      */
     public void setupDefaultSqliteDb() throws CentralRepoException {
         // change in-memory settings to default sqlite
@@ -355,11 +366,11 @@ public class CentralRepoDbManager {
     }
 
     /**
-     * Returns if changes to the central repository configuration were
-     * successfully applied
+     * This method returns if changes to the central repository configuration were
+     * successfully applied.
      *
-     * @return true if the database configuration was successfully changed false
-     * if it was not
+     * @return  Returns true if the database configuration was successfully changed false
+     * if it was not.
      */
     public boolean wasConfigurationChanged() {
         return configurationChanged;
@@ -392,9 +403,9 @@ public class CentralRepoDbManager {
     }
 
     /**
-     * create central repo database if it does not already exist
-     * @return      true if successful; false if unsuccessful
-     * @throws CentralRepoException     if 
+     * This method creates a central repo database if it does not already exist.
+     * @return      True if successful; false if unsuccessful.
+     * @throws CentralRepoException
      */
     public boolean createDb() throws CentralRepoException {
         CentralRepoDbConnectivityManager selectedDbSettings = getSelectedSettings();
@@ -434,7 +445,7 @@ public class CentralRepoDbManager {
     }
 
     /**
-     * saves a new central repository based on current settings
+     * This method saves a new central repository based on current settings.
      */
     @NbBundle.Messages({"CentralRepoDbManager.connectionErrorMsg.text=Failed to connect to central repository database."})
     public void saveNewCentralRepo() throws CentralRepoException {
@@ -481,27 +492,45 @@ public class CentralRepoDbManager {
         }
     }
 
+    /**
+     * This method retrieves the current status.  
+     * Note: this could be a dirty value if testing of the connection has not been performed.
+     * @return      The current status of the database connection.
+     */
     public DatabaseTestResult getStatus() {
         return testingStatus;
     }
 
+    /**
+     * This method retrieves the currently selected database choice.
+     * NOTE: This choice may not align with the saved setting.
+     * @return      The currently selected database choice.
+     */
     public CentralRepoDbChoice getSelectedDbChoice() {
         return selectedDbChoice;
     }
 
+    /**
+     * This method clears the current database testing status.
+     */
     public void clearStatus() {
         testingStatus = DatabaseTestResult.UNTESTED;
     }
 
+    /**
+     * This method sets the currently selected database choice and sets the testing status to untested.
+     * @param newSelected       The new database choice.
+     */
     public void setSelctedDbChoice(CentralRepoDbChoice newSelected) {
         selectedDbChoice = newSelected;
         testingStatus = DatabaseTestResult.UNTESTED;
     }
 
     /**
-     * Tests whether or not the database settings are valid.
+     * This method tests whether or not the settings have been filled in for the UI.
+     * NOTE: This does not check the connectivity status of these settings.
      *
-     * @return True or false.
+     * @return True if database settings are valid.
      */
     public boolean testDatabaseSettingsAreValid(
             String tbDbHostname, String tbDbPort, String tbDbUsername, String tfDatabasePath, String jpDbPassword) throws CentralRepoException, NumberFormatException {
@@ -525,6 +554,10 @@ public class CentralRepoDbManager {
         return true;
     }
 
+    /**
+     * This method tests the current database settings to see if a valid connection can be made.
+     * @return      The result of testing the connection.
+     */
     public DatabaseTestResult testStatus() {
         try {
             CentralRepoDbConnectivityManager manager = getSelectedSettings();

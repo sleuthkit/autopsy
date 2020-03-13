@@ -19,40 +19,58 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 /**
- * common interface for settings pertaining to the database in central repository
+ * This class is a common interface for settings pertaining to the database in central repository.
  */
 public interface CentralRepoDbConnectivityManager {
+    /**
+     * This method loads the current settings for this connection.
+     */
     void loadSettings();
     
+    /**
+     * This method saves the altered settings to disk.
+     */
     void saveSettings();
         
+    /**
+     * This method will create a central repository database if necessary.
+     * @return      Whether or not the operation was successful.
+     */
     boolean createDatabase();
 
+    /**
+     * This method deletes a central repository database (used for deleting a corrupted database).
+     * @return      Whether or not the operation was successful.
+     */
     boolean deleteDatabase();
 
     /**
-     * Use the current settings and the validation query to test the connection
+     * This method uses the current settings and the validation query to test the connection
      * to the database.
      *
-     * @return true if successfull connection, else false.
+     * @return True if successfull connection, else false.
      */
     boolean verifyConnection();
 
     /**
-     * Check to see if the database exists.
+     * This method checks to see if the database exists.
      *
-     * @return true if exists, else false
+     * @return True if exists, else false.
      */
     boolean verifyDatabaseExists();
 
     /**
-     * Use the current settings and the schema version query to test the
+     * This method is uses the current settings and the schema version query to test the
      * database schema.
      *
-     * @return true if successful connection, else false.
+     * @return True if successful connection, else false.
      */
     boolean verifyDatabaseSchema();
     
+    /**
+     * This method tests the connectivity status of this connection and returns the testing result.
+     * @return      The result of testing the database connectivity status.
+     */
     DatabaseTestResult testStatus();
     
 }

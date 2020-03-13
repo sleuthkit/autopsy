@@ -63,7 +63,7 @@ public class EamDbSettingsDialog extends JDialog {
     private static final long serialVersionUID = 1L;
     
     /**
-     * handles displaying and rendering drop down menu for database choices in central repo
+     * This class handles displaying and rendering drop down menu for database choices in central repo.
      */
     private class DbChoiceRenderer extends BasicComboBoxRenderer {
         private static final long serialVersionUID = 1L;
@@ -154,10 +154,10 @@ public class EamDbSettingsDialog extends JDialog {
     
     
      /**
-     * prompts user based on testing status (i.e. failure to connect, invalid schema, db does not exist, etc.)
-     * @param manager   the manager to use when setting up the database
-     * @param dialog    if non-null value, validates settings and updates 'okay' button enabled state
-     * @return whether or not the ultimate status after prompts is okay to continue
+     * This method prompts user based on testing status (i.e. failure to connect, invalid schema, db does not exist, etc.).
+     * @param manager   The manager to use when setting up the database.
+     * @param dialog    If non-null value, validates settings and updates 'okay' button enabled state.
+     * @return          Whether or not the ultimate status after prompts is okay to continue.
      */
     @NbBundle.Messages({"EamDbSettingsDialog.okButton.corruptDatabaseExists.title=Error Loading Database",
         "EamDbSettingsDialog.okButton.corruptDatabaseExists.message=Database exists but is not the right format. Manually delete it or choose a different path (if applicable).",
@@ -194,9 +194,9 @@ public class EamDbSettingsDialog extends JDialog {
     }   
 
     /**
-     * when a new database needs to be created on user selecting cr, this code will be ran when user selects create cr
-     * @param manager       the manager handling the database creation
-     * @param dialog        the dialog that prompted database creation
+     * When a new database needs to be created on user selecting cr, this code will be ran when user selects create cr.
+     * @param manager       The manager handling the database creation.
+     * @param dialog        The dialog that prompted database creation.
      */
     private static void onUserPromptCreateDb(CentralRepoDbManager manager, EamDbSettingsDialog dialog) {
         try {
@@ -210,8 +210,8 @@ public class EamDbSettingsDialog extends JDialog {
 
     
     /**
-     * when an error occurs while going through promptTestStatusWarning, this method is called
-     * @param manager1          the manager to use as service class
+     * When an error occurs while going through promptTestStatusWarning, this method is called.
+     * @param manager1          The manager to use as service class.
      * @throws HeadlessException 
      */
     private static void onPromptStatusError(CentralRepoDbManager manager1) {
@@ -526,11 +526,11 @@ public class EamDbSettingsDialog extends JDialog {
     }//GEN-LAST:event_bnOkActionPerformed
 
     
-        /**
-     * tests status for central repo db / creation and prompts user accordingly
-     * @param parent        the parent component (the anchor for displaying dialogs)
-     * @param manager       the central repo db manager with settings to be tested and saved
-     * @return              whether or not central repo db was successfully be created or found
+    /**
+     * This method tests status for central repo db / creation and prompts user accordingly.
+     * @param parent        The parent component (the anchor for displaying dialogs).
+     * @param manager       The central repo db manager with settings to be tested and saved.
+     * @return              Whether or not central repo db was successfully be created or found.
      */
     public static boolean testStatusAndCreate(Component parent, CentralRepoDbManager manager) {
         return testStatusAndCreate(parent, manager, null);
@@ -538,11 +538,11 @@ public class EamDbSettingsDialog extends JDialog {
     
     
     /**
-     * tests status for central repo db / creation and prompts user accordingly
-     * @param parent        the parent component (the anchor for displaying dialogs)
-     * @param manager       the central repo db manager with settings to be tested and saved
-     * @param dialog        the db settings dialog; if non-null, will validate okay button state
-     * @return              whether or not central repo db was successfully be created or found
+     * This method tests status for central repo db / creation and prompts user accordingly.
+     * @param parent        The parent component (the anchor for displaying dialogs).
+     * @param manager       The central repo db manager with settings to be tested and saved.
+     * @param dialog        The db settings dialog; if non-null, will validate okay button state.
+     * @return              Whether or not central repo db was successfully be created or found.
      */
     private static boolean testStatusAndCreate(Component parent, CentralRepoDbManager manager, EamDbSettingsDialog dialog) {
         parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -577,11 +577,11 @@ public class EamDbSettingsDialog extends JDialog {
     }
     
     /**
-     * Returns if changes to the central repository configuration were
-     * successfully applied
+     * This method returns if changes to the central repository configuration were
+     * successfully applied.
      *
-     * @return true if the database configuration was successfully changed false
-     * if it was not
+     * @return True if the database configuration was successfully changed; false
+     * if it was not.
      */
     public boolean wasConfigurationChanged() {
         return manager.wasConfigurationChanged();
