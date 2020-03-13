@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.BoxLayout;
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
@@ -68,6 +69,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     public ContextViewer() {
 
         initComponents();
+        jScrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_AS_NEEDED);
     }
 
     /**
@@ -80,11 +82,11 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private void initComponents() {
 
         jSourcePanel = new javax.swing.JPanel();
-        jSourceLabel = new javax.swing.JLabel();
+        javax.swing.JLabel jSourceLabel = new javax.swing.JLabel();
         jUsagePanel = new javax.swing.JPanel();
-        jUsageLabel = new javax.swing.JLabel();
+        javax.swing.JLabel jUsageLabel = new javax.swing.JLabel();
         jUnknownPanel = new javax.swing.JPanel();
-        jUnknownLabel = new javax.swing.JLabel();
+        javax.swing.JLabel jUnknownLabel = new javax.swing.JLabel();
         jScrollPane = new javax.swing.JScrollPane();
 
         jSourcePanel.setBackground(javax.swing.UIManager.getDefaults().getColor("window"));
@@ -498,11 +500,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane jScrollPane;
-    private javax.swing.JLabel jSourceLabel;
     private javax.swing.JPanel jSourcePanel;
-    private javax.swing.JLabel jUnknownLabel;
     private javax.swing.JPanel jUnknownPanel;
-    private javax.swing.JLabel jUsageLabel;
     private javax.swing.JPanel jUsagePanel;
     // End of variables declaration//GEN-END:variables
 }
