@@ -207,6 +207,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param artifact The artifact to represent.
      * @param iconPath The path to the icon for the artifact type.
      */
+    @NbBundle.Messages({"# {0} - artifactDisplayName", "BlackboardArtifactNode.displayName.artifact={0} Artifact"})    
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
         super(artifact, createLookup(artifact));
         this.artifact = artifact;
@@ -228,7 +229,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         }
         setName(Long.toString(artifact.getArtifactID()));
-        setDisplayName();
+        setDisplayName(Bundle.BlackboardArtifactNode_displayName_artifact(artifact.getDisplayName()));
         setIconBaseWithExtension(iconPath);
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakAppEventListener);
     }
@@ -264,51 +265,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
             return Lookups.fixed(artifact);
         }
-    }
-
-    /**
-     * Sets the display name for this node.
-     */
-    @NbBundle.Messages({"# {0} - artifactDisplayName", "BlackboardArtifactNode.displayName.artifact={0} Artifact"})
-    private void setDisplayName() {
-        String displayName = ""; //NON-NLS
-
-        /*
-         * If the artifact this node represents is a keyword hit artifact and
-         * the associated artifact can be retreived from the case database, make
-         * the display name the display name of the associated artifact.
-         *
-         * If the artifact this node represents is an interesting artifact hit
-         * and the associated artifact can be retreived from the case database,
-         * make the display name the display name of the artifact this node
-         * represents.
-         */
-        if (artifact != null
-                && (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
-                || artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID())) {
-            try {
-                for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                    if (attribute.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
-                        BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
-                        if (associatedArtifact != null) {
-                            if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
-                                displayName = Bundle.BlackboardArtifactNode_displayName_artifact(artifact.getDisplayName());
-                            } else {
-                                displayName = Bundle.BlackboardArtifactNode_displayName_artifact(associatedArtifact.getDisplayName());
-                            }
-                        }
-                    }
-                }
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, MessageFormat.format("Error getting associated artifact of TSK_KEYWORD_HIT/TSK_INTERESTING_ARTIFACT_HIT artifact (objID={0}))", artifact.getId()), ex); //NON-NLS
-            }
-        }
-
-        if (displayName.isEmpty() && artifact != null) {
-            displayName = artifact.getDisplayName();
-        }
-
-        setDisplayName(displayName);
     }
 
     /**
