@@ -394,7 +394,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public String getSourceName() {
         String name = "";
         if (srcContent != null) {
-            srcContent.getName();
+            name = srcContent.getName();
         }
         return name;
     }
