@@ -268,9 +268,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             /*
              * RC: NPE ALERT!! The decision to return a Lookup without the
              * source content in it has the potential to cause NPEs within this
-             * class and in the UI component clients of this class. The node
-             * constructor should throw. However, that would be an exported
-             * public API change.
+             * class and in the UI component clients of this class. Thsi method
+             * should throw and the node constructor should propagate the
+             * exception. However, that would be an exported public API change.
              */
             return Lookups.fixed(artifact);
         }
