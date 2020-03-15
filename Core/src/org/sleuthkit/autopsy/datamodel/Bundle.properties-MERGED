@@ -78,9 +78,6 @@ BlackboardArtifactNode.createSheet.taggedItem.description=Result or associated f
 BlackboardArtifactNode.createSheet.tags.displayName=Tags
 # {0} - artifactDisplayName
 BlackboardArtifactNode.displayName.artifact={0} Artifact
-BlackboardArtifactNode.getAction.errorTitle=Error getting actions
-BlackboardArtifactNode.getAction.linkedFileMessage=There was a problem getting actions for the selected result.  The 'View File in Timeline' action will not be available.
-BlackboardArtifactNode.getAction.resultErrorMessage=There was a problem getting actions for the selected result.  The 'View Result in Timeline' action will not be available.
 BlackboardArtifactTagNode.createSheet.userName.text=User Name
 BlackboardArtifactTagNode.viewSourceArtifact.text=View Source Result
 Category.five=CAT-5: Non-pertinent
