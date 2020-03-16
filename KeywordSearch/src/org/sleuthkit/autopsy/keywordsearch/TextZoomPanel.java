@@ -3,80 +3,72 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.contentviewers.textcontentviewer;
+package org.sleuthkit.autopsy.keywordsearch;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import org.openide.util.NbBundle;
 
 /**
  * This panel shows current text size and allows for increasing or decreasing font size.
  */
-public class TextZoomPanel extends JPanel {
-    public static final int DEFAULT_SIZE = 12;
-    public static final int FONT_INCREMENT_DELTA = 1;
+class TextZoomPanel extends JPanel {
+    static final int DEFAULT_SIZE = new JLabel().getFont().getSize();
+    private static final int FONT_INCREMENT_DELTA = 1;
     
-    /**
-     * This interface allows for retrieving current text size and setting the new text size 
-     * for a panel.
-     */
-    public interface TextZoomable {
-        /**
-         * Retrieves the font size (in px).
-         * @return  the font size (in px).
-         */
-        int getTextSize();
-        
-        /**
-         * Sets the font size (in px).
-         * @param newSize   the new font size (in px).
-         */
-        void setTextSize(int newSize);
-    }
-    
-    
-    
-    private TextZoomable zoomable;
+    private final ResizableTextPanel zoomable;
     
     /**
      * Creates new form TextZoomPanel.
+     * @param zoomable      the component that will receive text resize events
      */
-    public TextZoomPanel() {
-        initComponents();
-    }
-    
-    
-    /**
-     * Returns the current zoomable object that will receive zoom change events.
-     * @return  The current zoomable object.
-     */
-    public TextZoomable getZoomable() {
-        return zoomable;
-    }
-
-    /**
-     * Sets the current zoomable object that will receive zoom change events.
-     * @param zoomable  The new zoomable object.
-     */
-    public void setZoomable(TextZoomable zoomable) {
+    public TextZoomPanel(ResizableTextPanel zoomable) {
         this.zoomable = zoomable;
+        initComponents();
         updateEnabled();
-        updateSize();
+        setZoomText();
     }
     
-    /**
-     * Updates size displayed to user based on current size;
-     */
-    private void updateSize() {
-        int size = (this.zoomable == null) ? DEFAULT_SIZE : this.zoomable.getTextSize();
-        // TODO update text panel
-    }
+
     
     private void updateEnabled() {
-        boolean shouldEnable = (this.zoomable != null);
-        this.zoomInButton.setEnabled(true);
+        boolean shouldEnable = this.zoomable != null;
+        this.zoomInButton.setEnabled(shouldEnable);
+        this.zoomOutButton.setEnabled(shouldEnable);
+        this.zoomResetButton.setEnabled(shouldEnable);
+        this.zoomTextField.setEnabled(shouldEnable);
+    }
+    
+    private void resetSize() {
+        zoomAbs(DEFAULT_SIZE);
+    }
+    
+    private void zoomAbs(int fontSize) {
+        if (this.zoomable != null) {
+            this.zoomable.setTextSize(fontSize);
+            setZoomText();
+        }
+    }
+    
+    private void setZoomText() {
+        int fontSize = (this.zoomable == null) ? DEFAULT_SIZE : this.zoomable.getTextSize();
+        zoomTextField.setText(fontSize + "pt");
+    }
+    
+    private void zoomDelta(int changeFactor) {
+        if (this.zoomable != null) {
+            int curSize = this.zoomable.getTextSize();
+            zoomAbs(curSize + changeFactor);
+        }
     }
     
     
-
+    @NbBundle.Messages({
+        "TextZoomPanel.zoomTextField.text=",
+        "TextZoomPanel.zoomOutButton.text=",
+        "TextZoomPanel.zoomInButton.text=",
+        "TextZoomPanel.zoomResetButton.text=Reset"
+    })
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -115,7 +107,7 @@ public class TextZoomPanel extends JPanel {
         zoomTextField.setPreferredSize(new java.awt.Dimension(50, 20));
         toolbar.add(zoomTextField);
 
-        zoomOutButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/zoom-out.png"))); // NOI18N
+        zoomOutButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/zoom-out.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(zoomOutButton, org.openide.util.NbBundle.getMessage(TextZoomPanel.class, "TextZoomPanel.zoomOutButton.text")); // NOI18N
         zoomOutButton.setFocusable(false);
         zoomOutButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -129,7 +121,7 @@ public class TextZoomPanel extends JPanel {
         });
         toolbar.add(zoomOutButton);
 
-        zoomInButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/zoom-in.png"))); // NOI18N
+        zoomInButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/zoom-in.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(zoomInButton, org.openide.util.NbBundle.getMessage(TextZoomPanel.class, "TextZoomPanel.zoomInButton.text")); // NOI18N
         zoomInButton.setFocusable(false);
         zoomInButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -174,29 +166,15 @@ public class TextZoomPanel extends JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
-        // Find the next zoom step.
-        for (int i = ZOOM_STEPS.length - 1; i >= 0; i--) {
-            if (zoomRatio > ZOOM_STEPS[i]) {
-                zoomRatio = ZOOM_STEPS[i];
-                break;
-            }
-        }
-        updateView();
+        zoomDelta(-FONT_INCREMENT_DELTA);
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
     private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
-        // Find the next zoom step.
-        for (int i = 0; i < ZOOM_STEPS.length; i++) {
-            if (zoomRatio < ZOOM_STEPS[i]) {
-                zoomRatio = ZOOM_STEPS[i];
-                break;
-            }
-        }
-        updateView();
+        zoomDelta(FONT_INCREMENT_DELTA);
     }//GEN-LAST:event_zoomInButtonActionPerformed
 
     private void zoomResetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomResetButtonActionPerformed
-        resetView();
+        resetSize();
     }//GEN-LAST:event_zoomResetButtonActionPerformed
 
 

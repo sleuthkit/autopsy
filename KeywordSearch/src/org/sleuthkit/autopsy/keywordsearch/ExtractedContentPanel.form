@@ -45,8 +45,8 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="controlScrollPane" alignment="0" pref="54" max="32767" attributes="0"/>
-          <Component id="extractedScrollPane" alignment="0" pref="54" max="32767" attributes="0"/>
+          <Component id="controlScrollPane" alignment="0" pref="994" max="32767" attributes="0"/>
+          <Component id="extractedScrollPane" alignment="0" pref="994" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -145,9 +145,11 @@
                       <Component id="pagePreviousButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
                       <Component id="pageNextButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                      <Component id="zoomPanel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="jSeparator1" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace pref="197" max="32767" attributes="0"/>
                       <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="sourceComboBox" min="-2" max="-2" attributes="0"/>
@@ -177,6 +179,7 @@
                           <Component id="hitOfLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="hitTotalLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="hitButtonsLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                          <Component id="zoomPanel" alignment="2" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                   </Group>
@@ -426,6 +429,29 @@
                 <Property name="orientation" type="int" value="1"/>
               </Properties>
             </Component>
+            <Container class="javax.swing.JPanel" name="zoomPanel">
+              <AccessibilityProperties>
+                <Property name="AccessibleContext.accessibleName" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/keywordsearch/Bundle.properties" key="ExtractedContentPanel.zoomPanel.AccessibleContext.accessibleName" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+              </AccessibilityProperties>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new TextZoomPanel(this)"/>
+              </AuxValues>
+
+              <Layout>
+                <DimensionLayout dim="0">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <EmptySpace min="0" pref="32" max="32767" attributes="0"/>
+                  </Group>
+                </DimensionLayout>
+                <DimensionLayout dim="1">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <EmptySpace min="0" pref="26" max="32767" attributes="0"/>
+                  </Group>
+                </DimensionLayout>
+              </Layout>
+            </Container>
           </SubComponents>
         </Container>
       </SubComponents>

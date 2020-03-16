@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.ComponentOrientation;
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
@@ -27,15 +28,19 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.JLabel;
 import javax.swing.SizeRequirements;
 import javax.swing.SwingWorker;
 import javax.swing.text.Element;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
 import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLEditorKit.HTMLFactory;
 import javax.swing.text.html.InlineView;
 import javax.swing.text.html.ParagraphView;
+import javax.swing.text.html.StyleSheet;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
@@ -48,11 +53,13 @@ import org.sleuthkit.autopsy.coreutils.TextUtil;
  * combo-box to select between multiple sources.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-class ExtractedContentPanel extends javax.swing.JPanel {
+class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextPanel {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private String contentName;
+    private final Style bodyStyle;
+    private int curSize;
 
     ExtractedContentPanel() {
         initComponents();
@@ -123,7 +130,13 @@ class ExtractedContentPanel extends javax.swing.JPanel {
          * set font size manually in an effort to get fonts in this panel to
          * look similar to what is in the 'String View' content viewer.
          */
-        editorKit.getStyleSheet().addRule("body {font-size: 8.5px;}"); //NON-NLS
+        bodyStyle = editorKit.getStyleSheet().getStyle("body");
+        Font defaultFont = new JLabel().getFont();
+        if (bodyStyle != null && defaultFont != null) {
+            StyleConstants.setFontFamily(bodyStyle, defaultFont.getFamily());
+            StyleConstants.setFontSize(bodyStyle, defaultFont.getSize());
+            curSize = defaultFont.getSize();
+        } //NON-NLS
         extractedTextPane.setEditorKit(editorKit);
 
         sourceComboBox.addItemListener(itemEvent -> {
@@ -134,6 +147,18 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         extractedTextPane.setComponentPopupMenu(rightClickMenu);
         copyMenuItem.addActionListener(actionEvent -> extractedTextPane.copy());
         selectAllMenuItem.addActionListener(actionEvent -> extractedTextPane.selectAll());
+    }
+    
+    
+    @Override
+    public int getTextSize() {
+        return curSize;
+    }
+
+    @Override
+    public void setTextSize(int newSize) {
+        curSize = newSize;
+        StyleConstants.setFontSize(bodyStyle, newSize);
     }
 
     /**
@@ -170,6 +195,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         hitPreviousButton = new javax.swing.JButton();
         hitCountLabel = new javax.swing.JLabel();
         jSeparator2 = new javax.swing.JSeparator();
+        zoomPanel = new TextZoomPanel(this);
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
@@ -276,6 +302,17 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
+        javax.swing.GroupLayout zoomPanelLayout = new javax.swing.GroupLayout(zoomPanel);
+        zoomPanel.setLayout(zoomPanelLayout);
+        zoomPanelLayout.setHorizontalGroup(
+            zoomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 32, Short.MAX_VALUE)
+        );
+        zoomPanelLayout.setVerticalGroup(
+            zoomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 26, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
         controlPanel.setLayout(controlPanelLayout);
         controlPanelLayout.setHorizontalGroup(
@@ -312,8 +349,10 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 .addGap(0, 0, 0)
                 .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
+                .addComponent(zoomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 197, Short.MAX_VALUE)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -340,11 +379,14 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                     .addComponent(pageTotalLabel)
                     .addComponent(hitOfLabel)
                     .addComponent(hitTotalLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(hitButtonsLabel))
+                    .addComponent(hitButtonsLabel)
+                    .addComponent(zoomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(0, 0, 0))
         );
 
         controlPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {hitButtonsLabel, hitCountLabel, hitLabel, hitNextButton, hitOfLabel, hitPreviousButton, hitTotalLabel, jLabel1, jSeparator1, jSeparator2, pageButtonsLabel, pageCurLabel, pageNextButton, pageOfLabel, pagePreviousButton, pageTotalLabel, pagesLabel, sourceComboBox});
+
+        zoomPanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.zoomPanel.AccessibleContext.accessibleName")); // NOI18N
 
         controlScrollPane.setViewportView(controlPanel);
 
@@ -352,8 +394,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(controlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
-            .addComponent(extractedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
+            .addComponent(controlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 994, Short.MAX_VALUE)
+            .addComponent(extractedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 994, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -389,6 +431,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JComboBox<org.sleuthkit.autopsy.keywordsearch.IndexedText> sourceComboBox;
+    private javax.swing.JPanel zoomPanel;
     // End of variables declaration//GEN-END:variables
 
     void refreshCurrentMarkup() {
