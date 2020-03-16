@@ -418,48 +418,12 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         }
                 }
             }
+            
+            CommunicationArtifactsHelper helper = new CommunicationArtifactsHelper(
+                currentCase, PARSER_NAME, parent, Account.Type.PHONE);
 
-            // Make sure we have the required fields.
-            // This combination is invalid.
-            if(senderId == null && recipientIdsList.isEmpty()) {
-                // Create the artifact manually..
-                if (direction != CommunicationDirection.UNKNOWN) {
-                    otherAttributes.add(new BlackboardAttribute(
-                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION,
-                            PARSER_NAME, direction.getDisplayName()));
-                }
-                
-                if (dateTime > 0L) {
-                    otherAttributes.add(new BlackboardAttribute(
-                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START,
-                            PARSER_NAME, dateTime));
-                }
-                
-                if(readStatus != MessageReadStatus.UNKNOWN) {
-                    otherAttributes.add(new BlackboardAttribute(
-                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS,
-                            PARSER_NAME, (readStatus == MessageReadStatus.READ) ? 1 : 0));
-                }
-                
-                if(text != null) {
-                    otherAttributes.add(new BlackboardAttribute(
-                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT,
-                            PARSER_NAME, text));
-                }
-                
-                if (!otherAttributes.isEmpty()) {
-                    BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE);
-                    artifact.addAttributes(otherAttributes);
-
-                    currentCase.getBlackboard().postArtifact(artifact, PARSER_NAME);
-                }
-            } else {
-                CommunicationArtifactsHelper helper = new CommunicationArtifactsHelper(
-                    currentCase, PARSER_NAME, parent, Account.Type.PHONE);
-
-                helper.addMessage(messageType, direction, senderId, recipientIdsList, 
-                    dateTime, readStatus, subject, text, threadId, otherAttributes);
-            }
+            helper.addMessage(messageType, direction, senderId, recipientIdsList, 
+                dateTime, readStatus, subject, text, threadId, otherAttributes);
         }
     }
 
