@@ -84,22 +84,11 @@ public class CorrelationAttributeUtil {
             BlackboardArtifact sourceArtifact = getCorrAttrSourceArtifact(artifact);
             if (sourceArtifact != null) {
                 int artifactTypeID = sourceArtifact.getArtifactTypeID();
-                if (artifactTypeID == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                    BlackboardAttribute setNameAttr = sourceArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
-                    if (setNameAttr != null && CorrelationAttributeUtil.getEmailAddressAttrDisplayName().equals(setNameAttr.getValueString())) {
-                        makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, CorrelationAttributeInstance.EMAIL_TYPE_ID);
-                    }
-
-                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()
+                if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN, CorrelationAttributeInstance.DOMAIN_TYPE_ID);
-
-                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
-                        || artifactTypeID == ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
-                        || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
-                    makeCorrAttrFromArtifactPhoneAttr(sourceArtifact);
 
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID, CorrelationAttributeInstance.USBID_TYPE_ID);
@@ -167,58 +156,6 @@ public class CorrelationAttributeUtil {
             sourceArtifact = artifact;
         }
         return sourceArtifact;
-    }
-
-    /**
-     * Makes a correlation attribute instance from a phone number attribute of an
-     * artifact.
-     *
-     * @param artifact An artifact with a phone number attribute.
-     *
-     * @return The correlation instance artifact or null, if the phone number is
-     *         not a valid correlation attribute.
-     *
-     * @throws TskCoreException     If there is an error querying the case
-     *                              database.
-     * @throws CentralRepoException If there is an error querying the central
-     *                              repository.
-     */
-    private static CorrelationAttributeInstance makeCorrAttrFromArtifactPhoneAttr(BlackboardArtifact artifact) throws TskCoreException, CentralRepoException {
-        CorrelationAttributeInstance corrAttr = null;
-
-        /*
-         * Extract the phone number from the artifact attribute.
-         */
-        String value = null;
-        if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER))) {
-            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)).getValueString();
-        } else if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM))) {
-            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)).getValueString();
-        } else if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO))) {
-            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
-        }
-
-        /*
-         * Normalize the phone number.
-         */
-        if (value != null) {
-            String newValue = value.replaceAll("\\D", "");
-            if (value.startsWith("+")) {
-                newValue = "+" + newValue;
-            }
-            value = newValue;
-
-            /*
-             * Validate the phone number. Three to five digit phone numbers may
-             * be valid, but they are too short to use as correlation
-             * attributes.
-             */
-            if (value.length() > 5) {
-                corrAttr = makeCorrAttr(artifact, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), value);
-            }
-        }
-
-        return corrAttr;
     }
 
     /**
