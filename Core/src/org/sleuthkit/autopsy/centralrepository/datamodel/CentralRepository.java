@@ -42,7 +42,7 @@ public interface CentralRepository {
 
         CentralRepoPlatforms selectedPlatform = CentralRepoPlatforms.DISABLED;
         if (CentralRepoDbUtil.allowUseOfCentralRepository()) {
-            selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
+            selectedPlatform = CentralRepoDbManager.getSavedDbChoice().getDbPlatform();
         }
         switch (selectedPlatform) {
             case POSTGRESQL:
@@ -93,7 +93,7 @@ public interface CentralRepository {
      */
     static boolean isEnabled() {
         return CentralRepoDbUtil.allowUseOfCentralRepository()
-                && CentralRepoPlatforms.getSelectedPlatform() != CentralRepoPlatforms.DISABLED;
+                && CentralRepoDbManager.getSavedDbChoice() != CentralRepoDbChoice.DISABLED;
     }
 
     /**

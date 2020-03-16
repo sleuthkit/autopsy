@@ -105,7 +105,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                             this.content.getName(), this.content.getId()), ex);
         }
 
-        if (UserPreferences.displayTranslatedFileNames()) {
+        if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
             backgroundTasksPool.submit(new TranslationTask(
                     new WeakReference<>(this), weakPcl));
         }
@@ -331,7 +331,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
          * background task that promises to update these values.
          */
 
-        if (UserPreferences.displayTranslatedFileNames()) {
+        if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
             properties.add(new NodeProperty<>(ORIGINAL_NAME.toString(), ORIGINAL_NAME.toString(), NO_DESCR, ""));
         }
 

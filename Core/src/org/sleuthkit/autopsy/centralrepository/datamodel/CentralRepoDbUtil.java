@@ -124,6 +124,28 @@ public class CentralRepoDbUtil {
     }
 
     /**
+     * Inserts the specified correlation type into the database.
+     *
+     * @param conn Open connection to use.
+     * @param correlationType New correlation type to add.
+     *
+     */
+    public static void insertCorrelationType(Connection conn, CorrelationAttributeInstance.Type correlationType) throws SQLException {
+
+        String sql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+
+            preparedStatement.setInt(1, correlationType.getId());
+            preparedStatement.setString(2, correlationType.getDisplayName());
+            preparedStatement.setString(3, correlationType.getDbTableName());
+            preparedStatement.setInt(4, correlationType.isSupported() ? 1 : 0);
+            preparedStatement.setInt(5, correlationType.isEnabled() ? 1 : 0);
+
+            preparedStatement.execute();
+        }
+    }
+
+    /**
      * Writes the current schema version into the database.
      *
      * @param conn Open connection to use.

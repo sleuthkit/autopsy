@@ -667,7 +667,7 @@ class FileSearch {
                         return;
                     }
                     BufferedImage thumbnail = ScalrWrapper.resize(bufferedImage, Scalr.Method.SPEED, Scalr.Mode.FIT_TO_HEIGHT, ImageUtils.ICON_SIZE_LARGE, ImageUtils.ICON_SIZE_MEDIUM, Scalr.OP_ANTIALIAS);
-                    //we are height limited here so it can be wider than it can be tall, scalr maintains aspect ratio
+                    //We are height limited here so it can be wider than it can be tall.Scalr maintains the aspect ratio.
                     videoThumbnails.add(thumbnail);
                     if (cacheDirectory != null) {
                         try {
