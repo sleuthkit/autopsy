@@ -68,6 +68,7 @@ public class EamDbSettingsDialog extends JDialog {
     private class DbChoiceRenderer extends BasicComboBoxRenderer {
         private static final long serialVersionUID = 1L;
         
+        @SuppressWarnings("rawtypes")
         public Component getListCellRendererComponent(JList list, Object value,
                 int index, boolean isSelected, boolean cellHasFocus) {
 
@@ -137,6 +138,14 @@ public class EamDbSettingsDialog extends JDialog {
     }
     
     
+    /**
+     * Sets the drowndown renderer so that an item is unselectable if inappropriate.
+     */
+    @SuppressWarnings("unchecked")
+    private void setDropdownRenderer() {
+        cbDatabaseType.setRenderer(DB_CHOICE_RENDERER);
+    }
+    
     private void setupDbChoice(CentralRepoDbChoice initialMenuItem) {
         // setup initially selected item
         CentralRepoDbChoice toSelect = (initialMenuItem == null) ?  
@@ -144,10 +153,8 @@ public class EamDbSettingsDialog extends JDialog {
             manager.getSelectedDbChoice() :
             CentralRepoDbChoice.DB_CHOICES[0] :
             initialMenuItem;
-        
-        // set the renderer so item is unselectable if inappropriate
-        cbDatabaseType.setRenderer(DB_CHOICE_RENDERER);
-        
+                
+        setDropdownRenderer();
         changeDbSelection(toSelect);
     }
     
