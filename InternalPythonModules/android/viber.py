@@ -133,12 +133,8 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                     attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), self._PARSER_NAME, contacts_parser.get_contact_name()))
                     artifact.addAttributes(attributes)
                     
-                    try:
                     # Post the artifact to blackboard
-                       current_case.getBlackboard().postArtifact(artifact, self._PARSER_NAME)
-                    except Blackboard.BlackboardException as e:
-                        self.log(Level.WARNING, "Error adding viber contacts artifact to case database.", ex )
-                        self._logger.log(Level.WARNING, traceback.format_exc())
+                    current_case.getBlackboard().postArtifact(artifact, self._PARSER_NAME)
 
             contacts_parser.close()
         except SQLException as ex:
