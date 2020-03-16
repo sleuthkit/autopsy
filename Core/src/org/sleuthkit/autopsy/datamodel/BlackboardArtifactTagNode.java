@@ -106,7 +106,12 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
         return propertySheet;
     }
 
-    @NbBundle.Messages("BlackboardArtifactTagNode.viewSourceArtifact.text=View Source Result")
+    @NbBundle.Messages({"BlackboardArtifactTagNode.viewSourceArtifact.text=View Source Result",
+        "BlackboardArtifactTagNode.getAction.errorTitle=Error getting actions",
+        "BlackboardArtifactTagNode.getAction.resultErrorMessage=There was a problem getting actions for the selected result."
+        + "  The 'View Result in Timeline' action will not be available.",
+        "BlackboardArtifactTagNode.getAction.linkedFileMessage=There was a problem getting actions for the selected result. "
+        + " The 'View File in Timeline' action will not be available."})
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actions = new ArrayList<>();
@@ -119,7 +124,7 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
             }
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting arttribute(s) from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_resultErrorMessage());
+            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactTagNode_getAction_errorTitle(), Bundle.BlackboardArtifactTagNode_getAction_resultErrorMessage());
         }
 
         // if the artifact links to another file, add an action to go to that file
@@ -130,7 +135,7 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
             }
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_linkedFileMessage());
+            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactTagNode_getAction_errorTitle(), Bundle.BlackboardArtifactTagNode_getAction_linkedFileMessage());
         }
         //if this artifact has associated content, add the action to view the content in the timeline
         AbstractFile file = getLookup().lookup(AbstractFile.class);
