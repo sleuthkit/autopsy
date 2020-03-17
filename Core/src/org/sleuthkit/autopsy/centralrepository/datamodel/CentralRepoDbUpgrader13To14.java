@@ -51,7 +51,7 @@ public class CentralRepoDbUpgrader13To14 implements CentralRepoDbUpgrader {
                     if (type.getId() >= CorrelationAttributeInstance.ADDITIONAL_TYPES_BASE_ID) {
 
                         // these are new Correlation types - new tables need to be created
-                        statement.execute(String.format(RdbmsCentralRepoFactory.getCreateArtifactInstancesTableTemplate(selectedPlatform), instance_type_dbname, instance_type_dbname));
+                        statement.execute(String.format(RdbmsCentralRepoFactory.getCreateAccountInstancesTableTemplate(selectedPlatform), instance_type_dbname, instance_type_dbname));
                         statement.execute(String.format(RdbmsCentralRepoFactory.getAddCaseIdIndexTemplate(), instance_type_dbname, instance_type_dbname));
                         statement.execute(String.format(RdbmsCentralRepoFactory.getAddDataSourceIdIndexTemplate(), instance_type_dbname, instance_type_dbname));
                         statement.execute(String.format(RdbmsCentralRepoFactory.getAddValueIndexTemplate(), instance_type_dbname, instance_type_dbname));
@@ -61,18 +61,19 @@ public class CentralRepoDbUpgrader13To14 implements CentralRepoDbUpgrader {
                         // add new correlation type
                         CentralRepoDbUtil.insertCorrelationType(connection, type);
 
-                    } else {
-
-                        // Alter the existing X_Instance tables to add account_id column 
-                        String sqlStr = String.format(getAlterArtifactInstancesAddAccountIdTemplate(selectedPlatform), instance_type_dbname);
-                        statement.execute(sqlStr);
-
-                        // SQLite does NOT allow adding a constraint with Alter Table statement.
-                        // The alternative would be to create new tables, copy all data over, and delete old tables - potentially a time consuming process. 
-                        // We decided to not add this constraint for SQLite, since there likely aren't many users using SQLite based Central Repo.
-                        if (selectedPlatform == CentralRepoPlatforms.POSTGRESQL) {
-                            sqlStr = String.format(getAlterArtifactInstancesAddAccountIdConstraintTemplate(), instance_type_dbname);
+                    } else {    // existing attributes 
+                        // Alter the existing _instance tables for Phone and Email attributes to add account_id column 
+                        if (type.getId() == CorrelationAttributeInstance.EMAIL_TYPE_ID || type.getId() == CorrelationAttributeInstance.PHONE_TYPE_ID) {
+                            String sqlStr = String.format(getAlterArtifactInstancesAddAccountIdTemplate(selectedPlatform), instance_type_dbname);
                             statement.execute(sqlStr);
+
+                            // SQLite does NOT allow adding a constraint with Alter Table statement.
+                            // The alternative would be to create new tables, copy all data over, and delete old tables - potentially a time consuming process. 
+                            // We decided to not add this constraint for SQLite, since there likely aren't many users using SQLite based Central Repo.
+                            if (selectedPlatform == CentralRepoPlatforms.POSTGRESQL) {
+                                sqlStr = String.format(getAlterArtifactInstancesAddAccountIdConstraintTemplate(), instance_type_dbname);
+                                statement.execute(sqlStr);
+                            }
                         }
                     }
                 }
