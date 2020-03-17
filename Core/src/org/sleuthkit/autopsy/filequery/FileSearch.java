@@ -303,8 +303,10 @@ class FileSearch {
                 image = ImageUtils.getThumbnail(largestChild, ImageUtils.ICON_SIZE_LARGE);
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error getting children for file: " + file.getId(), ex);        
+            logger.log(Level.WARNING, "Error getting children for file: " + file.getId(), ex);
         }
+        image = image == null ? image  : image.getScaledInstance(ImageUtils.ICON_SIZE_MEDIUM, ImageUtils.ICON_SIZE_MEDIUM,
+                Image.SCALE_SMOOTH);
         return new TextSummary(getFirstLines(file), image, countOfImages);
     }
 
