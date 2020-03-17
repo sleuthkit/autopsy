@@ -41,12 +41,14 @@ public class FileNameTranslator {
      *                                    translation.
      */
     public static String translate(String fileName) throws NoServiceProviderException, TranslationException {
-        
-//        //If already in complete English, don't translate.
-//        if (fileName.matches("^\\p{ASCII}+$")) {
-//            return "";
-//        }        
-       
+        /*
+         * Don't attempt translation if the characters of the file name are all
+         * ASCII chars.
+         */
+        if (fileName.matches("^\\p{ASCII}+$")) {
+            return "";
+        }
+
         TextTranslationService translator = TextTranslationService.getInstance();
         String baseName = FilenameUtils.getBaseName(fileName);
         String translation = translator.translate(baseName);

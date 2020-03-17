@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -28,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
@@ -66,6 +66,7 @@ import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.texttranslation.utils.FileNameTranslator;
 
 /**
  * An abstract node that encapsulates AbstractFile data
@@ -94,15 +95,15 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             }
         }
-        
+
         try {
             //See JIRA-5971
             //Attempt to cache file path during construction of this UI component.
             this.content.getUniquePath();
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Failed attempt to cache the "
-                            + "unique path of the abstract file instance. Name: %s (objID=%d)", 
-                            this.content.getName(), this.content.getId()), ex);
+                    + "unique path of the abstract file instance. Name: %s (objID=%d)",
+                    this.content.getName(), this.content.getId()), ex);
         }
 
         if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
@@ -490,39 +491,16 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
 
     /**
-     * Translates this nodes content name. Doesn't attempt translation if the
-     * name is in english or if there is now translation service available.
+     * Translates the name of the file this node represents. An empty string
+     * will be returned if the translation fails for any reason.
      */
     String getTranslatedFileName() {
-        //If already in complete English, don't translate.
-        if (content.getName().matches("^\\p{ASCII}+$")) {
+        try {
+            return FileNameTranslator.translate(content.getName());
+        } catch (NoServiceProviderException | TranslationException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error translating file name (objID={0}))", content.getId()), ex);
             return "";
         }
-        TextTranslationService tts = TextTranslationService.getInstance();
-        if (tts.hasProvider()) {
-            //Seperate out the base and ext from the contents file name.
-            String base = FilenameUtils.getBaseName(content.getName());
-            try {
-                String translation = tts.translate(base);
-                String ext = FilenameUtils.getExtension(content.getName());
-
-                //If we have no extension, then we shouldn't add the .
-                String extensionDelimiter = (ext.isEmpty()) ? "" : ".";
-
-                //Talk directly to this nodes pcl, fire an update when the translation
-                //is complete. 
-                if (!translation.isEmpty()) {
-                    return translation + extensionDelimiter + ext;
-                }
-            } catch (NoServiceProviderException noServiceEx) {
-                logger.log(Level.WARNING, "Translate unsuccessful because no TextTranslator "
-                        + "implementation was provided.", noServiceEx.getMessage());
-            } catch (TranslationException noTranslationEx) {
-                logger.log(Level.WARNING, "Could not successfully translate file name "
-                        + content.getName(), noTranslationEx.getMessage());
-            }
-        }
-        return "";
     }
 
     /**
