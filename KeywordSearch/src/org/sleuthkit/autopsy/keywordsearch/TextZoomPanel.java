@@ -86,7 +86,10 @@ class TextZoomPanel extends JPanel {
         jSeparator2 = new javax.swing.JToolBar.Separator();
         zoomResetButton = new javax.swing.JButton();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0));
-        filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+
+        setMinimumSize(new java.awt.Dimension(150, 23));
+        setPreferredSize(new java.awt.Dimension(200, 23));
+        setRequestFocusEnabled(false);
 
         toolbar.setFloatable(false);
         toolbar.setRollover(true);
@@ -149,7 +152,6 @@ class TextZoomPanel extends JPanel {
         });
         toolbar.add(zoomResetButton);
         toolbar.add(filler1);
-        toolbar.add(filler2);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -180,7 +182,6 @@ class TextZoomPanel extends JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.Box.Filler filler1;
-    private javax.swing.Box.Filler filler2;
     private javax.swing.JToolBar.Separator jSeparator1;
     private javax.swing.JToolBar.Separator jSeparator2;
     private javax.swing.JToolBar toolbar;

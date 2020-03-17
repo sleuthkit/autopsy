@@ -32,8 +32,6 @@ import javax.swing.JLabel;
 import javax.swing.SizeRequirements;
 import javax.swing.SwingWorker;
 import javax.swing.text.Element;
-import javax.swing.text.Style;
-import javax.swing.text.StyleConstants;
 import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
@@ -56,10 +54,16 @@ import org.sleuthkit.autopsy.coreutils.TextUtil;
 class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextPanel {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentPanel.class.getName());
+    
+    // set font as close as possible to default
+    private static final Font DEFAULT_FONT = new JLabel().getFont();
+    
     private static final long serialVersionUID = 1L;
     private String contentName;
-    private final Style bodyStyle;
     private int curSize;
+    
+    private final StyleSheet styleSheet;
+    private final HTMLEditorKit editorKit;
 
     ExtractedContentPanel() {
         initComponents();
@@ -72,7 +76,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
          * extractedTextPane taken form this website:
          * http://java-sl.com/tip_html_letter_wrap.html.
          */
-        HTMLEditorKit editorKit = new HTMLEditorKit() {
+        editorKit = new HTMLEditorKit() {
             private static final long serialVersionUID = 1L;
 
             @Override
@@ -126,19 +130,10 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
                 };
             }
         };
-        /*
-         * set font size manually in an effort to get fonts in this panel to
-         * look similar to what is in the 'String View' content viewer.
-         */
-        bodyStyle = editorKit.getStyleSheet().getStyle("body");
-        Font defaultFont = new JLabel().getFont();
-        if (bodyStyle != null && defaultFont != null) {
-            StyleConstants.setFontFamily(bodyStyle, defaultFont.getFamily());
-            StyleConstants.setFontSize(bodyStyle, defaultFont.getSize());
-            curSize = defaultFont.getSize();
-        } //NON-NLS
-        extractedTextPane.setEditorKit(editorKit);
-
+        
+        styleSheet = editorKit.getStyleSheet();
+        setTextSize(40);
+        
         sourceComboBox.addItemListener(itemEvent -> {
             if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
                 refreshCurrentMarkup();
@@ -147,6 +142,14 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         extractedTextPane.setComponentPopupMenu(rightClickMenu);
         copyMenuItem.addActionListener(actionEvent -> extractedTextPane.copy());
         selectAllMenuItem.addActionListener(actionEvent -> extractedTextPane.selectAll());
+        
+        zoomPanel.setEnabled(true);
+        zoomPanel.setVisible(true);
+    }
+    
+    
+    private void setStyleSheetSize(StyleSheet styleSheet, int size) {
+        styleSheet.addRule("body {font-family:\"" + DEFAULT_FONT.getFamily() + "\"; font-size:" + size + "pt; } ");
     }
     
     
@@ -158,8 +161,22 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     @Override
     public void setTextSize(int newSize) {
         curSize = newSize;
-        StyleConstants.setFontSize(bodyStyle, newSize);
+
+        int caretPos = extractedTextPane.getCaretPosition();
+        String curText = extractedTextPane.getText();
+        
+        setStyleSheetSize(styleSheet, curSize);
+        
+        editorKit.setStyleSheet(styleSheet);
+        extractedTextPane.setEditorKit(editorKit);
+
+        extractedTextPane.setText(curText);
+        extractedTextPane.setCaretPosition(caretPos);
     }
+    
+    
+    
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -302,11 +319,15 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
 
         jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
+        zoomPanel.setMinimumSize(new java.awt.Dimension(150, 26));
+        zoomPanel.setName(""); // NOI18N
+        zoomPanel.setPreferredSize(new java.awt.Dimension(200, 26));
+
         javax.swing.GroupLayout zoomPanelLayout = new javax.swing.GroupLayout(zoomPanel);
         zoomPanel.setLayout(zoomPanelLayout);
         zoomPanelLayout.setHorizontalGroup(
             zoomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 32, Short.MAX_VALUE)
+            .addGap(0, 401, Short.MAX_VALUE)
         );
         zoomPanelLayout.setVerticalGroup(
             zoomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -348,11 +369,11 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
                 .addComponent(pagePreviousButton)
                 .addGap(0, 0, 0)
                 .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(zoomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(zoomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 401, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 197, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -381,12 +402,12 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
                     .addComponent(hitTotalLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(hitButtonsLabel)
                     .addComponent(zoomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(0, 0, 0))
+                .addGap(56, 56, 56))
         );
 
         controlPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {hitButtonsLabel, hitCountLabel, hitLabel, hitNextButton, hitOfLabel, hitPreviousButton, hitTotalLabel, jLabel1, jSeparator1, jSeparator2, pageButtonsLabel, pageCurLabel, pageNextButton, pageOfLabel, pagePreviousButton, pageTotalLabel, pagesLabel, sourceComboBox});
 
-        zoomPanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.zoomPanel.AccessibleContext.accessibleName")); // NOI18N
+        zoomPanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.AccessibleContext.accessibleName")); // NOI18N
 
         controlScrollPane.setViewportView(controlPanel);
 
@@ -394,15 +415,16 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(controlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 994, Short.MAX_VALUE)
-            .addComponent(extractedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 994, Short.MAX_VALUE)
+            .addComponent(controlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1096, Short.MAX_VALUE)
+            .addComponent(extractedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1096, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(controlScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(controlScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(extractedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE))
+                .addComponent(extractedScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 422, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
