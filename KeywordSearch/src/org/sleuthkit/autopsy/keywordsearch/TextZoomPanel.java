@@ -59,7 +59,7 @@ class TextZoomPanel extends JPanel {
      * resets the font size displayed and triggers the ResizableTextPanel to
      * set their font to default size (i.e. JLabel().getFont().getSize())
      */
-    public void resetSize() {
+    void resetSize() {
         zoomAbs(DEFAULT_SIZE);
     }
     

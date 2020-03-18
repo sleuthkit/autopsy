@@ -65,6 +65,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     
     private final StyleSheet styleSheet;
     private final HTMLEditorKit editorKit;
+    private String lastKnownAnchor = null;
 
     ExtractedContentPanel() {
         initComponents();
@@ -169,7 +170,6 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     public void setTextSize(int newSize) {
         curSize = newSize;
 
-        int caretPos = extractedTextPane.getCaretPosition();
         String curText = extractedTextPane.getText();
         
         setStyleSheetSize(styleSheet, curSize);
@@ -178,7 +178,8 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         extractedTextPane.setEditorKit(editorKit);
 
         extractedTextPane.setText(curText);
-        extractedTextPane.setCaretPosition(caretPos);
+        if (lastKnownAnchor != null)
+            scrollToAnchor(lastKnownAnchor);
     }
     
     
@@ -465,6 +466,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
      *                    the content.
      */
     final void setSources(String contentName, List<IndexedText> sources) {
+        this.lastKnownAnchor = null;
         this.contentName = contentName;
         setPanelText(null, false);
 
@@ -512,6 +514,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     }
 
     void scrollToAnchor(String anchor) {
+        lastKnownAnchor = anchor;
         extractedTextPane.scrollToReference(anchor);
     }
 
