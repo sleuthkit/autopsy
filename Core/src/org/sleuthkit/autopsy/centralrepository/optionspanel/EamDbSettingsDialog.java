@@ -24,6 +24,7 @@ import java.awt.Cursor;
 import java.awt.HeadlessException;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,9 +32,11 @@ import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -64,7 +67,7 @@ public class EamDbSettingsDialog extends JDialog {
     /**
      * This class handles displaying and rendering drop down menu for database choices in central repo.
      */
-    private class DbChoiceRenderer extends TypedBasicComboBoxRenderer<CentralRepoDbChoice> {
+    private class DbChoiceRenderer extends JLabel implements ListCellRenderer<CentralRepoDbChoice>, Serializable {
         private static final long serialVersionUID = 1L;
         
         public Component getListCellRendererComponent(
