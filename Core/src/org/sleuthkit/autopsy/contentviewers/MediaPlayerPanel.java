@@ -74,6 +74,8 @@ import org.freedesktop.gstreamer.Format;
 import org.freedesktop.gstreamer.GstException;
 import org.freedesktop.gstreamer.event.SeekFlags;
 import org.freedesktop.gstreamer.event.SeekType;
+import org.sleuthkit.autopsy.contentviewers.utils.GstLoader;
+import org.sleuthkit.autopsy.contentviewers.utils.GstLoader.GstStatus;
 
 /**
  * This is a video player that is part of the Media View layered pane. It uses
@@ -540,23 +542,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 if (this.isCancelled()) {
                     return;
                 }
-
-                // Setting the following property causes the GST
-                // Java bindings to call dispose() on the GST 
-                // service thread instead of running it in the GST
-                // Native Object Reaper thread.
-                System.setProperty("glib.reapOnEDT", "true");
-
-                // Initialize Gstreamer. It is safe to call this for every file.
-                // It was moved here from the constructor because having it happen
-                // earlier resulted in crashes on Linux. See JIRA-5888.
-                Gst.init();
-
-                if (!Gst.isInitialized()) {
-                    logger.log(Level.INFO, "GStreamer is not initialized."); //NON-NLS
+                
+                GstStatus loadStatus = GstLoader.tryLoad();
+                if(loadStatus == GstStatus.FAILURE) {
                     return;
                 }
-
+                
                 Gst.getExecutor().submit(() -> {
                     //Video is ready for playback. Create new components
                     gstPlayBin = new PlayBin("VideoPlayer", tempFile.toURI());
