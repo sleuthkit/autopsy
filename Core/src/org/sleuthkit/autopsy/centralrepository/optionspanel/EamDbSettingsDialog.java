@@ -70,6 +70,7 @@ public class EamDbSettingsDialog extends JDialog {
     private class DbChoiceRenderer extends JLabel implements ListCellRenderer<CentralRepoDbChoice>, Serializable {
         private static final long serialVersionUID = 1L;
         
+        @Override
         public Component getListCellRendererComponent(
                 JList<? extends CentralRepoDbChoice> list, CentralRepoDbChoice value,
                 int index, boolean isSelected, boolean cellHasFocus) {
