@@ -78,29 +78,18 @@ class TextZoomPanel extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        toolbar = new javax.swing.JToolBar();
-        jSeparator1 = new javax.swing.JToolBar.Separator();
         zoomTextField = new javax.swing.JTextField();
+        jSeparator1 = new javax.swing.JToolBar.Separator();
         zoomOutButton = new javax.swing.JButton();
         zoomInButton = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JToolBar.Separator();
         zoomResetButton = new javax.swing.JButton();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0));
 
-        setMinimumSize(new java.awt.Dimension(150, 23));
-        setPreferredSize(new java.awt.Dimension(200, 23));
+        setMinimumSize(new java.awt.Dimension(150, 20));
+        setPreferredSize(new java.awt.Dimension(200, 20));
         setRequestFocusEnabled(false);
-
-        toolbar.setFloatable(false);
-        toolbar.setRollover(true);
-        toolbar.setMaximumSize(new java.awt.Dimension(200, 23));
-        toolbar.setMinimumSize(new java.awt.Dimension(150, 23));
-        toolbar.setName(""); // NOI18N
-        toolbar.setPreferredSize(new java.awt.Dimension(200, 23));
-        toolbar.setRequestFocusEnabled(false);
-
-        jSeparator1.setMaximumSize(new java.awt.Dimension(6, 20));
-        toolbar.add(jSeparator1);
+        setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 2, 0));
 
         zoomTextField.setEditable(false);
         zoomTextField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
@@ -108,7 +97,10 @@ class TextZoomPanel extends JPanel {
         zoomTextField.setMaximumSize(new java.awt.Dimension(50, 2147483647));
         zoomTextField.setMinimumSize(new java.awt.Dimension(50, 20));
         zoomTextField.setPreferredSize(new java.awt.Dimension(50, 20));
-        toolbar.add(zoomTextField);
+        add(zoomTextField);
+
+        jSeparator1.setMaximumSize(new java.awt.Dimension(6, 20));
+        add(jSeparator1);
 
         zoomOutButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/zoom-out.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(zoomOutButton, org.openide.util.NbBundle.getMessage(TextZoomPanel.class, "TextZoomPanel.zoomOutButton.text")); // NOI18N
@@ -122,7 +114,7 @@ class TextZoomPanel extends JPanel {
                 zoomOutButtonActionPerformed(evt);
             }
         });
-        toolbar.add(zoomOutButton);
+        add(zoomOutButton);
 
         zoomInButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/zoom-in.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(zoomInButton, org.openide.util.NbBundle.getMessage(TextZoomPanel.class, "TextZoomPanel.zoomInButton.text")); // NOI18N
@@ -136,10 +128,10 @@ class TextZoomPanel extends JPanel {
                 zoomInButtonActionPerformed(evt);
             }
         });
-        toolbar.add(zoomInButton);
+        add(zoomInButton);
 
         jSeparator2.setMaximumSize(new java.awt.Dimension(6, 20));
-        toolbar.add(jSeparator2);
+        add(jSeparator2);
 
         org.openide.awt.Mnemonics.setLocalizedText(zoomResetButton, org.openide.util.NbBundle.getMessage(TextZoomPanel.class, "TextZoomPanel.zoomResetButton.text")); // NOI18N
         zoomResetButton.setFocusable(false);
@@ -150,21 +142,8 @@ class TextZoomPanel extends JPanel {
                 zoomResetButtonActionPerformed(evt);
             }
         });
-        toolbar.add(zoomResetButton);
-        toolbar.add(filler1);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(toolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 885, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(toolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-        );
+        add(zoomResetButton);
+        add(filler1);
     }// </editor-fold>//GEN-END:initComponents
 
     private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
@@ -184,7 +163,6 @@ class TextZoomPanel extends JPanel {
     private javax.swing.Box.Filler filler1;
     private javax.swing.JToolBar.Separator jSeparator1;
     private javax.swing.JToolBar.Separator jSeparator2;
-    private javax.swing.JToolBar toolbar;
     private javax.swing.JButton zoomInButton;
     private javax.swing.JButton zoomOutButton;
     private javax.swing.JButton zoomResetButton;

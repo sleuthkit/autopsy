@@ -236,7 +236,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         controlScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         controlScrollPane.setPreferredSize(new java.awt.Dimension(600, 100));
 
-        controlPanel.setMinimumSize(new java.awt.Dimension(0, 0));
+        controlPanel.setMinimumSize(new java.awt.Dimension(0, 20));
         controlPanel.setPreferredSize(new java.awt.Dimension(600, 81));
 
         sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel<org.sleuthkit.autopsy.keywordsearch.IndexedText>());
@@ -319,19 +319,19 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
 
         jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        zoomPanel.setMinimumSize(new java.awt.Dimension(150, 26));
+        zoomPanel.setMinimumSize(new java.awt.Dimension(150, 20));
         zoomPanel.setName(""); // NOI18N
-        zoomPanel.setPreferredSize(new java.awt.Dimension(200, 26));
+        zoomPanel.setPreferredSize(new java.awt.Dimension(200, 20));
 
         javax.swing.GroupLayout zoomPanelLayout = new javax.swing.GroupLayout(zoomPanel);
         zoomPanel.setLayout(zoomPanelLayout);
         zoomPanelLayout.setHorizontalGroup(
             zoomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 401, Short.MAX_VALUE)
+            .addGap(0, 200, Short.MAX_VALUE)
         );
         zoomPanelLayout.setVerticalGroup(
             zoomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 26, Short.MAX_VALUE)
+            .addGap(0, 20, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
@@ -370,8 +370,8 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
                 .addGap(0, 0, 0)
                 .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(zoomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 401, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(zoomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(144, 144, 144)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel1)
