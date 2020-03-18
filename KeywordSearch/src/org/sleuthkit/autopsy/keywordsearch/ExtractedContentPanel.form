@@ -147,6 +147,8 @@
                       <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
                       <Component id="pageNextButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jSeparator3" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="zoomPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="144" max="-2" attributes="0"/>
                       <Component id="jSeparator1" min="-2" max="-2" attributes="0"/>
@@ -180,6 +182,7 @@
                           <Component id="hitOfLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="hitTotalLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="hitButtonsLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                          <Component id="jSeparator3" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="zoomPanel" alignment="1" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="56" max="-2" attributes="0"/>
@@ -429,6 +432,8 @@
               <Properties>
                 <Property name="orientation" type="int" value="1"/>
               </Properties>
+            </Component>
+            <Component class="javax.swing.JSeparator" name="jSeparator3">
             </Component>
             <Container class="javax.swing.JPanel" name="zoomPanel">
               <Properties>

@@ -28,12 +28,22 @@ import org.openide.util.NbBundle;
 class TextZoomPanel extends JPanel {
     static final int DEFAULT_SIZE = new JLabel().getFont().getSize();
     
-    // how much font size is incremented or decremented when zooming in or zooming out respectively
+    // How much font size is incremented or decremented when zooming in or zooming out respectively.
     private static final int FONT_INCREMENT_DELTA = 1;
-    private static final int MIN_FONT_SIZE = 5;
-    private static final Integer MAX_FONT_SIZE = 140;
     
+    private static final double[] ZOOM_STEPS = {
+        0.0625, 0.125, 0.25, 0.375, 0.5, 0.75,
+        1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10};
+    
+    // Identifies the center index in zoom steps (what identifies 100%).
+    private static final int DEFAULT_STEP_IDX = 6;
+    
+    // The component to receive zoom updates.
     private final ResizableTextPanel zoomable;
+    
+    // On initialization, set to 100%.
+    private int curStepIndex = DEFAULT_STEP_IDX;
+    
     
     /**
      * Creates new form TextZoomPanel.
@@ -59,32 +69,31 @@ class TextZoomPanel extends JPanel {
      * resets the font size displayed and triggers the ResizableTextPanel to
      * set their font to default size (i.e. JLabel().getFont().getSize())
      */
-    void resetSize() {
-        zoomAbs(DEFAULT_SIZE);
+    synchronized void resetSize() {
+        zoomStep(DEFAULT_STEP_IDX);
     }
     
-    private void zoomAbs(int fontSize) {
-        if (this.zoomable != null && fontSize >= MIN_FONT_SIZE && 
-                (MAX_FONT_SIZE == null || fontSize <= MAX_FONT_SIZE)) {
-            
-            this.zoomable.setTextSize(fontSize);
+    private synchronized void zoomStep(int newStep) {
+        if (this.zoomable != null && newStep >= 0 && newStep < ZOOM_STEPS.length) {
+            curStepIndex = newStep;
+            zoomable.setTextSize((int)Math.round(ZOOM_STEPS[curStepIndex] * (double)DEFAULT_SIZE));
             setZoomText();
-            
-            System.out.println("zoom in button " + zoomInButton.getHeight() + " reset button " + zoomResetButton.getHeight());
         }
+    }
+    
+    private synchronized void zoomDecrement() {
+        zoomStep(curStepIndex - 1);
+    }
+    
+    private synchronized void zoomIncrement() {
+        zoomStep(curStepIndex + 1);
     }
     
     private void setZoomText() {
-        int fontSize = (this.zoomable == null) ? DEFAULT_SIZE : this.zoomable.getTextSize();
-        zoomTextField.setText(fontSize + "pt");
+        String percent = Long.toString(Math.round(ZOOM_STEPS[this.curStepIndex] * 100));
+        zoomTextField.setText(percent + "%");
     }
     
-    private void zoomDelta(int changeFactor) {
-        if (this.zoomable != null) {
-            int curSize = this.zoomable.getTextSize();
-            zoomAbs(curSize + changeFactor);
-        }
-    }
     
     
     @NbBundle.Messages({
@@ -170,11 +179,11 @@ class TextZoomPanel extends JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
-        zoomDelta(-FONT_INCREMENT_DELTA);
+        zoomDecrement();
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
     private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
-        zoomDelta(FONT_INCREMENT_DELTA);
+        zoomIncrement();
     }//GEN-LAST:event_zoomInButtonActionPerformed
 
     private void zoomResetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomResetButtonActionPerformed
