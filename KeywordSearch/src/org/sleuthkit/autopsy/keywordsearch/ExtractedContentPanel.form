@@ -45,8 +45,8 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="controlScrollPane" alignment="0" pref="1096" max="32767" attributes="0"/>
-          <Component id="extractedScrollPane" alignment="0" pref="1096" max="32767" attributes="0"/>
+          <Component id="controlScrollPane" alignment="0" pref="100" max="32767" attributes="0"/>
+          <Component id="extractedScrollPane" alignment="0" pref="100" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -180,7 +180,7 @@
                           <Component id="hitOfLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="hitTotalLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="hitButtonsLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="zoomPanel" alignment="2" min="-2" max="-2" attributes="0"/>
+                          <Component id="zoomPanel" alignment="1" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="56" max="-2" attributes="0"/>
                   </Group>
@@ -449,18 +449,7 @@
                 <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new TextZoomPanel(this)"/>
               </AuxValues>
 
-              <Layout>
-                <DimensionLayout dim="0">
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="200" max="32767" attributes="0"/>
-                  </Group>
-                </DimensionLayout>
-                <DimensionLayout dim="1">
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="20" max="32767" attributes="0"/>
-                  </Group>
-                </DimensionLayout>
-              </Layout>
+              <Layout class="org.netbeans.modules.form.compat2.layouts.DesignFlowLayout"/>
             </Container>
           </SubComponents>
         </Container>

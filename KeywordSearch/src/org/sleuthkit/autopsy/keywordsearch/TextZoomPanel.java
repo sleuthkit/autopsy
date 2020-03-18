@@ -14,7 +14,11 @@ import org.openide.util.NbBundle;
  */
 class TextZoomPanel extends JPanel {
     static final int DEFAULT_SIZE = new JLabel().getFont().getSize();
+    
+    // how much font size is incremented or decremented when zooming in or zooming out respectively
     private static final int FONT_INCREMENT_DELTA = 1;
+    private static final int MIN_FONT_SIZE = 5;
+    private static final Integer MAX_FONT_SIZE = 140;
     
     private final ResizableTextPanel zoomable;
     
@@ -28,7 +32,6 @@ class TextZoomPanel extends JPanel {
         updateEnabled();
         setZoomText();
     }
-    
 
     
     private void updateEnabled() {
@@ -39,14 +42,22 @@ class TextZoomPanel extends JPanel {
         this.zoomTextField.setEnabled(shouldEnable);
     }
     
-    private void resetSize() {
+    /**
+     * resets the font size displayed and triggers the ResizableTextPanel to
+     * set their font to default size (i.e. JLabel().getFont().getSize())
+     */
+    public void resetSize() {
         zoomAbs(DEFAULT_SIZE);
     }
     
     private void zoomAbs(int fontSize) {
-        if (this.zoomable != null) {
+        if (this.zoomable != null && fontSize >= MIN_FONT_SIZE && 
+                (MAX_FONT_SIZE == null || fontSize <= MAX_FONT_SIZE)) {
+            
             this.zoomable.setTextSize(fontSize);
             setZoomText();
+            
+            System.out.println("zoom in button " + zoomInButton.getHeight() + " reset button " + zoomResetButton.getHeight());
         }
     }
     
@@ -89,7 +100,7 @@ class TextZoomPanel extends JPanel {
         setMinimumSize(new java.awt.Dimension(150, 20));
         setPreferredSize(new java.awt.Dimension(200, 20));
         setRequestFocusEnabled(false);
-        setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 2, 0));
+        setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEADING, 0, 0));
 
         zoomTextField.setEditable(false);
         zoomTextField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
@@ -136,7 +147,6 @@ class TextZoomPanel extends JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(zoomResetButton, org.openide.util.NbBundle.getMessage(TextZoomPanel.class, "TextZoomPanel.zoomResetButton.text")); // NOI18N
         zoomResetButton.setFocusable(false);
         zoomResetButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        zoomResetButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         zoomResetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 zoomResetButtonActionPerformed(evt);

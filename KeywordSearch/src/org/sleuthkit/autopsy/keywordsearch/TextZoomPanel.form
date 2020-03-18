@@ -24,7 +24,8 @@
   </AuxValues>
 
   <Layout class="org.netbeans.modules.form.compat2.layouts.DesignFlowLayout">
-    <Property name="horizontalGap" type="int" value="2"/>
+    <Property name="alignment" type="int" value="3"/>
+    <Property name="horizontalGap" type="int" value="0"/>
     <Property name="verticalGap" type="int" value="0"/>
   </Layout>
   <SubComponents>
@@ -115,7 +116,6 @@
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
         <Property name="horizontalTextPosition" type="int" value="0"/>
-        <Property name="verticalTextPosition" type="int" value="3"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="zoomResetButtonActionPerformed"/>

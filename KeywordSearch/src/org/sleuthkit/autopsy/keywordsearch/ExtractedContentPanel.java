@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JLabel;
 import javax.swing.SizeRequirements;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.text.Element;
 import javax.swing.text.View;
@@ -130,9 +131,8 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
                 };
             }
         };
-        
+        // get the style sheet for editing font size
         styleSheet = editorKit.getStyleSheet();
-        setTextSize(40);
         
         sourceComboBox.addItemListener(itemEvent -> {
             if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
@@ -143,8 +143,15 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         copyMenuItem.addActionListener(actionEvent -> extractedTextPane.copy());
         selectAllMenuItem.addActionListener(actionEvent -> extractedTextPane.selectAll());
         
-        zoomPanel.setEnabled(true);
-        zoomPanel.setVisible(true);
+        // TextZoomPanel could not be directly instantiated in Swing WYSIWYG editor 
+        // (because it was package private, couldn't use constructor, etc.)
+        // so it was identified as a JPanel for the WYSIWYG.  This function is called for
+        // initial setup so the font size of this panel as well as the font size indicated
+        // in the TextZoomPanel are correct
+        SwingUtilities.invokeLater(() -> {
+            if (zoomPanel != null && zoomPanel instanceof TextZoomPanel)
+                ((TextZoomPanel) this.zoomPanel).resetSize();
+        });
     }
     
     
@@ -323,17 +330,6 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         zoomPanel.setName(""); // NOI18N
         zoomPanel.setPreferredSize(new java.awt.Dimension(200, 20));
 
-        javax.swing.GroupLayout zoomPanelLayout = new javax.swing.GroupLayout(zoomPanel);
-        zoomPanel.setLayout(zoomPanelLayout);
-        zoomPanelLayout.setHorizontalGroup(
-            zoomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 200, Short.MAX_VALUE)
-        );
-        zoomPanelLayout.setVerticalGroup(
-            zoomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 20, Short.MAX_VALUE)
-        );
-
         javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
         controlPanel.setLayout(controlPanelLayout);
         controlPanelLayout.setHorizontalGroup(
@@ -401,7 +397,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
                     .addComponent(hitOfLabel)
                     .addComponent(hitTotalLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(hitButtonsLabel)
-                    .addComponent(zoomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(zoomPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(56, 56, 56))
         );
 
@@ -415,8 +411,8 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(controlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1096, Short.MAX_VALUE)
-            .addComponent(extractedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1096, Short.MAX_VALUE)
+            .addComponent(controlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
+            .addComponent(extractedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
