@@ -137,6 +137,7 @@ class TextZoomPanel extends JPanel {
 
         zoomOutButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/zoom-out.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(zoomOutButton, org.openide.util.NbBundle.getMessage(TextZoomPanel.class, "TextZoomPanel.zoomOutButton.text")); // NOI18N
+        zoomOutButton.setBorderPainted(false);
         zoomOutButton.setFocusable(false);
         zoomOutButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         zoomOutButton.setMaximumSize(new java.awt.Dimension(24, 24));
@@ -151,6 +152,7 @@ class TextZoomPanel extends JPanel {
 
         zoomInButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/zoom-in.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(zoomInButton, org.openide.util.NbBundle.getMessage(TextZoomPanel.class, "TextZoomPanel.zoomInButton.text")); // NOI18N
+        zoomInButton.setBorderPainted(false);
         zoomInButton.setFocusable(false);
         zoomInButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         zoomInButton.setMaximumSize(new java.awt.Dimension(24, 24));
@@ -163,10 +165,12 @@ class TextZoomPanel extends JPanel {
         });
         add(zoomInButton);
 
+        jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
         jSeparator2.setMaximumSize(new java.awt.Dimension(6, 20));
         add(jSeparator2);
 
         org.openide.awt.Mnemonics.setLocalizedText(zoomResetButton, org.openide.util.NbBundle.getMessage(TextZoomPanel.class, "TextZoomPanel.zoomResetButton.text")); // NOI18N
+        zoomResetButton.setBorderPainted(false);
         zoomResetButton.setFocusable(false);
         zoomResetButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         zoomResetButton.addActionListener(new java.awt.event.ActionListener() {

@@ -150,8 +150,6 @@
                       <Component id="jSeparator3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="zoomPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="144" max="-2" attributes="0"/>
-                      <Component id="jSeparator1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -170,7 +168,6 @@
                           <Component id="pageButtonsLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="pagePreviousButton" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="pageNextButton" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="jSeparator1" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="sourceComboBox" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="pagesLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="hitLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
@@ -307,11 +304,6 @@
                 </Property>
               </Properties>
             </Component>
-            <Component class="javax.swing.JSeparator" name="jSeparator1">
-              <Properties>
-                <Property name="orientation" type="int" value="1"/>
-              </Properties>
-            </Component>
             <Component class="javax.swing.JLabel" name="hitLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -434,6 +426,9 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JSeparator" name="jSeparator3">
+              <Properties>
+                <Property name="orientation" type="int" value="1"/>
+              </Properties>
             </Component>
             <Container class="javax.swing.JPanel" name="zoomPanel">
               <Properties>

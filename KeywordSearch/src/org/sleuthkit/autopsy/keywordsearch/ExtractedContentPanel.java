@@ -211,7 +211,6 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         pageNextButton = new javax.swing.JButton();
         pagePreviousButton = new javax.swing.JButton();
         pageCurLabel = new javax.swing.JLabel();
-        jSeparator1 = new javax.swing.JSeparator();
         hitLabel = new javax.swing.JLabel();
         hitButtonsLabel = new javax.swing.JLabel();
         hitNextButton = new javax.swing.JButton();
@@ -285,8 +284,6 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         pageCurLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         pageCurLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageCurLabel.text")); // NOI18N
 
-        jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
-
         hitLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitLabel.text")); // NOI18N
         hitLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitLabel.toolTipText")); // NOI18N
 
@@ -327,6 +324,8 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         hitCountLabel.setPreferredSize(new java.awt.Dimension(18, 14));
 
         jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
         zoomPanel.setMinimumSize(new java.awt.Dimension(150, 20));
         zoomPanel.setName(""); // NOI18N
@@ -371,8 +370,6 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
                 .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(zoomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(144, 144, 144)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -389,7 +386,6 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
                     .addComponent(pageButtonsLabel)
                     .addComponent(pagePreviousButton)
                     .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(pagesLabel)
                     .addComponent(hitLabel)
@@ -406,7 +402,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
                 .addGap(56, 56, 56))
         );
 
-        controlPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {hitButtonsLabel, hitCountLabel, hitLabel, hitNextButton, hitOfLabel, hitPreviousButton, hitTotalLabel, jLabel1, jSeparator1, jSeparator2, jSeparator3, pageButtonsLabel, pageCurLabel, pageNextButton, pageOfLabel, pagePreviousButton, pageTotalLabel, pagesLabel, sourceComboBox});
+        controlPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {hitButtonsLabel, hitCountLabel, hitLabel, hitNextButton, hitOfLabel, hitPreviousButton, hitTotalLabel, jLabel1, jSeparator2, jSeparator3, pageButtonsLabel, pageCurLabel, pageNextButton, pageOfLabel, pagePreviousButton, pageTotalLabel, pagesLabel, sourceComboBox});
 
         zoomPanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.AccessibleContext.accessibleName")); // NOI18N
 
@@ -442,7 +438,6 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     private javax.swing.JButton hitPreviousButton;
     private javax.swing.JLabel hitTotalLabel;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JLabel pageButtonsLabel;
