@@ -229,7 +229,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * listener held by event publishers prevents garbage collection of this
      * node.
      */
-    private final PropertyChangeListener weakAppEventListener = WeakListeners.propertyChange(listener, null);
+    private final PropertyChangeListener weakListener = WeakListeners.propertyChange(listener, null);
 
     /**
      * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
@@ -264,7 +264,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         setDisplayName(displayName);
         setShortDescription(displayName);
         setIconBaseWithExtension(iconPath);
-        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakAppEventListener);
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
     }
 
     /**
@@ -339,7 +339,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * Unregisters this node's application event listener.
      */
     private void unregisterListener() {
-        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakAppEventListener);
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
     }
 
     /**
@@ -491,7 +491,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         VALUE_LOADING,
                         ""));
             }
-            backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakAppEventListener));
+            backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakListener));
         }
 
         /*
