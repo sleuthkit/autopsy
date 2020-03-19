@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,6 +47,8 @@ import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
@@ -62,6 +64,7 @@ import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFa
 import org.sleuthkit.autopsy.modules.vmextractor.VMExtractorIngestModuleFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepoFactory;
 
 /**
  * Utilities for testing intercase correlation feature.
@@ -220,7 +223,7 @@ class InterCaseTestUtils {
         this.kitchenShink = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.ALL_MODULES, kitchenSink);
 
         try {
-            Collection<CorrelationAttributeInstance.Type> types = CorrelationAttributeInstance.getDefaultCorrelationTypes();
+            Collection<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getCorrelationTypes();
 
             //TODO use ids instead of strings
             FILE_TYPE = types.stream().filter(type -> type.getDisplayName().equals("Files")).findAny().get();
@@ -248,7 +251,7 @@ class InterCaseTestUtils {
                     CentralRepository.getInstance().shutdownConnections();
                 }
                 FileUtils.deleteDirectory(CENTRAL_REPO_DIRECTORY_PATH.toFile());
-            } catch (IOException | CentralRepoExceptionex) {
+            } catch (IOException | CentralRepoException ex) {
                 Exceptions.printStackTrace(ex);
                 Assert.fail(ex.getMessage());
             }
@@ -297,11 +300,12 @@ class InterCaseTestUtils {
             crSettings.createDbDirectory();
         }
 
-        crSettings.initializeDatabaseSchema();
-        crSettings.insertDefaultDatabaseContent();
+        RdbmsCentralRepoFactory centralRepoSchemaFactory = new RdbmsCentralRepoFactory(CentralRepoPlatforms.SQLITE, crSettings);
+        centralRepoSchemaFactory.initializeDatabaseSchema();
+        centralRepoSchemaFactory.insertDefaultDatabaseContent();
+        
         crSettings.saveSettings();
-        CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.SQLITE.name());
-        CentralRepoPlatforms.saveSelectedPlatform();
+        CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.SQLITE);
     }
 
     /**

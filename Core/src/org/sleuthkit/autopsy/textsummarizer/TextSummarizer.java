@@ -40,9 +40,9 @@ public interface TextSummarizer {
      * @param file        The AbstractFile to summarize.
      * @param summarySize The size of the summary to create.
      *
-     * @return The summary as a string.
+     * @return The summary as a TextSummary object.
      *
      * @throws IOException
      */
-    String summarize(AbstractFile file, int summarySize) throws IOException;
+    TextSummary summarize(AbstractFile file, int summarySize) throws IOException;
 }

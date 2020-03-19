@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -105,7 +105,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                             this.content.getName(), this.content.getId()), ex);
         }
 
-        if (UserPreferences.displayTranslatedFileNames()) {
+        if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
             backgroundTasksPool.submit(new TranslationTask(
                     new WeakReference<>(this), weakPcl));
         }
@@ -331,7 +331,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
          * background task that promises to update these values.
          */
 
-        if (UserPreferences.displayTranslatedFileNames()) {
+        if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
             properties.add(new NodeProperty<>(ORIGINAL_NAME.toString(), ORIGINAL_NAME.toString(), NO_DESCR, ""));
         }
 
@@ -549,7 +549,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance attribute = null;
         if (CentralRepository.isEnabled() && !UserPreferences.getHideSCOColumns()) {
-            attribute = CorrelationAttributeUtil.getInstanceFromContent(content);
+            attribute = CorrelationAttributeUtil.getCorrAttrForFile(content);
         }
         return attribute;
     }

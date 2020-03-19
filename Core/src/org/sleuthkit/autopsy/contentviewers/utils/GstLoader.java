@@ -22,11 +22,9 @@ package org.sleuthkit.autopsy.contentviewers.utils;
 import java.util.logging.Level;
 import org.freedesktop.gstreamer.Gst;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
- *
- * @author dsmyda
+ * A utility class that loads the gstreamer bindings.
  */
 public class GstLoader {
 
@@ -57,9 +55,6 @@ public class GstLoader {
             status = GstStatus.SUCCESS;
         } catch (Throwable ex) {
             status = GstStatus.FAILURE;
-            MessageNotifyUtil.Message.error("A problem was encountered with"
-                    + "the video playback service. Video playback will"
-                    + " be disabled for the remainder of the session.");
             logger.log(Level.WARNING, "Failed to load gsteamer bindings", ex);
         }
 

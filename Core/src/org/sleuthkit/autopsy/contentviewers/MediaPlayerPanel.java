@@ -76,6 +76,7 @@ import org.freedesktop.gstreamer.event.SeekFlags;
 import org.freedesktop.gstreamer.event.SeekType;
 import org.sleuthkit.autopsy.contentviewers.utils.GstLoader;
 import org.sleuthkit.autopsy.contentviewers.utils.GstLoader.GstStatus;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * This is a video player that is part of the Media View layered pane. It uses
@@ -213,6 +214,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     //The slider is a shared resource between the VideoPanelUpdater
     //and the TrackListener on the slider itself.
     private final Semaphore sliderLock;
+    
+    private static volatile boolean IS_GST_ENABLED = true;
 
     /**
      * Creates a new MediaPlayerPanel
@@ -226,7 +229,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     }
 
     private void customizeComponents() {
-        progressSlider.setEnabled(false); // disable slider; enable after user plays vid
+        enableComponents(false);
         progressSlider.setMinimum(0);
         progressSlider.setMaximum(PROGRESS_SLIDER_SIZE);
         progressSlider.setValue(0);
@@ -234,7 +237,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                if (progressSlider.getValueIsAdjusting()) {
+                if (progressSlider.getValueIsAdjusting() && gstPlayBin != null) {
                     long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
                     double relativePosition = progressSlider.getValue() * 1.0 / PROGRESS_SLIDER_SIZE;
                     long newStartTime = (long) (relativePosition * duration);
@@ -260,13 +263,15 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
             @Override
             public void mousePressed(MouseEvent e) {
-                previousState = gstPlayBin.getState();
-                gstPlayBin.pause();
+                if (gstPlayBin != null) {
+                    previousState = gstPlayBin.getState();
+                    gstPlayBin.pause();
+                }
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (previousState.equals(State.PLAYING)) {
+                if (previousState.equals(State.PLAYING) && gstPlayBin != null) {
                     gstPlayBin.play();
                 }
                 previousState = State.NULL;
@@ -287,7 +292,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         });
         //Manage the audio level when the user is adjusting the volume slider
         audioSlider.addChangeListener((ChangeEvent event) -> {
-            if (audioSlider.getValueIsAdjusting()) {
+            if (audioSlider.getValueIsAdjusting() && gstPlayBin != null) {
                 double audioPercent = (audioSlider.getValue() * 2.0) / 100.0;
                 gstPlayBin.setVolume(audioPercent);
             }
@@ -321,11 +326,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         endOfStreamListener = new Bus.EOS() {
             @Override
             public void endOfStream(GstObject go) {
-                gstPlayBin.seek(ClockTime.ZERO);
-                /**
-                 * Keep the video from automatically playing
-                 */
-                Gst.getExecutor().submit(() -> gstPlayBin.pause());
+                if (gstPlayBin != null) {
+                    gstPlayBin.seek(ClockTime.ZERO);
+                    /**
+                     * Keep the video from automatically playing
+                     */
+                    Gst.getExecutor().submit(() -> gstPlayBin.pause());
+                }
             }
         };
     }
@@ -417,6 +424,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
     @Override
     public boolean isSupported(AbstractFile file) {
+        if(!IS_GST_ENABLED) {
+            return false;
+        }
+        
         String extension = file.getNameExtension();
         /**
          * Although it seems too restrictive, requiring both a supported
@@ -534,6 +545,11 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         /*
          * Initialize the playback components if the extraction was successful.
          */
+        @NbBundle.Messages({
+            "MediaPlayerPanel.playbackDisabled=A problem was encountered with"
+                        + " the video playback service. Video playback will"
+                        + " be disabled for the remainder of the session."
+        })
         @Override
         protected void done() {
             try {
@@ -542,12 +558,16 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 if (this.isCancelled()) {
                     return;
                 }
-                
+
                 GstStatus loadStatus = GstLoader.tryLoad();
-                if(loadStatus == GstStatus.FAILURE) {
+                if (loadStatus == GstStatus.FAILURE) {
+                    MessageNotifyUtil.Message.error(Bundle.MediaPlayerPanel_playbackDisabled());
+                    
+                    // This will disable the panel for future use.
+                    IS_GST_ENABLED = false;
                     return;
                 }
-                
+
                 Gst.getExecutor().submit(() -> {
                     //Video is ready for playback. Create new components
                     gstPlayBin = new PlayBin("VideoPlayer", tempFile.toURI());
@@ -566,17 +586,21 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
                     videoPanel.add(fxPanel);
                     fxAppSink = new JavaFxAppSink("JavaFxAppSink", fxPanel);
-                    gstPlayBin.setVideoSink(fxAppSink);
-
+                    if (gstPlayBin != null) {
+                        gstPlayBin.setVideoSink(fxAppSink);
+                    }
                     if (this.isCancelled()) {
                         return;
                     }
-
-                    gstPlayBin.setVolume((audioSlider.getValue() * 2.0) / 100.0);
-                    gstPlayBin.pause();
+                    if (gstPlayBin != null) {
+                        gstPlayBin.setVolume((audioSlider.getValue() * 2.0) / 100.0);
+                        gstPlayBin.pause();
+                    }
 
                     timer.start();
-                    enableComponents(true);
+                    SwingUtilities.invokeLater(() -> {
+                        enableComponents(true);
+                    });
                 });
             } catch (CancellationException ex) {
                 logger.log(Level.INFO, "Media buffering was canceled."); //NON-NLS
@@ -594,8 +618,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private class VideoPanelUpdater implements ActionListener {
 
         @Override
-        public void actionPerformed(ActionEvent e) {                
-            if (!progressSlider.getValueIsAdjusting()) {
+        public void actionPerformed(ActionEvent e) {
+            if (!progressSlider.getValueIsAdjusting() && gstPlayBin != null) {
                 Gst.getExecutor().submit(() -> {
                     try {
                         sliderLock.acquireUninterruptibly();
@@ -638,7 +662,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
          * thumb at the given width and height. It also paints the track blue as
          * the thumb progresses.
          *
-         * @param slider         JSlider component
+         * @param slider JSlider component
          * @param thumbDimension
          */
         public CircularJSliderUI(JSlider slider, Dimension thumbDimension) {
@@ -987,95 +1011,103 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
     private void rewindButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rewindButtonActionPerformed
         Gst.getExecutor().submit(() -> {
-            long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
-            //Skip 30 seconds.
-            long rewindDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
-            //Ensure new video position is within bounds
-            long newTime = Math.max(currentTime - rewindDelta, 0);
-            double playBackRate = getPlayBackRate();
-            gstPlayBin.seek(playBackRate,
-                    Format.TIME,
-                    //FLUSH - flushes the pipeline
-                    //ACCURATE - video will seek exactly to the position requested
-                    EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
-                    //Set the start position to newTime
-                    SeekType.SET, newTime,
-                    //Do nothing for the end position
-                    SeekType.NONE, -1);
-        });
-    }//GEN-LAST:event_rewindButtonActionPerformed
-
-    private void fastForwardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fastForwardButtonActionPerformed
-        Gst.getExecutor().submit(() -> {
-            long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
-            long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
-            //Skip 30 seconds.
-            long fastForwardDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
-            //Don't allow skipping within 2 seconds of video ending. Skipping right to
-            //the end causes undefined behavior for some gstreamer plugins.
-            long twoSecondsInNano = TimeUnit.NANOSECONDS.convert(2, TimeUnit.SECONDS);
-            if ((duration - currentTime) <= twoSecondsInNano) {
-                return;
-            }
-
-            long newTime;
-            if (currentTime + fastForwardDelta >= duration) {
-                //If there are less than 30 seconds left, only fast forward to the midpoint.
-                newTime = currentTime + (duration - currentTime) / 2;
-            } else {
-                newTime = currentTime + fastForwardDelta;
-            }
-
-            double playBackRate = getPlayBackRate();
-            gstPlayBin.seek(playBackRate,
-                    Format.TIME,
-                    //FLUSH - flushes the pipeline
-                    //ACCURATE - video will seek exactly to the position requested
-                    EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
-                    //Set the start position to newTime
-                    SeekType.SET, newTime,
-                    //Do nothing for the end position
-                    SeekType.NONE, -1);
-        });
-    }//GEN-LAST:event_fastForwardButtonActionPerformed
-
-    private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
-        Gst.getExecutor().submit(() -> {
-            if (gstPlayBin.isPlaying()) {
-                gstPlayBin.pause();
-            } else {
-                double playBackRate = getPlayBackRate();
+            if (gstPlayBin != null) {
                 long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
-                //Set playback rate before play.
+                //Skip 30 seconds.
+                long rewindDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
+                //Ensure new video position is within bounds
+                long newTime = Math.max(currentTime - rewindDelta, 0);
+                double playBackRate = getPlayBackRate();
                 gstPlayBin.seek(playBackRate,
                         Format.TIME,
                         //FLUSH - flushes the pipeline
                         //ACCURATE - video will seek exactly to the position requested
                         EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
                         //Set the start position to newTime
-                        SeekType.SET, currentTime,
+                        SeekType.SET, newTime,
                         //Do nothing for the end position
                         SeekType.NONE, -1);
-                gstPlayBin.play();
             }
         });
-    }//GEN-LAST:event_playButtonActionPerformed
+    }//GEN-LAST:event_rewindButtonActionPerformed
 
-    private void playBackSpeedComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playBackSpeedComboBoxActionPerformed
+    private void fastForwardButtonActionPerformed(java.awt.event.ActionEvent evt) {
         Gst.getExecutor().submit(() -> {
-            double playBackRate = getPlayBackRate();
-            long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
-            gstPlayBin.seek(playBackRate,
-                    Format.TIME,
-                    //FLUSH - flushes the pipeline
-                    //ACCURATE - video will seek exactly to the position requested
-                    EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
-                    //Set the position to the currentTime, we are only adjusting the
-                    //playback rate.
-                    SeekType.SET, currentTime,
-                    SeekType.NONE, 0);
+            if (gstPlayBin != null) {
+                long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
+                long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+                //Skip 30 seconds.
+                long fastForwardDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
+                //Don't allow skipping within 2 seconds of video ending. Skipping right to
+                //the end causes undefined behavior for some gstreamer plugins.
+                long twoSecondsInNano = TimeUnit.NANOSECONDS.convert(2, TimeUnit.SECONDS);
+                if ((duration - currentTime) <= twoSecondsInNano) {
+                    return;
+                }
+
+                long newTime;
+                if (currentTime + fastForwardDelta >= duration) {
+                    //If there are less than 30 seconds left, only fast forward to the midpoint.
+                    newTime = currentTime + (duration - currentTime) / 2;
+                } else {
+                    newTime = currentTime + fastForwardDelta;
+                }
+
+                double playBackRate = getPlayBackRate();
+                gstPlayBin.seek(playBackRate,
+                        Format.TIME,
+                        //FLUSH - flushes the pipeline
+                        //ACCURATE - video will seek exactly to the position requested
+                        EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
+                        //Set the start position to newTime
+                        SeekType.SET, newTime,
+                        //Do nothing for the end position
+                        SeekType.NONE, -1);
+            }
         });
-    }//GEN-LAST:event_playBackSpeedComboBoxActionPerformed
+    }
+
+    private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        Gst.getExecutor().submit(() -> {
+            if (gstPlayBin != null) {
+                if (gstPlayBin.isPlaying()) {
+                    gstPlayBin.pause();
+                } else {
+                    double playBackRate = getPlayBackRate();
+                    long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+                    //Set playback rate before play.
+                    gstPlayBin.seek(playBackRate,
+                            Format.TIME,
+                            //FLUSH - flushes the pipeline
+                            //ACCURATE - video will seek exactly to the position requested
+                            EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
+                            //Set the start position to newTime
+                            SeekType.SET, currentTime,
+                            //Do nothing for the end position
+                            SeekType.NONE, -1);
+                    gstPlayBin.play();
+                }
+            }
+        });
+    }
+
+    private void playBackSpeedComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
+        Gst.getExecutor().submit(() -> {
+            if (gstPlayBin != null) {
+                double playBackRate = getPlayBackRate();
+                long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+                gstPlayBin.seek(playBackRate,
+                        Format.TIME,
+                        //FLUSH - flushes the pipeline
+                        //ACCURATE - video will seek exactly to the position requested
+                        EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
+                        //Set the position to the currentTime, we are only adjusting the
+                        //playback rate.
+                        SeekType.SET, currentTime,
+                        SeekType.NONE, 0);
+            }
+        });
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel VolumeIcon;

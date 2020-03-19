@@ -119,7 +119,6 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
             }
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting arttribute(s) from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_resultErrorMessage());
         }
 
         // if the artifact links to another file, add an action to go to that file
@@ -130,7 +129,6 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
             }
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_linkedFileMessage());
         }
         //if this artifact has associated content, add the action to view the content in the timeline
         AbstractFile file = getLookup().lookup(AbstractFile.class);

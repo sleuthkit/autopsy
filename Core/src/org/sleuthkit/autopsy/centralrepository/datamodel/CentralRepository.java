@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 
 /**
@@ -41,7 +42,7 @@ public interface CentralRepository {
 
         CentralRepoPlatforms selectedPlatform = CentralRepoPlatforms.DISABLED;
         if (CentralRepoDbUtil.allowUseOfCentralRepository()) {
-            selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
+            selectedPlatform = CentralRepoDbManager.getSavedDbChoice().getDbPlatform();
         }
         switch (selectedPlatform) {
             case POSTGRESQL:
@@ -92,7 +93,7 @@ public interface CentralRepository {
      */
     static boolean isEnabled() {
         return CentralRepoDbUtil.allowUseOfCentralRepository()
-                && CentralRepoPlatforms.getSelectedPlatform() != CentralRepoPlatforms.DISABLED;
+                && CentralRepoDbManager.getSavedDbChoice() != CentralRepoDbChoice.DISABLED;
     }
 
     /**
@@ -802,5 +803,38 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws CentralRepoException;      
+    public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws CentralRepoException;     
+    
+    
+   /**
+    * Returns list of all correlation types. 
+    * 
+    * @return  list of Correlation types
+    * @throws CentralRepoException 
+    */
+    List<CorrelationAttributeInstance.Type> getCorrelationTypes() throws CentralRepoException;
+    
+    
+    /**
+     * Get account type by type name.
+     * 
+     * @param accountTypeName account type name to look for
+     * @return CR account type
+     * @throws CentralRepoException 
+     */
+    CentralRepoAccountType getAccountTypeByName(String accountTypeName) throws CentralRepoException;
+     
+    /**
+     * Get an account from the accounts table matching the given type/ID.  
+     * Inserts a row if one doesn't exists.
+     * 
+     * @param crAccountType CR account type to look for or create
+     * @param accountUniqueID type specific unique account id
+     * @return CR account
+     * 
+     * @throws CentralRepoException 
+     */
+    CentralRepoAccount getOrCreateAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException;
+    
+             
 }
