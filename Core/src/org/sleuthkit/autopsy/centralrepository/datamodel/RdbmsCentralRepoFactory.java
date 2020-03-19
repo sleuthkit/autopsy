@@ -83,6 +83,7 @@ public class RdbmsCentralRepoFactory {
     public boolean initializeDatabaseSchema() {
 
         String createArtifactInstancesTableTemplate = getCreateArtifactInstancesTableTemplate(selectedPlatform);
+        String createAccountInstancesTableTemplate = getCreateAccountInstancesTableTemplate(selectedPlatform);
 
         String instancesCaseIdIdx = getAddCaseIdIndexTemplate();
         String instancesDatasourceIdIdx = getAddDataSourceIdIndexTemplate();
@@ -147,7 +148,13 @@ public class RdbmsCentralRepoFactory {
                     reference_type_dbname = CentralRepoDbUtil.correlationTypeToReferenceTableName(type);
                     instance_type_dbname = CentralRepoDbUtil.correlationTypeToInstanceTableName(type);
 
-                    stmt.execute(String.format(createArtifactInstancesTableTemplate, instance_type_dbname, instance_type_dbname));
+                    // use the correct create table template, based on whether the attribute type represents an account or not.
+                    String createTableTemplate = (CentralRepoDbUtil.correlationAttribHasAnAccount(type)) 
+                                        ? createAccountInstancesTableTemplate 
+                                        : createArtifactInstancesTableTemplate;
+                    
+                    stmt.execute(String.format(createTableTemplate, instance_type_dbname, instance_type_dbname));
+                    
                     stmt.execute(String.format(instancesCaseIdIdx, instance_type_dbname, instance_type_dbname));
                     stmt.execute(String.format(instancesDatasourceIdIdx, instance_type_dbname, instance_type_dbname));
                     stmt.execute(String.format(instancesValueIdx, instance_type_dbname, instance_type_dbname));
@@ -357,7 +364,7 @@ public class RdbmsCentralRepoFactory {
                 + ")";
     }
     /**
-     * Get the template String for creating a new _instances table in a Sqlite
+     * Get the template String for creating a new _instances table for non account artifacts in 
      * central repository. %s will exist in the template where the name of the
      * new table will be added.
      *
@@ -365,6 +372,31 @@ public class RdbmsCentralRepoFactory {
      */
     static String getCreateArtifactInstancesTableTemplate(CentralRepoPlatforms selectedPlatform) {
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        
+        return "CREATE TABLE IF NOT EXISTS %s ("
+                + getNumericPrimaryKeyClause("id", selectedPlatform)
+                + "case_id integer NOT NULL,"
+                + "data_source_id integer NOT NULL,"
+                + "value text NOT NULL,"
+                + "file_path text NOT NULL,"
+                + "known_status integer NOT NULL,"
+                + "comment text,"
+                + "file_obj_id " + getBigIntType(selectedPlatform) + " ," 
+                + "CONSTRAINT %s_multi_unique UNIQUE(data_source_id, value, file_path)" + getOnConflictIgnoreClause(selectedPlatform) + ","
+                + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
+                + "foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL)";
+    }
+
+     /**
+     * Get the template String for creating a new _instances table for Accounts in
+     * central repository. %s will exist in the template where the name of the
+     * new table will be added.
+     *
+     * @return a String which is a template for creating a _instances table
+     */
+    static String getCreateAccountInstancesTableTemplate(CentralRepoPlatforms selectedPlatform) {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        
         return "CREATE TABLE IF NOT EXISTS %s ("
                 + getNumericPrimaryKeyClause("id", selectedPlatform)
                 + "case_id integer NOT NULL,"
@@ -380,7 +412,7 @@ public class RdbmsCentralRepoFactory {
                 + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
                 + "foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL)";
     }
-
+    
     /**
      * Get the statement String for creating a new data_sources table in a
      * Sqlite central repository.
