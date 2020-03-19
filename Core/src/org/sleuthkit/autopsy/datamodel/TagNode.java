@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.Content;
  * translated name is made the display name of the node and the untranslated
  * name is put into both the original name property and into the node's tooltip.
  *
- * TODO (Jira-): Consider modifying this class to be able to use it more broadly
+ * TODO (Jira-6174): Consider modifying this class to be able to use it more broadly
  * within the Autopsy data model (i.e., AbstractNode suclasses). It's not really
  * specific to a tag node.
  */
