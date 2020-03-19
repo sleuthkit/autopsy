@@ -493,6 +493,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     /**
      * Translates the name of the file this node represents. An empty string
      * will be returned if the translation fails for any reason.
+     *
+     * @return The translated file name or the empty string.
      */
     String getTranslatedFileName() {
         try {
