@@ -106,6 +106,7 @@
     </Component>
     <Component class="javax.swing.JComboBox" name="correlationTypeComboBox">
       <Properties>
+        <Property name="maximumRowCount" type="int" value="50"/>
         <Property name="selectedItem" type="java.lang.Object" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
           <Connection code="null" type="code"/>
         </Property>
