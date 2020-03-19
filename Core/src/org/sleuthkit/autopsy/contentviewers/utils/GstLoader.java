@@ -61,7 +61,14 @@ public class GstLoader {
         return status;
     }
 
+    /**
+     * The various init statuses that tryLoad can return.
+     */
     public enum GstStatus {
         SUCCESS, FAILURE
+    }
+    
+    private GstLoader() {
+        
     }
 }
