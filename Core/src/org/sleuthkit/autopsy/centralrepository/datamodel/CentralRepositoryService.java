@@ -50,10 +50,6 @@ public class CentralRepositoryService implements AutopsyService {
             return;
         }
 
-        /*
-         * TODO (Jira-6108): We should consider adding coordination service
-         * locking to the central repository in collaborative environments.
-         */
         ProgressIndicator progress = context.getProgressIndicator();
         progress.progress(Bundle.CentralRepositoryService_progressMsg_updatingSchema());
         updateSchema();
