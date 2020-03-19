@@ -127,7 +127,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     };
 
     private final BlackboardArtifact artifact;
-    private Content srcContent; // May be null.    
+    private Content srcContent; // May be null.  
+    private volatile String translatedSourceName; // Only computed once, in a background thread.
 
     /*
      * A method has been provided to allow the injection of properties into this
@@ -182,25 +183,40 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
                 SCOData scoData = (SCOData) evt.getNewValue();
                 if (scoData.getScoreAndDescription() != null) {
-                    updateSheet(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), scoData.getScoreAndDescription().getRight(), scoData.getScoreAndDescription().getLeft()));
+                    updateSheet(new NodeProperty<>(
+                            Bundle.BlackboardArtifactNode_createSheet_score_name(),
+                            Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
+                            scoData.getScoreAndDescription().getRight(),
+                            scoData.getScoreAndDescription().getLeft()));
                 }
                 if (scoData.getComment() != null) {
-                    updateSheet(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR, scoData.getComment()));
+                    updateSheet(new NodeProperty<>(
+                            Bundle.BlackboardArtifactNode_createSheet_comment_name(),
+                            Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
+                            NO_DESCR, scoData.getComment()));
                 }
                 if (scoData.getCountAndDescription() != null) {
-                    updateSheet(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), scoData.getCountAndDescription().getRight(), scoData.getCountAndDescription().getLeft()));
+                    updateSheet(new NodeProperty<>(
+                            Bundle.BlackboardArtifactNode_createSheet_count_name(),
+                            Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
+                            scoData.getCountAndDescription().getRight(),
+                            scoData.getCountAndDescription().getLeft()));
                 }
             } else if (eventType.equals(FileNameTransTask.getPropertyName())) {
                 /*
                  * Replace the value of the Source File property with the
                  * translated name via setDisplayName (see note in createSheet),
-                 * and put the untranslated name in the Original Name property.
-                 * Also set the tooltip to the original name.
+                 * and put the untranslated name in the Original Name property
+                 * and in the tooltip.
                  */
+                translatedSourceName = evt.getNewValue().toString();
                 setDisplayName(evt.getNewValue().toString());
                 setShortDescription(evt.getOldValue().toString());
-                updateSheet(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_srcFile_name(), Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(), NO_DESCR, (String) evt.getNewValue()));                
-                //updateSheet(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_srcFile_origName(), Bundle.BlackboardArtifactNode_createSheet_srcFile_origDisplayName(), NO_DESCR, (String) evt.getOldValue()));
+                updateSheet(new NodeProperty<>(
+                        Bundle.BlackboardArtifactNode_createSheet_srcFile_origName(),
+                        Bundle.BlackboardArtifactNode_createSheet_srcFile_origDisplayName(),
+                        NO_DESCR,
+                        evt.getOldValue().toString()));
             }
         }
     };
@@ -225,17 +241,15 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
         super(artifact, createLookup(artifact));
         this.artifact = artifact;
-
-        for (Content lookupContent : this.getLookup().lookupAll(Content.class
-        )) {
+        for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
             if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
                 srcContent = lookupContent;
                 try {
                     /*
                      * Calling this getter causes the unique path of the source
                      * content to be cached in the Content object. This is
-                     * advantageous if this node is constructed in a background
-                     * thread instead of a UI thread.
+                     * advantageous as long as this node is constructed in a
+                     * background thread instead of a UI thread.
                      */
                     srcContent.getUniquePath();
                 } catch (TskCoreException ex) {
@@ -245,13 +259,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         }
         setName(Long.toString(artifact.getArtifactID()));
-        if (srcContent != null) {
-            setDisplayName(srcContent.getName());
-            setShortDescription(srcContent.getName());
-        } else {
-            setDisplayName(Bundle.BlackboardArtifactNode_displayName_artifact(artifact.getDisplayName()));
-            setShortDescription(Bundle.BlackboardArtifactNode_displayName_artifact(artifact.getDisplayName()));
-        }
+        String displayName = selectDisplayName();
+        setDisplayName(displayName);
+        setShortDescription(displayName);
         setIconBaseWithExtension(iconPath);
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakAppEventListener);
     }
@@ -287,6 +297,26 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
             return Lookups.fixed(artifact);
         }
+    }
+
+    /**
+     * Gets the display name for this node, depending on its current state and
+     * application state.
+     *
+     * @return The display name.
+     */
+    private String selectDisplayName() {
+        String displayName;
+        if (srcContent != null) {
+            if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames() && translatedSourceName != null) {
+                displayName = translatedSourceName;
+            } else {
+                displayName = srcContent.getName();
+            }
+        } else {
+            displayName = Bundle.BlackboardArtifactNode_displayName_artifact(artifact.getDisplayName());
+        }
+        return displayName;
     }
 
     /**
@@ -409,17 +439,15 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
         /*
          * Add the name of the source content of the artifact represented by
-         * this node to the sheet.
-         *
-         * IMPORTANT NOTE: This property is in effect a replacement for the Name
-         * property of the node (with icon). To set the property value, call
-         * setDisplayName().
+         * this node to the sheet. The value of this property is the same as the
+         * display name of the node and this a "special" property that displays
+         * the node's icon as well as the display name.
          */
         sheetSet.put(new NodeProperty<>(
                 Bundle.BlackboardArtifactNode_createSheet_srcFile_name(),
                 Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(),
                 NO_DESCR,
-                this.getSourceName()));
+                getDisplayName()));
 
         if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
             /*
@@ -431,8 +459,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     Bundle.BlackboardArtifactNode_createSheet_srcFile_origName(),
                     Bundle.BlackboardArtifactNode_createSheet_srcFile_origDisplayName(),
                     NO_DESCR,
-                    ""));
-            if (srcContent != null) {
+                    translatedSourceName != null ? translatedSourceName : ""));
+            if (srcContent != null && translatedSourceName == null) {
                 new FileNameTransTask(srcContent.getName(), this, listener).submit();
             }
         }
@@ -445,10 +473,22 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
              * will fire a PropertyChangeEvent when the computation is completed
              * and this node's PropertyChangeListener will update the sheet.
              */
-            sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), VALUE_LOADING, ""));
-            sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), VALUE_LOADING, ""));
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_score_name(),
+                    Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
+                    VALUE_LOADING,
+                    ""));
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_comment_name(),
+                    Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
+                    VALUE_LOADING,
+                    ""));
             if (CentralRepository.isEnabled()) {
-                sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), VALUE_LOADING, ""));
+                sheetSet.put(new NodeProperty<>(
+                        Bundle.BlackboardArtifactNode_createSheet_count_name(),
+                        Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
+                        VALUE_LOADING,
+                        ""));
             }
             backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakAppEventListener));
         }
@@ -463,20 +503,16 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
                 if (attribute != null) {
                     BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
-                    sheetSet
-                            .put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class,
-                                    "BlackboardArtifactNode.createSheet.artifactType.name"),
-                                    NbBundle.getMessage(BlackboardArtifactNode.class,
-                                            "BlackboardArtifactNode.createSheet.artifactType.displayName"),
-                                    NO_DESCR,
-                                    associatedArtifact.getDisplayName()));
-                    sheetSet
-                            .put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class,
-                                    "BlackboardArtifactNode.createSheet.artifactDetails.name"),
-                                    NbBundle.getMessage(BlackboardArtifactNode.class,
-                                            "BlackboardArtifactNode.createSheet.artifactDetails.displayName"),
-                                    NO_DESCR,
-                                    associatedArtifact.getShortDescription()));
+                    sheetSet.put(new NodeProperty<>(
+                            NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.name"),
+                            NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.displayName"),
+                            NO_DESCR,
+                            associatedArtifact.getDisplayName()));
+                    sheetSet.put(new NodeProperty<>(
+                            NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactDetails.name"),
+                            NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactDetails.displayName"),
+                            NO_DESCR,
+                            associatedArtifact.getShortDescription()));
                 }
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, MessageFormat.format("Error getting associated artifact of TSK_INTERESTING_ARTIFACT_HIT artifact (objID={0}))", artifact.getId()), ex); //NON-NLS
@@ -523,20 +559,16 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
                 }
             }
-            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class,
-                    "BlackboardArtifactNode.createSheet.ext.name"),
-                    NbBundle.getMessage(BlackboardArtifactNode.class,
-                            "BlackboardArtifactNode.createSheet.ext.displayName"),
+            sheetSet.put(new NodeProperty<>(
+                    NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.ext.name"),
+                    NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.ext.displayName"),
                     NO_DESCR,
                     ext));
-            sheetSet
-                    .put(new NodeProperty<>(
-                            NbBundle.getMessage(BlackboardArtifactNode.class,
-                                    "BlackboardArtifactNode.createSheet.mimeType.name"),
-                            NbBundle.getMessage(BlackboardArtifactNode.class,
-                                    "BlackboardArtifactNode.createSheet.mimeType.displayName"),
-                            NO_DESCR,
-                            actualMimeType));
+            sheetSet.put(new NodeProperty<>(
+                    NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.mimeType.name"),
+                    NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.mimeType.displayName"),
+                    NO_DESCR,
+                    actualMimeType));
         }
 
         /*
@@ -556,10 +588,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
             if (sourcePath.isEmpty() == false) {
                 sheetSet.put(new NodeProperty<>(
-                        NbBundle.getMessage(BlackboardArtifactNode.class,
-                                "BlackboardArtifactNode.createSheet.filePath.name"),
-                        NbBundle.getMessage(BlackboardArtifactNode.class,
-                                "BlackboardArtifactNode.createSheet.filePath.displayName"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.filePath.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.filePath.displayName"),
                         NO_DESCR,
                         sourcePath));
             }
@@ -571,42 +601,33 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
              */
             if (Arrays.asList(SHOW_FILE_METADATA).contains(artifactTypeId)) {
                 AbstractFile file = srcContent != null && srcContent instanceof AbstractFile ? (AbstractFile) srcContent : null;
-                sheetSet
-                        .put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class,
-                                "ContentTagNode.createSheet.fileModifiedTime.name"),
-                                NbBundle.getMessage(BlackboardArtifactNode.class,
-                                        "ContentTagNode.createSheet.fileModifiedTime.displayName"),
-                                "",
-                                file == null ? "" : ContentUtils.getStringTime(file.getMtime(), file)));
-                sheetSet
-                        .put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class,
-                                "ContentTagNode.createSheet.fileChangedTime.name"),
-                                NbBundle.getMessage(BlackboardArtifactNode.class,
-                                        "ContentTagNode.createSheet.fileChangedTime.displayName"),
-                                "",
-                                file == null ? "" : ContentUtils.getStringTime(file.getCtime(), file)));
-                sheetSet
-                        .put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class,
-                                "ContentTagNode.createSheet.fileAccessedTime.name"),
-                                NbBundle.getMessage(BlackboardArtifactNode.class,
-                                        "ContentTagNode.createSheet.fileAccessedTime.displayName"),
-                                "",
-                                file == null ? "" : ContentUtils.getStringTime(file.getAtime(), file)));
-                sheetSet
-                        .put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class,
-                                "ContentTagNode.createSheet.fileCreatedTime.name"),
-                                NbBundle.getMessage(BlackboardArtifactNode.class,
-                                        "ContentTagNode.createSheet.fileCreatedTime.displayName"),
-                                "",
-                                file == null ? "" : ContentUtils.getStringTime(file.getCrtime(), file)));
-                sheetSet
-                        .put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class,
-                                "ContentTagNode.createSheet.fileSize.name"),
-                                NbBundle.getMessage(BlackboardArtifactNode.class,
-                                        "ContentTagNode.createSheet.fileSize.displayName"),
-                                "",
-                                file == null ? "" : file.getSize()));
-                sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_artifactMD5_name(),
+                sheetSet.put(new NodeProperty<>(
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileModifiedTime.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileModifiedTime.displayName"),
+                        "",
+                        file == null ? "" : ContentUtils.getStringTime(file.getMtime(), file)));
+                sheetSet.put(new NodeProperty<>(
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileChangedTime.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileChangedTime.displayName"),
+                        "",
+                        file == null ? "" : ContentUtils.getStringTime(file.getCtime(), file)));
+                sheetSet.put(new NodeProperty<>(
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileAccessedTime.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileAccessedTime.displayName"),
+                        "",
+                        file == null ? "" : ContentUtils.getStringTime(file.getAtime(), file)));
+                sheetSet.put(new NodeProperty<>(
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileCreatedTime.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileCreatedTime.displayName"),
+                        "",
+                        file == null ? "" : ContentUtils.getStringTime(file.getCrtime(), file)));
+                sheetSet.put(new NodeProperty<>(
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileSize.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileSize.displayName"),
+                        "",
+                        file == null ? "" : file.getSize()));
+                sheetSet.put(new NodeProperty<>(
+                        Bundle.BlackboardArtifactNode_createSheet_artifactMD5_name(),
                         Bundle.BlackboardArtifactNode_createSheet_artifactMD5_displayName(),
                         "",
                         file == null ? "" : StringUtils.defaultString(file.getMd5Hash())));
@@ -629,10 +650,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
             if (dataSourceStr.isEmpty() == false) {
                 sheetSet.put(new NodeProperty<>(
-                        NbBundle.getMessage(BlackboardArtifactNode.class,
-                                "BlackboardArtifactNode.createSheet.dataSrc.name"),
-                        NbBundle.getMessage(BlackboardArtifactNode.class,
-                                "BlackboardArtifactNode.createSheet.dataSrc.displayName"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.dataSrc.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.dataSrc.displayName"),
                         NO_DESCR,
                         dataSourceStr));
             }
@@ -655,18 +674,15 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
                 }
             }
-            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class,
-                    "BlackboardArtifactNode.createSheet.fileSize.name"),
-                    NbBundle.getMessage(BlackboardArtifactNode.class,
-                            "BlackboardArtifactNode.createSheet.fileSize.displayName"),
+            sheetSet.put(new NodeProperty<>(
+                    NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.fileSize.name"),
+                    NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.fileSize.displayName"),
                     NO_DESCR,
                     size));
             sheetSet
                     .put(new NodeProperty<>(
-                            NbBundle.getMessage(BlackboardArtifactNode.class,
-                                    "BlackboardArtifactNode.createSheet.path.name"),
-                            NbBundle.getMessage(BlackboardArtifactNode.class,
-                                    "BlackboardArtifactNode.createSheet.path.displayName"),
+                            NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.path.name"),
+                            NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.path.displayName"),
                             NO_DESCR,
                             path));
         }

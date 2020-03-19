@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2016 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -39,18 +38,16 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Instances of this class wrap ContentTag objects. In the Autopsy presentation
  * of the SleuthKit data model, they are leaf nodes of a tree consisting of
- * content and blackboard artifact tags, grouped first by tag type, then by tag
- * name.
+ * content and artifact tags, grouped first by tag type, then by tag name.
  */
-class ContentTagNode extends DisplayableItemNode {
+class ContentTagNode extends TagNode {
 
     private static final Logger LOGGER = Logger.getLogger(ContentTagNode.class.getName());
-
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/blue-tag-icon-16.png"; //NON-NLS
     private final ContentTag tag;
 
-    public ContentTagNode(ContentTag tag) {
-        super(Children.LEAF, Lookups.fixed(tag, tag.getContent()));
+    ContentTagNode(ContentTag tag) {
+        super(Lookups.fixed(tag, tag.getContent()), tag.getContent());
         super.setName(tag.getContent().getName());
         super.setDisplayName(tag.getContent().getName());
         this.setIconBaseWithExtension(ICON_PATH);
@@ -58,6 +55,7 @@ class ContentTagNode extends DisplayableItemNode {
     }
 
     @Messages({
+        "ContentTagNode.createSheet.origFileName=Original Name",
         "ContentTagNode.createSheet.artifactMD5.displayName=MD5 Hash",
         "ContentTagNode.createSheet.artifactMD5.name=MD5 Hash",
         "ContentTagNode.createSheet.userName.text=User Name"})
@@ -79,15 +77,19 @@ class ContentTagNode extends DisplayableItemNode {
             properties = Sheet.createPropertiesSet();
             propertySheet.put(properties);
         }
-        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.file.name"),
+        properties.put(new NodeProperty<>(
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.file.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.file.displayName"),
                 "",
                 content.getName()));
-        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filePath.name"),
+        addOriginalNameProp(properties);
+        properties.put(new NodeProperty<>(
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filePath.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filePath.displayName"),
                 "",
                 contentPath));
-        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.comment.name"),
+        properties.put(new NodeProperty<>(
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.comment.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.comment.displayName"),
                 "",
                 tag.getComment()));
@@ -95,23 +97,28 @@ class ContentTagNode extends DisplayableItemNode {
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileModifiedTime.displayName"),
                 "",
                 file != null ? ContentUtils.getStringTime(file.getMtime(), file) : ""));
-        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileChangedTime.name"),
+        properties.put(new NodeProperty<>(
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileChangedTime.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileChangedTime.displayName"),
                 "",
                 file != null ? ContentUtils.getStringTime(file.getCtime(), file) : ""));
-        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileAccessedTime.name"),
+        properties.put(new NodeProperty<>(
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileAccessedTime.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileAccessedTime.displayName"),
                 "",
                 file != null ? ContentUtils.getStringTime(file.getAtime(), file) : ""));
-        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileCreatedTime.name"),
+        properties.put(new NodeProperty<>(
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileCreatedTime.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileCreatedTime.displayName"),
                 "",
                 file != null ? ContentUtils.getStringTime(file.getCrtime(), file) : ""));
-        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.name"),
+        properties.put(new NodeProperty<>(
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.displayName"),
                 "",
                 content.getSize()));
-        properties.put(new NodeProperty<>(Bundle.ContentTagNode_createSheet_artifactMD5_name(),
+        properties.put(new NodeProperty<>(
+                Bundle.ContentTagNode_createSheet_artifactMD5_name(),
                 Bundle.ContentTagNode_createSheet_artifactMD5_displayName(),
                 "",
                 file != null ? StringUtils.defaultString(file.getMd5Hash()) : ""));
@@ -128,8 +135,7 @@ class ContentTagNode extends DisplayableItemNode {
         List<Action> actions = new ArrayList<>();
         actions.addAll(Arrays.asList(super.getActions(context)));
 
-        AbstractFile file = getLookup().lookup(AbstractFile.class
-        );
+        AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (file != null) {
             actions.add(ViewFileInTimelineAction.createViewFileAction(file));
         }
@@ -145,12 +151,8 @@ class ContentTagNode extends DisplayableItemNode {
     }
 
     @Override
-    public boolean isLeafTypeNode() {
-        return true;
-    }
-
-    @Override
     public String getItemType() {
         return getClass().getName();
     }
+
 }

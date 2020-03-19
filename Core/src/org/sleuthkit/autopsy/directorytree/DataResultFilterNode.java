@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -185,27 +185,6 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         return propertySets;
-    }
-
-    /**
-     * Gets the display name for the wrapped node.
-     *
-     * OutlineView used in the DataResult table uses getDisplayName() to
-     * populate the first column, which is Source File.
-     *
-     * Hence this override to return the 'correct' displayName for the wrapped
-     * node.
-     *
-     * @return The display name for the node.
-     */
-    @Override
-    public String getDisplayName() {
-        final Node orig = getOriginal();
-        String name = orig.getDisplayName();
-        if ((orig instanceof BlackboardArtifactNode)) {
-            name = ((BlackboardArtifactNode) orig).getSourceName();
-        }
-        return name;
     }
 
     /**
