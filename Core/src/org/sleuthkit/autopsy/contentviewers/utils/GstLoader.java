@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * A utility class that loads the gstreamer bindings.
  */
-public class GstLoader {
+public final class GstLoader {
 
     private static final Logger logger = Logger.getLogger(GstLoader.class.getName());
     private static GstStatus status;
