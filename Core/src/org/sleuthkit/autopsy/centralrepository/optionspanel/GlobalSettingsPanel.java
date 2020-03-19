@@ -74,8 +74,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             ingestStateUpdated(evt.getNewValue() != null);
         });
     }
-    
-      
+         
     private void customizeComponents() {
         setName(NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.pnCorrelationProperties.border.title"));
     }
@@ -83,10 +82,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private void addIngestJobEventsListener() {
         IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobEventListener);
         ingestStateUpdated(Case.isCaseOpen());
-    }
-
-    private void updateDatabase() {
-        updateDatabase(this);
     }
     
     /**
@@ -102,7 +97,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             new EamDbSettingsDialog();
         
         if (dialog.wasConfigurationChanged()) {
-            updateDatabase(parent);
             return true;
         }
         
@@ -208,43 +202,12 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         }
     }
     
-    
     private static void handleDbChange(Component parent) {
         SwingUtilities.invokeLater(() -> {
             boolean successful = EamDbSettingsDialog.testStatusAndCreate(parent, new CentralRepoDbManager());
-            if (successful) {
-                updateDatabase(parent);
-            }
-            else {
-                // disable central repository due to error
-                CentralRepoDbManager.disableDueToFailure();
-            }
         });
     }
     
-    
-    @Messages({"GlobalSettingsPanel.updateFailed.title=Central repository disabled"})
-    private static void updateDatabase(Component parent) {
-        if (CentralRepoDbChoice.DISABLED.equals(CentralRepoDbManager.getSavedDbChoice())) {
-            return;
-        }
-        parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-        try {
-            CentralRepoDbManager.upgradeDatabase();
-            parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        } catch (CentralRepoException ex) {
-            parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            JOptionPane.showMessageDialog(parent,
-                    ex.getUserMessage(),
-                    NbBundle.getMessage(GlobalSettingsPanel.class,
-                            "GlobalSettingsPanel.updateFailed.title"),
-                    JOptionPane.WARNING_MESSAGE);
-        } finally {
-            parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        }
-    }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -598,8 +561,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
         }
         
-
-        updateDatabase();
         load();
         this.ingestStateUpdated(Case.isCaseOpen());
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
