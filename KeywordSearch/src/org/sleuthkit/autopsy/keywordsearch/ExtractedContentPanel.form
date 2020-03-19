@@ -45,8 +45,8 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="controlScrollPane" alignment="0" pref="100" max="32767" attributes="0"/>
-          <Component id="extractedScrollPane" alignment="0" pref="100" max="32767" attributes="0"/>
+          <Component id="controlScrollPane" alignment="0" pref="745" max="32767" attributes="0"/>
+          <Component id="extractedScrollPane" alignment="0" pref="745" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -146,7 +146,7 @@
                       <Component id="pagePreviousButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
                       <Component id="pageNextButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="jSeparator3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="zoomPanel" min="-2" max="-2" attributes="0"/>

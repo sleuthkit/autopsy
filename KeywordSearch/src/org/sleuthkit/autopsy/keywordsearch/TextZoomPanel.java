@@ -122,7 +122,7 @@ class TextZoomPanel extends JPanel {
         setMinimumSize(new java.awt.Dimension(150, 20));
         setPreferredSize(new java.awt.Dimension(200, 20));
         setRequestFocusEnabled(false);
-        setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEADING, 0, 0));
+        setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
 
         zoomTextField.setEditable(false);
         zoomTextField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
