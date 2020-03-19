@@ -209,14 +209,15 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                  * and put the untranslated name in the Original Name property
                  * and in the tooltip.
                  */
+                String originalName = evt.getOldValue().toString();
                 translatedSourceName = evt.getNewValue().toString();
-                setDisplayName(evt.getNewValue().toString());
-                setShortDescription(evt.getOldValue().toString());
+                setDisplayName(translatedSourceName);
+                setShortDescription(originalName);
                 updateSheet(new NodeProperty<>(
                         Bundle.BlackboardArtifactNode_createSheet_srcFile_origName(),
                         Bundle.BlackboardArtifactNode_createSheet_srcFile_origDisplayName(),
                         NO_DESCR,
-                        evt.getOldValue().toString()));
+                        originalName));
             }
         }
     };
