@@ -214,7 +214,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     //The slider is a shared resource between the VideoPanelUpdater
     //and the TrackListener on the slider itself.
     private final Semaphore sliderLock;
-    
+
     private static volatile boolean IS_GST_ENABLED = true;
 
     /**
@@ -424,10 +424,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
     @Override
     public boolean isSupported(AbstractFile file) {
-        if(!IS_GST_ENABLED) {
+        if (!IS_GST_ENABLED) {
             return false;
         }
-        
+
         String extension = file.getNameExtension();
         /**
          * Although it seems too restrictive, requiring both a supported
@@ -547,8 +547,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
          */
         @NbBundle.Messages({
             "MediaPlayerPanel.playbackDisabled=A problem was encountered with"
-                        + " the video playback service. Video playback will"
-                        + " be disabled for the remainder of the session."
+            + " the video and audio playback service. Video and audio "
+            + "playback will be disabled for the remainder of the session."
         })
         @Override
         protected void done() {
@@ -562,7 +562,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 GstStatus loadStatus = GstLoader.tryLoad();
                 if (loadStatus == GstStatus.FAILURE) {
                     MessageNotifyUtil.Message.error(Bundle.MediaPlayerPanel_playbackDisabled());
-                    
+
                     // This will disable the panel for future use.
                     IS_GST_ENABLED = false;
                     return;
