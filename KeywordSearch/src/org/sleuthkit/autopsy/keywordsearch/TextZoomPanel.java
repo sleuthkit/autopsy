@@ -49,7 +49,7 @@ class TextZoomPanel extends JPanel {
      * Creates new form TextZoomPanel.
      * @param zoomable      the component that will receive text resize events
      */
-    public TextZoomPanel(ResizableTextPanel zoomable) {
+    TextZoomPanel(ResizableTextPanel zoomable) {
         this.zoomable = zoomable;
         initComponents();
         updateEnabled();
