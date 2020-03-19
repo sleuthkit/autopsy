@@ -24,7 +24,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
@@ -53,7 +52,7 @@ abstract class TagNode extends DisplayableItemNode {
     private final static String ORIG_NAME_PROP_DISPLAY_NAME = Bundle.TagNode_propertySheet_origNameDisplayName();
 
     private final String originalName;
-    private volatile String translatedName; // Only computed once, in a background thread.
+    private volatile String translatedName;
 
     /**
      * An abstract superclass for a node that represents a tag, uses the name of
@@ -103,7 +102,7 @@ abstract class TagNode extends DisplayableItemNode {
         }
     }
 
-    /*
+    /**
      * A listener for PropertyChangeEvents from a background task used to
      * translate the original display name associated with the node.
      */

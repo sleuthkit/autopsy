@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.texttranslation.TranslationException;
 /**
  * A utility to translate file names.
  */
-public class FileNameTranslator {
+public final class FileNameTranslationUtil {
 
     /**
      * Translates a file name using the configured machine translation service.
@@ -68,7 +68,7 @@ public class FileNameTranslator {
     /**
      * Prevent instantiation of this utility class
      */
-    private FileNameTranslator() {
+    private FileNameTranslationUtil() {
     }
 
 }

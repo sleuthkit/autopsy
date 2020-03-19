@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.datamodel.utils;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import org.openide.nodes.AbstractNode;
-import org.sleuthkit.autopsy.texttranslation.utils.FileNameTranslator;
+import org.sleuthkit.autopsy.texttranslation.utils.FileNameTranslationUtil;
 
 /**
  * An AbstractNodePropertySheetTask that translates a file name for an
@@ -54,7 +54,7 @@ public class FileNameTransTask extends AbstractNodePropertySheetTask<AbstractNod
 
     @Override
     protected PropertyChangeEvent computePropertyValue(AbstractNode node) throws Exception {
-        String translatedFileName = FileNameTranslator.translate(fileName);
+        String translatedFileName = FileNameTranslationUtil.translate(fileName);
         return translatedFileName.isEmpty() ? null : new PropertyChangeEvent(EVENT_SOURCE, PROPERTY_NAME, fileName, translatedFileName);
     }
 

@@ -66,7 +66,7 @@ import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.texttranslation.utils.FileNameTranslator;
+import org.sleuthkit.autopsy.texttranslation.utils.FileNameTranslationUtil;
 
 /**
  * An abstract node that encapsulates AbstractFile data
@@ -498,7 +498,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     String getTranslatedFileName() {
         try {
-            return FileNameTranslator.translate(content.getName());
+            return FileNameTranslationUtil.translate(content.getName());
         } catch (NoServiceProviderException | TranslationException ex) {
             logger.log(Level.WARNING, MessageFormat.format("Error translating file name (objID={0}))", content.getId()), ex);
             return "";
