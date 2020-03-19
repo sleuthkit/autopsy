@@ -55,14 +55,6 @@ abstract class TagNode extends DisplayableItemNode {
     private final String originalName;
     private volatile String translatedName; // Only computed once, in a background thread.
 
-    /*
-     * The node has an event listener that is wrapped in a weak reference that
-     * allows the node to be garbage collected when the NetBeans infrastructure
-     * discards it. If this is not done, it has been shown that a strong
-     * reference to the listener prevents garbage collection of this node.
-     */
-    private final PropertyChangeListener listener = WeakListeners.propertyChange(new NameTranslationListener(), null);
-
     /**
      * An abstract superclass for a node that represents a tag, uses the name of
      * a given Content object as its display name, and has a property sheet with
@@ -106,7 +98,7 @@ abstract class TagNode extends DisplayableItemNode {
                     "",
                     translatedName != null ? translatedName : ""));
             if (translatedName == null) {
-                new FileNameTransTask(originalName, this, listener).submit();
+                new FileNameTransTask(originalName, this, new NameTranslationListener()).submit();
             }
         }
     }
@@ -121,13 +113,15 @@ abstract class TagNode extends DisplayableItemNode {
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
             if (eventType.equals(FileNameTransTask.getPropertyName())) {
-                setDisplayName(evt.getNewValue().toString());
-                setShortDescription(evt.getOldValue().toString());
+                translatedName = evt.getNewValue().toString();
+                String originalName = evt.getOldValue().toString();
+                setDisplayName(translatedName);
+                setShortDescription(originalName);
                 updatePropertySheet(new NodeProperty<>(
                         ORIG_NAME_PROP_NAME,
                         ORIG_NAME_PROP_DISPLAY_NAME,
                         "",
-                        evt.getOldValue().toString()));
+                        originalName));
             }
         }
     }
