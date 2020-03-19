@@ -127,8 +127,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     };
 
     private final BlackboardArtifact artifact;
-    private Content srcContent; // May be null.  
-    private volatile String translatedSourceName; // Only computed once, in a background thread.
+    private Content srcContent;  
+    private volatile String translatedSourceName; 
 
     /*
      * A method has been provided to allow the injection of properties into this
