@@ -44,6 +44,9 @@ public class FileNameTranslator {
         /*
          * Don't attempt translation if the characters of the file name are all
          * ASCII chars.
+         *
+         * TODO (Jira-6175): This filter prevents translation of many
+         * non-English file names composed entirely of Latin chars.
          */
         if (fileName.matches("^\\p{ASCII}+$")) {
             return "";
