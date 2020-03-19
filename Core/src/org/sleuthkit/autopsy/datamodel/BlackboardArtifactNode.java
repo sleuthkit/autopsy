@@ -462,6 +462,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     NO_DESCR,
                     translatedSourceName != null ? translatedSourceName : ""));
             if (srcContent != null && translatedSourceName == null) {
+                /*
+                 * NOTE: The task makes its own weak reference to the listener.
+                 */
                 new FileNameTransTask(srcContent.getName(), this, listener).submit();
             }
         }
