@@ -23,7 +23,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Paths;
@@ -457,6 +456,11 @@ class FileSearch {
                 + "AND blackboard_artifacts.obj_id IN (" + objIdList + ") "; // NON-NLS
     }
 
+    /**
+     * Get the default image to display when a thumbnail is not available.
+     *
+     * @return The default video thumbnail.
+     */
     private static BufferedImage getDefaultVideoThumbnail() {
         try {
             return ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/failedToCreateVideoThumb.png"));//NON-NLS
