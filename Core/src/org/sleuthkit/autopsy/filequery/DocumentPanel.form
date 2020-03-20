@@ -39,9 +39,9 @@
                           <Component id="previewScrollPane" pref="587" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="sampleImageLabel" alignment="1" min="-2" max="-2" attributes="0"/>
-                          <Component id="numberOfImagesLabel" alignment="1" min="-2" pref="100" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="numberOfImagesLabel" max="32767" attributes="0"/>
+                          <Component id="sampleImageLabel" max="32767" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -59,8 +59,8 @@
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="sampleImageLabel" max="32767" attributes="0"/>
                   <Component id="previewScrollPane" max="32767" attributes="0"/>
+                  <Component id="sampleImageLabel" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
@@ -157,6 +157,7 @@
             <EtchetBorder/>
           </Border>
         </Property>
+        <Property name="iconTextGap" type="int" value="0"/>
         <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[100, 100]"/>
         </Property>

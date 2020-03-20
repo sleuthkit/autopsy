@@ -84,8 +84,14 @@ final class DiscoveryUiUtils {
         }
         return Bundle.DiscoveryUiUtility_sizeLabel_text(size, units);
     }
-    
-    static ImageIcon getUnsupportedImageThumbnail(){
+
+    /**
+     * Get the image to use when the document type does not support image
+     * extraction.
+     *
+     * @return An image that indicates we don't know if there are images.
+     */
+    static ImageIcon getUnsupportedImageThumbnail() {
         return UNSUPPORTED_DOCUMENT_THUMBNAIL;
     }
 
