@@ -154,7 +154,6 @@ public final class InterCasePanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(correlationComboBoxLabel, org.openide.util.NbBundle.getMessage(InterCasePanel.class, "InterCasePanel.correlationComboBoxLabel.text")); // NOI18N
 
-        correlationTypeComboBox.setMaximumRowCount(50);
         correlationTypeComboBox.setSelectedItem(null);
         correlationTypeComboBox.setToolTipText(org.openide.util.NbBundle.getMessage(InterCasePanel.class, "InterCasePanel.correlationTypeComboBox.toolTipText")); // NOI18N
         correlationTypeComboBox.addActionListener(new java.awt.event.ActionListener() {
