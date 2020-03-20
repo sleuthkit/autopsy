@@ -432,7 +432,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     Bundle.BlackboardArtifactNode_createSheet_srcFile_origName(),
                     Bundle.BlackboardArtifactNode_createSheet_srcFile_origDisplayName(),
                     NO_DESCR,
-                    translatedSourceName != null ? translatedSourceName : ""));
+                    translatedSourceName != null ? srcContent.getName() : ""));
             if (translatedSourceName == null) {
                 /*
                  * NOTE: The task makes its own weak reference to the listener.

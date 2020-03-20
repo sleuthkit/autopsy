@@ -95,7 +95,7 @@ abstract class TagNode extends DisplayableItemNode {
                     ORIG_NAME_PROP_NAME,
                     ORIG_NAME_PROP_DISPLAY_NAME,
                     "",
-                    translatedName != null ? translatedName : ""));
+                    translatedName != null ? originalName : ""));
             if (translatedName == null) {
                 new FileNameTransTask(originalName, this, new NameTranslationListener()).submit();
             }
