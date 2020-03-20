@@ -165,12 +165,12 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
         if (value.getResultFile().getAllInstances().size() > 1) {
             nameText += Bundle.DocumentPanel_nameLabel_more_text(value.getResultFile().getAllInstances().size() - 1);
         }
-        if (FileSearchData.getDocTypesWithoutImageExtraction().contains(value.getResultFile().getFirstInstance().getMIMEType())) {
-            numberOfImagesLabel.setText(Bundle.DocumentPanel_noImageExtraction_text());
-            sampleImageLabel.setIcon(DiscoveryUiUtils.getUnsupportedImageThumbnail());
-        } else if (value.getSummary().getNumberOfImages() > 0) {
+        if (value.getSummary().getNumberOfImages() > 0) {
             numberOfImagesLabel.setText(Bundle.DocumentPanel_numberOfImages_text(value.getSummary().getNumberOfImages()));
             sampleImageLabel.setIcon(new ImageIcon(value.getSummary().getSampleImage()));
+        } else if (FileSearchData.getDocTypesWithoutImageExtraction().contains(value.getResultFile().getFirstInstance().getMIMEType())) {
+            numberOfImagesLabel.setText(Bundle.DocumentPanel_noImageExtraction_text());
+            sampleImageLabel.setIcon(DiscoveryUiUtils.getUnsupportedImageThumbnail());
         } else {
             numberOfImagesLabel.setText(Bundle.DocumentPanel_numberOfImages_noImages());
             sampleImageLabel.setIcon(null);
