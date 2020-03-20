@@ -63,9 +63,21 @@ public class CentralRepoPostgresSettingsUtil {
     
     private CentralRepoPostgresSettingsUtil() {}
     
-    private void logException(TryHandler handler) {
+    /**
+     * Uses setter object to set a value as specified by 'value'.  In the event that 'value'
+     * is null, the setter will not be called.  Exceptions that are raised from the setter will
+     * be logged.
+     * 
+     * @param setter    The setter to call.
+     * @param value     The value to use with the setter.
+     */
+    private void setValOrLog(ValueSetter setter, String value) {
+        // ignore null values as they indicate a setting that is not set yet
+        if (value == null || value.isEmpty())
+            return;
+
         try {
-            handler.operation();
+            setter.set(value);
         }
         catch (CentralRepoException | NumberFormatException e) {
             LOGGER.log(Level.WARNING, "There was an error in converting central repo postgres settings", e);
@@ -73,10 +85,10 @@ public class CentralRepoPostgresSettingsUtil {
     }
     
     /**
-     * This interface represents an action that potentially throws an exception.
+     * This interface represents a setter that potentially throws an exception.
      */
-    private interface TryHandler {
-        void operation() throws CentralRepoException, NumberFormatException;
+    private interface ValueSetter {
+        void set(String value) throws CentralRepoException, NumberFormatException;
     }
     
     /**
@@ -96,15 +108,12 @@ public class CentralRepoPostgresSettingsUtil {
             return settings;
         }
         
-        logException(() -> settings.setHost(muConn.getHost()));
-        logException(() -> settings.setDbName(PostgresConnectionSettings.DEFAULT_DBNAME));
-        logException(() -> settings.setUserName(muConn.getUserName()));
+        setValOrLog((v) -> settings.setHost(v), muConn.getHost());
+        setValOrLog((v) -> settings.setUserName(v), muConn.getUserName());
+        setValOrLog((v) -> settings.setPassword(v), muConn.getPassword());
         
-        logException(() -> settings.setPort(Integer.parseInt(muConn.getPort())));
-        logException(() -> settings.setBulkThreshold(RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD));
-        
-        logException(() -> settings.setPassword(muConn.getPassword()));
-        
+        setValOrLog((v) -> settings.setPort(Integer.parseInt(v)), muConn.getPort());
+                
         return settings;
     }
     
@@ -120,24 +129,27 @@ public class CentralRepoPostgresSettingsUtil {
         Map<String, String> keyVals = ModuleSettings.getConfigSettings(MODULE_KEY);
         
         
-        logException(() -> settings.setHost(keyVals.get(HOST_KEY)));
-        logException(() -> settings.setDbName(keyVals.get(DBNAME_KEY)));
-        logException(() -> settings.setUserName(keyVals.get(USER_KEY)));
+        setValOrLog((v) -> settings.setHost(v), keyVals.get(HOST_KEY));
+        setValOrLog((v) -> settings.setDbName(v), keyVals.get(DBNAME_KEY));
+        setValOrLog((v) -> settings.setUserName(v), keyVals.get(USER_KEY));
         
-        logException(() -> settings.setPort(Integer.parseInt(keyVals.get(PORT_KEY))));
-        logException(() -> settings.setBulkThreshold(Integer.parseInt(keyVals.get((BULK_THRESHOLD_KEY)))));
+        setValOrLog((v) -> settings.setPort(Integer.parseInt(v)), keyVals.get(PORT_KEY));
+        setValOrLog((v) -> settings.setBulkThreshold(Integer.parseInt(v)), keyVals.get((BULK_THRESHOLD_KEY)));
         
         String passwordHex = keyVals.get(PASSWORD_KEY);
-        String password;
-        try {
-            password = TextConverter.convertHexTextToText(passwordHex);
-        } catch (TextConverterException ex) {
-            LOGGER.log(Level.WARNING, "Failed to convert password from hex text to text.", ex);
-            password = null;
+        if (passwordHex != null) {
+            String password;
+            try {
+                password = TextConverter.convertHexTextToText(passwordHex);
+            } catch (TextConverterException ex) {
+                LOGGER.log(Level.WARNING, "Failed to convert password from hex text to text.", ex);
+                password = null;
+            }
+
+            final String finalPassword = password;
+            setValOrLog((v) -> settings.setPassword(v), finalPassword);
         }
         
-        final String finalPassword = password;
-        logException(() -> settings.setPassword(finalPassword));
         return settings;
     }
 

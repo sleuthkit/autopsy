@@ -117,13 +117,25 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
         try:
             contacts_parser = ViberContactsParser(contacts_db)
             while contacts_parser.next():
-                helper.addContact( 
-                    contacts_parser.get_contact_name(), 
-                    contacts_parser.get_phone(),
-                    contacts_parser.get_home_phone(),
-                    contacts_parser.get_mobile_phone(),
-                    contacts_parser.get_email()
-                )
+                if (not(not contacts_parser.get_phone() or contacts_parser.get_phone().isspace())):
+                    helper.addContact( 
+                        contacts_parser.get_contact_name(), 
+                        contacts_parser.get_phone(),
+                        contacts_parser.get_home_phone(),
+                        contacts_parser.get_mobile_phone(),
+                        contacts_parser.get_email()
+                    )
+                # Check if contact_name is blank and if it is not create a TSK_CONTACT otherwise ignore as not Contact Info
+                elif (not(not contacts_parser.get_contact_name() or contacts_parser.get_contact_name().isspace())):
+                    current_case = Case.getCurrentCase().getSleuthkitCase()
+                    attributes = ArrayList()
+                    artifact = contacts_db.getDBFile().newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), self._PARSER_NAME, contacts_parser.get_contact_name()))
+                    artifact.addAttributes(attributes)
+                    
+                    # Post the artifact to blackboard
+                    current_case.getBlackboard().postArtifact(artifact, self._PARSER_NAME)
+
             contacts_parser.close()
         except SQLException as ex:
             self._logger.log(Level.WARNING, "Error querying the viber database for contacts.", ex)
@@ -268,8 +280,8 @@ class ViberContactsParser(TskContactsParser):
     def __init__(self, contact_db):
         super(ViberContactsParser, self).__init__(contact_db.runQuery(
                  """
-                      SELECT C.display_name AS name, 
-                             D.data2        AS number 
+                      SELECT C.display_name AS name,                      
+                             coalesce(D.data2, D.data1, D.data3) AS number 
                       FROM   phonebookcontact AS C 
                              JOIN phonebookdata AS D 
                                ON C._id = D.contact_id
