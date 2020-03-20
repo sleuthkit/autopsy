@@ -291,6 +291,14 @@ final class FileSearchData {
                             "application/vnd.oasis.opendocument.text" //NON-NLS
                     ).build();
 
+        private static final ImmutableSet<String> IMAGE_UNSUPPORTED_DOC_TYPES
+            = new ImmutableSet.Builder<String>()
+                    .add("application/pdf", //NON-NLS
+                              "application/xhtml+xml").build(); //NON-NLS
+        
+        static Collection<String> getDocTypesWithoutImageExtraction(){
+             return Collections.unmodifiableCollection(IMAGE_UNSUPPORTED_DOC_TYPES);
+        }
     /**
      * Enum representing the file type. We don't simply use
      * FileTypeUtils.FileTypeCategory because: - Some file types categories

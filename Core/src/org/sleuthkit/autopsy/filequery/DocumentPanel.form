@@ -27,21 +27,21 @@
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <Component id="fileSizeLabel" pref="648" max="32767" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="fileSizeLabel" max="32767" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="isDeletedLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Component id="scoreLabel" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="previewScrollPane" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="1" attributes="0">
                           <Component id="nameLabel" max="32767" attributes="0"/>
+                          <Component id="previewScrollPane" pref="587" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="sampleImageLabel" max="32767" attributes="0"/>
-                          <Component id="numberOfImagesLabel" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="sampleImageLabel" alignment="1" min="-2" max="-2" attributes="0"/>
+                          <Component id="numberOfImagesLabel" alignment="1" min="-2" pref="100" max="-2" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -62,7 +62,7 @@
                   <Component id="sampleImageLabel" max="32767" attributes="0"/>
                   <Component id="previewScrollPane" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="scoreLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="isDeletedLabel" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -158,13 +158,13 @@
           </Border>
         </Property>
         <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[120, 120]"/>
+          <Dimension value="[100, 100]"/>
         </Property>
         <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[120, 120]"/>
+          <Dimension value="[100, 100]"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[120, 120]"/>
+          <Dimension value="[100, 100]"/>
         </Property>
       </Properties>
     </Component>
