@@ -27,6 +27,7 @@ import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
+import org.sleuthkit.autopsy.centralrepository.optionspanel.GlobalSettingsPanel;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -679,55 +680,92 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         boolean isPwSet = (tbMsgPassword.getPassword().length != 0);
         return (isUserSet == isPwSet);
     }
+    
+    
 
     void store() {
+        boolean prevSelected = UserPreferences.getIsMultiUserModeEnabled();
+        CaseDbConnectionInfo prevConn = null;
+        try {
+            prevConn = UserPreferences.getDatabaseConnectionInfo();
+        } catch (UserPreferencesException ex) {
+            logger.log(Level.SEVERE, "There was an error while fetching previous connection settings while trying to save", ex); //NON-NLS
+        }
 
         boolean multiUserCasesEnabled = cbEnableMultiUser.isSelected();
         UserPreferences.setIsMultiUserModeEnabled(multiUserCasesEnabled);
-        if (multiUserCasesEnabled == false) {
-            return;
+        
+        CaseDbConnectionInfo info = null;
+        
+        if (multiUserCasesEnabled == true) {
+
+            /*
+             * Currently only supporting multi-user cases with PostgreSQL case
+             * databases.
+             */
+            DbType dbType = DbType.POSTGRESQL;
+            info = new CaseDbConnectionInfo(
+                    tbDbHostname.getText().trim(),
+                    tbDbPort.getText().trim(),
+                    tbDbUsername.getText().trim(),
+                    new String(tbDbPassword.getPassword()),
+                    dbType);
+            try {
+                UserPreferences.setDatabaseConnectionInfo(info);
+            } catch (UserPreferencesException ex) {
+                logger.log(Level.SEVERE, "Error saving case database connection info", ex); //NON-NLS
+            }
+
+            int msgServicePort = 0;
+            try {
+                msgServicePort = Integer.parseInt(this.tbMsgPort.getText().trim());
+            } catch (NumberFormatException ex) {
+                logger.log(Level.SEVERE, "Could not parse messaging service port setting", ex);
+            }
+
+            MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
+                    tbMsgHostname.getText().trim(),
+                    msgServicePort,
+                    tbMsgUsername.getText().trim(),
+                    new String(tbMsgPassword.getPassword()));
+
+            try {
+                UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
+            } catch (UserPreferencesException ex) {
+                logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
+            }
+
+            UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
+            UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
         }
 
-        /*
-         * Currently only supporting multi-user cases with PostgreSQL case
-         * databases.
-         */
-        DbType dbType = DbType.POSTGRESQL;
-        CaseDbConnectionInfo info = new CaseDbConnectionInfo(
-                tbDbHostname.getText().trim(),
-                tbDbPort.getText().trim(),
-                tbDbUsername.getText().trim(),
-                new String(tbDbPassword.getPassword()),
-                dbType);
-        try {
-            UserPreferences.setDatabaseConnectionInfo(info);
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error saving case database connection info", ex); //NON-NLS
-        }
-
-        int msgServicePort = 0;
-        try {
-            msgServicePort = Integer.parseInt(this.tbMsgPort.getText().trim());
-        } catch (NumberFormatException ex) {
-            logger.log(Level.SEVERE, "Could not parse messaging service port setting", ex);
-        }
-
-        MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
-                tbMsgHostname.getText().trim(),
-                msgServicePort,
-                tbMsgUsername.getText().trim(),
-                new String(tbMsgPassword.getPassword()));
-
-        try {
-            UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
-        }
-
-        UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
-        UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
-
+        // trigger changes to whether or not user can use multi user settings for central repository
+        if (prevSelected != multiUserCasesEnabled || !areCaseDbConnectionEqual(prevConn, info))
+            GlobalSettingsPanel.onMultiUserChange(this, prevSelected, multiUserCasesEnabled);
     }
+
+    private static boolean arePropsEqual(Object a, Object b) {
+        if (a == null || b == null) {
+            return (a == null && b == null);
+        }
+        else {
+            return a.equals(b);
+        }
+    }
+    
+	private static boolean areCaseDbConnectionEqual(CaseDbConnectionInfo a, CaseDbConnectionInfo b) {
+        if (a == null || b == null) {
+            return (a == null && b == null);
+        }
+
+        return 
+            arePropsEqual(a.getDbType(), b.getDbType()) &&
+            arePropsEqual(a.getHost(), b.getHost()) && 
+            arePropsEqual(a.getPassword(), b.getPassword()) &&
+            arePropsEqual(a.getPort(), b.getPort()) &&
+            arePropsEqual(a.getUserName(), b.getUserName());
+	}
+
 
     /**
      * Validates that the form is filled out correctly for our usage.
