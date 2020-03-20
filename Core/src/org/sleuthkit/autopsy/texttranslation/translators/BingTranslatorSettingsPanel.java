@@ -55,16 +55,19 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         authenticationKeyField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
+                warningLabel.setText("");
                 firePropertyChange("SettingChanged", true, false);
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
+                warningLabel.setText("");
                 firePropertyChange("SettingChanged", true, false);
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
+                warningLabel.setText("");
                 firePropertyChange("SettingChanged", true, false);
             }
 
@@ -256,6 +259,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         String selectedCode = ((LanguageWrapper) targetLanguageComboBox.getSelectedItem()).getLanguageCode();
         if (!StringUtils.isBlank(selectedCode) && !selectedCode.equals(targetLanguageCode)) {
             targetLanguageCode = selectedCode;
+            warningLabel.setText("");
             firePropertyChange("SettingChanged", true, false);
         }
     }//GEN-LAST:event_targetLanguageComboBoxSelected
