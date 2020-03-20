@@ -64,7 +64,7 @@ public abstract class AbstractNodePropertySheetTask<T extends AbstractNode> impl
      * @return The Future of the task, may be used for task cancellation by
      *         calling Future.cancel(true).
      */
-    public static Future<?> submitTask(AbstractNodePropertySheetTask<?> task) {
+    private static Future<?> submitTask(AbstractNodePropertySheetTask<?> task) {
         return executor.submit(task);
     }
 
@@ -104,12 +104,22 @@ public abstract class AbstractNodePropertySheetTask<T extends AbstractNode> impl
      *
      * @param node The AbstractNode.
      *
-     * @return The result of the computation as a PropertyChangeEvent.
+     * @return The result of the computation as a PropertyChangeEvent, may be
+     *         null.
      */
     protected abstract PropertyChangeEvent computePropertyValue(T node) throws Exception;
 
+    /**
+     * Submits this task to the ExecutorService for the thread pool.
+     *
+     * @return The task's Future from the ExecutorService.
+     */
+    public final Future<?> submit() {
+        return submitTask(this);
+    }
+
     @Override
-    final public void run() {
+    public final void run() {
         try {
             T node = this.weakNodeRef.get();
             PropertyChangeListener listener = this.weakListenerRef.get();
