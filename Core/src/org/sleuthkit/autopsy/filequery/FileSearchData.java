@@ -273,7 +273,6 @@ final class FileSearchData {
             = new ImmutableSet.Builder<String>()
                     .add("text/html", //NON-NLS
                             "text/csv", //NON-NLS
-                            "text/x-log", //NON-NLS
                             "application/rtf", //NON-NLS
                             "application/pdf", //NON-NLS
                             "application/xhtml+xml", //NON-NLS
