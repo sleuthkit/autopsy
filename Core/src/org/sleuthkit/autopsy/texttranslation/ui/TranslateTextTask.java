@@ -81,9 +81,9 @@ public abstract class TranslateTextTask extends SwingWorker<TranslateTextTask.Tr
     }
 
     /**
-     * This is the main contructor for the TranslateTextTask.
+     * This is the main constructor for the TranslateTextTask.
      * @param translateText whether or not to translate text
-     * @param contentDescriptor the content descriptor for the item being
+     * @param fileDescriptor the content descriptor for the item being
      * translated (used for logging errors)
      */
     public TranslateTextTask(boolean translateText, String fileDescriptor) {
