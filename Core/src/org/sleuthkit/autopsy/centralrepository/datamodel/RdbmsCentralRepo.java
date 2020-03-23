@@ -80,6 +80,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             .expireAfterWrite(ACCOUNTS_CACHE_TIMEOUT, TimeUnit.MINUTES).
             build();
     
+    private boolean isCRTypeCacheInitialized;
     private static final Cache<Integer, CorrelationAttributeInstance.Type> typeCache = CacheBuilder.newBuilder().build();
     private static final Cache<String, CorrelationCase> caseCacheByUUID = CacheBuilder.newBuilder()
             .expireAfterWrite(CASE_CACHE_TIMEOUT, TimeUnit.MINUTES).
@@ -106,6 +107,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      * @throws UnknownHostException, EamDbException
      */
     protected RdbmsCentralRepo() throws CentralRepoException {
+        isCRTypeCacheInitialized = false;
         bulkArtifactsCount = 0;
         bulkArtifacts = new HashMap<>();
 
@@ -215,7 +217,10 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      * Reset the contents of the caches associated with EamDb results.
      */
     protected final void clearCaches() {
-        typeCache.invalidateAll();
+        synchronized(typeCache) {
+            typeCache.invalidateAll();
+            isCRTypeCacheInitialized = false;
+        }
         caseCacheByUUID.invalidateAll();
         caseCacheById.invalidateAll();
         dataSourceCacheByDsObjectId.invalidateAll();
@@ -3013,7 +3018,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             typeId = newCorrelationTypeKnownId(newType);
         }
 
-        typeCache.put(newType.getId(), newType);
+        synchronized(typeCache) {
+            typeCache.put(newType.getId(), newType);
+        }
         return typeId;
     }
 
@@ -3243,7 +3250,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             preparedStatement.setInt(4, aType.isEnabled() ? 1 : 0);
             preparedStatement.setInt(5, aType.getId());
             preparedStatement.executeUpdate();
-            typeCache.put(aType.getId(), aType);
+            synchronized(typeCache) {
+                typeCache.put(aType.getId(), aType);
+            }
         } catch (SQLException ex) {
             throw new CentralRepoException("Error updating correlation type.", ex); // NON-NLS
         } finally {
@@ -3265,7 +3274,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     @Override
     public CorrelationAttributeInstance.Type getCorrelationTypeById(int typeId) throws CentralRepoException {
         try {
-            return typeCache.get(typeId, () -> getCorrelationTypeByIdFromCr(typeId));
+            synchronized(typeCache) {
+                return typeCache.get(typeId, () -> getCorrelationTypeByIdFromCr(typeId));
+            }
         } catch (CacheLoader.InvalidCacheLoadException ignored) {
             //lambda valueloader returned a null value and cache can not store null values this is normal if the correlation type does not exist in the central repo yet
             return null;
@@ -3285,11 +3296,12 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     @Override
     public List<CorrelationAttributeInstance.Type> getCorrelationTypes() throws CentralRepoException {
 
-        if (typeCache.size() == 0) {
-            getCorrelationTypesFromCr();
+        synchronized (typeCache) {
+            if (isCRTypeCacheInitialized == false) {
+                getCorrelationTypesFromCr();
+            }
+            return new ArrayList<>(typeCache.asMap().values());
         }
-
-        return new ArrayList<>(typeCache.asMap().values());
     }
     
     /**
@@ -3358,16 +3370,22 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     private void getCorrelationTypesFromCr() throws CentralRepoException {
         
         // clear out the cache
-        typeCache.invalidateAll();
+        synchronized(typeCache) {
+            typeCache.invalidateAll();
+            isCRTypeCacheInitialized = false;
+        }
         
         String sql = "SELECT * FROM correlation_types";
         try ( Connection conn = connect();
               PreparedStatement preparedStatement = conn.prepareStatement(sql);
               ResultSet resultSet = preparedStatement.executeQuery();) {
 
-            while (resultSet.next()) {
-                CorrelationAttributeInstance.Type aType = getCorrelationTypeFromResultSet(resultSet);
-                typeCache.put(aType.getId(), aType);
+            synchronized(typeCache) {
+                while (resultSet.next()) {
+                    CorrelationAttributeInstance.Type aType = getCorrelationTypeFromResultSet(resultSet);
+                    typeCache.put(aType.getId(), aType);
+                }
+                isCRTypeCacheInitialized = true;
             }
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting correlation types.", ex); // NON-NLS
