@@ -3134,27 +3134,12 @@ abstract class RdbmsCentralRepo implements CentralRepository {
 
     @Override
     public List<CorrelationAttributeInstance.Type> getDefinedCorrelationTypes() throws CentralRepoException {
-        Connection conn = connect();
 
-        List<CorrelationAttributeInstance.Type> aTypes = new ArrayList<>();
-        PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
-        String sql = "SELECT * FROM correlation_types";
-
-        try {
-            preparedStatement = conn.prepareStatement(sql);
-            resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                aTypes.add(getCorrelationTypeFromResultSet(resultSet));
+        synchronized (typeCache) {
+            if (isCRTypeCacheInitialized == false) {
+                getCorrelationTypesFromCr();
             }
-            return aTypes;
-
-        } catch (SQLException ex) {
-            throw new CentralRepoException("Error getting all correlation types.", ex); // NON-NLS
-        } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
-            CentralRepoDbUtil.closeResultSet(resultSet);
-            CentralRepoDbUtil.closeConnection(conn);
+            return new ArrayList<>(typeCache.asMap().values());
         }
     }
 
@@ -3283,45 +3268,6 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (ExecutionException ex) {
             throw new CentralRepoException("Error getting correlation type", ex);
         }
-    }
-
-    /**
-     * Returns a list of all correlation types. It uses the cache to build the
-     * list. If the cache is empty, it reads from the database and loads up the
-     * cache.
-     *
-     * @return List of correlation types.
-     * @throws CentralRepoException
-     */
-    @Override
-    public List<CorrelationAttributeInstance.Type> getCorrelationTypes() throws CentralRepoException {
-
-        synchronized (typeCache) {
-            if (isCRTypeCacheInitialized == false) {
-                getCorrelationTypesFromCr();
-            }
-            return new ArrayList<>(typeCache.asMap().values());
-        }
-    }
-    
-    /**
-     * Gets a Correlation type with the specified name.
-     *
-     * @param correlationtypeName Correlation type name
-     * @return Correlation type matching the given name, null if none matches.
-     * 
-     * @throws CentralRepoException
-     */
-    public CorrelationAttributeInstance.Type getCorrelationTypeByName(String correlationtypeName) throws CentralRepoException {
-        List<CorrelationAttributeInstance.Type> correlationTypesList = getCorrelationTypes();
-
-        CorrelationAttributeInstance.Type correlationType
-                = correlationTypesList.stream()
-                        .filter(x -> correlationtypeName.equalsIgnoreCase(x.getDisplayName()))
-                        .findAny()
-                        .orElse(null);
-
-        return null;
     }
 
     
