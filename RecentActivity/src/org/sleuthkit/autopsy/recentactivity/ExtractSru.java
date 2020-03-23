@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
@@ -45,8 +46,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME;
+//import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
+//import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -65,6 +66,7 @@ final class ExtractSru extends Extract {
     private static final String APPLICATION_EXECUTION_ARTIFACT_NAME = "TSK_APPLICATION_EXECUTION"; //NON-NLS
     private static final String NETWORK_USAGE_ARTIFACT_NAME = "RA_SRU_NETWORK_USAGE_BIN"; //NON-NLS
     private static final String APPLICATION_RESOURCE_ARTIFACT_NAME = "RA_SRU_APPLICATION_RESOURCE"; //NON-NLS
+    private static final String NETWORK_PROFILE_NAME_ATTRIBUTE_NAME = "RA_SRU_NETWORK_PROFILE_NAME"; //NON-NLS
 
     private static final String ARTIFACT_ATTRIBUTE_NAME = "TSK_ARTIFACT_NAME"; //NON-NLS
     private static final String BACKGROUND_CYCLE_TIME_ART_NAME = "RA_BACKGROUND_CYCLE_TIME"; //NON-NLS
@@ -75,7 +77,8 @@ final class ExtractSru extends Extract {
     private static final String MODULE_NAME = "extractSRU"; //NON-NLS
 
     private static final String SRU_TOOL_FOLDER = "markmckinnon"; //NON-NLS
-    private static final String SRU_TOOL_NAME_WINDOWS = "export_srudb.exe"; //NON-NLS
+    private static final String SRU_TOOL_NAME_WINDOWS_32 = "export_srudb_32.exe"; //NON-NLS
+    private static final String SRU_TOOL_NAME_WINDOWS_64 = "export_srudb_64.exe"; //NON-NLS
     private static final String SRU_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
     private static final String SRU_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
 
@@ -107,6 +110,36 @@ final class ExtractSru extends Extract {
         }
 
         SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+
+        List<AbstractFile> softwareHiveFiles;
+
+        try {
+            softwareHiveFiles = fileManager.findFiles(dataSource, "SOFTWARE"); //NON-NLS            
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to find SOFTWARE HIVE file.", ex); //NON-NLS
+            return;  // No need to continue
+        }
+
+        String softwareHiveFileName = null;
+        AbstractFile softwareHiveAbstractFile = null;
+
+        for (AbstractFile softwareFile : softwareHiveFiles) {
+
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
+  
+            if (softwareFile.getParentPath().endsWith("/config/")) {
+                softwareHiveFileName = tempDirPath + File.separator + softwareFile.getId() + "_" + softwareFile.getName();
+                softwareHiveAbstractFile = softwareFile;
+
+                try {
+                    ContentUtils.writeToFile(softwareFile, new File(softwareHiveFileName));
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, String.format("Unable to write %s to temp directory. File name: %s", softwareFile.getName(), softwareFile), ex); //NON-NLS
+                }
+            }
+        }
 
         List<AbstractFile> sruFiles;
 
@@ -154,10 +187,10 @@ final class ExtractSru extends Extract {
         }
 
         try {
-            extractSruFiles(sruDumper, sruFileName, tempOutFile, tempDirPath);
+            extractSruFiles(sruDumper, sruFileName, tempOutFile, tempDirPath, softwareHiveFileName);
             createSruAttributeType();
             createSruArtifactType();
-            createAppExecArtifacts(tempOutFile, sruAbstractFile);
+//            createAppExecArtifacts(tempOutFile, sruAbstractFile);
             createNetUsageArtifacts(tempOutFile, sruAbstractFile);
             createAppUsageArtifacts(tempOutFile, sruAbstractFile);
         } finally {
@@ -175,13 +208,14 @@ final class ExtractSru extends Extract {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    void extractSruFiles(String sruExePath, String sruFile, String tempOutFile, String tempOutPath) throws FileNotFoundException, IOException {
+    void extractSruFiles(String sruExePath, String sruFile, String tempOutFile, String tempOutPath, String softwareHiveFile) throws FileNotFoundException, IOException {
         final Path outputFilePath = Paths.get(tempOutPath, SRU_OUTPUT_FILE_NAME);
         final Path errFilePath = Paths.get(tempOutPath, SRU_ERROR_FILE_NAME);
 
         List<String> commandLine = new ArrayList<>();
         commandLine.add(sruExePath);
         commandLine.add(sruFile);  //NON-NLS
+        commandLine.add(softwareHiveFile);
         commandLine.add(tempOutFile);
 
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
@@ -192,7 +226,12 @@ final class ExtractSru extends Extract {
     }
 
     private String getPathForSruDumper() {
-        Path path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_WINDOWS);
+        Path path = null;
+        if (PlatformUtil.is64BitOS()) {
+            path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_WINDOWS_64);
+        } else {
+            path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_WINDOWS_32);            
+        }
         File sruToolFile = InstalledFileLocator.getDefault().locate(path.toString(),
                 ExtractSru.class.getPackage().getName(), false);
         if (sruToolFile != null) {
@@ -238,7 +277,7 @@ final class ExtractSru extends Extract {
                         //                                TSK_DATETIME, getName(),
                         //                                executionTime), //NON-NLS
                         new BlackboardAttribute(
-                                TSK_PROG_NAME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
                                 applicationName),//NON-NLS
                         new BlackboardAttribute(
                                 artifactAttributeType, getName(),
@@ -271,21 +310,25 @@ final class ExtractSru extends Extract {
         Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
         BlackboardAttribute.Type bytesSentAttributeType;
         BlackboardAttribute.Type bytesRecvAttributeType;
+        BlackboardAttribute.Type networkProfileName;
         BlackboardArtifact.Type artifactType;
+        Content sruContentFile;
+        BlackboardArtifact bbart;
 
         try {
             bytesSentAttributeType = currentCase.getSleuthkitCase().getAttributeType(BYTES_SENT_ART_NAME);
             bytesRecvAttributeType = currentCase.getSleuthkitCase().getAttributeType(BYTES_RECEIVED_ART_NAME);
             artifactType = currentCase.getSleuthkitCase().getArtifactType(NETWORK_USAGE_ARTIFACT_NAME);
+            networkProfileName = currentCase.getSleuthkitCase().getAttributeType(NETWORK_PROFILE_NAME_ATTRIBUTE_NAME);
+            sruContentFile = sruAbstractFile;
+            bbart = sruContentFile.newArtifact(artifactType.getTypeID());
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting Net Usage Attribute's and Artifact.", ex);//NON-NLS
             return;
         }
 
-        Content sruContentFile = sruAbstractFile;
-
-        String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, idBlob ApplicationName, "
-                + " bytesSent, BytesRecvd FROM network_Usage, SruDbIdMapTable WHERE appid = idIndex;"; //NON-NLS
+        String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, Application_Name, User_Name, Profile_Name,"
+                + " bytesSent, BytesRecvd FROM network_Usage;"; //NON-NLS
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + sruDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
@@ -298,38 +341,32 @@ final class ExtractSru extends Extract {
                 }
 
 //                int executionTime = resultSet.getInt("ExecutionTime"); //NON-NLS
-                String applicationName = resultSet.getString("ApplicationName"); //NON-NLS
+                String applicationName = resultSet.getString("Application_Name"); //NON-NLS
                 Long executionTime = new Long(resultSet.getInt("ExecutionTime")); //NON-NLS
                 Long bytesSent = new Long(resultSet.getInt("bytesSent")); //NON-NLS
                 Long bytesRecvd = new Long(resultSet.getInt("BytesRecvd")); //NON-NLS
+                String userName = resultSet.getString("User_Name"); //NON-NLS
+                String profileName = resultSet.getString("Profile_Name"); //NON-NLS
 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
-                                TSK_PROG_NAME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
                                 applicationName),//NON-NLS
                         new BlackboardAttribute(
-                                TSK_DATETIME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getName(),
+                                userName), 
+                        new BlackboardAttribute(
+                                networkProfileName, getName(), profileName),
+                        new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
                                 executionTime),
                         new BlackboardAttribute(
-                                bytesSentAttributeType, getName(),
-                                bytesSent),
+                                bytesSentAttributeType, getName(), bytesSent),
                         new BlackboardAttribute(
-                                bytesRecvAttributeType, getName(),
-                                bytesRecvd));
+                                bytesRecvAttributeType, getName(), bytesRecvd));
 
                 try {
-                    BlackboardArtifact bbart = sruContentFile.newArtifact(artifactType.getTypeID());
                     bbart.addAttributes(bbattributes);
-                    try {
-                        /*
-                         * Post the artifact which will index the artifact for
-                         * keyword search, and fire an event to notify UI of
-                         * this new artifact
-                         */
-                        blackboard.postArtifact(bbart, MODULE_NAME);
-                    } catch (Blackboard.BlackboardException ex) {
-                        logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
-                    }
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Exception Adding Artifact.", ex);//NON-NLS
                 }
@@ -338,6 +375,12 @@ final class ExtractSru extends Extract {
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
+
+        try {
+            blackboard.postArtifact(bbart, MODULE_NAME);
+        } catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
+        }
     }
 
     private void createAppUsageArtifacts(String sruDb, AbstractFile sruAbstractFile) {
@@ -345,20 +388,22 @@ final class ExtractSru extends Extract {
         BlackboardAttribute.Type fgCycleTimeAttributeType;
         BlackboardAttribute.Type bgCycleTimeAttributeType;
         BlackboardArtifact.Type artifactType;
+        BlackboardArtifact bbart;
+        Content sruContentFile;
 
         try {
             fgCycleTimeAttributeType = currentCase.getSleuthkitCase().getAttributeType(FOREGROUND_CYCLE_TIME_ART_NAME);
             bgCycleTimeAttributeType = currentCase.getSleuthkitCase().getAttributeType(BACKGROUND_CYCLE_TIME_ART_NAME);
             artifactType = currentCase.getSleuthkitCase().getArtifactType(APPLICATION_RESOURCE_ARTIFACT_NAME);
+            sruContentFile = sruAbstractFile;
+            bbart = sruContentFile.newArtifact(artifactType.getTypeID());
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting APP Usage Attribute's and Artifact.", ex);//NON-NLS
             return;
         }
 
-        Content sruContentFile = sruAbstractFile;
-
-        String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, idBlob ApplicationName, "
-                + " foregroundCycleTime, backgroundCycleTime FROM Application_Resource_Usage, SruDbIdMapTable WHERE appid = idIndex;"; //NON-NLS
+        String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, Application_Name, User_Name,"
+                + " foregroundCycleTime, backgroundCycleTime FROM Application_Resource_Usage;"; //NON-NLS
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + sruDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
@@ -371,17 +416,21 @@ final class ExtractSru extends Extract {
                 }
 
 //                int executionTime = resultSet.getInt("ExecutionTime"); //NON-NLS
-                String applicationName = resultSet.getString("ApplicationName"); //NON-NLS
+                String applicationName = resultSet.getString("Application_Name"); //NON-NLS
                 Long executionTime = new Long(resultSet.getInt("ExecutionTime")); //NON-NLS
                 Long fgCycleTime = new Long(resultSet.getInt("foregroundCycleTime")); //NON-NLS
                 Long bgCycleTime = new Long(resultSet.getInt("backgroundCycleTime")); //NON-NLS
+                String userName = resultSet.getString("User_Name");
 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
-                                TSK_PROG_NAME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
                                 applicationName),//NON-NLS
                         new BlackboardAttribute(
-                                TSK_DATETIME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getName(),
+                                userName),
+                        new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
                                 executionTime),
                         new BlackboardAttribute(
                                 fgCycleTimeAttributeType, getName(),
@@ -391,18 +440,8 @@ final class ExtractSru extends Extract {
                                 bgCycleTime));
 
                 try {
-                    BlackboardArtifact bbart = sruContentFile.newArtifact(artifactType.getTypeID());
+//                    bbart = sruContentFile.newArtifact(artifactType.getTypeID());
                     bbart.addAttributes(bbattributes);
-                    try {
-                        /*
-                         * Post the artifact which will index the artifact for
-                         * keyword search, and fire an event to notify UI of
-                         * this new artifact
-                         */
-                        blackboard.postArtifact(bbart, MODULE_NAME);
-                    } catch (Blackboard.BlackboardException ex) {
-                        logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
-                    }
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Exception Adding Artifact.", ex);//NON-NLS
                 }
@@ -410,6 +449,12 @@ final class ExtractSru extends Extract {
 
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
+        }
+        
+        try {
+            blackboard.postArtifact(bbart, MODULE_NAME);
+        } catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
         }
     }
 
@@ -467,6 +512,12 @@ final class ExtractSru extends Extract {
         }
         try {
             tskCase.addArtifactAttributeType(BYTES_RECEIVED_ART_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG, "Bytes Received"); //NON-NLS
+        } catch (TskDataException ex) {
+            logger.log(Level.INFO, String.format("%s may have already been defined for this case", BYTES_RECEIVED_ART_NAME));
+        }
+
+        try {
+            tskCase.addArtifactAttributeType(NETWORK_PROFILE_NAME_ATTRIBUTE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Network Profile Name");
         } catch (TskDataException ex) {
             logger.log(Level.INFO, String.format("%s may have already been defined for this case", BYTES_RECEIVED_ART_NAME));
         }
