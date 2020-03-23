@@ -731,9 +731,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             enableButtonSubComponents(cbUseCentralRepo.isSelected());
         } else {
             load();
-            enableDatabaseConfigureButton(cbUseCentralRepo.isSelected() && !caseIsOpen);
         }
 
+        enableDatabaseConfigureButton(cbUseCentralRepo.isSelected() && !caseIsOpen);
     }
 
     /**

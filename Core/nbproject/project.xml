@@ -616,10 +616,6 @@
                 <binary-origin>release/modules/ext/commons-validator-1.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jna-5.1.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jna-5.1.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jbig2-imageio-3.0.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jbig2-imageio-3.0.2.jar</binary-origin>
             </class-path-extension>
