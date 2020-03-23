@@ -150,7 +150,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         // initial setup so the font size of this panel as well as the font size indicated
         // in the TextZoomPanel are correct
         SwingUtilities.invokeLater(() -> {
-            if (zoomPanel != null && zoomPanel instanceof TextZoomPanel)
+            if (zoomPanel instanceof TextZoomPanel)
                 ((TextZoomPanel) this.zoomPanel).resetSize();
         });
     }

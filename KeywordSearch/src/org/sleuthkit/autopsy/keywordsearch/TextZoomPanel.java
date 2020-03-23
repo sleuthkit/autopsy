@@ -28,8 +28,7 @@ import org.openide.util.NbBundle;
 class TextZoomPanel extends JPanel {
     static final int DEFAULT_SIZE = new JLabel().getFont().getSize();
     
-    // How much font size is incremented or decremented when zooming in or zooming out respectively.
-    private static final int FONT_INCREMENT_DELTA = 1;
+    private static final long serialVersionUID = 1L;
     
     private static final double[] ZOOM_STEPS = {
         0.0625, 0.125, 0.25, 0.375, 0.5, 0.75,
