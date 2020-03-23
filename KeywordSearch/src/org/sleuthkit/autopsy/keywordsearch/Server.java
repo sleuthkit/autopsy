@@ -974,9 +974,9 @@ public class Server {
         * exist or loaded if it already exists.
         */
 
-        Properties properties = new Properties(); 
-        properties.setProperty("dataDir", dataDirPath);
-        logger.log(Level.INFO, "dataDirPath: {0}", dataDirPath);
+        //Properties properties = new Properties(); 
+        //properties.setProperty("dataDir", dataDirPath);
+        //logger.log(Level.INFO, "dataDirPath: {0}", dataDirPath);
         // properties.setProperty("transient", "true");
         // properties.setProperty("loadOnStartup", "false");
 
@@ -985,8 +985,8 @@ public class Server {
         Integer numNrtReplicas = 1;
         Integer numTlogReplicas = 0;
         Integer numPullReplicas = 0;
-        CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas)
-                .setProperties(properties);
+        CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas);
+        //        .setProperties(properties);
         //CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas);
 
         CollectionAdminResponse createResponse = createCollectionRequest.process(currentSolrServer);
