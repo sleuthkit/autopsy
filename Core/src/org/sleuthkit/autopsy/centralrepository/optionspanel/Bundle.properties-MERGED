@@ -39,7 +39,6 @@ GlobalSettingsPanel.onMultiUserChange.disabledMu.title=Central Repository Change
 GlobalSettingsPanel.onMultiUserChange.enable.description=Do you want to update the Central Repository to use this PostgreSQL database?
 GlobalSettingsPanel.onMultiUserChange.enable.description2=The Central Repository stores hash values and accounts from past cases.
 GlobalSettingsPanel.onMultiUserChange.enable.title=Use with Central Repository?
-GlobalSettingsPanel.updateFailed.title=Central repository disabled
 GlobalSettingsPanel.validationErrMsg.ingestRunning=You cannot change settings while ingest is running.
 GlobalSettingsPanel.validationerrMsg.mustConfigure=Configure the database to enable this module.
 ManageCasesDialog.title.text=Manage Cases
