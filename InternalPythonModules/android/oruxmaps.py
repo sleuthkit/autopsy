@@ -146,7 +146,7 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
                                         altitude = trackpointsResultSet.getDouble("trkptalt")
                                         time = trackpointsResultSet.getLong("trkpttime") / 1000    # milliseconds since unix epoch
                                         
-                                        geoPointList.addPoint(latitude, longitude, altitude, segmentName, 0, 0, 0, time)
+                                        geoPointList.addPoint(TskGeoTrackpointsUtil.GeoTrackPoint(latitude, longitude, altitude, segmentName, 0, 0, 0, time))
 
                                     try:
                                         geoartifact = geoArtifactHelper.addTrack(segmentName, geoPointList, None)
