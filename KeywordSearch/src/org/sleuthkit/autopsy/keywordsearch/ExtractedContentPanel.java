@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.ComponentOrientation;
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
@@ -27,7 +28,9 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.JLabel;
 import javax.swing.SizeRequirements;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.text.Element;
 import javax.swing.text.View;
@@ -36,6 +39,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLEditorKit.HTMLFactory;
 import javax.swing.text.html.InlineView;
 import javax.swing.text.html.ParagraphView;
+import javax.swing.text.html.StyleSheet;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
@@ -48,11 +52,20 @@ import org.sleuthkit.autopsy.coreutils.TextUtil;
  * combo-box to select between multiple sources.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-class ExtractedContentPanel extends javax.swing.JPanel {
+class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextPanel {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentPanel.class.getName());
+    
+    // set font as close as possible to default
+    private static final Font DEFAULT_FONT = new JLabel().getFont();
+    
     private static final long serialVersionUID = 1L;
     private String contentName;
+    private int curSize;
+    
+    private final StyleSheet styleSheet;
+    private final HTMLEditorKit editorKit;
+    private String lastKnownAnchor = null;
 
     ExtractedContentPanel() {
         initComponents();
@@ -65,7 +78,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
          * extractedTextPane taken form this website:
          * http://java-sl.com/tip_html_letter_wrap.html.
          */
-        HTMLEditorKit editorKit = new HTMLEditorKit() {
+        editorKit = new HTMLEditorKit() {
             private static final long serialVersionUID = 1L;
 
             @Override
@@ -119,13 +132,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 };
             }
         };
-        /*
-         * set font size manually in an effort to get fonts in this panel to
-         * look similar to what is in the 'String View' content viewer.
-         */
-        editorKit.getStyleSheet().addRule("body {font-size: 8.5px;}"); //NON-NLS
-        extractedTextPane.setEditorKit(editorKit);
-
+        // get the style sheet for editing font size
+        styleSheet = editorKit.getStyleSheet();
+        
         sourceComboBox.addItemListener(itemEvent -> {
             if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
                 refreshCurrentMarkup();
@@ -134,7 +143,48 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         extractedTextPane.setComponentPopupMenu(rightClickMenu);
         copyMenuItem.addActionListener(actionEvent -> extractedTextPane.copy());
         selectAllMenuItem.addActionListener(actionEvent -> extractedTextPane.selectAll());
+        
+        // TextZoomPanel could not be directly instantiated in Swing WYSIWYG editor 
+        // (because it was package private, couldn't use constructor, etc.)
+        // so it was identified as a JPanel for the WYSIWYG.  This function is called for
+        // initial setup so the font size of this panel as well as the font size indicated
+        // in the TextZoomPanel are correct
+        SwingUtilities.invokeLater(() -> {
+            if (zoomPanel instanceof TextZoomPanel)
+                ((TextZoomPanel) this.zoomPanel).resetSize();
+        });
     }
+    
+    
+    private void setStyleSheetSize(StyleSheet styleSheet, int size) {
+        styleSheet.addRule("body {font-family:\"" + DEFAULT_FONT.getFamily() + "\"; font-size:" + size + "pt; } ");
+    }
+    
+    
+    @Override
+    public int getTextSize() {
+        return curSize;
+    }
+
+    @Override
+    public void setTextSize(int newSize) {
+        curSize = newSize;
+
+        String curText = extractedTextPane.getText();
+        
+        setStyleSheetSize(styleSheet, curSize);
+        
+        editorKit.setStyleSheet(styleSheet);
+        extractedTextPane.setEditorKit(editorKit);
+
+        extractedTextPane.setText(curText);
+        if (lastKnownAnchor != null)
+            scrollToAnchor(lastKnownAnchor);
+    }
+    
+    
+    
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -161,7 +211,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         pageNextButton = new javax.swing.JButton();
         pagePreviousButton = new javax.swing.JButton();
         pageCurLabel = new javax.swing.JLabel();
-        jSeparator1 = new javax.swing.JSeparator();
         hitLabel = new javax.swing.JLabel();
         hitButtonsLabel = new javax.swing.JLabel();
         hitNextButton = new javax.swing.JButton();
@@ -170,6 +219,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         hitPreviousButton = new javax.swing.JButton();
         hitCountLabel = new javax.swing.JLabel();
         jSeparator2 = new javax.swing.JSeparator();
+        jSeparator3 = new javax.swing.JSeparator();
+        zoomPanel = new TextZoomPanel(this);
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
@@ -177,6 +228,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
+        setMinimumSize(new java.awt.Dimension(100, 0));
         setPreferredSize(new java.awt.Dimension(100, 58));
 
         extractedScrollPane.setBackground(new java.awt.Color(255, 255, 255));
@@ -193,7 +245,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         controlScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         controlScrollPane.setPreferredSize(new java.awt.Dimension(600, 100));
 
-        controlPanel.setMinimumSize(new java.awt.Dimension(0, 0));
+        controlPanel.setMinimumSize(new java.awt.Dimension(0, 20));
         controlPanel.setPreferredSize(new java.awt.Dimension(600, 81));
 
         sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel<org.sleuthkit.autopsy.keywordsearch.IndexedText>());
@@ -232,8 +284,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         pageCurLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         pageCurLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageCurLabel.text")); // NOI18N
-
-        jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
         hitLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitLabel.text")); // NOI18N
         hitLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitLabel.toolTipText")); // NOI18N
@@ -276,6 +326,12 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
+        jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        zoomPanel.setMinimumSize(new java.awt.Dimension(150, 20));
+        zoomPanel.setName(""); // NOI18N
+        zoomPanel.setPreferredSize(new java.awt.Dimension(200, 20));
+
         javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
         controlPanel.setLayout(controlPanelLayout);
         controlPanelLayout.setHorizontalGroup(
@@ -312,7 +368,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 .addGap(0, 0, 0)
                 .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(zoomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -329,7 +387,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                     .addComponent(pageButtonsLabel)
                     .addComponent(pagePreviousButton)
                     .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(pagesLabel)
                     .addComponent(hitLabel)
@@ -340,11 +397,15 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                     .addComponent(pageTotalLabel)
                     .addComponent(hitOfLabel)
                     .addComponent(hitTotalLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(hitButtonsLabel))
+                    .addComponent(hitButtonsLabel)
+                    .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(zoomPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(0, 0, 0))
         );
 
-        controlPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {hitButtonsLabel, hitCountLabel, hitLabel, hitNextButton, hitOfLabel, hitPreviousButton, hitTotalLabel, jLabel1, jSeparator1, jSeparator2, pageButtonsLabel, pageCurLabel, pageNextButton, pageOfLabel, pagePreviousButton, pageTotalLabel, pagesLabel, sourceComboBox});
+        controlPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {hitButtonsLabel, hitCountLabel, hitLabel, hitNextButton, hitOfLabel, hitPreviousButton, hitTotalLabel, jLabel1, jSeparator2, jSeparator3, pageButtonsLabel, pageCurLabel, pageNextButton, pageOfLabel, pagePreviousButton, pageTotalLabel, pagesLabel, sourceComboBox, zoomPanel});
+
+        zoomPanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.AccessibleContext.accessibleName")); // NOI18N
 
         controlScrollPane.setViewportView(controlPanel);
 
@@ -352,8 +413,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(controlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
-            .addComponent(extractedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
+            .addComponent(controlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 980, Short.MAX_VALUE)
+            .addComponent(extractedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 980, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -377,8 +438,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     private javax.swing.JButton hitPreviousButton;
     private javax.swing.JLabel hitTotalLabel;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JSeparator jSeparator3;
     private javax.swing.JLabel pageButtonsLabel;
     private javax.swing.JLabel pageCurLabel;
     private javax.swing.JButton pageNextButton;
@@ -389,6 +450,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JComboBox<org.sleuthkit.autopsy.keywordsearch.IndexedText> sourceComboBox;
+    private javax.swing.JPanel zoomPanel;
     // End of variables declaration//GEN-END:variables
 
     void refreshCurrentMarkup() {
@@ -404,6 +466,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      *                    the content.
      */
     final void setSources(String contentName, List<IndexedText> sources) {
+        this.lastKnownAnchor = null;
         this.contentName = contentName;
         setPanelText(null, false);
 
@@ -451,6 +514,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     void scrollToAnchor(String anchor) {
+        lastKnownAnchor = anchor;
         extractedTextPane.scrollToReference(anchor);
     }
 
