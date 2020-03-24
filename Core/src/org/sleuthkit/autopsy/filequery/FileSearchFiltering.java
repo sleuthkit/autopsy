@@ -842,14 +842,14 @@ class FileSearchFiltering {
     }
 
     /**
-     * A filter for specifying that the file must have EXIF data.
+     * A filter for specifying that the file must have user content suspected data.
      */
-    static class ExifFilter extends FileFilter {
+    static class UserCreatedFilter extends FileFilter {
 
         /**
          * Create the ExifFilter
          */
-        ExifFilter() {
+        UserCreatedFilter() {
             // Nothing to save
         }
 
@@ -857,14 +857,14 @@ class FileSearchFiltering {
         String getWhereClause() {
             return "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN "
                     + "(SELECT artifact_id FROM blackboard_attributes WHERE artifact_type_id = "
-                    + BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID() + ")))";
+                    + BlackboardArtifact.ARTIFACT_TYPE.TSK_USER_CONTENT_SUSPECTED.getTypeID() + ")))";
         }
 
         @NbBundle.Messages({
-            "FileSearchFiltering.ExifFilter.desc=Files that contain EXIF data",})
+            "FileSearchFiltering.UserCreatedFilter.desc=Files that contain EXIF data",})
         @Override
         String getDesc() {
-            return Bundle.FileSearchFiltering_ExifFilter_desc();
+            return Bundle.FileSearchFiltering_UserCreatedFilter_desc();
         }
     }
 

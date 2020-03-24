@@ -408,16 +408,16 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     /**
-     * Setup the exif filter settings.
+     * Setup the user created filter settings.
      *
      * @param visible  Boolean indicating if the filter should be visible.
      * @param enabled  Boolean indicating if the filter should be enabled.
      * @param selected Boolean indicating if the filter should be selected.
      */
-    private void exifFilterSettings(boolean visible, boolean enabled, boolean selected) {
-        exifCheckbox.setVisible(visible);
-        exifCheckbox.setEnabled(enabled);
-        exifCheckbox.setSelected(selected);
+    private void userCreatedFilterSettings(boolean visible, boolean enabled, boolean selected) {
+        userCreatedCheckbox.setVisible(visible);
+        userCreatedCheckbox.setEnabled(enabled);
+        userCreatedCheckbox.setSelected(selected);
     }
 
     /**
@@ -467,7 +467,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
         }
         crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
-        exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
+        userCreatedFilterSettings(true, enabled, !resetSelected && userCreatedCheckbox.isSelected());
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
         interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
@@ -499,7 +499,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
         }
         crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
-        exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
+        userCreatedFilterSettings(true, enabled, !resetSelected && userCreatedCheckbox.isSelected());
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
         interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
@@ -531,7 +531,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
         }
         crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
-        exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
+        userCreatedFilterSettings(false, false, false);
         objectsFilterSettings(false, false, false, null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
         interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
@@ -941,8 +941,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             filters.add(new FileSearchFiltering.TagsFilter(tagsList.getSelectedValuesList()));
         }
 
-        if (exifCheckbox.isSelected()) {
-            filters.add(new FileSearchFiltering.ExifFilter());
+        if (userCreatedCheckbox.isSelected()) {
+            filters.add(new FileSearchFiltering.UserCreatedFilter());
         }
 
         if (notableCheckbox.isSelected()) {
@@ -1148,7 +1148,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         tagsCheckbox = new javax.swing.JCheckBox();
         interestingItemsCheckbox = new javax.swing.JCheckBox();
         scoreCheckbox = new javax.swing.JCheckBox();
-        exifCheckbox = new javax.swing.JCheckBox();
+        userCreatedCheckbox = new javax.swing.JCheckBox();
         notableCheckbox = new javax.swing.JCheckBox();
         objectsScrollPane = new javax.swing.JScrollPane();
         objectsList = new javax.swing.JList<>();
@@ -1474,14 +1474,14 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
         filtersPanel.add(scoreCheckbox, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(exifCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.exifCheckbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(userCreatedCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.userCreatedCheckbox.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 6);
-        filtersPanel.add(exifCheckbox, gridBagConstraints);
+        filtersPanel.add(userCreatedCheckbox, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(notableCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.notableCheckbox.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1948,7 +1948,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JButton deleteButton;
     private javax.swing.JLabel errorLabel;
     private javax.swing.JRadioButton excludeRadioButton;
-    private javax.swing.JCheckBox exifCheckbox;
     private javax.swing.JRadioButton fullRadioButton;
     private javax.swing.JComboBox<GroupingAttributeType> groupByCombobox;
     private javax.swing.JComboBox<GroupSortingAlgorithm> groupSortingComboBox;
@@ -1983,6 +1982,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JCheckBox tagsCheckbox;
     private javax.swing.JList<TagName> tagsList;
     private javax.swing.JScrollPane tagsScrollPane;
+    private javax.swing.JCheckBox userCreatedCheckbox;
     // End of variables declaration//GEN-END:variables
 
 }
