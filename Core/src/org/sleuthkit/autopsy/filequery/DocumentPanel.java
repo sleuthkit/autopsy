@@ -157,7 +157,7 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
         "# {0} - numberOfImages",
         "DocumentPanel.numberOfImages.text=1 of {0} images",
         "DocumentPanel.numberOfImages.noImages=No images",
-        "DocumentPanel.noImageExtraction.text=No Image Extraction"})
+        "DocumentPanel.noImageExtraction.text=0 of ? images"})
 
     @Override
     public Component getListCellRendererComponent(JList<? extends DocumentWrapper> list, DocumentWrapper value, int index, boolean isSelected, boolean cellHasFocus) {

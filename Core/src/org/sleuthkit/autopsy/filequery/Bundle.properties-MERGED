@@ -16,6 +16,7 @@ DiscoveryUiUtility.sizeLabel.text=Size: {0} {1}
 DiscoveryUiUtility.terraBytes.text=TB
 # {0} - otherInstanceCount
 DocumentPanel.nameLabel.more.text=\ and {0} more
+DocumentPanel.noImageExtraction.text=0 of ? images
 DocumentPanel.numberOfImages.noImages=No images
 # {0} - numberOfImages
 DocumentPanel.numberOfImages.text=1 of {0} images
