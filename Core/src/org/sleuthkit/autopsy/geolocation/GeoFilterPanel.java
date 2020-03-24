@@ -79,7 +79,6 @@ class GeoFilterPanel extends javax.swing.JPanel {
         checkboxPanel = new CheckBoxListPanel<>();
         checkboxPanel.setPanelTitle(Bundle.GeoFilterPanel_DataSource_List_Title());
         checkboxPanel.setPanelTitleIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/image.png")));
-        checkboxPanel.setSetAllSelected(true);
 
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -443,9 +442,8 @@ class GeoFilterPanel extends javax.swing.JPanel {
                 for (Pair<String, DataSource> source : sources) {
                     checkboxPanel.addElement(source.getKey(), source.getValue());
                 }
+                checkboxPanel.setSetAllSelected(false);
             }
-
-            GeoFilterPanel.this.firePropertyChange(INITPROPERTY, false, true);
         }
 
     }

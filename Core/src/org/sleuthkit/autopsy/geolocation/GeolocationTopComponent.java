@@ -154,24 +154,6 @@ public final class GeolocationTopComponent extends TopComponent {
             }
         });
 
-        geoFilterPanel.addPropertyChangeListener(GeoFilterPanel.INITPROPERTY, new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (geoFilterPanel.hasDataSources()) {
-                    updateWaypoints();
-                } else {
-                    geoFilterPanel.setEnabled(false);
-                    setWaypointLoading(false);
-                    JOptionPane.showMessageDialog(GeolocationTopComponent.this,
-                            Bundle.GLTopComponent_No_dataSource_message(),
-                            Bundle.GLTopComponent_No_dataSource_Title(),
-                            JOptionPane.ERROR_MESSAGE);
-
-                }
-            }
-
-        });
-
         mapPanel.addPropertyChangeListener(MapPanel.CURRENT_MOUSE_GEOPOSITION, new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
