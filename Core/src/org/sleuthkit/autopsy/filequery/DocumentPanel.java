@@ -85,6 +85,7 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
 
         previewTextPane.setEditable(false);
         previewTextPane.setBackground(new java.awt.Color(240, 240, 240));
+        previewTextPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
