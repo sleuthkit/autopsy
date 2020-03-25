@@ -336,6 +336,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         if (dialogResult == JFileChooser.APPROVE_OPTION) {
             credentialsPathField.setText(fileChooser.getSelectedFile().getPath());
             populateTargetLanguageComboBox();
+            testResultValueLabel.setText("");
             firePropertyChange("SettingChanged", true, false);
         }
     }//GEN-LAST:event_browseButtonActionPerformed
@@ -406,6 +407,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
             if (!StringUtils.isBlank(selectedCode) && !selectedCode.equals(targetLanguageCode)) {
                 targetLanguageCode = selectedCode;
                 populateTargetLanguageComboBox();
+                testResultValueLabel.setText("");
                 firePropertyChange("SettingChanged", true, false);
             }
         }

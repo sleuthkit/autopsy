@@ -806,15 +806,6 @@ public interface CentralRepository {
     public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws CentralRepoException;     
     
     
-   /**
-    * Returns list of all correlation types. 
-    * 
-    * @return  list of Correlation types
-    * @throws CentralRepoException 
-    */
-    List<CorrelationAttributeInstance.Type> getCorrelationTypes() throws CentralRepoException;
-    
-    
     /**
      * Get account type by type name.
      * 

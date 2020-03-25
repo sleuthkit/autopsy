@@ -129,7 +129,7 @@ final public class CommonAttributeCountSearchResults {
         }
 
         CentralRepository eamDb = CentralRepository.getInstance();
-        CorrelationAttributeInstance.Type attributeType = eamDb.getCorrelationTypes()
+        CorrelationAttributeInstance.Type attributeType = eamDb.getDefinedCorrelationTypes()
                 .stream()
                 .filter(filterType -> filterType.getId() == this.resultTypeId)
                 .findFirst().get();

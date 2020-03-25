@@ -111,7 +111,7 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
     private CorrelationAttributeInstance.Type getCorrelationType(Account.Type accountType) throws CentralRepoException {
         if (correlationTypeMap == null) {
             correlationTypeMap = new HashMap<>();
-            List<CorrelationAttributeInstance.Type> correcationTypeList = CentralRepository.getInstance().getCorrelationTypes();
+            List<CorrelationAttributeInstance.Type> correcationTypeList = CentralRepository.getInstance().getDefinedCorrelationTypes();
             correcationTypeList.forEach((type) -> {
                 correlationTypeMap.put(type.getId(), type);
             });
