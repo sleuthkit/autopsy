@@ -28,6 +28,7 @@ import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
 
 /**
  * Class which displays a preview and details about a document.
@@ -59,7 +60,7 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
         nameLabel = new javax.swing.JLabel();
         sampleImageLabel = new javax.swing.JLabel();
         numberOfImagesLabel = new javax.swing.JLabel();
-        previewTextPane = new javax.swing.JTextPane();
+        previewTextPane = new AutoWrappingJTextPane();
 
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -102,9 +103,7 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(nameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(previewTextPane, javax.swing.GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
-                                .addGap(0, 0, 0)))
+                            .addComponent(previewTextPane, javax.swing.GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(numberOfImagesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
