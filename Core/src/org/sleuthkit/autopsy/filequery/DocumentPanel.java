@@ -35,6 +35,7 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
 
     private static final long serialVersionUID = 1L;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
+    private static final int MAX_NAME_STRING = 90;
 
     /**
      * Creates new form DocumentPanel
@@ -138,6 +139,9 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
         String nameText = value.getResultFile().getFirstInstance().getParentPath() + value.getResultFile().getFirstInstance().getName();
         if (value.getResultFile().getAllInstances().size() > 1) {
             nameText += Bundle.DocumentPanel_nameLabel_more_text(value.getResultFile().getAllInstances().size() - 1);
+        }
+        if (nameText.length() > MAX_NAME_STRING) {
+            nameText = "..." + nameText.substring(nameText.length() - (MAX_NAME_STRING - 3));
         }
         nameLabel.setText(nameText);
         previewTextArea.setText(value.getPreview());
