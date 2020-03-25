@@ -6,7 +6,7 @@ The file discovery tool shows images, videos, or documents that match a set of f
 
 \section file_disc_prereq Prerequisites
 
-We suggest running all \ref ingest_page "ingest modules" before launching file discovery, but if time is a factor the following are the modules that are the most important. You will see a warning if you open file discovery without running the \ref file_type_identification_page and \ref EXIF_parser_page.
+We suggest running all \ref ingest_page "ingest modules" before launching file discovery, but if time is a factor the following are the modules that are the most important. You will see a warning if you open file discovery without running the \ref file_type_identification_page, the \ref hash_db_page, and the \ref EXIF_parser_page.
 
 Required ingest modules:
 <ul>
@@ -20,6 +20,8 @@ Optional ingest modules:
 <li>\ref hash_db_page - Needed to use the \ref file_disc_hash_filter and to de-duplicate files
 <li>\ref interesting_files_identifier_page - Needed to use the \ref file_disc_int_filter 
 <li>\ref object_detection_page - Needed to use the \ref file_disc_obj_filter 
+<li>\ref keyword_search_page - Improves document summaries
+<li>\ref embedded_file_extractor_page - Allows display of an image contained in a document
 </ul>
 
 \section file_disc_run Running File Discovery
@@ -146,6 +148,10 @@ Once you select your options and click "Show", you'll see a list of groups in th
 If your results are videos, each result will display four thumbnails from the video.
 
 \image html FileDiscovery/fd_videos.png
+
+If your results are documents, you'll see part of the document text. If the \ref embedded_file_extractor_page found any images in the document you'll see a thumbnail of the largest of them displayed on the right side along with a count of how many images were extracted from the document.
+
+\image html FileDiscovery/fd_documents.png
 
 When you select a result from the top of the right panel, you'll see the path to the corresponding file(s) in the "Instances" panel below the thumbnails. There may be more than one file instance associated with a result - see the \ref file_disc_dedupe section below. You can right-click on files in the instances panel to use most of options available in the normal \ref result_viewer_page.
 
