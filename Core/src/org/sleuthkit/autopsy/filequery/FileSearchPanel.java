@@ -456,7 +456,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                      present for images should be reset to their default
      *                      status.
      */
+    @NbBundle.Messages({"FileSearchPanel.steptwo.images=Step 2: Filter which images to show"})
     private void imagesSelected(boolean enabled, boolean resetSelected) {
+        stepTwoLabel.setText(Bundle.FileSearchPanel_steptwo_images());
         dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
         int[] selectedSizeIndices = {1, 2, 3, 4, 5};
         sizeFilterSettings(true, enabled, resetSelected || sizeCheckbox.isSelected(), resetSelected == true ? selectedSizeIndices : null);
@@ -489,7 +491,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                      present for videos should be reset to their default
      *                      status.
      */
+    @NbBundle.Messages({"FileSearchPanel.steptwo.videos=Step 2: Filter which videos to show"})
     private void videosSelected(boolean enabled, boolean resetSelected) {
+        stepTwoLabel.setText(Bundle.FileSearchPanel_steptwo_videos());
         dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
         sizeFilterSettings(true, enabled, !resetSelected && sizeCheckbox.isSelected(), null);
         int[] selectedFrequencyIndices;
@@ -511,17 +515,19 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         notableFilterSettings(false, false, false);
     }
 
-        /**
+    /**
      * Set the UI elements available to be the set of UI elements available when
      * a Document search is being performed.
      *
-     * @param enabled       Boolean indicating if the filters present for documents
-     *                      should be enabled.
+     * @param enabled       Boolean indicating if the filters present for
+     *                      documents should be enabled.
      * @param resetSelected Boolean indicating if selection of the filters
-     *                      present for documents should be reset to their default
-     *                      status.
+     *                      present for documents should be reset to their
+     *                      default status.
      */
+    @NbBundle.Messages({"FileSearchPanel.steptwo.documents=Step 2: Filter which documents to show"})
     private void documentsSelected(boolean enabled, boolean resetSelected) {
+        stepTwoLabel.setText(Bundle.FileSearchPanel_steptwo_documents());
         dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
         sizeFilterSettings(true, enabled, !resetSelected && sizeCheckbox.isSelected(), null);
         int[] selectedFrequencyIndices;
@@ -542,7 +548,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         knownFilesFilterSettings(false, false, false);
         notableFilterSettings(false, false, false);
     }
-    
+
     /**
      * Set the type of search to perform.
      *
@@ -1177,7 +1183,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         groupSortingComboBox = new javax.swing.JComboBox<>();
         errorLabel = new javax.swing.JLabel();
         cancelButton = new javax.swing.JButton();
-        javax.swing.JLabel stepTwoLabel = new javax.swing.JLabel();
+        stepTwoLabel = new javax.swing.JLabel();
         javax.swing.JLabel stepThreeLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(10, 0));
@@ -1721,8 +1727,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(stepTwoLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.stepTwoLabel.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(stepThreeLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.stepThreeLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -1757,7 +1761,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                 .addGap(6, 6, 6)
                 .addComponent(stepTwoLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 201, Short.MAX_VALUE)
+                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 207, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(stepThreeLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1979,6 +1983,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JCheckBox sizeCheckbox;
     private javax.swing.JList<FileSize> sizeList;
     private javax.swing.JScrollPane sizeScrollPane;
+    private javax.swing.JLabel stepTwoLabel;
     private javax.swing.JRadioButton substringRadioButton;
     private javax.swing.JCheckBox tagsCheckbox;
     private javax.swing.JList<TagName> tagsList;
