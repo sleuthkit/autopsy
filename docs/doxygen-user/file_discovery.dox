@@ -2,7 +2,7 @@
 
 \section file_disc_overview Overview
 
-The file discovery tool shows images or videos that match a set of filters configured by the user. You can choose how to group and order your results in order to see the most relevant data first.
+The file discovery tool shows images, videos, or documents that match a set of filters configured by the user. You can choose how to group and order your results in order to see the most relevant data first.
 
 \section file_disc_prereq Prerequisites
 
@@ -37,17 +37,17 @@ Once everything is set up, use the "Show" button at the bottom of the left panel
 
 \subsection file_disc_type File Type
 
-The first step is choosing whether you want to display images or videos. The file type is determined by the MIME type of the file, which is why the file_type_identification_page must be run to see any results. Switching between the file types will clear any results being displayed and reset the filters.
+The first step is choosing whether you want to display images, videos, or documents. The file type is determined by the MIME type of the file, which is why the \ref file_type_identification_page must be run to see any results. Switching between the file types will clear any results being displayed and reset the filters.
 
 \image html FileDiscovery/fd_fileType.png
 
 \subsection file_disc_filtering Filtering
 
-The second step is to select and configure your filters. For most filters, you enable them using the checkbox on the left and then select your options. Multiple options can be selected by using CTRL + left click. Files must pass all enabled filters to be displayed.
+The second step is to select and configure your filters. The available filters will vary depending on the file type. For most filters, you enable them using the checkbox on the left and then select your options. Multiple options can be selected by using CTRL + left click. Files must pass all enabled filters to be displayed.
 
 \subsubsection file_disc_size_filter File Size Filter
 
-The file size filter lets you restrict the size of your results. The options are different for images and videos - an extra small image might be under 16 KB while an extra small video is anything under 500 KB. 
+The file size filter lets you restrict the size of your results. The options are different for the different file types - an extra small image might be under 16 KB while an extra small video is anything under 500 KB. 
 
 \image html FileDiscovery/fd_fileSizeFilter.png
 
@@ -71,7 +71,7 @@ The possibly user created filter restricts the results to files that suspected t
 
 \image html FileDiscovery/fd_userCreatedFilter.png
 
-This means the image or video must have a "User Content Suspected" result associated with it. These primarily come from the \ref EXIF_parser_page "Exif parser module".
+This means the file must have a "User Content Suspected" result associated with it. These primarily come from the \ref EXIF_parser_page "Exif parser module".
 
 \image html FileDiscovery/fd_userContentArtifact.png
 
@@ -155,9 +155,7 @@ The bottom section of the panel is identical to the standard \ref content_viewer
 
 \subsection file_disc_dedupe De-duplication
 
-Assuming the \ref hash_db_page module has been run, all files in a result group with the same hash will be merged together under a single instance. You can see the number of instances of each file under the thumbnail, and each file instance will be displayed in the middle section of the panel.
-
-
+Assuming the \ref hash_db_page module has been run, all files in a result group with the same hash will be merged together under a single instance. The file path to one of the instances will be displayed along with a note such as "and 1 more" indicating how many duplicates were found. Selecting the file will display each instance in the middle section of the panel.
 
 \image html FileDiscovery/fd_dupeEx.png
 
