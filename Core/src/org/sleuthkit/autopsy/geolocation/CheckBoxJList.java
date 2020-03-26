@@ -18,11 +18,15 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import javax.swing.Icon;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 
@@ -60,6 +64,20 @@ final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JLis
          * @return
          */
         String getDisplayName();
+
+        /**
+         * Returns whether an icon has been configured for this item
+         *
+         * @return
+         */
+        boolean hasIcon();
+
+        /**
+         * Returns Icon to display next to the checkbox
+         *
+         * @return
+         */
+        Icon getIcon();
     }
 
     /**
@@ -91,9 +109,18 @@ final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JLis
     /**
      * A ListCellRenderer that renders list elements as check boxes.
      */
-    class CellRenderer extends JCheckBox implements ListCellRenderer<CheckBoxJList.CheckboxListItem> {
+    class CellRenderer extends JPanel implements ListCellRenderer<CheckBoxJList.CheckboxListItem> {
 
         private static final long serialVersionUID = 1L;
+
+        private final JCheckBox checkbox = new JCheckBox();
+        private final JLabel label = new JLabel();
+
+        public CellRenderer() {
+            setLayout(new BorderLayout(2, 0));
+            add(checkbox, BorderLayout.WEST);
+            add(label, BorderLayout.CENTER);
+        }
 
         @Override
         public Component getListCellRendererComponent(
@@ -101,8 +128,13 @@ final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JLis
                 boolean isSelected, boolean cellHasFocus) {
 
             setBackground(list.getBackground());
-            setSelected(value.isChecked());
-            setText(value.getDisplayName());
+
+            checkbox.setSelected(value.isChecked());
+            label.setText(value.getDisplayName());
+            if (value.hasIcon()) {
+                label.setIcon(value.getIcon());
+            }
+
             setEnabled(list.isEnabled());
             return this;
         }

@@ -28,12 +28,14 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.util.Pair;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.DataSource;
@@ -504,11 +506,13 @@ class GeoFilterPanel extends javax.swing.JPanel {
 
             if (sources != null) {
                 for (Pair<String, DataSource> source : sources.dataSources) {
-                    dsCheckboxPanel.addElement(source.getKey(), source.getValue());
+                    dsCheckboxPanel.addElement(source.getKey(), null, source.getValue());
                 }
                 for (Map.Entry<ARTIFACT_TYPE, Long> entry : sources.artifactTypes.entrySet()) {
                     String dispName = entry.getKey().getDisplayName() + " (" + entry.getValue() + ")";
-                    atCheckboxPanel.addElement(dispName, entry.getKey());
+                    String iconPath = "/" + IconsUtil.getIconFilePath(entry.getKey().getTypeID());
+                    Icon icon = new ImageIcon(getClass().getResource(iconPath));
+                    atCheckboxPanel.addElement(dispName, icon, entry.getKey());
                 }
             }
 
