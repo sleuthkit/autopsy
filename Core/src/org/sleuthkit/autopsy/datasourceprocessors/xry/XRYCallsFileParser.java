@@ -18,15 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourceprocessors.xry;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.time.temporal.TemporalAccessor;
-import java.time.temporal.TemporalQueries;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -49,14 +41,6 @@ import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper.Comm
 final class XRYCallsFileParser extends AbstractSingleEntityParser {
 
     private static final Logger logger = Logger.getLogger(XRYCallsFileParser.class.getName());
-
-    //Pattern is in reverse due to a Java 8 bug, see calculateSecondsSinceEpoch()
-    //function for more details.
-    private static final DateTimeFormatter DATE_TIME_PARSER
-            = DateTimeFormatter.ofPattern("[(XXX) ][O ][(O) ]a h:m:s M/d/y");
-
-    private static final String DEVICE_LOCALE = "(device)";
-    private static final String NETWORK_LOCALE = "(network)";
 
     /**
      * All of the known XRY keys for call reports and their corresponding
@@ -202,6 +186,10 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             switch (xryKey) {
                 case TEL:
                 case NUMBER:
+                    if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                        continue;
+                    }
+                    
                     // Apply namespace or direction
                     if (xryNamespace == XryNamespace.FROM || direction == CommunicationDirection.INCOMING) {
                         callerId = pair.getValue();
@@ -216,15 +204,23 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
                 // Although confusing, as these are also 'name spaces', it appears
                 // later versions of XRY just made these standardized lines.
                 case TO:
+                    if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                        continue;
+                    }
+                    
                     calleeList.add(pair.getValue());
                     break;
                 case FROM:
+                    if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                        continue;
+                    }
+                    
                     callerId = pair.getValue();
                     break;
                 case TIME:
                     try {
                         //Tranform value to seconds since epoch
-                        long dateTimeSinceEpoch = calculateSecondsSinceEpoch(pair.getValue());
+                        long dateTimeSinceEpoch = XRYUtils.calculateSecondsSinceEpoch(pair.getValue());
                         startTime = dateTimeSinceEpoch;
                     } catch (DateTimeParseException ex) {
                         logger.log(Level.WARNING, String.format("[XRY DSP] Assumption"
@@ -321,90 +317,5 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             helper.addCalllog(direction, callerId, calleeList, startTime,
                     endTime, callType, otherAttributes);
         }
-    }
-
-    /**
-     * Removes the locale from the date time value.
-     *
-     * Locale in this case being (Device) or (Network).
-     *
-     * @param dateTime XRY datetime value to be sanitized.
-     * @return A purer date time value.
-     */
-    private String removeDateTimeLocale(String dateTime) {
-        String result = dateTime;
-        int deviceIndex = result.toLowerCase().indexOf(DEVICE_LOCALE);
-        if (deviceIndex != -1) {
-            result = result.substring(0, deviceIndex);
-        }
-        int networkIndex = result.toLowerCase().indexOf(NETWORK_LOCALE);
-        if (networkIndex != -1) {
-            result = result.substring(0, networkIndex);
-        }
-        return result;
-    }
-
-    /**
-     * Parses the date time value and calculates seconds since epoch.
-     *
-     * @param dateTime
-     * @return
-     */
-    private long calculateSecondsSinceEpoch(String dateTime) {
-        String dateTimeWithoutLocale = removeDateTimeLocale(dateTime).trim();
-        /**
-         * The format of time in XRY Messages reports is of the form:
-         *
-         * 1/3/1990 1:23:54 AM UTC+4
-         *
-         * In our current version of Java (openjdk-1.8.0.222), there is a bug
-         * with having the timezone offset (UTC+4 or GMT-7) at the end of the
-         * date time input. This is fixed in later versions of the JDK (9 and
-         * beyond). https://bugs.openjdk.java.net/browse/JDK-8154050 Rather than
-         * update the JDK to accommodate this, the components of the date time
-         * string are reversed:
-         *
-         * UTC+4 AM 1:23:54 1/3/1990
-         *
-         * The java time package will correctly parse this date time format.
-         */
-        String reversedDateTime = reverseOrderOfDateTimeComponents(dateTimeWithoutLocale);
-        /**
-         * Furthermore, the DateTimeFormatter's timezone offset letter ('O')
-         * does not recognize UTC but recognizes GMT. According to
-         * https://en.wikipedia.org/wiki/Coordinated_Universal_Time, GMT only
-         * differs from UTC by at most 1 second and so substitution will only
-         * introduce a trivial amount of error.
-         */
-        String reversedDateTimeWithGMT = reversedDateTime.replace("UTC", "GMT");
-        TemporalAccessor result = DATE_TIME_PARSER.parseBest(reversedDateTimeWithGMT,
-                ZonedDateTime::from,
-                LocalDateTime::from,
-                OffsetDateTime::from);
-        //Query for the ZoneID
-        if (result.query(TemporalQueries.zoneId()) == null) {
-            //If none, assumed GMT+0.
-            return ZonedDateTime.of(LocalDateTime.from(result),
-                    ZoneId.of("GMT")).toEpochSecond();
-        } else {
-            return Instant.from(result).getEpochSecond();
-        }
-    }
-
-    /**
-     * Reverses the order of the date time components.
-     *
-     * Example: 1/3/1990 1:23:54 AM UTC+4 becomes UTC+4 AM 1:23:54 1/3/1990
-     *
-     * @param dateTime
-     * @return
-     */
-    private String reverseOrderOfDateTimeComponents(String dateTime) {
-        StringBuilder reversedDateTime = new StringBuilder(dateTime.length());
-        String[] dateTimeComponents = dateTime.split(" ");
-        for (String component : dateTimeComponents) {
-            reversedDateTime.insert(0, " ").insert(0, component);
-        }
-        return reversedDateTime.toString().trim();
     }
 }

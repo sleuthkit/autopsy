@@ -74,6 +74,10 @@ final class XRYContactsFileParser extends AbstractSingleEntityParser {
                     }
                     break;
                 case TEL:
+                    if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                        continue;
+                    }
+                    
                     if(phoneNumber != null) {
                         additionalAttributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, PARSER_NAME, pair.getValue()));
                     } else {
@@ -81,6 +85,10 @@ final class XRYContactsFileParser extends AbstractSingleEntityParser {
                     }
                     break;
                 case MOBILE:
+                    if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                        continue;
+                    }
+                    
                     if(mobilePhoneNumber != null) {
                         additionalAttributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE, PARSER_NAME, pair.getValue()));
                     } else {
@@ -88,11 +96,25 @@ final class XRYContactsFileParser extends AbstractSingleEntityParser {
                     }
                     break;
                 case HOME:
+                    if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                        continue;
+                    }
+                    
                     if(homePhoneNumber != null) {
                         additionalAttributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME, PARSER_NAME, pair.getValue()));
                     } else {
                         homePhoneNumber = pair.getValue();
                     }
+                    break;
+                case EMAIL_HOME:
+                    if(!XRYUtils.isEmailValid(pair.getValue())) {
+                        continue;
+                    }
+                    
+                    hasAnEmail = true;
+                    additionalAttributes.add(new BlackboardAttribute(
+                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_HOME,
+                            PARSER_NAME, pair.getValue()));
                     break;
                 default:
                     //Otherwise, the XryKey enum contains the correct BlackboardAttribute
@@ -100,10 +122,6 @@ final class XRYContactsFileParser extends AbstractSingleEntityParser {
                     if (xryKey.getType() != null) {
                         additionalAttributes.add(new BlackboardAttribute(xryKey.getType(),
                                 PARSER_NAME, pair.getValue()));
-                                           
-                        if(xryKey == XryKey.EMAIL_HOME) {
-                            hasAnEmail = true;
-                        }
                     }
 
                     logger.log(Level.INFO, String.format("[XRY DSP] Key value pair "
@@ -139,7 +157,7 @@ final class XRYContactsFileParser extends AbstractSingleEntityParser {
         HOME("home", null),
         RELATED_APPLICATION("related application", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME),
         ADDRESS_HOME("address home", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION),
-        EMAIL_HOME("email home", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_HOME),
+        EMAIL_HOME("email home", null),
         DELETED("deleted", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ISDELETED),
         //Ignoring or need more information to decide.
         STORAGE("storage", null),
