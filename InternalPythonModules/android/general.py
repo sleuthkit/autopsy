@@ -18,7 +18,8 @@ limitations under the License.
 
 """
 
-import re
+from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel import CommunicationsUtils
 
 MODULE_NAME = "Android Analyzer"
 
@@ -45,10 +46,18 @@ def appendAttachmentList(msgBody, attachmentsList):
 Checks if the given string might be a phone number.
 """
 def isValidPhoneNumer(data):
-    return bool(re.match(r"^\+?[0-9()\-\s]+$", data))
+    try:
+        return CommunicationsUtils.normalizePhoneNum(data) is not None
+    except TskCoreException as ex:
+        return False
+        
 
 """
 Checks if the given string is a valid email address.
 """
 def isValidEmailAddress(data):
-    return bool(re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", data))
+    try:
+        return CommunicationsUtils.normalizeEmailAddress(data) is not None
+    except TskCoreException as ex:
+        return False
+    
