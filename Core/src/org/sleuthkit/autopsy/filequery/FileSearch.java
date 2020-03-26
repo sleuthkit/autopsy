@@ -280,9 +280,33 @@ class FileSearch {
         }
         if (summary == null || StringUtils.isBlank(summary.getSummaryText())) {
             //summary text was empty grab the beginning of the file 
-            summary = new TextSummary(getFirstLines(file), null, 0);
+            summary = getDefaultSummary(file);
         }
         return summary;
+    }
+
+    private static TextSummary getDefaultSummary(AbstractFile file) {
+        Image image = null;
+        int countOfImages = 0;
+        try {
+            Content largestChild = null;
+            for (Content child : file.getChildren()) {
+                if (child instanceof AbstractFile && ImageUtils.isImageThumbnailSupported((AbstractFile) child)) {
+                    countOfImages++;
+                    if (largestChild == null || child.getSize() > largestChild.getSize()) {
+                        largestChild = child;
+                    }
+                }
+            }
+            if (largestChild != null) {
+                image = ImageUtils.getThumbnail(largestChild, ImageUtils.ICON_SIZE_LARGE);
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting children for file: " + file.getId(), ex);
+        }
+        image = image == null ? image  : image.getScaledInstance(ImageUtils.ICON_SIZE_MEDIUM, ImageUtils.ICON_SIZE_MEDIUM,
+                Image.SCALE_SMOOTH);
+        return new TextSummary(getFirstLines(file), image, countOfImages);
     }
 
     /**
