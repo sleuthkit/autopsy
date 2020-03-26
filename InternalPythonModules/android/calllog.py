@@ -105,6 +105,9 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                                         timeStamp = resultSet.getLong("date") / 1000
                                          
                                         number = resultSet.getString("number")
+                                        if not general.isValidPhoneNumer(number):
+                                            number = None
+                                            
                                         duration = resultSet.getLong("duration") # duration of call is in seconds
                                         name = resultSet.getString("name") # name of person dialed or called. None if unregistered
 

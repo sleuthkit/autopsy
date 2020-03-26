@@ -423,7 +423,7 @@ final class TikaTextExtractor implements TextExtractor {
         }
 
         String executableToFindName = Paths.get(TESSERACT_DIR_NAME, TESSERACT_EXECUTABLE).toString();
-        File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, "org.sleuthkit.autopsy.core", false);
+        File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, TikaTextExtractor.class.getPackage().getName(), false);
         if (null == exeFile) {
             return null;
         }

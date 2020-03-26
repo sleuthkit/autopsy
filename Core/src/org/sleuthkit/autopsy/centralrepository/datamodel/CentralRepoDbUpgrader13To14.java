@@ -39,7 +39,7 @@ public class CentralRepoDbUpgrader13To14 implements CentralRepoDbUpgrader {
 
             try (Statement statement = connection.createStatement();) {
 
-                CentralRepoPlatforms selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
+                CentralRepoPlatforms selectedPlatform = CentralRepoDbManager.getSavedDbChoice().getDbPlatform();
 
                 // Create account_types and accounts tables which are referred by X_instances tables
                 statement.execute(RdbmsCentralRepoFactory.getCreateAccountTypesTableStatement(selectedPlatform));
@@ -51,7 +51,7 @@ public class CentralRepoDbUpgrader13To14 implements CentralRepoDbUpgrader {
                     if (type.getId() >= CorrelationAttributeInstance.ADDITIONAL_TYPES_BASE_ID) {
 
                         // these are new Correlation types - new tables need to be created
-                        statement.execute(String.format(RdbmsCentralRepoFactory.getCreateArtifactInstancesTableTemplate(selectedPlatform), instance_type_dbname, instance_type_dbname));
+                        statement.execute(String.format(RdbmsCentralRepoFactory.getCreateAccountInstancesTableTemplate(selectedPlatform), instance_type_dbname, instance_type_dbname));
                         statement.execute(String.format(RdbmsCentralRepoFactory.getAddCaseIdIndexTemplate(), instance_type_dbname, instance_type_dbname));
                         statement.execute(String.format(RdbmsCentralRepoFactory.getAddDataSourceIdIndexTemplate(), instance_type_dbname, instance_type_dbname));
                         statement.execute(String.format(RdbmsCentralRepoFactory.getAddValueIndexTemplate(), instance_type_dbname, instance_type_dbname));
@@ -61,9 +61,8 @@ public class CentralRepoDbUpgrader13To14 implements CentralRepoDbUpgrader {
                         // add new correlation type
                         CentralRepoDbUtil.insertCorrelationType(connection, type);
 
-                    } else {
-
-                        // Alter the existing X_Instance tables to add account_id column 
+                    } else if (type.getId() == CorrelationAttributeInstance.EMAIL_TYPE_ID || type.getId() == CorrelationAttributeInstance.PHONE_TYPE_ID) {
+                        // Alter the existing _instance tables for Phone and Email attributes to add account_id column 
                         String sqlStr = String.format(getAlterArtifactInstancesAddAccountIdTemplate(selectedPlatform), instance_type_dbname);
                         statement.execute(sqlStr);
 

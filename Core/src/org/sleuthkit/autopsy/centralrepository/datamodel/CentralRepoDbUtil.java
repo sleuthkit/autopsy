@@ -325,4 +325,17 @@ public class CentralRepoDbUtil {
         closeStatement(preparedStatement);
     }
 
+    /**
+     * Checks if the given correlation attribute type has an account behind it.
+     *
+     * @param type Correlation type to check.
+     *
+     * @return True If the specified correlation type has an account.
+     */
+    static boolean correlationAttribHasAnAccount(CorrelationAttributeInstance.Type type) {
+       return (type.getId() >= CorrelationAttributeInstance.ADDITIONAL_TYPES_BASE_ID) 
+               || type.getId() == CorrelationAttributeInstance.PHONE_TYPE_ID
+               || type.getId() == CorrelationAttributeInstance.EMAIL_TYPE_ID;
+    }
+    
 }
