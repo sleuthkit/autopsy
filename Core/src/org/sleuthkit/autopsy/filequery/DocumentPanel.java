@@ -170,7 +170,6 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
             numberOfImagesLabel.setText(Bundle.DocumentPanel_numberOfImages_noImages());
             sampleImageLabel.setIcon(null);
         }
-
         nameLabel.setText(nameText);
         previewTextPane.setText(value.getSummary().getSummaryText());
         previewTextPane.setCaretPosition(0);

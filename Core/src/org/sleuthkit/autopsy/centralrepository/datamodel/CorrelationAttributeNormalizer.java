@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.sleuthkit.datamodel.CommunicationsUtils;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Provides functions for normalizing data by attribute type before insertion or
@@ -152,26 +154,25 @@ final public class CorrelationAttributeNormalizer {
     }
 
     /**
-     * Verify that there is an '@' and no invalid characters. Should normalize
-     * to lower case.
+     * Verify and normalize email address.
      */
     private static String normalizeEmail(String data) throws CorrelationAttributeNormalizationException {
-        EmailValidator validator = EmailValidator.getInstance(true, true);
-        if (validator.isValid(data)) {
-            return data.toLowerCase();
-        } else {
-            throw new CorrelationAttributeNormalizationException(String.format("Data was expected to be a valid email address: %s", data));
-        }
+       try {
+           return CommunicationsUtils.normalizeEmailAddress(data);
+       }
+       catch(TskCoreException ex) {
+           throw new CorrelationAttributeNormalizationException(String.format("Data was expected to be a valid email address: %s", data), ex);
+       }
     }
 
     /**
-     * Verify it is only numbers and '+'. Strip spaces, dashes, and parentheses.
+     * Verify and normalize phone number.
      */
     private static String normalizePhone(String data) throws CorrelationAttributeNormalizationException {
-        if (data.matches("\\+?[0-9()\\-\\s]+")) {
-            String phoneNumber = data.replaceAll("[^0-9\\+]", "");
-            return phoneNumber;
-        } else {
+        try {
+             return CommunicationsUtils.normalizePhoneNum(data);
+        }
+        catch(TskCoreException ex) {
             throw new CorrelationAttributeNormalizationException(String.format("Data was expected to be a valid phone number: %s", data));
         }
     }
