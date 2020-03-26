@@ -19,55 +19,57 @@
 package org.sleuthkit.autopsy.filequery;
 
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
 /**
- * Class to wrap all the information necessary for a document preview to be
+ * Class to wrap all the information necessary for a document summary to be
  * displayed.
  */
 public class DocumentWrapper {
 
-    private String preview;
+    private TextSummary summary;
     private final ResultFile resultFile;
 
     /**
      * Construct a new DocumentWrapper.
      *
      * @param file The ResultFile which represents the document which the
-     *             preview summary is created for.
+     *             summary is created for.
      */
     @Messages({"DocumentWrapper.previewInitialValue=Preview not generated yet."})
     DocumentWrapper(ResultFile file) {
-        this.preview = Bundle.DocumentWrapper_previewInitialValue();
+        this.summary = new TextSummary(Bundle.DocumentWrapper_previewInitialValue(), null, 0);
         this.resultFile = file;
     }
 
     /**
-     * Set the preview summary which exists.
+     * Set the summary which exists.
      *
-     * @param preview The String which should be displayed as a preview for this
-     *                document.
+     * @param textSummary The TextSummary object which contains the text and
+     *                    image which should be displayed as a summary for this
+     *                    document.
      */
-    void setPreview(String preview) {
-        this.preview = preview;
+    void setSummary(TextSummary textSummary) {
+        this.summary = textSummary;
     }
 
     /**
-     * Get the ResultFile which represents the document the preview summary was
-     * created for.
+     * Get the ResultFile which represents the document the summary was created
+     * for.
      *
      * @return The ResultFile which represents the document file which the
-     *         preview was created for.
+     *         summary was created for.
      */
     ResultFile getResultFile() {
         return resultFile;
     }
 
     /**
-     * Get the preview summary of the document.
+     * Get the summary of the document.
      *
-     * @return The String which is the preview of the document.
+     * @return The TextSummary which is the summary of the document.
      */
-    String getPreview() {
-        return preview;
+    TextSummary getSummary() {
+        return summary;
     }
 }
