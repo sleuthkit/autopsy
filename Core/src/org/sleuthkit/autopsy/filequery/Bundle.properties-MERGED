@@ -100,7 +100,6 @@ FileSearchFiltering.DataSourceFilter.datasource={0}({1})
 # {0} - filters
 FileSearchFiltering.DataSourceFilter.desc=Files in data source(s): {0}
 FileSearchFiltering.DataSourceFilter.or=\ or 
-FileSearchFiltering.ExifFilter.desc=Files that contain EXIF data
 # {0} - filters
 FileSearchFiltering.FileTypeFilter.desc=Files with type: {0}
 FileSearchFiltering.FileTypeFilter.or=\ or 
@@ -137,6 +136,7 @@ FileSearchFiltering.SizeFilter.range=({0} to {1})
 # {0} - tag names
 FileSearchFiltering.TagsFilter.desc=Files that have been tagged {0}
 FileSearchFiltering.TagsFilter.or=\ or 
+FileSearchFiltering.UserCreatedFilter.desc=Files that contain EXIF data
 FileSearchPanel.dialogTitle.text=Test file search
 FileSearchPanel.sortingPanel.border.title=Grouping
 FileSearchPanel.searchButton.text=Show
@@ -170,7 +170,6 @@ FileSearchPanel.hashSetCheckbox.text=Hash Set:
 FileSearchPanel.tagsCheckbox.text=Tag:
 FileSearchPanel.interestingItemsCheckbox.text=Interesting Item:
 FileSearchPanel.scoreCheckbox.text=Has Score:
-FileSearchPanel.exifCheckbox.text=Possibly User Created
 FileSearchPanel.notableCheckbox.text=Must have been tagged as notable
 FileSearchPanel.objectsCheckbox.text=Object Detected:
 FileSorter.SortingMethod.datasource.displayName=Data Source
@@ -219,6 +218,7 @@ DiscoveryTopComponent.documentsButton.text=Documents
 DocumentPanel.fileSizeLabel.toolTipText=
 DocumentPanel.isDeletedLabel.toolTipText=
 ImageThumbnailPanel.isDeletedLabel.toolTipText=
+FileSearchPanel.userCreatedCheckbox.text=Possibly User Created
 ResultsPanel.unableToCreate.text=Unable to create summary.
 ResultsPanel.viewFileInDir.name=View File in Directory
 VideoThumbnailPanel.bytes.text=bytes
