@@ -168,11 +168,11 @@ class GeoFilterPanel extends javax.swing.JPanel {
     })
     GeoFilter getFilterState() throws GeoLocationUIException {
         List<DataSource> dataSources = dsCheckboxPanel.getSelectedElements();
-        List<ARTIFACT_TYPE> artifactTypes = atCheckboxPanel.getSelectedElements();
-
         if (dataSources.isEmpty()) {
             throw new GeoLocationUIException(Bundle.GeoFilterPanel_empty_dataSource());
         }
+
+        List<ARTIFACT_TYPE> artifactTypes = atCheckboxPanel.getSelectedElements();
         if (artifactTypes.isEmpty()) {
             throw new GeoLocationUIException(Bundle.GeoFilterPanel_empty_artifactType());
         }
@@ -429,12 +429,15 @@ class GeoFilterPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Container for data sources and artifact types to be given as filter options
+     */
     final private class Sources {
         final List<Pair<String, DataSource>> dataSources;
-        final HashMap<ARTIFACT_TYPE, Long> artifactTypes;
+        final Map<ARTIFACT_TYPE, Long> artifactTypes;
 
         private Sources(List<Pair<String, DataSource>> dataSources,
-                        HashMap<ARTIFACT_TYPE, Long> artifactTypes) {
+                        Map<ARTIFACT_TYPE, Long> artifactTypes) {
             this.dataSources = dataSources;
             this.artifactTypes = artifactTypes;
         }
@@ -479,7 +482,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
          * 
          * @throws TskCoreException 
          */
-        private HashMap<ARTIFACT_TYPE, Long> getGPSDataSources(SleuthkitCase sleuthkitCase, DataSource dataSource) throws TskCoreException {
+        private Map<ARTIFACT_TYPE, Long> getGPSDataSources(SleuthkitCase sleuthkitCase, DataSource dataSource) throws TskCoreException {
             HashMap<ARTIFACT_TYPE, Long> ret = new HashMap<>();
             for (BlackboardArtifact.ARTIFACT_TYPE type : GPS_ARTIFACT_TYPES) {
                 long count = sleuthkitCase.getBlackboardArtifactsTypeCount(type.getTypeID(), dataSource.getId());
