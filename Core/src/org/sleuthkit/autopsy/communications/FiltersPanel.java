@@ -477,8 +477,9 @@ final public class FiltersPanel extends JPanel {
 
         setLayout(new java.awt.GridBagLayout());
 
-        scrollPane.setAutoscrolls(true);
         scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setAutoscrolls(true);
 
         mainPanel.setLayout(new java.awt.GridBagLayout());
 
@@ -652,7 +653,9 @@ final public class FiltersPanel extends JPanel {
         devicesPane.add(checkAllDevicesButton, gridBagConstraints);
 
         devicesScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        devicesScrollPane.setMinimumSize(new java.awt.Dimension(27, 75));
+        devicesScrollPane.setMaximumSize(new java.awt.Dimension(32767, 30));
+        devicesScrollPane.setMinimumSize(new java.awt.Dimension(27, 30));
+        devicesScrollPane.setPreferredSize(new java.awt.Dimension(3, 30));
 
         devicesListPane.setMinimumSize(new java.awt.Dimension(4, 100));
         devicesListPane.setLayout(new javax.swing.BoxLayout(devicesListPane, javax.swing.BoxLayout.Y_AXIS));
@@ -728,7 +731,10 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
         accountTypesPane.add(checkAllAccountTypesButton, gridBagConstraints);
 
-        accountTypesScrollPane.setPreferredSize(new java.awt.Dimension(2, 200));
+        accountTypesScrollPane.setMaximumSize(new java.awt.Dimension(32767, 210));
+        accountTypesScrollPane.setMinimumSize(new java.awt.Dimension(20, 210));
+        accountTypesScrollPane.setName(""); // NOI18N
+        accountTypesScrollPane.setPreferredSize(new java.awt.Dimension(2, 210));
 
         accountTypeListPane.setLayout(new javax.swing.BoxLayout(accountTypeListPane, javax.swing.BoxLayout.PAGE_AXIS));
         accountTypesScrollPane.setViewportView(accountTypeListPane);
