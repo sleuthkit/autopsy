@@ -420,6 +420,10 @@
                 <binary-origin>release\modules\ext\tika-core-1.20.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.8.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.8.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/StixLib.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/StixLib.jar</binary-origin>
             </class-path-extension>
@@ -434,6 +438,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/json-simple-1.1.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\json-simple-1.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/zookeeper-3.5.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/zookeeper-3.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.11.0.jar</runtime-relative-path>
@@ -496,16 +504,16 @@
                 <binary-origin>release\modules\ext\vorbis-java-core-0.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/DatCon.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/DatCon.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/java-libpst-0.8.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\java-libpst-0.8.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/okio-1.6.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/okio-1.6.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/curator-framework-2.8.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/curator-framework-2.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-dbcp2-2.1.1.jar</runtime-relative-path>
@@ -532,10 +540,6 @@
                 <binary-origin>release/modules/ext/google-http-client-1.29.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.8.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.8.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/bcpkix-jdk15on-1.60.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\bcpkix-jdk15on-1.60.jar</binary-origin>
             </class-path-extension>
@@ -550,6 +554,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/google-cloud-core-1.70.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/google-cloud-core-1.70.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/curator-client-4.1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/curator-client-4.1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/geoapi-3.0.1.jar</runtime-relative-path>
@@ -584,6 +592,10 @@
                 <binary-origin>release\modules\ext\grib-4.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/zookeeper-jute-3.5.5.jar</runtime-relative-path>
+                <binary-origin>ext/zookeeper-jute-3.5.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/gax-1.44.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/gax-1.44.0.jar</binary-origin>
             </class-path-extension>
@@ -616,6 +628,10 @@
                 <binary-origin>release/modules/ext/commons-validator-1.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/decodetect-core-0.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/decodetect-core-0.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jbig2-imageio-3.0.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jbig2-imageio-3.0.2.jar</binary-origin>
             </class-path-extension>
@@ -628,12 +644,12 @@
                 <binary-origin>release\modules\ext\pdfbox-2.0.13.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/xmlbeans-3.0.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\xmlbeans-3.0.2.jar</binary-origin>
+                <runtime-relative-path>ext/curator-recipes-4.1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/curator-recipes-4.1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/curator-recipes-2.8.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/curator-recipes-2.8.0.jar</binary-origin>
+                <runtime-relative-path>ext/xmlbeans-3.0.2.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\xmlbeans-3.0.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tagsoup-1.2.1.jar</runtime-relative-path>
@@ -668,10 +684,6 @@
                 <binary-origin>release/modules/ext/c3p0-0.9.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/zookeeper-3.4.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/zookeeper-3.4.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-csv-1.6.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\commons-csv-1.6.jar</binary-origin>
             </class-path-extension>
@@ -682,6 +694,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jackson-annotations-2.9.7.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jackson-annotations-2.9.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/curator-framework-4.1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/curator-framework-4.1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/google-api-client-1.27.0.jar</runtime-relative-path>
@@ -740,10 +756,6 @@
                 <binary-origin>release\modules\ext\httpclient-4.5.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/curator-client-2.8.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/curator-client-2.8.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/fontbox-2.0.13.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\fontbox-2.0.13.jar</binary-origin>
             </class-path-extension>
@@ -780,6 +792,10 @@
                 <binary-origin>release/modules/ext/sevenzipjbinding-AllPlatforms.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jutf7-1.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/google-api-services-translate-v2-rev20170525-1.27.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/google-api-services-translate-v2-rev20170525-1.27.0.jar</binary-origin>
             </class-path-extension>
@@ -794,18 +810,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/vorbis-java-tika-0.8.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\vorbis-java-tika-0.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/decodetect-core-0.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/decodetect-core-0.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jutf7-1.0.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/DatCon.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/DatCon.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>
