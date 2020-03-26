@@ -121,7 +121,7 @@ public class MatchesInAtLeastTwoSourcesIntraCaseTest extends NbTestCase {
             assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET1, 0));
             assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
