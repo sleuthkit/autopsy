@@ -24,6 +24,7 @@ import java.awt.Cursor;
 import java.awt.HeadlessException;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,14 +32,15 @@ import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
-import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -65,18 +67,18 @@ public class EamDbSettingsDialog extends JDialog {
     /**
      * This class handles displaying and rendering drop down menu for database choices in central repo.
      */
-    private class DbChoiceRenderer extends BasicComboBoxRenderer {
+    private class DbChoiceRenderer extends JLabel implements ListCellRenderer<CentralRepoDbChoice>, Serializable {
         private static final long serialVersionUID = 1L;
         
-        public Component getListCellRendererComponent(JList list, Object value,
+        @Override
+        public Component getListCellRendererComponent(
+                JList<? extends CentralRepoDbChoice> list, CentralRepoDbChoice value,
                 int index, boolean isSelected, boolean cellHasFocus) {
-
-            CentralRepoDbChoice item = (CentralRepoDbChoice) value;
 
             // disable cell if it is the db connection from multi user settings 
             // and that option is not enabled in multi user settings
-            setText(item.getTitle());
-            setEnabled(isDbChoiceSelectable(item));
+            setText(value.getTitle());
+            setEnabled(isDbChoiceSelectable(value));
             return this;
         }
     }
@@ -135,7 +137,7 @@ public class EamDbSettingsDialog extends JDialog {
         valid();
         display();
     }
-    
+
     
     private void setupDbChoice(CentralRepoDbChoice initialMenuItem) {
         // setup initially selected item
@@ -144,10 +146,8 @@ public class EamDbSettingsDialog extends JDialog {
             manager.getSelectedDbChoice() :
             CentralRepoDbChoice.DB_CHOICES[0] :
             initialMenuItem;
-        
-        // set the renderer so item is unselectable if inappropriate
+                
         cbDatabaseType.setRenderer(DB_CHOICE_RENDERER);
-        
         changeDbSelection(toSelect);
     }
     

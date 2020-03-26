@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -140,6 +141,28 @@ public abstract class DisplayableItemNode extends AbstractNode {
      */
     public NodeSelectionInfo getChildNodeSelectionInfo() {
         return selectedChildNodeInfo;
+    }
+
+    /**
+     * Updates the node property sheet by replacing existing properties with new
+     * properties with the same property name.
+     *
+     * @param newProps The replacement property objects.
+     */
+    protected synchronized final void updatePropertySheet(NodeProperty<?>... newProps) {
+        Sheet currentSheet = this.getSheet();
+        Sheet.Set currentPropsSet = currentSheet.get(Sheet.PROPERTIES);
+        Property<?>[] currentProps = currentPropsSet.getProperties();
+        for (NodeProperty<?> newProp : newProps) {
+            for (int i = 0; i < currentProps.length; i++) {
+                if (currentProps[i].getName().equals(newProp.getName())) {
+                    currentProps[i] = newProp;
+                }
+            }
+        }
+        currentPropsSet.put(currentProps);
+        currentSheet.put(currentPropsSet);
+        this.setSheet(currentSheet);
     }
 
 }
