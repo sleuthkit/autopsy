@@ -220,7 +220,7 @@ class InterCaseTestUtils {
         this.kitchenShink = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.ALL_MODULES, kitchenSink);
 
         try {
-            Collection<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getCorrelationTypes();
+            Collection<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getDefinedCorrelationTypes();
 
             //TODO use ids instead of strings
             FILE_TYPE = types.stream().filter(type -> type.getDisplayName().equals("Files")).findAny().get();

@@ -66,10 +66,8 @@ public class CentralRepoAccountsTest extends TestCase {
         sqliteSettings.setDbName(CR_DB_NAME);
         sqliteSettings.setDbDirectory(testDirectory.toString());
 
-        if (!sqliteSettings.dbDirectoryExists()) {
-            if (!sqliteSettings.createDbDirectory()) {
-                Assert.fail("Failed to create central repo directory.");
-            }
+        if (!sqliteSettings.dbDirectoryExists() && !sqliteSettings.createDbDirectory()) {
+            Assert.fail("Failed to create central repo directory.");
         }
 
         RdbmsCentralRepoFactory factory = new RdbmsCentralRepoFactory(CentralRepoPlatforms.SQLITE, sqliteSettings);
