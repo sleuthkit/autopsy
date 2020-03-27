@@ -407,7 +407,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         BlackboardAttribute attribute = attributesMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
         
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == artifact.getArtifactTypeID()) {
-            if (attribute.getValueLong() > 0) {
+            if (attribute != null && attribute.getValueLong() > 0) {
                 appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, attributesMap, Bundle.ContextViewer_on());
             } else {
                 sb.append(Bundle.ContextViewer_unknown());
