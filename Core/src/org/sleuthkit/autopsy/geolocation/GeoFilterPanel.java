@@ -258,6 +258,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         gridBagConstraints.gridy = 3;
         gridBagConstraints.gridwidth = 3;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, -20, 0, 5);
         waypointSettings.add(showWaypointsWOTSCheckBox, gridBagConstraints);
 
         daysSpinner.setEnabled(false);
@@ -275,7 +276,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         gridBagConstraints.gridy = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(9, 5, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(9, 5, 0, 5);
         waypointSettings.add(daysLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(showLabel, org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.showLabel.text")); // NOI18N
