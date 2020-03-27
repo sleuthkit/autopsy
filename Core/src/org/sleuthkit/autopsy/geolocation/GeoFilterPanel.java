@@ -210,6 +210,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         showWaypointsWOTSCheckBox = new javax.swing.JCheckBox();
         daysSpinner = new javax.swing.JSpinner(numberModel);
         daysLabel = new javax.swing.JLabel();
+        showLabel = new javax.swing.JLabel();
         javax.swing.JPanel buttonPanel = new javax.swing.JPanel();
         applyButton = new javax.swing.JButton();
         javax.swing.JLabel optionsLabel = new javax.swing.JLabel();
@@ -229,7 +230,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridy = 1;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
@@ -244,7 +245,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
@@ -254,17 +255,16 @@ class GeoFilterPanel extends javax.swing.JPanel {
         showWaypointsWOTSCheckBox.setEnabled(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridy = 3;
         gridBagConstraints.gridwidth = 3;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 30, 0, 0);
         waypointSettings.add(showWaypointsWOTSCheckBox, gridBagConstraints);
 
         daysSpinner.setEnabled(false);
         daysSpinner.setPreferredSize(new java.awt.Dimension(75, 26));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
         waypointSettings.add(daysSpinner, gridBagConstraints);
@@ -272,11 +272,19 @@ class GeoFilterPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(daysLabel, org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.daysLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(9, 5, 0, 0);
         waypointSettings.add(daysLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(showLabel, org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.showLabel.text")); // NOI18N
+        showLabel.setToolTipText(org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.showLabel.toolTipText")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
+        waypointSettings.add(showLabel, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -330,6 +338,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
     private javax.swing.JLabel daysLabel;
     private javax.swing.JSpinner daysSpinner;
     private javax.swing.JRadioButton mostRecentButton;
+    private javax.swing.JLabel showLabel;
     private javax.swing.JCheckBox showWaypointsWOTSCheckBox;
     // End of variables declaration//GEN-END:variables
 
@@ -458,7 +467,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
             HashMap<ARTIFACT_TYPE, Long> atCountsTotal = new HashMap<>();
 
             for (DataSource dataSource : sleuthkitCase.getDataSources()) {
-                HashMap<ARTIFACT_TYPE, Long> atCounts = getGPSDataSources(sleuthkitCase, dataSource);
+                Map<ARTIFACT_TYPE, Long> atCounts = getGPSDataSources(sleuthkitCase, dataSource);
                 if (!atCounts.isEmpty()) {
                     for (Map.Entry<ARTIFACT_TYPE, Long> entry : atCounts.entrySet()) {
                         atCountsTotal.putIfAbsent(entry.getKey(), 0L);
