@@ -24,8 +24,10 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -83,22 +85,11 @@ public class CorrelationAttributeUtil {
             BlackboardArtifact sourceArtifact = getCorrAttrSourceArtifact(artifact);
             if (sourceArtifact != null) {
                 int artifactTypeID = sourceArtifact.getArtifactTypeID();
-                if (artifactTypeID == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                    BlackboardAttribute setNameAttr = sourceArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
-                    if (setNameAttr != null && CorrelationAttributeUtil.getEmailAddressAttrDisplayName().equals(setNameAttr.getValueString())) {
-                        makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, CorrelationAttributeInstance.EMAIL_TYPE_ID);
-                    }
-
-                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()
+                if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN, CorrelationAttributeInstance.DOMAIN_TYPE_ID);
-
-                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
-                        || artifactTypeID == ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
-                        || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
-                    makeCorrAttrFromArtifactPhoneAttr(sourceArtifact);
 
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID, CorrelationAttributeInstance.USBID_TYPE_ID);
@@ -169,59 +160,9 @@ public class CorrelationAttributeUtil {
     }
 
     /**
-     * Makes a correlation attribute instance from a phone number attribute of an
-     * artifact.
-     *
-     * @param artifact An artifact with a phone number attribute.
-     *
-     * @return The correlation instance artifact or null, if the phone number is
-     *         not a valid correlation attribute.
-     *
-     * @throws TskCoreException     If there is an error querying the case
-     *                              database.
-     * @throws CentralRepoException If there is an error querying the central
-     *                              repository.
-     */
-    private static CorrelationAttributeInstance makeCorrAttrFromArtifactPhoneAttr(BlackboardArtifact artifact) throws TskCoreException, CentralRepoException {
-        CorrelationAttributeInstance corrAttr = null;
-
-        /*
-         * Extract the phone number from the artifact attribute.
-         */
-        String value = null;
-        if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER))) {
-            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)).getValueString();
-        } else if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM))) {
-            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)).getValueString();
-        } else if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO))) {
-            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
-        }
-
-        /*
-         * Normalize the phone number.
-         */
-        if (value != null) {
-            String newValue = value.replaceAll("\\D", "");
-            if (value.startsWith("+")) {
-                newValue = "+" + newValue;
-            }
-            value = newValue;
-
-            /*
-             * Validate the phone number. Three to five digit phone numbers may
-             * be valid, but they are too short to use as correlation
-             * attributes.
-             */
-            if (value.length() > 5) {
-                corrAttr = makeCorrAttr(artifact, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), value);
-            }
-        }
-
-        return corrAttr;
-    }
-
-    /**
      * Makes a correlation attribute instance for an account artifact.
+     * 
+     * Also creates an account in the CR DB if it doesn't exist.
      *
      * IMPORTANT: The correlation attribute instance is NOT added to the central
      * repository by this method.
@@ -239,13 +180,35 @@ public class CorrelationAttributeUtil {
      *
      * @return The correlation attribute instance.
      */
-    private static void makeCorrAttrFromAcctArtifact(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact acctArtifact) {
-        // RAMAN TODO: Convert TSK_ACCOUNT_TYPE attribute to correlation attribute type
-        // RAMAN TODO: Extract TSK_ID as value
-//        CorrelationAttributeInstance corrAttr = makeCorrAttr(acctArtifact, corrType, corrAttrValue);
-//        if (corrAttr != null) {
-//            corrAttrInstances.add(corrAttr);
-//        }
+    private static void makeCorrAttrFromAcctArtifact(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact acctArtifact) throws TskCoreException, CentralRepoException {
+       
+        // Get the account type from the artifact
+        BlackboardAttribute accountTypeAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
+        String accountTypeStr = accountTypeAttribute.getValueString();
+        
+        // do not create any correlation attribute instance for a Device account
+        if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false) {
+
+            // Get the corresponding CentralRepoAccountType from the database.
+            CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
+
+            int corrTypeId = crAccountType.getCorrelationTypeId();
+            CorrelationAttributeInstance.Type corrType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
+
+            // Get the account identifier
+            BlackboardAttribute accountIdAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID));
+            String accountIdStr = accountIdAttribute.getValueString();
+
+            // add/get the account and get its accountId.
+            CentralRepoAccount crAccount = CentralRepository.getInstance().getOrCreateAccount(crAccountType, accountIdStr);
+
+            CorrelationAttributeInstance corrAttr = makeCorrAttr(acctArtifact, corrType, accountIdStr);
+            if (corrAttr != null) {
+                // set the account_id in correlation attribute
+                corrAttr.setAccountId(crAccount.getAccountId());
+                corrAttrInstances.add(corrAttr);
+            }
+        }
     }
 
     /**

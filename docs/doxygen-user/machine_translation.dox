@@ -24,7 +24,7 @@ Once enabled, the translated versions of the file and folder names will be shown
 
 \image html mt_file_names_translated.png
 
-\section mt_content_viewer Translating File Content
+\section mt_content_viewer Translating File and Message Content
 
 After you set up a machine translation service, the Translation tab under the Text tab in the Content Viewer will be active. The Translation tab allows you to use your service to translate the beginning of a file. For example, you might see the following in the default Indexed Text tab:
 
@@ -33,5 +33,13 @@ After you set up a machine translation service, the Translation tab under the Te
 Switching to the Translation tab will display the results of running the text through the machine translation service.  
 
 \image html mt_content_viewer_translated.png
+
+Machine translation also works for messages. To translate a message, select the "Text" tab above the message content.
+
+\image html mt_message_orig.png
+
+Then use the drop-down menu on the right to change from "Original Text" to "Translated Text".
+
+\image html mt_message_translated.png
 
 */

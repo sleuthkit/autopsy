@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.AddContentToHashDbAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
 /**
  * Panel for displaying of file discovery results and handling the paging of
@@ -777,11 +778,11 @@ public class ResultsPanel extends javax.swing.JPanel {
         @Messages({"ResultsPanel.unableToCreate.text=Unable to create summary."})
         @Override
         protected Void doInBackground() throws Exception {
-            String preview = FileSearch.summarize(documentWrapper.getResultFile().getFirstInstance());
+            TextSummary preview = FileSearch.summarize(documentWrapper.getResultFile().getFirstInstance());
             if (preview == null) {
-                preview = Bundle.ResultsPanel_unableToCreate_text();
+                preview = new TextSummary(Bundle.ResultsPanel_unableToCreate_text(), null, 0);
             }
-            documentWrapper.setPreview(preview);
+            documentWrapper.setSummary(preview);
             return null;
         }
 
@@ -791,10 +792,10 @@ public class ResultsPanel extends javax.swing.JPanel {
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                documentWrapper.setPreview(ex.getMessage());
+                documentWrapper.setSummary(new TextSummary(ex.getMessage(), null, 0));
                 logger.log(Level.WARNING, "Document Worker Exception", ex);
             } catch (CancellationException ignored) {
-                documentWrapper.setPreview(Bundle.ResultsPanel_documentPreview_text());
+                documentWrapper.setSummary(new TextSummary(Bundle.ResultsPanel_documentPreview_text(), null, 0));
                 //we want to do nothing in response to this since we allow it to be cancelled
             }
             documentPreviewViewer.repaint();

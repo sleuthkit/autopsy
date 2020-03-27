@@ -41,6 +41,7 @@ from org.sleuthkit.datamodel import TskCoreException
 
 import traceback
 import general
+import struct
 
 """
 Parses cache files that Android maintains for Wifi and cell towers. Adds GPS points to blackboard.
@@ -74,60 +75,24 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
 
     def __findGeoLocationsInFile(self, file, abstractFile):
 
-        tempBytes = bytearray([0] * 2) # will temporarily hold bytes to be converted into the correct data types
-
         try:
-            inputStream = FileInputStream(file)
-
-            inputStream.read(tempBytes) # version
-
-            tempBytes = bytearray([0] * 2)
-            inputStream.read(tempBytes) # number of location entries
-
-            iterations = BigInteger(tempBytes).intValue()
-
-            for i in range(iterations): # loop through every entry
-                tempBytes = bytearray([0] * 2)
-                inputStream.read(tempBytes)
-
-                tempBytes = bytearray([0])
-                inputStream.read(tempBytes)
-
-                while BigInteger(tempBytes).intValue() != 0: # pass through non important values until the start of accuracy(around 7-10 bytes)
-                    if 0 > inputStream.read(tempBytes):
-                        break # we've passed the end of the file, so stop
-
-                tempBytes = bytearray([0] * 3)
-                inputStream.read(tempBytes)
-                if BigInteger(tempBytes).intValue() <= 0: # This refers to a location that could not be calculated
-                    tempBytes = bytearray([0] * 28) # read rest of the row's bytes
-                    inputStream.read(tempBytes)
-                    continue
-                accuracy = "" + BigInteger(tempBytes).intValue()
-
-                tempBytes = bytearray([0] * 4)
-                inputStream.read(tempBytes)
-                confidence = "" + BigInteger(tempBytes).intValue()
-
-                tempBytes = bytearray([0] * 8)
-                inputStream.read(tempBytes)
-                latitude = CacheLocationAnalyzer.toDouble(bytes)
-
-                tempBytes = bytearray([0] * 8)
-                inputStream.read(tempBytes)
-                longitude = CacheLocationAnalyzer.toDouble(bytes)
-
-                tempBytes = bytearray([0] * 8)
-                inputStream.read(tempBytes)
-                timestamp = BigInteger(tempBytes).longValue() / 1000
+            # code to parse the cache.wifi and cache.cell taken from https://forensics.spreitzenbarth.de/2011/10/28/decoding-cache-cell-and-cache-wifi-files/
+            cacheFile = open(str(file), 'rb')
+            (version, entries) = struct.unpack('>hh', cacheFile.read(4))
+            i = 0
+            while i < entries:
+                key = cacheFile.read(struct.unpack('>h', cacheFile.read(2))[0])
+                (accuracy, confidence, latitude, longitude, readtime) = struct.unpack('>iiddQ', cacheFile.read(32))
+                timestamp = readtime/1000
+                i = i + 1
 
                 attributes = ArrayList()
-                artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT)
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, AndroidAnalyzer.MODULE_NAME, latitude))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, AndroidAnalyzer.MODULE_NAME, longitude))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, AndroidModuleFactorymodule.Name, timestamp))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, AndroidAnalyzer.MODULE_NAME,
-                    file.getName() + "Location History"))
+                artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK)
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, general.MODULE_NAME, latitude))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, general.MODULE_NAME, longitude))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, general.MODULE_NAME, timestamp))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, general.MODULE_NAME,
+                    abstractFile.getName() + " Location History"))
 
                 artifact.addAttributes(attributes)
                 #Not storing these for now.
@@ -136,15 +101,13 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     # index the artifact for keyword search
                     blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
-                    blackboard.postArtifact(artifact, MODULE_NAME)
+                    blackboard.postArtifact(artifact, general.MODULE_NAME)
                 except Blackboard.BlackboardException as ex:
                     self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactID()), ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
                     MessageNotifyUtil.Notify.error("Failed to index GPS trackpoint artifact for keyword search.", artifact.getDisplayName())
+            cacheFile.close()
 
-        except SQLException as ex:
-            # Unable to execute Cached GPS locations SQL query against database.
-            pass
         except Exception as ex:
             self._logger.log(Level.SEVERE, "Error parsing Cached GPS locations to blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())

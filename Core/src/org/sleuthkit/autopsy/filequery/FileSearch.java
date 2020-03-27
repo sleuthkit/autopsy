@@ -23,7 +23,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Paths;
@@ -46,6 +45,7 @@ import javax.imageio.ImageIO;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
+import org.imgscalr.Scalr;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
@@ -78,6 +78,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.autopsy.textsummarizer.TextSummarizer;
+import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
 /**
  * Main class to perform the file search.
@@ -93,6 +94,7 @@ class FileSearch {
             .build();
     private static final int PREVIEW_SIZE = 256;
     private static volatile TextSummarizer summarizerToUse = null;
+    private static final BufferedImage VIDEO_DEFAULT_IMAGE = getDefaultVideoThumbnail();
 
     /**
      * Run the file search and returns the SearchResults object for debugging.
@@ -258,8 +260,8 @@ class FileSearch {
      */
     @NbBundle.Messages({"FileSearch.documentSummary.noPreview=No preview available.",
         "FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview."})
-    static String summarize(AbstractFile file) {
-        String summary = null;
+    static TextSummary summarize(AbstractFile file) {
+        TextSummary summary = null;
         TextSummarizer localSummarizer = summarizerToUse;
         if (localSummarizer == null) {
             synchronized (searchCache) {
@@ -273,14 +275,38 @@ class FileSearch {
                 //a summary of length 40 seems to fit without vertical scroll bars
                 summary = localSummarizer.summarize(file, 40);
             } catch (IOException ex) {
-                return Bundle.FileSearch_documentSummary_noPreview();
+                return new TextSummary(Bundle.FileSearch_documentSummary_noPreview(), null, 0);
             }
         }
-        if (StringUtils.isBlank(summary)) {
-            //no summarizer was found or summary was empty just grab the beginning of the file
-            summary = getFirstLines(file);
+        if (summary == null || StringUtils.isBlank(summary.getSummaryText())) {
+            //summary text was empty grab the beginning of the file 
+            summary = getDefaultSummary(file);
         }
         return summary;
+    }
+
+    private static TextSummary getDefaultSummary(AbstractFile file) {
+        Image image = null;
+        int countOfImages = 0;
+        try {
+            Content largestChild = null;
+            for (Content child : file.getChildren()) {
+                if (child instanceof AbstractFile && ImageUtils.isImageThumbnailSupported((AbstractFile) child)) {
+                    countOfImages++;
+                    if (largestChild == null || child.getSize() > largestChild.getSize()) {
+                        largestChild = child;
+                    }
+                }
+            }
+            if (largestChild != null) {
+                image = ImageUtils.getThumbnail(largestChild, ImageUtils.ICON_SIZE_LARGE);
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting children for file: " + file.getId(), ex);
+        }
+        image = image == null ? image  : image.getScaledInstance(ImageUtils.ICON_SIZE_MEDIUM, ImageUtils.ICON_SIZE_MEDIUM,
+                Image.SCALE_SMOOTH);
+        return new TextSummary(getFirstLines(file), image, countOfImages);
     }
 
     /**
@@ -291,13 +317,21 @@ class FileSearch {
      * @return The beginning of text from the specified AbstractFile.
      */
     private static String getFirstLines(AbstractFile file) {
-        try (Reader reader = TextExtractorFactory.getExtractor(file, null).getReader()) {
+        TextExtractor extractor;
+        try {
+            extractor = TextExtractorFactory.getExtractor(file, null);
+        } catch (TextExtractorFactory.NoTextExtractorFound ignored) {
+            //no extractor found, use Strings Extractor
+            extractor = TextExtractorFactory.getStringsExtractor(file, null);
+        }
+
+        try (Reader reader = extractor.getReader()) {
             char[] cbuf = new char[PREVIEW_SIZE];
             reader.read(cbuf, 0, PREVIEW_SIZE);
             return new String(cbuf);
         } catch (IOException ex) {
             return Bundle.FileSearch_documentSummary_noBytes();
-        } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
+        } catch (TextExtractor.InitReaderException ex) {
             return Bundle.FileSearch_documentSummary_noPreview();
         }
     }
@@ -447,6 +481,20 @@ class FileSearch {
     }
 
     /**
+     * Get the default image to display when a thumbnail is not available.
+     *
+     * @return The default video thumbnail.
+     */
+    private static BufferedImage getDefaultVideoThumbnail() {
+        try {
+            return ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/failedToCreateVideoThumb.png"));//NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to load 'failed to create video' placeholder.", ex); //NON-NLS
+        }
+        return null;
+    }
+
+    /**
      * Get the video thumbnails for a file which exists in a
      * VideoThumbnailsWrapper and update the VideoThumbnailsWrapper to include
      * them.
@@ -466,7 +514,6 @@ class FileSearch {
             cacheDirectory = null;
             logger.log(Level.WARNING, "Unable to get cache directory, video thumbnails will not be saved", ex);
         }
-
         if (cacheDirectory == null || file.getMd5Hash() == null || !Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash()).toFile().exists()) {
             java.io.File tempFile;
             try {
@@ -478,7 +525,7 @@ class FileSearch {
                     0,
                     0,
                     0};
-                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(VIDEO_DEFAULT_IMAGE), framePositions);
                 return;
             }
             if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
@@ -492,7 +539,7 @@ class FileSearch {
                             0,
                             0,
                             0};
-                        thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                        thumbnailWrapper.setThumbnails(createDefaultThumbnailList(VIDEO_DEFAULT_IMAGE), framePositions);
                         return;
                     }
                     ContentUtils.writeToFile(file, tempFile, progress, null, true);
@@ -513,7 +560,7 @@ class FileSearch {
                         0,
                         0,
                         0};
-                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(VIDEO_DEFAULT_IMAGE), framePositions);
                     return;
                 }
                 double fps = videoFile.get(5); // gets frame per second
@@ -525,7 +572,7 @@ class FileSearch {
                         0,
                         0,
                         0};
-                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(VIDEO_DEFAULT_IMAGE), framePositions);
                     return;
                 }
                 if (Thread.interrupted()) {
@@ -534,7 +581,7 @@ class FileSearch {
                         0,
                         0,
                         0};
-                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(VIDEO_DEFAULT_IMAGE), framePositions);
                     return;
                 }
 
@@ -563,10 +610,10 @@ class FileSearch {
                         logger.log(Level.WARNING, "Error seeking to " + framePositions[i] + "ms in {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
                         // If we can't set the time, continue to the next frame position and try again.
 
-                        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                        videoThumbnails.add(VIDEO_DEFAULT_IMAGE);
                         if (cacheDirectory != null) {
                             try {
-                                ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
+                                ImageIO.write(VIDEO_DEFAULT_IMAGE, THUMBNAIL_FORMAT,
                                         Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
                             } catch (IOException ex) {
                                 logger.log(Level.WARNING, "Unable to save default video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
@@ -578,10 +625,10 @@ class FileSearch {
                     if (!videoFile.read(imageMatrix)) {
                         logger.log(Level.WARNING, "Error reading frame at " + framePositions[i] + "ms from {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
                         // If the image is bad for some reason, continue to the next frame position and try again.
-                        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                        videoThumbnails.add(VIDEO_DEFAULT_IMAGE);
                         if (cacheDirectory != null) {
                             try {
-                                ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
+                                ImageIO.write(VIDEO_DEFAULT_IMAGE, THUMBNAIL_FORMAT,
                                         Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
                             } catch (IOException ex) {
                                 logger.log(Level.WARNING, "Unable to save default video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
@@ -592,10 +639,10 @@ class FileSearch {
                     }
                     // If the image is empty, return since no buffered image can be created.
                     if (imageMatrix.empty()) {
-                        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                        videoThumbnails.add(VIDEO_DEFAULT_IMAGE);
                         if (cacheDirectory != null) {
                             try {
-                                ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
+                                ImageIO.write(VIDEO_DEFAULT_IMAGE, THUMBNAIL_FORMAT,
                                         Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
                             } catch (IOException ex) {
                                 logger.log(Level.WARNING, "Unable to save default video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
@@ -633,7 +680,8 @@ class FileSearch {
                         }
                         return;
                     }
-                    BufferedImage thumbnail = ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE);
+                    BufferedImage thumbnail = ScalrWrapper.resize(bufferedImage, Scalr.Method.SPEED, Scalr.Mode.FIT_TO_HEIGHT, ImageUtils.ICON_SIZE_LARGE, ImageUtils.ICON_SIZE_MEDIUM, Scalr.OP_ANTIALIAS);
+                    //We are height limited here so it can be wider than it can be tall.Scalr maintains the aspect ratio.
                     videoThumbnails.add(thumbnail);
                     if (cacheDirectory != null) {
                         try {
@@ -649,7 +697,7 @@ class FileSearch {
                 videoFile.release(); // close the file}
             }
         } else {
-            loadSavedThumbnails(cacheDirectory, thumbnailWrapper);
+            loadSavedThumbnails(cacheDirectory, thumbnailWrapper, VIDEO_DEFAULT_IMAGE);
         }
     }
 
@@ -663,7 +711,7 @@ class FileSearch {
      *                         information about the file and the thumbnails
      *                         associated with it.
      */
-    private static void loadSavedThumbnails(String cacheDirectory, VideoThumbnailsWrapper thumbnailWrapper) {
+    private static void loadSavedThumbnails(String cacheDirectory, VideoThumbnailsWrapper thumbnailWrapper, BufferedImage failedVideoThumbImage) {
         int[] framePositions = new int[4];
         List<Image> videoThumbnails = new ArrayList<>();
         int thumbnailNumber = 0;
@@ -672,7 +720,7 @@ class FileSearch {
             try {
                 videoThumbnails.add(ImageIO.read(Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, md5, fileName).toFile()));
             } catch (IOException ex) {
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                videoThumbnails.add(failedVideoThumbImage);
                 logger.log(Level.WARNING, "Unable to read saved video thumbnail " + fileName + " for " + md5, ex);
             }
             int framePos = Integer.valueOf(FilenameUtils.getBaseName(fileName).substring(2));
@@ -688,12 +736,12 @@ class FileSearch {
      *
      * @return List containing the default thumbnail.
      */
-    private static List<Image> createDefaultThumbnailList() {
+    private static List<Image> createDefaultThumbnailList(BufferedImage failedVideoThumbImage) {
         List<Image> videoThumbnails = new ArrayList<>();
-        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+        videoThumbnails.add(failedVideoThumbImage);
+        videoThumbnails.add(failedVideoThumbImage);
+        videoThumbnails.add(failedVideoThumbImage);
+        videoThumbnails.add(failedVideoThumbImage);
         return videoThumbnails;
     }
 

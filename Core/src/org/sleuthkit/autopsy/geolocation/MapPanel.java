@@ -434,7 +434,7 @@ final public class MapPanel extends javax.swing.JPanel {
     /**
      * Find the waypoint that is closest to the given mouse click point.
      *
-     * @param mouseClickPoint The mouse click point
+     * @param clickPoint The mouse click point
      *
      * @return A waypoint that is within 10 pixels of the given point, or null
      *         if none was found.
