@@ -24,21 +24,39 @@ The following are some use cases for the central repository:
 
 \section cr_setup Setup
 
-To start, open the main options panel and select the "Central Repository" icon. 
+The central repository settings are found on the main options panel (Tools->Options) on the "Central Repository" tab. 
 
 \image html central_repo_options.png
 
-\subsection cr_db_setup Setting up the Database
+\subsection cr_db_setup Database Configuration
 
-On the central repository options panel, check the 'Use a Central Repository' option and then click the Configure button to set up a database. There are two options here:
+There are two types of central repository databases:
+- <b>SQLite</b> - This type of database is stored in a file. It should only be used when a single client will be accessing the database. You can not use this option with \ref multiuser_page "multi-user cases".
+- <b>PostgreSQL</b> - This type of database is stored on a server running either on the user's host or a remote server. This option must be used if multiple users will be using the same database.
+
+\subsubsection cr_db_setup_auto Automatic Database Configuration
+
+Starting with Autopsy 4.15, when you load Autopsy and the central repository is not enabled you will be 
+asked if you want to enable it. Doing so will create a SQLite database in your Autopsy user folder (on Windows this will be in AppData). You will only be prompted to do this once. Whichever option you select, you can change your central repository settings later as described below.
+
+Since a SQLite database can't be used for multi-user cases, you are also given the option to switch to a PostgreSQL database when you \ref multiuser_install_clients "enable multi-user cases". If you are currently using a SQLite database, when you enable multi-user cases you will be asked if you want to switch to a PostgreSQL database on the same server. Note that the contents of your SQLite database will not be copied over.
+
+\subsubsection cr_db_setup_manual Manual Database Configuration
+
+On the central repository options panel, check the 'Use a Central Repository' option and then click the Configure button to set up a database. There are three options here:
 - <b>SQLite</b> - This option stores the database in a file. It should only be used when a single client will be accessing the database.
-- <b>PostgreSQL</b> - This option uses a database server running either on the user's host or a remote server. This option must be used if multiple users will be using the same database.
+- <b>PostgreSQL using multi-user settings</b> - This option uses a central repository on the same PostgreSQL server that has been configured for \ref multiuser_page "multi-user cases". This option can not be selected if multi-user cases are not enabled. This is one of the options if multiple users will be using the same database.
+- <b>Custom PostgreSQL</b> - This option uses a database server running either on the user's host or a remote server, where the server is specified in the central repository settings. This is one of the options if multiple users will be using the same database.
 
 Once a database has been configured, the lower two buttons on the main panel will be enabled, which will be described below.
 
-<b>Setting up PostgreSQL Deployment</b>
+<b>Setting up a PostgreSQL deployment using the multi-user settings</b>
 
-If needed, see the \ref install_postgresql_page for help setting up your PostgreSQL server.
+See the \ref install_multiuser_page page for instructions on configuring a multi-user environment. Once done, you can select the "PostgreSQL using multi-user settings" option to create/use a central repository on that PostgreSQL server.
+
+<b>Setting up a custom PostgreSQL deployment</b>
+
+If needed, see the \ref install_postgresql_page page for help setting up your PostgreSQL server.
 
 For PostgreSQL all values are required, but some defaults are provided for convenience.
 
@@ -70,25 +88,29 @@ are saved to the database, so in a multi-user setting any changes will affect al
 
 Descriptions of the property types:
 - <b>Files</b>
- - Files are correlated based on MD5 hash and file path and name. The Hash Lookup ingest module must be enabled.
+ - Files are correlated based on MD5 hash and file path and name. The \ref hash_db_page must be enabled.
 - <b>Domains</b>
- - Domains are extracted from the various web artifacts, which primarily come from the Recent Activity module
+ - Domains are extracted from the various web artifacts, which primarily come from the \ref recent_activity_page.
 - <b>Email Addresses</b>
- - Email addresses are pulled from Email Address hits from the Keyword Search module.
+ - Email addresses are created by modules such as the \ref email_parser_page.
 - <b>Phone Numbers</b>
- - Phone numbers are currently only extracted from call logs, contact lists and message, which come from the Android Analyzer module.
+ - Phone numbers are currently only extracted from call logs, contact lists and message, which come from the \ref android_analyzer_page.
 - <b>USB Devices</b>
- - USB device properties come from the registry parsing in the Recent Activity Module.
+ - USB device properties come from the registry parsing in the \ref recent_activity_page.
 - <b>Wireless Networks</b>
- - Wireless networks are correlated on SSIDs, and come from the registry parsing in the Recent Activity Module.
+ - Wireless networks are correlated on SSIDs, and come from the registry parsing in the \ref recent_activity_page.
 - <b>MAC Addresses</b>
- - MAC address properties are currently only created by custom Autopsy modules
+ - MAC address properties are currently only created by custom Autopsy modules.
 - <b>IMEI Number</b>
- - IMEIs properties are currently only created by custom Autopsy modules
+ - IMEIs properties are currently only created by custom Autopsy modules.
 - <b>IMSI Number</b>
- - IMSI properties are currently only created by custom Autopsy modules
+ - IMSI properties are currently only created by custom Autopsy modules.
 - <b>ICCID Number</b>
- - ICCID properties are currently only created by custom Autopsy modules
+ - ICCID properties are currently only created by custom Autopsy modules.
+- <b>Credit Card</b>
+ - Credid Card properties are created by the \ref keyword_search_page.
+- <b> App-specific Accounts (Facebook, Twitter, etc)</b>
+ - These properties primarily come from the \ref android_analyzer_page.
 
 \subsection cr_manage_orgs Manage Organizations
 

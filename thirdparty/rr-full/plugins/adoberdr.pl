@@ -101,7 +101,7 @@ sub pluginmain {
 				::rptMsg("Most recent PDF opened: ".gmtime($arkeys{1}{lastwrite})." (UTC)");
 				::rptMsg("Key name,file name,sDate,uFileSize,uPageCount");
 				foreach my $k (sort {$a <=> $b} keys %arkeys) {
-					::rptMsg("c".$k.",".$arkeys{$k}{data}.",".$arkeys{$k}{sDate}.",".$arkeys{$k}{uFileSize}.",".$arkeys{$k}{uPageCount});
+					::rptMsg("c".$k.',"'.$arkeys{$k}{data}.'",'.$arkeys{$k}{sDate}.",".$arkeys{$k}{uFileSize}.",".$arkeys{$k}{uPageCount});
 				}
 			}
 			else {

@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016-2018 Basis Technology Corp.
+Copyright 2016-2020 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ from java.util.logging import Level
 from java.util import ArrayList
 from java.util import UUID
 from org.sleuthkit.autopsy.casemodule import Case
+from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
@@ -42,8 +43,13 @@ from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel import Relationship
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.autopsy.ingest import IngestServices
 from org.sleuthkit.autopsy.ingest import ModuleDataEvent
+from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
+from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 
 import traceback
 import general
@@ -58,102 +64,76 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
 
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
-
+        self._PACKAGE_NAME = "com.zynga.words"
+        self._PARSER_NAME = "Words With Friend Parser"
+        self._MESSAGE_TYPE = "WWF Message"
+        
     def analyze(self, dataSource, fileManager, context):
         try:
 
+            # Create new account type, if doesnt exist
             global wwfAccountType
             wwfAccountType = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addAccountType("WWF", "Words with Friends")
 
-            absFiles = fileManager.findFiles(dataSource, "WordsFramework")
-            for abstractFile in absFiles:
+            wwfDbFiles = AppSQLiteDB.findAppDatabases(dataSource, "WordsFramework", True, self._PACKAGE_NAME)
+            for wwfDbFile in wwfDbFiles:
                 try:
-                    jFile = File(Case.getCurrentCase().getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
-                    ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
-                    self.__findWWFMessagesInDB(jFile.toString(), abstractFile, dataSource)
+                    self.__findWWFMessagesInDB(wwfDbFile, dataSource)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing WWF messages", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
         except TskCoreException as ex:
             # Error finding WWF messages.
+            self._logger.log(Level.SEVERE, "Error finding WWF message files.", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())
             pass
 
-    def __findWWFMessagesInDB(self, databasePath, abstractFile, dataSource):
-        if not databasePath:
-            return
-			
-        bbartifacts = list()
-        try:
-            Class.forName("org.sqlite.JDBC"); # load JDBC driver
-            connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
-            statement = connection.createStatement()
-        except (ClassNotFoundException) as ex:
-            self._logger.log(Level.SEVERE, "Error loading JDBC driver", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
-            return
-        except (SQLException) as ex:
-            # Error opening database.
+    def __findWWFMessagesInDB(self, wwfDb, dataSource):
+        if not wwfDb:
             return
 
-        # Create a 'Device' account using the data source device id
-        datasourceObjId = dataSource.getDataSource().getId()
-        ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
-        deviceID = ds.getDeviceId()
-        deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
+        current_case = Case.getCurrentCaseThrows()
+
+        # Create a helper to parse the DB
+        wwfDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
+                                                    self._PARSER_NAME,
+                                                    wwfDb.getDBFile(),
+                                                    wwfAccountType )
+            
         uuid = UUID.randomUUID().toString()
 
         resultSet = None
         try:
-            resultSet = statement.executeQuery(
-                    "SELECT message, strftime('%s' ,created_at) as datetime, user_id, game_id FROM chat_messages ORDER BY game_id DESC, created_at DESC;")
+            resultSet = wwfDb.runQuery("SELECT message, strftime('%s' ,created_at) as datetime, user_id, game_id FROM chat_messages ORDER BY game_id DESC, created_at DESC;")
 
             while resultSet.next():
                 message = resultSet.getString("message") # WWF Message
                 created_at = resultSet.getLong("datetime")
-                user_id = resultSet.getString("user_id") # the ID of the user who sent the message.
+                user_id = resultSet.getString("user_id") # the ID of the user who sent/received the message.
                 game_id = resultSet.getString("game_id") # ID of the game which the the message was sent.
                 thread_id = "{0}-{1}".format(uuid, user_id)
 
-                attributes = ArrayList()
-                artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) # create a call log and then add attributes from result set.
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, general.MODULE_NAME, created_at))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, user_id))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MSG_ID, general.MODULE_NAME, game_id))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, general.MODULE_NAME, message))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, general.MODULE_NAME, "Words With Friends Message"))
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID, general.MODULE_NAME, thread_id))
-
-                artifact.addAttributes(attributes)
-
-                # Create an account
-                wwfAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(wwfAccountType, user_id, general.MODULE_NAME, abstractFile);
-
-                # create relationship between accounts
-                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [wwfAccountInstance], artifact,Relationship.Type.MESSAGE, created_at);
-
-                bbartifacts.append(artifact)
-                try:
-                    # index the artifact for keyword search
-                    blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
-                    blackboard.postArtifact(artifact, general.MODULE_NAME)
-                except Blackboard.BlackboardException as ex:
-                    self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactID()), ex)
-                    self._logger.log(Level.SEVERE, traceback.format_exc())
-                    MessageNotifyUtil.Notify.error("Failed to index WWF message artifact for keyword search.", artifact.getDisplayName())
+                messageArtifact = wwfDbHelper.addMessage( self._MESSAGE_TYPE,
+                                                            CommunicationDirection.UNKNOWN,
+                                                            user_id,    # fromId
+                                                            None,       # toId
+                                                            created_at,
+                                                            MessageReadStatus.UNKNOWN,
+                                                            "",     # subject
+                                                            message,
+                                                            thread_id)
 
         except SQLException as ex:
-            # Unable to execute WWF messages SQL query against database.
-            pass
-        except Exception as ex:
-            self._logger.log(Level.SEVERE, "Error parsing messages from Words With Friends.", ex)
+            self._logger.log(Level.WARNING, "Error processing query result for WWF messages", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+        except TskCoreException as ex:
+            self._logger.log(Level.SEVERE, "Failed to add WWF message artifacts.", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
+        except BlackboardException as ex:
+            self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+        except NoCurrentCaseException as ex:
+            self._logger.log(Level.WARNING, "No case currently open.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
         finally:
-
-            try:
-                if resultSet is not None:
-                    resultSet.close()
-                statement.close()
-                connection.close()
-            except Exception as ex:
-                # Error closing database.
-                pass
+            wwfDb.close()

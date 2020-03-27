@@ -42,6 +42,7 @@ class CommandLineCommand {
      */
     static enum InputType {
         CASE_NAME,
+        CASE_TYPE,
         CASES_BASE_DIR_PATH,
         CASE_FOLDER_PATH,
         DATA_SOURCE_PATH,

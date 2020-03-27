@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,6 +60,12 @@ class ResultFile {
      * @param abstractFile
      */
     ResultFile(AbstractFile abstractFile) {
+        try {
+            //call get uniquePath to cache the path
+            abstractFile.getUniquePath();
+        } catch (TskCoreException ignored) {
+            //path wasnt cached will likely be called on EDT later JIRA-5972
+        }
         //store the file the ResultFile was created for as the first value in the instances list
         instances.add(abstractFile);
         if (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
@@ -107,6 +113,12 @@ class ResultFile {
             fileType = FileType.fromMIMEtype(duplicate.getMIMEType());
         }
         updateScoreAndDescription(duplicate);
+        try {
+            //call get uniquePath to cache the path
+            duplicate.getUniquePath();
+        } catch (TskCoreException ignored) {
+            //path wasnt cached will likely be called on EDT later JIRA-5972
+        }
         instances.add(duplicate);
     }
 

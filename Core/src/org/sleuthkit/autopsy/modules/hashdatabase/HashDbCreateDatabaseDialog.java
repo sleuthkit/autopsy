@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,11 +30,10 @@ import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoOrganization;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoFileSet;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -44,6 +43,8 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFile
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 
 /**
  * Instances of this class allow a user to create a new hash database and add it
@@ -58,8 +59,8 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     private JFileChooser fileChooser = null;
     private HashDb newHashDb = null;
     private final static String LAST_FILE_PATH_KEY = "HashDbCreate_Path";
-    private EamOrganization selectedOrg = null;
-    private List<EamOrganization> orgs = null;
+    private CentralRepoOrganization selectedOrg = null;
+    private List<CentralRepoOrganization> orgs = null;
     static final String HASH_DATABASE_DIR_NAME = "HashDatabases";
 
     /**
@@ -124,38 +125,38 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         setLocationRelativeTo(getOwner());
         setVisible(true);
     }
-    
-    private void enableComponents(){
-                
-        if(! EamDb.isEnabled()){
+
+    private void enableComponents() {
+
+        if (!CentralRepository.isEnabled() || !FeatureAccessUtils.canAddHashSetsToCentralRepo()) {
             centralRepoRadioButton.setEnabled(false);
             fileTypeRadioButton.setSelected(true);
         } else {
             populateCombobox();
         }
-        
+
         boolean isFileType = fileTypeRadioButton.isSelected();
 
         // Type type only
         databasePathLabel.setEnabled(isFileType);
         databasePathTextField.setEnabled(isFileType);
         saveAsButton.setEnabled(isFileType);
-        
+
         // Central repo only
-        lbOrg.setEnabled(! isFileType);
-        orgButton.setEnabled(! isFileType);
-        orgComboBox.setEnabled(! isFileType);
+        lbOrg.setEnabled(!isFileType);
+        orgButton.setEnabled(!isFileType);
+        orgComboBox.setEnabled(!isFileType);
     }
-    
+
     @NbBundle.Messages({"HashDbCreateDatabaseDialog.populateOrgsError.message=Failure loading organizations."})
     private void populateCombobox() {
         orgComboBox.removeAllItems();
         try {
-            EamDb dbManager = EamDb.getInstance();
+            CentralRepository dbManager = CentralRepository.getInstance();
             orgs = dbManager.getOrganizations();
             orgs.forEach((org) -> {
                 orgComboBox.addItem(org.getName());
-                if(EamDbUtil.isDefaultOrg(org)){
+                if (CentralRepoDbUtil.isDefaultOrg(org)) {
                     orgComboBox.setSelectedItem(org.getName());
                     selectedOrg = org;
                 }
@@ -163,11 +164,11 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             if ((selectedOrg == null) && (!orgs.isEmpty())) {
                 selectedOrg = orgs.get(0);
             }
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             JOptionPane.showMessageDialog(this, Bundle.HashDbCreateDatabaseDialog_populateOrgsError_message());
             Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Failure loading organizations", ex);
         }
-    }    
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -413,7 +414,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             path.append(lastBaseDirectory);
             File hashDbFolder = new File(path.toString());
             // create the folder if it doesn't exist
-            if (!hashDbFolder.exists()){
+            if (!hashDbFolder.exists()) {
                 hashDbFolder.mkdir();
             }
             if (!hashSetNameTextField.getText().isEmpty()) {
@@ -452,7 +453,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             return;
         }
 
-        if(fileTypeRadioButton.isSelected()){
+        if (fileTypeRadioButton.isSelected()) {
             if (databasePathTextField.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(this.getClass(),
@@ -463,13 +464,13 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                 return;
             }
         } else {
-            if(selectedOrg == null){
+            if (selectedOrg == null) {
                 JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                            "HashDbCreateDatabaseDialog.missingOrg"),
-                    NbBundle.getMessage(this.getClass(),
-                            "HashDbCreateDatabaseDialog.createHashDbErr"),
-                    JOptionPane.ERROR_MESSAGE);
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbCreateDatabaseDialog.missingOrg"),
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbCreateDatabaseDialog.createHashDbErr"),
+                        JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
@@ -487,7 +488,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         String errorMessage = NbBundle
                 .getMessage(this.getClass(), "HashDbCreateDatabaseDialog.errMsg.hashDbCreationErr");
 
-        if(fileTypeRadioButton.isSelected()){
+        if (fileTypeRadioButton.isSelected()) {
             try {
                 newHashDb = HashDbManager.getInstance().addNewHashDatabaseNoSave(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);
             } catch (IOException ex) {
@@ -510,17 +511,17 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             }
         } else {
             // Check if a hash set with the same name/version already exists
-            try{
-                if(EamDb.getInstance().referenceSetExists(hashSetNameTextField.getText(), "")){
+            try {
+                if (CentralRepository.getInstance().referenceSetExists(hashSetNameTextField.getText(), "")) {
                     JOptionPane.showMessageDialog(this,
-                        NbBundle.getMessage(this.getClass(),
-                                "HashDbCreateDatabaseDialog.duplicateName"),
-                        NbBundle.getMessage(this.getClass(),
-                                "HashDbCreateDatabaseDialog.createHashDbErr"),
-                        JOptionPane.ERROR_MESSAGE);
+                            NbBundle.getMessage(this.getClass(),
+                                    "HashDbCreateDatabaseDialog.duplicateName"),
+                            NbBundle.getMessage(this.getClass(),
+                                    "HashDbCreateDatabaseDialog.createHashDbErr"),
+                            JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-            } catch (EamDbException ex){
+            } catch (CentralRepoException ex) {
                 Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Error looking up reference set", ex);
                 JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(this.getClass(),
@@ -528,16 +529,16 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                         NbBundle.getMessage(this.getClass(),
                                 "HashDbCreateDatabaseDialog.createHashDbErr"),
                         JOptionPane.ERROR_MESSAGE);
-                return;                
+                return;
             }
-            
-            try{
-                int referenceSetID = EamDb.getInstance().newReferenceSet(new EamGlobalSet(selectedOrg.getOrgID(), hashSetNameTextField.getText(),  
-                        "", fileKnown, false, EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID)));
-                newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetNameTextField.getText(), 
-                        "", referenceSetID, 
+
+            try {
+                int referenceSetID = CentralRepository.getInstance().newReferenceSet(new CentralRepoFileSet(selectedOrg.getOrgID(), hashSetNameTextField.getText(),
+                        "", fileKnown, false, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID)));
+                newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetNameTextField.getText(),
+                        "", referenceSetID,
                         true, sendIngestMessagesCheckbox.isSelected(), type, false);
-            } catch (EamDbException | TskCoreException ex){
+            } catch (CentralRepoException | TskCoreException ex) {
                 Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Error creating new reference set", ex);
                 JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(this.getClass(),
@@ -545,8 +546,8 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                         NbBundle.getMessage(this.getClass(),
                                 "HashDbCreateDatabaseDialog.createHashDbErr"),
                         JOptionPane.ERROR_MESSAGE);
-                return;  
-            } 
+                return;
+            }
         }
 
         dispose();
@@ -561,13 +562,15 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         // update the combobox options
         if (dialog.isChanged()) {
             populateCombobox();
-        } 
+        }
     }//GEN-LAST:event_orgButtonActionPerformed
 
     private void orgComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orgComboBoxActionPerformed
-        if (null == orgComboBox.getSelectedItem()) return;
+        if (null == orgComboBox.getSelectedItem()) {
+            return;
+        }
         String orgName = this.orgComboBox.getSelectedItem().toString();
-        for (EamOrganization org : orgs) {
+        for (CentralRepoOrganization org : orgs) {
             if (org.getName().equals(orgName)) {
                 selectedOrg = org;
                 return;

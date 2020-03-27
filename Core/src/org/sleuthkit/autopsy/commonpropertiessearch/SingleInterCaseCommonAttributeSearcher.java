@@ -27,7 +27,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import static org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeSearcher.MEDIA_PICS_VIDEO_MIME_TYPES;
@@ -49,10 +49,10 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
      * @param corAttrType
      * @param percentageThreshold
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     public SingleInterCaseCommonAttributeSearcher(int correlationCaseId, boolean filterByMediaMimeType,
-            boolean filterByDocMimeType, Type corAttrType, int percentageThreshold) throws EamDbException {
+            boolean filterByDocMimeType, Type corAttrType, int percentageThreshold) throws CentralRepoException {
         super(filterByMediaMimeType, filterByDocMimeType, corAttrType, percentageThreshold);
 
         this.corrleationCaseId = correlationCaseId;
@@ -68,10 +68,10 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
      * @throws TskCoreException
      * @throws NoCurrentCaseException
      * @throws SQLException
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    public CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException, CentralRepoException {
 
         CorrelationCase correlationCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
         this.correlationCaseName = correlationCase.getDisplayName();
@@ -97,10 +97,10 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
      * @throws TskCoreException
      * @throws NoCurrentCaseException
      * @throws SQLException
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
     @Override
-    public CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    public CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, CentralRepoException {
 
         CorrelationCase correlationCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
         this.correlationCaseName = correlationCase.getDisplayName();

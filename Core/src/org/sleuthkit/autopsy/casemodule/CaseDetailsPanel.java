@@ -22,10 +22,10 @@ import java.nio.file.Paths;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoOrganization;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * A panel that allows the user to view various details of a case and change
@@ -69,7 +69,7 @@ final class CaseDetailsPanel extends javax.swing.JPanel {
         } else {
             dbNameField.setText(theCase.getMetadata().getCaseDatabaseName());
         }
-        boolean cREnabled = EamDb.isEnabled();
+        boolean cREnabled = CentralRepository.isEnabled();
         lbOrganizationNameLabel.setEnabled(cREnabled);
         lbOrganizationNameText.setEnabled(cREnabled);
         lbPointOfContactEmailLabel.setEnabled(cREnabled);
@@ -79,15 +79,15 @@ final class CaseDetailsPanel extends javax.swing.JPanel {
         lbPointOfContactPhoneLabel.setEnabled(cREnabled);
         lbPointOfContactPhoneText.setEnabled(cREnabled);
         pnOrganization.setEnabled(cREnabled);
-        EamOrganization currentOrg = null;
+        CentralRepoOrganization currentOrg = null;
         if (cREnabled) {
             try {
-                EamDb dbManager = EamDb.getInstance();
+                CentralRepository dbManager = CentralRepository.getInstance();
                 if (dbManager != null) {
                     CorrelationCase correlationCase = dbManager.getCase(theCase);
                     currentOrg = correlationCase.getOrg();
                 }
-            } catch (EamDbException ex) {
+            } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Unable to access Correlation Case when Central Repo is enabled", ex);
             }
         }

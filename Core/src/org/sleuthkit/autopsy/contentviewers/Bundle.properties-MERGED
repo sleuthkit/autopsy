@@ -41,6 +41,7 @@ MediaFileViewer.AccessibleContext.accessibleDescription=
 MediaFileViewer.title=Media
 MediaFileViewer.toolTip=Displays supported multimedia files (images, videos, audio)
 MediaPlayerPanel.noSupport=File not supported.
+MediaPlayerPanel.playbackDisabled=A problem was encountered with the video and audio playback service. Video and audio playback will be disabled for the remainder of the session.
 MediaPlayerPanel.timeFormat=%02d:%02d:%02d
 MediaPlayerPanel.unknownTime=Unknown
 MediaViewImagePanel.createTagOption=Create
@@ -168,3 +169,7 @@ MediaPlayerPanel.playBackSpeedLabel.text=Speed:
 SQLiteViewer.readTable.errorText=Error getting rows for table: {0}
 # {0} - tableName
 SQLiteViewer.selectTable.errorText=Error getting row count for table: {0}
+TranslatablePanel.comboBoxOption.originalText=Original Text
+TranslatablePanel.comboBoxOption.translatedText=Translated Text
+# {0} - exception message
+TranslatablePanel.onSetContentError.text=There was an error displaying the text: {0}

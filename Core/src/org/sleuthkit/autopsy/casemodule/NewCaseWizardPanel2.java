@@ -29,9 +29,9 @@ import org.openide.util.HelpCtx;
 import org.openide.windows.WindowManager;
 import java.awt.Cursor;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * The second panel of the New Case wizard.
@@ -145,7 +145,7 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
             panel.setExaminerName(lastExaminerName);
             panel.setExaminerPhone(lastExaminerPhone);
             panel.setExaminerEmail(lastExaminerEmail);
-            panel.setOrganization(EamDb.isEnabled() ? lastOrganizationName : "");
+            panel.setOrganization(CentralRepository.isEnabled() ? lastOrganizationName : "");
             panel.setCaseNumber("");  //clear the number field 
             panel.setCaseNotes(""); //clear the notes field
         } catch (Exception e) {

@@ -35,7 +35,7 @@ final class TrackpointWaypoint extends Waypoint {
     TrackpointWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
         this(artifact, getAttributesFromArtifactAsMap(artifact));
     }
-    
+
     private TrackpointWaypoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
          super(artifact,
                 getLabelFromArtifact(attributeMap),

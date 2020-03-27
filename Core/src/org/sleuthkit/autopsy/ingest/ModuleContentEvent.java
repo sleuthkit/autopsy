@@ -40,9 +40,8 @@ public class ModuleContentEvent extends ChangeEvent {
     /**
      * Constructs event data that is published when content is added to case.
      *
-     * @param content    A reference to the new content.
      * @param moduleName The name of the module that added the content.
-     * @param content
+     * @param content    A reference to the new content.
      */
     public ModuleContentEvent(String moduleName, Content content) {
         super(content);

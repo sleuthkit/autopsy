@@ -11,6 +11,10 @@ PortableCaseReportModule.createCase.errorCreatingCase=Error creating case
 # {0} - folder
 PortableCaseReportModule.createCase.errorCreatingFolder=Error creating folder {0}
 PortableCaseReportModule.createCase.errorStoringMaxIds=Error storing maximum database IDs
+PortableCaseReportModule.generateCaseUcoReport.errorCreatingReportFolder=Could not make report folder
+PortableCaseReportModule.generateCaseUcoReport.errorGeneratingCaseUcoReport=Problem while generating CASE-UCO report
+PortableCaseReportModule.generateCaseUcoReport.startCaseUcoReportGeneration=Creating a CASE-UCO report of the portable case
+PortableCaseReportModule.generateCaseUcoReport.successCaseUcoReportGeneration=Successfully created a CASE-UCO report of the portable case
 PortableCaseReportModule.generateReport.caseClosed=Current case has been closed
 PortableCaseReportModule.generateReport.compressingCase=Compressing case...
 # {0} - tag name
@@ -25,8 +29,6 @@ PortableCaseReportModule.generateReport.errorCopyingInterestingFiles=Error copyi
 PortableCaseReportModule.generateReport.errorCopyingInterestingResults=Error copying interesting results
 PortableCaseReportModule.generateReport.errorCopyingTags=Error copying tags
 PortableCaseReportModule.generateReport.errorCreatingImageTagTable=Error creating image tags table
-PortableCaseReportModule.generateReport.errorCreatingReportFolder=Could not make report folder
-PortableCaseReportModule.generateReport.errorGeneratingUCOreport=Problem while generating CASE-UCO report
 # {0} - attribute type name
 PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}
 PortableCaseReportModule.generateReport.errorReadingSets=Error while reading interesting items sets from case database

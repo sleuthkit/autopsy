@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,13 +23,14 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,16 +44,18 @@ import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
+import org.imgscalr.Scalr;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
@@ -71,6 +74,11 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.textextractors.TextExtractor;
+import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
+import org.sleuthkit.autopsy.textsummarizer.TextSummarizer;
+import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
 /**
  * Main class to perform the file search.
@@ -84,6 +92,9 @@ class FileSearch {
     private static final Cache<SearchKey, Map<GroupKey, List<ResultFile>>> searchCache = CacheBuilder.newBuilder()
             .maximumSize(MAXIMUM_CACHE_SIZE)
             .build();
+    private static final int PREVIEW_SIZE = 256;
+    private static volatile TextSummarizer summarizerToUse = null;
+    private static final BufferedImage VIDEO_DEFAULT_IMAGE = getDefaultVideoThumbnail();
 
     /**
      * Run the file search and returns the SearchResults object for debugging.
@@ -108,7 +119,7 @@ class FileSearch {
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
-            SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
         // Make a list of attributes that we want to add values for. This ensures the
         // ResultFile objects will have all needed fields set when it's time to group
         // and sort them. For example, if we're grouping by central repo frequency, we need
@@ -160,7 +171,7 @@ class FileSearch {
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
-            SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
         Map<GroupKey, List<ResultFile>> searchResults = runFileSearch(userName, filters,
                 groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
         LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
@@ -200,7 +211,7 @@ class FileSearch {
             GroupKey groupKey,
             int startingEntry,
             int numberOfEntries,
-            SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
         //the group should be in the cache at this point
         List<ResultFile> filesInGroup = null;
         SearchKey searchKey = new SearchKey(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod);
@@ -240,6 +251,110 @@ class FileSearch {
     }
 
     /**
+     * Get a summary for the specified AbstractFile. If no TextSummarizers exist
+     * get the beginning of the file.
+     *
+     * @param file The AbstractFile to summarize.
+     *
+     * @return The summary or beginning of the specified file as a String.
+     */
+    @NbBundle.Messages({"FileSearch.documentSummary.noPreview=No preview available.",
+        "FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview."})
+    static TextSummary summarize(AbstractFile file) {
+        TextSummary summary = null;
+        TextSummarizer localSummarizer = summarizerToUse;
+        if (localSummarizer == null) {
+            synchronized (searchCache) {
+                if (localSummarizer == null) {
+                    localSummarizer = getLocalSummarizer();
+                }
+            }
+        }
+        if (localSummarizer != null) {
+            try {
+                //a summary of length 40 seems to fit without vertical scroll bars
+                summary = localSummarizer.summarize(file, 40);
+            } catch (IOException ex) {
+                return new TextSummary(Bundle.FileSearch_documentSummary_noPreview(), null, 0);
+            }
+        }
+        if (summary == null || StringUtils.isBlank(summary.getSummaryText())) {
+            //summary text was empty grab the beginning of the file 
+            summary = getDefaultSummary(file);
+        }
+        return summary;
+    }
+
+    private static TextSummary getDefaultSummary(AbstractFile file) {
+        Image image = null;
+        int countOfImages = 0;
+        try {
+            Content largestChild = null;
+            for (Content child : file.getChildren()) {
+                if (child instanceof AbstractFile && ImageUtils.isImageThumbnailSupported((AbstractFile) child)) {
+                    countOfImages++;
+                    if (largestChild == null || child.getSize() > largestChild.getSize()) {
+                        largestChild = child;
+                    }
+                }
+            }
+            if (largestChild != null) {
+                image = ImageUtils.getThumbnail(largestChild, ImageUtils.ICON_SIZE_LARGE);
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting children for file: " + file.getId(), ex);
+        }
+        image = image == null ? image  : image.getScaledInstance(ImageUtils.ICON_SIZE_MEDIUM, ImageUtils.ICON_SIZE_MEDIUM,
+                Image.SCALE_SMOOTH);
+        return new TextSummary(getFirstLines(file), image, countOfImages);
+    }
+
+    /**
+     * Get the beginning of text from the specified AbstractFile.
+     *
+     * @param file The AbstractFile to get text from.
+     *
+     * @return The beginning of text from the specified AbstractFile.
+     */
+    private static String getFirstLines(AbstractFile file) {
+        TextExtractor extractor;
+        try {
+            extractor = TextExtractorFactory.getExtractor(file, null);
+        } catch (TextExtractorFactory.NoTextExtractorFound ignored) {
+            //no extractor found, use Strings Extractor
+            extractor = TextExtractorFactory.getStringsExtractor(file, null);
+        }
+
+        try (Reader reader = extractor.getReader()) {
+            char[] cbuf = new char[PREVIEW_SIZE];
+            reader.read(cbuf, 0, PREVIEW_SIZE);
+            return new String(cbuf);
+        } catch (IOException ex) {
+            return Bundle.FileSearch_documentSummary_noBytes();
+        } catch (TextExtractor.InitReaderException ex) {
+            return Bundle.FileSearch_documentSummary_noPreview();
+        }
+    }
+
+    /**
+     * Get the first TextSummarizer found by a lookup of TextSummarizers.
+     *
+     * @return The first TextSummarizer found by a lookup of TextSummarizers.
+     *
+     * @throws IOException
+     */
+    private static TextSummarizer getLocalSummarizer() {
+        Collection<? extends TextSummarizer> summarizers
+                = Lookup.getDefault().lookupAll(TextSummarizer.class
+                );
+        if (!summarizers.isEmpty()) {
+            summarizerToUse = summarizers.iterator().next();
+            return summarizerToUse;
+        }
+        return null;
+    }
+
+    /**
      * Run the file search. Caching new results for access at later time.
      *
      * @param userName           The name of the user performing the search.
@@ -261,7 +376,7 @@ class FileSearch {
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
-            SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
 
         // Make a list of attributes that we want to add values for. This ensures the
         // ResultFile objects will have all needed fields set when it's time to group
@@ -302,7 +417,7 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    private static void addAttributes(List<AttributeType> attrs, List<ResultFile> resultFiles, SleuthkitCase caseDb, EamDb centralRepoDb)
+    private static void addAttributes(List<AttributeType> attrs, List<ResultFile> resultFiles, SleuthkitCase caseDb, CentralRepository centralRepoDb)
             throws FileSearchException {
         for (AttributeType attr : attrs) {
             attr.addAttributeToResultFiles(resultFiles, caseDb, centralRepoDb);
@@ -316,7 +431,7 @@ class FileSearch {
      * @param hashesToLookUp Hashes to find the frequency of
      * @param currentFiles   List of files to update with frequencies
      */
-    private static void computeFrequency(Set<String> hashesToLookUp, List<ResultFile> currentFiles, EamDb centralRepoDb) {
+    private static void computeFrequency(Set<String> hashesToLookUp, List<ResultFile> currentFiles, CentralRepository centralRepoDb) {
 
         if (hashesToLookUp.isEmpty()) {
             return;
@@ -326,7 +441,7 @@ class FileSearch {
         hashes = "'" + hashes + "'";
         try {
             CorrelationAttributeInstance.Type attributeType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
-            String tableName = EamDbUtil.correlationTypeToInstanceTableName(attributeType);
+            String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(attributeType);
 
             String selectClause = " value, COUNT(value) FROM "
                     + "(SELECT DISTINCT case_id, value FROM " + tableName
@@ -337,7 +452,7 @@ class FileSearch {
             FrequencyCallback callback = new FrequencyCallback(currentFiles);
             centralRepoDb.processSelectClause(selectClause, callback);
 
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.WARNING, "Error getting frequency counts from Central Repository", ex); // NON-NLS
         }
 
@@ -366,6 +481,20 @@ class FileSearch {
     }
 
     /**
+     * Get the default image to display when a thumbnail is not available.
+     *
+     * @return The default video thumbnail.
+     */
+    private static BufferedImage getDefaultVideoThumbnail() {
+        try {
+            return ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/failedToCreateVideoThumb.png"));//NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to load 'failed to create video' placeholder.", ex); //NON-NLS
+        }
+        return null;
+    }
+
+    /**
      * Get the video thumbnails for a file which exists in a
      * VideoThumbnailsWrapper and update the VideoThumbnailsWrapper to include
      * them.
@@ -385,7 +514,6 @@ class FileSearch {
             cacheDirectory = null;
             logger.log(Level.WARNING, "Unable to get cache directory, video thumbnails will not be saved", ex);
         }
-
         if (cacheDirectory == null || file.getMd5Hash() == null || !Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash()).toFile().exists()) {
             java.io.File tempFile;
             try {
@@ -397,7 +525,7 @@ class FileSearch {
                     0,
                     0,
                     0};
-                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(VIDEO_DEFAULT_IMAGE), framePositions);
                 return;
             }
             if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
@@ -411,7 +539,7 @@ class FileSearch {
                             0,
                             0,
                             0};
-                        thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                        thumbnailWrapper.setThumbnails(createDefaultThumbnailList(VIDEO_DEFAULT_IMAGE), framePositions);
                         return;
                     }
                     ContentUtils.writeToFile(file, tempFile, progress, null, true);
@@ -432,7 +560,7 @@ class FileSearch {
                         0,
                         0,
                         0};
-                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(VIDEO_DEFAULT_IMAGE), framePositions);
                     return;
                 }
                 double fps = videoFile.get(5); // gets frame per second
@@ -444,7 +572,7 @@ class FileSearch {
                         0,
                         0,
                         0};
-                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(VIDEO_DEFAULT_IMAGE), framePositions);
                     return;
                 }
                 if (Thread.interrupted()) {
@@ -453,7 +581,7 @@ class FileSearch {
                         0,
                         0,
                         0};
-                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(VIDEO_DEFAULT_IMAGE), framePositions);
                     return;
                 }
 
@@ -482,10 +610,10 @@ class FileSearch {
                         logger.log(Level.WARNING, "Error seeking to " + framePositions[i] + "ms in {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
                         // If we can't set the time, continue to the next frame position and try again.
 
-                        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                        videoThumbnails.add(VIDEO_DEFAULT_IMAGE);
                         if (cacheDirectory != null) {
                             try {
-                                ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
+                                ImageIO.write(VIDEO_DEFAULT_IMAGE, THUMBNAIL_FORMAT,
                                         Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
                             } catch (IOException ex) {
                                 logger.log(Level.WARNING, "Unable to save default video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
@@ -497,10 +625,10 @@ class FileSearch {
                     if (!videoFile.read(imageMatrix)) {
                         logger.log(Level.WARNING, "Error reading frame at " + framePositions[i] + "ms from {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
                         // If the image is bad for some reason, continue to the next frame position and try again.
-                        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                        videoThumbnails.add(VIDEO_DEFAULT_IMAGE);
                         if (cacheDirectory != null) {
                             try {
-                                ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
+                                ImageIO.write(VIDEO_DEFAULT_IMAGE, THUMBNAIL_FORMAT,
                                         Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
                             } catch (IOException ex) {
                                 logger.log(Level.WARNING, "Unable to save default video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
@@ -511,10 +639,10 @@ class FileSearch {
                     }
                     // If the image is empty, return since no buffered image can be created.
                     if (imageMatrix.empty()) {
-                        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                        videoThumbnails.add(VIDEO_DEFAULT_IMAGE);
                         if (cacheDirectory != null) {
                             try {
-                                ImageIO.write((RenderedImage) ImageUtils.getDefaultThumbnail(), THUMBNAIL_FORMAT,
+                                ImageIO.write(VIDEO_DEFAULT_IMAGE, THUMBNAIL_FORMAT,
                                         Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, file.getMd5Hash(), i + "-" + framePositions[i] + "." + THUMBNAIL_FORMAT).toFile()); //NON-NLS)
                             } catch (IOException ex) {
                                 logger.log(Level.WARNING, "Unable to save default video thumbnail for " + file.getMd5Hash() + " at frame position " + framePositions[i], ex);
@@ -552,7 +680,8 @@ class FileSearch {
                         }
                         return;
                     }
-                    BufferedImage thumbnail = ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE);
+                    BufferedImage thumbnail = ScalrWrapper.resize(bufferedImage, Scalr.Method.SPEED, Scalr.Mode.FIT_TO_HEIGHT, ImageUtils.ICON_SIZE_LARGE, ImageUtils.ICON_SIZE_MEDIUM, Scalr.OP_ANTIALIAS);
+                    //We are height limited here so it can be wider than it can be tall.Scalr maintains the aspect ratio.
                     videoThumbnails.add(thumbnail);
                     if (cacheDirectory != null) {
                         try {
@@ -568,7 +697,7 @@ class FileSearch {
                 videoFile.release(); // close the file}
             }
         } else {
-            loadSavedThumbnails(cacheDirectory, thumbnailWrapper);
+            loadSavedThumbnails(cacheDirectory, thumbnailWrapper, VIDEO_DEFAULT_IMAGE);
         }
     }
 
@@ -582,7 +711,7 @@ class FileSearch {
      *                         information about the file and the thumbnails
      *                         associated with it.
      */
-    private static void loadSavedThumbnails(String cacheDirectory, VideoThumbnailsWrapper thumbnailWrapper) {
+    private static void loadSavedThumbnails(String cacheDirectory, VideoThumbnailsWrapper thumbnailWrapper, BufferedImage failedVideoThumbImage) {
         int[] framePositions = new int[4];
         List<Image> videoThumbnails = new ArrayList<>();
         int thumbnailNumber = 0;
@@ -591,13 +720,12 @@ class FileSearch {
             try {
                 videoThumbnails.add(ImageIO.read(Paths.get(cacheDirectory, VIDEO_THUMBNAIL_DIR, md5, fileName).toFile()));
             } catch (IOException ex) {
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                videoThumbnails.add(failedVideoThumbImage);
                 logger.log(Level.WARNING, "Unable to read saved video thumbnail " + fileName + " for " + md5, ex);
             }
             int framePos = Integer.valueOf(FilenameUtils.getBaseName(fileName).substring(2));
             framePositions[thumbnailNumber] = framePos;
             thumbnailNumber++;
-
         }
         thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
     }
@@ -608,12 +736,12 @@ class FileSearch {
      *
      * @return List containing the default thumbnail.
      */
-    private static List<Image> createDefaultThumbnailList() {
+    private static List<Image> createDefaultThumbnailList(BufferedImage failedVideoThumbImage) {
         List<Image> videoThumbnails = new ArrayList<>();
-        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+        videoThumbnails.add(failedVideoThumbImage);
+        videoThumbnails.add(failedVideoThumbImage);
+        videoThumbnails.add(failedVideoThumbImage);
+        videoThumbnails.add(failedVideoThumbImage);
         return videoThumbnails;
     }
 
@@ -646,7 +774,7 @@ class FileSearch {
          *
          * @throws FileSearchException
          */
-        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
             // Default is to do nothing
         }
     }
@@ -1044,7 +1172,7 @@ class FileSearch {
 
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             // Get pairs of (object ID, keyword list name) for all files in the list of files that have
             // keyword list hits.
@@ -1199,7 +1327,7 @@ class FileSearch {
 
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
             if (centralRepoDb == null) {
                 for (ResultFile file : files) {
                     if (file.getFrequency() == Frequency.UNKNOWN && file.getFirstInstance().getKnown() == TskData.FileKnown.KNOWN) {
@@ -1220,7 +1348,7 @@ class FileSearch {
          * @param centralRepoDb The central repository currently in use.
          */
         private void processResultFilesForCR(List<ResultFile> files,
-                EamDb centralRepoDb) {
+                CentralRepository centralRepoDb) {
             List<ResultFile> currentFiles = new ArrayList<>();
             Set<String> hashesToLookUp = new HashSet<>();
             for (ResultFile file : files) {
@@ -1347,7 +1475,7 @@ class FileSearch {
 
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             // Get pairs of (object ID, hash set name) for all files in the list of files that have
             // hash set hits.
@@ -1499,7 +1627,7 @@ class FileSearch {
 
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             // Get pairs of (object ID, interesting item set name) for all files in the list of files that have
             // interesting file set hits.
@@ -1653,7 +1781,7 @@ class FileSearch {
 
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             // Get pairs of (object ID, object type name) for all files in the list of files that have
             // objects detected
@@ -1806,7 +1934,7 @@ class FileSearch {
 
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                EamDb centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws FileSearchException {
 
             try {
                 for (ResultFile resultFile : files) {

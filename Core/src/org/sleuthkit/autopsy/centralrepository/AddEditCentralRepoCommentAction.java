@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,11 +29,11 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * An AbstractAction to manage adding and modifying a Central Repository file
@@ -61,10 +61,10 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      */
     public AddEditCentralRepoCommentAction(AbstractFile file) {
         fileId = file.getId();
-        correlationAttributeInstance = EamArtifactUtil.getInstanceFromContent(file);
+        correlationAttributeInstance = CorrelationAttributeUtil.getCorrAttrForFile(file);
         if (correlationAttributeInstance == null) {
             addToDatabase = true;
-            correlationAttributeInstance = EamArtifactUtil.makeInstanceFromContent(file);
+            correlationAttributeInstance = CorrelationAttributeUtil.makeCorrAttrFromFile(file);
         }
         if (file.getSize() == 0) {
             putValue(Action.NAME, Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoCommentEmptyFile());
@@ -94,10 +94,10 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
         comment = null;
 
         if (centralRepoCommentDialog.isCommentUpdated()) {
-            EamDb dbManager;
+            CentralRepository dbManager;
 
             try {
-                dbManager = EamDb.getInstance();
+                dbManager = CentralRepository.getInstance();
 
                 if (addToDatabase) {
                     dbManager.addArtifactInstance(correlationAttributeInstance);
@@ -111,7 +111,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
                 } catch (NoCurrentCaseException ex) {
                     logger.log(Level.WARNING, "Case not open after changing central repository comment", ex);
                 }
-            } catch (EamDbException ex) {
+            } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Error adding comment", ex);
                 NotifyDescriptor notifyDescriptor = new NotifyDescriptor.Message(
                         "An error occurred while trying to save the comment to the central repository.",

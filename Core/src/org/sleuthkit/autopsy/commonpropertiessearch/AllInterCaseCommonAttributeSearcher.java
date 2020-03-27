@@ -26,7 +26,7 @@ import java.util.Set;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import static org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeSearcher.MEDIA_PICS_VIDEO_MIME_TYPES;
@@ -47,14 +47,14 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
      * @param percentageThreshold   omit any matches with frequency above this
      *                              threshold
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    public AllInterCaseCommonAttributeSearcher(boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType, int percentageThreshold) throws EamDbException {
+    public AllInterCaseCommonAttributeSearcher(boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType, int percentageThreshold) throws CentralRepoException {
         super(filterByMediaMimeType, filterByDocMimeType, corAttrType, percentageThreshold);
     }
 
     @Override
-    public CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    public CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException, CentralRepoException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(corAttrType);
         Set<String> mimeTypesToFilterOn = new HashSet<>();
         if (isFilterByMedia()) {
@@ -68,7 +68,7 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
     }
 
     @Override
-    public CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    public CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, CentralRepoException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(corAttrType);
         Set<String> mimeTypesToFilterOn = new HashSet<>();
         if (isFilterByMedia()) {

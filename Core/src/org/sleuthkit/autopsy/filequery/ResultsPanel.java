@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
@@ -41,8 +43,7 @@ import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
@@ -53,6 +54,8 @@ import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.modules.hashdatabase.AddContentToHashDbAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
 /**
  * Panel for displaying of file discovery results and handling the paging of
@@ -64,6 +67,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private final static Logger logger = Logger.getLogger(ResultsPanel.class.getName());
     private final VideoThumbnailViewer videoThumbnailViewer;
     private final ImageThumbnailViewer imageThumbnailViewer;
+    private final DocumentPreviewViewer documentPreviewViewer;
     private List<FileSearchFiltering.FileFilter> searchFilters;
     private FileSearch.AttributeType groupingAttribute;
     private FileGroup.GroupSortingAlgorithm groupSort;
@@ -74,7 +78,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private FileSearchData.FileType resultType;
     private int groupSize = 0;
     private PageWorker pageWorker;
-    private final List<SwingWorker<Void, Void>> thumbnailWorkers = new ArrayList<>();
+    private final List<SwingWorker<Void, Void>> resultContentWorkers = new ArrayList<>();
     private final DefaultListModel<AbstractFile> instancesListModel = new DefaultListModel<>();
     private ListSelectionListener listener = null;
 
@@ -87,6 +91,7 @@ public class ResultsPanel extends javax.swing.JPanel {
         initComponents();
         imageThumbnailViewer = new ImageThumbnailViewer();
         videoThumbnailViewer = new VideoThumbnailViewer();
+        documentPreviewViewer = new DocumentPreviewViewer();
         videoThumbnailViewer.addListSelectionListener((e) -> {
             if (resultType == FileSearchData.FileType.VIDEO) {
                 if (!e.getValueIsAdjusting()) {
@@ -98,6 +103,15 @@ public class ResultsPanel extends javax.swing.JPanel {
         });
         imageThumbnailViewer.addListSelectionListener((e) -> {
             if (resultType == FileSearchData.FileType.IMAGE) {
+                if (!e.getValueIsAdjusting()) {
+                    populateInstancesList();
+                } else {
+                    instancesList.clearSelection();
+                }
+            }
+        });
+        documentPreviewViewer.addListSelectionListener((e) -> {
+            if (resultType == FileSearchData.FileType.DOCUMENTS) {
                 if (!e.getValueIsAdjusting()) {
                     populateInstancesList();
                 } else {
@@ -188,10 +202,17 @@ public class ResultsPanel extends javax.swing.JPanel {
      *         selected in the results viewer area.
      */
     private List<AbstractFile> getInstancesForSelected() {
-        if (resultType == FileSearchData.FileType.VIDEO) {
-            return videoThumbnailViewer.getInstancesForSelected();
-        } else if (resultType == FileSearchData.FileType.IMAGE) {
-            return imageThumbnailViewer.getInstancesForSelected();
+        if (null != resultType) {
+            switch (resultType) {
+                case VIDEO:
+                    return videoThumbnailViewer.getInstancesForSelected();
+                case IMAGE:
+                    return imageThumbnailViewer.getInstancesForSelected();
+                case DOCUMENTS:
+                    return documentPreviewViewer.getInstancesForSelected();
+                default:
+                    break;
+            }
         }
         return new ArrayList<>();
     }
@@ -208,12 +229,23 @@ public class ResultsPanel extends javax.swing.JPanel {
             currentPage = pageRetrievedEvent.getPageNumber();
             updateControls();
             resetResultViewer();
-            if (pageRetrievedEvent.getType() == FileSearchData.FileType.IMAGE) {
-                populateImageViewer(pageRetrievedEvent.getSearchResults());
-                resultsViewerPanel.add(imageThumbnailViewer);
-            } else if (pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
-                populateVideoViewer(pageRetrievedEvent.getSearchResults());
-                resultsViewerPanel.add(videoThumbnailViewer);
+            if (null != pageRetrievedEvent.getType()) {
+                switch (pageRetrievedEvent.getType()) {
+                    case IMAGE:
+                        populateImageViewer(pageRetrievedEvent.getSearchResults());
+                        resultsViewerPanel.add(imageThumbnailViewer);
+                        break;
+                    case VIDEO:
+                        populateVideoViewer(pageRetrievedEvent.getSearchResults());
+                        resultsViewerPanel.add(videoThumbnailViewer);
+                        break;
+                    case DOCUMENTS:
+                        populateDocumentViewer(pageRetrievedEvent.getSearchResults());
+                        resultsViewerPanel.add(documentPreviewViewer);
+                        break;
+                    default:
+                        break;
+                }
             }
             resultsViewerPanel.revalidate();
             resultsViewerPanel.repaint();
@@ -228,16 +260,18 @@ public class ResultsPanel extends javax.swing.JPanel {
     synchronized void resetResultViewer() {
         resultsViewerPanel.remove(imageThumbnailViewer);
         resultsViewerPanel.remove(videoThumbnailViewer);
+        resultsViewerPanel.remove(documentPreviewViewer);
         //cancel any unfished thumb workers
-        for (SwingWorker<Void, Void> thumbWorker : thumbnailWorkers) {
+        for (SwingWorker<Void, Void> thumbWorker : resultContentWorkers) {
             if (!thumbWorker.isDone()) {
                 thumbWorker.cancel(true);
             }
         }
         //clear old thumbnails
-        thumbnailWorkers.clear();
+        resultContentWorkers.clear();
         videoThumbnailViewer.clearViewer();
         imageThumbnailViewer.clearViewer();
+        documentPreviewViewer.clearViewer();
     }
 
     /**
@@ -251,7 +285,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             VideoThumbnailWorker thumbWorker = new VideoThumbnailWorker(file);
             thumbWorker.execute();
             //keep track of thumb worker for possible cancelation 
-            thumbnailWorkers.add(thumbWorker);
+            resultContentWorkers.add(thumbWorker);
         }
     }
 
@@ -266,7 +300,22 @@ public class ResultsPanel extends javax.swing.JPanel {
             ImageThumbnailWorker thumbWorker = new ImageThumbnailWorker(file);
             thumbWorker.execute();
             //keep track of thumb worker for possible cancelation 
-            thumbnailWorkers.add(thumbWorker);
+            resultContentWorkers.add(thumbWorker);
+        }
+    }
+
+    /**
+     * Populate the document preview viewer, cancelling any content which is
+     * currently being created first.
+     *
+     * @param files The list of ResultFiles to populate the image viewer with.
+     */
+    synchronized void populateDocumentViewer(List<ResultFile> files) {
+        for (ResultFile file : files) {
+            DocumentPreviewWorker documentWorker = new DocumentPreviewWorker(file);
+            documentWorker.execute();
+            //keep track of thumb worker for possible cancelation 
+            resultContentWorkers.add(documentWorker);
         }
     }
 
@@ -303,6 +352,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             updateControls();
             videoThumbnailViewer.clearViewer();
             imageThumbnailViewer.clearViewer();
+            documentPreviewViewer.clearViewer();
             resultsViewerPanel.revalidate();
             resultsViewerPanel.repaint();
         });
@@ -320,11 +370,11 @@ public class ResultsPanel extends javax.swing.JPanel {
             if (pageWorker != null && !pageWorker.isDone()) {
                 pageWorker.cancel(true);
             }
-            EamDb centralRepo = null;
-            if (EamDb.isEnabled()) {
+            CentralRepository centralRepo = null;
+            if (CentralRepository.isEnabled()) {
                 try {
-                    centralRepo = EamDb.getInstance();
-                } catch (EamDbException ex) {
+                    centralRepo = CentralRepository.getInstance();
+                } catch (CentralRepoException ex) {
                     centralRepo = null;
                     logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for File Discovery", ex);
                 }
@@ -653,6 +703,13 @@ public class ResultsPanel extends javax.swing.JPanel {
 
         @Override
         protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.WARNING, "Video Worker Exception for file: " + thumbnailWrapper.getResultFile().getFirstInstance().getId(), ex);
+            } catch (CancellationException ignored) {
+                //we want to do nothing in response to this since we allow it to be cancelled
+            }
             videoThumbnailViewer.repaint();
         }
     }
@@ -687,7 +744,61 @@ public class ResultsPanel extends javax.swing.JPanel {
 
         @Override
         protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.WARNING, "Image Worker Exception for file: " + thumbnailWrapper.getResultFile().getFirstInstance().getId(), ex);
+            } catch (CancellationException ignored) {
+                //we want to do nothing in response to this since we allow it to be cancelled
+            }
             imageThumbnailViewer.repaint();
+        }
+
+    }
+
+    /**
+     * Swing worker to handle the retrieval of document previews and population
+     * of the Document Preview Viewer.
+     */
+    private class DocumentPreviewWorker extends SwingWorker<Void, Void> {
+
+        private final DocumentWrapper documentWrapper;
+
+        /**
+         * Construct a new DocumentPreviewWorker.
+         *
+         * @param file The ResultFile which represents the document file a
+         *             preview is being retrieved for.
+         */
+        DocumentPreviewWorker(ResultFile file) {
+            documentWrapper = new DocumentWrapper(file);
+            documentPreviewViewer.addDocument(documentWrapper);
+        }
+
+        @Messages({"ResultsPanel.unableToCreate.text=Unable to create summary."})
+        @Override
+        protected Void doInBackground() throws Exception {
+            TextSummary preview = FileSearch.summarize(documentWrapper.getResultFile().getFirstInstance());
+            if (preview == null) {
+                preview = new TextSummary(Bundle.ResultsPanel_unableToCreate_text(), null, 0);
+            }
+            documentWrapper.setSummary(preview);
+            return null;
+        }
+
+        @Messages({"ResultsPanel.documentPreview.text=Document preview creation cancelled."})
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                documentWrapper.setSummary(new TextSummary(ex.getMessage(), null, 0));
+                logger.log(Level.WARNING, "Document Worker Exception", ex);
+            } catch (CancellationException ignored) {
+                documentWrapper.setSummary(new TextSummary(Bundle.ResultsPanel_documentPreview_text(), null, 0));
+                //we want to do nothing in response to this since we allow it to be cancelled
+            }
+            documentPreviewViewer.repaint();
         }
 
     }
