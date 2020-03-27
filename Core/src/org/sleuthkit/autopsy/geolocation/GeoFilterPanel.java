@@ -248,7 +248,6 @@ class GeoFilterPanel extends javax.swing.JPanel {
         gridBagConstraints.gridy = 2;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
         waypointSettings.add(mostRecentButton, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(showWaypointsWOTSCheckBox, org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.showWaypointsWOTSCheckBox.text")); // NOI18N
@@ -267,7 +266,6 @@ class GeoFilterPanel extends javax.swing.JPanel {
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
         waypointSettings.add(daysSpinner, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(daysLabel, org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.daysLabel.text")); // NOI18N
@@ -276,7 +274,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         gridBagConstraints.gridy = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(9, 5, 0, 5);
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 5);
         waypointSettings.add(daysLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(showLabel, org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.showLabel.text")); // NOI18N
