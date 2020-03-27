@@ -66,6 +66,22 @@ public class CorrelationAttributeUtil {
      * IMPORTANT: The correlation attribute instances are NOT added to the
      * central repository by this method.
      *
+     * @param artifact An artifact.
+     *
+     * @return A list, possibly empty, of correlation attribute instances for
+     *         the artifact.
+     */
+    public static List<CorrelationAttributeInstance> makeCorrAttrsFromArtifact(BlackboardArtifact artifact) {
+        return makeCorrAttrsFromArtifact(artifact, true );
+    }
+    
+    /**
+     * Makes zero to many correlation attribute instances from the attributes of
+     * an artifact.
+     *
+     * IMPORTANT: The correlation attribute instances are NOT added to the
+     * central repository by this method.
+     *
      * TODO (Jira-6088): The methods in this low-level, utility class should
      * throw exceptions instead of logging them. The reason for this is that the
      * clients of the utility class, not the utility class itself, should be in
@@ -74,13 +90,22 @@ public class CorrelationAttributeUtil {
      * whether receiving a null return value is an error or not, plus null
      * checking is easy to forget, while catching exceptions is enforced.
      *
-     * @param artifact An artifact.
+     * @param artifact              An artifact.
+     * @param resolveSourceArtifact A flag to indicate whether to resolve the
+     *                              source artifact, if the given artifact is 
+     *                              of type TSK_INTERESTING_ARTIFACT_HIT.
      *
      * @return A list, possibly empty, of correlation attribute instances for
-     *         the artifact.
+     *          the artifact.
      */
-    public static List<CorrelationAttributeInstance> makeCorrAttrsFromArtifact(BlackboardArtifact artifact) {
+    public static List<CorrelationAttributeInstance> makeCorrAttrsFromArtifact(BlackboardArtifact artifact, boolean resolveSourceArtifact) {
         List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
+        
+        // If the artifact is of type TSK_INTERESTING_ARTIFACT_HIT, and the caller 
+        // has not indicated to resolve the source artifact, then return an empty list.
+        if ((artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) && (resolveSourceArtifact == false) ) {
+            return correlationAttrs;
+        }
         try {
             BlackboardArtifact sourceArtifact = getCorrAttrSourceArtifact(artifact);
             if (sourceArtifact != null) {
