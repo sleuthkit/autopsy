@@ -1495,7 +1495,7 @@ class ExtractRegistry extends Extract {
      */
     private void parseTrustrecordsMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         String userProfile = regFile.getParentPath();
-        userProfile = userProfile.substring(0, userProfile.length() - 2);
+        userProfile = userProfile.substring(0, userProfile.length() - 1);
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         SimpleDateFormat pluginDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy", US);
         Long usedTime = Long.valueOf(0);
