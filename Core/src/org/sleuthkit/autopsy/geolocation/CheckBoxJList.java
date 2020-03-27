@@ -130,6 +130,7 @@ final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JLis
             setBackground(list.getBackground());
 
             checkbox.setSelected(value.isChecked());
+            checkbox.setBackground(list.getBackground());
             label.setText(value.getDisplayName());
             if (value.hasIcon()) {
                 label.setIcon(value.getIcon());
