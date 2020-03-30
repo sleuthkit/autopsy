@@ -154,7 +154,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
             return filePath + "encrypted-file.png"; //NON-NLS
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
             return filePath + "mismatch-16.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID() 
+                || typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID()) {
             return filePath + "gps_trackpoint.png"; //NON-NLS
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_REMOTE_DRIVE.getTypeID()) {
             return filePath + "drive_network.png"; //NON-NLS
