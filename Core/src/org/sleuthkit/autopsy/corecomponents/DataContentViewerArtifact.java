@@ -550,12 +550,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                             break;
                         // Use Autopsy date formatting settings, not TSK defaults
                         case DATETIME:
-                            long epoch = attr.getValueLong();
-                            value = "0000-00-00 00:00:00";
-                            if (null != content && 0 != epoch) {
-                                dateFormatter.setTimeZone(ContentUtils.getTimeZone(content));
-                                value = dateFormatter.format(new java.util.Date(epoch * 1000));
-                            }
+                            value = epochTimeToString(attr.getValueLong());
                             break;
                         case JSON: 
                             // Get the attribute's JSON value and convert to indented multiline display string
@@ -632,6 +627,21 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         
        
         /**
+         * Converts epoch time to readable string.
+         * 
+         * @param epochTime epoch time value to be converted to string.
+         * @return String with human readable time.
+         */
+        private String epochTimeToString(long epochTime) {
+            String dateTimeString = "0000-00-00 00:00:00";
+            if (null != content && 0 != epochTime) {
+                dateFormatter.setTimeZone(ContentUtils.getTimeZone(content));
+                dateTimeString = dateFormatter.format(new java.util.Date(epochTime * 1000));
+            }
+            return dateTimeString;
+        }
+        
+        /**
          * Converts the given JSON element into string and appends to the given string builder.
          * 
          * @param jsonKey
@@ -654,7 +664,14 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             } else if (jsonElement.isJsonObject()) {
                 sb.append(NEW_LINE).append(String.format("%s%s %s", startIndent, jsonKey, toJsonDisplayString(jsonElement.getAsJsonObject(), startIndent + INDENT_RIGHT)));
             } else if (jsonElement.isJsonPrimitive()) {
-                sb.append(NEW_LINE).append(String.format("%s%s = %s", startIndent, jsonKey, jsonElement.getAsString()));
+                String attributeName = jsonKey;
+                String attributeValue;
+                if (attributeName.toUpperCase().contains("DATETIME")) {
+                    attributeValue = epochTimeToString(Long.parseLong(jsonElement.getAsString()));
+                } else {
+                    attributeValue = jsonElement.getAsString();
+                }
+                sb.append(NEW_LINE).append(String.format("%s%s = %s", startIndent, attributeName, attributeValue));
             } else if (jsonElement.isJsonNull()) {
                 sb.append(NEW_LINE).append(String.format("%s%s = null", startIndent, jsonKey));
             }
