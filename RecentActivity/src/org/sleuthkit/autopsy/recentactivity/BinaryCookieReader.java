@@ -89,7 +89,7 @@ final class BinaryCookieReader implements Iterable<Cookie> {
                 throw new IOException(cookieFile.getName() + " is not a cookie file"); //NON-NLS
             }
 
-            int[] sizeArray = null;
+            int[] sizeArray;
             int pageCount = dataStream.readInt();
             if (pageCount != 0) {
                 sizeArray = new int[pageCount];
@@ -97,8 +97,9 @@ final class BinaryCookieReader implements Iterable<Cookie> {
                 for (int cnt = 0; cnt < pageCount; cnt++) {
                     sizeArray[cnt] = dataStream.readInt();
                 }
-
+            } else {
                 LOG.log(Level.INFO, "No cookies found in {0}", cookieFile.getName()); //NON-NLS
+                sizeArray = new int[0];
             }
 
             reader = new BinaryCookieReader(cookieFile, sizeArray);
