@@ -457,7 +457,7 @@ public class IngestEventsListener {
             for (BlackboardArtifact bbArtifact : bbArtifacts) {
                 // If the incoming artifact is of type TSK_INTERESTING_ARTIFACT_HIT, 
                 // do not resolve to the source artifact, as correlation attributes 
-                // for the source artifact would have laready been created, 
+                // for the source artifact would have already been created, 
                 // when the event for that source artifact was received.
                 List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsFromArtifact(bbArtifact, false);
                 for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
