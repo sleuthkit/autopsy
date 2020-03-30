@@ -154,8 +154,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
             return filePath + "encrypted-file.png"; //NON-NLS
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
             return filePath + "mismatch-16.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID() 
-                || typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID()
+                || typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID()) {
             return filePath + "gps_trackpoint.png"; //NON-NLS
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_REMOTE_DRIVE.getTypeID()) {
             return filePath + "drive_network.png"; //NON-NLS
@@ -244,7 +244,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             doNotShow.add(new BlackboardArtifact.Type(TSK_DATA_SOURCE_USAGE));
             doNotShow.add(new BlackboardArtifact.Type(TSK_DOWNLOAD_SOURCE));
             doNotShow.add(new BlackboardArtifact.Type(TSK_TL_EVENT));
-            
+
             //This is not meant to be shown in the UI at all. It is more of a meta artifact.
             doNotShow.add(new BlackboardArtifact.Type(TSK_ASSOCIATED_OBJECT));
         }
@@ -511,12 +511,12 @@ public class ExtractedContent implements AutopsyVisitableItem {
             if (skCase != null) {
                 try {
                     List<BlackboardArtifact> arts;
-                    if(filteringDSObjId > 0) {
+                    if (filteringDSObjId > 0) {
                         arts = blackboard.getArtifacts(type.getTypeID(), filteringDSObjId);
                     } else {
                         arts = skCase.getBlackboardArtifacts(type.getTypeID());
                     }
-                    for(BlackboardArtifact art: arts) {
+                    for (BlackboardArtifact art : arts) {
                         //Cache attributes while we are off the EDT.
                         //See JIRA-5969
                         art.getAttributes();
