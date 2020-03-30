@@ -43,8 +43,8 @@ import org.sleuthkit.datamodel.Content;
  * specific to a tag node.
  */
 @NbBundle.Messages({
-    "TagNode.propertySheet.origName=Original Name",
-    "TagNode.propertySheet.origNameDisplayName=Original Name"
+    "TagNode.propertySheet.origName=Original File Name",
+    "TagNode.propertySheet.origNameDisplayName=Original File Name"
 })
 abstract class TagNode extends DisplayableItemNode {
 
@@ -114,7 +114,7 @@ abstract class TagNode extends DisplayableItemNode {
             if (eventType.equals(FileNameTransTask.getPropertyName())) {
                 translatedName = evt.getNewValue().toString();
                 String originalName = evt.getOldValue().toString();
-                setDisplayName(translatedName);
+                setDisplayName(!translatedName.isEmpty() ? translatedName : originalName);
                 setShortDescription(originalName);
                 updatePropertySheet(new NodeProperty<>(
                         ORIG_NAME_PROP_NAME,

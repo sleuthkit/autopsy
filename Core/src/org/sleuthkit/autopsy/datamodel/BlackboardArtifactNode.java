@@ -205,7 +205,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                  */
                 String originalName = evt.getOldValue().toString();
                 translatedSourceName = evt.getNewValue().toString();
-                setDisplayName(translatedSourceName);
+                setDisplayName(!translatedSourceName.isEmpty() ? translatedSourceName : originalName);
                 setShortDescription(originalName);
                 updateSheet(new NodeProperty<>(
                         Bundle.BlackboardArtifactNode_createSheet_srcFile_origName(),
@@ -384,9 +384,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
     @NbBundle.Messages({
         "BlackboardArtifactNode.createSheet.srcFile.name=Source File",
-        "BlackboardArtifactNode.createSheet.srcFile.displayName=Source File",
-        "BlackboardArtifactNode.createSheet.srcFile.origName=Original Name",
-        "BlackboardArtifactNode.createSheet.srcFile.origDisplayName=Original Name",
+        "BlackboardArtifactNode.createSheet.srcFile.displayName=Source File Name",
+        "BlackboardArtifactNode.createSheet.srcFile.origName=Original File Name",
+        "BlackboardArtifactNode.createSheet.srcFile.origDisplayName=Original File Name",
         "BlackboardArtifactNode.createSheet.artifactType.displayName=Result Type",
         "BlackboardArtifactNode.createSheet.artifactType.name=Result Type",
         "BlackboardArtifactNode.createSheet.artifactDetails.displayName=Result Details",

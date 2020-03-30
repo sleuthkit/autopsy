@@ -55,7 +55,7 @@ public class FileNameTransTask extends AbstractNodePropertySheetTask<AbstractNod
     @Override
     protected PropertyChangeEvent computePropertyValue(AbstractNode node) throws Exception {
         String translatedFileName = FileNameTranslationUtil.translate(fileName);
-        return translatedFileName.isEmpty() ? null : new PropertyChangeEvent(EVENT_SOURCE, PROPERTY_NAME, fileName, translatedFileName);
+        return new PropertyChangeEvent(EVENT_SOURCE, PROPERTY_NAME, fileName, translatedFileName);
     }
 
 }

@@ -208,7 +208,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, attribute)));
             }
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
-            this.setDisplayName(evt.getNewValue().toString());
+            this.setDisplayName(!evt.getNewValue().toString().isEmpty() ? evt.getNewValue().toString() : content.getName());
             //Set the tooltip
             this.setShortDescription(content.getName());
             updateSheet(new NodeProperty<>(ORIGINAL_NAME.toString(), ORIGINAL_NAME.toString(), NO_DESCR, content.getName()));
@@ -256,8 +256,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         return sheet;
     }
 
-    @NbBundle.Messages({"AbstractAbstractFileNode.nameColLbl=Name",
-        "AbstractAbstractFileNode.originalName=Original Name",
+    @NbBundle.Messages({"AbstractAbstractFileNode.nameColLbl=File Name",
+        "AbstractAbstractFileNode.originalName=Original File Name",
         "AbstractAbstractFileNode.createSheet.score.name=S",
         "AbstractAbstractFileNode.createSheet.comment.name=C",
         "AbstractAbstractFileNode.createSheet.count.name=O",

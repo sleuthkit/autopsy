@@ -55,7 +55,7 @@ class ContentTagNode extends TagNode {
     }
 
     @Messages({
-        "ContentTagNode.createSheet.origFileName=Original Name",
+        "ContentTagNode.createSheet.origFileName=Original File Name",
         "ContentTagNode.createSheet.artifactMD5.displayName=MD5 Hash",
         "ContentTagNode.createSheet.artifactMD5.name=MD5 Hash",
         "ContentTagNode.createSheet.userName.text=User Name"})
