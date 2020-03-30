@@ -227,7 +227,7 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
          * Constructs a new ObjectCheckBox
          * 
          * @param displayName String to show as the check box label
-         * @param icon Icon to show before the check box
+         * @param icon Icon to show before the check box (may be null)
          * @param initialState Sets the initial state of the check box
          * @param object Object that the check box represents.
          */

@@ -91,7 +91,9 @@ final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JLis
      * Do all of the UI initialization.
      */
     private void initalize() {
-        setCellRenderer(new CellRenderer());
+        CellRenderer cellRenderer = new CellRenderer();
+        cellRenderer.init();
+        setCellRenderer(cellRenderer);
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -116,7 +118,7 @@ final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JLis
         private final JCheckBox checkbox = new JCheckBox();
         private final JLabel label = new JLabel();
 
-        public CellRenderer() {
+        public void init() {
             setLayout(new BorderLayout(2, 0));
             add(checkbox, BorderLayout.WEST);
             add(label, BorderLayout.CENTER);
@@ -131,7 +133,9 @@ final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JLis
 
             checkbox.setSelected(value.isChecked());
             checkbox.setBackground(list.getBackground());
+            checkbox.setEnabled(list.isEnabled());
             label.setText(value.getDisplayName());
+            label.setEnabled(list.isEnabled());
             if (value.hasIcon()) {
                 label.setIcon(value.getIcon());
             }

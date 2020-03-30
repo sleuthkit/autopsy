@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.geolocation;
 
 import java.awt.GridBagConstraints;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,7 +58,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
     private final CheckBoxListPanel<DataSource> dsCheckboxPanel;
     private final CheckBoxListPanel<ARTIFACT_TYPE> atCheckboxPanel;
 
-    // Make sure to update if 
+    // Make sure to update if other GPS artifacts are added
     @SuppressWarnings("deprecation")
     private static final ARTIFACT_TYPE[] GPS_ARTIFACT_TYPES = {
         ARTIFACT_TYPE.TSK_GPS_BOOKMARK,
@@ -481,7 +482,8 @@ class GeoFilterPanel extends javax.swing.JPanel {
         }
 
         /**
-         * Returns whether or not the given data source has GPS artifacts.
+         * Returns a Map representing the number of sources found for each
+         * artifact type. If no data was found, an empty map is returned.
          * 
          * @param sleuthkitCase The current sleuthkitCase
          * @param dataSource 
@@ -521,7 +523,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
                 }
                 for (Map.Entry<ARTIFACT_TYPE, Long> entry : sources.artifactTypes.entrySet()) {
                     String dispName = entry.getKey().getDisplayName() + " (" + entry.getValue() + ")";
-                    String iconPath = "/" + IconsUtil.getIconFilePath(entry.getKey().getTypeID());
+                    String iconPath = File.separator + IconsUtil.getIconFilePath(entry.getKey().getTypeID());
                     Icon icon = new ImageIcon(getClass().getResource(iconPath));
                     atCheckboxPanel.addElement(dispName, icon, entry.getKey());
                 }

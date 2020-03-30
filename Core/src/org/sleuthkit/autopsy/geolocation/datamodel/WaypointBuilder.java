@@ -445,6 +445,9 @@ public final class WaypointBuilder {
      *                          Pass a null or empty list to show way points for
      *                          all dataSources.
      *
+     * @param artifactTypes     List of types from which we want to get
+     *                          waypoints.
+     *
      * @param showAll           True to get all waypoints.
      *
      * @param cntDaysFromRecent Number of days from the most recent time stamp
