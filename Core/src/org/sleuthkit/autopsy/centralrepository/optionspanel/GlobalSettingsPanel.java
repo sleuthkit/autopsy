@@ -234,6 +234,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         lbDbPlatformValue = new javax.swing.JLabel();
         lbDbNameValue = new javax.swing.JLabel();
         lbDbLocationValue = new javax.swing.JLabel();
+        bnTestConfigure = new javax.swing.JButton();
+        testStatusLabel = new javax.swing.JLabel();
         pnCorrelationProperties = new javax.swing.JPanel();
         bnManageTypes = new javax.swing.JButton();
         correlationPropertiesScrollPane = new javax.swing.JScrollPane();
@@ -282,6 +284,17 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(bnTestConfigure, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnTestConfigure.text")); // NOI18N
+        bnTestConfigure.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnTestConfigureActionPerformed(evt);
+            }
+        });
+
+        testStatusLabel.setFont(testStatusLabel.getFont().deriveFont(testStatusLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        org.openide.awt.Mnemonics.setLocalizedText(testStatusLabel, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.testStatusLabel.text")); // NOI18N
+        testStatusLabel.setToolTipText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.testStatusLabel.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout pnDatabaseConfigurationLayout = new javax.swing.GroupLayout(pnDatabaseConfiguration);
         pnDatabaseConfiguration.setLayout(pnDatabaseConfigurationLayout);
         pnDatabaseConfigurationLayout.setHorizontalGroup(
@@ -289,9 +302,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
-                        .addComponent(bnDbConfigure)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
                         .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(lbDbPlatformTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -301,7 +311,14 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                         .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(lbDbNameValue, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 936, Short.MAX_VALUE)
                             .addComponent(lbDbPlatformValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lbDbLocationValue, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                            .addComponent(lbDbLocationValue, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
+                        .addComponent(bnDbConfigure)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(bnTestConfigure)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(testStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 836, Short.MAX_VALUE)
+                        .addContainerGap())))
         );
         pnDatabaseConfigurationLayout.setVerticalGroup(
             pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -319,7 +336,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                     .addComponent(lbDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lbDbLocationValue, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(bnDbConfigure)
+                .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(bnDbConfigure)
+                    .addComponent(bnTestConfigure)
+                    .addComponent(testStatusLabel))
                 .addGap(8, 8, 8))
         );
 
@@ -364,7 +384,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         pnCorrelationPropertiesLayout.setVerticalGroup(
             pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnCorrelationPropertiesLayout.createSequentialGroup()
-                .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 32, Short.MAX_VALUE)
+                .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bnManageTypes)
                 .addGap(8, 8, 8))
@@ -480,7 +500,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.DEFAULT_SIZE, 1012, Short.MAX_VALUE)
+                    .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.DEFAULT_SIZE, 1016, Short.MAX_VALUE)
                     .addComponent(organizationPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(casesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
@@ -570,6 +590,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         this.ingestStateUpdated(Case.isCaseOpen());
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_cbUseCentralRepoActionPerformed
+
+    private void bnTestConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestConfigureActionPerformed
+        testCurrentConfiguration();
+    }//GEN-LAST:event_bnTestConfigureActionPerformed
 
     @Override
     @Messages({"GlobalSettingsPanel.validationerrMsg.mustConfigure=Configure the database to enable this module."})
@@ -699,6 +723,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
         enableDatabaseConfigureButton(cbUseCentralRepo.isSelected() && !caseIsOpen);
     }
+    
+    
 
     /**
      * Enable the Configure button
@@ -710,8 +736,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private void enableDatabaseConfigureButton(Boolean enable) {
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         ingestRunningWarningLabel.setVisible(ingestRunning);
+
         pnDatabaseConfiguration.setEnabled(enable && !ingestRunning);
         bnDbConfigure.setEnabled(enable && !ingestRunning);
+        bnTestConfigure.setEnabled(enable && !ingestRunning);
         lbDbLocationLabel.setEnabled(enable && !ingestRunning);
         lbDbLocationValue.setEnabled(enable && !ingestRunning);
         lbDbNameLabel.setEnabled(enable && !ingestRunning);
@@ -746,6 +774,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnDbConfigure;
     private javax.swing.JButton bnManageTypes;
+    private javax.swing.JButton bnTestConfigure;
     private javax.swing.JPanel casesPanel;
     private javax.swing.JScrollPane casesScrollPane;
     private javax.swing.JTextArea casesTextArea;
@@ -770,5 +799,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private javax.swing.JPanel pnDatabaseConfiguration;
     private javax.swing.JButton showCasesButton;
     private javax.swing.JTextField tbOops;
+    private javax.swing.JLabel testStatusLabel;
     // End of variables declaration//GEN-END:variables
 }
