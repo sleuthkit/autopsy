@@ -66,8 +66,7 @@ final class ExtractSru extends Extract {
 
     private IngestJobContext context;
 
-    private static final String APPLICATION_EXECUTION_ARTIFACT_NAME = "TSK_APPLICATION_EXECUTION"; //NON-NLS
-    private static final String NETWORK_USAGE_ARTIFACT_NAME = "RA_SRU_NETWORK_USAGE_BIN"; //NON-NLS
+    private static final String NETWORK_USAGE_ARTIFACT_NAME = "RA_SRU_NETWORK_USAGE"; //NON-NLS
     private static final String APPLICATION_RESOURCE_ARTIFACT_NAME = "RA_SRU_APPLICATION_RESOURCE"; //NON-NLS
     private static final String NETWORK_PROFILE_NAME_ATTRIBUTE_NAME = "RA_SRU_NETWORK_PROFILE_NAME"; //NON-NLS
 
@@ -102,7 +101,7 @@ final class ExtractSru extends Extract {
         try {
             createSruArtifactType();
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, String.format("%s, %s or $s may not have been created.", APPLICATION_EXECUTION_ARTIFACT_NAME, NETWORK_USAGE_ARTIFACT_NAME, APPLICATION_RESOURCE_ARTIFACT_NAME), ex);
+            logger.log(Level.WARNING, String.format("%s or $s may not have been created.", NETWORK_USAGE_ARTIFACT_NAME, APPLICATION_RESOURCE_ARTIFACT_NAME), ex);
         }
 
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
@@ -271,14 +270,14 @@ final class ExtractSru extends Extract {
                 String filePath = FilenameUtils.getPath(normalizePathName);
                 if (fileName.contains(" [")) {
                     fileName = fileName.substring(0, fileName.indexOf(" ["));
-                    fileName.trim();
                 }
+                fileName.trim();
                 List<AbstractFile> sourceFiles;
                 try {
                     sourceFiles = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS
                     for (AbstractFile sourceFile : sourceFiles) {
                         if (sourceFile.getParentPath().endsWith(filePath)) {
-                                applicationFilesFound.put(sourceName, sourceFile);
+                                applicationFilesFound.put(sourceName.toLowerCase(), sourceFile);
                         }
                     }
             
@@ -354,7 +353,7 @@ final class ExtractSru extends Extract {
                     BlackboardArtifact bbart = sruAbstractFile.newArtifact(artifactType.getTypeID());
                     bbart.addAttributes(bbattributes);
                     bba.add(bbart);
-                    BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName, bbart);
+                    BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), bbart);
                     if (associateBbArtifact != null) {
                         bba.add(associateBbArtifact);
                     }
@@ -431,7 +430,7 @@ final class ExtractSru extends Extract {
                     BlackboardArtifact bbart = sruAbstractFile.newArtifact(artifactType.getTypeID());
                     bbart.addAttributes(bbattributes);
                     bba.add(bbart);
-                    BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName, bbart);
+                    BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), bbart);
                     if (associateBbArtifact != null) {
                         bba.add(associateBbArtifact);
                     }
@@ -484,11 +483,6 @@ final class ExtractSru extends Extract {
      */
     private void createSruArtifactType() throws TskCoreException {
 
-        try {
-            tskCase.addBlackboardArtifactType(APPLICATION_EXECUTION_ARTIFACT_NAME, "Application Execution"); //NON-NLS
-        } catch (TskDataException ex) {
-            logger.log(Level.INFO, String.format("%s may have already been defined for this case", APPLICATION_EXECUTION_ARTIFACT_NAME));
-        }
         try {
             tskCase.addBlackboardArtifactType(NETWORK_USAGE_ARTIFACT_NAME, "SRU Network Usage"); //NON-NLS
         } catch (TskDataException ex) {

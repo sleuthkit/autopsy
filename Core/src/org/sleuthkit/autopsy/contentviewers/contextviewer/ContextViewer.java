@@ -53,7 +53,12 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private static final Logger logger = Logger.getLogger(ContextViewer.class.getName());
     private static final int ARTIFACT_STR_MAX_LEN = 1024;
     private static final int ATTRIBUTE_STR_MAX_LEN = 200;
-
+ 
+    // Defines artifacts that are not defined in Blackboard Artifact
+    private static final String NETWORK_USAGE_ARTIFACT_NAME = "RA_SRU_NETWORK_USAGE"; //NON-NLS
+    private static final String APPLICATION_RESOURCE_ARTIFACT_NAME = "RA_SRU_APPLICATION_RESOURCE"; //NON-NLS
+    
+    
     // defines a list of artifacts that provide context for a file
     private static final List<BlackboardArtifact.ARTIFACT_TYPE> SOURCE_CONTEXT_ARTIFACTS = new ArrayList<>();
     private final List<javax.swing.JPanel> contextSourcePanels = new ArrayList<>();
@@ -334,7 +339,9 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     @NbBundle.Messages({
         "ContextViewer.attachmentSource=Attached to: ",
         "ContextViewer.downloadSource=Downloaded from: ",
-        "ContextViewer.recentDocs=Recent Documents: "
+        "ContextViewer.recentDocs=Recent Documents: ",
+        "ContextViewer.programExecution=Program Execution: ",
+        "ContextViewer.networkUsage=Network Usage"
     })
     private void setSourceFields(BlackboardArtifact associatedArtifact) throws TskCoreException {
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == associatedArtifact.getArtifactTypeID()
@@ -357,6 +364,19 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact);        
             contextUsagePanels.add(usagePanel);
             
+        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() == associatedArtifact.getArtifactTypeID()
+                || Case.getCurrentCase().getSleuthkitCase().getArtifactType(APPLICATION_RESOURCE_ARTIFACT_NAME).getTypeID() == associatedArtifact.getArtifactTypeID()) {
+            String sourceName = Bundle.ContextViewer_programExecution();
+            String sourceText = programExecArtifactToString(associatedArtifact);
+            javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact);        
+            contextUsagePanels.add(usagePanel);
+            
+        } else if (Case.getCurrentCase().getSleuthkitCase().getArtifactType(NETWORK_USAGE_ARTIFACT_NAME).getTypeID() == associatedArtifact.getArtifactTypeID()) {
+            String sourceName = Bundle.ContextViewer_networkUsage();
+            String sourceText = networkUsageArtifactToString(associatedArtifact);
+            javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact);        
+            contextUsagePanels.add(usagePanel);
+            
         }
     }
 
@@ -376,12 +396,17 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     })
     private String webDownloadArtifactToString(BlackboardArtifact artifact) throws TskCoreException {
         StringBuilder sb = new StringBuilder(ARTIFACT_STR_MAX_LEN);
-        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
+        Map<BlackboardAttribute.Type, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
 
+        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+        BlackboardAttribute.Type urlType = skCase.getAttributeType(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getLabel());
+        BlackboardAttribute.Type dateTimeCreatedType = skCase.getAttributeType(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getLabel());
+        
+        
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == artifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == artifact.getArtifactTypeID()) {
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL, attributesMap, Bundle.ContextViewer_downloadURL());
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, attributesMap, Bundle.ContextViewer_downloadedOn());
+            appendAttributeString(sb, urlType, attributesMap, Bundle.ContextViewer_downloadURL());
+            appendAttributeString(sb, dateTimeCreatedType, attributesMap, Bundle.ContextViewer_downloadedOn());
         }
         return sb.toString();
     }
@@ -402,13 +427,15 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     })
     private String recentDocArtifactToString(BlackboardArtifact artifact) throws TskCoreException {
         StringBuilder sb = new StringBuilder(ARTIFACT_STR_MAX_LEN);
-        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
+        Map<BlackboardAttribute.Type, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
         
-        BlackboardAttribute attribute = attributesMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-        
+        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+        BlackboardAttribute.Type dateTimeType = skCase.getAttributeType(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getLabel());
+        BlackboardAttribute attribute = attributesMap.get(dateTimeType);
+                
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == artifact.getArtifactTypeID()) {
             if (attribute.getValueLong() > 0) {
-                appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, attributesMap, Bundle.ContextViewer_on());
+                appendAttributeString(sb, dateTimeType, attributesMap, Bundle.ContextViewer_on());
             } else {
                 sb.append(Bundle.ContextViewer_unknown());
             }
@@ -416,6 +443,72 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         return sb.toString();
     }
 
+    /**
+     * Returns a display string with Program Execution
+     * artifact.
+     *
+     * @param artifact artifact to get doc from.
+     *
+     * @return Display string with download URL and date/time.
+     *
+     * @throws TskCoreException
+     */
+    @NbBundle.Messages({
+        "ContextViewer.runOn=Program Run On",
+        "ContextViewer.runUnknown= Program Run at unknown time"
+    })
+    private String programExecArtifactToString(BlackboardArtifact artifact) throws TskCoreException {
+        StringBuilder sb = new StringBuilder(ARTIFACT_STR_MAX_LEN);
+        Map<BlackboardAttribute.Type, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
+        
+        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+        BlackboardAttribute.Type dateTimeType = skCase.getAttributeType(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getLabel());
+        
+        BlackboardAttribute attribute = attributesMap.get(dateTimeType);
+        
+        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() == artifact.getArtifactTypeID()
+           || Case.getCurrentCase().getSleuthkitCase().getArtifactType(APPLICATION_RESOURCE_ARTIFACT_NAME).getTypeID() == artifact.getArtifactTypeID()) {
+            if (attribute != null && attribute.getValueLong() > 0) {
+                appendAttributeString(sb, dateTimeType, attributesMap, Bundle.ContextViewer_runOn());
+            } else {
+                sb.append(Bundle.ContextViewer_runUnknown());
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Returns a display string with Network Usage
+     * artifact.
+     *
+     * @param artifact artifact to get doc from.
+     *
+     * @return Display string with download URL and date/time.
+     *
+     * @throws TskCoreException
+     */
+    @NbBundle.Messages({
+        "ContextViewer.networkOn=Network Traffic",
+        "ContextViewer.networkUnknown=Network Traffic at unknown time"
+    })
+    private String networkUsageArtifactToString(BlackboardArtifact artifact) throws TskCoreException {
+        StringBuilder sb = new StringBuilder(ARTIFACT_STR_MAX_LEN);
+        Map<BlackboardAttribute.Type, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
+        
+        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+        BlackboardAttribute.Type dateTimeType = skCase.getAttributeType(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getLabel());
+        
+        BlackboardAttribute attribute = attributesMap.get(dateTimeType);
+        
+        if (Case.getCurrentCase().getSleuthkitCase().getArtifactType(NETWORK_USAGE_ARTIFACT_NAME).getTypeID() == artifact.getArtifactTypeID()) {
+            if (attribute != null && attribute.getValueLong() > 0) {
+                appendAttributeString(sb, dateTimeType, attributesMap, Bundle.ContextViewer_networkOn());
+            } else {
+                sb.append(Bundle.ContextViewer_networkUnknown());
+            }
+        }
+        return sb.toString();
+    }
     /**
      * Returns a abbreviated display string for a message artifact.
      *
@@ -434,18 +527,27 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private String msgArtifactToAbbreviatedString(BlackboardArtifact artifact) throws TskCoreException {
 
         StringBuilder sb = new StringBuilder(ARTIFACT_STR_MAX_LEN);
-        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
+        Map<BlackboardAttribute.Type, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
+
+        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+        BlackboardAttribute.Type dateTimeType = skCase.getAttributeType(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getLabel());
+        BlackboardAttribute.Type phoneNumberFromType = skCase.getAttributeType(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getLabel());
+        BlackboardAttribute.Type phoneNumberToType = skCase.getAttributeType(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getLabel());
+        BlackboardAttribute.Type emailFromType = skCase.getAttributeType(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getLabel());
+        BlackboardAttribute.Type emailToType = skCase.getAttributeType(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO.getLabel());
+        BlackboardAttribute.Type dateTimeSentType = skCase.getAttributeType(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getLabel());
+        
 
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == artifact.getArtifactTypeID()) {
             sb.append(Bundle.ContextViewer_message()).append(' ');
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, attributesMap, Bundle.ContextViewer_messageFrom());
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, attributesMap, Bundle.ContextViewer_messageTo());
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, attributesMap, Bundle.ContextViewer_messageOn());
+            appendAttributeString(sb, phoneNumberFromType, attributesMap, Bundle.ContextViewer_messageFrom());
+            appendAttributeString(sb, phoneNumberToType, attributesMap, Bundle.ContextViewer_messageTo());
+            appendAttributeString(sb, dateTimeType, attributesMap, Bundle.ContextViewer_messageOn());
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == artifact.getArtifactTypeID()) {
             sb.append(Bundle.ContextViewer_email()).append(' ');
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM, attributesMap, Bundle.ContextViewer_messageFrom());
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO, attributesMap, Bundle.ContextViewer_messageTo());
-            appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT, attributesMap, Bundle.ContextViewer_messageOn());
+            appendAttributeString(sb, emailFromType, attributesMap, Bundle.ContextViewer_messageFrom());
+            appendAttributeString(sb, emailToType, attributesMap, Bundle.ContextViewer_messageTo());
+            appendAttributeString(sb, dateTimeSentType, attributesMap, Bundle.ContextViewer_messageOn());
         }
         return sb.toString();
     }
@@ -460,8 +562,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      * @param prependStr    Optional string that is prepended before the
      *                      attribute value.
      */
-    private void appendAttributeString(StringBuilder sb, BlackboardAttribute.ATTRIBUTE_TYPE attribType,
-            Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap, String prependStr) {
+    private void appendAttributeString(StringBuilder sb, BlackboardAttribute.Type attribType,
+            Map<BlackboardAttribute.Type, BlackboardAttribute> attributesMap, String prependStr) {
 
         BlackboardAttribute attribute = attributesMap.get(attribType);
         if (attribute != null) {
@@ -485,12 +587,15 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      *
      * @throws TskCoreException
      */
-    private Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> getAttributesMap(BlackboardArtifact artifact) throws TskCoreException {
-        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap = new HashMap<>();
+    private Map<BlackboardAttribute.Type, BlackboardAttribute> getAttributesMap(BlackboardArtifact artifact) throws TskCoreException {
+        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+        
+        Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap = new HashMap<>();
 
         List<BlackboardAttribute> attributeList = artifact.getAttributes();
         for (BlackboardAttribute attribute : attributeList) {
-            BlackboardAttribute.ATTRIBUTE_TYPE type = BlackboardAttribute.ATTRIBUTE_TYPE.fromID(attribute.getAttributeType().getTypeID());
+            BlackboardAttribute.Type type = skCase.getAttributeType(attribute.getAttributeType().getTypeName());
+//            BlackboardAttribute.ATTRIBUTE_TYPE type = BlackboardAttribute.ATTRIBUTE_TYPE.fromID(attribute.getAttributeType().getTypeID());
             attributeMap.put(type, attribute);
         }
 
