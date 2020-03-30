@@ -88,7 +88,7 @@ The File Metadata tab displays basic information about the file, such as type, s
 
 \section cv_context Context
 
-The Context tab shows the the source of attached files and allows you to view the original result. In the image below you can see the context for an image that was sent as an email attachment.
+The Context tab shows information on where a file came from and allows you to navigate to the original result. For example, it can show the the URL for downloaded files and the email message a file was attached to. In the image below you can see the context for an image that was sent as an email attachment.
 
 \image html content_viewer_context.png
 

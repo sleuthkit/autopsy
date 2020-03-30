@@ -36,6 +36,7 @@ import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
@@ -56,6 +57,7 @@ import org.xml.sax.SAXException;
 import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Collection;
 import java.util.Date;
@@ -66,7 +68,6 @@ import java.util.Set;
 import java.util.HashSet;
 import static java.util.Locale.US;
 import static java.util.TimeZone.getTimeZone;
-import org.apache.commons.io.FilenameUtils;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
@@ -74,7 +75,9 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.recentactivity.ShellBagParser.ShellBag;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED;
@@ -1201,8 +1204,6 @@ class ExtractRegistry extends Extract {
     /**
      * Create recently used artifacts from adobemru records
      * 
-     * @param regFileName name of the regripper output file
-     * 
      * @param regFile registry file the artifact is associated with
      * 
      * @param reader buffered reader to parse adobemru records
@@ -1230,7 +1231,6 @@ class ExtractRegistry extends Extract {
                     if (fileName.charAt(0) == '/') {
                         fileName = fileName.substring(1,fileName.length() - 1);
                         fileName = fileName.replaceFirst("/", ":/");
-                        fileName = FilenameUtils.normalize(fileName, true);
                     }
                     // Check to see if more then 2 tokens, Date may not be populated, will default to 0
                     if (tokens.length > 2) {
@@ -1251,12 +1251,17 @@ class ExtractRegistry extends Extract {
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                     if(bba != null) {
                          bbartifacts.add(bba);
+                         fileName = fileName.replace("\0", "");
+                         bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
+                         if (bba != null) {
+                             bbartifacts.add(bba);
+                         }
                     }
                     line = reader.readLine();
                 }
                 line = line.trim();
             }
-        }    
+        }
         if (!bbartifacts.isEmpty()) {
             postArtifacts(bbartifacts);
         }
@@ -1264,8 +1269,6 @@ class ExtractRegistry extends Extract {
     
      /**
      * Create recently used artifacts to parse the mpmru records
-     * 
-     * @param regFileName name of the regripper output file
      * 
      * @param regFile registry file the artifact is associated with
      * 
@@ -1287,12 +1290,19 @@ class ExtractRegistry extends Extract {
                     // Split line on "> " which is the record delimiter between position and file
                     String tokens[] = line.split("> ");
                     String fileName = tokens[1];
-                    fileName = FilenameUtils.normalize(fileName, true);
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                     if(bba != null) {
                          bbartifacts.add(bba);
+                         bba = createAssociatedArtifact(fileName, bba);
+                         if (bba != null) {
+                             bbartifacts.add(bba);
+                             bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
+                             if (bba != null) {
+                                 bbartifacts.add(bba);
+                             }
+                         }
                     }
                     line = reader.readLine();
                 }
@@ -1306,8 +1316,6 @@ class ExtractRegistry extends Extract {
     
      /**
      * Create recently used artifacts to parse the regripper output
-     * 
-     * @param regFileName name of the regripper output file
      * 
      * @param regFile registry file the artifact is associated with
      * 
@@ -1329,12 +1337,15 @@ class ExtractRegistry extends Extract {
                     // Split line on "> " which is the record delimiter between position and file
                     String tokens[] = line.split("> ");
                     String fileName = tokens[1];
-                    fileName = FilenameUtils.normalize(fileName, true);
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                     if(bba != null) {
                          bbartifacts.add(bba);
+                         bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
+                         if (bba != null) {
+                             bbartifacts.add(bba);
+                         }                        
                     }
                     line = reader.readLine();
                 }
@@ -1348,8 +1359,6 @@ class ExtractRegistry extends Extract {
     
      /**
      * Create recently used artifacts to parse the WinRAR output
-     * 
-     * @param regFileName name of the regripper output file
      * 
      * @param regFile registry file the artifact is associated with
      * 
@@ -1372,12 +1381,15 @@ class ExtractRegistry extends Extract {
                         // Split line on "> " which is the record delimiter between position and file
                         String tokens[] = line.split("> ");
                         String fileName = tokens[1];
-                        fileName = FilenameUtils.normalize(fileName, true);
                         Collection<BlackboardAttribute> attributes = new ArrayList<>();
                         attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
                         BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                         if(bba != null) {
                              bbartifacts.add(bba);
+                             bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
+                             if (bba != null) {
+                                 bbartifacts.add(bba);
+                             }
                         }
                         line = reader.readLine();
                     }
@@ -1392,8 +1404,6 @@ class ExtractRegistry extends Extract {
     
      /**
      * Create recently used artifacts to parse the runmru ArcHistory records
-     * 
-     * @param regFileName name of the regripper output file
      * 
      * @param regFile registry file the artifact is associated with
      * 
@@ -1410,12 +1420,15 @@ class ExtractRegistry extends Extract {
                 // Columns are
                 // <fileName>
                 String fileName = line;
-                fileName = FilenameUtils.normalize(fileName, true);
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
                 attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
                 BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                 if (bba != null) {
                      bbartifacts.add(bba);
+                     bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
+                     if (bba != null) {
+                         bbartifacts.add(bba);
+                     }
                 }
                 line = reader.readLine();
                 line = line.trim();
@@ -1428,8 +1441,6 @@ class ExtractRegistry extends Extract {
     
      /**
      * Create recently used artifacts to parse the Office Documents 2010 records
-     * 
-     * @param regFileName name of the regripper output file
      * 
      * @param regFile registry file the artifact is associated with
      * 
@@ -1454,13 +1465,16 @@ class ExtractRegistry extends Extract {
             Long docDate = Long.valueOf(tokens[0]); 
             String fileNameTokens[] = tokens[4].split(" - ");
             String fileName = fileNameTokens[1];
-            fileName = FilenameUtils.normalize(fileName, true);
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), docDate));
             BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
             if(bba != null) {
                  bbartifacts.add(bba);
+                 bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
+                 if (bba != null) {
+                     bbartifacts.add(bba);
+                 }
             }
             line = reader.readLine();
             line = line.trim();
@@ -1473,8 +1487,6 @@ class ExtractRegistry extends Extract {
     /**
      * Create recently used artifacts to parse the trustrecords records
      * 
-     * @param regFileName name of the regripper output file
-     * 
      * @param regFile registry file the artifact is associated with
      * 
      * @param reader buffered reader to parse adobemru records
@@ -1483,7 +1495,7 @@ class ExtractRegistry extends Extract {
      */
     private void parseTrustrecordsMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         String userProfile = regFile.getParentPath();
-        userProfile = userProfile.substring(0, userProfile.length() - 2);
+        userProfile = userProfile.substring(0, userProfile.length() - 1);
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         SimpleDateFormat pluginDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy", US);
         Long usedTime = Long.valueOf(0);
@@ -1501,7 +1513,6 @@ class ExtractRegistry extends Extract {
                 String tokens[] = line.split(" : ");
                 fileName = tokens[1];
                 fileName = fileName.replace("%USERPROFILE%", userProfile);
-                fileName = FilenameUtils.normalize(fileName, true);
                 // Time in the format of Wed May 31 14:33:03 2017 Z 
                 try {
                     String fileUsedTime = tokens[0].replaceAll(" Z","");
@@ -1518,6 +1529,10 @@ class ExtractRegistry extends Extract {
                 BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                 if(bba != null) {
                      bbartifacts.add(bba);
+                     bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
+                     if (bba != null) {
+                         bbartifacts.add(bba);
+                     }
                 }
                 line = line.trim();
             }
@@ -1525,6 +1540,46 @@ class ExtractRegistry extends Extract {
         if (!bbartifacts.isEmpty()) {
             postArtifacts(bbartifacts);
         }
+    }
+
+    /**
+     * Create associated artifacts using file name and path and the artifact it associates with
+     * 
+     * @param filePathName file and path of object being associated with
+     * 
+     * @param bba blackboard artifact to associate with
+     * 
+     * @returnv BlackboardArtifact or a null value 
+     */  
+    private BlackboardArtifact createAssociatedArtifact(String filePathName, BlackboardArtifact bba) {
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
+        String fileName = FilenameUtils.getName(filePathName);
+        String filePath = FilenameUtils.getPath(filePathName);
+        List<AbstractFile> sourceFiles;
+        try {
+            sourceFiles = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS
+            if (!sourceFiles.isEmpty()) {
+                for (AbstractFile sourceFile : sourceFiles) {
+                    if (sourceFile.getParentPath().endsWith(filePath)) {
+                        Collection<BlackboardAttribute> bbattributes2 = new ArrayList<>();
+                           bbattributes2.addAll(Arrays.asList(
+                             new BlackboardAttribute(TSK_ASSOCIATED_ARTIFACT, this.getName(),
+                             bba.getArtifactID())));
+
+                        BlackboardArtifact associatedObjectBba = createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, sourceFile, bbattributes2);
+                        if (associatedObjectBba != null) {
+                            return associatedObjectBba;
+                        }
+                    }
+                }
+            }
+        } catch (TskCoreException ex) {
+            // only catching the error and displaying the message as the file may not exist on the 
+            // system anymore
+            logger.log(Level.WARNING, String.format("Error finding actual file %s. file may not exist", filePathName)); //NON-NLS
+        }
+       
+        return null;
     }
     
     /**

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -111,7 +111,7 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
     private CorrelationAttributeInstance.Type getCorrelationType(Account.Type accountType) throws CentralRepoException {
         if (correlationTypeMap == null) {
             correlationTypeMap = new HashMap<>();
-            List<CorrelationAttributeInstance.Type> correcationTypeList = CorrelationAttributeInstance.getDefaultCorrelationTypes();
+            List<CorrelationAttributeInstance.Type> correcationTypeList = CentralRepository.getInstance().getDefinedCorrelationTypes();
             correcationTypeList.forEach((type) -> {
                 correlationTypeMap.put(type.getId(), type);
             });

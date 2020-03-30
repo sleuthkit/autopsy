@@ -42,7 +42,8 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
     private static final int BYTE_UNIT_CONVERSION = 1000;
     private static final long serialVersionUID = 1L;
-
+    private static final int MAX_NAME_STRING = 120;
+    
     /**
      * Creates new form VideoThumbnailPanel
      */
@@ -71,6 +72,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         for (Image image : thumbnailWrapper.getThumbnails()) {
             gridBagConstraints.gridy = 0;
             imagePanel.add(new JLabel(new ImageIcon(image)), gridBagConstraints);
+
             gridBagConstraints.gridy = 1;
             long millis = timeStamps[timeIndex];
             long hours = TimeUnit.MILLISECONDS.toHours(millis);
@@ -106,6 +108,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
 
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
+        imagePanel.setPreferredSize(new java.awt.Dimension(776, 115));
         imagePanel.setLayout(new java.awt.GridBagLayout());
 
         scoreLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/red-circle-exclamation.png"))); // NOI18N
@@ -125,7 +128,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(imagePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 776, Short.MAX_VALUE)
+                    .addComponent(imagePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(fileSizeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -141,7 +144,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
                 .addContainerGap()
                 .addComponent(nameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(imagePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(imagePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(deletedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -170,6 +173,9 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         String nameText = value.getResultFile().getFirstInstance().getParentPath() + value.getResultFile().getFirstInstance().getName();
         if (value.getResultFile().getAllInstances().size() > 1) {
             nameText += Bundle.VideoThumbnailPanel_nameLabel_more_text(value.getResultFile().getAllInstances().size() - 1);
+        }
+        if (nameText.length() > MAX_NAME_STRING) {
+            nameText = "..." + nameText.substring(nameText.length() - (MAX_NAME_STRING - 3));
         }
         nameLabel.setText(nameText);
         addThumbnails(value);

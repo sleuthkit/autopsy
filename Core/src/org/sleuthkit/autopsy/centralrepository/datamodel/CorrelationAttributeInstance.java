@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -49,6 +50,7 @@ public class CorrelationAttributeInstance implements Serializable {
     private String comment;
     private TskData.FileKnown knownStatus;
     private Long objectId;
+    private Long accountId;
 
     public CorrelationAttributeInstance(
             CorrelationAttributeInstance.Type correlationType,
@@ -73,6 +75,20 @@ public class CorrelationAttributeInstance implements Serializable {
             TskData.FileKnown knownStatus,
             Long fileObjectId
     ) throws CentralRepoException, CorrelationAttributeNormalizationException {
+         this(type, value, -1, eamCase, eamDataSource, filePath, comment, knownStatus, fileObjectId, (long)-1);
+    }
+    CorrelationAttributeInstance(
+            Type type,
+            String value,
+            int instanceId,
+            CorrelationCase eamCase,
+            CorrelationDataSource eamDataSource,
+            String filePath,
+            String comment,
+            TskData.FileKnown knownStatus,
+            Long fileObjectId,
+            Long accountId
+    ) throws CentralRepoException, CorrelationAttributeNormalizationException {
         if (filePath == null) {
             throw new CentralRepoException("file path is null");
         }
@@ -87,6 +103,7 @@ public class CorrelationAttributeInstance implements Serializable {
         this.comment = comment;
         this.knownStatus = knownStatus;
         this.objectId = fileObjectId;
+        this.accountId = accountId;
     }
 
     public Boolean equals(CorrelationAttributeInstance otherInstance) {
@@ -97,7 +114,8 @@ public class CorrelationAttributeInstance implements Serializable {
                 && (this.getCorrelationDataSource().equals(otherInstance.getCorrelationDataSource()))
                 && (this.getFilePath().equals(otherInstance.getFilePath()))
                 && (this.getKnownStatus().equals(otherInstance.getKnownStatus()))
-                && (this.getComment().equals(otherInstance.getComment())));
+                && (this.getComment().equals(otherInstance.getComment()))
+                && (this.getAccountId().equals(otherInstance.getAccountId())));
     }
 
     @Override
@@ -105,6 +123,7 @@ public class CorrelationAttributeInstance implements Serializable {
         return this.getID()
                 + this.getCorrelationCase().getCaseUUID()
                 + this.getCorrelationDataSource().getDeviceID()
+                + this.getAccountId()
                 + this.getFilePath()
                 + this.getCorrelationType().toString()
                 + this.getCorrelationValue()
@@ -209,6 +228,24 @@ public class CorrelationAttributeInstance implements Serializable {
         return objectId;
     }
 
+    /**
+     * Get the accountId of the account associated with the correlation
+     * attribute.
+     *
+     * @return the accountId of the account
+     */
+    public Long getAccountId() {
+        return accountId;
+    }
+
+    /**
+     * Set the accountId of the account associated with this correlation
+     * attribute.
+     */
+    void setAccountId(Long accountId) {
+        this.accountId = accountId;
+    }
+    
     // Type ID's for Default Correlation Types
     public static final int FILES_TYPE_ID = 0;
     public static final int DOMAIN_TYPE_ID = 1;
@@ -220,6 +257,9 @@ public class CorrelationAttributeInstance implements Serializable {
     public static final int IMEI_TYPE_ID = 7;
     public static final int IMSI_TYPE_ID = 8;
     public static final int ICCID_TYPE_ID = 9;
+    
+    // An offset to assign Ids for additional  correlation types.
+    public static final int ADDITIONAL_TYPES_BASE_ID = 1000;
 
     /**
      * Load the default correlation types
@@ -238,18 +278,31 @@ public class CorrelationAttributeInstance implements Serializable {
         "CorrelationType.IMSI.displayName=IMSI Number",
         "CorrelationType.ICCID.displayName=ICCID Number"})
     public static List<CorrelationAttributeInstance.Type> getDefaultCorrelationTypes() throws CentralRepoException {
-        List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(SSID_TYPE_ID, Bundle.CorrelationType_SSID_displayName(), "wireless_networks", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(MAC_TYPE_ID, Bundle.CorrelationType_MAC_displayName(), "mac_address", true, true)); //NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(IMEI_TYPE_ID, Bundle.CorrelationType_IMEI_displayName(), "imei_number", true, true)); //NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(IMSI_TYPE_ID, Bundle.CorrelationType_IMSI_displayName(), "imsi_number", true, true)); //NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(ICCID_TYPE_ID, Bundle.CorrelationType_ICCID_displayName(), "iccid_number", true, true)); //NON-NLS
-        return DEFAULT_CORRELATION_TYPES;
+        List<CorrelationAttributeInstance.Type> defaultCorrelationTypes = new ArrayList<>();
+        
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, true)); // NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address", true, true)); // NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number", true, true)); // NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, true)); // NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(SSID_TYPE_ID, Bundle.CorrelationType_SSID_displayName(), "wireless_networks", true, true)); // NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(MAC_TYPE_ID, Bundle.CorrelationType_MAC_displayName(), "mac_address", true, true)); //NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(IMEI_TYPE_ID, Bundle.CorrelationType_IMEI_displayName(), "imei_number", true, true)); //NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(IMSI_TYPE_ID, Bundle.CorrelationType_IMSI_displayName(), "imsi_number", true, true)); //NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(ICCID_TYPE_ID, Bundle.CorrelationType_ICCID_displayName(), "iccid_number", true, true)); //NON-NLS
+        
+        // Create Correlation Types for Accounts.
+        int correlationTypeId = ADDITIONAL_TYPES_BASE_ID;
+        for (Account.Type type : Account.Type.PREDEFINED_ACCOUNT_TYPES) {
+            // Skip Device account type - we dont want to correlate on those.
+            // Skip Phone and Email accounts as there are already Correlation types defined for those.
+            if (type != Account.Type.DEVICE && type != Account.Type.EMAIL && type != Account.Type.PHONE) {
+                defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(correlationTypeId, type.getDisplayName(), type.getTypeName().toLowerCase() + "_acct", true, true)); //NON-NLS
+                correlationTypeId++;
+            }
+        }
+
+        return defaultCorrelationTypes;
     }
 
     /**

@@ -1,8 +1,0 @@
-CallLogAnalyzer.indexError.message=Failed to index call log artifact for keyword search.
-ContactAnalyzer.indexError.message=Failed to index contact artifact for keyword search.
-iOSModuleFactory.moduleName=iOS Analyzer
-iOSModuleFactory.moduleDescription=Extracts system and 3rd party app data
-TextMessageAnalyzer.bbAttribute.incoming=Incoming
-TextMessageAnalyzer.bbAttribute.outgoing=Outgoing
-TextMessageAnalyzer.bbAttribute.smsMessage=SMS Message
-TextMessageAnalyzer.indexError.message=Failed to index text message artifact for keyword search.

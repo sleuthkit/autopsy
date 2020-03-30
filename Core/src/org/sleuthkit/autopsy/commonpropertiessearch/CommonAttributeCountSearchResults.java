@@ -128,14 +128,13 @@ final public class CommonAttributeCountSearchResults {
             return;
         }
 
-        CorrelationAttributeInstance.Type attributeType = CorrelationAttributeInstance
-                .getDefaultCorrelationTypes()
+        CentralRepository eamDb = CentralRepository.getInstance();
+        CorrelationAttributeInstance.Type attributeType = eamDb.getDefinedCorrelationTypes()
                 .stream()
                 .filter(filterType -> filterType.getId() == this.resultTypeId)
                 .findFirst().get();
 
-        CentralRepository eamDb = CentralRepository.getInstance();
-
+        
         Map<Integer, List<CommonAttributeValue>> itemsToRemove = new HashMap<>();
         //Call countUniqueDataSources once to reduce the number of DB queries needed to get
         //the frequencyPercentage

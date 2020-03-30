@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -117,7 +118,7 @@ public final class InterCasePanel extends javax.swing.JPanel {
     void setupCorrelationTypeFilter() {
         this.correlationTypeFilters = new HashMap<>();
         try {
-            List<CorrelationAttributeInstance.Type> types = CorrelationAttributeInstance.getDefaultCorrelationTypes();
+            List<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getDefinedCorrelationTypes();
             for (CorrelationAttributeInstance.Type type : types) {
                 correlationTypeFilters.put(type.getDisplayName(), type);
                 this.correlationTypeComboBox.addItem(type.getDisplayName());
