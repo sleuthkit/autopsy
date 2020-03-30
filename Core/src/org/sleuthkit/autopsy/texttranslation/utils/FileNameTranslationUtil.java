@@ -41,17 +41,6 @@ public final class FileNameTranslationUtil {
      *                                    translation.
      */
     public static String translate(String fileName) throws NoServiceProviderException, TranslationException {
-        /*
-         * Don't attempt translation if the characters of the file name are all
-         * ASCII chars.
-         *
-         * TODO (Jira-6175): This filter prevents translation of many
-         * non-English file names composed entirely of Latin chars.
-         */
-        if (fileName.matches("^\\p{ASCII}+$")) {
-            return "";
-        }
-
         TextTranslationService translator = TextTranslationService.getInstance();
         String baseName = FilenameUtils.getBaseName(fileName);
         String translation = translator.translate(baseName);
