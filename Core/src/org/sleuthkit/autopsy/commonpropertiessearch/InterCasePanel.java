@@ -118,7 +118,7 @@ public final class InterCasePanel extends javax.swing.JPanel {
     void setupCorrelationTypeFilter() {
         this.correlationTypeFilters = new HashMap<>();
         try {
-            List<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getCorrelationTypes();
+            List<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getDefinedCorrelationTypes();
             for (CorrelationAttributeInstance.Type type : types) {
                 correlationTypeFilters.put(type.getDisplayName(), type);
                 this.correlationTypeComboBox.addItem(type.getDisplayName());

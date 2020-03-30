@@ -526,6 +526,7 @@ public class RdbmsCentralRepoFactory {
      * on the selected CR platform/RDMBS.
      *
      * @param pkName name of primary key.
+     * @param selectedPlatform The selected platform.
      *
      * @return SQL clause to be used in a Create table statement
      */
@@ -802,6 +803,7 @@ public class RdbmsCentralRepoFactory {
       * Inserts the default content in persona related tables.
       * 
       * @param conn Database connection to use.
+      * @param selectedPlatform The selected platform.
       * 
       * @return True if success, false otherwise.
       */

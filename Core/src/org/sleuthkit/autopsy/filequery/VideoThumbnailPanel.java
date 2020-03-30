@@ -42,7 +42,8 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
     private static final int BYTE_UNIT_CONVERSION = 1000;
     private static final long serialVersionUID = 1L;
-
+    private static final int MAX_NAME_STRING = 120;
+    
     /**
      * Creates new form VideoThumbnailPanel
      */
@@ -71,7 +72,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         for (Image image : thumbnailWrapper.getThumbnails()) {
             gridBagConstraints.gridy = 0;
             imagePanel.add(new JLabel(new ImageIcon(image)), gridBagConstraints);
-            
+
             gridBagConstraints.gridy = 1;
             long millis = timeStamps[timeIndex];
             long hours = TimeUnit.MILLISECONDS.toHours(millis);
@@ -172,6 +173,9 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         String nameText = value.getResultFile().getFirstInstance().getParentPath() + value.getResultFile().getFirstInstance().getName();
         if (value.getResultFile().getAllInstances().size() > 1) {
             nameText += Bundle.VideoThumbnailPanel_nameLabel_more_text(value.getResultFile().getAllInstances().size() - 1);
+        }
+        if (nameText.length() > MAX_NAME_STRING) {
+            nameText = "..." + nameText.substring(nameText.length() - (MAX_NAME_STRING - 3));
         }
         nameLabel.setText(nameText);
         addThumbnails(value);
