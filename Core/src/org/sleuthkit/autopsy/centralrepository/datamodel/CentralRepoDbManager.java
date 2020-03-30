@@ -39,25 +39,14 @@ public class CentralRepoDbManager {
     private static final String CENTRAL_REPO_DB_NAME = "central_repository";
     private static final String CENTRAL_REPOSITORY_SETTINGS_KEY = "CentralRepository";
     private static final String DB_SELECTED_PLATFORM_KEY = "db.selectedPlatform";
-    private static final String DISABLED_DUE_TO_FAILURE_KEY = "disabledDueToFailure";
 
     private static volatile CentralRepoDbChoice savedChoice = null;
     
     private static final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(CentralRepoDbManager.class);
     
     private static final Object dbChoiceLock = new Object();
-    private static final Object disabledDueToFailureLock = new Object();
     
     
-    
-    /**
-     * This saves the currently selected database choice and clears any disabledDueToFailure flag.
-     * @param choice        The choice to save.
-     * @return              The newly saved choice.
-     */
-    public static CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice) {
-        return saveDbChoice(choice, true);
-    }
     
     /**
      * This saves the currently selected database choice.
@@ -65,12 +54,8 @@ public class CentralRepoDbManager {
      * @param clearDisabledDueToError   Whether or not to clear the 'disabledDueToFailure' settings key.
      * @return              The newly saved choice.
      */
-    public static CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice, boolean clearDisabledDueToError) {
+    public static CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice) {
         synchronized(dbChoiceLock) {
-            // clear disabling due to a failure
-            if (clearDisabledDueToError)
-                setDisabledDueToFailure(false);
-            
             // change the settings
             CentralRepoDbChoice newChoice = (choice == null) ? CentralRepoDbChoice.DISABLED : choice;
             CentralRepoDbChoice oldChoice = savedChoice;
@@ -113,41 +98,7 @@ public class CentralRepoDbManager {
         }
     }
     
-    /**
-     * This method disables the central repository and indicates through a flag that this was due to a failure during database setup.
-     * This is used when re-enabling multi-user as a flag to determine whether or not CR should be re-enabled.
-     */
-    public static void disableDueToFailure() {
-        CentralRepoDbUtil.setUseCentralRepo(false);
-        setDisabledDueToFailure(true);
-    }
     
-    /**
-     * This method sets whether or not the repository has been disabled due to a database setup issue;
-     * This is used when re-enabling multi-user as a flag to determine whether or not CR should be re-enabled.
-     * 
-     * @param disabledDueToFailure  Whether or not the repository has been disabled due to a database setup issue.
-     */
-    private static void setDisabledDueToFailure(boolean disabledDueToFailure) {
-        synchronized(disabledDueToFailureLock) {
-            boolean oldValue = isDisabledDueToFailure();
-            ModuleSettings.setConfigSetting(CENTRAL_REPOSITORY_SETTINGS_KEY, DISABLED_DUE_TO_FAILURE_KEY, Boolean.toString(disabledDueToFailure));
-            propertyChangeSupport.firePropertyChange("disabledDueToFailure", oldValue, disabledDueToFailure);
-        }
-    }
-
-    /**
-     * This method retrieves setting whether or not the repository has been disabled due to a database setup issue;
-     * this is used when re-enabling multi-user as a flag to determine whether or not CR should be re-enabled.
-     * 
-     * @return  Whether or not the repository has been disabled due to a database setup issue.
-     */
-    public static boolean isDisabledDueToFailure() {
-        synchronized(disabledDueToFailureLock) {
-            return Boolean.toString(true).equals(ModuleSettings.getConfigSetting(CENTRAL_REPOSITORY_SETTINGS_KEY, DISABLED_DUE_TO_FAILURE_KEY));
-        }
-    }
-
     /**
      * This method adds a property change listener.
      * NOTE: currently only listening for changes in currently saved db choice and disabling due to failure.
@@ -288,7 +239,7 @@ public class CentralRepoDbManager {
         } catch (CentralRepoException ex2) {
             logger.log(Level.SEVERE, "Error shutting down central repo connection pool", ex2);
         }
-        saveDbChoice(CentralRepoDbChoice.DISABLED, false);
+        saveDbChoice(CentralRepoDbChoice.DISABLED);
         if (innerException == null) {
             throw new CentralRepoException(message, desc);
         } else {
