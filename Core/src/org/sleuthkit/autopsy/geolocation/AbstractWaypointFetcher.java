@@ -217,7 +217,7 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
         for (Track track : tracks) {
             if (mostRecent == null) {
                 mostRecent = track.getStartTime();
-            } else {
+            } else if (track.getStartTime() != null) {
                 mostRecent = Math.max(mostRecent, track.getStartTime());
             }
         }
