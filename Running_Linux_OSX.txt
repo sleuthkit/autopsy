@@ -19,7 +19,8 @@ The following need to be done at least once. They do not need to be repeated for
        % sudo apt-get update
        % sudo apt-get install bellsoft-java8=1.8.0.232+10
     2. Set JAVA_HOME
-       % export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-amd64
+       e.g. add the following to ~/.bashrc
+           export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-amd64
 
     NOTE: You may need to log out and back in again after setting JAVA_HOME before the Autopsy
           unix_setup.sh script can see the value.
@@ -43,7 +44,7 @@ The following need to be done at least once. They do not need to be repeated for
 Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libraries of The Sleuth Kit installed, which is not part of all packages.
 
 - Linux: Install the sleuthkit-java.deb file that you can download from github.com/sleuthkit/sleuthkit/releases.  This will install libewf, etc.
--- % sudo apt install ./sleuthkit-java_4.7.0-1_amd64.deb
+-- % sudo dpkg -i sleuthkit-java_4.7.0-1_amd64.deb
 
 - OS X: Install The Sleuth Kit from brew.
 -- % brew install sleuthkit
@@ -59,8 +60,9 @@ Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libr
 
 * Running Autopsy *
 
-- In a terminal, change to the ‘bin’ directory in the Autopsy folder.
-- Run Autopsy
+- The Autopsy executable is in the ‘bin’ directory in the Autopsy folder.
+- From the Autopsy folder, run Autopsy
+  % cd bin
   % ./autopsy
 
 * Troubleshooting *
