@@ -206,12 +206,18 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         controlPanel = new javax.swing.JPanel();
         javax.swing.JPanel pagePanel = new javax.swing.JPanel();
         pagesLabel = new javax.swing.JLabel();
+        fillerSmall1 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         pageCurLabel = new javax.swing.JLabel();
+        fillerSmall2 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         pageOfLabel = new javax.swing.JLabel();
+        fillerSmall3 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         pageTotalLabel = new javax.swing.JLabel();
+        fillerSmall4 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         pageButtonsLabel = new javax.swing.JLabel();
+        javax.swing.Box.Filler fillerMed1 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
         pagePreviousButton = new javax.swing.JButton();
         pageNextButton = new javax.swing.JButton();
+        javax.swing.Box.Filler fillerSmall6 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         jSeparator2 = new javax.swing.JSeparator();
         javax.swing.JPanel matchesPanel = new javax.swing.JPanel();
         hitLabel = new javax.swing.JLabel();
@@ -219,15 +225,20 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         hitOfLabel = new javax.swing.JLabel();
         hitTotalLabel = new javax.swing.JLabel();
         hitButtonsLabel = new javax.swing.JLabel();
+        javax.swing.Box.Filler fillerMed2 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
         hitPreviousButton = new javax.swing.JButton();
         hitNextButton = new javax.swing.JButton();
+        javax.swing.Box.Filler fillerSmall11 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         jSeparator3 = new javax.swing.JSeparator();
         javax.swing.JPanel zoomPanelWrapper = new javax.swing.JPanel();
         zoomPanel = new TextZoomPanel(this);
+        javax.swing.Box.Filler fillerSmall14 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         jSeparator4 = new javax.swing.JSeparator();
         javax.swing.JPanel textSourcePanel = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        javax.swing.Box.Filler fillerSmall12 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         sourceComboBox = new javax.swing.JComboBox<>();
+        javax.swing.Box.Filler fillerSmall13 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         jSeparator5 = new javax.swing.JSeparator();
         extractedScrollPane = new javax.swing.JScrollPane();
         extractedTextPane = new javax.swing.JTextPane();
@@ -248,20 +259,25 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
 
         pagesLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pagesLabel.text")); // NOI18N
         pagePanel.add(pagesLabel);
+        pagePanel.add(fillerSmall1);
 
         pageCurLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         pageCurLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageCurLabel.text")); // NOI18N
         pagePanel.add(pageCurLabel);
+        pagePanel.add(fillerSmall2);
 
         pageOfLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageOfLabel.text")); // NOI18N
         pagePanel.add(pageOfLabel);
+        pagePanel.add(fillerSmall3);
 
         pageTotalLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         pageTotalLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageTotalLabel.text")); // NOI18N
         pagePanel.add(pageTotalLabel);
+        pagePanel.add(fillerSmall4);
 
         pageButtonsLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageButtonsLabel.text")); // NOI18N
         pagePanel.add(pageButtonsLabel);
+        pagePanel.add(fillerMed1);
 
         pagePreviousButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back.png"))); // NOI18N
         pagePreviousButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pagePreviousButton.text")); // NOI18N
@@ -282,6 +298,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         pageNextButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
         pageNextButton.setPreferredSize(new java.awt.Dimension(23, 23));
         pagePanel.add(pageNextButton);
+        pagePanel.add(fillerSmall6);
 
         jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
         jSeparator2.setMaximumSize(new java.awt.Dimension(2, 25));
@@ -316,6 +333,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
 
         hitButtonsLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitButtonsLabel.text")); // NOI18N
         matchesPanel.add(hitButtonsLabel);
+        matchesPanel.add(fillerMed2);
 
         hitPreviousButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back.png"))); // NOI18N
         hitPreviousButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitPreviousButton.text")); // NOI18N
@@ -338,6 +356,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         hitNextButton.setPreferredSize(new java.awt.Dimension(23, 23));
         hitNextButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward_hover.png"))); // NOI18N
         matchesPanel.add(hitNextButton);
+        matchesPanel.add(fillerSmall11);
 
         jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
         jSeparator3.setMaximumSize(new java.awt.Dimension(2, 25));
@@ -354,6 +373,8 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         zoomPanelWrapper.add(zoomPanel);
         zoomPanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.AccessibleContext.accessibleName")); // NOI18N
 
+        zoomPanelWrapper.add(fillerSmall14);
+
         jSeparator4.setOrientation(javax.swing.SwingConstants.VERTICAL);
         jSeparator4.setMaximumSize(new java.awt.Dimension(2, 25));
         jSeparator4.setMinimumSize(new java.awt.Dimension(2, 25));
@@ -367,12 +388,14 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
 
         jLabel1.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.jLabel1.text")); // NOI18N
         textSourcePanel.add(jLabel1);
+        textSourcePanel.add(fillerSmall12);
 
         sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel<org.sleuthkit.autopsy.keywordsearch.IndexedText>());
         sourceComboBox.setMaximumSize(new java.awt.Dimension(150, 32767));
         sourceComboBox.setMinimumSize(new java.awt.Dimension(150, 20));
         sourceComboBox.setPreferredSize(new java.awt.Dimension(150, 20));
         textSourcePanel.add(sourceComboBox);
+        textSourcePanel.add(fillerSmall13);
 
         jSeparator5.setOrientation(javax.swing.SwingConstants.VERTICAL);
         jSeparator5.setMaximumSize(new java.awt.Dimension(2, 25));
@@ -402,6 +425,10 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JScrollPane extractedScrollPane;
     private javax.swing.JTextPane extractedTextPane;
+    private javax.swing.Box.Filler fillerSmall1;
+    private javax.swing.Box.Filler fillerSmall2;
+    private javax.swing.Box.Filler fillerSmall3;
+    private javax.swing.Box.Filler fillerSmall4;
     private javax.swing.JLabel hitButtonsLabel;
     private javax.swing.JLabel hitCountLabel;
     private javax.swing.JLabel hitLabel;
