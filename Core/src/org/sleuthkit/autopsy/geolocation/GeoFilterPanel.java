@@ -66,7 +66,8 @@ class GeoFilterPanel extends javax.swing.JPanel {
         ARTIFACT_TYPE.TSK_GPS_ROUTE,
         ARTIFACT_TYPE.TSK_GPS_SEARCH,
         ARTIFACT_TYPE.TSK_GPS_TRACK,
-        ARTIFACT_TYPE.TSK_GPS_TRACKPOINT
+        ARTIFACT_TYPE.TSK_GPS_TRACKPOINT,
+        ARTIFACT_TYPE.TSK_METADATA_EXIF
     };
 
     /**
@@ -523,7 +524,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
                 }
                 for (Map.Entry<ARTIFACT_TYPE, Long> entry : sources.artifactTypes.entrySet()) {
                     String dispName = entry.getKey().getDisplayName() + " (" + entry.getValue() + ")";
-                    String iconPath = File.separator + IconsUtil.getIconFilePath(entry.getKey().getTypeID());
+                    String iconPath = IconsUtil.getIconFilePath(entry.getKey().getTypeID());
                     Icon icon = new ImageIcon(getClass().getResource(iconPath));
                     atCheckboxPanel.addElement(dispName, icon, entry.getKey());
                 }

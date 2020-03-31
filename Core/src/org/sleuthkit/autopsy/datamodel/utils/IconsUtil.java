@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 public class IconsUtil {
     @SuppressWarnings("deprecation")
     public static String getIconFilePath(int typeID) {
-        String filePath = "org/sleuthkit/autopsy/images/"; //NON-NLS
+        String filePath = "/org/sleuthkit/autopsy/images/"; //NON-NLS
         if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
             return filePath + "bookmarks.png"; //NON-NLS
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
