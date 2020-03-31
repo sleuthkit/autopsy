@@ -20,12 +20,16 @@ IndexedText.warningMessage.knownFile=<span style='font-style:italic'>This file i
 IndexedText.warningMessage.noTextAvailable=<span style='font-style:italic'>No indexed text for this file.</span>
 KeywordSearchGlobalSettingsPanel.Title=Global Keyword Search Settings
 KeywordSearchIngestModule.init.badInitMsg=Keyword search server was not properly initialized, cannot run keyword search ingest.
+# {0} - Reason for not connecting to Solr
 KeywordSearchIngestModule.init.exception.errConnToSolr.msg=Error connecting to SOLR server: {0}.
+# {0} - Reason for not starting Solr
 KeywordSearchIngestModule.init.tryStopSolrMsg={0}<br />Please try stopping Java Solr processes if any exist and restart the application.
 KeywordSearchIngestModule.metadataTitle=METADATA
 KeywordSearchIngestModule.noOpenCase.errMsg=No open case available.
 KeywordSearchIngestModule.startUp.noOpenCore.msg=The index could not be opened or does not exist.
+# {0} - schema version number
 KeywordSearchIngestModule.startupException.indexSchemaNotSupported=Adding text no longer supported for schema version {0} of the text index.
+# {0} - Solr version number
 KeywordSearchIngestModule.startupException.indexSolrVersionNotSupported=Adding text no longer supported for Solr version {0} of the text index.
 KeywordSearchIngestModule.startupMessage.failedToGetIndexSchema=Failed to get schema version for text index.
 KeywordSearchResultFactory.createNodeForKey.noResultsFound.text=No results found.
@@ -208,6 +212,7 @@ KeywordSearchSettings.propertiesNSRL.text={0}_NSRL
 KeywordSearchSettings.propertiesScripts.text={0}_Scripts
 NoOpenCoreException.err.noOpenSorlCore.msg=No currently open Solr core.
 SearchRunner.query.exception.msg=Error performing query:
+# {0} - core name
 Server.deleteCore.exception.msg=Failed to delete Solr core {0}
 Server.start.exception.cantStartSolr.msg=Could not start Solr server process
 Server.start.exception.cantStartSolr.msg2=Could not start Solr server process
@@ -335,8 +340,10 @@ SolrSearch.openCore.msg=Opening text index
 SolrSearch.openGiantCore.msg=Opening text index. Text index for this case is very large and may take long time to load.
 SolrSearch.openLargeCore.msg=Opening text index. This may take several minutes.
 SolrSearch.readingIndexes.msg=Reading text index metadata file
+# {0} - index folder path
 SolrSearchService.exceptionMessage.failedToDeleteIndexFiles=Failed to delete text index files at {0}
 SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case
+# {0} - case directory
 SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from case directory: {0}
 SolrSearchService.indexingError=Unable to index blackboard artifact.
 SolrSearchService.ServiceName=Solr Keyword Search Service
@@ -353,24 +360,24 @@ DropdownListSearchPanel.jSaveSearchResults.text=Save search results
 GlobalEditListPanel.ingestWarningLabel.text=Ingest is ongoing, some settings will be unavailable until it finishes.
 KeywordSearchGlobalLanguageSettingsPanel.ingestWarningLabel.text=Ingest is ongoing, some settings will be unavailable until it finishes.
 KeywordSearchGlobalSearchSettingsPanel.ingestWarningLabel.text=Ingest is ongoing, some settings will be unavailable until it finishes.
-ExtractedContentPanel.AccessibleContext.accessibleName=
-ExtractedContentPanel.jLabel1.text=Text Source:
-ExtractedContentPanel.hitNextButton.text=
+ExtractedContentPanel.hitCountLabel.text=-
 ExtractedContentPanel.hitPreviousButton.text=
-ExtractedContentPanel.hitButtonsLabel.text=Match
 ExtractedContentPanel.hitTotalLabel.text=-
 ExtractedContentPanel.hitOfLabel.text=of
-ExtractedContentPanel.hitCountLabel.text=-
+ExtractedContentPanel.hitNextButton.text=
+ExtractedContentPanel.hitButtonsLabel.text=Match
 ExtractedContentPanel.hitLabel.toolTipText=
 ExtractedContentPanel.hitLabel.text=Matches on page:
-ExtractedContentPanel.pageNextButton.text=
+ExtractedContentPanel.pageCurLabel.text=-
 ExtractedContentPanel.pagePreviousButton.actionCommand=pagePreviousButton
 ExtractedContentPanel.pagePreviousButton.text=
-ExtractedContentPanel.pageButtonsLabel.text=Page
-ExtractedContentPanel.pageTotalLabel.text=-
-ExtractedContentPanel.pageOfLabel.text=of
-ExtractedContentPanel.pageCurLabel.text=-
+ExtractedContentPanel.pageNextButton.text=
 ExtractedContentPanel.pagesLabel.text=Page:
+ExtractedContentPanel.pageTotalLabel.text=-
+ExtractedContentPanel.pageButtonsLabel.text=Page
+ExtractedContentPanel.pageOfLabel.text=of
+ExtractedContentPanel.jLabel1.text=Text Source:
+ExtractedContentPanel.AccessibleContext.accessibleName=
 TextZoomPanel.zoomInButton.text=
 TextZoomPanel.zoomOutButton.text=
 TextZoomPanel.zoomResetButton.text=Reset
