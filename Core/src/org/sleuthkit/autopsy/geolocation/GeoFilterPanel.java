@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.geolocation;
 
 import java.awt.GridBagConstraints;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
