@@ -181,8 +181,7 @@ public class Installer extends ModuleInstall {
      *                              repository.
      */
     private void setupDefaultSqliteCentralRepo() throws CentralRepoException {
-        CentralRepoDbManager manager = new CentralRepoDbManager();
-        manager.setupDefaultSqliteDb();
+        CentralRepoDbManager.getInstance().setupDefaultSqliteDb();
     }
 
     /**

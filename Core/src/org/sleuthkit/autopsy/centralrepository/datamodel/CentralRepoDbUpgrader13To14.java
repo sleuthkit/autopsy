@@ -39,7 +39,7 @@ public class CentralRepoDbUpgrader13To14 implements CentralRepoDbUpgrader {
 
             try (Statement statement = connection.createStatement();) {
 
-                CentralRepoPlatforms selectedPlatform = CentralRepoDbManager.getSavedDbChoice().getDbPlatform();
+                CentralRepoPlatforms selectedPlatform = CentralRepoDbManager.getInstance().getSavedDbChoice().getDbPlatform();
 
                 // Create account_types and accounts tables which are referred by X_instances tables
                 statement.execute(RdbmsCentralRepoFactory.getCreateAccountTypesTableStatement(selectedPlatform));

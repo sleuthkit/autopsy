@@ -275,7 +275,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
 
         // Don't allow sqlite central repo databases to be used for multi user cases
         if ((autopsyCase.getCaseType() == Case.CaseType.MULTI_USER_CASE)
-                && (CentralRepoDbManager.getSavedDbChoice().getDbPlatform() == CentralRepoPlatforms.SQLITE)) {
+                && (CentralRepoDbManager.getInstance().getSavedDbChoice().getDbPlatform() == CentralRepoPlatforms.SQLITE)) {
             logger.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite central repository.");
             throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }

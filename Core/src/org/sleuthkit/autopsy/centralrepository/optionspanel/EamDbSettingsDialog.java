@@ -86,8 +86,7 @@ public class EamDbSettingsDialog extends JDialog {
     
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
-    private final CentralRepoDbManager manager = new CentralRepoDbManager();
-    private final boolean isMultiUserSelectable = CentralRepoDbManager.isPostgresMultiuserAllowed();
+    private final CentralRepoDbManager manager = CentralRepoDbManager.getInstance();
     private final DbChoiceRenderer DB_CHOICE_RENDERER = new DbChoiceRenderer();
     
     public EamDbSettingsDialog() {
@@ -95,7 +94,7 @@ public class EamDbSettingsDialog extends JDialog {
     }
     
     private boolean isDbChoiceSelectable(CentralRepoDbChoice item) {
-        return (item != CentralRepoDbChoice.POSTGRESQL_MULTIUSER || isMultiUserSelectable);
+        return (item != CentralRepoDbChoice.POSTGRESQL_MULTIUSER || manager.isPostgresMultiuserAllowed());
     }
     
     
@@ -181,31 +180,43 @@ public class EamDbSettingsDialog extends JDialog {
                     Bundle.EamDbSettingsDialog_okButton_corruptDatabaseExists_title(),
                     JOptionPane.WARNING_MESSAGE);
         } else if (manager.getStatus() == DatabaseTestResult.DB_DOES_NOT_EXIST) {
-            //database doesn't exist. do you want to create?
-            if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
-                    Bundle.EamDbSettingsDialog_okButton_createDbDialog_message(),
-                    Bundle.EamDbSettingsDialog_okButton_createDbDialog_title(),
-                    JOptionPane.YES_NO_OPTION)) {
-                onUserPromptCreateDb(manager, dialog);
-            }
+            promptCreateDatabase(manager, dialog);
         }
 
         return (manager.getStatus() == DatabaseTestResult.TESTED_OK);
     }   
-
-    /**
-     * When a new database needs to be created on user selecting cr, this code will be ran when user selects create cr.
-     * @param manager       The manager handling the database creation.
-     * @param dialog        The dialog that prompted database creation.
+    
+    
+     /**
+     * This method prompts the user whether or not they would like to create a database in the instance that
+     * it doesn't exist.
+     * @param manager   The manager to use when setting up the database.
+     * @param dialog  If non-null value, validates settings and updates 'okay'
+     *                button enabled state.
+     *
+     * @return Whether or not the ultimate status after prompts is okay.
      */
-    private static void onUserPromptCreateDb(CentralRepoDbManager manager, EamDbSettingsDialog dialog) {
-        try {
-            manager.createDb();
-        } catch (CentralRepoException e) {
-            onPromptStatusError(manager);
+    public static boolean promptCreateDatabase(CentralRepoDbManager manager, EamDbSettingsDialog dialog) {
+        //database doesn't exist. do you want to create?
+        if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
+                Bundle.EamDbSettingsDialog_okButton_createDbDialog_message(),
+                Bundle.EamDbSettingsDialog_okButton_createDbDialog_title(),
+                JOptionPane.YES_NO_OPTION)) {
+            try {
+                manager.createDb();
+                
+            } catch (CentralRepoException e) {
+                onPromptStatusError(manager);
+                return false;
+            }
+            
+            if (dialog != null) {
+                dialog.valid();
+            }
+            return true;
         }
-        if (dialog != null)
-            dialog.valid();
+        
+        return manager.testStatus() == DatabaseTestResult.TESTED_OK;
     }
 
     

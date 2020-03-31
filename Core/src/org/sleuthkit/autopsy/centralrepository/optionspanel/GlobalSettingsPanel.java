@@ -43,6 +43,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSett
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import java.awt.Component;
 import java.util.logging.Level;
+import javax.swing.ImageIcon;
+import org.openide.util.ImageUtilities;
+import org.sleuthkit.autopsy.centralrepository.datamodel.DatabaseTestResult;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.Bundle;
 
 
@@ -56,16 +59,22 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(GlobalSettingsPanel.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.STARTED, IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
-    private final IngestJobEventPropertyChangeListener ingestJobEventListener;
 
+    private final IngestJobEventPropertyChangeListener ingestJobEventListener;
+    private final CentralRepoDbManager manager;
+    
+    private final ImageIcon goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/good.png", false));
+    private final ImageIcon badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/bad.png", false));
+    
     /**
      * Creates new form EamOptionsPanel
      */
     public GlobalSettingsPanel() {
         ingestJobEventListener = new IngestJobEventPropertyChangeListener();
-
+        manager = CentralRepoDbManager.getInstance();
+        
         // listen for change events in currently saved choice
-        CentralRepoDbManager.addPropertyChangeListener((PropertyChangeEvent evt) -> ingestStateUpdated(Case.isCaseOpen()));
+        manager.addPropertyChangeListener((PropertyChangeEvent evt) -> ingestStateUpdated(Case.isCaseOpen()));
         initComponents();
         customizeComponents();
         addIngestJobEventsListener();
@@ -121,8 +130,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         "GlobalSettingsPanel.onMultiUserChange.enable.description2=The Central Repository stores hash values and accounts from past cases."
     })
     public static void onMultiUserChange(Component parent, boolean muPreviouslySelected, boolean muCurrentlySelected) {
+        CentralRepoDbManager manager = CentralRepoDbManager.getInstance();
         boolean crEnabled = CentralRepoDbUtil.allowUseOfCentralRepository();
-        boolean crMultiUser = CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
+        boolean crMultiUser = manager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
 
         if (!muPreviouslySelected && muCurrentlySelected) {
             SwingUtilities.invokeLater(() -> {
@@ -138,8 +148,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
                     // setup database for CR
                     CentralRepoDbUtil.setUseCentralRepo(true);
-                    CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.POSTGRESQL_MULTIUSER);
-                    checkStatusAndCreateDb(parent);
+                    manager.saveDbChoice(CentralRepoDbChoice.POSTGRESQL_MULTIUSER);
+                    checkStatusAndCreateDb(manager, parent);
                 }
             });
         } // moving from selected to not selected && 'PostgreSQL using multi-user settings' is selected
@@ -150,7 +160,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         } // changing multi-user settings connection && 'PostgreSQL using multi-user settings' is selected && 
         // central repo either enabled or was disabled due to error
         else if (muPreviouslySelected && muCurrentlySelected && crEnabled && crMultiUser) {
-            checkStatusAndCreateDb(parent);
+            checkStatusAndCreateDb(manager, parent);
         }
     }
     
@@ -160,9 +170,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * database if cr database is absent.
      * @param parent    the parent component to which the dialogs will be associated.
      */
-    private static void checkStatusAndCreateDb(Component parent) {
+    private static void checkStatusAndCreateDb(CentralRepoDbManager manager, Component parent) {
         SwingUtilities.invokeLater(() -> {
-            EamDbSettingsDialog.testStatusAndCreate(parent, new CentralRepoDbManager());
+            EamDbSettingsDialog.testStatusAndCreate(parent, manager);
         });
     }
 
@@ -210,8 +220,47 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             invokeCrChoice(parent, CentralRepoDbChoice.POSTGRESQL_CUSTOM);
         }
     }
+    
+    @NbBundle.Messages({
+        "GlobalSettingsPanel.testCurrentConfiguration.dbDoesNotExist.message=Database does not exist.",
+    })
+    private boolean testCurrentConfiguration() {
+        DatabaseTestResult testResult = manager.testStatus();
+        // if database doesn't exist, prompt user to create database
+        if (testResult == DatabaseTestResult.DB_DOES_NOT_EXIST) {
+            boolean success = EamDbSettingsDialog.promptCreateDatabase(manager, null);
+            if (success)
+                testResult = DatabaseTestResult.TESTED_OK;
+        }
+        
+        // display to the user the status
+        switch (testResult) {
+            case TESTED_OK: return showStatusOkay();
+            case DB_DOES_NOT_EXIST: return showStatusFail(Bundle.GlobalSettingsPanel_testCurrentConfiguration_dbDoesNotExist_message());
+            case SCHEMA_INVALID: return showStatusFail(Bundle.EamDbSettingsDialog_okButton_corruptDatabaseExists_message());
+            case CONNECTION_FAILED: 
+            default: 
+                return showStatusFail(Bundle.EamDbSettingsDialog_okButton_databaseConnectionFailed_message());
+        }
+    }
 
+    private boolean showStatusOkay() {
+        return setStatus(goodIcon, null);
+    }
+    
+    private boolean showStatusFail(String message) {
+        return setStatus(badIcon, message);
+    }
 
+    private void clearStatus() {
+        setStatus(null, null);
+    }
+    
+    private boolean setStatus(ImageIcon icon, String text) {
+        testStatusLabel.setIcon(icon);
+        testStatusLabel.setText(text);
+        return true;
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -577,15 +626,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private void cbUseCentralRepoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbUseCentralRepoActionPerformed
         //if saved setting is disabled checkbox should be disabled already 
         store();
-
-        // if moving to using CR, multi-user mode is disabled and selection is multiuser settings, set to disabled
-        if (cbUseCentralRepo.isSelected()
-                && !CentralRepoDbManager.isPostgresMultiuserAllowed()
-                && CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER) {
-
-            CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
-        }
-
         load();
         this.ingestStateUpdated(Case.isCaseOpen());
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
@@ -600,7 +640,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     public void load() {
         tbOops.setText("");
         enableButtonSubComponents(false);
-        CentralRepoDbChoice selectedChoice = CentralRepoDbManager.getSavedDbChoice();
+        CentralRepoDbChoice selectedChoice = manager.getSavedDbChoice();
         cbUseCentralRepo.setSelected(CentralRepoDbUtil.allowUseOfCentralRepository()); // NON-NLS
 
         lbDbPlatformValue.setText(selectedChoice.getTitle());

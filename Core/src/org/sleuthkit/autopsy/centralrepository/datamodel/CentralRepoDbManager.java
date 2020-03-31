@@ -39,12 +39,39 @@ public class CentralRepoDbManager {
     private static final String CENTRAL_REPO_DB_NAME = "central_repository";
     private static final String CENTRAL_REPOSITORY_SETTINGS_KEY = "CentralRepository";
     private static final String DB_SELECTED_PLATFORM_KEY = "db.selectedPlatform";
+    
+    private static CentralRepoDbManager instance = null;
+    
+    public static CentralRepoDbManager getInstance() {
+        if (instance == null)
+            instance = new CentralRepoDbManager();
+        
+        return instance;
+    }
 
-    private static volatile CentralRepoDbChoice savedChoice = null;
     
-    private static final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(CentralRepoDbManager.class);
+    // The currently saved db choice.
+    private volatile CentralRepoDbChoice savedChoice = null;
+    private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(CentralRepoDbManager.class);
+    private final Object dbChoiceLock = new Object();
     
-    private static final Object dbChoiceLock = new Object();
+    // The currently selected (but not necessarily saved) central repo db choice.
+    private CentralRepoDbChoice selectedDbChoice;
+    
+    private boolean configurationChanged = false;
+    private DatabaseTestResult testingStatus;
+
+    private final PostgresCentralRepoSettings dbSettingsPostgres;
+    private final PostgresCentralRepoSettings dbSettingsMultiUser;
+    private final SqliteCentralRepoSettings dbSettingsSqlite;
+
+    private CentralRepoDbManager() {
+        selectedDbChoice = getSavedDbChoice();
+        dbSettingsPostgres = new PostgresCentralRepoSettings(PostgresSettingsLoader.CUSTOM_SETTINGS_LOADER);
+        dbSettingsMultiUser = new PostgresCentralRepoSettings(PostgresSettingsLoader.MULTIUSER_SETTINGS_LOADER);
+        dbSettingsSqlite = new SqliteCentralRepoSettings();
+    }
+    
     
     
     
@@ -54,7 +81,7 @@ public class CentralRepoDbManager {
      * @param clearDisabledDueToError   Whether or not to clear the 'disabledDueToFailure' settings key.
      * @return              The newly saved choice.
      */
-    public static CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice) {
+    public CentralRepoDbChoice saveDbChoice(CentralRepoDbChoice choice) {
         synchronized(dbChoiceLock) {
             // change the settings
             CentralRepoDbChoice newChoice = (choice == null) ? CentralRepoDbChoice.DISABLED : choice;
@@ -71,7 +98,7 @@ public class CentralRepoDbManager {
      * This method indicates whether or not 'PostgreSQL using multi-user settings' is a valid option.
      * @return  True if 'PostgreSQL using multi-user settings' is valid.
      */
-    public static boolean isPostgresMultiuserAllowed() {
+    public boolean isPostgresMultiuserAllowed() {
         // if multi user mode is not enabled, then this cannot be used
         if (!UserPreferences.getIsMultiUserModeEnabled())
             return false;
@@ -87,7 +114,7 @@ public class CentralRepoDbManager {
     /**
      * This method loads the selectedPlatform boolean from the config file if it is set.
      */
-    public static CentralRepoDbChoice getSavedDbChoice() {
+    public CentralRepoDbChoice getSavedDbChoice() {
         synchronized(dbChoiceLock) {
             if (savedChoice == null) {
                 String selectedPlatformString = ModuleSettings.getConfigSetting(CENTRAL_REPOSITORY_SETTINGS_KEY, DB_SELECTED_PLATFORM_KEY); // NON-NLS
@@ -105,7 +132,7 @@ public class CentralRepoDbManager {
      * 
      * @param listener      The listener for the event.
      */
-    public static void addPropertyChangeListener(PropertyChangeListener listener) {
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
          propertyChangeSupport.addPropertyChangeListener(listener);
      }
 
@@ -113,13 +140,13 @@ public class CentralRepoDbManager {
      * This method removes a propert change listener.
      * @param listener  The listener to remove.
      */
-     public static void removePropertyChangeListener(PropertyChangeListener listener) {
+     public void removePropertyChangeListener(PropertyChangeListener listener) {
          propertyChangeSupport.removePropertyChangeListener(listener);
      }
 
 
 
-    private static CentralRepoDbChoice fromKey(String keyName) {
+    private CentralRepoDbChoice fromKey(String keyName) {
         for (CentralRepoDbChoice dbChoice : CentralRepoDbChoice.values()) {
             if (dbChoice.getSettingKey().equalsIgnoreCase(keyName)) {
                 return dbChoice;
@@ -137,7 +164,7 @@ public class CentralRepoDbManager {
      * @return The CentralRepository object that will be used for connection.
      * @throws CentralRepoException
      */
-    private static CentralRepository obtainCentralRepository() throws CentralRepoException {
+    private CentralRepository obtainCentralRepository() throws CentralRepoException {
         //get connection
         try {
             return CentralRepository.getInstance();
@@ -158,7 +185,7 @@ public class CentralRepoDbManager {
      * @return      The lock if acquired.
      * @throws CentralRepoException
      */
-    private static CoordinationService.Lock obtainCentralRepoLock(CentralRepository db) throws CentralRepoException {
+    private CoordinationService.Lock obtainCentralRepoLock(CentralRepository db) throws CentralRepoException {
         try {
             // This may return null if locking isn't supported, which is fine. It will
             // throw an exception if locking is supported but we can't get the lock
@@ -182,7 +209,7 @@ public class CentralRepoDbManager {
      * @param lock  The acquired lock.
      * @throws CentralRepoException
      */
-    private static void updatedDbSchema(CentralRepository db, CoordinationService.Lock lock) throws CentralRepoException {
+    private void updatedDbSchema(CentralRepository db, CoordinationService.Lock lock) throws CentralRepoException {
         try {
             db.upgradeSchema();
         } catch (CentralRepoException ex) {
@@ -213,7 +240,7 @@ public class CentralRepoDbManager {
      * settings will be cleared.
      */
     @NbBundle.Messages(value = {"EamDbUtil.centralRepoDisabled.message= The Central Repository has been disabled.", "EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade Central Repository.", "EamDbUtil.centralRepoConnectionFailed.message=Unable to connect to Central Repository.", "EamDbUtil.exclusiveLockAquisitionFailure.message=Unable to acquire exclusive lock for Central Repository."})
-    public static void upgradeDatabase() throws CentralRepoException {
+    public void upgradeDatabase() throws CentralRepoException {
         if (!CentralRepository.isEnabled()) {
             return;
         }
@@ -230,7 +257,7 @@ public class CentralRepoDbManager {
         }
     }
 
-    private static void onUpgradeError(String message, String desc, Exception innerException) throws CentralRepoException {
+    private void onUpgradeError(String message, String desc, Exception innerException) throws CentralRepoException {
         // Disable the central repo and clear the current settings.
         try {
             if (null != CentralRepository.getInstance()) {
@@ -249,21 +276,6 @@ public class CentralRepoDbManager {
 
 
 
-    private DatabaseTestResult testingStatus;
-    private CentralRepoDbChoice selectedDbChoice;
-
-    private final PostgresCentralRepoSettings dbSettingsPostgres;
-    private final PostgresCentralRepoSettings dbSettingsMultiUser;
-    private final SqliteCentralRepoSettings dbSettingsSqlite;
-
-    private boolean configurationChanged = false;
-
-    public CentralRepoDbManager() {
-        selectedDbChoice = getSavedDbChoice();
-        dbSettingsPostgres = new PostgresCentralRepoSettings(PostgresSettingsLoader.CUSTOM_SETTINGS_LOADER);
-        dbSettingsMultiUser = new PostgresCentralRepoSettings(PostgresSettingsLoader.MULTIUSER_SETTINGS_LOADER);
-        dbSettingsSqlite = new SqliteCentralRepoSettings();
-    }
 
     
     /**
