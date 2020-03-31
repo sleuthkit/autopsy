@@ -63,7 +63,7 @@ public final class Track extends GeoPath{
         super(artifact, getTrackName(attributeMap));
 
         GeoTrackPointList points = getPointsList(attributeMap);
-        buildPath(points);
+        buildPath(points, artifact);
 
         startTimestamp = points.getStartTime();
         endTimeStamp = points.getEndTime();
@@ -108,15 +108,18 @@ public final class Track extends GeoPath{
      * 
      * @param points List of GeoTrackPoints
      * 
+     * @param artifact The artifact to which these points belong
+     * 
      * @throws GeoLocationDataException 
      */
     @Messages({
         "# {0} - track name",
         "GEOTrack_point_label_header=Trackpoint for track: {0}"
     })
-    private void buildPath(GeoTrackPointList points) throws GeoLocationDataException {
+    private void buildPath(GeoTrackPointList points, BlackboardArtifact artifact)
+            throws GeoLocationDataException {
         for(GeoTrackPoint point: points) {
-            addToPath(new TrackWaypoint(Bundle.GEOTrack_point_label_header(getLabel()), point));
+            addToPath(new TrackWaypoint(artifact, Bundle.GEOTrack_point_label_header(getLabel()), point));
         }
     }
 
@@ -147,12 +150,16 @@ public final class Track extends GeoPath{
         /**
          * Construct a TrackWaypoint.
          * 
+         * @param artifact the artifact to which this waypoint belongs
+         * 
+         * @param pointLabel the label for the waypoint
+         * 
          * @param point GeoTrackPoint 
          * 
          * @throws GeoLocationDataException 
          */
-        TrackWaypoint(String pointLabel, GeoTrackPoint point) throws GeoLocationDataException {
-            super(null, pointLabel,
+        TrackWaypoint(BlackboardArtifact artifact, String pointLabel, GeoTrackPoint point) throws GeoLocationDataException {
+            super(artifact, pointLabel,
                     point.getTimeStamp(),
                     point.getLatitude(),
                     point.getLongitude(),
