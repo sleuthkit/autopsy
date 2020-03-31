@@ -164,8 +164,8 @@ class GeoFilterPanel extends javax.swing.JPanel {
      * @throws GeoLocationUIException
      */
     @Messages({
-        "GeoFilterPanel_empty_dataSource=Data Source list is empty.",
-        "GeoFilterPanel_empty_artifactType=Type list is empty."
+        "GeoFilterPanel_empty_dataSource=Unable to apply filter, please select one or more data sources.",
+        "GeoFilterPanel_empty_artifactType=Unable to apply filter, please select one or more artifact types."
     })
     GeoFilter getFilterState() throws GeoLocationUIException {
         List<DataSource> dataSources = dsCheckboxPanel.getSelectedElements();
