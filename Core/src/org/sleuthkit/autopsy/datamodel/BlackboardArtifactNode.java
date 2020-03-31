@@ -75,6 +75,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
@@ -270,7 +271,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param artifact The artifact to represent.
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
-        this(artifact, ExtractedContent.getIconFilePath(artifact.getArtifactTypeID()));
+        this(artifact, IconsUtil.getIconFilePath(artifact.getArtifactTypeID()));
     }
 
     /**

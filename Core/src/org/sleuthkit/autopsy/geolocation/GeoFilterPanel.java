@@ -22,17 +22,22 @@ import java.awt.GridBagConstraints;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.util.Pair;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -49,24 +54,27 @@ class GeoFilterPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(GeoFilterPanel.class.getName());
 
     private final SpinnerNumberModel numberModel;
-    private final CheckBoxListPanel<DataSource> checkboxPanel;
+    private final CheckBoxListPanel<DataSource> dsCheckboxPanel;
+    private final CheckBoxListPanel<ARTIFACT_TYPE> atCheckboxPanel;
 
-    // Make sure to update if 
+    // Make sure to update if other GPS artifacts are added
     @SuppressWarnings("deprecation")
-    private static final BlackboardArtifact.ARTIFACT_TYPE[] GPS_ARTIFACT_TYPES = {
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK,
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION,
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE,
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH,
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK,
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT
+    private static final ARTIFACT_TYPE[] GPS_ARTIFACT_TYPES = {
+        ARTIFACT_TYPE.TSK_GPS_BOOKMARK,
+        ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION,
+        ARTIFACT_TYPE.TSK_GPS_ROUTE,
+        ARTIFACT_TYPE.TSK_GPS_SEARCH,
+        ARTIFACT_TYPE.TSK_GPS_TRACK,
+        ARTIFACT_TYPE.TSK_GPS_TRACKPOINT,
+        ARTIFACT_TYPE.TSK_METADATA_EXIF
     };
 
     /**
      * Creates new GeoFilterPanel
      */
     @Messages({
-        "GeoFilterPanel_DataSource_List_Title=Data Sources"
+        "GeoFilterPanel_DataSource_List_Title=Data Sources",
+        "GeoFilterPanel_ArtifactType_List_Title=Types"
     })
     GeoFilterPanel() {
         // numberModel is used in initComponents
@@ -76,10 +84,15 @@ class GeoFilterPanel extends javax.swing.JPanel {
 
         // The gui builder cannot handle using CheckBoxListPanel due to its
         // use of generics so we will initalize it here.
-        checkboxPanel = new CheckBoxListPanel<>();
-        checkboxPanel.setPanelTitle(Bundle.GeoFilterPanel_DataSource_List_Title());
-        checkboxPanel.setPanelTitleIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/image.png")));
-        checkboxPanel.setSetAllSelected(true);
+        dsCheckboxPanel = new CheckBoxListPanel<>();
+        dsCheckboxPanel.setPanelTitle(Bundle.GeoFilterPanel_DataSource_List_Title());
+        dsCheckboxPanel.setPanelTitleIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/image.png")));
+        dsCheckboxPanel.setSetAllSelected(true);
+
+        atCheckboxPanel = new CheckBoxListPanel<>();
+        atCheckboxPanel.setPanelTitle(Bundle.GeoFilterPanel_ArtifactType_List_Title());
+        atCheckboxPanel.setPanelTitleIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/extracted_content.png")));
+        atCheckboxPanel.setSetAllSelected(true);
 
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -89,7 +102,17 @@ class GeoFilterPanel extends javax.swing.JPanel {
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(0, 15, 0, 15);
-        add(checkboxPanel, gridBagConstraints);
+        add(dsCheckboxPanel, gridBagConstraints);
+
+        gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 15, 0, 15);
+        add(atCheckboxPanel, gridBagConstraints);
     }
 
     @Override
@@ -98,7 +121,8 @@ class GeoFilterPanel extends javax.swing.JPanel {
         mostRecentButton.setEnabled(enabled);
         allButton.setEnabled(enabled);
         showWaypointsWOTSCheckBox.setEnabled(enabled && mostRecentButton.isSelected());
-        checkboxPanel.setEnabled(enabled);
+        dsCheckboxPanel.setEnabled(enabled);
+        atCheckboxPanel.setEnabled(enabled);
         daysLabel.setEnabled(enabled);
         daysSpinner.setEnabled(enabled);
     }
@@ -115,11 +139,12 @@ class GeoFilterPanel extends javax.swing.JPanel {
      * Clears the data source list.
      */
     void clearDataSourceList() {
-        checkboxPanel.clearList();
+        dsCheckboxPanel.clearList();
+        atCheckboxPanel.clearList();
     }
 
     boolean hasDataSources() {
-        return !checkboxPanel.isEmpty();
+        return !dsCheckboxPanel.isEmpty();
     }
 
     /**
@@ -139,18 +164,24 @@ class GeoFilterPanel extends javax.swing.JPanel {
      * @throws GeoLocationUIException
      */
     @Messages({
-        "GeoFilterPanel_empty_dataSource=Data Source list is empty."
+        "GeoFilterPanel_empty_dataSource=Unable to apply filter, please select one or more data sources.",
+        "GeoFilterPanel_empty_artifactType=Unable to apply filter, please select one or more artifact types."
     })
     GeoFilter getFilterState() throws GeoLocationUIException {
-        List<DataSource> dataSources = checkboxPanel.getSelectedElements();
-
+        List<DataSource> dataSources = dsCheckboxPanel.getSelectedElements();
         if (dataSources.isEmpty()) {
             throw new GeoLocationUIException(Bundle.GeoFilterPanel_empty_dataSource());
+        }
+
+        List<ARTIFACT_TYPE> artifactTypes = atCheckboxPanel.getSelectedElements();
+        if (artifactTypes.isEmpty()) {
+            throw new GeoLocationUIException(Bundle.GeoFilterPanel_empty_artifactType());
         }
         return new GeoFilter(allButton.isSelected(),
                 showWaypointsWOTSCheckBox.isSelected(),
                 numberModel.getNumber().intValue(),
-                dataSources);
+                dataSources,
+                artifactTypes);
     }
 
     /**
@@ -180,6 +211,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         showWaypointsWOTSCheckBox = new javax.swing.JCheckBox();
         daysSpinner = new javax.swing.JSpinner(numberModel);
         daysLabel = new javax.swing.JLabel();
+        showLabel = new javax.swing.JLabel();
         javax.swing.JPanel buttonPanel = new javax.swing.JPanel();
         applyButton = new javax.swing.JButton();
         javax.swing.JLabel optionsLabel = new javax.swing.JLabel();
@@ -199,7 +231,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridy = 1;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
@@ -214,39 +246,45 @@ class GeoFilterPanel extends javax.swing.JPanel {
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
         waypointSettings.add(mostRecentButton, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(showWaypointsWOTSCheckBox, org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.showWaypointsWOTSCheckBox.text")); // NOI18N
         showWaypointsWOTSCheckBox.setEnabled(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridy = 3;
         gridBagConstraints.gridwidth = 3;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 30, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(0, -20, 0, 5);
         waypointSettings.add(showWaypointsWOTSCheckBox, gridBagConstraints);
 
         daysSpinner.setEnabled(false);
         daysSpinner.setPreferredSize(new java.awt.Dimension(75, 26));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
         waypointSettings.add(daysSpinner, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(daysLabel, org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.daysLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(9, 5, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 5);
         waypointSettings.add(daysLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(showLabel, org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.showLabel.text")); // NOI18N
+        showLabel.setToolTipText(org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.showLabel.toolTipText")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
+        waypointSettings.add(showLabel, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -300,6 +338,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
     private javax.swing.JLabel daysLabel;
     private javax.swing.JSpinner daysSpinner;
     private javax.swing.JRadioButton mostRecentButton;
+    private javax.swing.JLabel showLabel;
     private javax.swing.JCheckBox showWaypointsWOTSCheckBox;
     // End of variables declaration//GEN-END:variables
 
@@ -312,6 +351,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         private final boolean showWithoutTimeStamp;
         private final int mostRecentNumDays;
         private final List<DataSource> dataSources;
+        private final List<ARTIFACT_TYPE> artifactTypes;
 
         /**
          * Construct a Geolocation filter. showAll and mostRecentNumDays are
@@ -332,12 +372,17 @@ class GeoFilterPanel extends javax.swing.JPanel {
          *                          showAll is true.
          * @param dataSources       A list of dataSources to filter waypoint
          *                          for.
+         * @param artifactTypes     A list of artifactTypes to filter waypoint
+         *                          for.
          */
-        GeoFilter(boolean showAll, boolean withoutTimeStamp, int mostRecentNumDays, List<DataSource> dataSources) {
+        GeoFilter(boolean showAll, boolean withoutTimeStamp,
+                  int mostRecentNumDays, List<DataSource> dataSources,
+                  List<ARTIFACT_TYPE> artifactTypes) {
             this.showAll = showAll;
             this.showWithoutTimeStamp = withoutTimeStamp;
             this.mostRecentNumDays = mostRecentNumDays;
             this.dataSources = dataSources;
+            this.artifactTypes = artifactTypes;
         }
 
         /**
@@ -380,6 +425,31 @@ class GeoFilterPanel extends javax.swing.JPanel {
         List<DataSource> getDataSources() {
             return Collections.unmodifiableList(dataSources);
         }
+
+        /**
+         * Returns a list of artifact types to filter the waypoints by, or null
+         * if all types should be include.
+         *
+         * @return A list of artifactTypes or null if all artifactTypes should
+         * be included.
+         */
+        List<ARTIFACT_TYPE> getArtifactTypes() {
+            return Collections.unmodifiableList(artifactTypes);
+        }
+    }
+
+    /**
+     * Container for data sources and artifact types to be given as filter options
+     */
+    final private class Sources {
+        final List<Pair<String, DataSource>> dataSources;
+        final Map<ARTIFACT_TYPE, Long> artifactTypes;
+
+        private Sources(List<Pair<String, DataSource>> dataSources,
+                        Map<ARTIFACT_TYPE, Long> artifactTypes) {
+            this.dataSources = dataSources;
+            this.artifactTypes = artifactTypes;
+        }
     }
 
     /**
@@ -388,25 +458,32 @@ class GeoFilterPanel extends javax.swing.JPanel {
      * doInBackground creates a list of Pair objects that contain the 
      * display name of the data source and the data source object. 
      */
-    final private class DataSourceUpdater extends SwingWorker<List<Pair<String, DataSource>>, Void> {
+    final private class DataSourceUpdater extends SwingWorker<Sources, Void> {
 
         @Override
-        protected List<Pair<String, DataSource>> doInBackground() throws Exception {
+        protected Sources doInBackground() throws Exception {
             SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
             List<Pair<String, DataSource>> validSources = new ArrayList<>();
+            HashMap<ARTIFACT_TYPE, Long> atCountsTotal = new HashMap<>();
+
             for (DataSource dataSource : sleuthkitCase.getDataSources()) {
-                if (isGPSDataSource(sleuthkitCase, dataSource)) {
+                Map<ARTIFACT_TYPE, Long> atCounts = getGPSDataSources(sleuthkitCase, dataSource);
+                if (!atCounts.isEmpty()) {
+                    for (Map.Entry<ARTIFACT_TYPE, Long> entry : atCounts.entrySet()) {
+                        atCountsTotal.putIfAbsent(entry.getKey(), 0L);
+                        atCountsTotal.put(entry.getKey(), atCountsTotal.get(entry.getKey()) + entry.getValue());
+                    }
                     String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
                     Pair<String, DataSource> pair = new Pair<>(dsName, dataSource);
                     validSources.add(pair);
                 }
             }
-
-            return validSources;
+            return new Sources(validSources, atCountsTotal);
         }
 
         /**
-         * Returns whether or not the given data source has GPS artifacts.
+         * Returns a Map representing the number of sources found for each
+         * artifact type. If no data was found, an empty map is returned.
          * 
          * @param sleuthkitCase The current sleuthkitCase
          * @param dataSource 
@@ -415,19 +492,20 @@ class GeoFilterPanel extends javax.swing.JPanel {
          * 
          * @throws TskCoreException 
          */
-        private boolean isGPSDataSource(SleuthkitCase sleuthkitCase, DataSource dataSource) throws TskCoreException {
+        private Map<ARTIFACT_TYPE, Long> getGPSDataSources(SleuthkitCase sleuthkitCase, DataSource dataSource) throws TskCoreException {
+            HashMap<ARTIFACT_TYPE, Long> ret = new HashMap<>();
             for (BlackboardArtifact.ARTIFACT_TYPE type : GPS_ARTIFACT_TYPES) {
-                if (sleuthkitCase.getBlackboardArtifactsTypeCount(type.getTypeID(), dataSource.getId()) > 0) {
-                    return true;
+                long count = sleuthkitCase.getBlackboardArtifactsTypeCount(type.getTypeID(), dataSource.getId());
+                if (count > 0) {
+                    ret.put(type, count);
                 }
             }
-
-            return false;
+            return ret;
         }
 
         @Override
         public void done() {
-            List<Pair<String, DataSource>> sources = null;
+            Sources sources = null;
             try {
                 sources = get();
             } catch (InterruptedException | ExecutionException ex) {
@@ -440,8 +518,14 @@ class GeoFilterPanel extends javax.swing.JPanel {
             }
 
             if (sources != null) {
-                for (Pair<String, DataSource> source : sources) {
-                    checkboxPanel.addElement(source.getKey(), source.getValue());
+                for (Pair<String, DataSource> source : sources.dataSources) {
+                    dsCheckboxPanel.addElement(source.getKey(), null, source.getValue());
+                }
+                for (Map.Entry<ARTIFACT_TYPE, Long> entry : sources.artifactTypes.entrySet()) {
+                    String dispName = entry.getKey().getDisplayName() + " (" + entry.getValue() + ")";
+                    String iconPath = IconsUtil.getIconFilePath(entry.getKey().getTypeID());
+                    Icon icon = new ImageIcon(getClass().getResource(iconPath));
+                    atCheckboxPanel.addElement(dispName, icon, entry.getKey());
                 }
             }
 
