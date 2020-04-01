@@ -158,11 +158,11 @@ public class EamDbSettingsDialog extends JDialog {
      * @param dialog    If non-null value, validates settings and updates 'okay' button enabled state.
      * @return          Whether or not the ultimate status after prompts is okay to continue.
      */
-    @NbBundle.Messages({"EamDbSettingsDialog.okButton.corruptDatabaseExists.title=Error Loading Database",
+    @NbBundle.Messages({"EamDbSettingsDialog.okButton.corruptDatabaseExists.title=Error Loading Central Repository Database",
         "EamDbSettingsDialog.okButton.corruptDatabaseExists.message=Database exists but is not the right format. Manually delete it or choose a different path (if applicable).",
-        "EamDbSettingsDialog.okButton.createDbDialog.title=Database Does Not Exist",
+        "EamDbSettingsDialog.okButton.createDbDialog.title=Central Repository Database Does Not Exist",
         "EamDbSettingsDialog.okButton.createDbDialog.message=Database does not exist, would you like to create it?",
-        "EamDbSettingsDialog.okButton.databaseConnectionFailed.title=Database Connection Failed",
+        "EamDbSettingsDialog.okButton.databaseConnectionFailed.title=Central Repository Database Connection Failed",
         "EamDbSettingsDialog.okButton.databaseConnectionFailed.message=Unable to connect to database. Please check your settings and try again.",
         "EamDbSettingsDialog.okButton.createSQLiteDbError.message=Unable to create SQLite Database, please ensure location exists and you have write permissions and try again.",
         "EamDbSettingsDialog.okButton.createPostgresDbError.message=Unable to create Postgres Database, please ensure address, port, and login credentials are correct for Postgres server and try again.",
