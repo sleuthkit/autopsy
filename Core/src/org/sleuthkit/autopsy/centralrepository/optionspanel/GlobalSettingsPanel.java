@@ -615,7 +615,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private void bnDbConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDbConfigureActionPerformed
         store();
-        invokeCrChoice(this, null);
+        boolean changed = invokeCrChoice(this, null);
+        if (changed) {
+            load(); // reload db settings content and update buttons
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
     }//GEN-LAST:event_bnDbConfigureActionPerformed
 
     private void manageOrganizationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manageOrganizationButtonActionPerformed
