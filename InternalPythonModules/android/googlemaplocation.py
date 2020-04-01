@@ -111,7 +111,6 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                 time = Long.valueOf(resultSet.getString("time")) / 1000
                 dest_title = resultSet.getString("dest_title")
                 dest_address = resultSet.getString("dest_address")
-                
 
                 dest_lat = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("dest_lat"))
                 dest_lng = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("dest_lng"))
