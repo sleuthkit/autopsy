@@ -67,7 +67,7 @@
                           <Group type="102" attributes="0">
                               <Component id="cbUseCentralRepo" min="-2" pref="162" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="ingestRunningWarningLabel" pref="844" max="32767" attributes="0"/>
+                              <Component id="ingestRunningWarningLabel" max="32767" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
@@ -146,18 +146,18 @@
                                   </Group>
                                   <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="1" attributes="0">
-                                      <Component id="lbDbNameValue" alignment="0" pref="936" max="32767" attributes="0"/>
+                                      <Component id="lbDbNameValue" alignment="0" max="32767" attributes="0"/>
                                       <Component id="lbDbPlatformValue" max="32767" attributes="0"/>
                                       <Component id="lbDbLocationValue" alignment="0" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                               <Group type="102" attributes="0">
                                   <Component id="bnDbConfigure" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
                                   <Component id="bnTestConfigure" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                  <Component id="testStatusLabel" pref="836" max="32767" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="testStatusLabel" min="-2" pref="805" max="-2" attributes="0"/>
+                                  <EmptySpace pref="19" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                       </Group>
@@ -185,7 +185,7 @@
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="bnDbConfigure" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="bnTestConfigure" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="testStatusLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="testStatusLabel" alignment="3" min="-2" pref="32" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
                       </Group>

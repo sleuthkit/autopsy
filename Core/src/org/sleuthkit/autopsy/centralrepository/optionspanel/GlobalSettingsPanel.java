@@ -74,7 +74,14 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         manager = CentralRepoDbManager.getInstance();
         
         // listen for change events in currently saved choice
-        manager.addPropertyChangeListener((PropertyChangeEvent evt) -> ingestStateUpdated(Case.isCaseOpen()));
+        manager.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            //ingestStateUpdated(Case.isCaseOpen());
+            
+            load(); // reload db settings content and update buttons
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            clearStatus();
+        });
+        
         initComponents();
         customizeComponents();
         addIngestJobEventsListener();
@@ -104,11 +111,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      *
      * @return True if there was a change.
      */
-    private static boolean invokeCrChoice(Component parent, CentralRepoDbChoice initialSelection) {
+    private static void invokeCrChoice(Component parent, CentralRepoDbChoice initialSelection) {
         EamDbSettingsDialog dialog = (initialSelection != null)
-                ? new EamDbSettingsDialog(initialSelection)
-                : new EamDbSettingsDialog();
-        return dialog.wasConfigurationChanged();
+            ? new EamDbSettingsDialog(initialSelection)
+            : new EamDbSettingsDialog();
     }
 
     /**
@@ -257,9 +263,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }
     
     private boolean setStatus(ImageIcon icon, String text) {
-        testStatusLabel.setIcon(icon);
-        testStatusLabel.setText(text);
-        return true;
+        synchronized (testStatusLabel) {
+            testStatusLabel.setIcon(icon);
+            testStatusLabel.setText(text);
+            return true;   
+        }
     }
 
     /**
@@ -358,16 +366,16 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                             .addComponent(lbDbLocationLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(lbDbNameValue, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 936, Short.MAX_VALUE)
+                            .addComponent(lbDbNameValue, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lbDbPlatformValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lbDbLocationValue, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
                         .addComponent(bnDbConfigure)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(18, 18, 18)
                         .addComponent(bnTestConfigure)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(testStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 836, Short.MAX_VALUE)
-                        .addContainerGap())))
+                        .addGap(18, 18, 18)
+                        .addComponent(testStatusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 805, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(19, Short.MAX_VALUE))))
         );
         pnDatabaseConfigurationLayout.setVerticalGroup(
             pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -388,7 +396,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(bnDbConfigure)
                     .addComponent(bnTestConfigure)
-                    .addComponent(testStatusLabel))
+                    .addComponent(testStatusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(8, 8, 8))
         );
 
@@ -555,7 +563,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(cbUseCentralRepo, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(ingestRunningWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 844, Short.MAX_VALUE))
+                        .addComponent(ingestRunningWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, 974, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -606,11 +614,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private void bnDbConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDbConfigureActionPerformed
         store();
-        boolean changed = invokeCrChoice(this, null);
-        if (changed) {
-            load(); // reload db settings content and update buttons
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-        }
+        invokeCrChoice(this, null);
     }//GEN-LAST:event_bnDbConfigureActionPerformed
 
     private void manageOrganizationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manageOrganizationButtonActionPerformed

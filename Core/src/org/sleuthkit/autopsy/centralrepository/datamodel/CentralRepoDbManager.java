@@ -50,15 +50,14 @@ public class CentralRepoDbManager {
     }
 
     
-    // The currently saved db choice.
-    private volatile CentralRepoDbChoice savedChoice = null;
     private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(CentralRepoDbManager.class);
     private final Object dbChoiceLock = new Object();
     
+    // The currently saved db choice.
+    private volatile CentralRepoDbChoice savedChoice = null;
+    
     // The currently selected (but not necessarily saved) central repo db choice.
     private CentralRepoDbChoice selectedDbChoice;
-    
-    private boolean configurationChanged = false;
     private DatabaseTestResult testingStatus;
 
     private final PostgresCentralRepoSettings dbSettingsPostgres;
@@ -328,30 +327,28 @@ public class CentralRepoDbManager {
         saveNewCentralRepo();
     }
 
-    /**
-     * This method returns if changes to the central repository configuration were
-     * successfully applied.
-     *
-     * @return  Returns true if the database configuration was successfully changed false
-     * if it was not.
-     */
-    public boolean wasConfigurationChanged() {
-        return configurationChanged;
+    private CentralRepoDbConnectivityManager getSelectedSettings() throws CentralRepoException {
+        return getSettings(getSelectedDbChoice());
     }
 
-    private CentralRepoDbConnectivityManager getSelectedSettings() throws CentralRepoException {
-        if (selectedDbChoice == CentralRepoDbChoice.POSTGRESQL_MULTIUSER)
+    private CentralRepoDbConnectivityManager getSavedSettings() throws CentralRepoException {
+        return getSettings(getSavedDbChoice());
+    }
+    
+    private CentralRepoDbConnectivityManager getSettings(CentralRepoDbChoice dbChoice) throws CentralRepoException {
+        if (dbChoice == CentralRepoDbChoice.POSTGRESQL_MULTIUSER)
             return dbSettingsMultiUser;
-        if (selectedDbChoice == CentralRepoDbChoice.POSTGRESQL_CUSTOM)
+        if (dbChoice == CentralRepoDbChoice.POSTGRESQL_CUSTOM)
             return dbSettingsPostgres;
-        if (selectedDbChoice == CentralRepoDbChoice.SQLITE)
+        if (dbChoice == CentralRepoDbChoice.SQLITE)
             return dbSettingsSqlite;
-        if (selectedDbChoice == CentralRepoDbChoice.DISABLED)
+        if (dbChoice == CentralRepoDbChoice.DISABLED)
             return null;
         
-            throw new CentralRepoException("Unknown database type: " + selectedDbChoice);
+            throw new CentralRepoException("Unknown database type: " + dbChoice);
     }
-
+    
+    
     private RdbmsCentralRepoFactory getDbFactory() throws CentralRepoException {
         if (selectedDbChoice == CentralRepoDbChoice.POSTGRESQL_MULTIUSER)
             return new RdbmsCentralRepoFactory(CentralRepoPlatforms.POSTGRESQL, dbSettingsMultiUser);
@@ -408,7 +405,7 @@ public class CentralRepoDbManager {
     }
 
     /**
-     * This method saves a new central repository based on current settings.
+     * This method saves a new central repository based on current selected settings.
      */
     @NbBundle.Messages({"CentralRepoDbManager.connectionErrorMsg.text=Failed to connect to central repository database."})
     public void saveNewCentralRepo() throws CentralRepoException {
@@ -447,7 +444,6 @@ public class CentralRepoDbManager {
             try {
                 logger.info("Saving central repo settings for db: " + selectedDbSettings);
                 CentralRepository.getInstance().updateSettings();
-                configurationChanged = true;
             } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, Bundle.CentralRepoDbManager_connectionErrorMsg_text(), ex); //NON-NLS
                 return;
@@ -479,6 +475,14 @@ public class CentralRepoDbManager {
     public void clearStatus() {
         testingStatus = DatabaseTestResult.UNTESTED;
     }
+    
+    /**
+     * Resets selected db choice to currently saved choice.
+     */
+    public void resetSelectedDbChoice() {
+        setSelctedDbChoice(getSavedDbChoice());
+    }
+
 
     /**
      * This method sets the currently selected database choice and sets the testing status to untested.
@@ -518,18 +522,37 @@ public class CentralRepoDbManager {
     }
 
     /**
-     * This method tests the current database settings to see if a valid connection can be made.
+     * This method tests the current selected (not necessarily saved) database settings to see if a valid connection can be made.
      * @return      The result of testing the connection.
      */
     public DatabaseTestResult testStatus() {
+        CentralRepoDbConnectivityManager manager = null;
         try {
-            CentralRepoDbConnectivityManager manager = getSelectedSettings();
-            if (manager != null)
-                testingStatus = manager.testStatus();
+            manager = getSelectedSettings();
         }
         catch (CentralRepoException e) {
             logger.log(Level.WARNING, "unable to test status of db connection in central repo", e);
         }
+        
+        return testStatus(manager);
+    }
+    
+    
+    public DatabaseTestResult testSavedStatus() {
+        CentralRepoDbConnectivityManager manager = null;
+        try {
+            manager = getSavedSettings();
+        }
+        catch (CentralRepoException e) {
+            logger.log(Level.WARNING, "unable to test status of db connection in central repo", e);
+        }
+        
+        return testStatus(manager);        
+    }
+    
+    private DatabaseTestResult testStatus(CentralRepoDbConnectivityManager manager) {
+        if (manager != null)
+            testingStatus = manager.testStatus();
         
         return testingStatus;
     }
