@@ -40,7 +40,7 @@ import javax.swing.SwingUtilities;
  * Originally written by Rob Camick
  * https://tips4java.wordpress.com/2008/11/06/wrap-layout/
  */
-public class WrapLayout implements LayoutManager, java.io.Serializable {
+class WrapLayout implements LayoutManager, java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -56,7 +56,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * @see #getHgap()
      * @see #setHgap(int)
      */
-    int hgap;
+    private int hgap;
 
     /**
      * The flow layout manager allows a seperation of
@@ -68,7 +68,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * @see #getHgap()
      * @see #setHgap(int)
      */
-    int vgap;
+    private int vgap;
 
     /**
      * If true, components will be aligned on their baseline.
@@ -85,19 +85,19 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * Constructs a new <code>WrapLayout</code> with a left alignment and a
      * default 5-unit horizontal and vertical gap.
      */
-    public WrapLayout() {
+    WrapLayout() {
         super();
     }
 
     
-    public void setOppositeAligned(Collection<Component> rightAlignedComponents) {
+    void setOppositeAligned(Collection<Component> rightAlignedComponents) {
         synchronized (this.oppositeAlignedItems) {
             this.oppositeAlignedItems.clear();
             this.oppositeAlignedItems.addAll(rightAlignedComponents);
         }
     }
 
-    public Set<Component> getOppositeAlignedItems() {
+    Set<Component> getOppositeAlignedItems() {
         return oppositeAlignedItems;
     }
     
@@ -113,7 +113,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * @see        java.awt.FlowLayout#setHgap
      * @since      JDK1.1
      */
-    public int getHgap() {
+    int getHgap() {
         return hgap;
     }
 
@@ -128,7 +128,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * @see        java.awt.FlowLayout#getHgap
      * @since      JDK1.1
      */
-    public void setHgap(int hgap) {
+    void setHgap(int hgap) {
         this.hgap = hgap;
     }
 
@@ -143,7 +143,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * @see        java.awt.FlowLayout#setVgap
      * @since      JDK1.1
      */
-    public int getVgap() {
+    int getVgap() {
         return vgap;
     }
 
@@ -157,7 +157,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * @see        java.awt.FlowLayout#getVgap
      * @since      JDK1.1
      */
-    public void setVgap(int vgap) {
+    void setVgap(int vgap) {
         this.vgap = vgap;
     }
 
@@ -170,7 +170,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      *                        vertically aligned on their baseline
      * @since 1.6
      */
-    public void setAlignOnBaseline(boolean alignOnBaseline) {
+    void setAlignOnBaseline(boolean alignOnBaseline) {
         this.alignOnBaseline = alignOnBaseline;
     }
 
@@ -182,7 +182,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      *              their baseline
      * @since 1.6
      */
-    public boolean getAlignOnBaseline() {
+    boolean getAlignOnBaseline() {
         return alignOnBaseline;
     }
 
