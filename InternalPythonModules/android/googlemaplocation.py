@@ -41,8 +41,10 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel.blackboardutils import GeoArtifactsHelper
 from org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoWaypointsUtil import GeoWaypointList
+from org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoWaypointsUtil.GeoWaypointList import GeoWaypoint
 
 import traceback
 import general
@@ -109,6 +111,7 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                 time = Long.valueOf(resultSet.getString("time")) / 1000
                 dest_title = resultSet.getString("dest_title")
                 dest_address = resultSet.getString("dest_address")
+                
 
                 dest_lat = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("dest_lat"))
                 dest_lng = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("dest_lng"))
@@ -116,8 +119,8 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                 source_lng = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("source_lng"))
 
                 waypointlist = GeoWaypointList()
-                waypointlist.addPoint(source_lat, source_lng, None, None)
-                waypointlist.addPoint(dest_lat, dest_lng, None, dest_address)
+                waypointlist.addPoint(GeoWaypoint(source_lat, source_lng, None, None))
+                waypointlist.addPoint(GeoWaypoint(dest_lat, dest_lng, None, dest_address))
 				
                 artifactHelper.addRoute(dest_title, time, waypointlist, None)
 
