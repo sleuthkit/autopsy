@@ -156,8 +156,8 @@
                                   <EmptySpace type="separate" max="-2" attributes="0"/>
                                   <Component id="bnTestConfigure" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="testStatusLabel" min="-2" pref="416" max="-2" attributes="0"/>
-                                  <EmptySpace pref="420" max="32767" attributes="0"/>
+                                  <Component id="testStatusLabel" min="-2" pref="671" max="-2" attributes="0"/>
+                                  <EmptySpace pref="165" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                       </Group>
@@ -181,13 +181,11 @@
                               <Component id="lbDbLocationLabel" max="32767" attributes="0"/>
                               <Component id="lbDbLocationValue" min="-2" pref="14" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="8" max="32767" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="103" alignment="1" groupAlignment="3" attributes="0">
-                                  <Component id="bnDbConfigure" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="bnTestConfigure" alignment="3" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <Component id="testStatusLabel" alignment="1" min="-2" pref="32" max="-2" attributes="0"/>
+                          <EmptySpace pref="10" max="32767" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="bnDbConfigure" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="bnTestConfigure" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="testStatusLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
                       </Group>
@@ -249,6 +247,9 @@
                         <Font bold="false" component="testStatusLabel" property="font" relativeSize="false" size="11"/>
                       </FontInfo>
                     </Property>
+                    <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                      <Color blue="0" green="0" red="ff" type="rgb"/>
+                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="GlobalSettingsPanel.testStatusLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -256,10 +257,10 @@
                       <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="GlobalSettingsPanel.testStatusLabel.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                     <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                      <Dimension value="[387, 32]"/>
+                      <Dimension value="[387, 16]"/>
                     </Property>
                     <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                      <Dimension value="[387, 32]"/>
+                      <Dimension value="[387, 16]"/>
                     </Property>
                   </Properties>
                 </Component>
