@@ -161,7 +161,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
             }
         });
 
-        dataSourceNoteLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        dataSourceNoteLabel.setFont(dataSourceNoteLabel.getFont().deriveFont(dataSourceNoteLabel.getFont().getSize()-1f));
         org.openide.awt.Mnemonics.setLocalizedText(dataSourceNoteLabel, org.openide.util.NbBundle.getMessage(DataSourcePanel.class, "DataSourcePanel.dataSourceNoteLabel.text")); // NOI18N
         dataSourceNoteLabel.setEnabled(false);
 

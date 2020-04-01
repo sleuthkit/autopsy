@@ -1286,7 +1286,7 @@ class ExtractRegistry extends Extract {
                 line = reader.readLine();
                 // Columns are
                 // FileX -> <Media file>
-                while (!line.contains(SECTION_DIVIDER)) {
+                while (!line.contains(SECTION_DIVIDER) && !line.contains("RecentFileList has no values.")) {
                     // Split line on "> " which is the record delimiter between position and file
                     String tokens[] = line.split("> ");
                     String fileName = tokens[1];

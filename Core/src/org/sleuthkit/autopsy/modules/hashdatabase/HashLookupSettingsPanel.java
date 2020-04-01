@@ -602,10 +602,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel2 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        jButton3 = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
         hashDatabasesLabel = new javax.swing.JLabel();
@@ -638,22 +634,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         sendIngestMessagesCheckBox = new javax.swing.JCheckBox();
         ingestWarningLabel = new javax.swing.JLabel();
 
-        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jLabel2.text")); // NOI18N
-
-        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jLabel4.text")); // NOI18N
-
-        jLabel6.setFont(jLabel6.getFont().deriveFont(jLabel6.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jLabel6.text")); // NOI18N
-
-        jButton3.setFont(jButton3.getFont().deriveFont(jButton3.getFont().getStyle() & ~java.awt.Font.BOLD, 14));
-        org.openide.awt.Mnemonics.setLocalizedText(jButton3, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jButton3.text")); // NOI18N
-
-        hashDatabasesLabel.setFont(hashDatabasesLabel.getFont().deriveFont(hashDatabasesLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(hashDatabasesLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDatabasesLabel.text")); // NOI18N
 
-        hashSetTable.setFont(hashSetTable.getFont().deriveFont(hashSetTable.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         hashSetTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -671,7 +653,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         });
         jScrollPane1.setViewportView(hashSetTable);
 
-        createDatabaseButton.setFont(createDatabaseButton.getFont().deriveFont(createDatabaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         createDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/new16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(createDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.createDatabaseButton.text")); // NOI18N
         createDatabaseButton.setToolTipText(org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.createDatabaseButton.toolTipText")); // NOI18N
@@ -683,7 +664,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         });
 
-        importDatabaseButton.setFont(importDatabaseButton.getFont().deriveFont(importDatabaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         importDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/import16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(importDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.importDatabaseButton.text")); // NOI18N
         importDatabaseButton.setToolTipText(org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.importDatabaseButton.toolTipText")); // NOI18N
@@ -695,7 +675,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         });
 
-        deleteDatabaseButton.setFont(deleteDatabaseButton.getFont().deriveFont(deleteDatabaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         deleteDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/delete16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(deleteDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.deleteDatabaseButton.text")); // NOI18N
         deleteDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
@@ -712,17 +691,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.nameLabel.text")); // NOI18N
 
-        hashDbNameLabel.setFont(hashDbNameLabel.getFont().deriveFont(hashDbNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(hashDbNameLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDbNameLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(typeLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.typeLabel.text")); // NOI18N
 
-        hashDbTypeLabel.setFont(hashDbTypeLabel.getFont().deriveFont(hashDbTypeLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(hashDbTypeLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDbTypeLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(locationLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.locationLabel.text")); // NOI18N
 
-        hashDbLocationLabel.setFont(hashDbLocationLabel.getFont().deriveFont(hashDbLocationLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(hashDbLocationLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDbLocationLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(versionLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.versionLabel.text_1")); // NOI18N
@@ -737,16 +713,12 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         org.openide.awt.Mnemonics.setLocalizedText(hashDbReadOnlyLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDbReadOnlyLabel.text_1")); // NOI18N
 
-        indexPathLabelLabel.setFont(indexPathLabelLabel.getFont().deriveFont(indexPathLabelLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(indexPathLabelLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.indexPathLabelLabel.text")); // NOI18N
 
-        indexPathLabel.setFont(indexPathLabel.getFont().deriveFont(indexPathLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(indexPathLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.indexPathLabel.text")); // NOI18N
 
-        indexLabel.setFont(indexLabel.getFont().deriveFont(indexLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(indexLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.indexLabel.text")); // NOI18N
 
-        hashDbIndexStatusLabel.setFont(hashDbIndexStatusLabel.getFont().deriveFont(hashDbIndexStatusLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(hashDbIndexStatusLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDbIndexStatusLabel.text")); // NOI18N
 
         javax.swing.GroupLayout informationPanelLayout = new javax.swing.GroupLayout(informationPanel);
@@ -832,7 +804,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         informationScrollPanel.setViewportView(informationPanel);
 
-        indexButton.setFont(indexButton.getFont().deriveFont(indexButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(indexButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.indexButton.text")); // NOI18N
         indexButton.setEnabled(false);
         indexButton.addActionListener(new java.awt.event.ActionListener() {
@@ -841,7 +812,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         });
 
-        addHashesToDatabaseButton.setFont(addHashesToDatabaseButton.getFont().deriveFont(addHashesToDatabaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(addHashesToDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.addHashesToDatabaseButton.text")); // NOI18N
         addHashesToDatabaseButton.setEnabled(false);
         addHashesToDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
@@ -1094,10 +1064,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     private javax.swing.JPanel informationPanel;
     private javax.swing.JScrollPane informationScrollPanel;
     private javax.swing.JLabel ingestWarningLabel;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;

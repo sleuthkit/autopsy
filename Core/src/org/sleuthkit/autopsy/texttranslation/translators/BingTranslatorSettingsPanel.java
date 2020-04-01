@@ -178,7 +178,6 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         instructionsTextArea.setEditable(false);
         instructionsTextArea.setBackground(new java.awt.Color(240, 240, 240));
         instructionsTextArea.setColumns(20);
-        instructionsTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         instructionsTextArea.setLineWrap(true);
         instructionsTextArea.setRows(2);
         instructionsTextArea.setText(org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.instructionsTextArea.text")); // NOI18N

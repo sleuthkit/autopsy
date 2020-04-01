@@ -59,7 +59,7 @@ import org.sleuthkit.autopsy.report.ReportModule;
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 301, separatorAfter = 399)
     ,
-    @ActionReference(path = "Toolbars/Case", position = 106)})
+    @ActionReference(path = "Toolbars/Case", position = 107)})
 public final class ReportWizardAction extends CallableSystemAction implements Presenter.Toolbar, ActionListener {
 
     private static final Logger logger = Logger.getLogger(ReportWizardAction.class.getName());

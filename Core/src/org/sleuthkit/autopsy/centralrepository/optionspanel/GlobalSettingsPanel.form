@@ -61,7 +61,7 @@
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="pnDatabaseConfiguration" alignment="0" max="32767" attributes="0"/>
-                          <Component id="pnCorrelationProperties" alignment="0" pref="1016" max="32767" attributes="0"/>
+                          <Component id="pnCorrelationProperties" alignment="0" pref="1010" max="32767" attributes="0"/>
                           <Component id="organizationPanel" alignment="1" max="32767" attributes="0"/>
                           <Component id="casesPanel" alignment="0" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
@@ -126,7 +126,6 @@
                   <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
                     <TitledBorder title="Database Configuration">
                       <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="GlobalSettingsPanel.pnDatabaseConfiguration.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                      <Font PropertyName="font" name="Tahoma" size="12" style="0"/>
                     </TitledBorder>
                   </Border>
                 </Property>
@@ -272,7 +271,6 @@
                   <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
                     <TitledBorder title="Correlation Properties">
                       <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="GlobalSettingsPanel.pnCorrelationProperties.border.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                      <Font PropertyName="font" name="Tahoma" size="12" style="0"/>
                     </TitledBorder>
                   </Border>
                 </Property>
@@ -300,7 +298,7 @@
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="1" attributes="0">
-                          <Component id="correlationPropertiesScrollPane" pref="25" max="32767" attributes="0"/>
+                          <Component id="correlationPropertiesScrollPane" pref="28" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="bnManageTypes" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
@@ -338,9 +336,6 @@
                           <Color blue="f0" green="f0" red="f0" type="rgb"/>
                         </Property>
                         <Property name="columns" type="int" value="20"/>
-                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                          <Font name="Tahoma" size="11" style="0"/>
-                        </Property>
                         <Property name="lineWrap" type="boolean" value="true"/>
                         <Property name="rows" type="int" value="1"/>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -364,7 +359,6 @@
                   <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
                     <TitledBorder title="Organizations">
                       <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="GlobalSettingsPanel.organizationPanel.border.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                      <Font PropertyName="font" name="Tahoma" size="12" style="0"/>
                     </TitledBorder>
                   </Border>
                 </Property>
@@ -428,9 +422,6 @@
                           <Color blue="f0" green="f0" red="f0" type="rgb"/>
                         </Property>
                         <Property name="columns" type="int" value="20"/>
-                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                          <Font name="Tahoma" size="11" style="0"/>
-                        </Property>
                         <Property name="lineWrap" type="boolean" value="true"/>
                         <Property name="rows" type="int" value="2"/>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -453,7 +444,6 @@
                   <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
                     <TitledBorder title="Case Details">
                       <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="GlobalSettingsPanel.casesPanel.border.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                      <Font PropertyName="font" name="Tahoma" size="12" style="0"/>
                     </TitledBorder>
                   </Border>
                 </Property>
@@ -523,9 +513,6 @@
                           <Color blue="f0" green="f0" red="f0" type="rgb"/>
                         </Property>
                         <Property name="columns" type="int" value="20"/>
-                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                          <Font name="Tahoma" size="11" style="0"/>
-                        </Property>
                         <Property name="lineWrap" type="boolean" value="true"/>
                         <Property name="rows" type="int" value="2"/>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -547,7 +534,7 @@
                 <Property name="editable" type="boolean" value="false"/>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                   <FontInfo relative="true">
-                    <Font bold="true" component="tbOops" property="font" relativeSize="false" size="12"/>
+                    <Font bold="true" component="tbOops" property="font" relativeSize="true" size="-1"/>
                   </FontInfo>
                 </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -560,11 +547,6 @@
             </Component>
             <Component class="javax.swing.JLabel" name="ingestRunningWarningLabel">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                  <FontInfo relative="true">
-                    <Font bold="false" component="ingestRunningWarningLabel" property="font" relativeSize="false" size="11"/>
-                  </FontInfo>
-                </Property>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/org/sleuthkit/autopsy/modules/filetypeid/warning16.png"/>
                 </Property>

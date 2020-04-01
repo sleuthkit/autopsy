@@ -591,7 +591,6 @@ class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         acquisitionDetailsTextArea.setEditable(false);
         acquisitionDetailsTextArea.setBackground(javax.swing.UIManager.getDefaults().getColor("TextArea.disabledBackground"));
         acquisitionDetailsTextArea.setColumns(20);
-        acquisitionDetailsTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         acquisitionDetailsTextArea.setRows(4);
         acquisitionDetailsTextArea.setText(org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.acquisitionDetailsTextArea.text")); // NOI18N
         acquisitionDetailsTextArea.setBorder(null);
