@@ -84,7 +84,8 @@ public final class IconsUtil {
             imageFile = "encrypted-file.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
             imageFile = "mismatch-16.png"; //NON-NLS
-        } else if (typeID == ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID()) {
+        } else if (typeID == ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID()
+                || typeID == ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID()) {
             imageFile = "gps_trackpoint.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_REMOTE_DRIVE.getTypeID()) {
             imageFile = "drive_network.png"; //NON-NLS
