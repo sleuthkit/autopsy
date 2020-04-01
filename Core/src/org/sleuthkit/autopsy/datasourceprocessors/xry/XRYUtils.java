@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Common utility methods shared among all XRY parser implementations.
  */
-public final class XRYUtils {
+final class XRYUtils {
 
     // Pattern is in reverse due to a Java 8 bug, see calculateSecondsSinceEpoch()
     // function for more details.

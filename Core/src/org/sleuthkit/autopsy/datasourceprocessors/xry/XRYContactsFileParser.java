@@ -67,50 +67,50 @@ final class XRYContactsFileParser extends AbstractSingleEntityParser {
             XryKey xryKey = XryKey.fromDisplayName(pair.getKey());
             switch (xryKey) {
                 case NAME:
-                    if(contactName != null) {
+                    if (contactName != null) {
                         additionalAttributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, PARSER_NAME, pair.getValue()));
                     } else {
                         contactName = pair.getValue();
                     }
                     break;
                 case TEL:
-                    if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                    if (!XRYUtils.isPhoneValid(pair.getValue())) {
                         continue;
                     }
-                    
-                    if(phoneNumber != null) {
+
+                    if (phoneNumber != null) {
                         additionalAttributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, PARSER_NAME, pair.getValue()));
                     } else {
                         phoneNumber = pair.getValue();
                     }
                     break;
                 case MOBILE:
-                    if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                    if (!XRYUtils.isPhoneValid(pair.getValue())) {
                         continue;
                     }
-                    
-                    if(mobilePhoneNumber != null) {
+
+                    if (mobilePhoneNumber != null) {
                         additionalAttributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE, PARSER_NAME, pair.getValue()));
                     } else {
                         mobilePhoneNumber = pair.getValue();
                     }
                     break;
                 case HOME:
-                    if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                    if (!XRYUtils.isPhoneValid(pair.getValue())) {
                         continue;
                     }
-                    
-                    if(homePhoneNumber != null) {
+
+                    if (homePhoneNumber != null) {
                         additionalAttributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME, PARSER_NAME, pair.getValue()));
                     } else {
                         homePhoneNumber = pair.getValue();
                     }
                     break;
                 case EMAIL_HOME:
-                    if(!XRYUtils.isEmailValid(pair.getValue())) {
+                    if (!XRYUtils.isEmailValid(pair.getValue())) {
                         continue;
                     }
-                    
+
                     hasAnEmail = true;
                     additionalAttributes.add(new BlackboardAttribute(
                             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_HOME,
@@ -130,26 +130,32 @@ final class XRYContactsFileParser extends AbstractSingleEntityParser {
                             pair));
             }
         }
-        
+
         // Make sure we have the required fields, otherwise the CommHelper will
         // complain about illegal arguments.
-        if(phoneNumber != null || homePhoneNumber != null || mobilePhoneNumber != null || hasAnEmail) {
+        if (phoneNumber != null || homePhoneNumber != null || mobilePhoneNumber != null || hasAnEmail) {
             CommunicationArtifactsHelper helper = new CommunicationArtifactsHelper(
                     currentCase, PARSER_NAME, parent, Account.Type.DEVICE);
-            
-            helper.addContact(contactName, phoneNumber, homePhoneNumber, 
+
+            helper.addContact(contactName, phoneNumber, homePhoneNumber,
                     mobilePhoneNumber, emailAddr, additionalAttributes);
         } else {
             // Just create an artifact with the attributes that we do have.
-            if(!additionalAttributes.isEmpty()) {
+            if (!additionalAttributes.isEmpty()) {
                 BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
                 artifact.addAttributes(additionalAttributes);
-                
+
                 currentCase.getBlackboard().postArtifact(artifact, PARSER_NAME);
             }
         }
     }
 
+    /**
+     * Enum containing all known keys for contacts and their corresponding
+     * blackboard attribute. Some keys are intentionally null, because they are
+     * handled as special cases in makeArtifact(). Some are null because there's
+     * not an appropriate attribute type.
+     */
     private enum XryKey {
         NAME("name", null),
         TEL("tel", null),
