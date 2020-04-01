@@ -132,7 +132,6 @@ class MissingImageDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        selectButton.setFont(selectButton.getFont().deriveFont(selectButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(selectButton, org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.selectButton.text")); // NOI18N
         selectButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -140,7 +139,6 @@ class MissingImageDialog extends javax.swing.JDialog {
             }
         });
 
-        cancelButton.setFont(cancelButton.getFont().deriveFont(cancelButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -169,7 +167,6 @@ class MissingImageDialog extends javax.swing.JDialog {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        pathNameTextField.setFont(pathNameTextField.getFont().deriveFont(pathNameTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         pathNameTextField.setText(org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.pathNameTextField.text")); // NOI18N
         pathNameTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -177,7 +174,6 @@ class MissingImageDialog extends javax.swing.JDialog {
             }
         });
 
-        browseButton.setFont(browseButton.getFont().deriveFont(browseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.browseButton.text")); // NOI18N
         browseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -185,7 +181,7 @@ class MissingImageDialog extends javax.swing.JDialog {
             }
         });
 
-        lbWarning.setFont(lbWarning.getFont().deriveFont(lbWarning.getFont().getStyle() | java.awt.Font.BOLD, 12));
+        lbWarning.setFont(lbWarning.getFont().deriveFont(lbWarning.getFont().getStyle() | java.awt.Font.BOLD, lbWarning.getFont().getSize()+1));
         lbWarning.setForeground(new java.awt.Color(244, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(lbWarning, org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.lbWarning.text")); // NOI18N
         lbWarning.setToolTipText(org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.lbWarning.toolTipText")); // NOI18N
@@ -216,7 +212,7 @@ class MissingImageDialog extends javax.swing.JDialog {
                 .addGap(18, 18, 18))
         );
 
-        titleLabel.setFont(titleLabel.getFont().deriveFont(titleLabel.getFont().getStyle() | java.awt.Font.BOLD, 12));
+        titleLabel.setFont(titleLabel.getFont().deriveFont(titleLabel.getFont().getStyle() | java.awt.Font.BOLD, titleLabel.getFont().getSize()+1));
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.titleLabel.text")); // NOI18N
 
         titleSeparator.setForeground(new java.awt.Color(102, 102, 102));

@@ -86,69 +86,51 @@ final class FileSystemDetailsPanel extends javax.swing.JPanel {
         firstInumValue = new javax.swing.JLabel();
         lastInumValue = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
+        bytesLabel1 = new javax.swing.JLabel();
+        bytesLabel2 = new javax.swing.JLabel();
 
         OKButton.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.OKButton.text")); // NOI18N
 
         genInfoPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         genInfoPanel.setPreferredSize(new java.awt.Dimension(815, 170));
 
-        fsTypeLabel.setFont(fsTypeLabel.getFont().deriveFont(fsTypeLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         fsTypeLabel.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.fsTypeLabel.text")); // NOI18N
 
-        imgOffsetLabel.setFont(imgOffsetLabel.getFont().deriveFont(imgOffsetLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         imgOffsetLabel.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.imgOffsetLabel.text")); // NOI18N
 
-        volumeIDLabel.setFont(volumeIDLabel.getFont().deriveFont(volumeIDLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         volumeIDLabel.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.volumeIDLabel.text")); // NOI18N
 
-        blockSizeLabel.setFont(blockSizeLabel.getFont().deriveFont(blockSizeLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         blockSizeLabel.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.blockSizeLabel.text")); // NOI18N
 
-        blockCountLabel.setFont(blockCountLabel.getFont().deriveFont(blockCountLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         blockCountLabel.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.blockCountLabel.text")); // NOI18N
 
-        rootInumLabel.setFont(rootInumLabel.getFont().deriveFont(rootInumLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         rootInumLabel.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.rootInumLabel.text")); // NOI18N
 
-        firstInumLabel.setFont(firstInumLabel.getFont().deriveFont(firstInumLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         firstInumLabel.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.firstInumLabel.text")); // NOI18N
 
-        lastInumLabel.setFont(lastInumLabel.getFont().deriveFont(lastInumLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         lastInumLabel.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.lastInumLabel.text")); // NOI18N
 
-        fsTypeValue.setFont(fsTypeValue.getFont().deriveFont(fsTypeValue.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         fsTypeValue.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.fsTypeValue.text")); // NOI18N
 
-        imgOffsetValue.setFont(imgOffsetValue.getFont().deriveFont(imgOffsetValue.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         imgOffsetValue.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.imgOffsetValue.text")); // NOI18N
 
-        volumeIDValue.setFont(volumeIDValue.getFont().deriveFont(volumeIDValue.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         volumeIDValue.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.volumeIDValue.text")); // NOI18N
 
-        blockSizeValue.setFont(blockSizeValue.getFont().deriveFont(blockSizeValue.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         blockSizeValue.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.blockSizeValue.text")); // NOI18N
 
-        blockCountValue.setFont(blockCountValue.getFont().deriveFont(blockCountValue.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         blockCountValue.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.blockCountValue.text")); // NOI18N
 
-        rootInumValue.setFont(rootInumValue.getFont().deriveFont(rootInumValue.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         rootInumValue.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.rootInumValue.text")); // NOI18N
 
-        firstInumValue.setFont(firstInumValue.getFont().deriveFont(firstInumValue.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         firstInumValue.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.firstInumValue.text")); // NOI18N
 
-        lastInumValue.setFont(lastInumValue.getFont().deriveFont(lastInumValue.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         lastInumValue.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.lastInumValue.text")); // NOI18N
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        jLabel2.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.jLabel2.text")); // NOI18N
+        bytesLabel1.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.bytesLabel1.text")); // NOI18N
 
-        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        jLabel3.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.jLabel3.text")); // NOI18N
+        bytesLabel2.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.bytesLabel2.text")); // NOI18N
 
         javax.swing.GroupLayout genInfoPanelLayout = new javax.swing.GroupLayout(genInfoPanel);
         genInfoPanel.setLayout(genInfoPanelLayout);
@@ -169,8 +151,8 @@ final class FileSystemDetailsPanel extends javax.swing.JPanel {
                             .addComponent(imgOffsetValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel3)))
+                            .addComponent(bytesLabel1)
+                            .addComponent(bytesLabel2)))
                     .addComponent(volumeIDValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(fsTypeValue))
                 .addGap(10, 10, 10)
@@ -187,7 +169,7 @@ final class FileSystemDetailsPanel extends javax.swing.JPanel {
                     .addComponent(rootInumValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(firstInumValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lastInumValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(229, Short.MAX_VALUE))
+                .addContainerGap(226, Short.MAX_VALUE))
         );
         genInfoPanelLayout.setVerticalGroup(
             genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -209,13 +191,13 @@ final class FileSystemDetailsPanel extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(imgOffsetValue)
-                                    .addComponent(jLabel2))
+                                    .addComponent(bytesLabel1))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(volumeIDValue)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(blockSizeValue)
-                                    .addComponent(jLabel3))))
+                                    .addComponent(bytesLabel2))))
                         .addGroup(genInfoPanelLayout.createSequentialGroup()
                             .addComponent(blockCountValue)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -347,6 +329,8 @@ final class FileSystemDetailsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel blockCountValue;
     private javax.swing.JLabel blockSizeLabel;
     private javax.swing.JLabel blockSizeValue;
+    private javax.swing.JLabel bytesLabel1;
+    private javax.swing.JLabel bytesLabel2;
     private javax.swing.JLabel firstInumLabel;
     private javax.swing.JLabel firstInumValue;
     private javax.swing.JLabel fsTypeLabel;
@@ -354,8 +338,6 @@ final class FileSystemDetailsPanel extends javax.swing.JPanel {
     private javax.swing.JPanel genInfoPanel;
     private javax.swing.JLabel imgOffsetLabel;
     private javax.swing.JLabel imgOffsetValue;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lastInumLabel;
     private javax.swing.JLabel lastInumValue;

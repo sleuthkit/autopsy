@@ -225,36 +225,36 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
 
         setMinimumSize(new java.awt.Dimension(830, 240));
 
-        lbDbConnection.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbDbConnection.setFont(lbDbConnection.getFont().deriveFont(lbDbConnection.getFont().getSize()+1f));
         lbDbConnection.setText("Database");
         lbDbConnection.setToolTipText("Set database credentials via 'Options'");
         lbDbConnection.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
         lbDbConnection.setFocusable(false);
 
-        picDbStatus.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        picDbStatus.setFont(picDbStatus.getFont().deriveFont(picDbStatus.getFont().getSize()+1f));
         picDbStatus.setLabelFor(lbDbConnection);
         picDbStatus.setText("Database Status");
         picDbStatus.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
         picDbStatus.setFocusable(false);
 
-        lbCaseDestination.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbCaseDestination.setFont(lbCaseDestination.getFont().deriveFont(lbCaseDestination.getFont().getSize()+1f));
         lbCaseDestination.setText("Case Destination");
         lbCaseDestination.setFocusable(false);
 
-        lbCaseSource.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbCaseSource.setFont(lbCaseSource.getFont().deriveFont(lbCaseSource.getFont().getSize()+1f));
         lbCaseSource.setLabelFor(lbCaseSource);
         lbCaseSource.setText("Case Source");
         lbCaseSource.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
         lbCaseSource.setFocusable(false);
 
-        lbCaption.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        lbCaption.setFont(lbCaption.getFont().deriveFont(lbCaption.getFont().getStyle() | java.awt.Font.BOLD, lbCaption.getFont().getSize()+1));
         lbCaption.setText("Import single-user cases to multi-user cases");
 
-        lbImageDestination.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbImageDestination.setFont(lbImageDestination.getFont().deriveFont(lbImageDestination.getFont().getSize()+1f));
         lbImageDestination.setText("Image Destination");
         lbImageDestination.setFocusable(false);
 
-        lbImageSource.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbImageSource.setFont(lbImageSource.getFont().deriveFont(lbImageSource.getFont().getSize()+1f));
         lbImageSource.setText("Image Source");
         lbImageSource.setFocusable(false);
 
@@ -295,32 +295,32 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
             }
         });
 
-        pbShowProgress.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        pbShowProgress.setFont(pbShowProgress.getFont().deriveFont(pbShowProgress.getFont().getStyle() | java.awt.Font.BOLD, pbShowProgress.getFont().getSize()+1));
         pbShowProgress.setToolTipText("");
         pbShowProgress.setFocusable(false);
         pbShowProgress.setMaximumSize(new java.awt.Dimension(32767, 16));
         pbShowProgress.setPreferredSize(new java.awt.Dimension(146, 16));
 
         tbCaseSource.setEditable(false);
-        tbCaseSource.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbCaseSource.setFont(tbCaseSource.getFont().deriveFont(tbCaseSource.getFont().getSize()+1f));
         tbCaseSource.setToolTipText("Press \"Browse\" to select the case source folder.");
         tbCaseSource.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true));
         tbCaseSource.setFocusable(false);
 
         tbCaseDestination.setEditable(false);
-        tbCaseDestination.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbCaseDestination.setFont(tbCaseDestination.getFont().deriveFont(tbCaseDestination.getFont().getSize()+1f));
         tbCaseDestination.setToolTipText("The case destination folder. Press \"Options\" and edit \"Shared Results Folder\" to change this.  Any imported cases will be stored in this folder.");
         tbCaseDestination.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true));
         tbCaseDestination.setFocusable(false);
 
         tbImageDestination.setEditable(false);
-        tbImageDestination.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbImageDestination.setFont(tbImageDestination.getFont().deriveFont(tbImageDestination.getFont().getSize()+1f));
         tbImageDestination.setToolTipText("This is the Image folder. Press \"Options\" and edit \"Shared Images Folder\" to change this. Any input images will be copied to this folder during import.");
         tbImageDestination.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true));
         tbImageDestination.setFocusable(false);
 
         tbBottomNotification.setEditable(false);
-        tbBottomNotification.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbBottomNotification.setFont(tbBottomNotification.getFont().deriveFont(tbBottomNotification.getFont().getSize()+1f));
         tbBottomNotification.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         tbBottomNotification.setText("tbNotification");
         tbBottomNotification.setToolTipText("Shows notifications");
@@ -328,12 +328,12 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         tbBottomNotification.setFocusable(false);
 
         tbImageSource.setEditable(false);
-        tbImageSource.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbImageSource.setFont(tbImageSource.getFont().deriveFont(tbImageSource.getFont().getSize()+1f));
         tbImageSource.setToolTipText("Press \"Browse\" to select the image source folder.");
         tbImageSource.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true));
         tbImageSource.setFocusable(false);
 
-        cbCopyImages.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        cbCopyImages.setFont(cbCopyImages.getFont().deriveFont(cbCopyImages.getFont().getSize()+1f));
         cbCopyImages.setText("Copy images");
         cbCopyImages.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
@@ -346,7 +346,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
             }
         });
 
-        cbDeleteCase.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        cbDeleteCase.setFont(cbDeleteCase.getFont().deriveFont(cbDeleteCase.getFont().getSize()+1f));
         cbDeleteCase.setText("Delete original case");
         cbDeleteCase.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
@@ -354,17 +354,17 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
             }
         });
 
-        lbProgressBar.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbProgressBar.setFont(lbProgressBar.getFont().deriveFont(lbProgressBar.getFont().getSize()+1f));
         lbProgressBar.setText("Progress");
 
         tbInputNotification.setEditable(false);
-        tbInputNotification.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbInputNotification.setFont(tbInputNotification.getFont().deriveFont(tbInputNotification.getFont().getSize()+1f));
         tbInputNotification.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         tbInputNotification.setText("Input box");
         tbInputNotification.setBorder(null);
 
         tbOutputNotification.setEditable(false);
-        tbOutputNotification.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbOutputNotification.setFont(tbOutputNotification.getFont().deriveFont(tbOutputNotification.getFont().getSize()+1f));
         tbOutputNotification.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         tbOutputNotification.setText("Output box");
         tbOutputNotification.setBorder(null);
@@ -374,7 +374,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         tbDeleteWarning.setBorder(null);
 
         tbOops.setEditable(false);
-        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
+        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, tbOops.getFont().getSize()+1));
         tbOops.setForeground(new java.awt.Color(255, 0, 0));
         tbOops.setBorder(null);
 

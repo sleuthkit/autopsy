@@ -138,7 +138,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbDbHostname" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbDbHostname" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -153,7 +153,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbDbPort" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbDbPort" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -168,7 +168,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbDbUsername" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbDbUsername" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -183,7 +183,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbDbPassword" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbDbPassword" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -198,7 +198,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="lbDatabaseSettings" property="font" relativeSize="false" size="12"/>
+                        <Font component="lbDatabaseSettings" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -209,11 +209,6 @@
                 </Component>
                 <Component class="javax.swing.JButton" name="bnTestDatabase">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="bnTestDatabase" property="font" relativeSize="false" size="11"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.bnTestDatabase.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -302,7 +297,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="lbSolrSettings" property="font" relativeSize="false" size="12"/>
+                        <Font component="lbSolrSettings" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -314,7 +309,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbSolrHostname" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbSolrHostname" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -326,7 +321,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbSolrPort" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbSolrPort" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -336,11 +331,6 @@
                 </Component>
                 <Component class="javax.swing.JButton" name="bnTestSolr">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="bnTestSolr" property="font" relativeSize="false" size="11"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.bnTestSolr.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -434,7 +424,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="lbMessageServiceSettings" property="font" relativeSize="false" size="12"/>
+                        <Font component="lbMessageServiceSettings" property="font" relativeSize="false" size="12"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -446,7 +436,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbMsgHostname" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbMsgHostname" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -461,7 +451,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbMsgUsername" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbMsgUsername" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -476,7 +466,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbMsgPort" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbMsgPort" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -491,7 +481,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbMsgPassword" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbMsgPassword" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -504,11 +494,6 @@
                 </Component>
                 <Component class="javax.swing.JButton" name="bnTestMessageService">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="bnTestMessageService" property="font" relativeSize="false" size="11"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.bnTestMessageService.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -538,11 +523,6 @@
             </Container>
             <Component class="javax.swing.JCheckBox" name="cbEnableMultiUser">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                  <FontInfo relative="true">
-                    <Font bold="false" component="cbEnableMultiUser" property="font" relativeSize="false" size="11"/>
-                  </FontInfo>
-                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.cbEnableMultiUser.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -556,7 +536,7 @@
                 <Property name="editable" type="boolean" value="false"/>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                   <FontInfo relative="true">
-                    <Font bold="true" component="tbOops" property="font" relativeSize="false" size="12"/>
+                    <Font bold="true" component="tbOops" property="font" relativeSize="true" size="1"/>
                   </FontInfo>
                 </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
