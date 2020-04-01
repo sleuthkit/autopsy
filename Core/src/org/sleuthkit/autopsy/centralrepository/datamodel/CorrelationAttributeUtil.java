@@ -306,8 +306,11 @@ public class CorrelationAttributeUtil {
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Error getting querying case database (%s)", artifact), ex); // NON-NLS
             return null;
-        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", artifact), ex); // NON-NLS
+            return null;
+        } catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", artifact), ex); // NON-NLS
             return null;
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
@@ -363,8 +366,11 @@ public class CorrelationAttributeUtil {
         CorrelationAttributeInstance correlationAttributeInstance;
         try {
             correlationAttributeInstance = CentralRepository.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, file.getId());
-        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
+            return null;
+        } catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
             return null;
         }
 
@@ -378,8 +384,11 @@ public class CorrelationAttributeUtil {
             String filePath = (file.getParentPath() + file.getName()).toLowerCase();
             try {
                 correlationAttributeInstance = CentralRepository.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, file.getMd5Hash(), filePath);
-            } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
+            } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
+                return null;
+            } catch (CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
                 return null;
             }
         }
@@ -434,8 +443,11 @@ public class CorrelationAttributeUtil {
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Error querying case database (%s)", file), ex); // NON-NLS            
             return null;
-        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS            
+            return null;
+        } catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
             return null;
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
