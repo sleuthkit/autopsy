@@ -69,7 +69,7 @@ public class CentralRepositoryService implements AutopsyService {
      */
     private void updateSchema() throws AutopsyServiceException {
         try {
-            CentralRepoDbManager.getInstance().upgradeDatabase();
+            CentralRepoDbManager.upgradeDatabase();
         } catch (CentralRepoException ex) {
             throw new AutopsyServiceException("Failed to update the Central Repository schema", ex);
         }

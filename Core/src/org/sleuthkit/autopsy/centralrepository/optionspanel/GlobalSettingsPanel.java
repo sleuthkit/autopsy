@@ -61,7 +61,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.STARTED, IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
 
     private final IngestJobEventPropertyChangeListener ingestJobEventListener;
-    private final CentralRepoDbManager manager;
     
     private final ImageIcon goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/good.png", false));
     private final ImageIcon badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/bad.png", false));
@@ -71,10 +70,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      */
     public GlobalSettingsPanel() {
         ingestJobEventListener = new IngestJobEventPropertyChangeListener();
-        manager = CentralRepoDbManager.getInstance();
-        
+
         // listen for change events in currently saved choice
-        manager.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+        CentralRepoDbManager.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             //ingestStateUpdated(Case.isCaseOpen());
             
             load(); // reload db settings content and update buttons
@@ -111,10 +109,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      *
      * @return True if there was a change.
      */
-    private static void invokeCrChoice(Component parent, CentralRepoDbChoice initialSelection) {
+    private static boolean invokeCrChoice(Component parent, CentralRepoDbChoice initialSelection) {
         EamDbSettingsDialog dialog = (initialSelection != null)
-            ? new EamDbSettingsDialog(initialSelection)
-            : new EamDbSettingsDialog();
+                ? new EamDbSettingsDialog(initialSelection)
+                : new EamDbSettingsDialog();
+        return dialog.wasConfigurationChanged();
     }
 
     /**
@@ -136,9 +135,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         "GlobalSettingsPanel.onMultiUserChange.enable.description2=The Central Repository stores hash values and accounts from past cases."
     })
     public static void onMultiUserChange(Component parent, boolean muPreviouslySelected, boolean muCurrentlySelected) {
-        CentralRepoDbManager manager = CentralRepoDbManager.getInstance();
         boolean crEnabled = CentralRepoDbUtil.allowUseOfCentralRepository();
-        boolean crMultiUser = manager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
+        boolean crMultiUser = CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
 
         if (!muPreviouslySelected && muCurrentlySelected) {
             SwingUtilities.invokeLater(() -> {
@@ -154,8 +152,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
                     // setup database for CR
                     CentralRepoDbUtil.setUseCentralRepo(true);
-                    manager.saveDbChoice(CentralRepoDbChoice.POSTGRESQL_MULTIUSER);
-                    checkStatusAndCreateDb(manager, parent);
+                    CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.POSTGRESQL_MULTIUSER);
+                    checkStatusAndCreateDb(parent);
                 }
             });
         } // moving from selected to not selected && 'PostgreSQL using multi-user settings' is selected
@@ -166,7 +164,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         } // changing multi-user settings connection && 'PostgreSQL using multi-user settings' is selected && 
         // central repo either enabled or was disabled due to error
         else if (muPreviouslySelected && muCurrentlySelected && crEnabled && crMultiUser) {
-            checkStatusAndCreateDb(manager, parent);
+            checkStatusAndCreateDb(parent);
         }
     }
     
@@ -176,9 +174,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * database if cr database is absent.
      * @param parent    the parent component to which the dialogs will be associated.
      */
-    private static void checkStatusAndCreateDb(CentralRepoDbManager manager, Component parent) {
+    private static void checkStatusAndCreateDb(Component parent) {
         SwingUtilities.invokeLater(() -> {
-            EamDbSettingsDialog.testStatusAndCreate(parent, manager);
+            EamDbSettingsDialog.testStatusAndCreate(parent, new CentralRepoDbManager());
         });
     }
 
@@ -231,6 +229,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         "GlobalSettingsPanel.testCurrentConfiguration.dbDoesNotExist.message=Database does not exist.",
     })
     private boolean testCurrentConfiguration() {
+        CentralRepoDbManager manager = new CentralRepoDbManager();
         DatabaseTestResult testResult = manager.testStatus();
         // if database doesn't exist, prompt user to create database
         if (testResult == DatabaseTestResult.DB_DOES_NOT_EXIST) {
@@ -251,7 +250,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }
 
     private boolean showStatusOkay() {
-        return setStatus(goodIcon, null);
+        return setStatus(goodIcon, " ");
     }
     
     private boolean showStatusFail(String message) {
@@ -351,6 +350,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         testStatusLabel.setFont(testStatusLabel.getFont().deriveFont(testStatusLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(testStatusLabel, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.testStatusLabel.text")); // NOI18N
         testStatusLabel.setToolTipText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.testStatusLabel.toolTipText")); // NOI18N
+        testStatusLabel.setMaximumSize(new java.awt.Dimension(387, 40));
+        testStatusLabel.setPreferredSize(new java.awt.Dimension(387, 16));
 
         javax.swing.GroupLayout pnDatabaseConfigurationLayout = new javax.swing.GroupLayout(pnDatabaseConfiguration);
         pnDatabaseConfiguration.setLayout(pnDatabaseConfigurationLayout);
@@ -644,7 +645,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     public void load() {
         tbOops.setText("");
         enableButtonSubComponents(false);
-        CentralRepoDbChoice selectedChoice = manager.getSavedDbChoice();
+        CentralRepoDbChoice selectedChoice = CentralRepoDbManager.getSavedDbChoice();
         cbUseCentralRepo.setSelected(CentralRepoDbUtil.allowUseOfCentralRepository()); // NON-NLS
 
         lbDbPlatformValue.setText(selectedChoice.getTitle());

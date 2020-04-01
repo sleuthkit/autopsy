@@ -46,7 +46,7 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbConnectiv
     private PostgresConnectionSettings connSettings;
     
     private static PostgresSettingsLoader getLoaderFromSaved() throws CentralRepoException {
-        CentralRepoDbChoice choice = CentralRepoDbManager.getInstance().getSavedDbChoice();
+        CentralRepoDbChoice choice = CentralRepoDbManager.getSavedDbChoice();
         if (choice == CentralRepoDbChoice.POSTGRESQL_CUSTOM)
             return PostgresSettingsLoader.CUSTOM_SETTINGS_LOADER;
         else if (choice == CentralRepoDbChoice.POSTGRESQL_MULTIUSER)

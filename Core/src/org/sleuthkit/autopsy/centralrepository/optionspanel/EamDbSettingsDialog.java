@@ -86,7 +86,7 @@ public class EamDbSettingsDialog extends JDialog {
     
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
-    private final CentralRepoDbManager manager = CentralRepoDbManager.getInstance();
+    private final CentralRepoDbManager manager = new CentralRepoDbManager();
     private final DbChoiceRenderer DB_CHOICE_RENDERER = new DbChoiceRenderer();
     
     public EamDbSettingsDialog() {
@@ -586,9 +586,20 @@ public class EamDbSettingsDialog extends JDialog {
         parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         return true;
     }
+    
+        
+    /**
+     * This method returns if changes to the central repository configuration were
+     * successfully applied.
+     *
+     * @return True if the database configuration was successfully changed; false
+     * if it was not.
+     */
+    public boolean wasConfigurationChanged() {
+        return manager.wasConfigurationChanged();
+    }
 
     private void bnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCancelActionPerformed
-        manager.resetSelectedDbChoice();
         dispose();
     }//GEN-LAST:event_bnCancelActionPerformed
 
