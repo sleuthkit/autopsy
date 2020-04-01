@@ -33,6 +33,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.FileAttachment;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
+import org.sleuthkit.datamodel.CommunicationsUtils;
 
 /**
  * 
@@ -97,20 +98,27 @@ class AccountSummary {
                             
                             boolean isReference = false;
                             
-                            for (BlackboardAttribute attribute: attributes) {
+                            for (BlackboardAttribute attribute : attributes) {
+
                                 String attributeTypeName = attribute.getAttributeType().getTypeName();
                                 String attributeValue = attribute.getValueString();
-                                
-                                if (attributeTypeName.contains("PHONE")) {
-                                    attributeValue = RelationshipsNodeUtilities.normalizePhoneNum(attributeValue);
-                                } else if (attributeTypeName.contains("EMAIL")) {
-                                    attributeValue = RelationshipsNodeUtilities.normalizeEmailAddress(attributeValue);
+                                try {
+                                    if (attributeTypeName.contains("PHONE")) {
+                                        attributeValue = CommunicationsUtils.normalizePhoneNum(attributeValue);
+                                    } else if (attributeTypeName.contains("EMAIL")) {
+                                        attributeValue = CommunicationsUtils.normalizeEmailAddress(attributeValue);
+                                    }
+                                    
+                                    if (typeSpecificID.equals(attributeValue)) {
+                                        isReference = true;
+                                        break;
+                                    }
+                                } catch (TskCoreException ex) {
+                                    logger.log(Level.WARNING, String.format("Exception thrown "
+                                            + "in trying to normalize attribute value: %s",
+                                            attributeValue), ex); //NON-NLS
                                 }
-                                
-                                if ( typeSpecificID.equals(attributeValue) ) {
-                                    isReference = true;
-                                    break;
-                                }
+
                             }
                             if (isReference) {
                                 referenceCnt++;
