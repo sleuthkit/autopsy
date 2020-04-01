@@ -24,6 +24,7 @@ import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -186,7 +187,9 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     
     private void additionalInit() {
         // use wrap layout for better component wrapping
-        WrapLayout layout = new WrapLayout(java.awt.FlowLayout.LEFT);
+        WrapLayout layout = new WrapLayout();
+        layout.setHgap(5);
+        layout.setOppositeAligned(Arrays.asList(textSourcePanel));
         controlPanel.setLayout(layout);
     }
     
@@ -234,12 +237,10 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         zoomPanel = new TextZoomPanel(this);
         javax.swing.Box.Filler fillerSmall14 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         jSeparator4 = new javax.swing.JSeparator();
-        javax.swing.JPanel textSourcePanel = new javax.swing.JPanel();
+        textSourcePanel = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         javax.swing.Box.Filler fillerSmall12 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         sourceComboBox = new javax.swing.JComboBox<>();
-        javax.swing.Box.Filler fillerSmall13 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
-        jSeparator5 = new javax.swing.JSeparator();
         extractedScrollPane = new javax.swing.JScrollPane();
         extractedTextPane = new javax.swing.JTextPane();
 
@@ -395,14 +396,6 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         sourceComboBox.setMinimumSize(new java.awt.Dimension(150, 20));
         sourceComboBox.setPreferredSize(new java.awt.Dimension(150, 20));
         textSourcePanel.add(sourceComboBox);
-        textSourcePanel.add(fillerSmall13);
-
-        jSeparator5.setOrientation(javax.swing.SwingConstants.VERTICAL);
-        jSeparator5.setMaximumSize(new java.awt.Dimension(2, 25));
-        jSeparator5.setMinimumSize(new java.awt.Dimension(2, 25));
-        jSeparator5.setName(""); // NOI18N
-        jSeparator5.setPreferredSize(new java.awt.Dimension(2, 25));
-        textSourcePanel.add(jSeparator5);
 
         controlPanel.add(textSourcePanel);
 
@@ -440,7 +433,6 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JSeparator jSeparator4;
-    private javax.swing.JSeparator jSeparator5;
     private javax.swing.JLabel pageButtonsLabel;
     private javax.swing.JLabel pageCurLabel;
     private javax.swing.JButton pageNextButton;
@@ -451,6 +443,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JComboBox<org.sleuthkit.autopsy.keywordsearch.IndexedText> sourceComboBox;
+    private javax.swing.JPanel textSourcePanel;
     private javax.swing.JPanel zoomPanel;
     // End of variables declaration//GEN-END:variables
 
