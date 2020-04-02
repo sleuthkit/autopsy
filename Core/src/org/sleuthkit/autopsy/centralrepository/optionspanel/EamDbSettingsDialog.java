@@ -159,14 +159,14 @@ public class EamDbSettingsDialog extends JDialog {
      * @return          Whether or not the ultimate status after prompts is okay to continue.
      */
     @NbBundle.Messages({"EamDbSettingsDialog.okButton.corruptDatabaseExists.title=Error Loading Central Repository Database",
-        "EamDbSettingsDialog.okButton.corruptDatabaseExists.message=Database exists but is not the right format. Manually delete it or choose a different path (if applicable).",
+        "EamDbSettingsDialog.okButton.corruptDatabaseExists.message=Central Repository Database exists but is not the right format. Manually delete it or choose a different path (if applicable).",
         "EamDbSettingsDialog.okButton.createDbDialog.title=Central Repository Database Does Not Exist",
-        "EamDbSettingsDialog.okButton.createDbDialog.message=Database does not exist, would you like to create it?",
+        "EamDbSettingsDialog.okButton.createDbDialog.message=Central Repository Database does not exist, would you like to create it?",
         "EamDbSettingsDialog.okButton.databaseConnectionFailed.title=Central Repository Database Connection Failed",
-        "EamDbSettingsDialog.okButton.databaseConnectionFailed.message=Unable to connect to database. Please check your settings and try again.",
-        "EamDbSettingsDialog.okButton.createSQLiteDbError.message=Unable to create SQLite Database, please ensure location exists and you have write permissions and try again.",
-        "EamDbSettingsDialog.okButton.createPostgresDbError.message=Unable to create Postgres Database, please ensure address, port, and login credentials are correct for Postgres server and try again.",
-        "EamDbSettingsDialog.okButton.createDbError.title=Unable to Create Database"})
+        "EamDbSettingsDialog.okButton.databaseConnectionFailed.message=Unable to connect to Central Repository Database. Please check your settings and try again.",
+        "EamDbSettingsDialog.okButton.createSQLiteDbError.message=Unable to create SQLite Central Repository Database, please ensure location exists and you have write permissions and try again.",
+        "EamDbSettingsDialog.okButton.createPostgresDbError.message=Unable to create Postgres Central Repository Database, please ensure address, port, and login credentials are correct for Postgres server and try again.",
+        "EamDbSettingsDialog.okButton.createDbError.title=Unable to Create Central Repository Database"})
     private static boolean promptTestStatusWarnings(CentralRepoDbManager manager, EamDbSettingsDialog dialog) {
         if (manager.getStatus() == DatabaseTestResult.CONNECTION_FAILED) {
             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),

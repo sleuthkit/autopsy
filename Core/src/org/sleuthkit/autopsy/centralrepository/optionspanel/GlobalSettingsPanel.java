@@ -251,8 +251,14 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         "GlobalSettingsPanel.testCurrentConfiguration.dbDoesNotExist.message=Database does not exist.",
     })
     private boolean testCurrentConfiguration() {
+        if (CentralRepoDbManager.getSavedDbChoice() == null || 
+                CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.DISABLED || 
+                !CentralRepoDbUtil.allowUseOfCentralRepository())
+            return false;
+        
         CentralRepoDbManager manager = new CentralRepoDbManager();
         DatabaseTestResult testResult = manager.testStatus();
+        
         // if database doesn't exist, prompt user to create database
         if (testResult == DatabaseTestResult.DB_DOES_NOT_EXIST) {
             boolean success = EamDbSettingsDialog.promptCreateDatabase(manager, null);
@@ -419,10 +425,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                     .addComponent(lbDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lbDbLocationValue, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(bnDbConfigure)
-                    .addComponent(bnTestConfigure)
-                    .addComponent(testStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(testStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(bnDbConfigure)
+                        .addComponent(bnTestConfigure)))
                 .addGap(8, 8, 8))
         );
 
