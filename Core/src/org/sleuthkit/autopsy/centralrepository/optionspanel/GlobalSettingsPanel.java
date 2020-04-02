@@ -42,13 +42,11 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.beans.PropertyChangeSupport;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
 import org.sleuthkit.autopsy.centralrepository.datamodel.DatabaseTestResult;
-import org.sleuthkit.autopsy.centralrepository.optionspanel.Bundle;
 
 
 
