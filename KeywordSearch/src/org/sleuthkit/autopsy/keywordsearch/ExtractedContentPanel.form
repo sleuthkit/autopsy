@@ -27,10 +27,10 @@
   </NonVisualComponents>
   <Properties>
     <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[100, 0]"/>
+      <Dimension value="[250, 0]"/>
     </Property>
     <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[100, 58]"/>
+      <Dimension value="[250, 58]"/>
     </Property>
   </Properties>
   <AuxValues>
@@ -571,10 +571,10 @@
                   <Dimension value="[150, 32767]"/>
                 </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[150, 20]"/>
+                  <Dimension value="[150, 25]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[150, 20]"/>
+                  <Dimension value="[150, 25]"/>
                 </Property>
               </Properties>
               <AuxValues>

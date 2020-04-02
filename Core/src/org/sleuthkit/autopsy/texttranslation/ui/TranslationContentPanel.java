@@ -25,11 +25,13 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.JComboBox;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
+import org.sleuthkit.autopsy.guiutils.WrapLayout;
 
 /**
  * A JPanel used by TranslatedContentViewer to display machine translation of
@@ -49,6 +51,7 @@ public class TranslationContentPanel extends javax.swing.JPanel {
      */
     public TranslationContentPanel() {
         initComponents();
+        additionalInitComponents();
               
         DISPLAY_PANE = new AutoWrappingJTextPane();
         DISPLAY_PANE.setEditable(false);
@@ -255,6 +258,13 @@ public class TranslationContentPanel extends javax.swing.JPanel {
         LANGUAGE_NAMES = createLanguageBiMap();
     }
 
+    private void additionalInitComponents() {
+        // use wrap layout for better component wrapping
+        WrapLayout layout = new WrapLayout(0,5);
+        layout.setOppositeAligned(Arrays.asList(showPanel, ocrPanel));
+        controlPanel.setLayout(layout);
+    }
+
     /**
      * Selection choices to be displayed in the combobox dropdown.
      */
@@ -285,59 +295,87 @@ public class TranslationContentPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
+        controlPanel = new javax.swing.JPanel();
+        javax.swing.JPanel warningLabelPanel = new javax.swing.JPanel();
         warningLabel = new javax.swing.JLabel();
-        javax.swing.JPanel showPanel = new javax.swing.JPanel();
+        jSeparator1 = new javax.swing.JSeparator();
+        showPanel = new javax.swing.JPanel();
         showLabel = new javax.swing.JLabel();
+        javax.swing.JSeparator jSepMed1 = new javax.swing.JSeparator();
         displayTextComboBox = new javax.swing.JComboBox<>();
-        javax.swing.JPanel ocrPanel = new javax.swing.JPanel();
+        ocrPanel = new javax.swing.JPanel();
+        javax.swing.JSeparator jSepLarge1 = new javax.swing.JSeparator();
         ocrLabel = new javax.swing.JLabel();
+        javax.swing.JSeparator jSepMed2 = new javax.swing.JSeparator();
         ocrDropdown = new javax.swing.JComboBox<>();
         textScrollPane = new javax.swing.JScrollPane();
 
         setMaximumSize(new java.awt.Dimension(2000, 2000));
-        setMinimumSize(new java.awt.Dimension(2, 2));
+        setMinimumSize(new java.awt.Dimension(250, 2));
         setName(""); // NOI18N
-        setPreferredSize(new java.awt.Dimension(100, 58));
+        setPreferredSize(new java.awt.Dimension(250, 58));
         setVerifyInputWhenFocusTarget(false);
         setLayout(new java.awt.BorderLayout());
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        jPanel1.setMaximumSize(new java.awt.Dimension(182, 25));
-        jPanel1.setMinimumSize(new java.awt.Dimension(254, 25));
-        jPanel1.setName(""); // NOI18N
-        jPanel1.setPreferredSize(new java.awt.Dimension(182, 25));
-        jPanel1.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
+        controlPanel.setMaximumSize(new java.awt.Dimension(20000, 20000));
+        controlPanel.setMinimumSize(new java.awt.Dimension(2, 25));
+        controlPanel.setName(""); // NOI18N
+        controlPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
+
+        warningLabelPanel.setMaximumSize(new java.awt.Dimension(32767, 25));
+        warningLabelPanel.setMinimumSize(new java.awt.Dimension(2, 25));
+        warningLabelPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 0));
 
         warningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/warning16.png"))); // NOI18N
         warningLabel.setMaximumSize(new java.awt.Dimension(250, 25));
         warningLabel.setMinimumSize(new java.awt.Dimension(150, 25));
-        warningLabel.setPreferredSize(new java.awt.Dimension(250, 25));
-        jPanel1.add(warningLabel);
+        warningLabel.setPreferredSize(null);
+        warningLabelPanel.add(warningLabel);
 
+        jSeparator1.setMaximumSize(new java.awt.Dimension(1, 25));
+        jSeparator1.setMinimumSize(new java.awt.Dimension(1, 25));
+        jSeparator1.setPreferredSize(new java.awt.Dimension(1, 25));
+        warningLabelPanel.add(jSeparator1);
+
+        controlPanel.add(warningLabelPanel);
+
+        showPanel.setMaximumSize(new java.awt.Dimension(32767, 25));
+        showPanel.setMinimumSize(new java.awt.Dimension(0, 25));
         showPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 0));
 
         org.openide.awt.Mnemonics.setLocalizedText(showLabel, org.openide.util.NbBundle.getMessage(TranslationContentPanel.class, "TranslationContentPanel.showLabel.text")); // NOI18N
         showLabel.setMaximumSize(new java.awt.Dimension(42, 25));
         showLabel.setMinimumSize(new java.awt.Dimension(42, 25));
-        showLabel.setPreferredSize(new java.awt.Dimension(42, 25));
+        showLabel.setPreferredSize(null);
         showPanel.add(showLabel);
+
+        jSepMed1.setPreferredSize(new java.awt.Dimension(5, 0));
+        showPanel.add(jSepMed1);
 
         displayTextComboBox.setMaximumSize(new java.awt.Dimension(170, 25));
         displayTextComboBox.setMinimumSize(new java.awt.Dimension(170, 25));
         displayTextComboBox.setPreferredSize(new java.awt.Dimension(170, 25));
         showPanel.add(displayTextComboBox);
 
-        jPanel1.add(showPanel);
+        controlPanel.add(showPanel);
 
+        ocrPanel.setMaximumSize(new java.awt.Dimension(32767, 25));
+        ocrPanel.setMinimumSize(new java.awt.Dimension(0, 25));
         ocrPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 0));
+
+        jSepLarge1.setPreferredSize(new java.awt.Dimension(10, 0));
+        ocrPanel.add(jSepLarge1);
+        jSepLarge1.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(TranslationContentPanel.class, "TranslationContentPanel.jSepLarge1.AccessibleContext.accessibleName")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(ocrLabel, org.openide.util.NbBundle.getMessage(TranslationContentPanel.class, "TranslationContentPanel.ocrLabel.text")); // NOI18N
         ocrLabel.setEnabled(false);
         ocrLabel.setMaximumSize(new java.awt.Dimension(40, 25));
         ocrLabel.setMinimumSize(new java.awt.Dimension(25, 16));
-        ocrLabel.setPreferredSize(new java.awt.Dimension(40, 25));
+        ocrLabel.setPreferredSize(null);
         ocrPanel.add(ocrLabel);
+
+        jSepMed2.setPreferredSize(new java.awt.Dimension(5, 0));
+        ocrPanel.add(jSepMed2);
 
         ocrDropdown.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "N/A" }));
         ocrDropdown.setEnabled(false);
@@ -347,22 +385,26 @@ public class TranslationContentPanel extends javax.swing.JPanel {
         ocrDropdown.setPreferredSize(new java.awt.Dimension(170, 25));
         ocrPanel.add(ocrDropdown);
 
-        jPanel1.add(ocrPanel);
+        controlPanel.add(ocrPanel);
 
-        add(jPanel1, java.awt.BorderLayout.NORTH);
+        add(controlPanel, java.awt.BorderLayout.NORTH);
 
         textScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         textScrollPane.setMaximumSize(new java.awt.Dimension(20000, 20000));
-        textScrollPane.setPreferredSize(new java.awt.Dimension(640, 250));
+        textScrollPane.setMinimumSize(new java.awt.Dimension(20, 20));
+        textScrollPane.setPreferredSize(new java.awt.Dimension(20, 20));
         add(textScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel controlPanel;
     private javax.swing.JComboBox<String> displayTextComboBox;
-    private javax.swing.JPanel jPanel1;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JComboBox<String> ocrDropdown;
     private javax.swing.JLabel ocrLabel;
+    private javax.swing.JPanel ocrPanel;
     private javax.swing.JLabel showLabel;
+    private javax.swing.JPanel showPanel;
     private javax.swing.JScrollPane textScrollPane;
     private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables

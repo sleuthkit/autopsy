@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.contentviewers.textcontentviewer;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
@@ -32,6 +33,7 @@ import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.datamodel.StringContent;
+import org.sleuthkit.autopsy.guiutils.WrapLayout;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -78,6 +80,11 @@ public class StringsContentPanel extends javax.swing.JPanel {
             languageCombo.addItem(s);
         });
 
+        // use wrap layout for better component wrapping
+        WrapLayout layout = new WrapLayout(0,5);
+        layout.setOppositeAligned(Arrays.asList(panelScriptSelect));
+        controlPanel.setLayout(layout);
+        
     }
 
     final void resetDisplay() {
@@ -119,7 +126,6 @@ public class StringsContentPanel extends javax.swing.JPanel {
         pageLabel2 = new javax.swing.JLabel();
         javax.swing.JSeparator jSepMed5 = new javax.swing.JSeparator();
         prevPageButton = new javax.swing.JButton();
-        javax.swing.JSeparator jSepXs1 = new javax.swing.JSeparator();
         nextPageButton = new javax.swing.JButton();
         javax.swing.JSeparator jSepMed6 = new javax.swing.JSeparator();
         javax.swing.JPanel panelGoToPage = new javax.swing.JPanel();
@@ -140,8 +146,8 @@ public class StringsContentPanel extends javax.swing.JPanel {
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        setMinimumSize(new java.awt.Dimension(5, 5));
-        setPreferredSize(new java.awt.Dimension(100, 58));
+        setMinimumSize(new java.awt.Dimension(250, 5));
+        setPreferredSize(new java.awt.Dimension(250, 58));
         setLayout(new java.awt.BorderLayout());
 
         controlPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
@@ -149,28 +155,36 @@ public class StringsContentPanel extends javax.swing.JPanel {
         panelPageOfCount.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 0));
 
         pageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.pageLabel.text_1")); // NOI18N
-        pageLabel.setMaximumSize(new java.awt.Dimension(33, 14));
-        pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
+        pageLabel.setMaximumSize(new java.awt.Dimension(33, 25));
+        pageLabel.setMinimumSize(new java.awt.Dimension(33, 25));
+        pageLabel.setPreferredSize(new java.awt.Dimension(32, 25));
         panelPageOfCount.add(pageLabel);
 
         jSepMed1.setPreferredSize(new java.awt.Dimension(5, 0));
         panelPageOfCount.add(jSepMed1);
 
         currentPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.currentPageLabel.text_1")); // NOI18N
-        currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 14));
-        currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 14));
+        currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 25));
+        currentPageLabel.setMinimumSize(new java.awt.Dimension(7, 25));
+        currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 25));
         panelPageOfCount.add(currentPageLabel);
 
         jSepMed2.setPreferredSize(new java.awt.Dimension(5, 0));
         panelPageOfCount.add(jSepMed2);
 
         ofLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.ofLabel.text_1")); // NOI18N
+        ofLabel.setMaximumSize(new java.awt.Dimension(11, 25));
+        ofLabel.setMinimumSize(new java.awt.Dimension(11, 25));
+        ofLabel.setPreferredSize(new java.awt.Dimension(11, 25));
         panelPageOfCount.add(ofLabel);
 
         jSepMed3.setPreferredSize(new java.awt.Dimension(5, 0));
         panelPageOfCount.add(jSepMed3);
 
         totalPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.totalPageLabel.text_1")); // NOI18N
+        totalPageLabel.setMaximumSize(new java.awt.Dimension(21, 25));
+        totalPageLabel.setMinimumSize(new java.awt.Dimension(21, 25));
+        totalPageLabel.setPreferredSize(new java.awt.Dimension(21, 25));
         panelPageOfCount.add(totalPageLabel);
 
         jSepMed4.setPreferredSize(new java.awt.Dimension(5, 0));
@@ -181,8 +195,9 @@ public class StringsContentPanel extends javax.swing.JPanel {
         panelPageNextPrevButton.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
 
         pageLabel2.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.pageLabel2.text")); // NOI18N
-        pageLabel2.setMaximumSize(new java.awt.Dimension(29, 14));
-        pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
+        pageLabel2.setMaximumSize(new java.awt.Dimension(29, 25));
+        pageLabel2.setMinimumSize(new java.awt.Dimension(29, 25));
+        pageLabel2.setPreferredSize(new java.awt.Dimension(29, 25));
         panelPageNextPrevButton.add(pageLabel2);
 
         jSepMed5.setPreferredSize(new java.awt.Dimension(5, 0));
@@ -194,9 +209,9 @@ public class StringsContentPanel extends javax.swing.JPanel {
         prevPageButton.setContentAreaFilled(false);
         prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
         prevPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-        prevPageButton.setMaximumSize(new java.awt.Dimension(20, 20));
-        prevPageButton.setMinimumSize(new java.awt.Dimension(20, 20));
-        prevPageButton.setPreferredSize(new java.awt.Dimension(20, 20));
+        prevPageButton.setMaximumSize(new java.awt.Dimension(25, 25));
+        prevPageButton.setMinimumSize(new java.awt.Dimension(20, 25));
+        prevPageButton.setPreferredSize(new java.awt.Dimension(25, 25));
         prevPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
         prevPageButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -205,19 +220,15 @@ public class StringsContentPanel extends javax.swing.JPanel {
         });
         panelPageNextPrevButton.add(prevPageButton);
 
-        jSepXs1.setMinimumSize(new java.awt.Dimension(1, 0));
-        jSepXs1.setPreferredSize(new java.awt.Dimension(1, 0));
-        panelPageNextPrevButton.add(jSepXs1);
-
         nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
         nextPageButton.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.nextPageButton.text")); // NOI18N
         nextPageButton.setBorderPainted(false);
         nextPageButton.setContentAreaFilled(false);
         nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
         nextPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-        nextPageButton.setMaximumSize(new java.awt.Dimension(20, 20));
-        nextPageButton.setMinimumSize(new java.awt.Dimension(20, 20));
-        nextPageButton.setPreferredSize(new java.awt.Dimension(20, 20));
+        nextPageButton.setMaximumSize(new java.awt.Dimension(25, 25));
+        nextPageButton.setMinimumSize(new java.awt.Dimension(20, 25));
+        nextPageButton.setPreferredSize(new java.awt.Dimension(25, 25));
         nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
         nextPageButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -242,7 +253,7 @@ public class StringsContentPanel extends javax.swing.JPanel {
         goToPageTextField.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.goToPageTextField.text")); // NOI18N
         goToPageTextField.setMaximumSize(new java.awt.Dimension(2147483647, 25));
         goToPageTextField.setMinimumSize(new java.awt.Dimension(50, 25));
-        goToPageTextField.setPreferredSize(new java.awt.Dimension(100, 25));
+        goToPageTextField.setPreferredSize(new java.awt.Dimension(70, 25));
         goToPageTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 goToPageTextFieldActionPerformed(evt);
@@ -278,11 +289,9 @@ public class StringsContentPanel extends javax.swing.JPanel {
 
         add(controlPanel, java.awt.BorderLayout.NORTH);
 
-        outputScrollPane.setPreferredSize(new java.awt.Dimension(640, 402));
-
         outputViewPane.setEditable(false);
         outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
-        outputViewPane.setPreferredSize(new java.awt.Dimension(100, 40));
+        outputViewPane.setPreferredSize(null);
         outputScrollPane.setViewportView(outputViewPane);
 
         add(outputScrollPane, java.awt.BorderLayout.CENTER);

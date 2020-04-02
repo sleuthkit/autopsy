@@ -47,6 +47,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
+import org.sleuthkit.autopsy.guiutils.WrapLayout;
 
 /**
  * Panel displays HTML content sent to ExtractedContentViewer, and provides a
@@ -187,8 +188,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     
     private void additionalInit() {
         // use wrap layout for better component wrapping
-        WrapLayout layout = new WrapLayout();
-        layout.setHgap(5);
+        WrapLayout layout = new WrapLayout(0,5);
         layout.setOppositeAligned(Arrays.asList(textSourcePanel));
         controlPanel.setLayout(layout);
     }
@@ -209,13 +209,13 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         controlPanel = new javax.swing.JPanel();
         javax.swing.JPanel pagePanel = new javax.swing.JPanel();
         pagesLabel = new javax.swing.JLabel();
-        fillerSmall1 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
+        javax.swing.Box.Filler fillerSmall1 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         pageCurLabel = new javax.swing.JLabel();
-        fillerSmall2 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
+        javax.swing.Box.Filler fillerSmall2 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         pageOfLabel = new javax.swing.JLabel();
-        fillerSmall3 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
+        javax.swing.Box.Filler fillerSmall3 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         pageTotalLabel = new javax.swing.JLabel();
-        fillerSmall4 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
+        javax.swing.Box.Filler fillerSmall4 = new javax.swing.Box.Filler(new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 0), new java.awt.Dimension(5, 32767));
         pageButtonsLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler fillerMed1 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
         pagePreviousButton = new javax.swing.JButton();
@@ -250,8 +250,8 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        setMinimumSize(new java.awt.Dimension(100, 0));
-        setPreferredSize(new java.awt.Dimension(100, 58));
+        setMinimumSize(new java.awt.Dimension(250, 0));
+        setPreferredSize(new java.awt.Dimension(250, 58));
         setLayout(new java.awt.BorderLayout());
 
         controlPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
@@ -393,8 +393,8 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
 
         sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel<org.sleuthkit.autopsy.keywordsearch.IndexedText>());
         sourceComboBox.setMaximumSize(new java.awt.Dimension(150, 32767));
-        sourceComboBox.setMinimumSize(new java.awt.Dimension(150, 20));
-        sourceComboBox.setPreferredSize(new java.awt.Dimension(150, 20));
+        sourceComboBox.setMinimumSize(new java.awt.Dimension(150, 25));
+        sourceComboBox.setPreferredSize(new java.awt.Dimension(150, 25));
         textSourcePanel.add(sourceComboBox);
 
         controlPanel.add(textSourcePanel);
@@ -418,10 +418,6 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JScrollPane extractedScrollPane;
     private javax.swing.JTextPane extractedTextPane;
-    private javax.swing.Box.Filler fillerSmall1;
-    private javax.swing.Box.Filler fillerSmall2;
-    private javax.swing.Box.Filler fillerSmall3;
-    private javax.swing.Box.Filler fillerSmall4;
     private javax.swing.JLabel hitButtonsLabel;
     private javax.swing.JLabel hitCountLabel;
     private javax.swing.JLabel hitLabel;
