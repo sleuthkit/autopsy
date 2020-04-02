@@ -284,14 +284,15 @@ public class TranslationContentPanel extends javax.swing.JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
 
         jPanel1 = new javax.swing.JPanel();
-        displayTextComboBox = new javax.swing.JComboBox<>();
-        ocrDropdown = new javax.swing.JComboBox<>();
-        ocrLabel = new javax.swing.JLabel();
         warningLabel = new javax.swing.JLabel();
+        javax.swing.JPanel showPanel = new javax.swing.JPanel();
         showLabel = new javax.swing.JLabel();
+        displayTextComboBox = new javax.swing.JComboBox<>();
+        javax.swing.JPanel ocrPanel = new javax.swing.JPanel();
+        ocrLabel = new javax.swing.JLabel();
+        ocrDropdown = new javax.swing.JComboBox<>();
         textScrollPane = new javax.swing.JScrollPane();
 
         setMaximumSize(new java.awt.Dimension(2000, 2000));
@@ -302,57 +303,51 @@ public class TranslationContentPanel extends javax.swing.JPanel {
         setLayout(new java.awt.BorderLayout());
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        jPanel1.setMaximumSize(new java.awt.Dimension(182, 24));
-        jPanel1.setPreferredSize(new java.awt.Dimension(182, 24));
-        jPanel1.setLayout(new java.awt.GridBagLayout());
+        jPanel1.setMaximumSize(new java.awt.Dimension(182, 25));
+        jPanel1.setMinimumSize(new java.awt.Dimension(254, 25));
+        jPanel1.setName(""); // NOI18N
+        jPanel1.setPreferredSize(new java.awt.Dimension(182, 25));
+        jPanel1.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
 
-        displayTextComboBox.setMinimumSize(new java.awt.Dimension(43, 20));
-        displayTextComboBox.setPreferredSize(new java.awt.Dimension(43, 20));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 3;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
-        jPanel1.add(displayTextComboBox, gridBagConstraints);
+        warningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/warning16.png"))); // NOI18N
+        warningLabel.setMaximumSize(new java.awt.Dimension(250, 25));
+        warningLabel.setMinimumSize(new java.awt.Dimension(150, 25));
+        warningLabel.setPreferredSize(new java.awt.Dimension(250, 25));
+        jPanel1.add(warningLabel);
 
-        ocrDropdown.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "N/A" }));
-        ocrDropdown.setEnabled(false);
-        ocrDropdown.setName(""); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 5;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
-        jPanel1.add(ocrDropdown, gridBagConstraints);
+        showPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 0));
+
+        org.openide.awt.Mnemonics.setLocalizedText(showLabel, org.openide.util.NbBundle.getMessage(TranslationContentPanel.class, "TranslationContentPanel.showLabel.text")); // NOI18N
+        showLabel.setMaximumSize(new java.awt.Dimension(42, 25));
+        showLabel.setMinimumSize(new java.awt.Dimension(42, 25));
+        showLabel.setPreferredSize(new java.awt.Dimension(42, 25));
+        showPanel.add(showLabel);
+
+        displayTextComboBox.setMaximumSize(new java.awt.Dimension(170, 25));
+        displayTextComboBox.setMinimumSize(new java.awt.Dimension(170, 25));
+        displayTextComboBox.setPreferredSize(new java.awt.Dimension(170, 25));
+        showPanel.add(displayTextComboBox);
+
+        jPanel1.add(showPanel);
+
+        ocrPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 0));
 
         org.openide.awt.Mnemonics.setLocalizedText(ocrLabel, org.openide.util.NbBundle.getMessage(TranslationContentPanel.class, "TranslationContentPanel.ocrLabel.text")); // NOI18N
         ocrLabel.setEnabled(false);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 0);
-        jPanel1.add(ocrLabel, gridBagConstraints);
+        ocrLabel.setMaximumSize(new java.awt.Dimension(40, 25));
+        ocrLabel.setMinimumSize(new java.awt.Dimension(25, 16));
+        ocrLabel.setPreferredSize(new java.awt.Dimension(40, 25));
+        ocrPanel.add(ocrLabel);
 
-        warningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/warning16.png"))); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-        gridBagConstraints.weightx = 0.25;
-        jPanel1.add(warningLabel, gridBagConstraints);
+        ocrDropdown.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "N/A" }));
+        ocrDropdown.setEnabled(false);
+        ocrDropdown.setMaximumSize(new java.awt.Dimension(170, 25));
+        ocrDropdown.setMinimumSize(new java.awt.Dimension(170, 25));
+        ocrDropdown.setName(""); // NOI18N
+        ocrDropdown.setPreferredSize(new java.awt.Dimension(170, 25));
+        ocrPanel.add(ocrDropdown);
 
-        org.openide.awt.Mnemonics.setLocalizedText(showLabel, org.openide.util.NbBundle.getMessage(TranslationContentPanel.class, "TranslationContentPanel.showLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 0;
-        jPanel1.add(showLabel, gridBagConstraints);
+        jPanel1.add(ocrPanel);
 
         add(jPanel1, java.awt.BorderLayout.NORTH);
 
