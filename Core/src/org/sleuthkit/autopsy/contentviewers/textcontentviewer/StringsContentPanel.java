@@ -290,8 +290,6 @@ public class StringsContentPanel extends javax.swing.JPanel {
         add(controlPanel, java.awt.BorderLayout.NORTH);
 
         outputViewPane.setEditable(false);
-        outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
-        outputViewPane.setPreferredSize(null);
         outputScrollPane.setViewportView(outputViewPane);
 
         add(outputScrollPane, java.awt.BorderLayout.CENTER);
