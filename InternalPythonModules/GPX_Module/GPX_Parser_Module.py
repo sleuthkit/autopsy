@@ -37,12 +37,10 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.blackboardutils import GeoArtifactsHelper
-from org.sleuthkit.datamodel.blackboardutils.attributes import TskGeoWaypointsUtil
-from org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoWaypointsUtil import GeoWaypointList
-from org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoWaypointsUtil.GeoWaypointList import GeoWaypoint
-from org.sleuthkit.datamodel.blackboardutils.attributes import TskGeoTrackpointsUtil
-from org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoTrackpointsUtil import GeoTrackPointList
-from org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoTrackpointsUtil.GeoTrackPointList import GeoTrackPoint
+from org.sleuthkit.datamodel.blackboardutils.attributes import GeoWaypoints
+from org.sleuthkit.datamodel.blackboardutils.attributes import GeoWaypoints.Waypoint
+from org.sleuthkit.datamodel.blackboardutils.attributes import GeoTrackPoints
+from org.sleuthkit.datamodel.blackboardutils.attributes import GeoTrackPoints.TrackPoint
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestModule
 from org.sleuthkit.autopsy.ingest.IngestModule import IngestModuleException
@@ -166,7 +164,7 @@ class GPXParserDataSourceIngestModule(DataSourceIngestModule):
                 if self.writeDebugMsgs: self.log(Level.INFO, "Processing tracks from " + file.getUniquePath() + " (objID = " + str(file.getId()) + ")")
                 for track in gpx.tracks:                
                     for segment in track.segments:
-                        geoPointList = TskGeoTrackpointsUtil.GeoTrackPointList()
+                        geoPointList = GeoTrackPoints()
                         for point in segment.points:
 
                             elevation = 0
@@ -180,7 +178,7 @@ class GPXParserDataSourceIngestModule(DataSourceIngestModule):
                             except Exception as e:                            
                                 self.log(Level.WARNING, "Error getting track timestamp from " + file.getUniquePath() + " (objID = " + str(file.getId()) + "):" + str(e))
 
-                            geoPointList.addPoint(GeoTrackPoint(point.latitude, point.longitude, elevation, None, 0, 0, 0, timeStamp))
+                            geoPointList.addPoint(TrackPoint(point.latitude, point.longitude, elevation, None, 0, 0, 0, timeStamp))
                                                                                                              
                         try:
                             geoArtifactHelper.addTrack("Track", geoPointList, None)
@@ -213,10 +211,10 @@ class GPXParserDataSourceIngestModule(DataSourceIngestModule):
                 if self.writeDebugMsgs: self.log(Level.INFO, "Processing routes from " + file.getUniquePath() + " (objID = " + str(file.getId()) + ")")
                 for route in gpx.routes:    
 
-                    geoWaypointList = TskGeoWaypointsUtil.GeoWaypointList()
+                    geoWaypoints = GeoWaypoints()
 
                     for point in route.points:
-                        geoWaypointList.addPoint(GeoWaypoint(point.latitude, point.longitude, point.elevation, point.name))
+                        geoWaypointList.addPoint(Waypoint(point.latitude, point.longitude, point.elevation, point.name))
                     
                     try:
                         geoArtifactHelper.addRoute(None, None, geoWaypointList, None)
