@@ -256,22 +256,16 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
 
         casePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.casePanel.border.title"))); // NOI18N
 
-        caseNumberLabel.setFont(caseNumberLabel.getFont().deriveFont(caseNumberLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(caseNumberLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.caseNumberLabel.text")); // NOI18N
         caseNumberLabel.setMaximumSize(new java.awt.Dimension(41, 14));
         caseNumberLabel.setMinimumSize(new java.awt.Dimension(41, 14));
         caseNumberLabel.setPreferredSize(new java.awt.Dimension(41, 14));
 
-        caseNumberTextField.setFont(caseNumberTextField.getFont().deriveFont(caseNumberTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-
-        caseDisplayNameLabel.setFont(caseDisplayNameLabel.getFont().deriveFont(caseDisplayNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(caseDisplayNameLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.caseDisplayNameLabel.text")); // NOI18N
         caseDisplayNameLabel.setMaximumSize(new java.awt.Dimension(41, 14));
         caseDisplayNameLabel.setMinimumSize(new java.awt.Dimension(41, 14));
         caseDisplayNameLabel.setPreferredSize(new java.awt.Dimension(41, 14));
         caseDisplayNameLabel.setVerifyInputWhenFocusTarget(false);
-
-        caseDisplayNameTextField.setFont(caseDisplayNameTextField.getFont().deriveFont(caseDisplayNameTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
         javax.swing.GroupLayout casePanelLayout = new javax.swing.GroupLayout(casePanel);
         casePanel.setLayout(casePanelLayout);
@@ -312,21 +306,17 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         caseNotesScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         taNotesText.setColumns(20);
-        taNotesText.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         taNotesText.setLineWrap(true);
         taNotesText.setRows(2);
         taNotesText.setWrapStyleWord(true);
         taNotesText.setBorder(null);
         caseNotesScrollPane.setViewportView(taNotesText);
 
-        examinerTextField.setFont(examinerTextField.getFont().deriveFont(examinerTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-
         org.openide.awt.Mnemonics.setLocalizedText(lbExaminerEmailLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.lbExaminerEmailLabel.text")); // NOI18N
         lbExaminerEmailLabel.setMaximumSize(new java.awt.Dimension(41, 14));
         lbExaminerEmailLabel.setMinimumSize(new java.awt.Dimension(41, 14));
         lbExaminerEmailLabel.setPreferredSize(new java.awt.Dimension(41, 14));
 
-        examinerLabel.setFont(examinerLabel.getFont().deriveFont(examinerLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(examinerLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.examinerLabel.text")); // NOI18N
         examinerLabel.setMaximumSize(new java.awt.Dimension(41, 14));
         examinerLabel.setMinimumSize(new java.awt.Dimension(41, 14));

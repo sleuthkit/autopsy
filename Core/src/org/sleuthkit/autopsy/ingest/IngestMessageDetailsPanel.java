@@ -116,7 +116,7 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         messageDetailsPane.setBackground(new java.awt.Color(221, 221, 235));
         messageDetailsPane.setBorder(null);
         messageDetailsPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.contentType")); // NOI18N
-        messageDetailsPane.setFont(messageDetailsPane.getFont().deriveFont(messageDetailsPane.getFont().getStyle() & ~java.awt.Font.BOLD, 10));
+        messageDetailsPane.setFont(messageDetailsPane.getFont().deriveFont(messageDetailsPane.getFont().getSize()-1f));
         messageDetailsPane.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.toolTipText")); // NOI18N
         jScrollPane1.setViewportView(messageDetailsPane);
 
@@ -140,7 +140,6 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         jToolBar1.add(backButton);
         jToolBar1.add(filler1);
 
-        viewArtifactButton.setFont(viewArtifactButton.getFont().deriveFont(viewArtifactButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         viewArtifactButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_res.png"))); // NOI18N
         viewArtifactButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewArtifactButton.text")); // NOI18N
         viewArtifactButton.setIconTextGap(2);
@@ -151,7 +150,6 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         });
         jToolBar1.add(viewArtifactButton);
 
-        viewContentButton.setFont(viewContentButton.getFont().deriveFont(viewContentButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         viewContentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_dir.png"))); // NOI18N
         viewContentButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewContentButton.text")); // NOI18N
         viewContentButton.setIconTextGap(2);

@@ -240,7 +240,6 @@ public class EamDbSettingsDialog extends JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        bnGrpDatabasePlatforms = new javax.swing.ButtonGroup();
         fcDatabasePath = new javax.swing.JFileChooser();
         pnButtons = new javax.swing.JPanel();
         bnCancel = new javax.swing.JButton();
@@ -369,7 +368,6 @@ public class EamDbSettingsDialog extends JDialog {
         dataBaseFileTextArea.setEditable(false);
         dataBaseFileTextArea.setBackground(new java.awt.Color(240, 240, 240));
         dataBaseFileTextArea.setColumns(20);
-        dataBaseFileTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         dataBaseFileTextArea.setLineWrap(true);
         dataBaseFileTextArea.setRows(3);
         dataBaseFileScrollPane.setViewportView(dataBaseFileTextArea);
@@ -832,7 +830,6 @@ public class EamDbSettingsDialog extends JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnCancel;
     private javax.swing.JButton bnDatabasePathFileOpen;
-    private javax.swing.ButtonGroup bnGrpDatabasePlatforms;
     private javax.swing.JButton bnOk;
     private javax.swing.JComboBox<org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice> cbDatabaseType;
     private javax.swing.JScrollPane dataBaseFileScrollPane;

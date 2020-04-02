@@ -210,34 +210,24 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
         signatureTypeLabel = new javax.swing.JLabel();
         signatureTextField = new javax.swing.JTextField();
 
-        offsetLabel.setFont(offsetLabel.getFont().deriveFont(offsetLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(offsetLabel, org.openide.util.NbBundle.getMessage(AddFileTypeSignaturePanel.class, "AddFileTypeSignaturePanel.offsetLabel.text")); // NOI18N
 
-        offsetTextField.setFont(offsetTextField.getFont().deriveFont(offsetTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         offsetTextField.setText(org.openide.util.NbBundle.getMessage(AddFileTypeSignaturePanel.class, "AddFileTypeSignaturePanel.offsetTextField.text")); // NOI18N
 
-        offsetRelativeToComboBox.setFont(offsetRelativeToComboBox.getFont().deriveFont(offsetRelativeToComboBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-
-        offsetRelativeToLabel.setFont(offsetRelativeToLabel.getFont().deriveFont(offsetRelativeToLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(offsetRelativeToLabel, org.openide.util.NbBundle.getMessage(AddFileTypeSignaturePanel.class, "AddFileTypeSignaturePanel.offsetRelativeToLabel.text")); // NOI18N
 
-        hexPrefixLabel.setFont(hexPrefixLabel.getFont().deriveFont(hexPrefixLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(hexPrefixLabel, org.openide.util.NbBundle.getMessage(AddFileTypeSignaturePanel.class, "AddFileTypeSignaturePanel.hexPrefixLabel.text")); // NOI18N
 
-        signatureTypeComboBox.setFont(signatureTypeComboBox.getFont().deriveFont(signatureTypeComboBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         signatureTypeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 signatureTypeComboBoxActionPerformed(evt);
             }
         });
 
-        signatureLabel.setFont(signatureLabel.getFont().deriveFont(signatureLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(signatureLabel, org.openide.util.NbBundle.getMessage(AddFileTypeSignaturePanel.class, "AddFileTypeSignaturePanel.signatureLabel.text")); // NOI18N
 
-        signatureTypeLabel.setFont(signatureTypeLabel.getFont().deriveFont(signatureTypeLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(signatureTypeLabel, org.openide.util.NbBundle.getMessage(AddFileTypeSignaturePanel.class, "AddFileTypeSignaturePanel.signatureTypeLabel.text")); // NOI18N
 
-        signatureTextField.setFont(signatureTextField.getFont().deriveFont(signatureTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         signatureTextField.setText(org.openide.util.NbBundle.getMessage(AddFileTypeSignaturePanel.class, "AddFileTypeSignaturePanel.signatureTextField.text")); // NOI18N
         signatureTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

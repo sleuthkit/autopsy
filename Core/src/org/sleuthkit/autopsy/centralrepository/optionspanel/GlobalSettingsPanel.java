@@ -263,7 +263,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             }
         });
 
-        pnDatabaseConfiguration.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.pnDatabaseConfiguration.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        pnDatabaseConfiguration.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.pnDatabaseConfiguration.title"))); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(lbDbPlatformTypeLabel, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.lbDbPlatformTypeLabel.text")); // NOI18N
 
@@ -319,7 +319,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addGap(8, 8, 8))
         );
 
-        pnCorrelationProperties.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.pnCorrelationProperties.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        pnCorrelationProperties.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.pnCorrelationProperties.border.title"))); // NOI18N
         pnCorrelationProperties.setPreferredSize(new java.awt.Dimension(674, 93));
 
         org.openide.awt.Mnemonics.setLocalizedText(bnManageTypes, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageProperties.text")); // NOI18N
@@ -334,7 +334,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         correlationPropertiesTextArea.setEditable(false);
         correlationPropertiesTextArea.setBackground(new java.awt.Color(240, 240, 240));
         correlationPropertiesTextArea.setColumns(20);
-        correlationPropertiesTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         correlationPropertiesTextArea.setLineWrap(true);
         correlationPropertiesTextArea.setRows(1);
         correlationPropertiesTextArea.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.correlationPropertiesTextArea.text")); // NOI18N
@@ -360,13 +359,13 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         pnCorrelationPropertiesLayout.setVerticalGroup(
             pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnCorrelationPropertiesLayout.createSequentialGroup()
-                .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 32, Short.MAX_VALUE)
+                .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 28, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bnManageTypes)
                 .addGap(8, 8, 8))
         );
 
-        organizationPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.organizationPanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        organizationPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.organizationPanel.border.title"))); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(manageOrganizationButton, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.manageOrganizationButton.text")); // NOI18N
         manageOrganizationButton.addActionListener(new java.awt.event.ActionListener() {
@@ -380,7 +379,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         organizationTextArea.setEditable(false);
         organizationTextArea.setBackground(new java.awt.Color(240, 240, 240));
         organizationTextArea.setColumns(20);
-        organizationTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         organizationTextArea.setLineWrap(true);
         organizationTextArea.setRows(2);
         organizationTextArea.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.organizationTextArea.text")); // NOI18N
@@ -412,7 +410,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addGap(8, 8, 8))
         );
 
-        casesPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.casesPanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        casesPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.casesPanel.border.title"))); // NOI18N
         casesPanel.setName("Case Details"); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(showCasesButton, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.showCasesButton.text")); // NOI18N
@@ -427,7 +425,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         casesTextArea.setEditable(false);
         casesTextArea.setBackground(new java.awt.Color(240, 240, 240));
         casesTextArea.setColumns(20);
-        casesTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         casesTextArea.setLineWrap(true);
         casesTextArea.setRows(2);
         casesTextArea.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.casesTextArea.text")); // NOI18N
@@ -460,11 +457,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         );
 
         tbOops.setEditable(false);
-        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
+        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, tbOops.getFont().getSize()-1));
         tbOops.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
 
-        ingestRunningWarningLabel.setFont(ingestRunningWarningLabel.getFont().deriveFont(ingestRunningWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         ingestRunningWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/filetypeid/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(ingestRunningWarningLabel, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.ingestRunningWarningLabel.text")); // NOI18N
 
@@ -476,7 +472,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.DEFAULT_SIZE, 1012, Short.MAX_VALUE)
+                    .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.DEFAULT_SIZE, 1010, Short.MAX_VALUE)
                     .addComponent(organizationPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(casesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()

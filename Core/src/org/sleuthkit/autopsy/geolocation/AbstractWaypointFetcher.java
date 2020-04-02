@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.geolocation.datamodel.Track;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
  * The business logic for filtering waypoints.
@@ -60,6 +61,7 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
         Case currentCase = Case.getCurrentCase();
         WaypointBuilder.getAllWaypoints(currentCase.getSleuthkitCase(),
                 filters.getDataSources(),
+                filters.getArtifactTypes(),
                 filters.showAllWaypoints(),
                 filters.getMostRecentNumDays(),
                 filters.showWaypointsWithoutTimeStamp(),
@@ -77,12 +79,13 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
 
     @Override
     public void process(List<Waypoint> waypoints) {
-
         List<Track> tracks = null;
-        try {
-            tracks = Track.getTracks(Case.getCurrentCase().getSleuthkitCase(), filters.getDataSources());
-        } catch (GeoLocationDataException ex) {
-            logger.log(Level.WARNING, "Exception thrown while retrieving list of Tracks", ex);
+        if (filters.getArtifactTypes().contains(ARTIFACT_TYPE.TSK_GPS_TRACK)) {
+            try {
+                tracks = Track.getTracks(Case.getCurrentCase().getSleuthkitCase(), filters.getDataSources());
+            } catch (GeoLocationDataException ex) {
+                logger.log(Level.WARNING, "Exception thrown while retrieving list of Tracks", ex);
+            }
         }
 
         List<Waypoint> completeList = createWaypointList(waypoints, tracks);
@@ -217,7 +220,7 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
         for (Track track : tracks) {
             if (mostRecent == null) {
                 mostRecent = track.getStartTime();
-            } else {
+            } else if (track.getStartTime() != null) {
                 mostRecent = Math.max(mostRecent, track.getStartTime());
             }
         }

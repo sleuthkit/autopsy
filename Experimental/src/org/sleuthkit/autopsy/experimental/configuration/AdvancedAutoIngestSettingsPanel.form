@@ -55,8 +55,10 @@
           <Properties>
             <Property name="editable" type="boolean" value="false"/>
             <Property name="columns" type="int" value="20"/>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Monospaced" size="14" style="1"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="true" component="tbWarning" property="font" relativeSize="true" size="1"/>
+              </FontInfo>
             </Property>
             <Property name="rows" type="int" value="5"/>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -102,17 +104,14 @@
                           </Group>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <EmptySpace min="0" pref="41" max="32767" attributes="0"/>
+                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   <Group type="103" groupAlignment="1" attributes="0">
                                       <Component id="spInputScanInterval" min="-2" pref="90" max="-2" attributes="0"/>
                                       <Component id="spMaximumRetryAttempts" min="-2" pref="90" max="-2" attributes="0"/>
                                       <Component id="spConcurrentJobsPerCase" alignment="1" min="-2" pref="90" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
-                              <Group type="102" attributes="0">
-                                  <EmptySpace max="32767" attributes="0"/>
-                                  <Component id="numberOfFileIngestThreadsComboBox" min="-2" pref="91" max="-2" attributes="0"/>
-                              </Group>
+                              <Component id="numberOfFileIngestThreadsComboBox" min="-2" pref="91" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                       <Group type="102" attributes="0">
@@ -133,7 +132,7 @@
                       <Component id="lbTimeoutHours" min="-2" max="-2" attributes="0"/>
                       <Component id="lbInputScanIntervalMinutes" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace pref="50" max="32767" attributes="0"/>
+                  <EmptySpace pref="70" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>

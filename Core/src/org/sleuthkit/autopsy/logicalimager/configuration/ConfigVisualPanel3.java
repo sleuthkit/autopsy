@@ -198,7 +198,6 @@ class ConfigVisualPanel3 extends javax.swing.JPanel {
         descriptionTextArea.setEditable(false);
         descriptionTextArea.setBackground(new java.awt.Color(240, 240, 240));
         descriptionTextArea.setColumns(20);
-        descriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         descriptionTextArea.setLineWrap(true);
         descriptionTextArea.setRows(5);
         descriptionTextArea.setWrapStyleWord(true);
@@ -250,7 +249,7 @@ class ConfigVisualPanel3 extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(executableLabel)
                     .addComponent(executableStatusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(120, Short.MAX_VALUE))
+                .addContainerGap(100, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

@@ -119,7 +119,6 @@ final class ConfigVisualPanel1 extends JPanel {
         descriptionTextArea.setEditable(false);
         descriptionTextArea.setBackground(new java.awt.Color(240, 240, 240));
         descriptionTextArea.setColumns(20);
-        descriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         descriptionTextArea.setLineWrap(true);
         descriptionTextArea.setRows(4);
         descriptionTextArea.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.descriptionTextArea.text")); // NOI18N
@@ -205,7 +204,7 @@ final class ConfigVisualPanel1 extends JPanel {
                     .addComponent(driveListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(refreshButton)
-                        .addGap(0, 95, Short.MAX_VALUE)))
+                        .addGap(0, 87, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(configureFolderRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -214,7 +213,7 @@ final class ConfigVisualPanel1 extends JPanel {
                     .addComponent(browseButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(warningLabel)
-                .addContainerGap(60, Short.MAX_VALUE))
+                .addContainerGap(52, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
