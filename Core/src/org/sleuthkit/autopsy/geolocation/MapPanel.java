@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
+import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -34,9 +36,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
@@ -89,7 +93,6 @@ final public class MapPanel extends javax.swing.JPanel {
     private static final int POPUP_MARGIN = 10;
 
     private BufferedImage defaultWaypointImage;
-    private BufferedImage selectedWaypointImage;
 
     private MapWaypoint currentlySelectedWaypoint;
 
@@ -108,8 +111,7 @@ final public class MapPanel extends javax.swing.JPanel {
         popupFactory = new PopupFactory();
 
         try {
-            defaultWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_teal.png"));
-            selectedWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_yellow.png"));
+            defaultWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_white.png"));
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to load geolocation waypoint images", ex);
         }
@@ -685,16 +687,61 @@ final public class MapPanel extends javax.swing.JPanel {
      * Renderer for the map waypoints.
      */
     private class MapWaypointRenderer implements WaypointRenderer<MapWaypoint> {
+        private final HashMap<Color, BufferedImage> imageCache = new HashMap<>();
+
+        /**
+         * 
+         * @param waypoint the waypoint for which to get the color
+         * @param currentlySelectedWaypoint the waypoint that is currently selected
+         * @return the color that this waypoint should be rendered
+         */
+        private Color getColor(MapWaypoint waypoint, MapWaypoint currentlySelectedWaypoint) {
+            if (waypoint == currentlySelectedWaypoint) {
+                return Color.YELLOW;
+            }
+            return waypoint.getColor();
+        }
+
+        /**
+         * 
+         * @param baseImg the base image
+         * @param newColor the color that the resulting image should be changed into
+         * @return a new waypoint image
+         */
+        private BufferedImage getWaypointImage(BufferedImage baseImg, Color newColor) {
+            int w = baseImg.getWidth();
+            int h = baseImg.getHeight();
+            BufferedImage imgOut = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            BufferedImage imgColor = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+
+            Graphics2D g = imgColor.createGraphics();
+            g.setColor(newColor);
+            g.fillRect(0, 0, w + 1, h + 1);
+            g.dispose();
+
+            Graphics2D graphics = imgOut.createGraphics();
+            graphics.drawImage(baseImg, 0, 0, null);
+            graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_IN));
+            graphics.drawImage(imgColor, 0, 0, null);
+            graphics.dispose();
+
+            return imgOut;
+        }
 
         @Override
         public void paintWaypoint(Graphics2D gd, JXMapViewer jxmv, MapWaypoint waypoint) {
+            Color color = getColor(waypoint, currentlySelectedWaypoint);
+
+            // Store computed images in cache for later use
+            BufferedImage image = imageCache.computeIfAbsent(color, k -> {
+                return getWaypointImage(defaultWaypointImage, color);
+            });
+
             Point2D point = jxmv.getTileFactory().geoToPixel(waypoint.getPosition(), jxmv.getZoom());
 
             int x = (int) point.getX();
             int y = (int) point.getY();
-
-            BufferedImage image = (waypoint == currentlySelectedWaypoint ? selectedWaypointImage : defaultWaypointImage);
-
+            
             (gd.create()).drawImage(image, x - image.getWidth() / 2, y - image.getHeight(), null);
         }
     }

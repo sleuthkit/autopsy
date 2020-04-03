@@ -18,11 +18,13 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -64,6 +66,12 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
     private static final Logger logger = Logger.getLogger(MapWaypoint.class.getName());
     private final static String HTML_PROP_FORMAT = "<b>%s: </b>%s<br>";
     static private final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.US);
+    
+    private static final HashMap<Integer, Color> artifactTypesToColors = new HashMap();
+    
+    static {
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID(), Color.BLUE);
+    }
 
     private final Waypoint dataModelWaypoint;
     private final GeoPosition position;
@@ -324,6 +332,14 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      */
     private String getTimeStamp(long timeStamp) {
         return DATE_FORMAT.format(new java.util.Date(timeStamp * 1000));
+    }
+
+    /**
+     * 
+     * @return the color that this waypoint should be rendered
+     */
+    Color getColor() {
+        return artifactTypesToColors.getOrDefault(dataModelWaypoint.getArtifact().getArtifactTypeID(), Color.ORANGE);
     }
 
     /**
