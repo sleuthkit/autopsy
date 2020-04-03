@@ -194,6 +194,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
 
     /**
      * Adds the specified component to the layout. Not used by this class.
+     * NOTE: This is not used for this layout
      *
      * @param name The name of the component.
      * @param comp The component to be added.
@@ -204,6 +205,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
 
     /**
      * Removes the specified component from the layout. Not used by this class.
+     * NOTE: This is not used for this layout
      *
      * @param comp The component to remove.
      */
@@ -285,7 +287,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
             synchronized (this.oppositeAlignedItems) {
                 ParentDimensions targetDims = getTargetDimensions(target);
                 List<Component> components = Arrays.asList(target.getComponents());
-                List<Row> rows = getAllRows(components, true, targetDims.innerWidth);
+                List<WrapLayoutRow> rows = getAllRows(components, true, targetDims.innerWidth);
 
                 boolean ltr = target.getComponentOrientation().isLeftToRight();
                 boolean useBaseline = getAlignOnBaseline();
@@ -294,7 +296,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
                 int leftX = targetDims.insets.left + getHgap();
                 int rightX = targetDims.outerWidth - targetDims.insets.right - getHgap();
 
-                for (Row row : rows) {
+                for (WrapLayoutRow row : rows) {
                     int rowHeight = row.height;
 
                     int curX = 0;
@@ -426,7 +428,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
             synchronized (this.oppositeAlignedItems) {
                 ParentDimensions targetDims = getTargetDimensions(target);
                 List<Component> components = Arrays.asList(target.getComponents());
-                List<Row> rows = getAllRows(components, preferred, targetDims.innerWidth);
+                List<WrapLayoutRow> rows = getAllRows(components, preferred, targetDims.innerWidth);
 
                 Integer containerHeight = rows.stream().map((r) -> r.height).reduce(0, Integer::sum);
                 // add in vertical gap between rows
@@ -457,7 +459,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
     /**
      * A row of components in the WrapLayout.
      */
-    private class Row {
+    private class WrapLayoutRow {
 
         /**
          * The normally aligned components in the order that they will be laid
@@ -483,7 +485,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
          */
         final int width;
 
-        public Row(List<Component> components, List<Component> oppositeAligned, int height, int width) {
+        public WrapLayoutRow(List<Component> components, List<Component> oppositeAligned, int height, int width) {
             this.components = components;
             this.oppositeAligned = oppositeAligned;
             this.height = height;
@@ -501,14 +503,14 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      *
      * @return The list of rows ordered from top to bottom.
      */
-    private List<Row> getAllRows(List<Component> components, boolean preferred, int maxWidth) {
+    private List<WrapLayoutRow> getAllRows(List<Component> components, boolean preferred, int maxWidth) {
         List<Component> originalComp
                 = components
                         .stream()
                         .filter((comp) -> !this.oppositeAlignedItems.contains(comp))
                         .collect(Collectors.toList());
 
-        List<Row> originalRowSet = getRowSet(originalComp, preferred, maxWidth);
+        List<WrapLayoutRow> originalRowSet = getRowSet(originalComp, preferred, maxWidth);
 
         List<Component> oppositeAlignedComp
                 = components
@@ -518,26 +520,26 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
 
         // go in reverse order and then revert so we can use same getRowSet method
         Collections.reverse(oppositeAlignedComp);
-        List<Row> oppositeRowSet = getRowSet(oppositeAlignedComp, preferred, maxWidth)
+        List<WrapLayoutRow> oppositeRowSet = getRowSet(oppositeAlignedComp, preferred, maxWidth)
                 .stream()
-                .map((Row row) -> {
+                .map((WrapLayoutRow row) -> {
                     Collections.reverse(row.components);
-                    return new Row(null, row.components, row.height, row.width);
+                    return new WrapLayoutRow(null, row.components, row.height, row.width);
                 })
                 .collect(Collectors.toList());
         Collections.reverse(oppositeRowSet);
 
-        List<Row> toReturn = new ArrayList<>();
+        List<WrapLayoutRow> toReturn = new ArrayList<>();
 
         // if there is a row of components that will have both normal and opposite aligned
         // components, create the corresponding row.
-        if (originalRowSet.size() > 0 && oppositeRowSet.size() > 0) {
-            Row lastOrig = originalRowSet.get(originalRowSet.size() - 1);
-            Row firstOpp = oppositeRowSet.get(0);
+        if (!originalRowSet.isEmpty() && !oppositeRowSet.isEmpty()) {
+            WrapLayoutRow lastOrig = originalRowSet.get(originalRowSet.size() - 1);
+            WrapLayoutRow firstOpp = oppositeRowSet.get(0);
 
             int proposedRowWidth = lastOrig.width + firstOpp.width + getHgap();
             if (proposedRowWidth <= maxWidth) {
-                Row middleRow = new Row(lastOrig.components, firstOpp.oppositeAligned,
+                WrapLayoutRow middleRow = new WrapLayoutRow(lastOrig.components, firstOpp.oppositeAligned,
                         Math.max(lastOrig.height, firstOpp.height), proposedRowWidth);
 
                 toReturn.addAll(originalRowSet.subList(0, originalRowSet.size() - 1));
@@ -564,8 +566,8 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      *
      * @return The list of rows determined.
      */
-    private List<Row> getRowSet(List<Component> components, boolean preferred, int maxWidth) {
-        List<Row> rows = new ArrayList<>();
+    private List<WrapLayoutRow> getRowSet(List<Component> components, boolean preferred, int maxWidth) {
+        List<WrapLayoutRow> rows = new ArrayList<>();
 
         List<Component> rowComponents = new ArrayList<>();
         int rowWidth = 0;
@@ -577,7 +579,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
 
                 //  Can't add the component to current row. Start a new row.
                 if (rowWidth + d.width > maxWidth) {
-                    rows.add(new Row(rowComponents, null, rowHeight, rowWidth));
+                    rows.add(new WrapLayoutRow(rowComponents, null, rowHeight, rowWidth));
                     rowComponents = new ArrayList<>();
                     rowWidth = 0;
                     rowHeight = 0;
@@ -595,7 +597,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
         }
 
         if (rowComponents.size() > 0) {
-            rows.add(new Row(rowComponents, null, rowHeight, rowWidth));
+            rows.add(new WrapLayoutRow(rowComponents, null, rowHeight, rowWidth));
         }
 
         return rows;
