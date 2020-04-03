@@ -596,7 +596,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
             }
         }
 
-        if (rowComponents.size() > 0) {
+        if (!rowComponents.isEmpty()) {
             rows.add(new WrapLayoutRow(rowComponents, null, rowHeight, rowWidth));
         }
 
