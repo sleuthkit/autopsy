@@ -215,7 +215,14 @@ public class CorrelationAttributeUtil {
         if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false) {
 
             // Get the corresponding CentralRepoAccountType from the database.
-            CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
+            CentralRepoAccountType crAccountType;
+            try {
+                // @@TODO Vik-6136: CR currently does not know of custom account types.  
+                // This try/catch prevents unnecessary exceptions, till CR handles implement custom account types
+                crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
+            } catch (CentralRepoException ex) {
+                return;
+            }
 
             int corrTypeId = crAccountType.getCorrelationTypeId();
             CorrelationAttributeInstance.Type corrType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
