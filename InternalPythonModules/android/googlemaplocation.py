@@ -43,7 +43,7 @@ from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel.blackboardutils import GeoArtifactsHelper
-from org.sleuthkit.datamodel.blackboardutils import GeoWaypoints
+from org.sleuthkit.datamodel.blackboardutils.attributes import GeoWaypoints
 from org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints import Waypoint
 
 import traceback

@@ -46,7 +46,7 @@ from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel.blackboardutils import GeoArtifactsHelper
 from org.sleuthkit.datamodel.blackboardutils.attributes import GeoTrackPoints
-from org.sleuthkit.datamodel.blackboardutils.attributes import GeoTrackPoints.TrackPoint
+from org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints import TrackPoint
 
 import traceback
 import general

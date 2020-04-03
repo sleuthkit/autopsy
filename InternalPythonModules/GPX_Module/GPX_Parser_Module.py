@@ -38,9 +38,9 @@ from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.blackboardutils import GeoArtifactsHelper
 from org.sleuthkit.datamodel.blackboardutils.attributes import GeoWaypoints
-from org.sleuthkit.datamodel.blackboardutils.attributes import GeoWaypoints.Waypoint
+from org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints import Waypoint
 from org.sleuthkit.datamodel.blackboardutils.attributes import GeoTrackPoints
-from org.sleuthkit.datamodel.blackboardutils.attributes import GeoTrackPoints.TrackPoint
+from org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints import TrackPoint
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestModule
 from org.sleuthkit.autopsy.ingest.IngestModule import IngestModuleException
