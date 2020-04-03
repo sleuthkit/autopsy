@@ -286,7 +286,7 @@ class TextNowContactsParser(TskContactsParser):
     
     def get_phone(self):
         number = self.result_set.getString("number")
-        return (number if general.isValidPhoneNumer(number) else None)
+        return (number if general.isValidPhoneNumber(number) else None)
         
     def get_email(self):
         # occasionally the 'number' column may have an email address instead
