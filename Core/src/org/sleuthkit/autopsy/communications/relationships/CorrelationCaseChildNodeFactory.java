@@ -113,9 +113,7 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
         if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false) {
             CentralRepoAccount.CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
             int corrTypeId = crAccountType.getCorrelationTypeId();
-            CorrelationAttributeInstance.Type corrType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
-            
-            return corrType;
+            return CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
         }
        
         return null;
