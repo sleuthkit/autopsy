@@ -91,8 +91,10 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
     }
 
     /**
-     * Constructs a new <code>WrapLayout</code> with a left alignment and a
-     * default 0-unit horizontal and vertical gap.
+     * Constructs a new <code>WrapLayout</code> with a left alignment.
+     * 
+     * @param vgap  The vertical gap spacing between rows of components.
+     * @param hgap  The horizontal gap spacing between components.
      */
     public WrapLayout(int vgap, int hgap) {
         this.vgap = vgap;
