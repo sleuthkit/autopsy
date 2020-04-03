@@ -50,25 +50,6 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
     private int casesCount;
 
     
-    final static class OrphanCaseNodeEntry {
-        final String caseName;
-        final String nodePath;
-
-        public OrphanCaseNodeEntry(String caseName, String nodePath) {
-            this.caseName = caseName;
-            this.nodePath = nodePath;
-        }
-
-        public String getCaseName() {
-            return caseName;
-        }
-
-        public String getNodePath() {
-            return nodePath;
-        }
-    }
-    
-    
     /**
      * Constucts an instance of a task for deleting case coordination service
      * nodes for which there is no longer a corresponding case.
