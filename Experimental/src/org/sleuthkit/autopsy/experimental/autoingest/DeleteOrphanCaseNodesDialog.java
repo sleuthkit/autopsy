@@ -22,14 +22,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.JFrame;
+import org.openide.windows.WindowManager;
 
 /**
  * This dialog shows the system administrator the orphaned znodes to be deleted.
  * If 'OK' is selected, isOkSelected() will return true.
  */
-public class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
+class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
     private static final String NEW_LINE = System.getProperty("line.separator");
-    private static final String DEFAULT_INDENT = "    ";
+    private static final String CASE_SPACING = NEW_LINE + NEW_LINE;
+    private static final String DEFAULT_INDENT = "     ";
     private static final String COLON = ":";
     
     private boolean okSelected = false;
@@ -37,11 +40,20 @@ public class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
     /**
      * Creates new form DeleteOrphanCaseNodesDialog
      */
-    public DeleteOrphanCaseNodesDialog(java.awt.Frame parent, boolean modal, Map<String, List<String>> znodes) {
-        super(parent, modal);
+    DeleteOrphanCaseNodesDialog(Map<String, List<String>> znodes) {
+        super((JFrame) WindowManager.getDefault().getMainWindow(), null, true);
         initComponents();
         additionalInit(znodes);
     }
+    
+    /**
+     * displays this dialog as child of main window.
+     */
+    void display() {
+        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+        setVisible(true);
+    }
+    
     
     private void additionalInit(Map<String, List<String>> znodes) {
         String textAreaText = "";
@@ -52,7 +64,7 @@ public class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
                         kv.getValue().stream().map((node) -> DEFAULT_INDENT + node))
                     .collect(Collectors.joining(NEW_LINE));
             })
-            .collect(Collectors.joining(NEW_LINE));
+            .collect(Collectors.joining(CASE_SPACING));
         }
         
         znodesTextArea.setText(textAreaText);
@@ -76,6 +88,7 @@ public class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(org.openide.util.NbBundle.getMessage(DeleteOrphanCaseNodesDialog.class, "DeleteOrphanCaseNodesDialog.titleText.text")); // NOI18N
+        setMinimumSize(new java.awt.Dimension(535, 226));
 
         org.openide.awt.Mnemonics.setLocalizedText(descriptionText, org.openide.util.NbBundle.getMessage(DeleteOrphanCaseNodesDialog.class, "DeleteOrphanCaseNodesDialog.descriptionText.text")); // NOI18N
         descriptionText.setVerticalAlignment(javax.swing.SwingConstants.TOP);
@@ -122,7 +135,7 @@ public class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(descriptionText)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 238, Short.MAX_VALUE)
+                .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 252, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton)
@@ -146,7 +159,7 @@ public class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
      * If the system administrator selected OK.
      * @return  Whether or not 'OK' was selected by the system administrator.
      */
-    public boolean isOkSelected() {
+    boolean isOkSelected() {
         return okSelected;
     }
     

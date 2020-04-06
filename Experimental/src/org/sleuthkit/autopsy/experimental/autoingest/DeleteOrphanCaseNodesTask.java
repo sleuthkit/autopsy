@@ -130,8 +130,6 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
                 addIfExists(paths, CoordinationServiceUtils.getCaseAutoIngestLogNodePath(caseDirectoryPath));
                 addIfExists(paths, CoordinationServiceUtils.getCaseDirectoryNodePath(caseDirectoryPath));
                 nodePathsToDelete.put(caseName, paths);
-                
-                ++casesCount;
             }
         }
         return nodePathsToDelete;
@@ -143,7 +141,8 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
      * @return                  True if the user would like to proceed deleting the znodes.
      */
     private boolean promptUser(Map<String, List<String>> orphanedNodes) {
-        DeleteOrphanCaseNodesDialog dialog = new DeleteOrphanCaseNodesDialog(null, true, orphanedNodes);
+        DeleteOrphanCaseNodesDialog dialog = new DeleteOrphanCaseNodesDialog(orphanedNodes);
+        dialog.display();
         return dialog.isOkSelected();
     }
     
@@ -168,6 +167,8 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
                 return;
 
             Map<String, List<String>> orphanedNodes = getOrphanedNodes(nodePaths);
+            if (orphanedNodes == null || orphanedNodes.isEmpty())
+                return;
             
             boolean continueDelete = promptUser(orphanedNodes);
             
@@ -209,6 +210,7 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
                     nodePath = path;
                     deleteNode(coordinationService, caseName, nodePath);
                 }
+                ++casesCount;
             }
         } catch (InterruptedException unused) {
             logger.log(Level.WARNING, String.format("Task cancelled while deleting orphaned znode %s for %s", nodePath, caseName)); //NON-NLS
