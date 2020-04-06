@@ -28,9 +28,19 @@ You can also right click on a waypoint to bring up a similar menu to what you'd 
 
 \subsection geo_filter Filtering
 
-The filters are displayed on the left side of the screen. The top filter lets you filter the waypoints based on timestamp. If enabled, you will only see waypoints with a timestamp within N days of the most recent waypoint (not the current date). When using this filter you can also choose whether you want to see waypoints with no timestamp. The second filter allows you to show waypoints only for the selected data sources.
+The filters are displayed on the left side of the screen. The top filter lets you filter the waypoints based on timestamp. If enabled, you will only see waypoints with a timestamp within N days of the most recent waypoint (not the current date). When using this filter you can also choose whether you want to see waypoints with no timestamp.
 
-\image html geo_filter_panel.png
+\image html geo_filter_time.png
+
+The second filter allows you to show waypoints only for the selected data sources. Note that only data sources that contain geolocation data are displayed here.
+
+\image html geo_filter_datasource.png
+
+The last filter allows you to only show certain types of waypoints. The number next to the type indicates how many waypoint of that type are in your case.
+
+\image html geo_filter_type.png
+
+Once you are done setting up your filters, click the "Apply" button at the top of the filter panel.
 
 If desired, the filter panel can be hidden by clicking on the vertical "Filters" tab on the top right edge of the filter panel. Clicking on that tab a second time will restore the filters panel.
 
