@@ -390,6 +390,7 @@ class FileSearch {
                 return sBuilder.toString();
             } catch (IOException ingored) {
                 //summary file may not exist or may be incomplete in which case return null so a summary can be generated
+                return null; //no saved summary was able to be found
             }
         } else {
             try {  //if the file didn't exist make sure the parent directories exist before we move on to creating a summary
@@ -397,8 +398,9 @@ class FileSearch {
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Unable to create summaries directory in case folder for file at: " + summarySavePath, ex);
             }
+            return null; //no saved summary was able to be found
         }
-        return null; //no saved summary was able to be found
+
     }
 
     /**
