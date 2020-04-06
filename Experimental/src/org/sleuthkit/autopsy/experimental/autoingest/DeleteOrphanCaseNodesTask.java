@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,11 +23,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
@@ -61,6 +59,10 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
     }
     
     
+    /**
+     * Retrieves an instance of the coordination service in order to fetch znodes and potentially delete.
+     * @return  The coordination service or null on error.
+     */
     private CoordinationService getCoordinationService() {
         progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_connectingToCoordSvc());
         logger.log(Level.INFO, Bundle.DeleteOrphanCaseNodesTask_progress_connectingToCoordSvc());
@@ -74,6 +76,11 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
     }
     
     
+    /**
+     * Retrieves node paths for cases.
+     * @param coordinationService       The coordination service to use in order to fetch the node paths.
+     * @return                          The list of node paths for cases.
+     */
     private List<String> getNodePaths(CoordinationService coordinationService) {
         progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_gettingCaseZnodes());
         logger.log(Level.INFO, Bundle.DeleteOrphanCaseNodesTask_progress_gettingCaseZnodes());
@@ -98,6 +105,11 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
             paths.add(path);
     }
     
+    /**
+     * Determines orphaned znode paths.
+     * @param nodePaths     The list of case node paths.
+     * @return              The list of orphaned node paths.
+     */
     private Map<String, List<String>> getOrphanedNodes(List<String> nodePaths) {
         progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_lookingForOrphanedCaseZnodes());
         logger.log(Level.INFO, Bundle.DeleteOrphanCaseNodesTask_progress_lookingForOrphanedCaseZnodes());
@@ -125,6 +137,16 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
         return nodePathsToDelete;
     }
     
+    /**
+     * prompts the user with a list of orphaned znodes.
+     * @param orphanedNodes     The orphaned znodes.
+     * @return                  True if the user would like to proceed deleting the znodes.
+     */
+    private boolean promptUser(Map<String, List<String>> orphanedNodes) {
+        DeleteOrphanCaseNodesDialog dialog = new DeleteOrphanCaseNodesDialog(null, true, orphanedNodes);
+        return dialog.isOkSelected();
+    }
+    
     
     
     @Override
@@ -147,7 +169,7 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
 
             Map<String, List<String>> orphanedNodes = getOrphanedNodes(nodePaths);
             
-            boolean continueDelete = displayToUser(orphanedNodes);
+            boolean continueDelete = promptUser(orphanedNodes);
             
             if (continueDelete)
                 deleteNodes(coordinationService, orphanedNodes);
@@ -169,6 +191,14 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
     }
     
     
+    /**
+     * Deletes the orphaned znodes provided in the 'orphanedNodes' variable.
+     * @param coordinationService       The coordination service to use for deletion.
+     * @param orphanedNodes             A mapping of case to the orphaned znodes.
+     * 
+     * @throws InterruptedException If the thread executing this task is
+     *                              interrupted during the delete operation.
+     */
     private void deleteNodes(CoordinationService coordinationService, Map<String, List<String>> orphanedNodes) {
         String caseName = null;
         String nodePath = null;
