@@ -66,7 +66,7 @@ public class CorrelationAttributeUtil {
     // Most notably, does not include KEYWORD HIT, CALLLOGS, MESSAGES, CONTACTS
     // TSK_INTERESTING_ARTIFACT_HIT (See JIRA-6129 for more details on the
     // interesting artifact hit).
-    private static final Set<Integer> SOURCE_TYPES_OF_CR_DATA = new HashSet<Integer>() {{
+    private static final Set<Integer> SOURCE_TYPES_FOR_CR_INSERT = new HashSet<Integer>() {{
         add(ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID());
         add(ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID());
         add(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID());
@@ -96,7 +96,7 @@ public class CorrelationAttributeUtil {
      *          the artifact.
      */
     public static List<CorrelationAttributeInstance> makeCorrAttrsToSave(BlackboardArtifact artifact) {
-        if(SOURCE_TYPES_OF_CR_DATA.contains(artifact.getArtifactTypeID())) {
+        if(SOURCE_TYPES_FOR_CR_INSERT.contains(artifact.getArtifactTypeID())) {
             // Restrict the correlation attributes to use for saving.
             // The artifacts which are suitable for saving are a subset of the
             // artifacts that are suitable for correlating.
