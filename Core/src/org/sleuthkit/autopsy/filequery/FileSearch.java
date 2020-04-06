@@ -314,16 +314,24 @@ class FileSearch {
         image = image == null ? image : image.getScaledInstance(ImageUtils.ICON_SIZE_MEDIUM, ImageUtils.ICON_SIZE_MEDIUM,
                 Image.SCALE_SMOOTH);
         String summaryText = null;
-        if (file.getMD5Hash() != null) {
-            summaryText = getSavedSummary(Paths.get(Case.getCurrentCaseThrows().getCacheDirectory(), "summaries", file.getMd5Hash() + "-default-" + PREVIEW_SIZE + "-translated.txt").toString());
+        if (file.getMd5Hash() != null) {
+            try {
+                summaryText = getSavedSummary(Paths.get(Case.getCurrentCaseThrows().getCacheDirectory(), "summaries", file.getMd5Hash() + "-default-" + PREVIEW_SIZE + "-translated.txt").toString());
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Unable to retrieve saved summary case not open", ex);
+            }
         }
         if (StringUtils.isBlank(summaryText)) {
             String firstLines = getFirstLines(file);
             String translatedFirstLines = getTranslatedVersion(firstLines);
             if (!StringUtils.isBlank(translatedFirstLines)) {
                 summaryText = translatedFirstLines;
-                if (file.getMD5Hash() != null) {
-                    saveSummary(summaryText, Paths.get(Case.getCurrentCaseThrows().getCacheDirectory(), "summaries", file.getMd5Hash() + "-default-" + PREVIEW_SIZE + "-translated.txt").toString());
+                if (file.getMd5Hash() != null) {
+                    try {
+                        saveSummary(summaryText, Paths.get(Case.getCurrentCaseThrows().getCacheDirectory(), "summaries", file.getMd5Hash() + "-default-" + PREVIEW_SIZE + "-translated.txt").toString());
+                    } catch (NoCurrentCaseException ex) {
+                        logger.log(Level.WARNING, "Unable to save translated summary case not open", ex);
+                    }
                 }
             } else {
                 summaryText = firstLines;
@@ -342,18 +350,16 @@ class FileSearch {
      *         translation occurred.
      */
     private static String getTranslatedVersion(String documentString) {
-        if (!LANGUAGE_DETECTOR.detect(documentString).isLanguage("en")) {
-            try {
-                TextTranslationService translatorInstance = TextTranslationService.getInstance();
-                if (translatorInstance.hasProvider()) {
-                    String translatedResult = translatorInstance.translate(documentString);
-                    if (translatedResult.isEmpty() == false) {
-                        return translatedResult;
-                    }
+        try {
+            TextTranslationService translatorInstance = TextTranslationService.getInstance();
+            if (translatorInstance.hasProvider()) {
+                String translatedResult = translatorInstance.translate(documentString);
+                if (translatedResult.isEmpty() == false) {
+                    return translatedResult;
                 }
-            } catch (NoServiceProviderException | TranslationException ex) {
-                logger.log(Level.INFO, "Error translating string for summary", ex);
             }
+        } catch (NoServiceProviderException | TranslationException ex) {
+            logger.log(Level.INFO, "Error translating string for summary", ex);
         }
         return null;
     }
