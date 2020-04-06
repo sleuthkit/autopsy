@@ -318,7 +318,7 @@ class FileSearch {
             try {
                 summaryText = getSavedSummary(Paths.get(Case.getCurrentCaseThrows().getCacheDirectory(), "summaries", file.getMd5Hash() + "-default-" + PREVIEW_SIZE + "-translated.txt").toString());
             } catch (NoCurrentCaseException ex) {
-                logger.log(Level.WARNING, "Unable to retrieve saved summary case not open", ex);
+                logger.log(Level.WARNING, "Unable to retrieve saved summary. No case is open.", ex);
             }
         }
         if (StringUtils.isBlank(summaryText)) {
@@ -330,7 +330,7 @@ class FileSearch {
                     try {
                         saveSummary(summaryText, Paths.get(Case.getCurrentCaseThrows().getCacheDirectory(), "summaries", file.getMd5Hash() + "-default-" + PREVIEW_SIZE + "-translated.txt").toString());
                     } catch (NoCurrentCaseException ex) {
-                        logger.log(Level.WARNING, "Unable to save translated summary case not open", ex);
+                        logger.log(Level.WARNING, "Unable to save translated summary. No case is open.", ex);
                     }
                 }
             } else {
