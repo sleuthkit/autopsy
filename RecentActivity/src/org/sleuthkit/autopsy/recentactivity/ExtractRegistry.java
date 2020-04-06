@@ -81,6 +81,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED;
@@ -103,7 +104,15 @@ import org.sleuthkit.datamodel.TskDataException;
     "Progress_Message_Analyze_Registry=Analyzing Registry Files",
     "Shellbag_Artifact_Display_Name=Shell Bags",
     "Shellbag_Key_Attribute_Display_Name=Key",
-    "Shellbag_Last_Write_Attribute_Display_Name=Last Write"
+    "Shellbag_Last_Write_Attribute_Display_Name=Last Write",
+    "Recently_Used_Artifacts_Office_Trustrecords=Stored in TrustRecords because Office security exception was granted",
+    "Recently_Used_Artifacts_ArcHistory=Recently opened by 7Zip",
+    "Recently_Used_Artifacts_Applets=Recently opened according to Applets registry key",
+    "Recently_Used_Artifacts_Mmc=Recently opened according to Windows Management Console MRU",
+    "Recently_Used_Artifacts_Winrar=Recently opened according to WinRAR MRU",
+    "Recently_Used_Artifacts_Officedocs=Recently opened according to Office MRU",
+    "Recently_Used_Artifacts_Adobe=Recently opened according to Adobe MRU",
+    "Recently_Used_Artifacts_Mediaplayer=Recently opened according to Media Player MRU"
 })
 class ExtractRegistry extends Extract {
 
@@ -1197,21 +1206,21 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
 
                 if (line.matches("^adoberdr v.*")) {
-                    parseAdobeMRUList(regFile, reader);
+                    parseAdobeMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Adobe());
                 } else if (line.matches("^mpmru v.*")) {
-                    parseMediaPlayerMRUList(regFile, reader);
+                    parseMediaPlayerMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Mediaplayer());
                 } else if (line.matches("^trustrecords v.*")) {
-                    parseTrustrecordsMRUList(regFile, reader);
+                    parseOfficeTrustRecords(regFile, reader, Bundle.Recently_Used_Artifacts_Office_Trustrecords());
                 } else if (line.matches("^ArcHistory:")) {
-                    parseArchHistoryMRUList(regFile, reader);
+                    parse7ZipMRU(regFile, reader, Bundle.Recently_Used_Artifacts_ArcHistory());
                 } else if (line.matches("^applets v.*")) {
-                    parseGenericMRUList(regFile, reader);
+                    parseGenericMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Applets());
                 } else if (line.matches("^mmc v.*")) {
-                    parseGenericMRUList(regFile, reader);
+                    parseGenericMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Mmc());
                 } else if (line.matches("^winrar v.*")) {
-                    parseWinRARMRUList(regFile, reader);
+                    parseWinRARMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Winrar());
                 } else if (line.matches("^officedocs2010 v.*")) {
-                    parseOfficeDocs2010MRUList(regFile, reader);
+                    parseOfficeDocs2010MRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Officedocs());
                 } 
                 line = reader.readLine();
             }
@@ -1219,15 +1228,17 @@ class ExtractRegistry extends Extract {
     }
     
     /**
-     * Create recently used artifacts from adobemru records
+     * Create recently used artifacts from adobemru Regripper Plugin records
      * 
      * @param regFile registry file the artifact is associated with
      * 
      * @param reader buffered reader to parse adobemru records
      * 
+     * @param comment string that will populate attribute TSK_COMMENT
+     * 
      * @throws FileNotFound and IOException
      */
-    private void parseAdobeMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseAdobeMRUList(AbstractFile regFile, BufferedReader reader, String comment) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         SimpleDateFormat adobePluginDateFormat = new SimpleDateFormat("yyyyMMddHHmmssZ", US);
@@ -1265,6 +1276,7 @@ class ExtractRegistry extends Extract {
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), adobeUsedTime));
+                    attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                     if(bba != null) {
                          bbartifacts.add(bba);
@@ -1285,15 +1297,17 @@ class ExtractRegistry extends Extract {
     }
     
      /**
-     * Create recently used artifacts to parse the mpmru records
+     * Create recently used artifacts to parse the Media Player MRU regripper (mpmru) records
      * 
      * @param regFile registry file the artifact is associated with
      * 
      * @param reader buffered reader to parse adobemru records
      * 
+     * @param comment string that will populate attribute TSK_COMMENT
+     * 
      * @throws FileNotFound and IOException
      */
-    private void parseMediaPlayerMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseMediaPlayerMRUList(AbstractFile regFile, BufferedReader reader, String comment) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         while (!line.contains(SECTION_DIVIDER)) {
@@ -1309,6 +1323,7 @@ class ExtractRegistry extends Extract {
                     String fileName = tokens[1];
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                    attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                     if(bba != null) {
                          bbartifacts.add(bba);
@@ -1332,15 +1347,17 @@ class ExtractRegistry extends Extract {
     }
     
      /**
-     * Create recently used artifacts to parse the regripper output
+     * Create recently used artifacts to parse the regripper plugin output, this format is used in several diffent plugins
      * 
      * @param regFile registry file the artifact is associated with
      * 
      * @param reader buffered reader to parse adobemru records
      * 
+     * @param comment string that will populate attribute TSK_COMMENT
+     * 
      * @throws FileNotFound and IOException
      */
-    private void parseGenericMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseGenericMRUList(AbstractFile regFile, BufferedReader reader, String comment) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         while (!line.contains(SECTION_DIVIDER)) {
@@ -1356,6 +1373,7 @@ class ExtractRegistry extends Extract {
                     String fileName = tokens[1];
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                    attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                     if(bba != null) {
                          bbartifacts.add(bba);
@@ -1375,15 +1393,17 @@ class ExtractRegistry extends Extract {
     }
     
      /**
-     * Create recently used artifacts to parse the WinRAR output
+     * Create recently used artifacts to parse the WinRAR Regripper plugin output
      * 
      * @param regFile registry file the artifact is associated with
      * 
      * @param reader buffered reader to parse adobemru records
      * 
+     * @param comment string that will populate attribute TSK_COMMENT
+     * 
      * @throws FileNotFound and IOException
      */
-    private void parseWinRARMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseWinRARMRUList(AbstractFile regFile, BufferedReader reader, String comment) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         while (!line.contains(SECTION_DIVIDER)) {
@@ -1400,6 +1420,7 @@ class ExtractRegistry extends Extract {
                         String fileName = tokens[1];
                         Collection<BlackboardAttribute> attributes = new ArrayList<>();
                         attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                        attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
                         BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                         if(bba != null) {
                              bbartifacts.add(bba);
@@ -1420,15 +1441,17 @@ class ExtractRegistry extends Extract {
     }
     
      /**
-     * Create recently used artifacts to parse the runmru ArcHistory records
+     * Create recently used artifacts to parse the runmru ArcHistory (7Zip) regripper plugin records
      * 
      * @param regFile registry file the artifact is associated with
      * 
      * @param reader buffered reader to parse adobemru records
      * 
+     * @param comment string that will populate attribute TSK_COMMENT
+     * 
      * @throws FileNotFound and IOException
      */
-    private void parseArchHistoryMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parse7ZipMRU(AbstractFile regFile, BufferedReader reader, String comment) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         line = line.trim();
@@ -1439,6 +1462,7 @@ class ExtractRegistry extends Extract {
                 String fileName = line;
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
                 attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
                 BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                 if (bba != null) {
                      bbartifacts.add(bba);
@@ -1457,15 +1481,17 @@ class ExtractRegistry extends Extract {
     }
     
      /**
-     * Create recently used artifacts to parse the Office Documents 2010 records
+     * Create recently used artifacts to parse the Office Documents 2010 records Regripper Plugin output
      * 
      * @param regFile registry file the artifact is associated with
      * 
      * @param reader buffered reader to parse adobemru records
      * 
+     * @param comment string that will populate attribute TSK_COMMENT
+     * 
      * @throws FileNotFound and IOException
      */
-    private void parseOfficeDocs2010MRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseOfficeDocs2010MRUList(AbstractFile regFile, BufferedReader reader, String comment) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
         line = line.trim();
@@ -1485,6 +1511,7 @@ class ExtractRegistry extends Extract {
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), docDate));
+            attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
             BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
             if(bba != null) {
                  bbartifacts.add(bba);
@@ -1502,15 +1529,17 @@ class ExtractRegistry extends Extract {
     }
        
     /**
-     * Create recently used artifacts to parse the trustrecords records
+     * Create recently used artifacts to parse the Office trust records (trustrecords) Regipper plugin records
      * 
      * @param regFile registry file the artifact is associated with
      * 
      * @param reader buffered reader to parse adobemru records
      * 
+     * @param comment string that will populate attribute TSK_COMMENT
+     * 
      * @throws FileNotFound and IOException
      */
-    private void parseTrustrecordsMRUList(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+    private void parseOfficeTrustRecords(AbstractFile regFile, BufferedReader reader, String comment) throws FileNotFoundException, IOException {
         String userProfile = regFile.getParentPath();
         userProfile = userProfile.substring(0, userProfile.length() - 1);
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
@@ -1543,6 +1572,7 @@ class ExtractRegistry extends Extract {
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
                 attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
                 attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), usedTime));
+                attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
                 BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                 if(bba != null) {
                      bbartifacts.add(bba);
