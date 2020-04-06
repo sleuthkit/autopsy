@@ -384,7 +384,7 @@ class FileSearch {
                 StringBuilder sBuilder = new StringBuilder();
                 String sCurrentLine = bReader.readLine();
                 while (sCurrentLine != null) {
-                    sBuilder.append(sCurrentLine).append("\n");
+                    sBuilder.append(sCurrentLine).append('\n');
                     sCurrentLine = bReader.readLine();
                 }
                 return sBuilder.toString();
