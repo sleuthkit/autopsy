@@ -65,7 +65,7 @@ public class CorrelationAttributeUtil {
     // Most notably, does not include KEYWORD HIT, CALLLOGS, MESSAGES, CONTACTS
     // TSK_INTERESTING_ARTIFACT_HIT (See JIRA-6129 for more details on the
     // interesting artifact hit).
-    private static final HashSet<Integer> SOURCE_TYPES_OF_CR_DATA = new HashSet<Integer>() {{
+    private static final Set<Integer> SOURCE_TYPES_OF_CR_DATA = new HashSet<Integer>() {{
         add(ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID());
         add(ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID());
         add(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID());
