@@ -68,7 +68,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="runtimePanel" max="32767" attributes="0"/>
-                          <Component id="logoPanel" alignment="0" pref="1010" max="32767" attributes="0"/>
+                          <Component id="logoPanel" alignment="0" pref="1002" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -399,11 +399,6 @@
                 <Component class="javax.swing.JTextField" name="logNumAlert">
                   <Properties>
                     <Property name="editable" type="boolean" value="false"/>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="logNumAlert" property="font" relativeSize="false" size="11"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                       <Color blue="0" green="0" red="ff" type="rgb"/>
                     </Property>

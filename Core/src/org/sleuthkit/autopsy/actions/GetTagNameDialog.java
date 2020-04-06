@@ -240,7 +240,6 @@ public class GetTagNameDialog extends JDialog {
         org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.descriptionLabel.text")); // NOI18N
 
         descriptionTextArea.setColumns(20);
-        descriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         descriptionTextArea.setRows(3);
         descriptionScrollPane.setViewportView(descriptionTextArea);
 

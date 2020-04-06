@@ -142,7 +142,7 @@ public final class CVTTopComponent extends TopComponent {
         splitPane.setDividerLocation(1);
         splitPane.setResizeWeight(0.25);
 
-        browseVisualizeTabPane.setFont(new Font("Tahoma", 0, 18)); // NOI18N
+        browseVisualizeTabPane.setFont(browseVisualizeTabPane.getFont().deriveFont(browseVisualizeTabPane.getFont().getSize()+7f));
         splitPane.setLeftComponent(browseVisualizeTabPane);
         browseVisualizeTabPane.getAccessibleContext().setAccessibleName(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.browseVisualizeTabPane.AccessibleContext.accessibleName")); // NOI18N
 

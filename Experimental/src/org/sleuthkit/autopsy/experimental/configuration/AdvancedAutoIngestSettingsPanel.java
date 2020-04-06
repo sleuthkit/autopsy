@@ -138,7 +138,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
 
         tbWarning.setEditable(false);
         tbWarning.setColumns(20);
-        tbWarning.setFont(new java.awt.Font("Monospaced", 1, 14)); // NOI18N
+        tbWarning.setFont(tbWarning.getFont().deriveFont(tbWarning.getFont().getStyle() | java.awt.Font.BOLD, tbWarning.getFont().getSize()+1));
         tbWarning.setRows(5);
         tbWarning.setText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.tbWarning.text")); // NOI18N
         tbWarning.setAutoscrolls(false);
@@ -232,14 +232,12 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
                             .addComponent(lbNumberOfThreads, javax.swing.GroupLayout.Alignment.LEADING))
                         .addGroup(jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanelAutoIngestJobSettingsLayout.createSequentialGroup()
-                                .addGap(0, 41, Short.MAX_VALUE)
+                                .addGap(0, 0, Short.MAX_VALUE)
                                 .addGroup(jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(spInputScanInterval, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(spMaximumRetryAttempts, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(spConcurrentJobsPerCase, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addGroup(jPanelAutoIngestJobSettingsLayout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(jPanelAutoIngestJobSettingsLayout.createSequentialGroup()
                         .addComponent(lbSecondsBetweenJobs)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -254,7 +252,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
                     .addComponent(lbSecondsBetweenJobsSeconds)
                     .addComponent(lbTimeoutHours)
                     .addComponent(lbInputScanIntervalMinutes))
-                .addContainerGap(50, Short.MAX_VALUE))
+                .addContainerGap(70, Short.MAX_VALUE))
         );
         jPanelAutoIngestJobSettingsLayout.setVerticalGroup(
             jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

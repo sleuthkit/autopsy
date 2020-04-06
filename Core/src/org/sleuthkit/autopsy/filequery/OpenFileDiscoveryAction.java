@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 103)
     ,
-    @ActionReference(path = "Toolbars/Case", position = 104)})
+    @ActionReference(path = "Toolbars/Case", position = 105)})
 @ActionRegistration(displayName = "#CTL_OpenFileDiscoveryAction", lazy = false)
 @NbBundle.Messages({"CTL_OpenFileDiscoveryAction=File Discovery"})
 public final class OpenFileDiscoveryAction extends CallableSystemAction implements Presenter.Toolbar {

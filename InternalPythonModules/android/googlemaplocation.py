@@ -41,8 +41,10 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel.blackboardutils import GeoArtifactsHelper
-from org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoWaypointsUtil import GeoWaypointList
+from org.sleuthkit.datamodel.blackboardutils.attributes import GeoWaypoints
+from org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints import Waypoint
 
 import traceback
 import general
@@ -115,9 +117,9 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                 source_lat = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("source_lat"))
                 source_lng = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("source_lng"))
 
-                waypointlist = GeoWaypointList()
-                waypointlist.addPoint(source_lat, source_lng, None, None)
-                waypointlist.addPoint(dest_lat, dest_lng, None, dest_address)
+                waypointlist = GeoWaypoints()
+                waypointlist.addPoint(Waypoint(source_lat, source_lng, None, None))
+                waypointlist.addPoint(Waypoint(dest_lat, dest_lng, None, dest_address))
 				
                 artifactHelper.addRoute(dest_title, time, waypointlist, None)
 
