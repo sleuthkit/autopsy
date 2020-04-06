@@ -455,11 +455,8 @@ public class IngestEventsListener {
             List<CorrelationAttributeInstance> eamArtifacts = new ArrayList<>();
 
             for (BlackboardArtifact bbArtifact : bbArtifacts) {
-                // If the incoming artifact is of type TSK_INTERESTING_ARTIFACT_HIT, 
-                // do not resolve to the source artifact, as correlation attributes 
-                // for the source artifact would have already been created, 
-                // when the event for that source artifact was received.
-                List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsFromArtifact(bbArtifact, false);
+                // makeCorrAttrToSave will filter out artifacts which should not be soruces of CR data.
+                List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsToSave(bbArtifact);
                 for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                     try {
                         // Only do something with this artifact if it's unique within the job
