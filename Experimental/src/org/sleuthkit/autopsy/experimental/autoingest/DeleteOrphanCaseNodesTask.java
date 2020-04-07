@@ -155,7 +155,7 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
             return value;
         }
 
-        void setValue(boolean value) {
+        void isValue(boolean value) {
             this.value = value;
         }
 
@@ -170,7 +170,6 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
      */
     private boolean promptUser(Collection<String> orphanedNodes) {
         final PromptResult dialogResult = new PromptResult();
-        ;
         try {
             SwingUtilities.invokeAndWait(() -> {
                 DeleteOrphanCaseNodesDialog dialog = new DeleteOrphanCaseNodesDialog(orphanedNodes);

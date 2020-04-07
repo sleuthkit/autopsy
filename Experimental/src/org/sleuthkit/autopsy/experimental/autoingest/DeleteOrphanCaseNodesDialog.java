@@ -31,6 +31,7 @@ import org.openide.util.NbBundle.Messages;
  * If 'OK' is selected, isOkSelected() will return true.
  */
 class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
+    private static final long serialVersionUID = 1L;
 
     private static final String NEW_LINE = System.getProperty("line.separator");
 
