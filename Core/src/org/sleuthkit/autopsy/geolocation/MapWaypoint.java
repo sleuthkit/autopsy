@@ -68,8 +68,9 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
     private final static String HTML_PROP_FORMAT = "<b>%s: </b>%s<br>";
     static private final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.US);
     
-    private static final Map<Integer, Color> artifactTypesToColors = new HashMap();
+    private static final Map<Integer, Color> artifactTypesToColors = new HashMap<>();
     
+    @SuppressWarnings("deprecation")
     static {
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID(), Color.BLUE);
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID(), Color.RED);
