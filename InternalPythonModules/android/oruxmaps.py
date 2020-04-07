@@ -45,7 +45,8 @@ from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel.blackboardutils import GeoArtifactsHelper
-from org.sleuthkit.datamodel.blackboardutils.attributes import TskGeoTrackpointsUtil
+from org.sleuthkit.datamodel.blackboardutils.attributes import GeoTrackPoints
+from org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints import TrackPoint
 
 import traceback
 import general
@@ -139,14 +140,14 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
                                 trackpointsQueryString = "SELECT trkptlat, trkptlon, trkptalt, trkpttime FROM trackpoints WHERE trkptseg = " + segmentId
                                 trackpointsResultSet = oruxMapsTrackpointsDb.runQuery(trackpointsQueryString)
                                 if trackpointsResultSet is not None:
-                                    geoPointList = TskGeoTrackpointsUtil.GeoTrackPointList()                            
+                                    geoPointList = GeoTrackPoints()                            
                                     while trackpointsResultSet.next():
                                         latitude = trackpointsResultSet.getDouble("trkptlat")
                                         longitude = trackpointsResultSet.getDouble("trkptlon")
                                         altitude = trackpointsResultSet.getDouble("trkptalt")
                                         time = trackpointsResultSet.getLong("trkpttime") / 1000    # milliseconds since unix epoch
                                         
-                                        geoPointList.addPoint(TskGeoTrackpointsUtil.GeoTrackPointList.GeoTrackPoint(latitude, longitude, altitude, segmentName, 0, 0, 0, time))
+                                        geoPointList.addPoint(TrackPoint(latitude, longitude, altitude, segmentName, 0, 0, 0, time))
 
                                     try:
                                         geoartifact = geoArtifactHelper.addTrack(segmentName, geoPointList, None)

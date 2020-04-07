@@ -284,9 +284,13 @@ public class CorrelationAttributeUtil {
         // Get the account type from the artifact
         BlackboardAttribute accountTypeAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
         String accountTypeStr = accountTypeAttribute.getValueString();
-
+        
+        // @@TODO Vik-6136: CR currently does not know of custom account types.  
+        // Ensure there is a predefined account type for this account.
+        Account.Type predefinedAccountType = Account.Type.PREDEFINED_ACCOUNT_TYPES.stream().filter(type -> type.getTypeName().equalsIgnoreCase(accountTypeStr)).findAny().orElse(null);
+             
         // do not create any correlation attribute instance for a Device account
-        if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false) {
+        if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false && predefinedAccountType != null) {
 
             // Get the corresponding CentralRepoAccountType from the database.
             CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
