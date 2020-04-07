@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
@@ -688,7 +689,7 @@ final public class MapPanel extends javax.swing.JPanel {
      * Renderer for the map waypoints.
      */
     private class MapWaypointRenderer implements WaypointRenderer<MapWaypoint> {
-        private final HashMap<Color, BufferedImage> imageCache = new HashMap<>();
+        private final Map<Color, BufferedImage> imageCache = new HashMap<>();
 
         /**
          *
@@ -720,7 +721,7 @@ final public class MapPanel extends javax.swing.JPanel {
          */
         private Color getColor(MapWaypoint waypoint, MapWaypoint currentlySelectedWaypoint) {
             Color baseColor = waypoint.getColor();
-            if (waypoint == currentlySelectedWaypoint) {
+            if (waypoint.equals(currentlySelectedWaypoint)) {
                 // Highlight this waypoint since it is selected
                 return blend(baseColor, Color.WHITE, 0.5f);
             } else {
