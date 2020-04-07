@@ -19,14 +19,17 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
 import static org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils.isCaseAutoIngestLogNodePath;
@@ -44,10 +47,9 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
 
     private static final Logger logger = AutoIngestDashboardLogger.getLogger();
     private final ProgressIndicator progress;
-    private int nodesCount;
-    private int casesCount;
+    private int nodesCount = 0;
+    private int casesCount = 0;
 
-    
     /**
      * Constucts an instance of a task for deleting case coordination service
      * nodes for which there is no longer a corresponding case.
@@ -57,11 +59,12 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
     DeleteOrphanCaseNodesTask(ProgressIndicator progress) {
         this.progress = progress;
     }
-    
-    
+
     /**
-     * Retrieves an instance of the coordination service in order to fetch znodes and potentially delete.
-     * @return  The coordination service or null on error.
+     * Retrieves an instance of the coordination service in order to fetch
+     * znodes and potentially delete.
+     *
+     * @return The coordination service or null on error.
      */
     private CoordinationService getCoordinationService() {
         progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_connectingToCoordSvc());
@@ -74,12 +77,14 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
         }
         return coordinationService;
     }
-    
-    
+
     /**
      * Retrieves node paths for cases.
-     * @param coordinationService       The coordination service to use in order to fetch the node paths.
-     * @return                          The list of node paths for cases.
+     *
+     * @param coordinationService The coordination service to use in order to
+     *                            fetch the node paths.
+     *
+     * @return The list of node paths for cases.
      */
     private List<String> getNodePaths(CoordinationService coordinationService) {
         progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_gettingCaseZnodes());
@@ -88,27 +93,30 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
         try {
             nodePaths = coordinationService.getNodeList(CoordinationService.CategoryNode.CASES);
             // in the event that getNodeList returns null (but still successful) return empty list
-            if (nodePaths == null)
+            if (nodePaths == null) {
                 return new ArrayList<String>();
+            }
         } catch (CoordinationService.CoordinationServiceException ex) {
             logger.log(Level.SEVERE, "Error getting case znode list", ex); //NON-NLS
         } catch (InterruptedException unused) {
             logger.log(Level.WARNING, "Task cancelled while getting case znode list"); //NON-NLS
         }
-        
+
         return nodePaths;
     }
 
-    
     private void addIfExists(List<String> paths, String path) {
-        if (path != null && !path.isEmpty())
+        if (path != null && !path.isEmpty()) {
             paths.add(path);
+        }
     }
-    
+
     /**
      * Determines orphaned znode paths.
-     * @param nodePaths     The list of case node paths.
-     * @return              The list of orphaned node paths.
+     *
+     * @param nodePaths The list of case node paths.
+     *
+     * @return The list of orphaned node paths.
      */
     private Map<String, List<String>> getOrphanedNodes(List<String> nodePaths) {
         progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_lookingForOrphanedCaseZnodes());
@@ -124,7 +132,7 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
             if (!caseDirectory.exists()) {
                 String caseName = CoordinationServiceUtils.getCaseNameNodePath(caseDirectoryPath);
                 List<String> paths = new ArrayList<>();
-                
+
                 addIfExists(paths, CoordinationServiceUtils.getCaseNameNodePath(caseDirectoryPath));
                 addIfExists(paths, CoordinationServiceUtils.getCaseResourcesNodePath(caseDirectoryPath));
                 addIfExists(paths, CoordinationServiceUtils.getCaseAutoIngestLogNodePath(caseDirectoryPath));
@@ -134,20 +142,49 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
         }
         return nodePathsToDelete;
     }
-    
+
+    /**
+     * Boxed boolean so that promptUser method can set a value on a final object
+     * from custom jdialog message.
+     */
+    private class PromptResult {
+
+        private boolean value = false;
+
+        boolean getValue() {
+            return value;
+        }
+
+        void setValue(boolean value) {
+            this.value = value;
+        }
+
+    }
+
     /**
      * prompts the user with a list of orphaned znodes.
-     * @param orphanedNodes     The orphaned znodes.
-     * @return                  True if the user would like to proceed deleting the znodes.
+     *
+     * @param orphanedNodes The orphaned znode cases.
+     *
+     * @return True if the user would like to proceed deleting the znodes.
      */
-    private boolean promptUser(Map<String, List<String>> orphanedNodes) {
-        DeleteOrphanCaseNodesDialog dialog = new DeleteOrphanCaseNodesDialog(orphanedNodes);
-        dialog.display();
-        return dialog.isOkSelected();
+    private boolean promptUser(Collection<String> orphanedNodes) {
+        final PromptResult dialogResult = new PromptResult();
+        ;
+        try {
+            SwingUtilities.invokeAndWait(() -> {
+                DeleteOrphanCaseNodesDialog dialog = new DeleteOrphanCaseNodesDialog(orphanedNodes);
+                dialog.display();
+                dialogResult.setValue(dialog.isOkSelected());
+            });
+
+            return dialogResult.getValue();
+        } catch (InterruptedException | InvocationTargetException e) {
+            logger.log(Level.WARNING, "Task cancelled while confirmingg case znodes to delete"); //NON-NLS
+            return false;
+        }
     }
-    
-    
-    
+
     @Override
     @NbBundle.Messages({
         "DeleteOrphanCaseNodesTask.progress.startMessage=Starting orphaned case znode cleanup",
@@ -159,22 +196,22 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
         progress.start(Bundle.DeleteOrphanCaseNodesTask_progress_startMessage());
         try {
             CoordinationService coordinationService = getCoordinationService();
-            if (coordinationService == null)
+            if (coordinationService == null) {
                 return;
+            }
 
             List<String> nodePaths = getNodePaths(coordinationService);
-            if (nodePaths == null)
+            if (nodePaths == null) {
                 return;
+            }
 
             Map<String, List<String>> orphanedNodes = getOrphanedNodes(nodePaths);
-            if (orphanedNodes == null || orphanedNodes.isEmpty())
-                return;
-            
-            boolean continueDelete = promptUser(orphanedNodes);
-            
-            if (continueDelete)
+            boolean continueDelete = promptUser(orphanedNodes.keySet());
+
+            if (continueDelete) {
                 deleteNodes(coordinationService, orphanedNodes);
-            
+            }
+
         } catch (Exception ex) {
             /*
              * This is an unexpected runtime exceptions firewall. It is here
@@ -190,13 +227,13 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
             progress.finish();
         }
     }
-    
-    
+
     /**
      * Deletes the orphaned znodes provided in the 'orphanedNodes' variable.
-     * @param coordinationService       The coordination service to use for deletion.
-     * @param orphanedNodes             A mapping of case to the orphaned znodes.
-     * 
+     *
+     * @param coordinationService The coordination service to use for deletion.
+     * @param orphanedNodes       A mapping of case to the orphaned znodes.
+     *
      * @throws InterruptedException If the thread executing this task is
      *                              interrupted during the delete operation.
      */
@@ -214,7 +251,6 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
             }
         } catch (InterruptedException unused) {
             logger.log(Level.WARNING, String.format("Task cancelled while deleting orphaned znode %s for %s", nodePath, caseName)); //NON-NLS
-            return;
         }
     }
 

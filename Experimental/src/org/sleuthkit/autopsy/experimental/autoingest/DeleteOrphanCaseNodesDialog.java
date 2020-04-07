@@ -18,34 +18,35 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.swing.JFrame;
 import org.openide.windows.WindowManager;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * This dialog shows the system administrator the orphaned znodes to be deleted.
  * If 'OK' is selected, isOkSelected() will return true.
  */
 class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
+
     private static final String NEW_LINE = System.getProperty("line.separator");
-    private static final String CASE_SPACING = NEW_LINE + NEW_LINE;
-    private static final String DEFAULT_INDENT = "     ";
-    private static final String COLON = ":";
-    
+
     private boolean okSelected = false;
 
     /**
      * Creates new form DeleteOrphanCaseNodesDialog
+     *
+     * @param zNodeCases The list of cases with nodes to be deleted
      */
-    DeleteOrphanCaseNodesDialog(Map<String, List<String>> znodes) {
+    DeleteOrphanCaseNodesDialog(Collection<String> zNodeCases) {
         super((JFrame) WindowManager.getDefault().getMainWindow(), null, true);
         initComponents();
-        additionalInit(znodes);
+        additionalInit(zNodeCases);
     }
-    
+
     /**
      * displays this dialog as child of main window.
      */
@@ -53,23 +54,26 @@ class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setVisible(true);
     }
-    
-    
-    private void additionalInit(Map<String, List<String>> znodes) {
-        String textAreaText = "";
-        if (znodes != null) {
-            textAreaText = znodes.entrySet().stream().map((kv) -> {
-                return Stream.concat(
-                        Stream.of(kv.getKey() + COLON), 
-                        kv.getValue().stream().map((node) -> DEFAULT_INDENT + node))
-                    .collect(Collectors.joining(NEW_LINE));
-            })
-            .collect(Collectors.joining(CASE_SPACING));
-        }
-        
+
+    @Messages({
+        "# {0} - item count",
+        "DeleteOrphanCaseNodesDialog.additionalInit.lblNodeCount.text=Znodes found: {0}",
+        "# {0} - item count",
+        "DeleteOrphanCaseNodesDialog.additionalInit.znodesTextArea.countMessage=ZNODES FOUND: {0}"
+    })
+    private void additionalInit(Collection<String> zNodeCases) {
+        List<String> casesList = (zNodeCases == null) ? new ArrayList<>() : new ArrayList<>(zNodeCases);
+        int count = casesList.size();
+        casesList.sort(Comparator.comparing(String::toString));
+        String textAreaText = Bundle.DeleteOrphanCaseNodesDialog_additionalInit_znodesTextArea_countMessage(count)
+                + NEW_LINE
+                + NEW_LINE
+                + String.join(NEW_LINE, casesList);
+
         znodesTextArea.setText(textAreaText);
+
+        lblNodeCount.setText(Bundle.DeleteOrphanCaseNodesDialog_additionalInit_lblNodeCount_text(count));
     }
-    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -85,6 +89,7 @@ class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
         znodesTextArea = new javax.swing.JTextArea();
         javax.swing.JButton cancelButton = new javax.swing.JButton();
         javax.swing.JButton okButton = new javax.swing.JButton();
+        lblNodeCount = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(org.openide.util.NbBundle.getMessage(DeleteOrphanCaseNodesDialog.class, "DeleteOrphanCaseNodesDialog.titleText.text")); // NOI18N
@@ -113,6 +118,8 @@ class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(lblNodeCount, org.openide.util.NbBundle.getMessage(DeleteOrphanCaseNodesDialog.class, "DeleteOrphanCaseNodesDialog.lblNodeCount.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -123,7 +130,8 @@ class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
                     .addComponent(jScrollPane, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(descriptionText, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(lblNodeCount, javax.swing.GroupLayout.PREFERRED_SIZE, 310, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(okButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton)))
@@ -139,7 +147,8 @@ class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton)
-                    .addComponent(okButton))
+                    .addComponent(okButton)
+                    .addComponent(lblNodeCount))
                 .addContainerGap())
         );
 
@@ -157,13 +166,15 @@ class DeleteOrphanCaseNodesDialog extends javax.swing.JDialog {
 
     /**
      * If the system administrator selected OK.
-     * @return  Whether or not 'OK' was selected by the system administrator.
+     *
+     * @return Whether or not 'OK' was selected by the system administrator.
      */
     boolean isOkSelected() {
         return okSelected;
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel lblNodeCount;
     private javax.swing.JTextArea znodesTextArea;
     // End of variables declaration//GEN-END:variables
 }
