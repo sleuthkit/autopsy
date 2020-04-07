@@ -56,10 +56,10 @@
                 <Property name="orientation" type="int" value="1"/>
                 <Property name="paintTicks" type="boolean" value="true"/>
                 <Property name="snapToTicks" type="boolean" value="true"/>
+                <Property name="inverted" type="boolean" value="true"/>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[35, 100]"/>
                 </Property>
-                <Property name="opaque" type="boolean" value="false"/>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[35, 190]"/>
                 </Property>
@@ -87,7 +87,6 @@
                 <Property name="borderPainted" type="boolean" value="false"/>
                 <Property name="focusPainted" type="boolean" value="false"/>
                 <Property name="requestFocusEnabled" type="boolean" value="false"/>
-                <Property name="rolloverEnabled" type="boolean" value="false"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="zoomInBtnActionPerformed"/>
@@ -116,7 +115,6 @@
                 <Property name="borderPainted" type="boolean" value="false"/>
                 <Property name="focusPainted" type="boolean" value="false"/>
                 <Property name="requestFocusEnabled" type="boolean" value="false"/>
-                <Property name="rolloverEnabled" type="boolean" value="false"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="zoomOutBtnActionPerformed"/>
