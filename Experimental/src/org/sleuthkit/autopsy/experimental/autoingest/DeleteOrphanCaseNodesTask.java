@@ -151,11 +151,11 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
 
         private boolean value = false;
 
-        boolean getValue() {
+        boolean isValue() {
             return value;
         }
 
-        void isValue(boolean value) {
+        void setValue(boolean value) {
             this.value = value;
         }
 
@@ -177,7 +177,7 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
                 dialogResult.setValue(dialog.isOkSelected());
             });
 
-            return dialogResult.getValue();
+            return dialogResult.isValue();
         } catch (InterruptedException | InvocationTargetException e) {
             logger.log(Level.WARNING, "Task cancelled while confirmingg case znodes to delete"); //NON-NLS
             return false;
