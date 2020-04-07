@@ -362,7 +362,7 @@ final public class MapPanel extends javax.swing.JPanel {
      * Show the popup menu for the given waypoint and location.
      *
      * @param waypoint Selected waypoint
-     * @param point    Current mouse click location
+     * @param point Current mouse click location
      */
     private void showPopupMenu(MapWaypoint waypoint, Point point) throws TskCoreException {
         if (waypoint == null) {
@@ -441,7 +441,7 @@ final public class MapPanel extends javax.swing.JPanel {
      * @param clickPoint The mouse click point
      *
      * @return A waypoint that is within 10 pixels of the given point, or null
-     *         if none was found.
+     * if none was found.
      */
     private List<MapWaypoint> findClosestWaypoint(Point clickPoint) {
         if (waypointTree == null) {
@@ -689,6 +689,7 @@ final public class MapPanel extends javax.swing.JPanel {
      * Renderer for the map waypoints.
      */
     private class MapWaypointRenderer implements WaypointRenderer<MapWaypoint> {
+
         private final Map<Color, BufferedImage> imageCache = new HashMap<>();
 
         /**
@@ -710,13 +711,14 @@ final public class MapPanel extends javax.swing.JPanel {
             afResult[1] = fromC[1] * inverse + toC[1] * amount;
             afResult[2] = fromC[2] * inverse + toC[2] * amount;
 
-            return new Color (afResult[0], afResult[1], afResult[2]);
+            return new Color(afResult[0], afResult[1], afResult[2]);
         }
 
         /**
-         * 
+         *
          * @param waypoint the waypoint for which to get the color
-         * @param currentlySelectedWaypoint the waypoint that is currently selected
+         * @param currentlySelectedWaypoint the waypoint that is currently
+         * selected
          * @return the color that this waypoint should be rendered
          */
         private Color getColor(MapWaypoint waypoint, MapWaypoint currentlySelectedWaypoint) {
@@ -731,6 +733,7 @@ final public class MapPanel extends javax.swing.JPanel {
 
         /**
          * Creates a waypoint image with the specified color
+         *
          * @param color the color of the new waypoint image
          * @return the new waypoint image
          */
@@ -741,10 +744,10 @@ final public class MapPanel extends javax.swing.JPanel {
             BufferedImage ret = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 
             Graphics2D g = ret.createGraphics();
-            g.drawImage(whiteWaypointImage, 0,0, null);
+            g.drawImage(whiteWaypointImage, 0, 0, null);
             g.setComposite(AlphaComposite.SrcIn);
             g.setColor(color);
-            g.fillRect(0,0,w,h);
+            g.fillRect(0, 0, w, h);
             g.setComposite(AlphaComposite.SrcAtop);
             g.drawImage(transparentWaypointImage, 0, 0, null);
             g.dispose();
@@ -764,8 +767,8 @@ final public class MapPanel extends javax.swing.JPanel {
 
             int x = (int) point.getX();
             int y = (int) point.getY();
-            
-            gd = (Graphics2D)gd.create();
+
+            gd = (Graphics2D) gd.create();
             gd.drawImage(image, x - image.getWidth() / 2, y - image.getHeight(), null);
             gd.dispose();
         }
