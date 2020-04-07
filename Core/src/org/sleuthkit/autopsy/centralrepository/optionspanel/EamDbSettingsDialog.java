@@ -530,8 +530,8 @@ public class EamDbSettingsDialog extends JDialog {
         "EamDbSettingsDialog.okButton.errorMsg.text=Please restart Autopsy to begin using the new database platform.",
         "EamDbSettingsDialog.okButton.connectionErrorMsg.text=Failed to connect to central repository database."})
     private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
-        testStatusAndCreate(this, manager, this);
-        dispose();
+        if (testStatusAndCreate(this, manager, this))
+            dispose();
     }//GEN-LAST:event_bnOkActionPerformed
 
     
@@ -814,7 +814,6 @@ public class EamDbSettingsDialog extends JDialog {
 
         @Override
         public void changedUpdate(DocumentEvent e) {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             manager.clearStatus();
             updateFullDbPath();
             valid();
@@ -822,7 +821,6 @@ public class EamDbSettingsDialog extends JDialog {
 
         @Override
         public void insertUpdate(DocumentEvent e) {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             manager.clearStatus();
             updateFullDbPath();
             valid();
@@ -830,7 +828,6 @@ public class EamDbSettingsDialog extends JDialog {
 
         @Override
         public void removeUpdate(DocumentEvent e) {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             manager.clearStatus();
             updateFullDbPath();
             valid();

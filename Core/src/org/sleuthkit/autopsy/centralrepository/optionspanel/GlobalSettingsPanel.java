@@ -88,6 +88,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }
     
     
+    /**
+     * Sets up this instance's listener for the GlobalSettingsPanel's changes.
+     */
     private void setupSettingsChangeListeners() {
         // listen for change events in currently saved choice
         if (lastRegistered != null) {
@@ -104,7 +107,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private void onSettingsChange(PropertyChangeEvent evt) {
         ingestStateUpdated(Case.isCaseOpen());
         clearStatus();
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }
 
     
@@ -644,7 +646,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         boolean changed = invokeCrChoice(this, null);
         if (changed) {
             load(); // reload db settings content and update buttons
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_bnDbConfigureActionPerformed
 
@@ -663,7 +664,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         store();
         load();
         this.ingestStateUpdated(Case.isCaseOpen());
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_cbUseCentralRepoActionPerformed
 
     private void bnTestConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestConfigureActionPerformed
