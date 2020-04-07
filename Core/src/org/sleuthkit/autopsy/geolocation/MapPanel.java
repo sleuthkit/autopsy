@@ -40,7 +40,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
@@ -92,7 +91,8 @@ final public class MapPanel extends javax.swing.JPanel {
     private static final int POPUP_HEIGHT = 200;
     private static final int POPUP_MARGIN = 10;
 
-    private BufferedImage defaultWaypointImage;
+    private BufferedImage whiteWaypointImage;
+    private BufferedImage transparentWaypointImage;
 
     private MapWaypoint currentlySelectedWaypoint;
 
@@ -111,7 +111,8 @@ final public class MapPanel extends javax.swing.JPanel {
         popupFactory = new PopupFactory();
 
         try {
-            defaultWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_white.png"));
+            whiteWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_white.png"));
+            transparentWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_transparent.png"));
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to load geolocation waypoint images", ex);
         }
@@ -465,7 +466,7 @@ final public class MapPanel extends javax.swing.JPanel {
             MapWaypoint nextWaypoint = iterator.next();
 
             Point2D point = mapViewer.convertGeoPositionToPoint(nextWaypoint.getPosition());
-            Rectangle rect = new Rectangle((int) point.getX() - (defaultWaypointImage.getWidth() / 2), (int) point.getY() - defaultWaypointImage.getHeight(), defaultWaypointImage.getWidth(), defaultWaypointImage.getHeight());
+            Rectangle rect = new Rectangle((int) point.getX() - (whiteWaypointImage.getWidth() / 2), (int) point.getY() - whiteWaypointImage.getHeight(), whiteWaypointImage.getWidth(), whiteWaypointImage.getHeight());
 
             if (rect.contains(clickPoint)) {
                 closestPoints.add(nextWaypoint);
@@ -690,42 +691,63 @@ final public class MapPanel extends javax.swing.JPanel {
         private final HashMap<Color, BufferedImage> imageCache = new HashMap<>();
 
         /**
+         *
+         * @param from the color to start with
+         * @param to the color to blend into
+         * @param amount the amount by which to blend
+         * @return a blended color
+         */
+        private Color blend(Color from, Color to, float amount) {
+            float inverse = 1.0f - amount;
+
+            float fromC[] = new float[3];
+            from.getColorComponents(fromC);
+            float toC[] = new float[3];
+            to.getColorComponents(toC);
+            float afResult[] = new float[3];
+            afResult[0] = fromC[0] * inverse + toC[0] * amount;
+            afResult[1] = fromC[1] * inverse + toC[1] * amount;
+            afResult[2] = fromC[2] * inverse + toC[2] * amount;
+
+            return new Color (afResult[0], afResult[1], afResult[2]);
+        }
+
+        /**
          * 
          * @param waypoint the waypoint for which to get the color
          * @param currentlySelectedWaypoint the waypoint that is currently selected
          * @return the color that this waypoint should be rendered
          */
         private Color getColor(MapWaypoint waypoint, MapWaypoint currentlySelectedWaypoint) {
+            Color baseColor = waypoint.getColor();
             if (waypoint == currentlySelectedWaypoint) {
-                return Color.YELLOW;
+                // Highlight this waypoint since it is selected
+                return blend(baseColor, Color.WHITE, 0.5f);
+            } else {
+                return baseColor;
             }
-            return waypoint.getColor();
         }
 
         /**
-         * 
-         * @param baseImg the base image
-         * @param newColor the color that the resulting image should be changed into
-         * @return a new waypoint image
+         * Creates a waypoint image with the specified color
+         * @param color the color of the new waypoint image
+         * @return the new waypoint image
          */
-        private BufferedImage getWaypointImage(BufferedImage baseImg, Color newColor) {
-            int w = baseImg.getWidth();
-            int h = baseImg.getHeight();
-            BufferedImage imgOut = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-            BufferedImage imgColor = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        private BufferedImage createWaypointImage(Color color) {
+            int w = whiteWaypointImage.getWidth();
+            int h = whiteWaypointImage.getHeight();
 
-            Graphics2D g = imgColor.createGraphics();
-            g.setColor(newColor);
-            g.fillRect(0, 0, w + 1, h + 1);
+            BufferedImage ret = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+
+            Graphics2D g = ret.createGraphics();
+            g.drawImage(whiteWaypointImage, 0,0, null);
+            g.setComposite(AlphaComposite.SrcIn);
+            g.setColor(color);
+            g.fillRect(0,0,w,h);
+            g.setComposite(AlphaComposite.SrcAtop);
+            g.drawImage(transparentWaypointImage, 0, 0, null);
             g.dispose();
-
-            Graphics2D graphics = imgOut.createGraphics();
-            graphics.drawImage(baseImg, 0, 0, null);
-            graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_IN));
-            graphics.drawImage(imgColor, 0, 0, null);
-            graphics.dispose();
-
-            return imgOut;
+            return ret;
         }
 
         @Override
@@ -734,7 +756,7 @@ final public class MapPanel extends javax.swing.JPanel {
 
             // Store computed images in cache for later use
             BufferedImage image = imageCache.computeIfAbsent(color, k -> {
-                return getWaypointImage(defaultWaypointImage, color);
+                return createWaypointImage(color);
             });
 
             Point2D point = jxmv.getTileFactory().geoToPixel(waypoint.getPosition(), jxmv.getZoom());
@@ -742,7 +764,9 @@ final public class MapPanel extends javax.swing.JPanel {
             int x = (int) point.getX();
             int y = (int) point.getY();
             
-            (gd.create()).drawImage(image, x - image.getWidth() / 2, y - image.getHeight(), null);
+            gd = (Graphics2D)gd.create();
+            gd.drawImage(image, x - image.getWidth() / 2, y - image.getHeight(), null);
+            gd.dispose();
         }
     }
 }

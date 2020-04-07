@@ -71,6 +71,12 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
     
     static {
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID(), Color.BLUE);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID(), Color.RED);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID(), Color.YELLOW);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID(), Color.GREEN);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID(), Color.ORANGE);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID(), Color.ORANGE);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID(), Color.CYAN);
     }
 
     private final Waypoint dataModelWaypoint;
@@ -339,7 +345,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      * @return the color that this waypoint should be rendered
      */
     Color getColor() {
-        return artifactTypesToColors.getOrDefault(dataModelWaypoint.getArtifact().getArtifactTypeID(), Color.ORANGE);
+        return artifactTypesToColors.getOrDefault(dataModelWaypoint.getArtifact().getArtifactTypeID(), Color.GRAY);
     }
 
     /**
