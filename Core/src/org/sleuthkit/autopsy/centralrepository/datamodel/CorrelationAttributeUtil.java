@@ -198,10 +198,13 @@ public class CorrelationAttributeUtil {
     }
 
     /**
-     * Makes correlation attribute instances from phone or email attributes 
-     * found on communication-type artifacts.
+     * Makes a correlation attribute instance from a phone number attribute of an
+     * artifact.
      *
-     * @param artifact A communication-type artifact
+     * @param artifact An artifact with a phone number attribute.
+     *
+     * @return The correlation instance artifact or null, if the phone number is
+     *         not a valid correlation attribute.
      *
      * @throws TskCoreException     If there is an error querying the case
      *                              database.
@@ -209,37 +212,29 @@ public class CorrelationAttributeUtil {
      *                              repository.
      */
     private static void makeCorrAttrsFromCommunicationArtifacts(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact artifact) throws TskCoreException, CentralRepoException {
-        for(BlackboardAttribute attribute : artifact.getAttributes()) {
-            BlackboardAttribute.Type attributeType = attribute.getAttributeType();
-            if(attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER))
-                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO))
-                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM))
-                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME))
-                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE))
-                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE))) {
-                String phoneNumber = attribute.getValueString();
-                if(CommunicationsUtils.isValidPhoneNumber(phoneNumber)) {
-                    String phoneNumberNorm = CommunicationsUtils.normalizePhoneNum(phoneNumber);
-                    CorrelationAttributeInstance corrAttr = makeCorrAttr(artifact, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), phoneNumberNorm);
-                    if(corrAttr != null) {
-                        corrAttrInstances.add(corrAttr);
-                    }
-                }
-            } else if (attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL))
-                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM))
-                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO))
-                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_HOME))
-                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_OFFICE))
-                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO))
-                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_BCC))
-                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CC))) {
-                String emailAddress = attribute.getValueString();
-                if(CommunicationsUtils.isValidEmailAddress(emailAddress)) {
-                    String emailAddressNorm = CommunicationsUtils.normalizeEmailAddress(emailAddress);
-                    CorrelationAttributeInstance corrAttr = makeCorrAttr(artifact, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.EMAIL_TYPE_ID), emailAddressNorm);
-                    if(corrAttr != null) {
-                        corrAttrInstances.add(corrAttr);
-                    }
+        CorrelationAttributeInstance corrAttr = null;
+
+        /*
+         * Extract the phone number from the artifact attribute.
+         */
+        String value = null;
+        if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER))) {
+            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)).getValueString();
+        } else if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM))) {
+            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)).getValueString();
+        } else if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO))) {
+            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
+        }
+
+        /*
+         * Normalize the phone number.
+         */
+        if (value != null) {
+            if(CommunicationsUtils.isValidPhoneNumber(value)) {
+                value = CommunicationsUtils.normalizePhoneNum(value);
+                corrAttr = makeCorrAttr(artifact, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), value);
+                if(corrAttr != null) {
+                    corrAttrInstances.add(corrAttr);
                 }
             }
         }
