@@ -58,7 +58,6 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
-import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
