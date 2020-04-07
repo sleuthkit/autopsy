@@ -66,6 +66,9 @@ public class CorrelationAttributeUtil {
     // Most notably, does not include KEYWORD HIT, CALLLOGS, MESSAGES, CONTACTS
     // TSK_INTERESTING_ARTIFACT_HIT (See JIRA-6129 for more details on the
     // interesting artifact hit).
+    
+    // IMPORTANT: This set should be updated for new artifacts types that need to
+    // be inserted into the CR.
     private static final Set<Integer> SOURCE_TYPES_FOR_CR_INSERT = new HashSet<Integer>() {{
         add(ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID());
         add(ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID());
@@ -114,6 +117,8 @@ public class CorrelationAttributeUtil {
      * have correlatable data != An artifact that should be the source of data
      * in the CR, so results may be too lenient.
      *
+     * IMPORTANT: The correlation attribute instances are NOT added to the
+     * central repository by this method.
      *
      * TODO (Jira-6088): The methods in this low-level, utility class should
      * throw exceptions instead of logging them. The reason for this is that the
@@ -176,7 +181,7 @@ public class CorrelationAttributeUtil {
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
-                    makeCorrAttrFromArtifactPhoneAttr(correlationAttrs, sourceArtifact);
+                    makeCorrAttrsFromCommunicationArtifacts(correlationAttrs, sourceArtifact);
                 }
             }
         } catch (CentralRepoException ex) {
@@ -193,46 +198,49 @@ public class CorrelationAttributeUtil {
     }
 
     /**
-     * Makes a correlation attribute instance from a phone number attribute of an
-     * artifact.
+     * Makes correlation attribute instances from phone or email attributes 
+     * found on communication-type artifacts.
      *
-     * @param artifact An artifact with a phone number attribute.
-     *
-     * @return The correlation instance artifact or null, if the phone number is
-     *         not a valid correlation attribute.
+     * @param artifact A communication-type artifact
      *
      * @throws TskCoreException     If there is an error querying the case
      *                              database.
      * @throws CentralRepoException If there is an error querying the central
      *                              repository.
      */
-    private static void makeCorrAttrFromArtifactPhoneAttr(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact artifact) throws TskCoreException, CentralRepoException {
-        CorrelationAttributeInstance corrAttr = null;
-
-        /*
-         * Extract the phone number from the artifact attribute.
-         */
-        String value = null;
-        if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER))) {
-            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)).getValueString();
-        } else if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM))) {
-            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)).getValueString();
-        } else if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO))) {
-            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
-        }
-
-        /*
-         * Normalize the phone number.
-         */
-        if (value != null) {
-            try {
-                value = CommunicationsUtils.normalizePhoneNum(value);
-                corrAttr = makeCorrAttr(artifact, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), value);
-                if(corrAttr != null) {
-                    corrAttrInstances.add(corrAttr);
+    private static void makeCorrAttrsFromCommunicationArtifacts(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact artifact) throws TskCoreException, CentralRepoException {
+        for(BlackboardAttribute attribute : artifact.getAttributes()) {
+            BlackboardAttribute.Type attributeType = attribute.getAttributeType();
+            if(attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER))
+                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO))
+                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM))
+                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME))
+                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE))
+                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE))) {
+                String phoneNumber = attribute.getValueString();
+                if(CommunicationsUtils.isValidPhoneNumber(phoneNumber)) {
+                    String phoneNumberNorm = CommunicationsUtils.normalizePhoneNum(phoneNumber);
+                    CorrelationAttributeInstance corrAttr = makeCorrAttr(artifact, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), phoneNumberNorm);
+                    if(corrAttr != null) {
+                        corrAttrInstances.add(corrAttr);
+                    }
                 }
-            } catch(TskCoreException ex) {
-                logger.log(Level.INFO, String.format("Phone number found in artifact %d did not pass validation.", artifact.getId()));
+            } else if (attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL))
+                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM))
+                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO))
+                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_HOME))
+                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_OFFICE))
+                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO))
+                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_BCC))
+                    || attributeType.equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CC))) {
+                String emailAddress = attribute.getValueString();
+                if(CommunicationsUtils.isValidEmailAddress(emailAddress)) {
+                    String emailAddressNorm = CommunicationsUtils.normalizeEmailAddress(emailAddress);
+                    CorrelationAttributeInstance corrAttr = makeCorrAttr(artifact, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.EMAIL_TYPE_ID), emailAddressNorm);
+                    if(corrAttr != null) {
+                        corrAttrInstances.add(corrAttr);
+                    }
+                }
             }
         }
     }

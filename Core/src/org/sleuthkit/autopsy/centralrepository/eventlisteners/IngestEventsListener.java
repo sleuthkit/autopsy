@@ -455,7 +455,7 @@ public class IngestEventsListener {
             List<CorrelationAttributeInstance> eamArtifacts = new ArrayList<>();
 
             for (BlackboardArtifact bbArtifact : bbArtifacts) {
-                // makeCorrAttrToSave will filter out artifacts which should not be soruces of CR data.
+                // makeCorrAttrToSave will filter out artifacts which should not be sources of CR data.
                 List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsToSave(bbArtifact);
                 for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                     try {
