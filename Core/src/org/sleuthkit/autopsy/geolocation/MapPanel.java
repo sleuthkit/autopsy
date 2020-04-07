@@ -574,6 +574,7 @@ final public class MapPanel extends javax.swing.JPanel {
         zoomSlider.setSnapToTicks(true);
         zoomSlider.setInverted(true);
         zoomSlider.setMinimumSize(new java.awt.Dimension(35, 100));
+        zoomSlider.setOpaque(false);
         zoomSlider.setPreferredSize(new java.awt.Dimension(35, 190));
         zoomSlider.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
@@ -591,6 +592,7 @@ final public class MapPanel extends javax.swing.JPanel {
         zoomInBtn.setBorderPainted(false);
         zoomInBtn.setFocusPainted(false);
         zoomInBtn.setRequestFocusEnabled(false);
+        zoomInBtn.setRolloverEnabled(false);
         zoomInBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 zoomInBtnActionPerformed(evt);
@@ -607,6 +609,7 @@ final public class MapPanel extends javax.swing.JPanel {
         zoomOutBtn.setBorderPainted(false);
         zoomOutBtn.setFocusPainted(false);
         zoomOutBtn.setRequestFocusEnabled(false);
+        zoomOutBtn.setRolloverEnabled(false);
         zoomOutBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 zoomOutBtnActionPerformed(evt);
