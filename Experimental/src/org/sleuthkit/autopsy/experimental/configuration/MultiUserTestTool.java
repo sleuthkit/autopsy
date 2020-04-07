@@ -57,6 +57,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -83,6 +84,7 @@ class MultiUserTestTool {
         "MultiUserTestTool.unableCreatFile=Unable to create a file in case output directory",
         "MultiUserTestTool.unableAddFileAsDataSource=Unable to add test file as data source to case",
         "MultiUserTestTool.unableToReadTestFileFromDatabase=Unable to read test file info from case database",
+        "MultiUserTestTool.unableToInitializeFilTypeDetector=Unable to initialize File Type Detector",
         "MultiUserTestTool.unableToUpdateKWSIndex=Unable to write to Keyword Search index",
         "MultiUserTestTool.unableToRunIngest=Unable to run ingest on test data source",
         "MultiUserTestTool.unexpectedError=Unexpected error while performing Multi User test",
@@ -187,6 +189,16 @@ class MultiUserTestTool {
             }
 
             AbstractFile file = listOfFiles.get(0);
+            
+            // Set MIME type of the test file (required to test indexing)
+            FileTypeDetector fileTypeDetector = null;
+            try {
+                fileTypeDetector = new FileTypeDetector();
+            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                return Bundle.MultiUserTestTool_unableToInitializeFilTypeDetector() + ". " + ex.getMessage();
+            }
+            String mimeType = fileTypeDetector.getMIMEType(file);
+            file.setMIMEType(mimeType);
 
             // write to KWS index
             KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
