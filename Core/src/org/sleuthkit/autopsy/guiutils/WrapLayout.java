@@ -413,18 +413,11 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * @return The dimensions for laying out components.
      */
     private ParentDimensions getTargetDimensions(Container target) {
-        //  Each row must fit with the width allocated to the containter.
-        //  When the container width = 0, the preferred width of the container
-        //  has not yet been calculated so lets ask for the maximum.
-
-        int targetWidth = target.getSize().width;
-        Container container = target;
-
-        while (container.getSize().width == 0 && container.getParent() != null) {
-            container = container.getParent();
+        while (target.getSize().width == 0 && target.getParent() != null) {
+            target = target.getParent();
         }
 
-        targetWidth = container.getSize().width;
+        int targetWidth = target.getSize().width;
 
         if (targetWidth == 0) {
             targetWidth = Integer.MAX_VALUE;
@@ -464,7 +457,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
                 Integer containerWidth = rows.stream().map((r) -> r.getWidth()).reduce(0, Math::max);
                 containerWidth += targetDims.getInsets().left + targetDims.getInsets().right + (getHgap() * 2);
 
-                //	When using a scroll pane or the DecoratedLookAndFeel we need to
+                //  When using a scroll pane or the DecoratedLookAndFeel we need to
                 //  make sure the preferred size is less than the size of the
                 //  target containter so shrinking the container size works
                 //  correctly. Removing the horizontal gap is an easy way to do this.
