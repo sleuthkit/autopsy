@@ -64,8 +64,7 @@ public final class HidingPane extends JTabbedPane {
         tabLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/funnel.png")));
         tabLabel.setUI(new VerticalLabelUI(true));
         tabLabel.setOpaque(false);
-        Font font = tabLabel.getFont().deriveFont(18).deriveFont(Font.BOLD);
-        tabLabel.setFont(font);
+        tabLabel.setFont(tabLabel.getFont().deriveFont(Font.BOLD, tabLabel.getFont().getSize()+7));
         
         addTab(null, panel);
         setTabComponentAt(0, tabLabel);

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,16 +20,9 @@ package org.sleuthkit.autopsy.datasourceprocessors.xry;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.time.temporal.TemporalAccessor;
-import java.time.temporal.TemporalQueries;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -37,10 +30,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper;
+import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper.CommunicationDirection;
+import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper.MessageReadStatus;
 
 /**
  * Parses Messages-SMS files and creates artifacts.
@@ -52,31 +50,20 @@ final class XRYMessagesFileParser implements XRYFileParser {
 
     private static final String PARSER_NAME = "XRY DSP";
 
-    //Pattern is in reverse due to a Java 8 bug, see calculateSecondsSinceEpoch()
-    //function for more details.
-    private static final DateTimeFormatter DATE_TIME_PARSER
-            = DateTimeFormatter.ofPattern("[(XXX) ][O ][(O) ]a h:m:s M/d/y");
-
-    private static final String DEVICE_LOCALE = "(device)";
-    private static final String NETWORK_LOCALE = "(network)";
-
-    private static final int READ = 1;
-    private static final int UNREAD = 0;
-
     /**
      * All of the known XRY keys for message reports and their corresponding
      * blackboard attribute types, if any.
      */
     private enum XryKey {
         DELETED("deleted", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ISDELETED),
-        DIRECTION("direction", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION),
-        MESSAGE("message", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT),
+        DIRECTION("direction", null),
+        MESSAGE("message", null),
         NAME_MATCHED("name (matched)", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON),
-        TEXT("text", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT),
-        TIME("time", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME),
-        SERVICE_CENTER("service center", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER),
-        FROM("from", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM),
-        TO("to", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO),
+        TEXT("text", null),
+        TIME("time", null),
+        SERVICE_CENTER("service center", null),
+        FROM("from", null),
+        TO("to", null),
         //The following keys either need special processing or more time and data to find a type.
         STORAGE("storage", null),
         NUMBER("number", null),
@@ -272,7 +259,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
      * encountered.
      */
     @Override
-    public void parse(XRYFileReader reader, Content parent) throws IOException, TskCoreException {
+    public void parse(XRYFileReader reader, Content parent, SleuthkitCase currentCase) throws IOException, TskCoreException, BlackboardException {
         Path reportPath = reader.getReportPath();
         logger.log(Level.INFO, String.format("[XRY DSP] Processing report at"
                 + " [ %s ]", reportPath.toString()));
@@ -282,26 +269,178 @@ final class XRYMessagesFileParser implements XRYFileParser {
 
         while (reader.hasNextEntity()) {
             String xryEntity = reader.nextEntity();
-            List<BlackboardAttribute> attributes = getBlackboardAttributes(xryEntity, reader, referenceNumbersSeen);
-            //Only create artifacts with non-empty attributes.
-            if (!attributes.isEmpty()) {
-                BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE);
-                artifact.addAttributes(attributes);
+            
+            // This call will combine all segmented text into a single key value pair
+            List<XRYKeyValuePair> pairs = getXRYKeyValuePairs(xryEntity, reader, referenceNumbersSeen);
+            
+            // Transform all the data from XRY land into the appropriate CommHelper
+            // data types.
+            final String messageType = PARSER_NAME;
+            CommunicationDirection direction = CommunicationDirection.UNKNOWN;
+            String senderId = null;
+            final List<String> recipientIdsList = new ArrayList<>();
+            long dateTime = 0L;
+            MessageReadStatus readStatus = MessageReadStatus.UNKNOWN;
+            final String subject = null;
+            String text = null;
+            final String threadId = null;
+            final Collection<BlackboardAttribute> otherAttributes = new ArrayList<>();
+            
+            for(XRYKeyValuePair pair : pairs) {
+                XryNamespace namespace = XryNamespace.NONE;
+                if (XryNamespace.contains(pair.getNamespace())) {
+                    namespace = XryNamespace.fromDisplayName(pair.getNamespace());
+                }
+                XryKey key = XryKey.fromDisplayName(pair.getKey());
+                String normalizedValue = pair.getValue().toLowerCase().trim();
+
+                switch (key) {
+                    case TEL:
+                    case NUMBER:
+                        if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                            continue;
+                        }
+                        
+                        // Apply namespace or direction
+                        if(namespace == XryNamespace.FROM || direction == CommunicationDirection.INCOMING) {
+                            senderId = pair.getValue();
+                        } else if(namespace == XryNamespace.TO || direction == CommunicationDirection.OUTGOING) {
+                            recipientIdsList.add(pair.getValue());
+                        } else {
+                            currentCase.getCommunicationsManager().createAccountFileInstance(
+                                Account.Type.PHONE, pair.getValue(), PARSER_NAME, parent);
+                            otherAttributes.add(new BlackboardAttribute(
+                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
+                                        PARSER_NAME, pair.getValue()));
+                        }
+                        break;
+                    // Although confusing, as these are also 'name spaces', it appears
+                    // later versions of XRY just made these standardized lines.
+                    case FROM:
+                        if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                            continue;
+                        }
+                        
+                        senderId = pair.getValue();
+                        break;
+                    case TO:
+                        if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                            continue;
+                        }
+                        
+                        recipientIdsList.add(pair.getValue());
+                        break;
+                    case TIME:
+                        try {
+                            //Tranform value to seconds since epoch
+                            long dateTimeSinceInEpoch = XRYUtils.calculateSecondsSinceEpoch(pair.getValue());
+                            dateTime = dateTimeSinceInEpoch;
+                        } catch (DateTimeParseException ex) {
+                            logger.log(Level.WARNING, String.format("[%s] Assumption"
+                                    + " about the date time formatting of messages is "
+                                    + "not right. Here is the pair [ %s ]", PARSER_NAME, pair), ex);
+                        }
+                        break;
+                    case TYPE:
+                        switch (normalizedValue) {
+                            case "incoming":
+                                direction = CommunicationDirection.INCOMING;
+                                break;
+                            case "outgoing":
+                                direction = CommunicationDirection.OUTGOING;
+                                break;
+                            case "deliver":
+                            case "submit":
+                            case "status report":
+                                //Ignore for now.
+                                break;
+                            default:
+                                logger.log(Level.WARNING, String.format("[%s] Unrecognized "
+                                        + " value for key pair [ %s ].", PARSER_NAME, pair));
+                        }
+                        break;
+                    case STATUS:
+                        switch (normalizedValue) {
+                            case "read":
+                                readStatus = MessageReadStatus.READ;
+                                break;
+                            case "unread":
+                                readStatus = MessageReadStatus.UNREAD;
+                                break;
+                            case "deleted":
+                                otherAttributes.add(new BlackboardAttribute(
+                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ISDELETED,
+                                        PARSER_NAME, pair.getValue()));
+                                break;
+                            case "sending failed":
+                            case "unsent":
+                            case "sent":
+                                //Ignoring for now.
+                                break;
+                            default:
+                                logger.log(Level.WARNING, String.format("[%s] Unrecognized "
+                                        + " value for key pair [ %s ].", PARSER_NAME, pair));
+                        }
+                        break;
+                    case TEXT:
+                    case MESSAGE:
+                        text = pair.getValue();
+                        break;
+                    case DIRECTION:
+                        switch (normalizedValue) {
+                            case "incoming":
+                                direction = CommunicationDirection.INCOMING;
+                                break;
+                            case "outgoing":
+                                direction = CommunicationDirection.OUTGOING;
+                                break;
+                            default:
+                                direction = CommunicationDirection.UNKNOWN;
+                                break;
+                        }
+                        break;
+                    case SERVICE_CENTER:
+                        if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                            continue;
+                        }
+                        
+                        otherAttributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, 
+                                PARSER_NAME, pair.getValue()));
+                        break;
+                    default:
+                        //Otherwise, the XryKey enum contains the correct BlackboardAttribute
+                        //type.
+                        if (key.getType() != null) {
+                            otherAttributes.add(new BlackboardAttribute(key.getType(),
+                                    PARSER_NAME, pair.getValue()));
+                        } else {
+                            logger.log(Level.INFO, String.format("[%s] Key value pair "
+                                    + "(in brackets) [ %s ] was recognized but "
+                                    + "more data or time is needed to finish implementation. Discarding... ",
+                                    PARSER_NAME, pair));
+                        }
+                }
             }
+            
+            CommunicationArtifactsHelper helper = new CommunicationArtifactsHelper(
+                currentCase, PARSER_NAME, parent, Account.Type.PHONE);
+
+            helper.addMessage(messageType, direction, senderId, recipientIdsList, 
+                dateTime, readStatus, subject, text, threadId, otherAttributes);
         }
     }
 
     /**
-     * Extracts all blackboard attributes from the XRY Entity. This function will
-     * unify any segmented text, if need be.
+     * Extracts all pairs from the XRY Entity. This function
+     * will unify any segmented text, if need be.
      */
-    private List<BlackboardAttribute> getBlackboardAttributes(String xryEntity,
+    private List<XRYKeyValuePair> getXRYKeyValuePairs(String xryEntity,
             XRYFileReader reader, Set<Integer> referenceValues) throws IOException {
         String[] xryLines = xryEntity.split("\n");
         //First line of the entity is the title, each XRY entity is non-empty.
         logger.log(Level.INFO, String.format("[XRY DSP] Processing [ %s ]", xryLines[0]));
 
-        List<BlackboardAttribute> attributes = new ArrayList<>();
+        List<XRYKeyValuePair> pairs = new ArrayList<>();
 
         //Count the key value pairs in the XRY entity.
         int keyCount = getCountOfKeyValuePairs(xryLines);
@@ -339,14 +478,10 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         pair.getNamespace());
             }
 
-            //Get the corresponding blackboard attribute, if any.
-            Optional<BlackboardAttribute> attribute = getBlackboardAttribute(pair);
-            if (attribute.isPresent()) {
-                attributes.add(attribute.get());
-            }
+            pairs.add(pair);
         }
 
-        return attributes;
+        return pairs;
     }
 
     /**
@@ -364,7 +499,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
     }
 
     /**
-     * Builds up segmented message entities so that the text is unified for a 
+     * Builds up segmented message entities so that the text is unified for a
      * single artifact.
      *
      * @param reader File reader that is producing XRY entities.
@@ -461,7 +596,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
 
     /**
      * Extracts the value of the XRY meta key, if any.
-     * 
+     *
      * @param xryLines XRY entity to extract from.
      * @param metaKey The key type to extract.
      * @return
@@ -486,10 +621,10 @@ final class XRYMessagesFileParser implements XRYFileParser {
     }
 
     /**
-     * Extracts the ith XRY Key Value pair in the XRY Entity. 
-     * 
+     * Extracts the ith XRY Key Value pair in the XRY Entity.
+     *
      * The total number of pairs can be determined via getCountOfKeyValuePairs().
-     * 
+     *
      * @param xryLines XRY entity.
      * @param index The requested Key Value pair.
      * @return
@@ -530,192 +665,5 @@ final class XRYMessagesFileParser implements XRYFileParser {
         }
 
         return Optional.empty();
-    }
-
-    /**
-     * Creates an attribute from the extracted key value pair.
-     *
-     * @param nameSpace The namespace of this key value pair. It will have been
-     * verified beforehand, otherwise it will be NONE.
-     * @param key The recognized XRY key.
-     * @param value The value associated with that key.
-     * @return Corresponding blackboard attribute, if any.
-     */
-    private Optional<BlackboardAttribute> getBlackboardAttribute(XRYKeyValuePair pair) {
-        XryNamespace namespace = XryNamespace.NONE;
-        if (XryNamespace.contains(pair.getNamespace())) {
-            namespace = XryNamespace.fromDisplayName(pair.getNamespace());
-        }
-        XryKey key = XryKey.fromDisplayName(pair.getKey());
-        String normalizedValue = pair.getValue().toLowerCase().trim();
-
-        switch (key) {
-            case TEL:
-            case NUMBER:
-                switch (namespace) {
-                    case FROM:
-                        return Optional.of(new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM,
-                                PARSER_NAME, pair.getValue()));
-                    case TO:
-                    case PARTICIPANT:
-                        return Optional.of(new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO,
-                                PARSER_NAME, pair.getValue()));
-                    default:
-                        return Optional.of(new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
-                                PARSER_NAME, pair.getValue()));
-                }
-            case TIME:
-                try {
-                    //Tranform value to seconds since epoch
-                    long dateTimeSinceInEpoch = calculateSecondsSinceEpoch(pair.getValue());
-                    return Optional.of(new BlackboardAttribute(
-                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START,
-                            PARSER_NAME, dateTimeSinceInEpoch));
-                } catch (DateTimeParseException ex) {
-                    logger.log(Level.WARNING, String.format("[XRY DSP] Assumption"
-                            + " about the date time formatting of messages is "
-                            + "not right. Here is the pair [ %s ]", pair), ex);
-                    return Optional.empty();
-                }
-            case TYPE:
-                switch (normalizedValue) {
-                    case "incoming":
-                    case "outgoing":
-                        return Optional.of(new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION,
-                                PARSER_NAME, pair.getValue()));
-                    case "deliver":
-                    case "submit":
-                    case "status report":
-                        //Ignore for now.
-                        return Optional.empty();
-                    default:
-                        logger.log(Level.WARNING, String.format("[XRY DSP] Unrecognized "
-                                + " value for key pair [ %s ].", pair));
-                        return Optional.empty();
-                }
-            case STATUS:
-                switch (normalizedValue) {
-                    case "read":
-                        return Optional.of(new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS,
-                                PARSER_NAME, READ));
-                    case "unread":
-                        return Optional.of(new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS,
-                                PARSER_NAME, UNREAD));
-                    case "sending failed":
-                    case "deleted":
-                    case "unsent":
-                    case "sent":
-                        //Ignore for now.
-                        return Optional.empty();
-                    default:
-                        logger.log(Level.WARNING, String.format("[XRY DSP] Unrecognized "
-                                + " value for key pair [ %s ].", pair));
-                        return Optional.empty();
-                }
-            default:
-                //Otherwise, the XryKey enum contains the correct BlackboardAttribute
-                //type.
-                if (key.getType() != null) {
-                    return Optional.of(new BlackboardAttribute(key.getType(),
-                            PARSER_NAME, pair.getValue()));
-                }
-
-                logger.log(Level.INFO, String.format("[XRY DSP] Key value pair "
-                        + "(in brackets) [ %s ] was recognized but "
-                        + "more data or time is needed to finish implementation. Discarding... ", pair));
-
-                return Optional.empty();
-        }
-    }
-
-    /**
-     * Removes the locale from the date time value.
-     *
-     * Locale in this case being (Device) or (Network).
-     *
-     * @param dateTime XRY datetime value to be sanitized.
-     * @return A purer date time value.
-     */
-    private String removeDateTimeLocale(String dateTime) {
-        String result = dateTime;
-        int deviceIndex = result.toLowerCase().indexOf(DEVICE_LOCALE);
-        if (deviceIndex != -1) {
-            result = result.substring(0, deviceIndex);
-        }
-        int networkIndex = result.toLowerCase().indexOf(NETWORK_LOCALE);
-        if (networkIndex != -1) {
-            result = result.substring(0, networkIndex);
-        }
-        return result;
-    }
-
-    /**
-     * Parses the date time value and calculates seconds since epoch.
-     *
-     * @param dateTime
-     * @return
-     */
-    private long calculateSecondsSinceEpoch(String dateTime) {
-        String dateTimeWithoutLocale = removeDateTimeLocale(dateTime).trim();
-        /**
-         * The format of time in XRY Messages reports is of the form:
-         *
-         * 1/3/1990 1:23:54 AM UTC+4
-         *
-         * In our current version of Java (openjdk-1.8.0.222), there is a bug
-         * with having the timezone offset (UTC+4 or GMT-7) at the end of the
-         * date time input. This is fixed in later versions of the JDK (9 and
-         * beyond). https://bugs.openjdk.java.net/browse/JDK-8154050 Rather than
-         * update the JDK to accommodate this, the components of the date time
-         * string are reversed:
-         *
-         * UTC+4 AM 1:23:54 1/3/1990
-         *
-         * The java time package will correctly parse this date time format.
-         */
-        String reversedDateTime = reverseOrderOfDateTimeComponents(dateTimeWithoutLocale);
-        /**
-         * Furthermore, the DateTimeFormatter's timezone offset letter ('O')
-         * does not recognize UTC but recognizes GMT. According to
-         * https://en.wikipedia.org/wiki/Coordinated_Universal_Time, GMT only
-         * differs from UTC by at most 1 second and so substitution will only
-         * introduce a trivial amount of error.
-         */
-        String reversedDateTimeWithGMT = reversedDateTime.replace("UTC", "GMT");
-        TemporalAccessor result = DATE_TIME_PARSER.parseBest(reversedDateTimeWithGMT,
-                ZonedDateTime::from,
-                LocalDateTime::from,
-                OffsetDateTime::from);
-        //Query for the ZoneID
-        if (result.query(TemporalQueries.zoneId()) == null) {
-            //If none, assumed GMT+0.
-            return ZonedDateTime.of(LocalDateTime.from(result),
-                    ZoneId.of("GMT")).toEpochSecond();
-        } else {
-            return Instant.from(result).getEpochSecond();
-        }
-    }
-
-    /**
-     * Reverses the order of the date time components.
-     *
-     * Example: 1/3/1990 1:23:54 AM UTC+4 becomes UTC+4 AM 1:23:54 1/3/1990
-     *
-     * @param dateTime
-     * @return
-     */
-    private String reverseOrderOfDateTimeComponents(String dateTime) {
-        StringBuilder reversedDateTime = new StringBuilder(dateTime.length());
-        String[] dateTimeComponents = dateTime.split(" ");
-        for (String component : dateTimeComponents) {
-            reversedDateTime.insert(0, " ").insert(0, component);
-        }
-        return reversedDateTime.toString().trim();
     }
 }

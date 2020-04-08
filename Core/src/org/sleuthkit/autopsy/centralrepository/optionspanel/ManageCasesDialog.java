@@ -140,7 +140,6 @@ final class ManageCasesDialog extends javax.swing.JDialog {
         notesTextArea.setEditable(false);
         notesTextArea.setBackground(new java.awt.Color(240, 240, 240));
         notesTextArea.setColumns(20);
-        notesTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         notesTextArea.setLineWrap(true);
         notesTextArea.setRows(3);
         notesTextArea.setWrapStyleWord(true);

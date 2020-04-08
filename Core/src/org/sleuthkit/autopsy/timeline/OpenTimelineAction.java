@@ -53,7 +53,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 102)
     ,
-    @ActionReference(path = "Toolbars/Case", position = 102)})
+    @ActionReference(path = "Toolbars/Case", position = 104)})
 public final class OpenTimelineAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
