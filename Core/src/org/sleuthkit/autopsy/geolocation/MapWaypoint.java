@@ -70,10 +70,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
 
     private static final Map<Integer, Color> artifactTypesToColors = new HashMap<>();
 
-    @SuppressWarnings("deprecation")
-    static
-
-    {
+    static {
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID(), Color.BLUE);
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID(), Color.RED);
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID(), Color.YELLOW);

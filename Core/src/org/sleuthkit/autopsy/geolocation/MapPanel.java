@@ -706,12 +706,12 @@ final public class MapPanel extends javax.swing.JPanel {
             from.getColorComponents(fromC);
             float toC[] = new float[3];
             to.getColorComponents(toC);
-            float afResult[] = new float[3];
-            afResult[0] = fromC[0] * inverse + toC[0] * amount;
-            afResult[1] = fromC[1] * inverse + toC[1] * amount;
-            afResult[2] = fromC[2] * inverse + toC[2] * amount;
+            float result[] = new float[3];
+            result[0] = fromC[0] * inverse + toC[0] * amount;
+            result[1] = fromC[1] * inverse + toC[1] * amount;
+            result[2] = fromC[2] * inverse + toC[2] * amount;
 
-            return new Color(afResult[0], afResult[1], afResult[2]);
+            return new Color(result[0], result[1], result[2]);
         }
 
         /**
