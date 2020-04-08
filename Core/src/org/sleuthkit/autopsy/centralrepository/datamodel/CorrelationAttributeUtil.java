@@ -201,10 +201,8 @@ public class CorrelationAttributeUtil {
      * Makes a correlation attribute instance from a phone number attribute of an
      * artifact.
      *
+     * @param corrAttrInstances Correlation attributes will be added to this.
      * @param artifact An artifact with a phone number attribute.
-     *
-     * @return The correlation instance artifact or null, if the phone number is
-     *         not a valid correlation attribute.
      *
      * @throws TskCoreException     If there is an error querying the case
      *                              database.
