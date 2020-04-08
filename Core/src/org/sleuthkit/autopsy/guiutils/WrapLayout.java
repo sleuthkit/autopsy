@@ -409,17 +409,19 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * @return The dimensions for laying out components.
      */
     private ParentDimensions getTargetDimensions(Container target) {
-        while (target.getSize().width == 0 && target.getParent() != null) {
-            target = target.getParent();
+        Container container = target;
+        
+        while (container.getSize().width == 0 && container.getParent() != null) {
+            container = container.getParent();
         }
 
-        int targetWidth = target.getSize().width;
+        int targetWidth = container.getSize().width;
 
         if (targetWidth == 0) {
             targetWidth = Integer.MAX_VALUE;
         }
 
-        Insets insets = target.getInsets();
+        Insets insets = container.getInsets();
         int horizontalInsetsAndGap = insets.left + insets.right + (getHgap() * 2);
         int maxWidth = targetWidth - horizontalInsetsAndGap;
 
