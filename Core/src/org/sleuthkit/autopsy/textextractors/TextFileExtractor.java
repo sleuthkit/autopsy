@@ -86,7 +86,7 @@ public final class TextFileExtractor implements TextExtractor {
             try {
                 fileTypeDetector = new FileTypeDetector();
             } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                logger.log(Level.WARNING, "Unable to create file type detector for determining MIME type.");
+                logger.log(Level.SEVERE, "Unable to create file type detector for determining MIME type.");
                 return false;
             }
             mimeType = fileTypeDetector.getMIMEType(file);
