@@ -110,10 +110,8 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      *                             alignment.
      */
     public void setOppositeAligned(Collection<Component> oppAlignedComponents) {
-        synchronized (this.oppositeAlignedItems) {
-            this.oppositeAlignedItems.clear();
-            this.oppositeAlignedItems.addAll(oppAlignedComponents);
-        }
+        this.oppositeAlignedItems.clear();
+        this.oppositeAlignedItems.addAll(oppAlignedComponents);
     }
 
     /**
@@ -287,41 +285,37 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      */
     @Override
     public void layoutContainer(Container target) {
-        synchronized (target.getTreeLock()) {
-            synchronized (this.oppositeAlignedItems) {
-                ParentDimensions targetDims = getTargetDimensions(target);
-                List<Component> components = Arrays.asList(target.getComponents());
-                List<WrapLayoutRow> rows = getAllRows(components, true, targetDims.getInnerWidth());
+        ParentDimensions targetDims = getTargetDimensions(target);
+        List<Component> components = Arrays.asList(target.getComponents());
+        List<WrapLayoutRow> rows = getAllRows(components, true, targetDims.getInnerWidth());
 
-                boolean ltr = target.getComponentOrientation().isLeftToRight();
-                boolean useBaseline = getAlignOnBaseline();
+        boolean ltr = target.getComponentOrientation().isLeftToRight();
+        boolean useBaseline = getAlignOnBaseline();
 
-                int rowY = targetDims.getInsets().top + getVgap();
-                int leftX = targetDims.getInsets().left + getHgap();
-                int rightX = targetDims.getOuterWidth() - targetDims.getInsets().right - getHgap();
+        int rowY = targetDims.getInsets().top + getVgap();
+        int leftX = targetDims.getInsets().left + getHgap();
+        int rightX = targetDims.getOuterWidth() - targetDims.getInsets().right - getHgap();
 
-                for (WrapLayoutRow row : rows) {
-                    int rowHeight = row.getHeight();
+        for (WrapLayoutRow row : rows) {
+            int rowHeight = row.getHeight();
 
-                    int curX = 0;
-                    if (row.getComponents() != null) {
-                        for (Component origComp : row.getComponents()) {
-                            curX += setComponentDims(origComp, useBaseline, ltr, rowY, rowHeight, leftX, rightX, curX) + getHgap();
-                        }
-                    }
-
-                    if (row.getOppositeAligned() != null) {
-                        curX = 0;
-                        // reverse opposite aligned for layout purposes since flipping ltr
-                        Collections.reverse(row.getOppositeAligned());
-                        for (Component oppAlignedComp : row.getOppositeAligned()) {
-                            curX += setComponentDims(oppAlignedComp, useBaseline, !ltr, rowY, rowHeight, leftX, rightX, curX) + getHgap();
-                        }
-                    }
-
-                    rowY += rowHeight + getVgap();
+            int curX = 0;
+            if (row.getComponents() != null) {
+                for (Component origComp : row.getComponents()) {
+                    curX += setComponentDims(origComp, useBaseline, ltr, rowY, rowHeight, leftX, rightX, curX) + getHgap();
                 }
             }
+
+            if (row.getOppositeAligned() != null) {
+                curX = 0;
+                // reverse opposite aligned for layout purposes since flipping ltr
+                Collections.reverse(row.getOppositeAligned());
+                for (Component oppAlignedComp : row.getOppositeAligned()) {
+                    curX += setComponentDims(oppAlignedComp, useBaseline, !ltr, rowY, rowHeight, leftX, rightX, curX) + getHgap();
+                }
+            }
+
+            rowY += rowHeight + getVgap();
         }
     }
 
@@ -442,36 +436,32 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * @return The dimension to layout the target container.
      */
     private Dimension layoutSize(Container target, boolean preferred) {
-        synchronized (target.getTreeLock()) {
-            synchronized (this.oppositeAlignedItems) {
-                ParentDimensions targetDims = getTargetDimensions(target);
-                List<Component> components = Arrays.asList(target.getComponents());
-                List<WrapLayoutRow> rows = getAllRows(components, preferred, targetDims.getInnerWidth());
+        ParentDimensions targetDims = getTargetDimensions(target);
+        List<Component> components = Arrays.asList(target.getComponents());
+        List<WrapLayoutRow> rows = getAllRows(components, preferred, targetDims.getInnerWidth());
 
-                Integer containerHeight = rows.stream().map((r) -> r.getHeight()).reduce(0, Integer::sum);
-                // add in vertical gap between rows
-                if (rows.size() > 1) {
-                    containerHeight += (rows.size() - 1) * getVgap();
-                }
-
-                containerHeight += targetDims.getInsets().top + targetDims.getInsets().bottom;
-
-                Integer containerWidth = rows.stream().map((r) -> r.getWidth()).reduce(0, Math::max);
-                containerWidth += targetDims.getInsets().left + targetDims.getInsets().right + (getHgap() * 2);
-
-                //  When using a scroll pane or the DecoratedLookAndFeel we need to
-                //  make sure the preferred size is less than the size of the
-                //  target containter so shrinking the container size works
-                //  correctly. Removing the horizontal gap is an easy way to do this.
-                Container scrollPane = SwingUtilities.getAncestorOfClass(JScrollPane.class, target);
-
-                if (scrollPane != null && target.isValid()) {
-                    containerWidth -= (getHgap() + 1);
-                }
-
-                return new Dimension(containerWidth, containerHeight);
-            }
+        Integer containerHeight = rows.stream().map((r) -> r.getHeight()).reduce(0, Integer::sum);
+        // add in vertical gap between rows
+        if (rows.size() > 1) {
+            containerHeight += (rows.size() - 1) * getVgap();
         }
+
+        containerHeight += targetDims.getInsets().top + targetDims.getInsets().bottom;
+
+        Integer containerWidth = rows.stream().map((r) -> r.getWidth()).reduce(0, Math::max);
+        containerWidth += targetDims.getInsets().left + targetDims.getInsets().right + (getHgap() * 2);
+
+        //  When using a scroll pane or the DecoratedLookAndFeel we need to
+        //  make sure the preferred size is less than the size of the
+        //  target containter so shrinking the container size works
+        //  correctly. Removing the horizontal gap is an easy way to do this.
+        Container scrollPane = SwingUtilities.getAncestorOfClass(JScrollPane.class, target);
+
+        if (scrollPane != null && target.isValid()) {
+            containerWidth -= (getHgap() + 1);
+        }
+
+        return new Dimension(containerWidth, containerHeight);
     }
 
     /**
