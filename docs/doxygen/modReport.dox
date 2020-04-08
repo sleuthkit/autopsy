@@ -5,7 +5,7 @@ Report modules allow Autopsy users to create different report types.  Autopsy co
 
 All custom report modules will be general report modules. General report modules have a single method to generate the report. This method gives the module freedom to find and process any data it so chooses. General modules also have the ability to provide a configuration panel, allowing the user to choose from various displayed settings. The report module may then use the user's selection to generate a more specific report.
 
-General modules are also given the responsibility of updating their report's progress bar and processing label in the UI. A progress panel is given to every general report module. It contains basic API to start, stop, and add to the progress bar, as well as update the processing label. The module is also expected to check the progress bar's status occasionally to see if the user has manually canceled the report.
+General modules are also given the responsibility of updating their report's progress bar and processing label in the UI. A progress panel is given to every general report module. It defines a basic API to start, stop, and increment the progress bar and to update the processing label. The module is also expected to check the progress bar's status occasionally to see if the user has manually canceled the report.
 
 \section report_create_module Creating a Report Module
 To create a report module, start off by creating a new Java or Python (Jython) class and implementing (Java) or inheriting (Jython) from org.sleuthkit.autopsy.report.GeneralReportModule. You'll need to override multiple methods including the following:
@@ -17,11 +17,11 @@ To create a report module, start off by creating a new Java or Python (Jython) c
 If your report module requires configuration, you'll need to override:
 - org.sleuthkit.autopsy.report.GeneralReportModule.getConfigurationPanel()
 
-For general report modules, Autopsy will simply call the generateReport(String reportPath, ReportProgressPanel progressPanel) method and leave it up to the module to aquire and report data in its desired format.  The only requirements are that the module saves to the given report path and updates the org.sleuthkit.autopsy.report.ReportProgressPanel as the report progresses.
+For general report modules, Autopsy will simply call the generateReport(String reportPath, ReportProgressPanel progressPanel) method and leave it up to the module to acquire and report data in its desired format.  The only requirements are that the module saves to the given report path and updates the org.sleuthkit.autopsy.report.ReportProgressPanel as the report progresses.
 
 When updating the progress panel, it is recommended to update it as infrequently as possible, while still keeping the user informed. If your report processes 100,000 files and you chose to update the UI each time a file is reviewed, the UI would freeze when trying to process all your requests. This would cause problems to not only your reporting module, but to other modules running in parallel. A safer approach would be to update the UI every 1,000 files, or when a certain "category" of the files being processed has changed. For example, the HTML report module increments the progress bar and changes the processing label every time a new Blackboard Artifact Type is being processed.
 
-Autopsy will also display the panel returned by getConfigurationPanel() in the generate report wizard. This panel can be used to allow the user custom controls over the report.  To make this panel, use NetBeans to make a new JPanel class and use its layout interface to put the UI widgets in the places that you want them.  Then, your getConfigurationPanel() method should create an instance of that class and return it. 
+Autopsy will also display the panel returned by getConfigurationPanel() in the generate report wizard. This panel can be used to allow the user to customize the report.  To make this panel, use NetBeans to make a new JPanel class and use its layout interface to put the UI widgets in the places that you want them.  Then, your getConfigurationPanel() method should create an instance of that class and return it. 
 
 
 Typically a general report module should interact with both the Blackboard API in the org.sleuthkit.datamodel.SleuthkitCase class, in addition to an API (possibly external/thirdparty) to convert Blackboard Artifacts to the desired reporting format.
@@ -32,7 +32,7 @@ You should call org.sleuthkit.autopsy.casemodule.Case.addReport() with the path 
 
 \subsection report_create_module_indexing Indexing Reports
 
-After you have called org.sleuthkit.autopsy.casemodule.Case.addReport() and created a report, you can pass it to org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService.index() so that it is indexed and can then be found by a user.  This is most commonly used when an Ingest Module runs a 3rd party tool and the output of that tool is added back into Autopsy as a report.  Here is some example code:
+After you have called org.sleuthkit.autopsy.casemodule.Case.addReport() and created a report, you can pass it to org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService.index() so that it is indexed and can then be found by a user running a keyword search.  This is most commonly used when an Ingest Module runs a 3rd party tool and the output of that tool is added back into Autopsy as a report.  Here is some example code:
 
 \code{.java}
 KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
