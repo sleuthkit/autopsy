@@ -124,7 +124,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * @return The components to display with opposite alignment.
      */
     public Collection<Component> getOppositeAlignedItems() {
-        return oppositeAlignedItems;
+        return Collections.unmodifiableCollection(oppositeAlignedItems);
     }
 
     /**
@@ -203,6 +203,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      */
     @Override
     public void addLayoutComponent(String name, Component comp) {
+        //Empty
     }
 
     /**
@@ -213,6 +214,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      */
     @Override
     public void removeLayoutComponent(Component comp) {
+        //Empty
     }
 
     /**
