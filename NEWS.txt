@@ -1,3 +1,32 @@
+---------------- VERSION 4.15.0  --------------
+New UI Features:
+- Added Document view to File Discovery.
+- Expanded Context Content Viewer to show if an app accessed a file.
+- Added translation feature to Message Content Viewer.
+- Added waypoint type filter to the Geolocation viewer.
+- Added zoom feature to Indexed Text Content Viewer.
+
+New Ingest Modules Features:
+- New GPX ingest module.
+- New Drone ingest module for DJI drones based on DatCon. 
+- Create artifacts for files opened by Adobe Reader, Windows Media Player, Office Docs (Most Recently Used (MRU) and TrustRecords), 7Zip MRU, WinRAR MRU, Applets, Microsoft Management Console (MMC) via RegRipper.
+
+New Central Repository Features:
+- Central Repository stores account IDs that were previously seen. 
+- Central Repository is enabled by default to store past hashes.  Feature to flag previously seen files is disabled by default. 
+
+Other New Features:
+- Multi-user cases can be created via command line
+
+Bug fixes:
+- Prevent entire application from crashing when gstreamer crashes on videos.
+- Improve Geolocation viewer with large data sets.
+- Fix error with non-sector aligned reads on local disks.
+- Times from Recycle Bin files are now in timeline.
+- Validate timeline events and ignore events too far in the future.
+- Moved some database queries off of UI thread.
+- Remove hard coded sizes from UI that cause issues with other languages.
+
 ---------------- VERSION 4.14.0  --------------
 Specialized UIs:
 - New File Discovery UI that allows you to search and filter for certain types of files. 
