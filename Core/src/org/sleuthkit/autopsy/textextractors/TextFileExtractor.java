@@ -76,11 +76,7 @@ public final class TextFileExtractor implements TextExtractor {
     }
 
     @Override
-    public boolean isSupported() {
-        // if file is null, it is not supported
-        if (file == null)
-            return false;
-        
+    public boolean isSupported() {        
         // get the MIME type
         String mimeType = file.getMIMEType();
         
@@ -91,6 +87,7 @@ public final class TextFileExtractor implements TextExtractor {
                 fileTypeDetector = new FileTypeDetector();
             } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                 logger.log(Level.WARNING, "Unable to create file type detector for determining MIME type.");
+                return false;
             }
             mimeType = fileTypeDetector.getMIMEType(file);
             
@@ -99,6 +96,6 @@ public final class TextFileExtractor implements TextExtractor {
                 file.setMIMEType(mimeType);
         }
         
-        return (StringUtils.isEmpty(mimeType)) ? false : mimeType.equals(PLAIN_TEXT_MIME_TYPE);
+        return PLAIN_TEXT_MIME_TYPE.equals(mimeType);
     }
 }
