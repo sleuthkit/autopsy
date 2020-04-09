@@ -40,6 +40,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TagSet;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.DbType;
@@ -267,6 +268,10 @@ public class TagsManager implements Closeable {
             }
         }
         return new ArrayList<>(tagNameSet);
+    }
+    
+    public List<TagSet> getTagSets() {
+        return null;
     }
 
     /**
