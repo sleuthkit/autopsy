@@ -179,7 +179,7 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
 
             return dialogResult.isValue();
         } catch (InterruptedException | InvocationTargetException e) {
-            logger.log(Level.WARNING, "Task cancelled while confirmingg case znodes to delete"); //NON-NLS
+            logger.log(Level.WARNING, "Task cancelled while confirming case znodes to delete"); //NON-NLS
             return false;
         }
     }
