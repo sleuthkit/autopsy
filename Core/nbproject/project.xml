@@ -496,6 +496,10 @@
                 <binary-origin>release\modules\ext\vorbis-java-core-0.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jgraphx-4.1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jgraphx-4.1.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/java-libpst-0.8.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\java-libpst-0.8.1.jar</binary-origin>
             </class-path-extension>
@@ -710,10 +714,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/google-auth-library-oauth2-http-0.15.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/google-auth-library-oauth2-http-0.15.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jgraphx-v3.8.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jgraphx-v3.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/juniversalchardet-1.0.3.jar</runtime-relative-path>
