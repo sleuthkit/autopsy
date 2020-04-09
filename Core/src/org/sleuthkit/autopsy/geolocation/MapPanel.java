@@ -310,7 +310,7 @@ final public class MapPanel extends javax.swing.JPanel {
     void setZoom(int zoom) {
         zoomChanging = true;
         mapViewer.setZoom(zoom);
-        zoomSlider.setValue((zoomSlider.getMaximum() + zoomSlider.getMinimum()) - zoom);
+        zoomSlider.setValue(zoom);
         zoomChanging = false;
     }
 
@@ -572,6 +572,7 @@ final public class MapPanel extends javax.swing.JPanel {
         zoomSlider.setOrientation(javax.swing.JSlider.VERTICAL);
         zoomSlider.setPaintTicks(true);
         zoomSlider.setSnapToTicks(true);
+        zoomSlider.setInverted(true);
         zoomSlider.setMinimumSize(new java.awt.Dimension(35, 100));
         zoomSlider.setOpaque(false);
         zoomSlider.setPreferredSize(new java.awt.Dimension(35, 190));
