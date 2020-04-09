@@ -13,7 +13,7 @@ Solr's embedded ZooKeeper is also used as a coordination service for Autopsy.
 We use Bitnami Solr, which packages Solr as a Windows service. 
 
 You will need:
-- A 64-bit version of the Java Runtime Environment (JRE) from https://github.com/ojdkbuild/ojdkbuild. 
+- A 64-bit version of the Java 8 Runtime Environment (JRE) from https://github.com/ojdkbuild/ojdkbuild. (<a href="https://github.com/ojdkbuild/ojdkbuild/releases/download/java-1.8.0-openjdk-1.8.0.242-1.b08/java-1.8.0-openjdk-1.8.0.242-1.b08.ojdkbuild.windows.x86_64.msi"> Link to installer</a>)
 - The Apache Solr 4.10.3-0 installation package.  This is no longer available from its original source, but you can find it on our site: https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr.
 -- NOTE: We tested Solr 6 at one point, but ran into stability problems when loading and unloading cores.  For now, you need to use Solr 4. 
 - An installed version of Autopsy so that you can copy files from it.   You can install Autopsy on one of the planned client systems.  You do not need to install it on the Solr server. 
