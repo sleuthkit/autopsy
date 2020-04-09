@@ -90,10 +90,6 @@ public final class TextFileExtractor implements TextExtractor {
                 return false;
             }
             mimeType = fileTypeDetector.getMIMEType(file);
-            
-            // if able to determine mime type, 
-            if (!StringUtils.isEmpty(mimeType))
-                file.setMIMEType(mimeType);
         }
         
         return PLAIN_TEXT_MIME_TYPE.equals(mimeType);
