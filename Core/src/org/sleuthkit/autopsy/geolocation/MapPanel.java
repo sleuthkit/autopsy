@@ -703,7 +703,7 @@ final public class MapPanel extends javax.swing.JPanel {
             Color baseColor = waypoint.getColor();
             if (waypoint.equals(currentlySelectedWaypoint)) {
                 // Highlight this waypoint since it is selected
-                return Color.WHITE;
+                return Color.YELLOW;
             } else {
                 return baseColor;
             }
