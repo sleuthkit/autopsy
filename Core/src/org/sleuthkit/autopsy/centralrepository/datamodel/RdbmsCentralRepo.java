@@ -3786,6 +3786,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
 
             // Upgrade to 1.4
             (new CentralRepoDbUpgrader13To14()).upgradeSchema(dbSchemaVersion, conn);
+            
+            // Upgrade to 1.5
+            (new CentralRepoDbUpgrader14To15()).upgradeSchema(dbSchemaVersion, conn);
 
             updateSchemaVersion(conn);
             conn.commit();
