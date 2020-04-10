@@ -198,7 +198,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             startSection(html, "Central Repository Comments");
             List<CorrelationAttributeInstance> instancesList = new ArrayList<>();
             if (artifact != null) {
-                instancesList.addAll(CorrelationAttributeUtil.makeCorrAttrsFromArtifact(artifact));
+                instancesList.addAll(CorrelationAttributeUtil.makeCorrAttrsForCorrelation(artifact));
             }
             try {
                 List<CorrelationAttributeInstance.Type> artifactTypes = CentralRepository.getInstance().getDefinedCorrelationTypes();
