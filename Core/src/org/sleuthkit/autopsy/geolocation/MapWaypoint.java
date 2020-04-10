@@ -343,10 +343,18 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
 
     /**
      *
+     * @return the waypoint color that represents the given artifact type id
+     */
+    static Color getColor(int artifactTypeId) {
+        return artifactTypesToColors.getOrDefault(artifactTypeId, Color.GRAY);
+    }
+
+    /**
+     *
      * @return the color that this waypoint should be rendered
      */
     Color getColor() {
-        return artifactTypesToColors.getOrDefault(dataModelWaypoint.getArtifact().getArtifactTypeID(), Color.GRAY);
+        return getColor(dataModelWaypoint.getArtifact().getArtifactTypeID());
     }
 
     /**
