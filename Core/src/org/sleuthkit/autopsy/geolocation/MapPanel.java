@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
+import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -34,8 +36,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
@@ -88,8 +92,8 @@ final public class MapPanel extends javax.swing.JPanel {
     private static final int POPUP_HEIGHT = 200;
     private static final int POPUP_MARGIN = 10;
 
-    private BufferedImage defaultWaypointImage;
-    private BufferedImage selectedWaypointImage;
+    private BufferedImage whiteWaypointImage;
+    private BufferedImage transparentWaypointImage;
 
     private MapWaypoint currentlySelectedWaypoint;
 
@@ -108,8 +112,8 @@ final public class MapPanel extends javax.swing.JPanel {
         popupFactory = new PopupFactory();
 
         try {
-            defaultWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_teal.png"));
-            selectedWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_yellow.png"));
+            whiteWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_white.png"));
+            transparentWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_transparent.png"));
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to load geolocation waypoint images", ex);
         }
@@ -358,7 +362,7 @@ final public class MapPanel extends javax.swing.JPanel {
      * Show the popup menu for the given waypoint and location.
      *
      * @param waypoint Selected waypoint
-     * @param point    Current mouse click location
+     * @param point Current mouse click location
      */
     private void showPopupMenu(MapWaypoint waypoint, Point point) throws TskCoreException {
         if (waypoint == null) {
@@ -437,7 +441,7 @@ final public class MapPanel extends javax.swing.JPanel {
      * @param clickPoint The mouse click point
      *
      * @return A waypoint that is within 10 pixels of the given point, or null
-     *         if none was found.
+     * if none was found.
      */
     private List<MapWaypoint> findClosestWaypoint(Point clickPoint) {
         if (waypointTree == null) {
@@ -463,7 +467,7 @@ final public class MapPanel extends javax.swing.JPanel {
             MapWaypoint nextWaypoint = iterator.next();
 
             Point2D point = mapViewer.convertGeoPositionToPoint(nextWaypoint.getPosition());
-            Rectangle rect = new Rectangle((int) point.getX() - (defaultWaypointImage.getWidth() / 2), (int) point.getY() - defaultWaypointImage.getHeight(), defaultWaypointImage.getWidth(), defaultWaypointImage.getHeight());
+            Rectangle rect = new Rectangle((int) point.getX() - (whiteWaypointImage.getWidth() / 2), (int) point.getY() - whiteWaypointImage.getHeight(), whiteWaypointImage.getWidth(), whiteWaypointImage.getHeight());
 
             if (rect.contains(clickPoint)) {
                 closestPoints.add(nextWaypoint);
@@ -687,16 +691,65 @@ final public class MapPanel extends javax.swing.JPanel {
      */
     private class MapWaypointRenderer implements WaypointRenderer<MapWaypoint> {
 
+        private final Map<Color, BufferedImage> imageCache = new HashMap<>();
+
+        /**
+         *
+         * @param waypoint the waypoint for which to get the color
+         * @param currentlySelectedWaypoint the waypoint that is currently
+         * selected
+         * @return the color that this waypoint should be rendered
+         */
+        private Color getColor(MapWaypoint waypoint, MapWaypoint currentlySelectedWaypoint) {
+            Color baseColor = waypoint.getColor();
+            if (waypoint.equals(currentlySelectedWaypoint)) {
+                // Highlight this waypoint since it is selected
+                return Color.YELLOW;
+            } else {
+                return baseColor;
+            }
+        }
+
+        /**
+         * Creates a waypoint image with the specified color
+         *
+         * @param color the color of the new waypoint image
+         * @return the new waypoint image
+         */
+        private BufferedImage createWaypointImage(Color color) {
+            int w = whiteWaypointImage.getWidth();
+            int h = whiteWaypointImage.getHeight();
+
+            BufferedImage ret = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+
+            Graphics2D g = ret.createGraphics();
+            g.drawImage(whiteWaypointImage, 0, 0, null);
+            g.setComposite(AlphaComposite.SrcIn);
+            g.setColor(color);
+            g.fillRect(0, 0, w, h);
+            g.setComposite(AlphaComposite.SrcAtop);
+            g.drawImage(transparentWaypointImage, 0, 0, null);
+            g.dispose();
+            return ret;
+        }
+
         @Override
         public void paintWaypoint(Graphics2D gd, JXMapViewer jxmv, MapWaypoint waypoint) {
+            Color color = getColor(waypoint, currentlySelectedWaypoint);
+
+            // Store computed images in cache for later use
+            BufferedImage image = imageCache.computeIfAbsent(color, k -> {
+                return createWaypointImage(color);
+            });
+
             Point2D point = jxmv.getTileFactory().geoToPixel(waypoint.getPosition(), jxmv.getZoom());
 
             int x = (int) point.getX();
             int y = (int) point.getY();
 
-            BufferedImage image = (waypoint == currentlySelectedWaypoint ? selectedWaypointImage : defaultWaypointImage);
-
-            (gd.create()).drawImage(image, x - image.getWidth() / 2, y - image.getHeight(), null);
+            gd = (Graphics2D) gd.create();
+            gd.drawImage(image, x - image.getWidth() / 2, y - image.getHeight(), null);
+            gd.dispose();
         }
     }
 }
