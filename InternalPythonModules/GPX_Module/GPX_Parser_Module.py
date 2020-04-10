@@ -214,10 +214,10 @@ class GPXParserDataSourceIngestModule(DataSourceIngestModule):
                     geoWaypoints = GeoWaypoints()
 
                     for point in route.points:
-                        geoWaypointList.addPoint(Waypoint(point.latitude, point.longitude, point.elevation, point.name))
+                        geoWaypoints.addPoint(Waypoint(point.latitude, point.longitude, point.elevation, point.name))
                     
                     try:
-                        geoArtifactHelper.addRoute(None, None, geoWaypointList, None)
+                        geoArtifactHelper.addRoute(None, None, geoWaypoints, None)
                     except Blackboard.BlackboardException as e:
                         self.log("Error posting GPS route artifact for " + file.getUniquePath() + " (objID = " + str(file.getId()) + "):" +  e.getMessage())
                     except TskCoreException as e:
