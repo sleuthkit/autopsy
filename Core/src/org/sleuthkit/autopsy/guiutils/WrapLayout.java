@@ -35,13 +35,13 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
 /**
- * A layout class similar to FlowLayout in that when a component can't fit in a
- * row it is moved to the next row. Inspired by WrapLayout, this layout also
- * allows for aligning some components in the opposite side. In instances where
- * components are laid out left to right, these opposite aligned components will
- * be aligned to the right.
+ * A wrap layout, similar to flow layout, orders subcomponents in a horizontal
+ * row similar to words in a paragraph. When subcomponents are moved to a new
+ * row, the height of the target component is expanded to accomodate. This
+ * layout also accomodates simultaneously left-aligned and right-aligned
+ * components.
  *
- * Inspired by WrapLayout
+ * Inspired by Rob Camick's WrapLayout
  * https://tips4java.wordpress.com/2008/11/06/wrap-layout/ and FlowLayout
  * https://raw.githubusercontent.com/mynawang/Java8-Source-Code/master/src/main/jdk8/java/awt/FlowLayout.java.
  */
@@ -50,9 +50,9 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The <code>WrapLayout</code> manager allows a separation of components
-     * with gaps. The horizontal gap will specify the space between components
-     * and between the components and the borders of the <code>Container</code>.
+     * The horizontal gap will specify the spacing between neighboring
+     * subcomponents as well as the spacing between subcomponents and the
+     * borders of the target component.
      *
      * @serial
      * @see #getHgap()
@@ -61,9 +61,8 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
     private int hgap = 0;
 
     /**
-     * The <code>WrapLayout</code> manager allows a separation of components
-     * with gaps. The vertical gap will specify the space between rows and
-     * between the the rows and the borders of the <code>Container</code>.
+     * The vertical gap between neighboring rows as well as the spacing between
+     * rows and the borders of the target component.
      *
      * @serial
      * @see #getVgap()
@@ -72,29 +71,34 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
     private int vgap = 0;
 
     /**
-     * If true, components will be aligned on their baseline.
+     * If true, subcomponents will be aligned on their bottom edge. Otherwise,
+     * subcomponents are aligned on their top edge.
      */
     private boolean alignOnBaseline = false;
 
     /**
-     * The set of components that will be aligned on the opposite side (if left
-     * to right, on the right).
+     * The set of components that will be aligned on the opposite side. If the
+     * target component's orientation is left to right, this set of components
+     * will be right aligned.
      */
     private final Set<Component> oppositeAlignedItems = new HashSet<>();
 
     /**
-     * Constructs a new <code>WrapLayout</code> with a left alignment and a
-     * default 5-unit horizontal and vertical gap.
+     * Constructs a new <code>WrapLayout</code> with a default 5-unit horizontal
+     * and vertical gap.
      */
     public WrapLayout() {
         this(5, 5);
     }
 
     /**
-     * Constructs a new <code>WrapLayout</code> with a left alignment.
+     * Constructs a new <code>WrapLayout</code>.
      *
-     * @param vgap The vertical gap spacing between rows of components.
-     * @param hgap The horizontal gap spacing between components.
+     * @param vgap The vertical gap spacing between rows of subcomponents as
+     *             well as the spacing between the target component and rows.
+     * @param hgap The horizontal gap spacing between neighboring subcomponents
+     *             as well as the spacing between the subcomponents and the
+     *             target component's border.
      */
     public WrapLayout(int vgap, int hgap) {
         this.vgap = vgap;
@@ -102,12 +106,12 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
     }
 
     /**
-     * Items in the collection will be aligned opposite to the rest. For
-     * instance, if items should be displayed left to right based on locale,
-     * these components will be on the right.
+     * Sets the set of components that will be aligned on the opposite side. If
+     * the target component's orientation is left to right, this set of
+     * components will be right aligned.
      *
-     * @param oppAlignedComponents The components to display with opposite
-     *                             alignment.
+     * @param oppAlignedComponents The components that will be aligned on the
+     *                             opposite side.
      */
     public void setOppositeAligned(Collection<Component> oppAlignedComponents) {
         this.oppositeAlignedItems.clear();
@@ -115,19 +119,20 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
     }
 
     /**
-     * Items in the collection will be aligned opposite to the rest. For
-     * instance, if items should be displayed left to right based on locale,
-     * these components will be on the right.
+     * Retrieves the set of components that will be aligned on the opposite
+     * side. If the target component's orientation is left to right, this set of
+     * components will be right aligned.
      *
-     * @return The components to display with opposite alignment.
+     * @return The components that will be aligned on the opposite side.
      */
     public Collection<Component> getOppositeAlignedItems() {
         return Collections.unmodifiableCollection(oppositeAlignedItems);
     }
 
     /**
-     * Gets the horizontal gap between components and between the components and
-     * the borders of the <code>Container</code>
+     * Retrieves the horizontal gap between neighboring subcomponents as well as
+     * the spacing between subcomponents and the borders of the target
+     * component.
      *
      * @return The horizontal gap between components and between the components
      *         and the borders of the <code>Container</code>.
@@ -137,8 +142,8 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
     }
 
     /**
-     * Sets the horizontal gap between components and between the components and
-     * the borders of the <code>Container</code>.
+     * Sets the horizontal gap between neighboring subcomponents as well as the
+     * spacing between subcomponents and the borders of the target component.
      *
      * @param hgap The horizontal gap between components and between the
      *             components and the borders of the <code>Container</code>.
@@ -148,8 +153,8 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
     }
 
     /**
-     * Gets the vertical gap between components and between the components and
-     * the borders of the <code>Container</code>.
+     * Retrieves the vertical gap between neighboring rows as well as the
+     * spacing between rows and the borders of the target component.
      *
      * @return The vertical gap between components and between the components
      *         and the borders of the <code>Container</code>.
@@ -159,8 +164,8 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
     }
 
     /**
-     * Sets the vertical gap between components and between the components and
-     * the borders of the <code>Container</code>.
+     * Sets the vertical gap between neighboring rows as well as the spacing
+     * between rows and the borders of the target component.
      *
      * @param vgap The vertical gap between components and between the
      *             components and the borders of the <code>Container</code>.
@@ -170,12 +175,12 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
     }
 
     /**
-     * Sets whether or not components should be vertically aligned along their
-     * baseline. Components that do not have a baseline will be centered. The
-     * default is false.
+     * Sets whether or not subcomponents should be vertically aligned along
+     * their bottom edge. Otherwise, subcomponents are aligned on their top
+     * edge. The default is false.
      *
      * @param alignOnBaseline Whether or not components should be vertically
-     *                        aligned on their baseline.
+     *                        aligned on their bottom edge.
      */
     public void setAlignOnBaseline(boolean alignOnBaseline) {
         this.alignOnBaseline = alignOnBaseline;
@@ -183,10 +188,11 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
 
     /**
      * Returns true if components are to be vertically aligned along their
-     * baseline. The default is false.
+     * bottom edge. Otherwise, subcomponents are aligned on their top edge. The
+     * default is false.
      *
-     * @return true If components are to be vertically aligned along their
-     *         baseline.
+     * @return If components are to be vertically aligned along their bottom
+     *         edge.
      */
     public boolean getAlignOnBaseline() {
         return alignOnBaseline;
@@ -194,7 +200,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
 
     /**
      * Adds the specified component to the layout. Not used by this class. NOTE:
-     * This is not used for this layout
+     * This method is not used by this layout.
      *
      * @param name The name of the component.
      * @param comp The component to be added.
@@ -206,7 +212,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
 
     /**
      * Removes the specified component from the layout. Not used by this class.
-     * NOTE: This is not used for this layout
+     * NOTE: This method is not used by this layout.
      *
      * @param comp The component to remove.
      */
@@ -226,7 +232,8 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      *
      * @return The top y position of the component.
      */
-    private int getComponentY(int rowY, boolean alignBaseline, int rowHeight, int itemHeight) {
+    private int getComponentY(int rowY, boolean alignBaseline, int rowHeight,
+            int itemHeight) {
         return alignBaseline
                 ? rowY + rowHeight - itemHeight
                 : rowY;
@@ -244,7 +251,8 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      *
      * @return The component's left x position.
      */
-    private int getComponentX(int leftX, int rightX, boolean ltr, int xPos, int componentWidth) {
+    private int getComponentX(int leftX, int rightX, boolean ltr, int xPos,
+            int componentWidth) {
         return ltr ? leftX + xPos : rightX - xPos - componentWidth;
     }
 
@@ -265,7 +273,10 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      *
      * @return The width of the component.
      */
-    private int setComponentDims(Component comp, boolean alignBaseline, boolean ltr, int rowY, int rowHeight, int leftX, int rightX, int xPos) {
+    private int setComponentDims(Component comp, boolean alignBaseline,
+            boolean ltr, int rowY, int rowHeight, int leftX, int rightX,
+            int xPos) {
+
         Dimension d = comp.getPreferredSize();
         comp.setSize(d);
 
@@ -276,13 +287,6 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
         return d.width;
     }
 
-    /**
-     * Lays out the container. This method lets each
-     * <i>visible</i> component take its preferred size by reshaping the
-     * components in the target container and creating new rows.
-     *
-     * @param target The specified component being laid out.
-     */
     @Override
     public void layoutContainer(Container target) {
         ParentDimensions targetDims = getTargetDimensions(target);
@@ -319,29 +323,11 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
         }
     }
 
-    /**
-     * Returns the preferred dimensions for this layout given the
-     * <i>visible</i> components in the specified target container.
-     *
-     * @param target The component which needs to be laid out.
-     *
-     * @return The preferred dimensions to lay out the subcomponents of the
-     *         specified container.
-     */
     @Override
     public Dimension preferredLayoutSize(Container target) {
         return layoutSize(target, true);
     }
 
-    /**
-     * Returns the minimum dimensions needed to layout the <i>visible</i>
-     * components contained in the specified target container.
-     *
-     * @param target The component which needs to be laid out.
-     *
-     * @return The minimum dimensions to lay out the subcomponents of the
-     *         specified container.
-     */
     @Override
     public Dimension minimumLayoutSize(Container target) {
         Dimension minimum = layoutSize(target, false);
@@ -410,7 +396,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      */
     private ParentDimensions getTargetDimensions(Container target) {
         Container container = target;
-        
+
         while (container.getSize().width == 0 && container.getParent() != null) {
             container = container.getParent();
         }
@@ -613,7 +599,8 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      *
      * @return The list of rows determined.
      */
-    private List<WrapLayoutRow> getRowSet(List<Component> components, boolean preferred, int maxWidth) {
+    private List<WrapLayoutRow> getRowSet(List<Component> components, 
+            boolean preferred, int maxWidth) {
         List<WrapLayoutRow> rows = new ArrayList<>();
 
         List<Component> rowComponents = new ArrayList<>();
