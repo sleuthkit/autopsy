@@ -694,28 +694,6 @@ final public class MapPanel extends javax.swing.JPanel {
 
         /**
          *
-         * @param from the color to start with
-         * @param to the color to blend into
-         * @param amount the amount by which to blend
-         * @return a blended color
-         */
-        private Color blend(Color from, Color to, float amount) {
-            float inverse = 1.0f - amount;
-
-            float fromC[] = new float[3];
-            from.getColorComponents(fromC);
-            float toC[] = new float[3];
-            to.getColorComponents(toC);
-            float result[] = new float[3];
-            result[0] = fromC[0] * inverse + toC[0] * amount;
-            result[1] = fromC[1] * inverse + toC[1] * amount;
-            result[2] = fromC[2] * inverse + toC[2] * amount;
-
-            return new Color(result[0], result[1], result[2]);
-        }
-
-        /**
-         *
          * @param waypoint the waypoint for which to get the color
          * @param currentlySelectedWaypoint the waypoint that is currently
          * selected
@@ -725,7 +703,7 @@ final public class MapPanel extends javax.swing.JPanel {
             Color baseColor = waypoint.getColor();
             if (waypoint.equals(currentlySelectedWaypoint)) {
                 // Highlight this waypoint since it is selected
-                return blend(baseColor, Color.WHITE, 0.8f);
+                return Color.WHITE;
             } else {
                 return baseColor;
             }
