@@ -473,7 +473,8 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
          * @param height          The maximum height of the row.
          * @param width           The total width of the row.
          */
-        WrapLayoutRow(List<Component> components, List<Component> oppositeAligned, int height, int width) {
+        WrapLayoutRow(List<Component> components, List<Component> oppositeAligned, 
+                int height, int width) {
             this.components = components;
             this.oppositeAligned = oppositeAligned;
             this.height = height;
@@ -536,7 +537,8 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      *
      * @return The list of rows ordered from top to bottom.
      */
-    private List<WrapLayoutRow> getAllRows(List<Component> components, boolean preferred, int maxWidth) {
+    private List<WrapLayoutRow> getAllRows(List<Component> components, 
+            boolean preferred, int maxWidth) {
         List<Component> originalComp
                 = components
                         .stream()
