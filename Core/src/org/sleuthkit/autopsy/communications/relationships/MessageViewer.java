@@ -247,6 +247,8 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
      */
     private void showMessagesPane() {
         switchCard("messages");
+        Outline outline = rootTablePane.getOutlineView().getOutline();
+        outline.clearSelection();
     }
     
     /**

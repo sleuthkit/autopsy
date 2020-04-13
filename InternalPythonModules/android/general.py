@@ -45,19 +45,15 @@ def appendAttachmentList(msgBody, attachmentsList):
 """
 Checks if the given string might be a phone number.
 """
-def isValidPhoneNumer(data):
-    try:
-        return CommunicationsUtils.normalizePhoneNum(data) is not None
-    except TskCoreException as ex:
-        return False
+def isValidPhoneNumber(data):
+    return CommunicationsUtils.isValidPhoneNumber(data)
+   
         
 
 """
 Checks if the given string is a valid email address.
 """
 def isValidEmailAddress(data):
-    try:
-        return CommunicationsUtils.normalizeEmailAddress(data) is not None
-    except TskCoreException as ex:
-        return False
+    return CommunicationsUtils.isValidEmailAddress(data)
+
     
