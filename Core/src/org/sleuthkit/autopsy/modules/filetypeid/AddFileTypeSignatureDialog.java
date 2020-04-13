@@ -42,7 +42,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 final class AddFileTypeSignatureDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
-    private static final Dimension BUTTON_SIZE = new Dimension(65, 23);
+    private static final Dimension BUTTON_SIZE = new Dimension(85, 23);
     private final AddFileTypeSignaturePanel addFileTypeSigPanel;
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesAction.class, "RunIngestModulesAction.name");
     private Signature signature;
