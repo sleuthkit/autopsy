@@ -60,6 +60,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -125,6 +126,7 @@ import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -1979,6 +1981,8 @@ public class Case {
             openAppServiceCaseResources(progressIndicator);
             checkForCancellation();
             openCommunicationChannels(progressIndicator);
+            checkForCancellation();
+            openFileSystems();
             return null;
 
         } catch (CaseActionException ex) {
@@ -1994,6 +1998,51 @@ public class Case {
             }
             close(progressIndicator);
             throw ex;
+        }
+    }
+    
+    /**
+     * Reads a sector from each file system of each image of a case to do an eager open of the filesystems in case.
+     * @throws CaseActionCancelledException     Exception thrown if task is cancelled.
+     */
+    private void openFileSystems() throws CaseActionCancelledException {
+        String caseName = (this.caseDb != null) ? this.caseDb.getDatabaseName() : "null";
+        
+        List<Image> images = null;
+        try {
+            images = this.caseDb.getImages();
+        } catch (TskCoreException ex) {
+            logger.log(
+                Level.SEVERE, 
+                String.format("Could not obtain images while opening case: %s.", caseName),
+                ex);
+            
+            return;
+        }
+        
+        checkForCancellation();
+        byte[] tempBuff = new byte[512];
+
+        for (Image image : images) {
+            Collection<FileSystem> fileSystems = this.caseDb.getFileSystems(image);
+            checkForCancellation();
+            for (FileSystem fileSystem : fileSystems) {
+                try {
+                    fileSystem.read(tempBuff, 0, 512);    
+                }
+                catch (TskCoreException ex) {
+                    String imageStr = image.getName();
+                    String fileSysStr = fileSystem.getName();
+                    
+                    logger.log(
+                        Level.WARNING, 
+                        String.format("Could not open filesystem: %s in image: %s for case: %s.", fileSysStr, imageStr, caseName),
+                        ex);
+                }
+                
+                checkForCancellation();
+            }
+
         }
     }
 
