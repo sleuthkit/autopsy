@@ -1056,8 +1056,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         jPanel1.setPreferredSize(new java.awt.Dimension(576, 22));
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
+        foundInLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         org.openide.awt.Mnemonics.setLocalizedText(foundInLabel, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.foundInLabel.text")); // NOI18N
-        foundInLabel.setPreferredSize(new java.awt.Dimension(100, 16));
+        foundInLabel.setPreferredSize(new java.awt.Dimension(400, 16));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 0;

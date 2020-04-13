@@ -267,11 +267,12 @@
           <SubComponents>
             <Component class="javax.swing.JLabel" name="foundInLabel">
               <Properties>
+                <Property name="horizontalAlignment" type="int" value="11"/>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/contentviewer/Bundle.properties" key="DataContentViewerOtherCases.foundInLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[100, 16]"/>
+                  <Dimension value="[400, 16]"/>
                 </Property>
               </Properties>
               <Constraints>
