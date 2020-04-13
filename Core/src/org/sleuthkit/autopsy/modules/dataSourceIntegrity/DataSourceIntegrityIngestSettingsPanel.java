@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.dataSourceIntegrity;
 
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
 
 /**
  * Ingest job settings panel for the Correlation Engine module.
@@ -58,27 +59,57 @@ final class DataSourceIntegrityIngestSettingsPanel extends IngestModuleIngestJob
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
-        computeHashesCheckbox = new javax.swing.JCheckBox();
         verifyHashesCheckbox = new javax.swing.JCheckBox();
         ingestSettingsLabel = new javax.swing.JLabel();
         noteLabel = new javax.swing.JLabel();
+        computeHashesPanel = new javax.swing.JPanel();
+        computeHashesCheckbox = new javax.swing.JCheckBox();
+        computeHashesTextArea = new javax.swing.JTextArea();
 
         setPreferredSize(new java.awt.Dimension(300, 155));
 
-        org.openide.awt.Mnemonics.setLocalizedText(computeHashesCheckbox, org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.computeHashesCheckbox.text")); // NOI18N
-        computeHashesCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                computeHashesCheckboxActionPerformed(evt);
-            }
-        });
-
         org.openide.awt.Mnemonics.setLocalizedText(verifyHashesCheckbox, org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.verifyHashesCheckbox.text")); // NOI18N
+        verifyHashesCheckbox.setFocusable(false);
 
         ingestSettingsLabel.setFont(ingestSettingsLabel.getFont().deriveFont(ingestSettingsLabel.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsLabel, org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.ingestSettingsLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(noteLabel, org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.noteLabel.text")); // NOI18N
+
+        computeHashesPanel.setLayout(new java.awt.GridBagLayout());
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        computeHashesPanel.add(computeHashesCheckbox, gridBagConstraints);
+
+        computeHashesTextArea.setEditable(false);
+        computeHashesTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        computeHashesTextArea.setColumns(20);
+        computeHashesTextArea.setLineWrap(true);
+        computeHashesTextArea.setRows(2);
+        computeHashesTextArea.setText(org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.computeHashesCheckbox.text")); // NOI18N
+        computeHashesTextArea.setWrapStyleWord(true);
+        computeHashesTextArea.setBorder(null);
+        computeHashesTextArea.setFocusable(false);
+        computeHashesTextArea.setOpaque(false);
+        computeHashesTextArea.setRequestFocusEnabled(false);
+        computeHashesTextArea.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                computeHashesTextAreaMouseClicked(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(3, 0, 0, 0);
+        computeHashesPanel.add(computeHashesTextArea, gridBagConstraints);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -86,12 +117,12 @@ final class DataSourceIntegrityIngestSettingsPanel extends IngestModuleIngestJob
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(noteLabel)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(noteLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(verifyHashesCheckbox)
-                    .addComponent(computeHashesCheckbox)
-                    .addComponent(ingestSettingsLabel))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(ingestSettingsLabel)
+                    .addComponent(computeHashesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(13, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -99,21 +130,23 @@ final class DataSourceIntegrityIngestSettingsPanel extends IngestModuleIngestJob
                 .addContainerGap()
                 .addComponent(ingestSettingsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(computeHashesCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(computeHashesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(verifyHashesCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(18, 18, 18)
                 .addComponent(noteLabel)
-                .addContainerGap(53, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void computeHashesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_computeHashesCheckboxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_computeHashesCheckboxActionPerformed
+    private void computeHashesTextAreaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_computeHashesTextAreaMouseClicked
+        computeHashesCheckbox.doClick();
+    }//GEN-LAST:event_computeHashesTextAreaMouseClicked
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox computeHashesCheckbox;
+    private javax.swing.JPanel computeHashesPanel;
+    private javax.swing.JTextArea computeHashesTextArea;
     private javax.swing.JLabel ingestSettingsLabel;
     private javax.swing.JLabel noteLabel;
     private javax.swing.JCheckBox verifyHashesCheckbox;
