@@ -56,7 +56,7 @@ public final class JythonModuleLoader {
      * @return A list of objects that implement the IngestModuleFactory
      *         interface.
      */
-    public static List<IngestModuleFactory> getIngestModuleFactories() {
+    public static synchronized List<IngestModuleFactory> getIngestModuleFactories() {
         return getInterfaceImplementations(new IngestModuleFactoryDefFilter(), IngestModuleFactory.class);
     }
 
