@@ -50,7 +50,7 @@ class AddFileTypeDialog extends JDialog {
     }
 
     private static final long serialVersionUID = 1L;
-    private static final Dimension BUTTON_SIZE = new Dimension(65, 23);
+    private static final Dimension BUTTON_SIZE = new Dimension(85, 23);
     private FileType fileType;
     final private AddFileTypePanel addMimeTypePanel;
     private BUTTON_PRESSED result;
