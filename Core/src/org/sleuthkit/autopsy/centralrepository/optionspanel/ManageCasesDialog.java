@@ -176,10 +176,11 @@ final class ManageCasesDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(caseInfoLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.caseInfoLabel.text")); // NOI18N
         caseInfoLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        caseInfoLabel.setPreferredSize(new java.awt.Dimension(130, 16));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(13, 12, 0, 0);
@@ -187,6 +188,7 @@ final class ManageCasesDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(dataSourcesLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.dataSourcesLabel.text")); // NOI18N
         dataSourcesLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        dataSourcesLabel.setPreferredSize(new java.awt.Dimension(130, 16));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 8;
@@ -199,9 +201,11 @@ final class ManageCasesDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(notesLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.notesLabel.text")); // NOI18N
         notesLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        notesLabel.setPreferredSize(new java.awt.Dimension(130, 16));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 0.1;
@@ -210,6 +214,7 @@ final class ManageCasesDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(orgLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.orgLabel.text")); // NOI18N
         orgLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        orgLabel.setPreferredSize(new java.awt.Dimension(130, 16));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
@@ -221,7 +226,8 @@ final class ManageCasesDialog extends javax.swing.JDialog {
         caseInfoPanel.add(orgLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(caseNumberLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.caseNumberLabel.text")); // NOI18N
-        caseNumberLabel.setPreferredSize(new java.awt.Dimension(237, 16));
+        caseNumberLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        caseNumberLabel.setPreferredSize(new java.awt.Dimension(130, 16));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
@@ -234,6 +240,7 @@ final class ManageCasesDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(examinerEmailLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.examinerEmailLabel.text")); // NOI18N
         examinerEmailLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        examinerEmailLabel.setPreferredSize(new java.awt.Dimension(130, 16));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 4;
@@ -246,6 +253,7 @@ final class ManageCasesDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(examinerNameLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.examinerNameLabel.text")); // NOI18N
         examinerNameLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        examinerNameLabel.setPreferredSize(new java.awt.Dimension(130, 16));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
@@ -258,6 +266,7 @@ final class ManageCasesDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(examinerPhoneLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.examinerPhoneLabel.text")); // NOI18N
         examinerPhoneLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        examinerPhoneLabel.setPreferredSize(new java.awt.Dimension(130, 16));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 5;
@@ -304,9 +313,9 @@ final class ManageCasesDialog extends javax.swing.JDialog {
         caseInfoPanel.add(examinerPhoneValueLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.closeButton.text")); // NOI18N
-        closeButton.setMaximumSize(new java.awt.Dimension(125, 23));
+        closeButton.setMaximumSize(new java.awt.Dimension(140, 23));
         closeButton.setMinimumSize(new java.awt.Dimension(65, 23));
-        closeButton.setPreferredSize(new java.awt.Dimension(65, 23));
+        closeButton.setPreferredSize(new java.awt.Dimension(90, 23));
         closeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 closeButtonActionPerformed(evt);
