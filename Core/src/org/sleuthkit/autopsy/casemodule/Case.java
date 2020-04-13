@@ -1982,7 +1982,7 @@ public class Case {
             checkForCancellation();
             openCommunicationChannels(progressIndicator);
             checkForCancellation();
-            openFileSystems();
+            openFileSystems(progressIndicator);
             return null;
 
         } catch (CaseActionException ex) {
@@ -2001,13 +2001,20 @@ public class Case {
         }
     }
     
+
     /**
      * Reads a sector from each file system of each image of a case to do an eager open of the filesystems in case.
+     * @param progressIndicator                 The progress indicator for the operation.
      * @throws CaseActionCancelledException     Exception thrown if task is cancelled.
      */
-    private void openFileSystems() throws CaseActionCancelledException {
-        String caseName = (this.caseDb != null) ? this.caseDb.getDatabaseName() : "null";
+    @Messages({
+        "# {0} - case", "Case.openFileSystems.retrievingImages=Retrieving images for case: {0}...",
+        "# {0} - image", "Case.openFileSystems.openingImage=Opening all filesystems for image: {0}..."
+    })
+    private void openFileSystems(ProgressIndicator progressIndicator) throws CaseActionCancelledException {
+        String caseName = (this.caseDb != null) ? this.caseDb.getDatabaseName() : "";
         
+        progressIndicator.progress(Bundle.Case_openFileSystems_retrievingImages(caseName));
         List<Image> images = null;
         try {
             images = this.caseDb.getImages();
@@ -2024,6 +2031,10 @@ public class Case {
         byte[] tempBuff = new byte[512];
 
         for (Image image : images) {
+            String imageStr = image.getName();
+            
+            progressIndicator.progress(Bundle.Case_openFileSystems_openingImage(imageStr));
+            
             Collection<FileSystem> fileSystems = this.caseDb.getFileSystems(image);
             checkForCancellation();
             for (FileSystem fileSystem : fileSystems) {
@@ -2031,7 +2042,6 @@ public class Case {
                     fileSystem.read(tempBuff, 0, 512);    
                 }
                 catch (TskCoreException ex) {
-                    String imageStr = image.getName();
                     String fileSysStr = fileSystem.getName();
                     
                     logger.log(
