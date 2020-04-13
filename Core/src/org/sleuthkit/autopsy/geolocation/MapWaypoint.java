@@ -200,6 +200,13 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
     }
 
     /**
+     * Returns the artifact type for this waypoint's data source
+     */
+    int getArtifactTypeID() {
+        return dataModelWaypoint.getArtifact().getArtifactTypeID();
+    }
+
+    /**
      * Returns a list of JMenuItems for the waypoint. The list list may contain
      * nulls which should be removed or replaced with JSeparators.
      *

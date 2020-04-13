@@ -19,11 +19,13 @@
 package org.sleuthkit.autopsy.geolocation;
 
 import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -71,6 +73,7 @@ import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.datamodel.TskCoreException;
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
  * The map panel. This panel contains the jxmapviewer MapViewer
@@ -691,7 +694,8 @@ final public class MapPanel extends javax.swing.JPanel {
      */
     private class MapWaypointRenderer implements WaypointRenderer<MapWaypoint> {
 
-        private final Map<Color, BufferedImage> imageCache = new HashMap<>();
+        private final Map<Color, BufferedImage> dotImageCache = new HashMap<>();
+        private final Map<Color, BufferedImage> waypointImageCache = new HashMap<>();
 
         /**
          *
@@ -708,6 +712,28 @@ final public class MapPanel extends javax.swing.JPanel {
             } else {
                 return baseColor;
             }
+        }
+
+        /**
+         * Creates a dot image with the specified color
+         *
+         * @param color the color of the new image
+         * @return the new dot image
+         */
+        private BufferedImage createTrackDotImage(Color color) {
+            int w = 10;
+            int h = 10;
+
+            BufferedImage ret = new BufferedImage(w + 2, h + 2, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = ret.createGraphics();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setColor(color);
+            g.fillOval(1, 1, w, h);
+            g.setColor(Color.BLACK);
+            g.setStroke(new BasicStroke(1));
+            g.drawOval(1, 1, w, h);
+            g.dispose();
+            return ret;
         }
 
         /**
@@ -736,11 +762,20 @@ final public class MapPanel extends javax.swing.JPanel {
         @Override
         public void paintWaypoint(Graphics2D gd, JXMapViewer jxmv, MapWaypoint waypoint) {
             Color color = getColor(waypoint, currentlySelectedWaypoint);
+            BufferedImage image;
+            int artifactType = waypoint.getArtifactTypeID();
 
-            // Store computed images in cache for later use
-            BufferedImage image = imageCache.computeIfAbsent(color, k -> {
-                return createWaypointImage(color);
-            });
+            if (artifactType == ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID() ||
+                artifactType == ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID()) {
+                image = dotImageCache.computeIfAbsent(color, k -> {
+                    return createTrackDotImage(color);
+                });
+            } else {
+                // Store computed images in cache for later use
+                image = waypointImageCache.computeIfAbsent(color, k -> {
+                    return createWaypointImage(color);
+                });
+            }
 
             Point2D point = jxmv.getTileFactory().geoToPixel(waypoint.getPosition(), jxmv.getZoom());
 
