@@ -910,6 +910,10 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
         nodePanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {bnAdvancedSettings, bnEditIngestSettings, bnFileExport, browseSharedSettingsButton, downloadButton, uploadButton});
 
+        nodePanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {inputPathTextField, outputPathTextField});
+
+        nodePanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {browseInputFolderButton, browseOutputFolderButton});
+
         nodePanelLayout.setVerticalGroup(
             nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(nodePanelLayout.createSequentialGroup()
