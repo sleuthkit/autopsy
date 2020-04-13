@@ -141,6 +141,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         authenticationKeyLabel = new javax.swing.JLabel();
         instructionsScrollPane = new javax.swing.JScrollPane();
         instructionsTextArea = new javax.swing.JTextArea();
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -208,6 +209,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         add(targetLanguageComboBox, gridBagConstraints);
 
         testUntranslatedTextField.setText(DEFUALT_TEST_STRING);
+        testUntranslatedTextField.setMinimumSize(new java.awt.Dimension(160, 22));
         testUntranslatedTextField.setPreferredSize(new java.awt.Dimension(160, 22));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
@@ -282,6 +284,13 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.weighty = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(13, 12, 0, 12);
         add(instructionsScrollPane, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridheight = 5;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 0.6;
+        add(filler1, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     @Messages({"BingTranslatorSettingsPanel.warning.invalidKey=Invalid translation authentication key"})
@@ -305,6 +314,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField authenticationKeyField;
     private javax.swing.JLabel authenticationKeyLabel;
+    private javax.swing.Box.Filler filler1;
     private javax.swing.JScrollPane instructionsScrollPane;
     private javax.swing.JTextArea instructionsTextArea;
     private javax.swing.JLabel resultLabel;
