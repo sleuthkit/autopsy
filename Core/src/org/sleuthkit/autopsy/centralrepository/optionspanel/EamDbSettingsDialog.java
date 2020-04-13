@@ -41,7 +41,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
-import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
@@ -61,15 +60,17 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettin
 public class EamDbSettingsDialog extends JDialog {
 
     private static final Logger logger = Logger.getLogger(EamDbSettingsDialog.class.getName());
-    
+
     private static final long serialVersionUID = 1L;
-    
+
     /**
-     * This class handles displaying and rendering drop down menu for database choices in central repo.
+     * This class handles displaying and rendering drop down menu for database
+     * choices in central repo.
      */
     private class DbChoiceRenderer extends JLabel implements ListCellRenderer<CentralRepoDbChoice>, Serializable {
+
         private static final long serialVersionUID = 1L;
-        
+
         @Override
         public Component getListCellRendererComponent(
                 JList<? extends CentralRepoDbChoice> list, CentralRepoDbChoice value,
@@ -82,22 +83,20 @@ public class EamDbSettingsDialog extends JDialog {
             return this;
         }
     }
-    
-    
+
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
     private final CentralRepoDbManager manager = new CentralRepoDbManager();
     private final DbChoiceRenderer DB_CHOICE_RENDERER = new DbChoiceRenderer();
-    
+
     public EamDbSettingsDialog() {
         this(null);
     }
-    
+
     private boolean isDbChoiceSelectable(CentralRepoDbChoice item) {
-        return (item != CentralRepoDbChoice.POSTGRESQL_MULTIUSER || manager.isPostgresMultiuserAllowed());
+        return (item != CentralRepoDbChoice.POSTGRESQL_MULTIUSER || CentralRepoDbManager.isPostgresMultiuserAllowed());
     }
-    
-    
+
     /**
      * Creates new form EamDbSettingsDialog
      */
@@ -123,7 +122,7 @@ public class EamDbSettingsDialog extends JDialog {
                 if (pathname.isDirectory()) {
                     return true;
                 }
-                return  pathname.getName().equalsIgnoreCase(SqliteCentralRepoSettings.DEFAULT_DBNAME);
+                return pathname.getName().equalsIgnoreCase(SqliteCentralRepoSettings.DEFAULT_DBNAME);
             }
 
             @Override
@@ -131,32 +130,34 @@ public class EamDbSettingsDialog extends JDialog {
                 return "Directories and Central Repository databases";
             }
         });
-        
+
         setupDbChoice(initialMenuItem);
         valid();
         display();
     }
 
-    
     private void setupDbChoice(CentralRepoDbChoice initialMenuItem) {
         // setup initially selected item
-        CentralRepoDbChoice toSelect = (initialMenuItem == null) ?  
-            (Arrays.asList(CentralRepoDbChoice.DB_CHOICES).contains(manager.getSelectedDbChoice())) ?
-            manager.getSelectedDbChoice() :
-            CentralRepoDbChoice.DB_CHOICES[0] :
-            initialMenuItem;
-                
+        CentralRepoDbChoice toSelect = (initialMenuItem == null)
+                ? (Arrays.asList(CentralRepoDbChoice.DB_CHOICES).contains(manager.getSelectedDbChoice()))
+                ? manager.getSelectedDbChoice()
+                : CentralRepoDbChoice.DB_CHOICES[0]
+                : initialMenuItem;
+
         cbDatabaseType.setRenderer(DB_CHOICE_RENDERER);
         changeDbSelection(toSelect);
     }
-    
-    
-    
-     /**
-     * This method prompts user based on testing status (i.e. failure to connect, invalid schema, db does not exist, etc.).
-     * @param manager   The manager to use when setting up the database.
-     * @param dialog    If non-null value, validates settings and updates 'okay' button enabled state.
-     * @return          Whether or not the ultimate status after prompts is okay to continue.
+
+    /**
+     * This method prompts user based on testing status (i.e. failure to
+     * connect, invalid schema, db does not exist, etc.).
+     *
+     * @param manager The manager to use when setting up the database.
+     * @param dialog  If non-null value, validates settings and updates 'okay'
+     *                button enabled state.
+     *
+     * @return Whether or not the ultimate status after prompts is okay to
+     *         continue.
      */
     @NbBundle.Messages({"EamDbSettingsDialog.okButton.corruptDatabaseExists.title=Error Loading Central Repository Database",
         "EamDbSettingsDialog.okButton.corruptDatabaseExists.message=Central Repository Database exists but is not the right format. Manually delete it or choose a different path (if applicable).",
@@ -184,13 +185,13 @@ public class EamDbSettingsDialog extends JDialog {
         }
 
         return (manager.getStatus() == DatabaseTestResult.TESTED_OK);
-    }   
-    
-    
-     /**
-     * This method prompts the user whether or not they would like to create a database in the instance that
-     * it doesn't exist.
-     * @param manager   The manager to use when setting up the database.
+    }
+
+    /**
+     * This method prompts the user whether or not they would like to create a
+     * database in the instance that it doesn't exist.
+     *
+     * @param manager The manager to use when setting up the database.
      * @param dialog  If non-null value, validates settings and updates 'okay'
      *                button enabled state.
      *
@@ -204,26 +205,28 @@ public class EamDbSettingsDialog extends JDialog {
                 JOptionPane.YES_NO_OPTION)) {
             try {
                 manager.createDb();
-                
+
             } catch (CentralRepoException e) {
                 onPromptStatusError(manager);
                 return false;
             }
-            
+
             if (dialog != null) {
                 dialog.valid();
             }
             return true;
         }
-        
+
         return manager.testStatus() == DatabaseTestResult.TESTED_OK;
     }
 
-    
     /**
-     * When an error occurs while going through promptTestStatusWarning, this method is called.
-     * @param manager1          The manager to use as service class.
-     * @throws HeadlessException 
+     * When an error occurs while going through promptTestStatusWarning, this
+     * method is called.
+     *
+     * @param manager1 The manager to use as service class.
+     *
+     * @throws HeadlessException
      */
     private static void onPromptStatusError(CentralRepoDbManager manager1) {
         // in the event that there is a failure to connect, notify user with corresponding message
@@ -240,7 +243,6 @@ public class EamDbSettingsDialog extends JDialog {
                 Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
                 JOptionPane.WARNING_MESSAGE);
     }
-    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -296,7 +298,8 @@ public class EamDbSettingsDialog extends JDialog {
         pnSQLiteSettings.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(lbDatabasePath, org.openide.util.NbBundle.getMessage(EamDbSettingsDialog.class, "EamDbSettingsDialog.lbDatabasePath.text")); // NOI18N
-        lbDatabasePath.setPreferredSize(new java.awt.Dimension(80, 14));
+        lbDatabasePath.setMaximumSize(new java.awt.Dimension(191, 16));
+        lbDatabasePath.setPreferredSize(new java.awt.Dimension(100, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
@@ -307,7 +310,8 @@ public class EamDbSettingsDialog extends JDialog {
         pnSQLiteSettings.add(lbDatabasePath, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(lbHostName, org.openide.util.NbBundle.getMessage(EamDbSettingsDialog.class, "EamDbSettingsDialog.lbHostName.text")); // NOI18N
-        lbHostName.setPreferredSize(new java.awt.Dimension(80, 14));
+        lbHostName.setMaximumSize(new java.awt.Dimension(195, 16));
+        lbHostName.setPreferredSize(new java.awt.Dimension(110, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
@@ -322,12 +326,14 @@ public class EamDbSettingsDialog extends JDialog {
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 3;
         gridBagConstraints.gridheight = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 10, 0, 6);
         pnSQLiteSettings.add(tbDbHostname, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(lbPort, org.openide.util.NbBundle.getMessage(EamDbSettingsDialog.class, "EamDbSettingsDialog.lbPort.text")); // NOI18N
-        lbPort.setPreferredSize(new java.awt.Dimension(80, 14));
+        lbPort.setMaximumSize(new java.awt.Dimension(132, 16));
+        lbPort.setPreferredSize(new java.awt.Dimension(90, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 5;
@@ -342,12 +348,14 @@ public class EamDbSettingsDialog extends JDialog {
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 5;
         gridBagConstraints.gridheight = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 10, 0, 6);
         pnSQLiteSettings.add(tbDbPort, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(lbUserName, org.openide.util.NbBundle.getMessage(EamDbSettingsDialog.class, "EamDbSettingsDialog.lbUserName.text")); // NOI18N
-        lbUserName.setPreferredSize(new java.awt.Dimension(80, 14));
+        lbUserName.setMaximumSize(new java.awt.Dimension(172, 16));
+        lbUserName.setPreferredSize(new java.awt.Dimension(100, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 7;
@@ -362,12 +370,14 @@ public class EamDbSettingsDialog extends JDialog {
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 7;
         gridBagConstraints.gridheight = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 10, 0, 6);
         pnSQLiteSettings.add(tbDbUsername, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(lbUserPassword, org.openide.util.NbBundle.getMessage(EamDbSettingsDialog.class, "EamDbSettingsDialog.lbUserPassword.text")); // NOI18N
-        lbUserPassword.setPreferredSize(new java.awt.Dimension(80, 14));
+        lbUserPassword.setMaximumSize(new java.awt.Dimension(194, 16));
+        lbUserPassword.setPreferredSize(new java.awt.Dimension(110, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 9;
@@ -382,14 +392,15 @@ public class EamDbSettingsDialog extends JDialog {
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 9;
         gridBagConstraints.gridheight = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 10, 0, 6);
         pnSQLiteSettings.add(jpDbPassword, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseType, org.openide.util.NbBundle.getMessage(EamDbSettingsDialog.class, "EamDbSettingsDialog.lbDatabaseType.text")); // NOI18N
-        lbDatabaseType.setMaximumSize(new java.awt.Dimension(80, 14));
+        lbDatabaseType.setMaximumSize(new java.awt.Dimension(180, 14));
         lbDatabaseType.setMinimumSize(new java.awt.Dimension(80, 14));
-        lbDatabaseType.setPreferredSize(new java.awt.Dimension(80, 14));
+        lbDatabaseType.setPreferredSize(new java.awt.Dimension(100, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
@@ -400,7 +411,8 @@ public class EamDbSettingsDialog extends JDialog {
         pnSQLiteSettings.add(lbDatabaseType, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseDesc, org.openide.util.NbBundle.getMessage(EamDbSettingsDialog.class, "EamDbSettingsDialog.lbDatabaseDesc.text")); // NOI18N
-        lbDatabaseDesc.setPreferredSize(new java.awt.Dimension(80, 14));
+        lbDatabaseDesc.setMaximumSize(new java.awt.Dimension(182, 16));
+        lbDatabaseDesc.setPreferredSize(new java.awt.Dimension(100, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 11;
@@ -452,7 +464,7 @@ public class EamDbSettingsDialog extends JDialog {
             pathPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pathPanelLayout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(tfDatabasePath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tfDatabasePath, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(bnDatabasePathFileOpen)
                 .addGap(0, 0, 0))
@@ -471,6 +483,7 @@ public class EamDbSettingsDialog extends JDialog {
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 1;
         gridBagConstraints.gridheight = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 10, 0, 6);
         pnSQLiteSettings.add(pathPanel, gridBagConstraints);
@@ -492,9 +505,9 @@ public class EamDbSettingsDialog extends JDialog {
             typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(typePanelLayout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(cbDatabaseType, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(cbDatabaseType, 0, 210, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lbSingleUserSqLite, javax.swing.GroupLayout.DEFAULT_SIZE, 318, Short.MAX_VALUE)
+                .addComponent(lbSingleUserSqLite, javax.swing.GroupLayout.DEFAULT_SIZE, 303, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
         typePanelLayout.setVerticalGroup(
@@ -545,7 +558,7 @@ public class EamDbSettingsDialog extends JDialog {
                         .addComponent(bnOk)
                         .addGap(11, 11, 11)
                         .addComponent(bnCancel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(pnSQLiteSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(pnSQLiteSettings, javax.swing.GroupLayout.DEFAULT_SIZE, 648, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -575,12 +588,10 @@ public class EamDbSettingsDialog extends JDialog {
         if (manager.getSelectedDbChoice() == CentralRepoDbChoice.SQLITE) {
             updatePostgresFields(false);
             updateSqliteFields(true);
-        }
-        else if (manager.getSelectedDbChoice() == CentralRepoDbChoice.POSTGRESQL_CUSTOM) {
+        } else if (manager.getSelectedDbChoice() == CentralRepoDbChoice.POSTGRESQL_CUSTOM) {
             updatePostgresFields(true);
             updateSqliteFields(false);
-        }
-        else {
+        } else {
             updatePostgresFields(false);
             updateSqliteFields(false);
         }
@@ -615,53 +626,63 @@ public class EamDbSettingsDialog extends JDialog {
         "EamDbSettingsDialog.okButton.errorMsg.text=Please restart Autopsy to begin using the new database platform.",
         "EamDbSettingsDialog.okButton.connectionErrorMsg.text=Failed to connect to central repository database."})
     private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
-        if (testStatusAndCreate(this, manager, this))
+        if (testStatusAndCreate(this, manager, this)) {
             dispose();
+        }
     }//GEN-LAST:event_bnOkActionPerformed
 
-    
     /**
-     * This method tests status for central repo db / creation and prompts user accordingly.
-     * @param parent        The parent component (the anchor for displaying dialogs).
-     * @param manager       The central repo db manager with settings to be tested and saved.
-     * @return              Whether or not central repo db was successfully be created or found.
+     * This method tests status for central repo db / creation and prompts user
+     * accordingly.
+     *
+     * @param parent  The parent component (the anchor for displaying dialogs).
+     * @param manager The central repo db manager with settings to be tested and
+     *                saved.
+     *
+     * @return Whether or not central repo db was successfully be created or
+     *         found.
      */
     public static boolean testStatusAndCreate(Component parent, CentralRepoDbManager manager) {
         return testStatusAndCreate(parent, manager, null);
     }
-    
-    
+
     /**
-     * This method tests status for central repo db / creation and prompts user accordingly.
-     * @param parent        The parent component (the anchor for displaying dialogs).
-     * @param manager       The central repo db manager with settings to be tested and saved.
-     * @param dialog        The db settings dialog; if non-null, will validate okay button state.
-     * @return              Whether or not central repo db was successfully be created or found.
+     * This method tests status for central repo db / creation and prompts user
+     * accordingly.
+     *
+     * @param parent  The parent component (the anchor for displaying dialogs).
+     * @param manager The central repo db manager with settings to be tested and
+     *                saved.
+     * @param dialog  The db settings dialog; if non-null, will validate okay
+     *                button state.
+     *
+     * @return Whether or not central repo db was successfully be created or
+     *         found.
      */
     private static boolean testStatusAndCreate(Component parent, CentralRepoDbManager manager, EamDbSettingsDialog dialog) {
         parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         manager.testStatus();
-        
-        if (dialog != null)
+
+        if (dialog != null) {
             dialog.valid();
-        
+        }
+
         boolean testedOk = promptTestStatusWarnings(manager, dialog);
         if (!testedOk) {
             parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             return false;
         }
-        
-        try{
+
+        try {
             manager.saveNewCentralRepo();
-        }
-        catch (CentralRepoException e) {
+        } catch (CentralRepoException e) {
             SwingUtilities.invokeLater(() -> {
                 JOptionPane.showMessageDialog(parent,
-                    Bundle.EamDbSettingsDialog_okButton_errorMsg_text(),
-                    Bundle.EamDbSettingsDialog_okButton_errorTitle_text(),
-                    JOptionPane.WARNING_MESSAGE);
+                        Bundle.EamDbSettingsDialog_okButton_errorMsg_text(),
+                        Bundle.EamDbSettingsDialog_okButton_errorTitle_text(),
+                        JOptionPane.WARNING_MESSAGE);
             });
-            
+
             parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             return false;
         }
@@ -669,14 +690,13 @@ public class EamDbSettingsDialog extends JDialog {
         parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         return true;
     }
-    
-        
+
     /**
-     * This method returns if changes to the central repository configuration were
-     * successfully applied.
+     * This method returns if changes to the central repository configuration
+     * were successfully applied.
      *
-     * @return True if the database configuration was successfully changed; false
-     * if it was not.
+     * @return True if the database configuration was successfully changed;
+     *         false if it was not.
      */
     public boolean wasConfigurationChanged() {
         return manager.wasConfigurationChanged();
@@ -696,11 +716,10 @@ public class EamDbSettingsDialog extends JDialog {
         if (isDbChoiceSelectable(selectedItem)) {
             manager.setSelctedDbChoice(selectedItem);
             cbDatabaseType.setSelectedItem(selectedItem);
-        }
-        else {
+        } else {
             cbDatabaseType.setSelectedItem(manager.getSelectedDbChoice());
         }
-        
+
         customizeComponents();
     }
 
@@ -712,14 +731,14 @@ public class EamDbSettingsDialog extends JDialog {
     private void displayDatabaseSettings(CentralRepoDbChoice choice) {
         boolean isSqlite = choice == CentralRepoDbChoice.SQLITE;
         boolean isPostgres = choice == CentralRepoDbChoice.POSTGRESQL_CUSTOM;
-        
+
         lbDatabasePath.setVisible(isSqlite);
         tfDatabasePath.setVisible(isSqlite);
         lbDatabaseDesc.setVisible(isSqlite);
         dataBaseFileTextArea.setVisible(isSqlite);
         lbSingleUserSqLite.setVisible(isSqlite);
         bnDatabasePathFileOpen.setVisible(isSqlite);
-        
+
         lbHostName.setVisible(isPostgres);
         tbDbHostname.setVisible(isPostgres);
         lbPort.setVisible(isPostgres);
@@ -800,7 +819,7 @@ public class EamDbSettingsDialog extends JDialog {
      * Adds a change listener to a collection of text fields.
      *
      * @param textFields The text fields.
-     * @param listener The change listener.
+     * @param listener   The change listener.
      */
     private static void addDocumentListeners(Collection<JTextField> textFields, TextBoxChangedListener listener) {
         textFields.forEach((textField) -> {
@@ -823,8 +842,7 @@ public class EamDbSettingsDialog extends JDialog {
                     //   && !tbDbName.getText().trim().isEmpty()
                     && !tbDbUsername.getText().trim().isEmpty()
                     && 0 < jpDbPassword.getPassword().length;
-        }
-        else if (manager.getSelectedDbChoice() == CentralRepoDbChoice.SQLITE) {
+        } else if (manager.getSelectedDbChoice() == CentralRepoDbChoice.SQLITE) {
             result = !tfDatabasePath.getText().trim().isEmpty();
         }
 
@@ -840,7 +858,6 @@ public class EamDbSettingsDialog extends JDialog {
         return databaseFieldsArePopulated()
                 && databaseSettingsAreValid();
     }
-
 
     /**
      * Validates that the form is filled out correctly for our usage.
@@ -867,9 +884,7 @@ public class EamDbSettingsDialog extends JDialog {
         return true;
 
     }
-    
-    
-    
+
     /**
      * Tests whether or not the database settings are valid.
      *
@@ -878,16 +893,15 @@ public class EamDbSettingsDialog extends JDialog {
     private boolean databaseSettingsAreValid() {
         try {
             manager.testDatabaseSettingsAreValid(
-                    tbDbHostname.getText().trim(), 
-                    tbDbPort.getText().trim(), 
-                    tbDbUsername.getText().trim(), 
-                    tfDatabasePath.getText().trim(), 
+                    tbDbHostname.getText().trim(),
+                    tbDbPort.getText().trim(),
+                    tbDbUsername.getText().trim(),
+                    tfDatabasePath.getText().trim(),
                     new String(jpDbPassword.getPassword()));
-        }
-        catch (CentralRepoException | NumberFormatException | IllegalStateException e) {
+        } catch (CentralRepoException | NumberFormatException | IllegalStateException e) {
             return false;
         }
-        
+
         return true;
     }
 
