@@ -215,7 +215,8 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         add(credentialsLabel, gridBagConstraints);
 
         credentialsPathField.setEditable(false);
-        credentialsPathField.setPreferredSize(new java.awt.Dimension(700, 22));
+        credentialsPathField.setMaximumSize(new java.awt.Dimension(700, 22));
+        credentialsPathField.setPreferredSize(new java.awt.Dimension(100, 22));
         credentialsPathField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 credentialsPathFieldActionPerformed(evt);
@@ -227,7 +228,6 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.gridwidth = 6;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(14, 7, 0, 0);
         add(credentialsPathField, gridBagConstraints);
 
@@ -345,6 +345,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         instructionsTextArea.setRows(4);
         instructionsTextArea.setText(org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.instructionsTextArea.text")); // NOI18N
         instructionsTextArea.setWrapStyleWord(true);
+        instructionsTextArea.setCaretPosition(0);
         instructionsTextArea.setMaximumSize(new java.awt.Dimension(1000, 200));
         instructionsTextArea.setPreferredSize(new java.awt.Dimension(164, 78));
         instructionsScrollPane.setViewportView(instructionsTextArea);

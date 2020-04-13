@@ -147,13 +147,13 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
 
         authenticationKeyField.setToolTipText(org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.authenticationKeyField.toolTipText")); // NOI18N
         authenticationKeyField.setMaximumSize(new java.awt.Dimension(800, 22));
+        authenticationKeyField.setPreferredSize(new java.awt.Dimension(163, 22));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 1;
         gridBagConstraints.gridwidth = 7;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(14, 5, 0, 12);
         add(authenticationKeyField, gridBagConstraints);
 
@@ -270,6 +270,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         instructionsTextArea.setRows(4);
         instructionsTextArea.setText(org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.instructionsTextArea.text")); // NOI18N
         instructionsTextArea.setWrapStyleWord(true);
+        instructionsTextArea.setCaretPosition(0);
         instructionsTextArea.setMaximumSize(new java.awt.Dimension(1000, 200));
         instructionsTextArea.setPreferredSize(new java.awt.Dimension(164, 78));
         instructionsScrollPane.setViewportView(instructionsTextArea);
@@ -282,7 +283,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(13, 12, 0, 12);
+        gridBagConstraints.insets = new java.awt.Insets(13, 12, 0, 0);
         add(instructionsScrollPane, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 10;
