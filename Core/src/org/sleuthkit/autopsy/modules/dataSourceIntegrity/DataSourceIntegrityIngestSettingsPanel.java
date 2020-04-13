@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.dataSourceIntegrity;
 
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
-import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
 
 /**
  * Ingest job settings panel for the Correlation Engine module.
@@ -31,7 +30,7 @@ final class DataSourceIntegrityIngestSettingsPanel extends IngestModuleIngestJob
     /**
      * Creates new form DataSourceIntegrityIngestSettingsPanel
      */
-    public DataSourceIntegrityIngestSettingsPanel(DataSourceIntegrityIngestSettings settings) {
+    DataSourceIntegrityIngestSettingsPanel(DataSourceIntegrityIngestSettings settings) {
         initComponents();
         customizeComponents(settings);
     }

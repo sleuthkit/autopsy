@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -186,11 +186,11 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
-        credentialsLabel = new javax.swing.JLabel();
+        javax.swing.JLabel credentialsLabel = new javax.swing.JLabel();
         credentialsPathField = new javax.swing.JTextField();
         browseButton = new javax.swing.JButton();
         targetLanguageComboBox = new javax.swing.JComboBox<>();
-        targetLanguageLabel = new javax.swing.JLabel();
+        javax.swing.JLabel targetLanguageLabel = new javax.swing.JLabel();
         warningLabel = new javax.swing.JLabel();
         testResultValueLabel = new javax.swing.JLabel();
         resultLabel = new javax.swing.JLabel();
@@ -199,7 +199,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         testButton = new javax.swing.JButton();
         instructionsScrollPane = new javax.swing.JScrollPane();
         instructionsTextArea = new javax.swing.JTextArea();
-        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -217,11 +217,6 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         credentialsPathField.setEditable(false);
         credentialsPathField.setMaximumSize(new java.awt.Dimension(700, 22));
         credentialsPathField.setPreferredSize(new java.awt.Dimension(100, 22));
-        credentialsPathField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                credentialsPathFieldActionPerformed(evt);
-            }
-        });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 1;
@@ -406,20 +401,13 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_testButtonActionPerformed
 
-    private void credentialsPathFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_credentialsPathFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_credentialsPathFieldActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
-    private javax.swing.JLabel credentialsLabel;
     private javax.swing.JTextField credentialsPathField;
-    private javax.swing.Box.Filler filler1;
     private javax.swing.JScrollPane instructionsScrollPane;
     private javax.swing.JTextArea instructionsTextArea;
     private javax.swing.JLabel resultLabel;
     private javax.swing.JComboBox<org.sleuthkit.autopsy.texttranslation.translators.LanguageWrapper> targetLanguageComboBox;
-    private javax.swing.JLabel targetLanguageLabel;
     private javax.swing.JButton testButton;
     private javax.swing.JLabel testResultValueLabel;
     private javax.swing.JTextField testUntranslatedTextField;
@@ -428,26 +416,28 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Get the currently selected target language code
+     * Get the currently selected target language code.
      *
-     * @return the target language code of the language selected in the combobox
+     * @return The target language code of the language selected in the combo
+     *         box.
      */
     String getTargetLanguageCode() {
         return targetLanguageCode;
     }
 
     /**
-     * Get the currently set path to the JSON credentials file
+     * Get the currently set path to the JSON credentials file.
      *
-     * @return the path to the credentials file specified in the textarea
+     * @return The path to the credentials file specified in the credentials
+     *         field.
      */
     String getCredentialsPath() {
         return credentialsPathField.getText();
     }
 
     /**
-     * Listener to identfy when a combo box item has been selected and update
-     * the combo box to reflect that
+     * Listener to identify when a combo box item has been selected and update
+     * the combo box to reflect that selection.
      */
     private class ComboBoxSelectionListener implements ItemListener {
 

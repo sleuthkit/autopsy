@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -122,7 +122,7 @@ final class ManageCasesDialog extends javax.swing.JDialog {
         examinerEmailValueLabel = new javax.swing.JLabel();
         examinerPhoneValueLabel = new javax.swing.JLabel();
         closeButton = new javax.swing.JButton();
-        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
         casesPanel = new javax.swing.JPanel();
         casesScrollPane = new javax.swing.JScrollPane();
         casesTable = new javax.swing.JTable();
@@ -412,7 +412,6 @@ final class ManageCasesDialog extends javax.swing.JDialog {
     private javax.swing.JLabel examinerNameValueLabel;
     private javax.swing.JLabel examinerPhoneLabel;
     private javax.swing.JLabel examinerPhoneValueLabel;
-    private javax.swing.Box.Filler filler1;
     private javax.swing.JLabel notesLabel;
     private javax.swing.JScrollPane notesScrollPane;
     private javax.swing.JTextArea notesTextArea;

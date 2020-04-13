@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -141,7 +141,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         authenticationKeyLabel = new javax.swing.JLabel();
         instructionsScrollPane = new javax.swing.JScrollPane();
         instructionsTextArea = new javax.swing.JTextArea();
-        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -315,7 +315,6 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField authenticationKeyField;
     private javax.swing.JLabel authenticationKeyLabel;
-    private javax.swing.Box.Filler filler1;
     private javax.swing.JScrollPane instructionsScrollPane;
     private javax.swing.JTextArea instructionsTextArea;
     private javax.swing.JLabel resultLabel;
