@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 import com.google.common.annotations.Beta;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -1982,7 +1983,7 @@ public class Case {
             checkForCancellation();
             openCommunicationChannels(progressIndicator);
             checkForCancellation();
-            openFileSystems(progressIndicator);
+            openFileSystemsInBackground();
             return null;
 
         } catch (CaseActionException ex) {
@@ -2001,59 +2002,109 @@ public class Case {
         }
     }
     
-
+    private static Future<?> backgroundOpenFileSystemsFuture = null;
+    private static final ExecutorService startIngestJobsExecutor = 
+        Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("Case-open-file-systems-%d").build());
+    
     /**
-     * Reads a sector from each file system of each image of a case to do an eager open of the filesystems in case.
-     * @param progressIndicator                 The progress indicator for the operation.
+     * Starts a background task that reads a sector from each file system of each image of a case to do an eager open of 
+     * the filesystems in case.  If this method is called before another background file system read has finished the earlier
+     * one will be cancelled.
+     * 
      * @throws CaseActionCancelledException     Exception thrown if task is cancelled.
      */
     @Messages({
         "# {0} - case", "Case.openFileSystems.retrievingImages=Retrieving images for case: {0}...",
         "# {0} - image", "Case.openFileSystems.openingImage=Opening all filesystems for image: {0}..."
     })
-    private void openFileSystems(ProgressIndicator progressIndicator) throws CaseActionCancelledException {
-        String caseName = (this.caseDb != null) ? this.caseDb.getDatabaseName() : "";
+    private void openFileSystemsInBackground() throws CaseActionCancelledException {
+        if (backgroundOpenFileSystemsFuture != null && !backgroundOpenFileSystemsFuture.isDone())
+            backgroundOpenFileSystemsFuture.cancel(true);
         
-        progressIndicator.progress(Bundle.Case_openFileSystems_retrievingImages(caseName));
-        List<Image> images = null;
-        try {
-            images = this.caseDb.getImages();
-        } catch (TskCoreException ex) {
-            logger.log(
-                Level.SEVERE, 
-                String.format("Could not obtain images while opening case: %s.", caseName),
-                ex);
-            
-            return;
+        BackgroundOpenFileSystemsTask backgroundTask = new BackgroundOpenFileSystemsTask(this.caseDb, new LoggingProgressIndicator());
+        backgroundOpenFileSystemsFuture = startIngestJobsExecutor.submit(backgroundTask);
+    }
+    
+    
+    
+    /**
+     * This task opens all the filesystems of all images in the case in the background.
+     * It also responds to cancellation events.
+     */
+    private static class BackgroundOpenFileSystemsTask implements Runnable {
+        private final SleuthkitCase tskCase;
+        private final String caseName;
+        private final ProgressIndicator progressIndicator;
+
+        
+        BackgroundOpenFileSystemsTask(SleuthkitCase tskCase, ProgressIndicator progressIndicator) {
+            this.tskCase = tskCase;
+            this.progressIndicator = progressIndicator;
+            caseName = (this.tskCase != null) ? this.tskCase.getDatabaseName() : "";
         }
         
-        checkForCancellation();
-        byte[] tempBuff = new byte[512];
+        private List<Image> getImages() {
+            progressIndicator.progress(Bundle.Case_openFileSystems_retrievingImages(caseName));
+            List<Image> images = null;
+            try {
+                images = this.tskCase.getImages();
+            } catch (TskCoreException ex) {
+                logger.log(
+                    Level.SEVERE, 
+                    String.format("Could not obtain images while opening case: %s.", caseName),
+                    ex);
 
-        for (Image image : images) {
-            String imageStr = image.getName();
-            
-            progressIndicator.progress(Bundle.Case_openFileSystems_openingImage(imageStr));
-            
-            Collection<FileSystem> fileSystems = this.caseDb.getFileSystems(image);
-            checkForCancellation();
-            for (FileSystem fileSystem : fileSystems) {
-                try {
-                    fileSystem.read(tempBuff, 0, 512);    
-                }
-                catch (TskCoreException ex) {
-                    String fileSysStr = fileSystem.getName();
-                    
-                    logger.log(
-                        Level.WARNING, 
-                        String.format("Could not open filesystem: %s in image: %s for case: %s.", fileSysStr, imageStr, caseName),
-                        ex);
-                }
-                
-                checkForCancellation();
+                return null;
             }
-
+            return images;
         }
+        
+        private void openFileSystems(List<Image> images) throws CaseActionCancelledException {
+            byte[] tempBuff = new byte[512];
+            
+            for (Image image : images) {
+                String imageStr = image.getName();
+
+                progressIndicator.progress(Bundle.Case_openFileSystems_openingImage(imageStr));
+
+                Collection<FileSystem> fileSystems = this.tskCase.getFileSystems(image);
+                checkForCancellation();
+                for (FileSystem fileSystem : fileSystems) {
+                    try {
+                        fileSystem.read(tempBuff, 0, 512);    
+                    }
+                    catch (TskCoreException ex) {
+                        String fileSysStr = fileSystem.getName();
+
+                        logger.log(
+                            Level.WARNING, 
+                            String.format("Could not open filesystem: %s in image: %s for case: %s.", fileSysStr, imageStr, caseName),
+                            ex);
+                    }
+
+                    checkForCancellation();
+                }
+
+            }
+        }
+        
+        @Override
+        public void run() {
+            try {
+                checkForCancellation();
+                List<Image> images = getImages();
+                if (images == null)
+                    return;
+
+                checkForCancellation();
+                openFileSystems(images);
+            }
+            catch (CaseActionCancelledException ex) {
+                // EMPTY
+                // No action needs to be taken when this task is cancelled.
+            }
+        }
+        
     }
 
     /**
