@@ -159,6 +159,9 @@ public class Case {
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static final Object caseActionSerializationLock = new Object();
+    private static Future<?> backgroundOpenFileSystemsFuture = null;
+    private static final ExecutorService startIngestJobsExecutor
+            = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("Case-open-file-systems-%d").build());
     private static volatile Frame mainFrame;
     private static volatile Case currentCase;
     private final CaseMetadata metadata;
@@ -2001,48 +2004,71 @@ public class Case {
             throw ex;
         }
     }
-    
-    private static Future<?> backgroundOpenFileSystemsFuture = null;
-    private static final ExecutorService startIngestJobsExecutor = 
-        Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("Case-open-file-systems-%d").build());
-    
+
     /**
-     * Starts a background task that reads a sector from each file system of each image of a case to do an eager open of 
-     * the filesystems in case.  If this method is called before another background file system read has finished the earlier
-     * one will be cancelled.
-     * 
-     * @throws CaseActionCancelledException     Exception thrown if task is cancelled.
+     * Starts a background task that reads a sector from each file system of
+     * each image of a case to do an eager open of the filesystems in case. If
+     * this method is called before another background file system read has
+     * finished the earlier one will be cancelled.
+     *
+     * @throws CaseActionCancelledException Exception thrown if task is
+     *                                      cancelled.
      */
     @Messages({
         "# {0} - case", "Case.openFileSystems.retrievingImages=Retrieving images for case: {0}...",
         "# {0} - image", "Case.openFileSystems.openingImage=Opening all filesystems for image: {0}..."
     })
     private void openFileSystemsInBackground() throws CaseActionCancelledException {
-        if (backgroundOpenFileSystemsFuture != null && !backgroundOpenFileSystemsFuture.isDone())
+        if (backgroundOpenFileSystemsFuture != null && !backgroundOpenFileSystemsFuture.isDone()) {
             backgroundOpenFileSystemsFuture.cancel(true);
-        
+        }
+
         BackgroundOpenFileSystemsTask backgroundTask = new BackgroundOpenFileSystemsTask(this.caseDb, new LoggingProgressIndicator());
         backgroundOpenFileSystemsFuture = startIngestJobsExecutor.submit(backgroundTask);
     }
-    
-    
-    
+
     /**
-     * This task opens all the filesystems of all images in the case in the background.
-     * It also responds to cancellation events.
+     * This task opens all the filesystems of all images in the case in the
+     * background. It also responds to cancellation events.
      */
     private static class BackgroundOpenFileSystemsTask implements Runnable {
+
         private final SleuthkitCase tskCase;
         private final String caseName;
         private final ProgressIndicator progressIndicator;
 
-        
+        /**
+         * Main constructor for the BackgroundOpenFileSystemsTask.
+         *
+         * @param tskCase           The case database to query for filesystems
+         *                          to open.
+         * @param progressIndicator The progress indicator for file systems
+         *                          opened.
+         */
         BackgroundOpenFileSystemsTask(SleuthkitCase tskCase, ProgressIndicator progressIndicator) {
             this.tskCase = tskCase;
             this.progressIndicator = progressIndicator;
             caseName = (this.tskCase != null) ? this.tskCase.getDatabaseName() : "";
         }
-        
+
+        /**
+         * Checks if thread has been cancelled and throws an
+         * InterruptedException if it has.
+         *
+         * @throws InterruptedException The exception thrown if the operation
+         *                              has been cancelled.
+         */
+        private void checkIfCancelled() throws InterruptedException {
+            if (Thread.interrupted()) {
+                throw new InterruptedException();
+            }
+        }
+
+        /**
+         * Retrieves all images present in the sleuthkit case.
+         *
+         * @return All images present in the sleuthkit case.
+         */
         private List<Image> getImages() {
             progressIndicator.progress(Bundle.Case_openFileSystems_retrievingImages(caseName));
             List<Image> images = null;
@@ -2050,61 +2076,70 @@ public class Case {
                 images = this.tskCase.getImages();
             } catch (TskCoreException ex) {
                 logger.log(
-                    Level.SEVERE, 
-                    String.format("Could not obtain images while opening case: %s.", caseName),
-                    ex);
+                        Level.SEVERE,
+                        String.format("Could not obtain images while opening case: %s.", caseName),
+                        ex);
 
                 return null;
             }
             return images;
         }
-        
-        private void openFileSystems(List<Image> images) throws CaseActionCancelledException {
+
+        /**
+         * Opens all file systems in the list of images provided.
+         *
+         * @param images The images whose file systems will be opened.
+         *
+         * @throws CaseActionCancelledException The exception thrown in the
+         *                                      event that the operation is
+         *                                      cancelled prior to completion.
+         */
+        private void openFileSystems(List<Image> images) throws InterruptedException {
             byte[] tempBuff = new byte[512];
-            
+
             for (Image image : images) {
                 String imageStr = image.getName();
 
                 progressIndicator.progress(Bundle.Case_openFileSystems_openingImage(imageStr));
 
                 Collection<FileSystem> fileSystems = this.tskCase.getFileSystems(image);
-                checkForCancellation();
+                checkIfCancelled();
                 for (FileSystem fileSystem : fileSystems) {
                     try {
-                        fileSystem.read(tempBuff, 0, 512);    
-                    }
-                    catch (TskCoreException ex) {
+                        fileSystem.read(tempBuff, 0, 512);
+                    } catch (TskCoreException ex) {
                         String fileSysStr = fileSystem.getName();
 
                         logger.log(
-                            Level.WARNING, 
-                            String.format("Could not open filesystem: %s in image: %s for case: %s.", fileSysStr, imageStr, caseName),
-                            ex);
+                                Level.WARNING,
+                                String.format("Could not open filesystem: %s in image: %s for case: %s.", fileSysStr, imageStr, caseName),
+                                ex);
                     }
 
-                    checkForCancellation();
+                    checkIfCancelled();
                 }
 
             }
         }
-        
+
         @Override
         public void run() {
             try {
-                checkForCancellation();
+                checkIfCancelled();
                 List<Image> images = getImages();
-                if (images == null)
+                if (images == null) {
                     return;
+                }
 
-                checkForCancellation();
+                checkIfCancelled();
                 openFileSystems(images);
-            }
-            catch (CaseActionCancelledException ex) {
-                // EMPTY
-                // No action needs to be taken when this task is cancelled.
+            } catch (InterruptedException ex) {
+                logger.log(
+                        Level.INFO,
+                        String.format("Background operation opening all file systems in %s has been cancelled.", caseName));
             }
         }
-        
+
     }
 
     /**
