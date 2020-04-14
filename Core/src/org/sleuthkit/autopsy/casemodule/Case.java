@@ -2071,9 +2071,8 @@ public class Case {
          */
         private List<Image> getImages() {
             progressIndicator.progress(Bundle.Case_openFileSystems_retrievingImages(caseName));
-            List<Image> images = null;
             try {
-                images = this.tskCase.getImages();
+                return this.tskCase.getImages();
             } catch (TskCoreException ex) {
                 logger.log(
                         Level.SEVERE,
@@ -2082,7 +2081,6 @@ public class Case {
 
                 return null;
             }
-            return images;
         }
 
         /**
