@@ -396,7 +396,7 @@ public class Installer extends ModuleInstall {
     
     
     /**
-     * Runs an initial load of the Jython modules to speed ub subsequent loads.
+     * Runs an initial load of the Jython modules to speed up subsequent loads.
      */
     private void preloadJython() {
         Runnable loader = () -> {
@@ -404,7 +404,7 @@ public class Installer extends ModuleInstall {
                 JythonModuleLoader.getIngestModuleFactories();
             }
             catch (Exception ex) {
-                logger.log(Level.SEVERE, "There was an error while pre-loading jython submodules.", ex);
+                logger.log(Level.SEVERE, "There was an error while doing an initial load of python plugins.", ex);
             }
             
         };
