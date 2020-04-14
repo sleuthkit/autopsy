@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +35,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 
 /**
  * The action associated with the Delete button of the Case Properties panel. It
@@ -54,7 +55,7 @@ final class CaseDeleteAction extends CallableSystemAction {
             /*
              * A value of 'null' signifies that there is no case open.
              */
-            setEnabled(null != evt.getNewValue());
+            setEnabled(null != evt.getNewValue() && FeatureAccessUtils.canDeleteCurrentCase());
         });
     }
 

@@ -123,15 +123,15 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             assertTrue("Failed to created central repo directory " + dbSettingsSqlite.getDbDirectory(), dbSettingsSqlite.dbDirectoryExists());
 
-            boolean result = dbSettingsSqlite.initializeDatabaseSchema()
-                    && dbSettingsSqlite.insertDefaultDatabaseContent();
+            RdbmsCentralRepoFactory factory = new RdbmsCentralRepoFactory(CentralRepoPlatforms.SQLITE, dbSettingsSqlite);
+            boolean result = factory.initializeDatabaseSchema()
+                    && factory.insertDefaultDatabaseContent();
 
             assertTrue("Failed to initialize central repo database", result);
 
             dbSettingsSqlite.saveSettings();
             CentralRepoDbUtil.setUseCentralRepo(true);
-            CentralRepoPlatforms.setSelectedPlatform(CentralRepoPlatforms.SQLITE.name());
-            CentralRepoPlatforms.saveSelectedPlatform();
+            CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.SQLITE);
         } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());

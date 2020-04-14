@@ -42,7 +42,7 @@ public interface CentralRepository {
 
         CentralRepoPlatforms selectedPlatform = CentralRepoPlatforms.DISABLED;
         if (CentralRepoDbUtil.allowUseOfCentralRepository()) {
-            selectedPlatform = CentralRepoPlatforms.getSelectedPlatform();
+            selectedPlatform = CentralRepoDbManager.getSavedDbChoice().getDbPlatform();
         }
         switch (selectedPlatform) {
             case POSTGRESQL:
@@ -93,7 +93,7 @@ public interface CentralRepository {
      */
     static boolean isEnabled() {
         return CentralRepoDbUtil.allowUseOfCentralRepository()
-                && CentralRepoPlatforms.getSelectedPlatform() != CentralRepoPlatforms.DISABLED;
+                && CentralRepoDbManager.getSavedDbChoice() != CentralRepoDbChoice.DISABLED;
     }
 
     /**
@@ -804,15 +804,6 @@ public interface CentralRepository {
      * @throws CentralRepoException
      */
     public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws CentralRepoException;     
-    
-    
-   /**
-    * Returns list of all correlation types. 
-    * 
-    * @return  list of Correlation types
-    * @throws CentralRepoException 
-    */
-    List<CorrelationAttributeInstance.Type> getCorrelationTypes() throws CentralRepoException;
     
     
     /**

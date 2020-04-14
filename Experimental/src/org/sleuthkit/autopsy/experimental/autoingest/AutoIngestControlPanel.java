@@ -1313,13 +1313,13 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             }
         });
 
-        lbPending.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        lbPending.setFont(lbPending.getFont().deriveFont(lbPending.getFont().getSize()+3f));
         org.openide.awt.Mnemonics.setLocalizedText(lbPending, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.lbPending.text")); // NOI18N
 
-        lbRunning.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        lbRunning.setFont(lbRunning.getFont().deriveFont(lbRunning.getFont().getSize()+3f));
         org.openide.awt.Mnemonics.setLocalizedText(lbRunning, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.lbRunning.text")); // NOI18N
 
-        lbCompleted.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        lbCompleted.setFont(lbCompleted.getFont().deriveFont(lbCompleted.getFont().getSize()+3f));
         org.openide.awt.Mnemonics.setLocalizedText(lbCompleted, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.lbCompleted.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(bnRefresh, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnRefresh.text")); // NOI18N
@@ -1412,11 +1412,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         });
 
         tbStatusMessage.setEditable(false);
-        tbStatusMessage.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        tbStatusMessage.setFont(tbStatusMessage.getFont().deriveFont(tbStatusMessage.getFont().getStyle() | java.awt.Font.BOLD, tbStatusMessage.getFont().getSize()+1));
         tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbStatusMessage.text")); // NOI18N
         tbStatusMessage.setBorder(null);
 
-        lbStatus.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        lbStatus.setFont(lbStatus.getFont().deriveFont(lbStatus.getFont().getSize()+3f));
         org.openide.awt.Mnemonics.setLocalizedText(lbStatus, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.lbStatus.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(bnPrioritizeJob, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPrioritizeJob.text")); // NOI18N
@@ -1431,11 +1431,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             }
         });
 
-        lbServicesStatus.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        lbServicesStatus.setFont(lbServicesStatus.getFont().deriveFont(lbServicesStatus.getFont().getSize()+3f));
         org.openide.awt.Mnemonics.setLocalizedText(lbServicesStatus, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.lbServicesStatus.text")); // NOI18N
 
         tbServicesStatusMessage.setEditable(false);
-        tbServicesStatusMessage.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        tbServicesStatusMessage.setFont(tbServicesStatusMessage.getFont().deriveFont(tbServicesStatusMessage.getFont().getStyle() | java.awt.Font.BOLD, tbServicesStatusMessage.getFont().getSize()+1));
         tbServicesStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.text")); // NOI18N
         tbServicesStatusMessage.setBorder(null);
 

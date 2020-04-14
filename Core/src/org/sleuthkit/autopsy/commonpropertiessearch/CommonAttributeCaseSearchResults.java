@@ -123,7 +123,7 @@ final public class CommonAttributeCaseSearchResults {
             if (currentCaseDataSourceMap == null) { //there are no results
                 return filteredCaseNameToDataSourcesTree;
             }
-            CorrelationAttributeInstance.Type attributeType = CentralRepository.getInstance().getCorrelationTypes()
+            CorrelationAttributeInstance.Type attributeType = CentralRepository.getInstance().getDefinedCorrelationTypes()
                     .stream()
                     .filter(filterType -> filterType.getId() == resultTypeId)
                     .findFirst().get();

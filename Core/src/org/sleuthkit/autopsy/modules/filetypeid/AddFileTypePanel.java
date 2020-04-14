@@ -247,7 +247,6 @@ class AddFileTypePanel extends javax.swing.JPanel {
             }
         });
 
-        mimeTypeLabel.setFont(mimeTypeLabel.getFont().deriveFont(mimeTypeLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(mimeTypeLabel, org.openide.util.NbBundle.getMessage(AddFileTypePanel.class, "AddFileTypePanel.mimeTypeLabel.text")); // NOI18N
 
         signatureList.setModel(new javax.swing.AbstractListModel<FileType.Signature>() {
@@ -257,7 +256,6 @@ class AddFileTypePanel extends javax.swing.JPanel {
         });
         jScrollPane1.setViewportView(signatureList);
 
-        mimeTypeTextField.setFont(mimeTypeTextField.getFont().deriveFont(mimeTypeTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         mimeTypeTextField.setText(org.openide.util.NbBundle.getMessage(AddFileTypePanel.class, "AddFileTypePanel.mimeTypeTextField.text")); // NOI18N
 
         addSigButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N

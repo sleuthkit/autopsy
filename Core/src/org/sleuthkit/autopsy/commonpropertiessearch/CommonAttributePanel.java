@@ -255,7 +255,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         filterByDocuments = interCasePanel.documentsCheckboxIsSelected();
                     }
                     if (corType == null) {
-                        corType = CentralRepository.getInstance().getCorrelationTypes().get(0);
+                        corType = CentralRepository.getInstance().getDefinedCorrelationTypes().get(0);
                     }
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
                         builder = new AllInterCaseCommonAttributeSearcher(filterByMedia, filterByDocuments, corType, percentageThreshold);
@@ -366,7 +366,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         filterByDocuments = interCasePanel.documentsCheckboxIsSelected();
                     }
                     if (corType == null) {
-                        corType = CentralRepository.getInstance().getCorrelationTypes().get(0);
+                        corType = CentralRepository.getInstance().getDefinedCorrelationTypes().get(0);
                     }
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
                         builder = new AllInterCaseCommonAttributeSearcher(filterByMedia, filterByDocuments, corType, percentageThreshold);

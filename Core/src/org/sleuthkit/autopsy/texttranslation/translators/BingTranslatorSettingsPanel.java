@@ -55,16 +55,19 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         authenticationKeyField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
+                testResultValueLabel.setText("");
                 firePropertyChange("SettingChanged", true, false);
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
+                testResultValueLabel.setText("");
                 firePropertyChange("SettingChanged", true, false);
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
+                testResultValueLabel.setText("");
                 firePropertyChange("SettingChanged", true, false);
             }
 
@@ -175,7 +178,6 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         instructionsTextArea.setEditable(false);
         instructionsTextArea.setBackground(new java.awt.Color(240, 240, 240));
         instructionsTextArea.setColumns(20);
-        instructionsTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         instructionsTextArea.setLineWrap(true);
         instructionsTextArea.setRows(2);
         instructionsTextArea.setText(org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.instructionsTextArea.text")); // NOI18N
@@ -256,6 +258,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         String selectedCode = ((LanguageWrapper) targetLanguageComboBox.getSelectedItem()).getLanguageCode();
         if (!StringUtils.isBlank(selectedCode) && !selectedCode.equals(targetLanguageCode)) {
             targetLanguageCode = selectedCode;
+            testResultValueLabel.setText("");
             firePropertyChange("SettingChanged", true, false);
         }
     }//GEN-LAST:event_targetLanguageComboBoxSelected

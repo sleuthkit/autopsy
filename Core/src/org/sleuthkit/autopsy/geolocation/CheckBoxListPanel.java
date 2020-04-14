@@ -52,8 +52,8 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      * @param displayName display name for the checkbox
      * @param obj         Object that the checkbox represents
      */
-    void addElement(String displayName, T obj) {
-        ObjectCheckBox<T> newCheckBox = new ObjectCheckBox<>(displayName, true, obj);
+    void addElement(String displayName, Icon icon, T obj) {
+        ObjectCheckBox<T> newCheckBox = new ObjectCheckBox<>(displayName, icon, true, obj);
         
         if(!model.contains(newCheckBox)) {
             model.addElement(newCheckBox);
@@ -220,17 +220,20 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
 
         private final T object;
         private final String displayName;
+        private final Icon icon;
         private boolean checked;
 
         /**
          * Constructs a new ObjectCheckBox
          * 
          * @param displayName String to show as the check box label
+         * @param icon Icon to show before the check box (may be null)
          * @param initialState Sets the initial state of the check box
          * @param object Object that the check box represents.
          */
-        ObjectCheckBox(String displayName, boolean initialState, T object) {
+        ObjectCheckBox(String displayName, Icon icon, boolean initialState, T object) {
             this.displayName = displayName;
+            this.icon = icon;
             this.object = object;
             this.checked = initialState;
         }
@@ -254,6 +257,16 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
             return displayName;
         }
         
+        @Override
+        public boolean hasIcon() {
+            return icon != null;
+        }
+
+        @Override
+        public Icon getIcon() {
+            return icon;
+        }
+
         @Override
         public boolean equals(Object obj) {
             if(obj instanceof ObjectCheckBox) {

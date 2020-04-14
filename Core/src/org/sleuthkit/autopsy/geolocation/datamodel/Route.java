@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,9 +25,9 @@ import java.util.Map;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoWaypointsUtil;
-import org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoWaypointsUtil.GeoWaypointList.GeoWaypoint;
-import org.sleuthkit.datamodel.blackboardutils.attributes.TskGeoWaypointsUtil.GeoWaypointList;
+import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
+import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil.InvalidJsonException;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints;
 
 /**
  * A Route represents a TSK_GPS_ROUTE artifact which has a start and end point
@@ -42,8 +42,6 @@ public class Route extends GeoPath {
     // This list is not expected to change after construction so the 
     // constructor will take care of creating an unmodifiable List
     private final List<Waypoint.Property> propertiesList;
-    
-    private static final TskGeoWaypointsUtil attributeUtil = new TskGeoWaypointsUtil();
 
     /**
      * Construct a route for the given artifact.
@@ -119,9 +117,13 @@ public class Route extends GeoPath {
         }
 
         if (attribute != null) {
-           GeoWaypointList waypoints = attributeUtil.fromAttribute(attribute);
-
-            for(GeoWaypoint waypoint: waypoints) {
+            GeoWaypoints waypoints;
+            try {
+                waypoints = BlackboardJsonAttrUtil.fromAttribute(attribute, GeoWaypoints.class);
+            } catch (InvalidJsonException ex) {
+                throw new GeoLocationDataException(String.format("Unable to parse waypoints in TSK_GEO_WAYPOINTS attribute (artifact object ID =%d)", artifact.getId()), ex);
+            }
+            for (GeoWaypoints.Waypoint waypoint : waypoints) {
                 addToPath(new Waypoint(artifact, label, null, waypoint.getLatitude(), waypoint.getLongitude(), waypoint.getAltitude(), null, attributeMap, this));
             }
         } else {

@@ -172,14 +172,22 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
         try:
             contacts_parser = WhatsAppContactsParser(contacts_db, self._PARSER_NAME)
             while contacts_parser.next():
-                helper.addContact( 
-                    contacts_parser.get_contact_name(), 
-                    contacts_parser.get_phone(),
-                    contacts_parser.get_home_phone(),
-                    contacts_parser.get_mobile_phone(),
-                    contacts_parser.get_email(),
-                    contacts_parser.get_other_attributes()
-                )
+                name = contacts_parser.get_contact_name()
+                phone = contacts_parser.get_phone()
+                home_phone = contacts_parser.get_home_phone()
+                mobile_phone = contacts_parser.get_mobile_phone()
+                email = contacts_parser.get_email()
+
+                # add contact if we have at least one valid phone/email
+                if phone or home_phone or mobile_phone or email:
+                    helper.addContact( 
+                        name, 
+                        phone,
+                        home_phone,
+                        mobile_phone,
+                        email,
+                        contacts_parser.get_other_attributes()
+                    )
             contacts_parser.close()
         except SQLException as ex:
             self._logger.log(Level.WARNING, "Error querying the whatsapp database for contacts.", ex)
@@ -426,8 +434,14 @@ class WhatsAppContactsParser(TskContactsParser):
         return self.result_set.getString("name")
 
     def get_phone(self):
-        return self.result_set.getString("number")
+        number = self.result_set.getString("number")
+        return (number if general.isValidPhoneNumber(number) else None)
 
+    def get_email(self):
+        # occasionally the 'number' column may have an email address instead
+        value = self.result_set.getString("number")
+        return (value if general.isValidEmailAddress(value) else None)
+        
     def get_other_attributes(self):
         return [BlackboardAttribute(
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID, 

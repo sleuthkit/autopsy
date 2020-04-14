@@ -134,8 +134,8 @@ class DateSearchPanel extends javax.swing.JPanel {
         this.fromDatePicker.setEnabled(enable);
         this.jLabel1.setEnabled(enable);
         this.toDatePicker.setEnabled(enable);
-        this.jLabel2.setEnabled(enable);
-        this.jLabel3.setEnabled(enable);
+        this.noLimitLabel.setEnabled(enable);
+        this.dateFormatLabel.setEnabled(enable);
         this.jLabel4.setEnabled(enable);
         this.timeZoneComboBox.setEnabled(enable);
         this.modifiedCheckBox.setEnabled(enable);
@@ -163,8 +163,8 @@ class DateSearchPanel extends javax.swing.JPanel {
         dateCheckBox = new javax.swing.JCheckBox();
         timeZoneComboBox = new JComboBox<>(this.timeZones.toArray(new String[this.timeZones.size()]));
         timeZoneComboBox.setRenderer(new DateSearchFilter.ComboBoxRenderer());
-        jLabel3 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
+        dateFormatLabel = new javax.swing.JLabel();
+        noLimitLabel = new javax.swing.JLabel();
         modifiedCheckBox = new javax.swing.JCheckBox();
         changedCheckBox = new javax.swing.JCheckBox();
         accessedCheckBox = new javax.swing.JCheckBox();
@@ -195,11 +195,11 @@ class DateSearchPanel extends javax.swing.JPanel {
             }
         });
 
-        jLabel3.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.jLabel3.text")); // NOI18N
-        jLabel3.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        dateFormatLabel.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.dateFormatLabel.text")); // NOI18N
+        dateFormatLabel.setFont(dateFormatLabel.getFont().deriveFont(dateFormatLabel.getFont().getSize()-1f));
 
-        jLabel2.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.jLabel2.text")); // NOI18N
-        jLabel2.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        noLimitLabel.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.noLimitLabel.text")); // NOI18N
+        noLimitLabel.setFont(noLimitLabel.getFont().deriveFont(noLimitLabel.getFont().getSize()-1f));
 
         modifiedCheckBox.setSelected(true);
         modifiedCheckBox.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.modifiedCheckBox.text")); // NOI18N
@@ -281,9 +281,9 @@ class DateSearchPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(jLabel2)
+                        .addComponent(noLimitLabel)
                         .addGap(18, 18, 18)
-                        .addComponent(jLabel3))
+                        .addComponent(dateFormatLabel))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(dateCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -308,8 +308,8 @@ class DateSearchPanel extends javax.swing.JPanel {
                             .addComponent(toDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel2))
+                            .addComponent(dateFormatLabel)
+                            .addComponent(noLimitLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
@@ -439,12 +439,12 @@ class DateSearchPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox createdCheckBox;
     private javax.swing.JMenuItem cutMenuItem;
     private javax.swing.JCheckBox dateCheckBox;
+    private javax.swing.JLabel dateFormatLabel;
     private com.github.lgooddatepicker.components.DatePicker fromDatePicker;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JCheckBox modifiedCheckBox;
+    private javax.swing.JLabel noLimitLabel;
     private javax.swing.JMenuItem pasteMenuItem;
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JMenuItem selectAllMenuItem;

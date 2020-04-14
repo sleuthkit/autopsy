@@ -27,6 +27,7 @@ import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
+import org.sleuthkit.autopsy.centralrepository.optionspanel.GlobalSettingsPanel;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -197,27 +198,26 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         pnDatabaseSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        tbDbHostname.setFont(tbDbHostname.getFont().deriveFont(tbDbHostname.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        tbDbHostname.setFont(tbDbHostname.getFont().deriveFont(tbDbHostname.getFont().getSize()+1f));
         tbDbHostname.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbHostname.text")); // NOI18N
         tbDbHostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbHostname.toolTipText")); // NOI18N
 
-        tbDbPort.setFont(tbDbPort.getFont().deriveFont(tbDbPort.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        tbDbPort.setFont(tbDbPort.getFont().deriveFont(tbDbPort.getFont().getSize()+1f));
         tbDbPort.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPort.text")); // NOI18N
         tbDbPort.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPort.toolTipText")); // NOI18N
 
-        tbDbUsername.setFont(tbDbUsername.getFont().deriveFont(tbDbUsername.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        tbDbUsername.setFont(tbDbUsername.getFont().deriveFont(tbDbUsername.getFont().getSize()+1f));
         tbDbUsername.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbUsername.text")); // NOI18N
         tbDbUsername.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbUsername.toolTipText")); // NOI18N
 
-        tbDbPassword.setFont(tbDbPassword.getFont().deriveFont(tbDbPassword.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        tbDbPassword.setFont(tbDbPassword.getFont().deriveFont(tbDbPassword.getFont().getSize()+1f));
         tbDbPassword.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPassword.text")); // NOI18N
         tbDbPassword.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPassword.toolTipText")); // NOI18N
 
-        lbDatabaseSettings.setFont(lbDatabaseSettings.getFont().deriveFont(lbDatabaseSettings.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        lbDatabaseSettings.setFont(lbDatabaseSettings.getFont().deriveFont(lbDatabaseSettings.getFont().getSize()+1f));
         org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbDatabaseSettings.text")); // NOI18N
         lbDatabaseSettings.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
-        bnTestDatabase.setFont(bnTestDatabase.getFont().deriveFont(bnTestDatabase.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(bnTestDatabase, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.bnTestDatabase.text")); // NOI18N
         bnTestDatabase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -276,16 +276,15 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         pnSolrSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        lbSolrSettings.setFont(lbSolrSettings.getFont().deriveFont(lbSolrSettings.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        lbSolrSettings.setFont(lbSolrSettings.getFont().deriveFont(lbSolrSettings.getFont().getSize()+1f));
         org.openide.awt.Mnemonics.setLocalizedText(lbSolrSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbSolrSettings.text")); // NOI18N
 
-        tbSolrHostname.setFont(tbSolrHostname.getFont().deriveFont(tbSolrHostname.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        tbSolrHostname.setFont(tbSolrHostname.getFont().deriveFont(tbSolrHostname.getFont().getSize()+1f));
         tbSolrHostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolrHostname.toolTipText")); // NOI18N
 
-        tbSolrPort.setFont(tbSolrPort.getFont().deriveFont(tbSolrPort.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        tbSolrPort.setFont(tbSolrPort.getFont().deriveFont(tbSolrPort.getFont().getSize()+1f));
         tbSolrPort.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolrPort.toolTipText")); // NOI18N
 
-        bnTestSolr.setFont(bnTestSolr.getFont().deriveFont(bnTestSolr.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(bnTestSolr, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.bnTestSolr.text")); // NOI18N
         bnTestSolr.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -338,26 +337,25 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         pnMessagingSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        lbMessageServiceSettings.setFont(lbMessageServiceSettings.getFont().deriveFont(lbMessageServiceSettings.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        lbMessageServiceSettings.setFont(lbMessageServiceSettings.getFont().deriveFont((float)12));
         org.openide.awt.Mnemonics.setLocalizedText(lbMessageServiceSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbMessageServiceSettings.text")); // NOI18N
 
-        tbMsgHostname.setFont(tbMsgHostname.getFont().deriveFont(tbMsgHostname.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        tbMsgHostname.setFont(tbMsgHostname.getFont().deriveFont(tbMsgHostname.getFont().getSize()+1f));
         tbMsgHostname.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgHostname.text")); // NOI18N
         tbMsgHostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgHostname.toolTipText")); // NOI18N
 
-        tbMsgUsername.setFont(tbMsgUsername.getFont().deriveFont(tbMsgUsername.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        tbMsgUsername.setFont(tbMsgUsername.getFont().deriveFont(tbMsgUsername.getFont().getSize()+1f));
         tbMsgUsername.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgUsername.text")); // NOI18N
         tbMsgUsername.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgUsername.toolTipText")); // NOI18N
 
-        tbMsgPort.setFont(tbMsgPort.getFont().deriveFont(tbMsgPort.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        tbMsgPort.setFont(tbMsgPort.getFont().deriveFont(tbMsgPort.getFont().getSize()+1f));
         tbMsgPort.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPort.text")); // NOI18N
         tbMsgPort.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPort.toolTipText")); // NOI18N
 
-        tbMsgPassword.setFont(tbMsgPassword.getFont().deriveFont(tbMsgPassword.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        tbMsgPassword.setFont(tbMsgPassword.getFont().deriveFont(tbMsgPassword.getFont().getSize()+1f));
         tbMsgPassword.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPassword.text")); // NOI18N
         tbMsgPassword.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPassword.toolTipText")); // NOI18N
 
-        bnTestMessageService.setFont(bnTestMessageService.getFont().deriveFont(bnTestMessageService.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(bnTestMessageService, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.bnTestMessageService.text")); // NOI18N
         bnTestMessageService.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -414,7 +412,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        cbEnableMultiUser.setFont(cbEnableMultiUser.getFont().deriveFont(cbEnableMultiUser.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(cbEnableMultiUser, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.cbEnableMultiUser.text")); // NOI18N
         cbEnableMultiUser.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -423,7 +420,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         });
 
         tbOops.setEditable(false);
-        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
+        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, tbOops.getFont().getSize()+1));
         tbOops.setForeground(new java.awt.Color(255, 0, 0));
         tbOops.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
@@ -683,55 +680,92 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         boolean isPwSet = (tbMsgPassword.getPassword().length != 0);
         return (isUserSet == isPwSet);
     }
+    
+    
 
     void store() {
+        boolean prevSelected = UserPreferences.getIsMultiUserModeEnabled();
+        CaseDbConnectionInfo prevConn = null;
+        try {
+            prevConn = UserPreferences.getDatabaseConnectionInfo();
+        } catch (UserPreferencesException ex) {
+            logger.log(Level.SEVERE, "There was an error while fetching previous connection settings while trying to save", ex); //NON-NLS
+        }
 
         boolean multiUserCasesEnabled = cbEnableMultiUser.isSelected();
         UserPreferences.setIsMultiUserModeEnabled(multiUserCasesEnabled);
-        if (multiUserCasesEnabled == false) {
-            return;
+        
+        CaseDbConnectionInfo info = null;
+        
+        if (multiUserCasesEnabled == true) {
+
+            /*
+             * Currently only supporting multi-user cases with PostgreSQL case
+             * databases.
+             */
+            DbType dbType = DbType.POSTGRESQL;
+            info = new CaseDbConnectionInfo(
+                    tbDbHostname.getText().trim(),
+                    tbDbPort.getText().trim(),
+                    tbDbUsername.getText().trim(),
+                    new String(tbDbPassword.getPassword()),
+                    dbType);
+            try {
+                UserPreferences.setDatabaseConnectionInfo(info);
+            } catch (UserPreferencesException ex) {
+                logger.log(Level.SEVERE, "Error saving case database connection info", ex); //NON-NLS
+            }
+
+            int msgServicePort = 0;
+            try {
+                msgServicePort = Integer.parseInt(this.tbMsgPort.getText().trim());
+            } catch (NumberFormatException ex) {
+                logger.log(Level.SEVERE, "Could not parse messaging service port setting", ex);
+            }
+
+            MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
+                    tbMsgHostname.getText().trim(),
+                    msgServicePort,
+                    tbMsgUsername.getText().trim(),
+                    new String(tbMsgPassword.getPassword()));
+
+            try {
+                UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
+            } catch (UserPreferencesException ex) {
+                logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
+            }
+
+            UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
+            UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
         }
 
-        /*
-         * Currently only supporting multi-user cases with PostgreSQL case
-         * databases.
-         */
-        DbType dbType = DbType.POSTGRESQL;
-        CaseDbConnectionInfo info = new CaseDbConnectionInfo(
-                tbDbHostname.getText().trim(),
-                tbDbPort.getText().trim(),
-                tbDbUsername.getText().trim(),
-                new String(tbDbPassword.getPassword()),
-                dbType);
-        try {
-            UserPreferences.setDatabaseConnectionInfo(info);
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error saving case database connection info", ex); //NON-NLS
-        }
-
-        int msgServicePort = 0;
-        try {
-            msgServicePort = Integer.parseInt(this.tbMsgPort.getText().trim());
-        } catch (NumberFormatException ex) {
-            logger.log(Level.SEVERE, "Could not parse messaging service port setting", ex);
-        }
-
-        MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
-                tbMsgHostname.getText().trim(),
-                msgServicePort,
-                tbMsgUsername.getText().trim(),
-                new String(tbMsgPassword.getPassword()));
-
-        try {
-            UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
-        }
-
-        UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
-        UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
-
+        // trigger changes to whether or not user can use multi user settings for central repository
+        if (prevSelected != multiUserCasesEnabled || !areCaseDbConnectionEqual(prevConn, info))
+            GlobalSettingsPanel.onMultiUserChange(this, prevSelected, multiUserCasesEnabled);
     }
+
+    private static boolean arePropsEqual(Object a, Object b) {
+        if (a == null || b == null) {
+            return (a == null && b == null);
+        }
+        else {
+            return a.equals(b);
+        }
+    }
+    
+	private static boolean areCaseDbConnectionEqual(CaseDbConnectionInfo a, CaseDbConnectionInfo b) {
+        if (a == null || b == null) {
+            return (a == null && b == null);
+        }
+
+        return 
+            arePropsEqual(a.getDbType(), b.getDbType()) &&
+            arePropsEqual(a.getHost(), b.getHost()) && 
+            arePropsEqual(a.getPassword(), b.getPassword()) &&
+            arePropsEqual(a.getPort(), b.getPort()) &&
+            arePropsEqual(a.getUserName(), b.getUserName());
+	}
+
 
     /**
      * Validates that the form is filled out correctly for our usage.
