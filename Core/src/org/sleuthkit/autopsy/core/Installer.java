@@ -408,7 +408,7 @@ public class Installer extends ModuleInstall {
             }
             
         };
-        new Thread(loader).run();
+        new Thread(loader).start();
     }
 
     @Override
