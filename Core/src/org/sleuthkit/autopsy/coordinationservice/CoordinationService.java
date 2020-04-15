@@ -74,8 +74,9 @@ public final class CoordinationService {
     private static boolean isZooKeeperAccessible() throws InterruptedException, IOException {
         boolean result = false;
         Object workerThreadWaitNotifyLock = new Object();
-        // ELTODO int zooKeeperServerPort = Integer.valueOf(UserPreferences.getIndexingServerPort()) + PORT_OFFSET;
-        String connectString = UserPreferences.getZkServerHost() + ":" + UserPreferences.getZkServerPort();
+        int zooKeeperServerPort = Integer.valueOf(UserPreferences.getIndexingServerPort()) + PORT_OFFSET;
+        // ELTODO String connectString = UserPreferences.getZkServerHost() + ":" + UserPreferences.getZkServerPort();
+        String connectString = UserPreferences.getIndexingServerHost() + ":" + zooKeeperServerPort;
         ZooKeeper zooKeeper = new ZooKeeper(connectString, ZOOKEEPER_SESSION_TIMEOUT_MILLIS,
                 (WatchedEvent event) -> {
                     synchronized (workerThreadWaitNotifyLock) {
