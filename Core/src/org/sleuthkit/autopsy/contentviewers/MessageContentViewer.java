@@ -692,7 +692,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 attachments = getAttachmentsFromMessageAttachments(attachmentsAttr);
             } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
                 LOGGER.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
-                attachments = getAttachmentsFromChildren(artifact);
+                attachments = new HashSet<>();
             }
         } else {
             attachments = getAttachmentsFromChildren(artifact);

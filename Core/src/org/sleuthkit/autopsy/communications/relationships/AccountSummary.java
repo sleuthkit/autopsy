@@ -156,7 +156,6 @@ class AccountSummary {
                     countFromMessageAttachments(attachmentsAttr, artifact);
                 } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
                     logger.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
-                    countFromArtifactChildren(artifact);
                 }
             } else {
                 countFromArtifactChildren(artifact);

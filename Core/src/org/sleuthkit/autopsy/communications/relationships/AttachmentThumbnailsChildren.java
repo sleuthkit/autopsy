@@ -134,7 +134,6 @@ final class AttachmentThumbnailsChildren extends Children.Keys<AbstractFile> {
                             addMessageAttachmentThumbnails(bba, attachmentsAttr, thumbnails);
                         } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
                             LOGGER.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", bba.getName()), ex);
-                            addChildrenThumbnails(bba, thumbnails);
                         }
                     } else {    // backward compatibility - email message attachments are derived files, children of the message.
                         addChildrenThumbnails(bba, thumbnails);

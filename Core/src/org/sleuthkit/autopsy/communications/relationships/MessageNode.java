@@ -159,10 +159,12 @@ class MessageNode extends BlackboardArtifactNode {
                 return msgAttachments.getAttachmentsCount();
             } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
                 logger.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
+                return 0;
             }
         }
-
-        // legacy attachments may be children of message artifact.
-        return artifact.getChildrenCount();
+        else {
+            // legacy attachments may be children of message artifact.
+            return artifact.getChildrenCount();   
+        }
     }
 }
