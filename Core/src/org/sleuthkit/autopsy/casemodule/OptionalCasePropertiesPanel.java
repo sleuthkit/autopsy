@@ -19,8 +19,10 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Cursor;
+import java.awt.Dialog;
 import java.util.logging.Level;
 import javax.swing.JComboBox;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
@@ -516,7 +518,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_comboBoxOrgNameActionPerformed
 
     private void bnNewOrganizationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnNewOrganizationActionPerformed
-        ManageOrganizationsDialog dialog = new ManageOrganizationsDialog();
+        ManageOrganizationsDialog dialog = new ManageOrganizationsDialog((Dialog) SwingUtilities.getWindowAncestor(this));
         // update the combobox options and org data fields
         loadOrganizationData();
         if (dialog.isChanged()) {
