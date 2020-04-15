@@ -92,7 +92,7 @@ class GPXParserDataSourceIngestModule(FileIngestModule):
 
     logger = Logger.getLogger(
         GPXParserDataSourceIngestModuleFactory.moduleName)
-    writeDebugMsgs = False
+    writeDebugMsgs = True
 
     def log(self, level, msg):
         self.logger.logp(level, self.__class__.__name__,
@@ -136,8 +136,6 @@ class GPXParserDataSourceIngestModule(FileIngestModule):
             self.log(Level.INFO, "Processing " + file.getUniquePath() +
                      " (objID = " + str(file.getId()) + ")")
 
-        self.fileCount += 1
-
         # Write the file so that it can be parsed by gpxpy.
         localFile = File(fileName)
         ContentUtils.writeToFile(file, localFile)
@@ -152,7 +150,7 @@ class GPXParserDataSourceIngestModule(FileIngestModule):
         except Exception as e:
             self.log(Level.WARNING, "Error parsing file " + file.getUniquePath() +
                      " (objID = " + str(file.getId()) + "):" + str(e))
-            continue
+            return IngestModule.ProcessResult.ERROR
 
         if gpx:
             if self.writeDebugMsgs:
@@ -242,6 +240,7 @@ class GPXParserDataSourceIngestModule(FileIngestModule):
                     self.log(Level.SEVERE, "Error creating GPS route artifact for " +
                              file.getUniquePath() + " (objID = " + str(file.getId()) + "):" + e.getMessage())
 
+        self.fileCount += 1
         return IngestModule.ProcessResult.OK
 
     # Where any shutdown code is run and resources are freed.
