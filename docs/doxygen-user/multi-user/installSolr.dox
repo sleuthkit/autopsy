@@ -13,7 +13,7 @@ Solr's embedded ZooKeeper is also used as a coordination service for Autopsy.
 We use Bitnami Solr, which packages Solr as a Windows service. 
 
 You will need:
-- A 64-bit version of the Java Runtime Environment (JRE) from http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. 
+- A 64-bit version of the Java 8 Runtime Environment (JRE) from https://github.com/ojdkbuild/ojdkbuild. (<a href="https://github.com/ojdkbuild/ojdkbuild/releases/download/java-1.8.0-openjdk-1.8.0.242-1.b08/java-1.8.0-openjdk-1.8.0.242-1.b08.ojdkbuild.windows.x86_64.msi"> Link to installer</a>)
 - The Apache Solr 4.10.3-0 installation package.  This is no longer available from its original source, but you can find it on our site: https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr.
 -- NOTE: We tested Solr 6 at one point, but ran into stability problems when loading and unloading cores.  For now, you need to use Solr 4. 
 - An installed version of Autopsy so that you can copy files from it.   You can install Autopsy on one of the planned client systems.  You do not need to install it on the Solr server. 
@@ -24,7 +24,11 @@ You will need:
 \section install_solr_install Installation
 
 \subsection install_solr_install_java JRE Installation
-1. JREs are normally installed under "C:\Program Files\Java\jre(version)", so check there to see if you have one installed already. If not, get the installer as listed in the above Prerequisites section and install it with the default settings.
+1.  Install the Java JRE if needed. You can test this by running _where java_ from the command line. If you see output similar to the results below, you have a JRE.
+<br><br>
+\image html wherejava.PNG
+<br><br>   
+If you need the JRE, install it with the default settings.
 
 \subsection install_solr_install_solr Solr Installation
 
@@ -52,7 +56,7 @@ The following steps will configure Solr to run using an account that will have a
 	+ <i>++JvmOptions=-Dbootstrap_confdir="C:\Bitnami\solr-4.10.3-0\apache-solr\solr\configsets\AutopsyConfig\conf"</i>
 	+ <i>++JvmOptions=-DzkRun </i>
                <br>
-    - Replace the path to JavaHome with the path to your 64-bit version of the JRE. If you do not know the path, the correct JavaHome path can be obtained by running the command "where java" from the Windows command line. An example is shown below. The text in yellow is what we are interested in. Do not include the "bin" folder in the path you place into the JavaHome variable. A correct example of the final result will look something like this: <i>–-JavaHome="C:\Program Files\Java\jre1.8.0_111"</i>
+    - Replace the path to JavaHome with the path to your 64-bit version of the JRE. If you do not know the path, the correct JavaHome path can be obtained by running the command "where java" from the Windows command line. An example is shown below. The text in yellow is what we are interested in. Do not include the "bin" folder in the path you place into the JavaHome variable. A correct example of the final result will look something like this: <i>–-JavaHome="C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1"</i>
 	<br><br>
 	A portion of an updated _serviceinstall.bat_ is shown below, with the changes marked in yellow.
      <br><br>

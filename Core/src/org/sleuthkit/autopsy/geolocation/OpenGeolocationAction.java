@@ -18,8 +18,11 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
+import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -41,10 +44,13 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
         id = "org.sleuthkit.autopsy.geolocation.OpenGeolocationAction")
 @ActionRegistration(displayName = "#CTL_OpenGeolocation", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 102)})
+    @ActionReference(path = "Menu/Tools", position = 102),
+@ActionReference(path = "Toolbars/Case", position = 103)})
 public class OpenGeolocationAction extends CallableSystemAction {
     
     private static final long serialVersionUID = 1L;
+    private final JButton toolbarButton = new JButton(getName(),
+            new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/blueGeo24.png"))); //NON-NLS
     
     @Messages({
         "OpenGeolocationAction_name=Geolocation",
@@ -55,6 +61,7 @@ public class OpenGeolocationAction extends CallableSystemAction {
      * Constructs the new action of opening the Geolocation window.
      */
     public OpenGeolocationAction() {
+        toolbarButton.addActionListener(actionEvent -> performAction());
         setEnabled(false); //disabled by default.  Will be enabled in Case.java when a case is opened.
 
         PropertyChangeListener caseChangeListener = (PropertyChangeEvent evt) -> {
@@ -78,9 +85,30 @@ public class OpenGeolocationAction extends CallableSystemAction {
         }
     }
 
+     /**
+     * Set this action to be enabled/disabled
+     *
+     * @param value whether to enable this action or not
+     */
+    @Override
+    public void setEnabled(boolean value) {
+        super.setEnabled(value);
+        toolbarButton.setEnabled(value);
+    }
+
     @Override
     public String getName() {
         return Bundle.OpenGeolocationAction_displayName();
+    }
+
+    /**
+     * Returns the toolbar component of this action
+     *
+     * @return component the toolbar button
+     */
+    @Override
+    public Component getToolbarPresenter() {
+        return toolbarButton;
     }
 
     @Override

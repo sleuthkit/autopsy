@@ -65,7 +65,7 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
         flagPreviouslySeenDevicesCheckbox = new javax.swing.JCheckBox();
         createCorrelationPropertiesCheckbox = new javax.swing.JCheckBox();
 
-        ingestSettingsLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        ingestSettingsLabel.setFont(ingestSettingsLabel.getFont().deriveFont(ingestSettingsLabel.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsLabel, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.ingestSettingsLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(flagTaggedNotableItemsCheckbox, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.flagTaggedNotableItemsCheckbox.text")); // NOI18N

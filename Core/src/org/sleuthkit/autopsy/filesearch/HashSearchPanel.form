@@ -78,24 +78,12 @@
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="HashSearchPanel.md5CheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="hashCheckBox" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="hashCheckBoxActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JTextField" name="searchTextField">
-      <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="searchTextField" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
-      </Properties>
     </Component>
   </SubComponents>
 </Form>

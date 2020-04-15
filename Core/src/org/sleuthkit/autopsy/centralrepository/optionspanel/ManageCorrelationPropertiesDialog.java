@@ -176,14 +176,13 @@ final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
         tbCorrelatableTypes.setMinimumSize(new java.awt.Dimension(150, 0));
         jScrollPane1.setViewportView(tbCorrelatableTypes);
 
-        lbWarningMsg.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        lbWarningMsg.setFont(lbWarningMsg.getFont().deriveFont(lbWarningMsg.getFont().getSize()+1f));
         lbWarningMsg.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(lbWarningMsg, org.openide.util.NbBundle.getMessage(ManageCorrelationPropertiesDialog.class, "ManageCorrelationPropertiesDialog.lbWarningMsg.text")); // NOI18N
 
         taInstructions.setEditable(false);
         taInstructions.setBackground(new java.awt.Color(240, 240, 240));
         taInstructions.setColumns(20);
-        taInstructions.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         taInstructions.setLineWrap(true);
         taInstructions.setRows(5);
         taInstructions.setText(org.openide.util.NbBundle.getMessage(ManageCorrelationPropertiesDialog.class, "ManageArtifactTypesDialog.taInstructionsMsg.text")); // NOI18N

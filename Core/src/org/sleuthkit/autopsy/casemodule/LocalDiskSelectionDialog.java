@@ -111,10 +111,8 @@ final class LocalDiskSelectionDialog extends JDialog {
         setAlwaysOnTop(true);
         setResizable(false);
 
-        selectLocalDiskLabel.setFont(selectLocalDiskLabel.getFont().deriveFont(selectLocalDiskLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(selectLocalDiskLabel, org.openide.util.NbBundle.getMessage(LocalDiskSelectionDialog.class, "LocalDiskSelectionDialog.selectLocalDiskLabel.text")); // NOI18N
 
-        errorLabel.setFont(errorLabel.getFont().deriveFont(errorLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(LocalDiskSelectionDialog.class, "LocalDiskSelectionDialog.errorLabel.text")); // NOI18N
 

@@ -262,7 +262,7 @@ class AddNewOrganizationDialog extends javax.swing.JDialog {
 
         tfPocName.setToolTipText(org.openide.util.NbBundle.getMessage(AddNewOrganizationDialog.class, "AddNewOrganizationDialog.tfName.tooltip")); // NOI18N
 
-        lbWarningMsg.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        lbWarningMsg.setFont(lbWarningMsg.getFont().deriveFont(lbWarningMsg.getFont().getStyle() | java.awt.Font.BOLD, lbWarningMsg.getFont().getSize()+1));
         lbWarningMsg.setForeground(new java.awt.Color(255, 0, 0));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
