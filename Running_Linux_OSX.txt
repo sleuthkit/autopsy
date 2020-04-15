@@ -80,6 +80,11 @@ Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libr
   (a) confirm that you have a version of Java 8 installed and
   (b) confirm that your JAVA_HOME environment variable is set correctly:
       % echo $JAVA_HOME
+      
+- If you see something like "cannot be opened because the developer cannot be verified." it is an indication 
+  that Gatekeeper is running and is stopping a file from being executed.  To fix this open a new terminal window
+  and enter the following command "sudo spctl --master-disable", you will be required to enter your password.  
+  This will allow any program to be be downloaded from anywhere and executed.
 
 * Limitations (Updated May 2018) *
 - Timeline does not work on OS X
