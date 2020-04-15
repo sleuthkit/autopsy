@@ -235,6 +235,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
         totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.totalPageLabel.text")); // NOI18N
+        totalPageLabel.setMaximumSize(new java.awt.Dimension(40, 16));
+        totalPageLabel.setPreferredSize(new java.awt.Dimension(25, 16));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 0;
@@ -253,9 +255,9 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         jPanel1.add(ofLabel, gridBagConstraints);
 
         currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.currentPageLabel.text")); // NOI18N
-        currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 14));
+        currentPageLabel.setMaximumSize(new java.awt.Dimension(38, 14));
         currentPageLabel.setMinimumSize(new java.awt.Dimension(18, 14));
-        currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 14));
+        currentPageLabel.setPreferredSize(new java.awt.Dimension(20, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
