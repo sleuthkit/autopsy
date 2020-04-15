@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.CommunicationsUtils;
 import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
 
 /**
- *
+ * 
  * Class representing the Summary data for a given account.
  */
 class AccountSummary {
@@ -56,9 +56,9 @@ class AccountSummary {
 
     /**
      * Summary constructor.
-     *
+     * 
      * @param selectedAccount Selected account object
-     * @param artifacts       List of relationship source artifacts
+     * @param artifacts List of relationship source artifacts
      */
     AccountSummary(Account selectedAccount, Set<BlackboardArtifact> artifacts) {
         this.selectedAccount = selectedAccount;
@@ -67,8 +67,7 @@ class AccountSummary {
     }
 
     /**
-     * Initialize the counts based on the selected account and the given
-     * artifacts.
+     * Initialize the counts based on the selected account and the given artifacts.
      */
     private void initCounts() {
         for (BlackboardArtifact artifact : artifacts) {
@@ -87,18 +86,18 @@ class AccountSummary {
                     case TSK_CONTACT:
                         if (selectedAccount.getAccountType() != Account.Type.DEVICE) {
                             String typeSpecificID = selectedAccount.getTypeSpecificID();
-
+                            
                             List<BlackboardAttribute> attributes = null;
-
-                            try {
+                            
+                            try{
                                 attributes = artifact.getAttributes();
-                            } catch (TskCoreException ex) {
+                            } catch(TskCoreException ex) {
                                 logger.log(Level.WARNING, String.format("Unable to getAttributes for artifact: %d", artifact.getArtifactID()), ex);
                                 break;
                             }
-
+                            
                             boolean isReference = false;
-
+                            
                             for (BlackboardAttribute attribute : attributes) {
 
                                 String attributeTypeName = attribute.getAttributeType().getTypeName();
@@ -109,7 +108,7 @@ class AccountSummary {
                                     } else if (attributeTypeName.contains("EMAIL")) {
                                         attributeValue = CommunicationsUtils.normalizeEmailAddress(attributeValue);
                                     }
-
+                                    
                                     if (typeSpecificID.equals(attributeValue)) {
                                         isReference = true;
                                         break;
@@ -134,88 +133,46 @@ class AccountSummary {
                         break;
                 }
             }
-            handleMessageAttachments(artifact);
-        }
-    }
-
-    /**
-     * Handles incrementing attachmentCnt and mediaCnt variables based on the
-     * attachments and media present in an artifact.
-     *
-     * @param artifact The artifact whose MessageAttachments will be used for
-     *                 this tally. If no MessageAttachments object can be found,
-     *                 then the count of the children of the artifact will be
-     *                 used instead.
-     */
-    private void handleMessageAttachments(BlackboardArtifact artifact) {
-        try {
-            // count the attachments from the TSK_ATTACHMENTS attribute.
-            BlackboardAttribute attachmentsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
-            if (attachmentsAttr != null) {
-                try {
-                    countFromMessageAttachments(attachmentsAttr, artifact);
-                } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
-                    logger.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
+            try {
+                // count the attachments from the TSK_ATTACHMENTS attribute.
+                BlackboardAttribute attachmentsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
+                if (attachmentsAttr != null) {
+                    try {
+                        MessageAttachments msgAttachments = BlackboardJsonAttrUtil.fromAttribute(attachmentsAttr, MessageAttachments.class);
+                        Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
+                        for (FileAttachment fileAttachment : fileAttachments) {
+                            attachmentCnt++;
+                            long attachedFileObjId = fileAttachment.getObjectId();
+                            if (attachedFileObjId >= 0) {
+                                AbstractFile attachedFile = artifact.getSleuthkitCase().getAbstractFileById(attachedFileObjId);
+                                if (ImageUtils.thumbnailSupported(attachedFile)) {
+                                    mediaCnt++;
+                                }  
+                            }
+                        }
+                    } 
+                    catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
+                        logger.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
+                    }                    
+                } else {  // backward compatibility - email message attachments are derived files, children of the message.
+                    attachmentCnt += artifact.getChildrenCount();
+                    for (Content childContent : artifact.getChildren()) {
+                        if (ImageUtils.thumbnailSupported(childContent)) {
+                            mediaCnt++;
+                        }
+                    }
                 }
-            } else {
-                countFromArtifactChildren(artifact);
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, String.format("Exception thrown "
-                    + "from getChildrenCount artifactID: %d",
-                    artifact.getArtifactID()), ex); //NON-NLS
-        }
-    }
-
-    /**
-     * Increments attachment and media counts based on the children of the
-     * BlackboardArtifact.
-     *
-     * @param artifact The artifact whose children will be counted.
-     *
-     * @throws TskCoreException
-     */
-    private void countFromArtifactChildren(BlackboardArtifact artifact) throws TskCoreException {
-        // backward compatibility - email message attachments are derived files, children of the message.
-        attachmentCnt += artifact.getChildrenCount();
-        for (Content childContent : artifact.getChildren()) {
-            if (ImageUtils.thumbnailSupported(childContent)) {
-                mediaCnt++;
-            }
-        }
-    }
-
-    /**
-     * Increments attachment and media counts based on the file attachments in
-     * the parsed MessageAttachments object.
-     *
-     * @param attachmentsAttr The attribute representing the MessageAttachments
-     *                        object.
-     * @param artifact        The artifact for this attribute.
-     *
-     * @throws TskCoreException
-     * @throws BlackboardJsonAttrUtil.InvalidJsonException
-     */
-    private void countFromMessageAttachments(BlackboardAttribute attachmentsAttr, BlackboardArtifact artifact)
-            throws TskCoreException, BlackboardJsonAttrUtil.InvalidJsonException {
-
-        MessageAttachments msgAttachments = BlackboardJsonAttrUtil.fromAttribute(attachmentsAttr, MessageAttachments.class);
-        Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
-        for (FileAttachment fileAttachment : fileAttachments) {
-            attachmentCnt++;
-            long attachedFileObjId = fileAttachment.getObjectId();
-            if (attachedFileObjId >= 0) {
-                AbstractFile attachedFile = artifact.getSleuthkitCase().getAbstractFileById(attachedFileObjId);
-                if (ImageUtils.thumbnailSupported(attachedFile)) {
-                    mediaCnt++;
-                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Exception thrown "
+                        + "from getChildrenCount artifactID: %d",
+                        artifact.getArtifactID()), ex); //NON-NLS
             }
         }
     }
 
     /**
      * Total number of attachments that this account is referenced.
-     *
+     * 
      * @return Attachment count
      */
     public int getAttachmentCnt() {
@@ -224,7 +181,7 @@ class AccountSummary {
 
     /**
      * Total number of messages that this account is referenced.
-     *
+     * 
      * @return Message count
      */
     public int getMessagesCnt() {
@@ -233,7 +190,7 @@ class AccountSummary {
 
     /**
      * Total number of Emails that this account is referenced.
-     *
+     * 
      * @return Email count
      */
     public int getEmailCnt() {
@@ -242,7 +199,7 @@ class AccountSummary {
 
     /**
      * Total number of call logs that this account is referenced.
-     *
+     * 
      * @return call log count
      */
     public int getCallLogCnt() {
@@ -251,7 +208,7 @@ class AccountSummary {
 
     /**
      * Total number of contacts in this accounts contact book.
-     *
+     * 
      * @return contact count
      */
     public int getContactsCnt() {
@@ -259,18 +216,17 @@ class AccountSummary {
     }
 
     /**
-     * Total number of thumbnail\media attachments that this account is
-     * referenced.
-     *
+     * Total number of thumbnail\media attachments that this account is referenced.
+     * 
      * @return Thumbnail count
      */
     public int getThumbnailCnt() {
         return mediaCnt;
     }
-
+    
     /**
      * Total number of contacts that this account is referenced.
-     *
+     * 
      * @return Contact count
      */
     public int getReferenceCnt() {
