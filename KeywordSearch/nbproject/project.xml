@@ -247,7 +247,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/solr-solrj-8.2.0.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\elivis\autopsy\KeywordSearch\release\modules\ext\solr-solrj-8.2.0.jar</binary-origin>
+                <binary-origin>release\modules\ext\solr-solrj-8.2.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tagsoup-1.2.1.jar</runtime-relative-path>
@@ -275,7 +275,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/zookeeper-3.5.5.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\elivis\autopsy\KeywordSearch\release\modules\ext\zookeeper-3.5.5.jar</binary-origin>
+                <binary-origin>release\modules\ext\zookeeper-3.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/c3p0-0.9.1.1.jar</runtime-relative-path>
