@@ -1242,6 +1242,7 @@ class TableReportGenerator {
      * @return List<String> row titles
      */
     @Messages({"ReportGenerator.artTableColHdr.comment=Comment"})
+    @SuppressWarnings("deprecation")
     private List<Column> getArtifactTableColumns(int artifactTypeId, Set<BlackboardAttribute.Type> attributeTypeSet) {
         ArrayList<Column> columns = new ArrayList<>();
 

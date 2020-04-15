@@ -247,7 +247,6 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         instructionsTextArea.setEditable(false);
         instructionsTextArea.setBackground(new java.awt.Color(240, 240, 240));
         instructionsTextArea.setColumns(20);
-        instructionsTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         instructionsTextArea.setLineWrap(true);
         instructionsTextArea.setRows(2);
         instructionsTextArea.setText(org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.instructionsTextArea.text")); // NOI18N
@@ -337,6 +336,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         if (dialogResult == JFileChooser.APPROVE_OPTION) {
             credentialsPathField.setText(fileChooser.getSelectedFile().getPath());
             populateTargetLanguageComboBox();
+            testResultValueLabel.setText("");
             firePropertyChange("SettingChanged", true, false);
         }
     }//GEN-LAST:event_browseButtonActionPerformed
@@ -407,6 +407,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
             if (!StringUtils.isBlank(selectedCode) && !selectedCode.equals(targetLanguageCode)) {
                 targetLanguageCode = selectedCode;
                 populateTargetLanguageComboBox();
+                testResultValueLabel.setText("");
                 firePropertyChange("SettingChanged", true, false);
             }
         }

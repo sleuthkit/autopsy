@@ -109,13 +109,21 @@ class TextNowAnalyzer(general.AndroidComponentAnalyzer):
         try:
             contacts_parser = TextNowContactsParser(textnow_db)
             while contacts_parser.next():
-                helper.addContact( 
-                    contacts_parser.get_contact_name(), 
-                    contacts_parser.get_phone(),
-                    contacts_parser.get_home_phone(),
-                    contacts_parser.get_mobile_phone(),
-                    contacts_parser.get_email()
-                )
+                name = contacts_parser.get_contact_name()
+                phone = contacts_parser.get_phone()
+                home_phone = contacts_parser.get_home_phone()
+                mobile_phone = contacts_parser.get_mobile_phone()
+                email = contacts_parser.get_email()
+
+                # add contact if we have at least one valid phone/email
+                if phone or home_phone or mobile_phone or email:
+                    helper.addContact( 
+                        name, 
+                        phone,
+                        home_phone,
+                        mobile_phone,
+                        email
+                    )
             contacts_parser.close()
         except SQLException as ex:
             #Error parsing TextNow db
@@ -277,7 +285,13 @@ class TextNowContactsParser(TskContactsParser):
         return self.result_set.getString("name")
     
     def get_phone(self):
-        return self.result_set.getString("number")
+        number = self.result_set.getString("number")
+        return (number if general.isValidPhoneNumber(number) else None)
+        
+    def get_email(self):
+        # occasionally the 'number' column may have an email address instead
+        value = self.result_set.getString("number")
+        return (value if general.isValidEmailAddress(value) else None)
 
 class TextNowMessagesParser(TskMessagesParser):
     """

@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,8 +36,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.filequery.FileGroup.GroupSortingAlgorithm;
 import org.sleuthkit.autopsy.filequery.FileSearch.GroupingAttributeType;
@@ -52,6 +51,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Dialog to allow the user to choose filtering and grouping options.
@@ -408,16 +408,16 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     /**
-     * Setup the exif filter settings.
+     * Setup the user created filter settings.
      *
      * @param visible  Boolean indicating if the filter should be visible.
      * @param enabled  Boolean indicating if the filter should be enabled.
      * @param selected Boolean indicating if the filter should be selected.
      */
-    private void exifFilterSettings(boolean visible, boolean enabled, boolean selected) {
-        exifCheckbox.setVisible(visible);
-        exifCheckbox.setEnabled(enabled);
-        exifCheckbox.setSelected(selected);
+    private void userCreatedFilterSettings(boolean visible, boolean enabled, boolean selected) {
+        userCreatedCheckbox.setVisible(visible);
+        userCreatedCheckbox.setEnabled(enabled);
+        userCreatedCheckbox.setSelected(selected);
     }
 
     /**
@@ -456,18 +456,20 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                      present for images should be reset to their default
      *                      status.
      */
+    @NbBundle.Messages({"FileSearchPanel.steptwo.images=Step 2: Filter which images to show"})
     private void imagesSelected(boolean enabled, boolean resetSelected) {
+        stepTwoLabel.setText(Bundle.FileSearchPanel_steptwo_images());
         dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
         int[] selectedSizeIndices = {1, 2, 3, 4, 5};
         sizeFilterSettings(true, enabled, resetSelected || sizeCheckbox.isSelected(), resetSelected == true ? selectedSizeIndices : null);
         int[] selectedFrequencyIndices;
-        if (!EamDb.isEnabled()) {
+        if (!CentralRepository.isEnabled()) {
             selectedFrequencyIndices = new int[]{0};
         } else {
             selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
         }
         crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
-        exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
+        userCreatedFilterSettings(true, enabled, !resetSelected && userCreatedCheckbox.isSelected());
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
         interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
@@ -489,18 +491,54 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                      present for videos should be reset to their default
      *                      status.
      */
+    @NbBundle.Messages({"FileSearchPanel.steptwo.videos=Step 2: Filter which videos to show"})
     private void videosSelected(boolean enabled, boolean resetSelected) {
+        stepTwoLabel.setText(Bundle.FileSearchPanel_steptwo_videos());
         dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
         sizeFilterSettings(true, enabled, !resetSelected && sizeCheckbox.isSelected(), null);
         int[] selectedFrequencyIndices;
-        if (!EamDb.isEnabled()) {
+        if (!CentralRepository.isEnabled()) {
             selectedFrequencyIndices = new int[]{0};
         } else {
             selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
         }
         crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
-        exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
+        userCreatedFilterSettings(true, enabled, !resetSelected && userCreatedCheckbox.isSelected());
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
+        hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
+        interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
+        parentFilterSettings(true, enabled, !resetSelected && parentCheckbox.isSelected(), null);
+        scoreFilterSettings(false, false, false, null);
+        tagsFilterSettings(false, false, false, null);
+        keywordFilterSettings(false, false, false, null);
+        knownFilesFilterSettings(false, false, false);
+        notableFilterSettings(false, false, false);
+    }
+
+    /**
+     * Set the UI elements available to be the set of UI elements available when
+     * a Document search is being performed.
+     *
+     * @param enabled       Boolean indicating if the filters present for
+     *                      documents should be enabled.
+     * @param resetSelected Boolean indicating if selection of the filters
+     *                      present for documents should be reset to their
+     *                      default status.
+     */
+    @NbBundle.Messages({"FileSearchPanel.steptwo.documents=Step 2: Filter which documents to show"})
+    private void documentsSelected(boolean enabled, boolean resetSelected) {
+        stepTwoLabel.setText(Bundle.FileSearchPanel_steptwo_documents());
+        dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
+        sizeFilterSettings(true, enabled, !resetSelected && sizeCheckbox.isSelected(), null);
+        int[] selectedFrequencyIndices;
+        if (!CentralRepository.isEnabled()) {
+            selectedFrequencyIndices = new int[]{0};
+        } else {
+            selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
+        }
+        crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
+        userCreatedFilterSettings(false, false, false);
+        objectsFilterSettings(false, false, false, null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
         interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
         parentFilterSettings(true, enabled, !resetSelected && parentCheckbox.isSelected(), null);
@@ -519,10 +557,20 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     void setSelectedType(FileType type) {
         fileType = type;
         setUpSizeFilter();
-        if (fileType == FileType.IMAGE) {
-            imagesSelected(true, true);
-        } else if (fileType == FileType.VIDEO) {
-            videosSelected(true, true);
+        if (null != fileType) {
+            switch (fileType) {
+                case IMAGE:
+                    imagesSelected(true, true);
+                    break;
+                case VIDEO:
+                    videosSelected(true, true);
+                    break;
+                case DOCUMENTS:
+                    documentsSelected(true, true);
+                    break;
+                default:
+                    break;
+            }
         }
         validateFields();
     }
@@ -553,7 +601,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         groupByCombobox.removeAllItems();
         // Set up the grouping attributes
         for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.getOptionsForGrouping()) {
-            if ((type != GroupingAttributeType.FREQUENCY || EamDb.isEnabled())
+            if ((type != GroupingAttributeType.FREQUENCY || CentralRepository.isEnabled())
                     && (type != GroupingAttributeType.OBJECT_DETECTED || objectsList.getModel().getSize() > 0)
                     && (type != GroupingAttributeType.INTERESTING_ITEM_SET || interestingItemsList.getModel().getSize() > 0)
                     && (type != GroupingAttributeType.HASH_LIST_NAME || hashSetList.getModel().getSize() > 0)) {
@@ -564,7 +612,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         orderByCombobox.removeAllItems();
         // Set up the file order list
         for (FileSorter.SortingMethod method : FileSorter.SortingMethod.getOptionsForOrdering()) {
-            if (method != SortingMethod.BY_FREQUENCY || EamDb.isEnabled()) {
+            if (method != SortingMethod.BY_FREQUENCY || CentralRepository.isEnabled()) {
                 orderByCombobox.addItem(method);
             }
         }
@@ -623,7 +671,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         int count = 0;
         DefaultListModel<FileSearchData.Frequency> frequencyListModel = (DefaultListModel<FileSearchData.Frequency>) crFrequencyList.getModel();
         frequencyListModel.removeAllElements();
-        if (!EamDb.isEnabled()) {
+        if (!CentralRepository.isEnabled()) {
             for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithoutCr()) {
                 frequencyListModel.add(count, freq);
             }
@@ -653,6 +701,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                     sizes = FileSearchData.FileSize.getOptionsForVideos();
                     break;
                 case IMAGE:
+                    sizes = FileSearchData.FileSize.getOptionsForImages();
+                    break;
+                case DOCUMENTS:
                     sizes = FileSearchData.FileSize.getOptionsForImages();
                     break;
                 default:
@@ -896,8 +947,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             filters.add(new FileSearchFiltering.TagsFilter(tagsList.getSelectedValuesList()));
         }
 
-        if (exifCheckbox.isSelected()) {
-            filters.add(new FileSearchFiltering.ExifFilter());
+        if (userCreatedCheckbox.isSelected()) {
+            filters.add(new FileSearchFiltering.UserCreatedFilter());
         }
 
         if (notableCheckbox.isSelected()) {
@@ -1103,7 +1154,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         tagsCheckbox = new javax.swing.JCheckBox();
         interestingItemsCheckbox = new javax.swing.JCheckBox();
         scoreCheckbox = new javax.swing.JCheckBox();
-        exifCheckbox = new javax.swing.JCheckBox();
+        userCreatedCheckbox = new javax.swing.JCheckBox();
         notableCheckbox = new javax.swing.JCheckBox();
         objectsScrollPane = new javax.swing.JScrollPane();
         objectsList = new javax.swing.JList<>();
@@ -1132,7 +1183,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         groupSortingComboBox = new javax.swing.JComboBox<>();
         errorLabel = new javax.swing.JLabel();
         cancelButton = new javax.swing.JButton();
-        javax.swing.JLabel stepTwoLabel = new javax.swing.JLabel();
+        stepTwoLabel = new javax.swing.JLabel();
         javax.swing.JLabel stepThreeLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(10, 0));
@@ -1429,14 +1480,14 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
         filtersPanel.add(scoreCheckbox, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(exifCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.exifCheckbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(userCreatedCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.userCreatedCheckbox.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 6);
-        filtersPanel.add(exifCheckbox, gridBagConstraints);
+        filtersPanel.add(userCreatedCheckbox, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(notableCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.notableCheckbox.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1676,8 +1727,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(stepTwoLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.stepTwoLabel.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(stepThreeLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.stepThreeLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -1712,7 +1761,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                 .addGap(6, 6, 6)
                 .addComponent(stepTwoLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 201, Short.MAX_VALUE)
+                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 207, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(stepThreeLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1739,11 +1788,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         // Get the file sorting method
         FileSorter.SortingMethod fileSort = getFileSortingMethod();
-        EamDb centralRepoDb = null;
-        if (EamDb.isEnabled()) {
+        CentralRepository centralRepoDb = null;
+        if (CentralRepository.isEnabled()) {
             try {
-                centralRepoDb = EamDb.getInstance();
-            } catch (EamDbException ex) {
+                centralRepoDb = CentralRepository.getInstance();
+            } catch (CentralRepoException ex) {
                 centralRepoDb = null;
                 logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for File Discovery", ex);
             }
@@ -1765,10 +1814,20 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         } else {
             DiscoveryTopComponent.getTopComponent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         }
-        if (fileType == FileType.IMAGE) {
-            imagesSelected(enabled, false);
-        } else if (fileType == FileType.VIDEO) {
-            videosSelected(enabled, false);
+        if (null != fileType) {
+            switch (fileType) {
+                case IMAGE:
+                    imagesSelected(enabled, false);
+                    break;
+                case VIDEO:
+                    videosSelected(enabled, false);
+                    break;
+                case DOCUMENTS:
+                    documentsSelected(enabled, false);
+                    break;
+                default:
+                    break;
+            }
         }
         searchButton.setEnabled(enabled);
         cancelButton.setEnabled(!enabled);
@@ -1893,7 +1952,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JButton deleteButton;
     private javax.swing.JLabel errorLabel;
     private javax.swing.JRadioButton excludeRadioButton;
-    private javax.swing.JCheckBox exifCheckbox;
     private javax.swing.JRadioButton fullRadioButton;
     private javax.swing.JComboBox<GroupingAttributeType> groupByCombobox;
     private javax.swing.JComboBox<GroupSortingAlgorithm> groupSortingComboBox;
@@ -1924,10 +1982,12 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JCheckBox sizeCheckbox;
     private javax.swing.JList<FileSize> sizeList;
     private javax.swing.JScrollPane sizeScrollPane;
+    private javax.swing.JLabel stepTwoLabel;
     private javax.swing.JRadioButton substringRadioButton;
     private javax.swing.JCheckBox tagsCheckbox;
     private javax.swing.JList<TagName> tagsList;
     private javax.swing.JScrollPane tagsScrollPane;
+    private javax.swing.JCheckBox userCreatedCheckbox;
     // End of variables declaration//GEN-END:variables
 
 }

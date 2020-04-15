@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2019 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  *
@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -55,6 +55,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.blackboardutils.WebBrowserArtifactsHelper;
 
 /**
  * Chrome recent activity extraction
@@ -142,7 +143,7 @@ class Chrome extends Extract {
         
         progressBar.progress(Bundle.Progress_Message_Chrome_Cache());
         ChromeCacheExtractor chromeCacheExtractor = new ChromeCacheExtractor(dataSource, context, progressBar);
-        chromeCacheExtractor.getCaches();
+        chromeCacheExtractor.processCaches();
     }
 
     /**
@@ -560,7 +561,8 @@ class Chrome extends Extract {
 
                     // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
                     try {
-                        for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(fullPath), FilenameUtils.getPath(fullPath))) {
+                        String normalizedFullPath = FilenameUtils.normalize(fullPath, true);
+                        for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(normalizedFullPath), FilenameUtils.getPath(normalizedFullPath))) {
                             BlackboardArtifact associatedObjectArtifact = downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
                             associatedObjectArtifact.addAttribute(
                                     new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
@@ -730,8 +732,13 @@ class Chrome extends Extract {
                    
             // get form autofill artifacts
             bbartifacts.addAll(getFormAutofillArtifacts(webDataFile, tempFilePath, isSchemaV8X));
-            // get form address atifacts
-            bbartifacts.addAll(getFormAddressArtifacts(webDataFile, tempFilePath, isSchemaV8X));
+            try {
+                // get form address atifacts
+                getFormAddressArtifacts(webDataFile, tempFilePath, isSchemaV8X);
+            } catch (NoCurrentCaseException | TskCoreException | Blackboard.BlackboardException ex) {
+                logger.log(Level.SEVERE, String.format("Error adding artifacts to the case database "
+                        + "for chrome file %s [objId=%d]", webDataFile.getName(), webDataFile.getId()), ex);
+            }
             
             dbFile.delete();
         }
@@ -807,17 +814,23 @@ class Chrome extends Extract {
      * 
      * @return collection of TSK_WEB_FORM_ADDRESS artifacts
      */
-    private Collection<BlackboardArtifact> getFormAddressArtifacts (AbstractFile webDataFile, String dbFilePath , boolean isSchemaV8X ) {
-        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+    private void getFormAddressArtifacts (AbstractFile webDataFile, String dbFilePath , boolean isSchemaV8X ) throws NoCurrentCaseException, 
+            TskCoreException, Blackboard.BlackboardException {
         
         String webformAddressQuery = (isSchemaV8X) ? WEBFORM_ADDRESS_QUERY_V8X 
                                                     : WEBFORM_ADDRESS_QUERY;
            
+        // Helper to create web form address artifacts.
+        WebBrowserArtifactsHelper helper = new WebBrowserArtifactsHelper(
+                Case.getCurrentCaseThrows().getSleuthkitCase(),
+                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                webDataFile
+        );
+        
         // Get Web form addresses
         List<HashMap<String, Object>> addresses = this.dbConnect(dbFilePath, webformAddressQuery);
         logger.log(Level.INFO, "{0}- Now getting Web form addresses from {1} with {2}artifacts identified.", new Object[]{moduleName, dbFilePath, addresses.size()}); //NON-NLS
         for (HashMap<String, Object> result : addresses) {
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
             // get name fields
             String first_name = result.get("first_name").toString() != null ? result.get("first_name").toString() : "";
@@ -852,73 +865,26 @@ class Chrome extends Extract {
                 String address_line_2 = result.get("address_line_2").toString() != null ? result.get("address_line_2").toString() : "";
                 street_address = String.join(" ", address_line_1, address_line_2);
             }
- 
-            // If an email address is found, create an account instance for it
-            if (email_Addr != null && !email_Addr.isEmpty()) {
-                try {
-                    Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, email_Addr,  NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), webDataFile);
-                } catch (NoCurrentCaseException | TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error creating email account instance for '%s' from Chrome WebData file '%s' .",
-                        email_Addr, webDataFile.getName()), ex); //NON-NLS
-                } 
-            }
-            // If a phone number is found, create an account instance for it
-            if (phone_number != null && !phone_number.isEmpty()) {
-                try {
-                    Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, phone_number,  NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), webDataFile);
-                } catch (NoCurrentCaseException | TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error creating phone account instance for '%s' from Chrome WebData file '%s' .",
-                        phone_number, webDataFile.getName()), ex); //NON-NLS
-                } 
-            }
 
             // Create atrributes from extracted fields
             if (full_name == null || full_name.isEmpty()) {
                 full_name = String.join(" ", first_name, middle_name, last_name);
             }
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME_PERSON,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                     full_name)); //NON-NLS
-
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                    email_Addr)); //NON-NLS
-
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                     phone_number)); //NON-NLS
 
             String locationAddress = String.join(", ", street_address, city, state, zipcode, country_code);
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LOCATION,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                    locationAddress)); //NON-NLS
 
+            List<BlackboardAttribute> otherAttributes = new ArrayList<>();
             if (date_modified > 0) {
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED,
+                otherAttributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED,
                     RecentActivityExtracterModuleFactory.getModuleName(),
                     date_modified)); //NON-NLS
             }
             
-            if (use_count > 0 ){  
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                    use_count)); //NON-NLS
-            }
-
-            if (use_date > 0) {
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                    use_date)); //NON-NLS   
-            }
-
-            // Create artifact
-            BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS, webDataFile, bbattributes);
-            if (bbart != null) {
-                bbartifacts.add(bbart);
-            }
+            helper.addWebFormAddress(
+                    full_name, email_Addr, phone_number, 
+                    locationAddress, 0, use_date, 
+                    use_count, otherAttributes);
         }
-        // return all extracted artifacts
-        return bbartifacts;
     }
     
     private boolean isChromePreVersion30(String temps) {

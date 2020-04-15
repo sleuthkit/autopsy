@@ -34,13 +34,13 @@ import java.util.concurrent.Executors;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoFileInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoFileSet;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Imports a hash set into the central repository and updates a progress dialog
@@ -239,16 +239,16 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 }
 
                 // Create an empty hashset in the central repository
-                EamDb dbManager = EamDb.getInstance();
-                referenceSetID.set(dbManager.newReferenceSet(new EamGlobalSet(orgId, hashSetName, version, knownStatus, 
-                        readOnly, EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID))));
+                CentralRepository dbManager = CentralRepository.getInstance();
+                referenceSetID.set(dbManager.newReferenceSet(new CentralRepoFileSet(orgId, hashSetName, version, knownStatus, 
+                        readOnly, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID))));
 
                 // Get the "FILES" content type. This is a database lookup so we
                 // only want to do it once.
                 CorrelationAttributeInstance.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
 
                 // Holds the current batch of hashes that need to be written to the central repo
-                Set<EamGlobalFileInstance> globalInstances = new HashSet<>();
+                Set<CentralRepoFileInstance> globalInstances = new HashSet<>();
 
                 while (!hashSetParser.doneReading()) {
                     if (isCancelled()) {
@@ -258,7 +258,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                     String newHash = hashSetParser.getNextHash();
 
                     if (newHash != null) {
-                        EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
+                        CentralRepoFileInstance eamGlobalFileInstance = new CentralRepoFileInstance(
                                 referenceSetID.get(),
                                 newHash,
                                 knownStatus,
@@ -299,8 +299,8 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                     @Override
                     public void run() {
                         try {
-                            EamDb.getInstance().deleteReferenceSet(referenceSetID.get());
-                        } catch (EamDbException ex2) {
+                            CentralRepository.getInstance().deleteReferenceSet(referenceSetID.get());
+                        } catch (CentralRepoException ex2) {
                             Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex2);
                         }
                     }

@@ -1,5 +1,4 @@
 /*
- *
  * Autopsy Forensic Browser
  *
  * Copyright 2020 Basis Technology Corp.
@@ -23,25 +22,27 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
+import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil.InvalidJsonException;
 import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints;
-import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoint.GeoTrackPoint;
 
 /**
  * A GPS track with which wraps the TSK_GPS_TRACK artifact.
  */
-public final class Track extends GeoPath{
+public final class Track extends GeoPath {
 
     private final Long startTimestamp;
     private final Long endTimeStamp;
 
     /**
      * Construct a new Track for the given artifact.
-     * 
+     *
      * @param artifact
-     * 
-     * @throws GeoLocationDataException 
+     *
+     * @throws GeoLocationDataException
      */
     public Track(BlackboardArtifact artifact) throws GeoLocationDataException {
         this(artifact, Waypoint.getAttributesFromArtifactAsMap(artifact));
@@ -49,49 +50,49 @@ public final class Track extends GeoPath{
 
     /**
      * Construct a Track for the given artifact and attributeMap.
-     * 
-     * @param artifact TSK_GPD_TRACK artifact
-     * @param attributeMap  Map of the artifact attributes
-     * 
-     * @throws GeoLocationDataException 
+     *
+     * @param artifact     TSK_GPD_TRACK artifact
+     * @param attributeMap Map of the artifact attributes
+     *
+     * @throws GeoLocationDataException
      */
     private Track(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         super(artifact, getTrackName(attributeMap));
 
-        List<GeoTrackPoint> points = getPointsList(attributeMap);
-        buildPath(points);
+        GeoTrackPoints points = getPointsList(attributeMap);
+        buildPath(points, artifact);
 
-        startTimestamp = findStartTime(points);
-        endTimeStamp = findEndTime(points);
+        startTimestamp = points.getStartTime();
+        endTimeStamp = points.getEndTime();
     }
-    
+
     /**
      * Returns the start time of this track.
-     * 
-     * @return  Earliest time, or null if none was available. 
-     *          (seconds from java epoch)
+     *
+     * @return Earliest time, or null if none was available. (seconds from java
+     *         epoch)
      */
     public Long getStartTime() {
         return startTimestamp;
     }
-    
+
     /**
      * Returns the end time of this track.
-     * 
-     * @return  Earliest timestamp, or null if none was available. 
-     *          (seconds from java epoch)
+     *
+     * @return Earliest timestamp, or null if none was available. (seconds from
+     *         java epoch)
      */
     public Long getEndTime() {
         return endTimeStamp;
     }
 
     /**
-     * Return the name of the track from the attributeMap. 
-     * Track name is stored in the attribute TSK_NAME
-     * 
+     * Return the name of the track from the attributeMap. Track name is stored
+     * in the attribute TSK_NAME
+     *
      * @param attributeMap
-     
-     * @return Track name or empty string if none was available. 
+     *
+     * @return Track name or empty string if none was available.
      */
     private static String getTrackName(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) {
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
@@ -101,69 +102,39 @@ public final class Track extends GeoPath{
 
     /**
      * Create the list of TrackWaypoints from the GeoTrackPoint list.
-     * 
-     * @param points List of GeoTrackPoints
-     * 
-     * @throws GeoLocationDataException 
+     *
+     * @param points   GeoTrackPoints object.
+     * @param artifact The artifact to which these points belong
+     *
+     * @throws GeoLocationDataException
      */
-    private void buildPath(List<GeoTrackPoint> points) throws GeoLocationDataException {
-        for (GeoTrackPoint point : points) {
-            addToPath(new TrackWaypoint(point));
+    @Messages({
+        "# {0} - track name",
+        "GEOTrack_point_label_header=Trackpoint for track: {0}"
+    })
+    private void buildPath(GeoTrackPoints points, BlackboardArtifact artifact) throws GeoLocationDataException {
+        for (GeoTrackPoints.TrackPoint point : points) {
+            addToPath(new TrackWaypoint(artifact, Bundle.GEOTrack_point_label_header(getLabel()), point));
         }
     }
 
     /**
-     * Returns the list of GeoTrackPoints from the attributeMap.  Creates the 
+     * Returns the list of GeoTrackPoints from the attributeMap. Creates the
      * GeoTrackPoint list from the TSK_GEO_TRACKPOINTS attribute.
-     * 
+     *
      * @param attributeMap Map of artifact attributes.
-     * 
+     *
      * @return GeoTrackPoint list empty list if the attribute was not found.
+     *
+     * @throws GeoLocationDataException
      */
-    private List<GeoTrackPoint> getPointsList(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) {
+    private GeoTrackPoints getPointsList(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_TRACKPOINTS);
         if (attribute != null) {
-            String value = attribute.getValueString();
-            return GeoTrackPoints.deserializePoints(value);
-        }
-
-        return new ArrayList<>();
-    }
-
-    /**
-     * Return the start time for the track. Assumes the points are in time
-     * order.
-     *
-     * @param points List of GeoTrackPoints.
-     *
-     * @return First non-null time stamp or null, if one was not found.
-     */
-    private Long findStartTime(List<GeoTrackPoint> points) {
-        if (points != null) {
-            for (GeoTrackPoint point : points) {
-                if (point.getTimeStamp() != null) {
-                    return point.getTimeStamp();
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Return the ends time for the track. Assumes the points are in time
-     * order.
-     *
-     * @param points List of GeoTrackPoints.
-     *
-     * @return First non-null time stamp or null, if one was not found.
-     */
-    private Long findEndTime(List<GeoTrackPoint> points) {
-        if (points != null) {
-            for (int index = points.size() - 1; index >= 0; index--) {
-                GeoTrackPoint point = points.get(index);
-                if (point.getTimeStamp() != null) {
-                    return point.getTimeStamp();
-                }
+            try {
+                return BlackboardJsonAttrUtil.fromAttribute(attribute, GeoTrackPoints.class);
+            } catch (InvalidJsonException ex) {
+                throw new GeoLocationDataException("Unable to parse track points in TSK_GEO_TRACKPOINTS attribute", ex);
             }
         }
         return null;
@@ -178,13 +149,17 @@ public final class Track extends GeoPath{
 
         /**
          * Construct a TrackWaypoint.
-         * 
-         * @param point GeoTrackPoint 
-         * 
-         * @throws GeoLocationDataException 
+         *
+         * @param artifact   the artifact to which this waypoint belongs
+         *
+         * @param pointLabel the label for the waypoint
+         *
+         * @param point      GeoTrackPoint
+         *
+         * @throws GeoLocationDataException
          */
-        TrackWaypoint(GeoTrackPoint point) throws GeoLocationDataException {
-            super(null, "",
+        TrackWaypoint(BlackboardArtifact artifact, String pointLabel, GeoTrackPoints.TrackPoint point) throws GeoLocationDataException {
+            super(artifact, pointLabel,
                     point.getTimeStamp(),
                     point.getLatitude(),
                     point.getLongitude(),
@@ -197,10 +172,10 @@ public final class Track extends GeoPath{
         }
 
         /**
-         * Overloaded to return a property list that is generated from
-         * the GeoTrackPoint instead of an artifact.
-         * 
-         * @return unmodifiable list of Waypoint.Property 
+         * Overloaded to return a property list that is generated from the
+         * GeoTrackPoint instead of an artifact.
+         *
+         * @return unmodifiable list of Waypoint.Property
          */
         @Override
         public List<Waypoint.Property> getOtherProperties() {
@@ -209,12 +184,16 @@ public final class Track extends GeoPath{
 
         /**
          * Create a propertyList specific to GeoTrackPoints.
-         * 
+         *
          * @param point GeoTrackPoint to get values from.
-         * 
+         *
          * @return A list of Waypoint.properies.
          */
-        private List<Waypoint.Property> createPropertyList(GeoTrackPoint point) {
+        @Messages({
+            "Track_distanceTraveled_displayName=Distance traveled",
+            "Track_distanceFromHome_displayName=Distance from home point"
+        })
+        private List<Waypoint.Property> createPropertyList(GeoTrackPoints.TrackPoint point) {
             List<Waypoint.Property> list = new ArrayList<>();
 
             Long timestamp = point.getTimeStamp();
@@ -229,12 +208,12 @@ public final class Track extends GeoPath{
 
             value = point.getDistanceTraveled();
             if (value != null) {
-                list.add(new Property(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_DISTANCE_TRAVELED.getDisplayName(), value.toString()));
+                list.add(new Property(Bundle.Track_distanceTraveled_displayName(), value.toString()));
             }
 
-            value = point.getDistanceFromHP();
+            value = point.getDistanceFromHomePoint();
             if (value != null) {
-                list.add(new Property(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_DISTANCE_FROM_HOME_POINT.getDisplayName(), value.toString()));
+                list.add(new Property(Bundle.Track_distanceFromHome_displayName(), value.toString()));
             }
 
             return list;

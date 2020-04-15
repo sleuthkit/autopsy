@@ -55,15 +55,18 @@ public final class CVTTopComponent extends TopComponent {
     private static final long serialVersionUID = 1L;
     private boolean filtersVisible = true;
     private final RelationshipBrowser relationshipBrowser = new RelationshipBrowser();
+    private final AccountsBrowser accountsBrowser = new AccountsBrowser(relationshipBrowser);
     private CommunicationsFilter currentFilter;
+    private final VisualizationPanel vizPanel = new VisualizationPanel(relationshipBrowser);
+    private final FiltersPanel filtersPane = new FiltersPanel();
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public CVTTopComponent() {
         initComponents();
-        
+
         splitPane.setRightComponent(relationshipBrowser);
         splitPane.setDividerLocation(0.25);
-                
+
         setName(Bundle.CVTTopComponent_name());
 
         /*
@@ -76,15 +79,18 @@ public final class CVTTopComponent extends TopComponent {
         // Make sure the Global Actions Context is proxying the selection of the active tab.
         browseVisualizeTabPane.addChangeListener(changeEvent -> {
             Component selectedComponent = browseVisualizeTabPane.getSelectedComponent();
-            if(selectedComponent instanceof Lookup.Provider) {
-                Lookup lookup = ((Lookup.Provider)selectedComponent).getLookup();
+            if (selectedComponent instanceof Lookup.Provider) {
+                Lookup lookup = ((Lookup.Provider) selectedComponent).getLookup();
                 proxyLookup.setNewLookups(lookup);
             }
-            
+
             relationshipBrowser.setSelectionInfo(new SelectionInfo(new HashSet<>(), new HashSet<>(), currentFilter));
         });
-        
-        
+
+        filterTabPanel.setLayout(new BorderLayout());
+        filterTabPanel.add(filtersPane, BorderLayout.CENTER);
+        browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
+        browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.vizPanel.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), vizPanel); // NOI18N
         /*
          * Connect the filtersPane to the accountsBrowser and visualizaionPanel
          * via an Eventbus
@@ -93,16 +99,17 @@ public final class CVTTopComponent extends TopComponent {
         CVTEvents.getCVTEventBus().register(vizPanel);
         CVTEvents.getCVTEventBus().register(accountsBrowser);
         CVTEvents.getCVTEventBus().register(filtersPane);
-        
+
         filterTabbedPane.setIconAt(0, new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-left.png")));
         filterTabbedPane.setTitleAt(0, "");
+
     }
 
     @Subscribe
     void pinAccount(CVTEvents.PinAccountsEvent pinEvent) {
         browseVisualizeTabPane.setSelectedIndex(1);
     }
-    
+
     @Subscribe
     void handle(final CVTEvents.FilterChangeEvent filterChangeEvent) {
         currentFilter = filterChangeEvent.getNewFilter();
@@ -118,11 +125,8 @@ public final class CVTTopComponent extends TopComponent {
 
         filterTabbedPane = new JTabbedPane();
         filterTabPanel = new JPanel();
-        filtersPane = new FiltersPanel();
         splitPane = new JSplitPane();
         browseVisualizeTabPane = new JTabbedPane();
-        accountsBrowser = new AccountsBrowser(relationshipBrowser);
-        vizPanel = new VisualizationPanel(relationshipBrowser);
 
         setLayout(new BorderLayout());
 
@@ -131,10 +135,6 @@ public final class CVTTopComponent extends TopComponent {
                 filterTabbedPaneMouseClicked(evt);
             }
         });
-
-		filterTabPanel.setLayout(new BorderLayout());
-        filterTabPanel.add(filtersPane, BorderLayout.CENTER);
-
         filterTabbedPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.filterTabPanel.TabConstraints.tabTitle"), filterTabPanel); // NOI18N
 
         add(filterTabbedPane, BorderLayout.WEST);
@@ -142,10 +142,7 @@ public final class CVTTopComponent extends TopComponent {
         splitPane.setDividerLocation(1);
         splitPane.setResizeWeight(0.25);
 
-        browseVisualizeTabPane.setFont(new Font("Tahoma", 0, 18)); // NOI18N
-        browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
-        browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.vizPanel.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), vizPanel); // NOI18N
-
+        browseVisualizeTabPane.setFont(browseVisualizeTabPane.getFont().deriveFont(browseVisualizeTabPane.getFont().getSize()+7f));
         splitPane.setLeftComponent(browseVisualizeTabPane);
         browseVisualizeTabPane.getAccessibleContext().setAccessibleName(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.browseVisualizeTabPane.AccessibleContext.accessibleName")); // NOI18N
 
@@ -154,8 +151,8 @@ public final class CVTTopComponent extends TopComponent {
 
     private void filterTabbedPaneMouseClicked(MouseEvent evt) {//GEN-FIRST:event_filterTabPaneMouseClicked
         int index = filterTabbedPane.indexAtLocation(evt.getX(), evt.getY());
-        if(index != -1) {
-            if(filtersVisible) {
+        if (index != -1) {
+            if (filtersVisible) {
                 filterTabbedPane.setIconAt(0, new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-right.png")));
                 filterTabPanel.removeAll();
                 filterTabPanel.revalidate();
@@ -171,13 +168,10 @@ public final class CVTTopComponent extends TopComponent {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private AccountsBrowser accountsBrowser;
     private JTabbedPane browseVisualizeTabPane;
-    private JTabbedPane filterTabbedPane;
     private JPanel filterTabPanel;
-    private FiltersPanel filtersPane;
+    private JTabbedPane filterTabbedPane;
     private JSplitPane splitPane;
-    private VisualizationPanel vizPanel;
     // End of variables declaration//GEN-END:variables
 
     @Override

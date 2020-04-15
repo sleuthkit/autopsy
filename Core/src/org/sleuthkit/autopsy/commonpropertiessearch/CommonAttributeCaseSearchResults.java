@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,9 +30,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Stores the results from the various types of common attribute searching
@@ -116,20 +116,19 @@ final public class CommonAttributeCaseSearchResults {
             try {
                 currentCaseName = Case.getCurrentCaseThrows().getDisplayName();
             } catch (NoCurrentCaseException ex) {
-                throw new EamDbException("Unable to get current case while performing filtering", ex);
+                throw new CentralRepoException("Unable to get current case while performing filtering", ex);
             }
             Map<String, CommonAttributeValueList> currentCaseDataSourceMap = metadata.get(currentCaseName);
             Map<String, Map<String, CommonAttributeValueList>> filteredCaseNameToDataSourcesTree = new HashMap<>();
             if (currentCaseDataSourceMap == null) { //there are no results
                 return filteredCaseNameToDataSourcesTree;
             }
-            CorrelationAttributeInstance.Type attributeType = CorrelationAttributeInstance
-                    .getDefaultCorrelationTypes()
+            CorrelationAttributeInstance.Type attributeType = CentralRepository.getInstance().getDefinedCorrelationTypes()
                     .stream()
                     .filter(filterType -> filterType.getId() == resultTypeId)
                     .findFirst().get();
             //Call countUniqueDataSources once to reduce the number of DB queries needed to get the frequencyPercentage
-            Double uniqueCaseDataSourceTuples = EamDb.getInstance().getCountUniqueDataSources().doubleValue();
+            Double uniqueCaseDataSourceTuples = CentralRepository.getInstance().getCountUniqueDataSources().doubleValue();
             Map<String, CommonAttributeValue> valuesToKeepCurrentCase = getValuesToKeepFromCurrentCase(currentCaseDataSourceMap, attributeType, percentageThreshold, uniqueCaseDataSourceTuples);
             for (Entry<String, Map<String, CommonAttributeValueList>> mapOfDataSources : Collections.unmodifiableMap(metadata).entrySet()) {
                 if (!mapOfDataSources.getKey().equals(currentCaseName)) {
@@ -141,7 +140,7 @@ final public class CommonAttributeCaseSearchResults {
                 }
             }
             return filteredCaseNameToDataSourcesTree;
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             LOGGER.log(Level.INFO, "Unable to perform filtering returning unfiltered result set", ex);
             return metadata;
         }
@@ -164,9 +163,9 @@ final public class CommonAttributeCaseSearchResults {
      * @return a map of correlation value to CommonAttributeValue for results
      *         from the current case
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    private Map<String, CommonAttributeValue> getValuesToKeepFromCurrentCase(Map<String, CommonAttributeValueList> dataSourceToValueList, CorrelationAttributeInstance.Type attributeType, int maximumPercentageThreshold, Double uniqueCaseDataSourceTuples) throws EamDbException {
+    private Map<String, CommonAttributeValue> getValuesToKeepFromCurrentCase(Map<String, CommonAttributeValueList> dataSourceToValueList, CorrelationAttributeInstance.Type attributeType, int maximumPercentageThreshold, Double uniqueCaseDataSourceTuples) throws CentralRepoException {
         Map<String, CommonAttributeValue> valuesToKeep = new HashMap<>();
         Set<String> valuesToRemove = new HashSet<>();
         for (Entry<String, CommonAttributeValueList> mapOfValueLists : Collections.unmodifiableMap(dataSourceToValueList).entrySet()) {
@@ -194,9 +193,9 @@ final public class CommonAttributeCaseSearchResults {
      *
      * @return the modified results for the case
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    private Map<String, CommonAttributeValueList> createTreeForCase(Map<String, CommonAttributeValue> valuesToKeepCurrentCase, Map<String, CommonAttributeValueList> dataSourceToValueList) throws EamDbException {
+    private Map<String, CommonAttributeValueList> createTreeForCase(Map<String, CommonAttributeValue> valuesToKeepCurrentCase, Map<String, CommonAttributeValueList> dataSourceToValueList) throws CentralRepoException {
         Map<String, CommonAttributeValueList> treeForCase = new HashMap<>();
         for (Entry<String, CommonAttributeValueList> mapOfValueLists : Collections.unmodifiableMap(dataSourceToValueList).entrySet()) {
             for (CommonAttributeValue value : mapOfValueLists.getValue().getDelayedMetadataSet()) {
@@ -228,12 +227,12 @@ final public class CommonAttributeCaseSearchResults {
      *         shown to the user, false if the value should not be removed and
      *         the user will see it as a result
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    private boolean filterValue(CorrelationAttributeInstance.Type attributeType, CommonAttributeValue value, int maximumPercentageThreshold, Double uniqueCaseDataSourceTuples) throws EamDbException {
+    private boolean filterValue(CorrelationAttributeInstance.Type attributeType, CommonAttributeValue value, int maximumPercentageThreshold, Double uniqueCaseDataSourceTuples) throws CentralRepoException {
         if (maximumPercentageThreshold != 0) {  //only do the frequency filtering when a max % was set
             try {
-                Double uniqueTypeValueTuples = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(
+                Double uniqueTypeValueTuples = CentralRepository.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(
                         attributeType, value.getValue()).doubleValue();
                 Double commonalityPercentage = uniqueTypeValueTuples / uniqueCaseDataSourceTuples * 100;
                 int frequencyPercentage = commonalityPercentage.intValue();

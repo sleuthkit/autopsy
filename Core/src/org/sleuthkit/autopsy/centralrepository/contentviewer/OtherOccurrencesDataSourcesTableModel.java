@@ -26,7 +26,7 @@ import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -144,7 +144,7 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
         String caseUUID;
         try {
             caseUUID = nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID();
-        } catch (EamDbException ignored) {
+        } catch (CentralRepoException ignored) {
             //non central repo nodeData won't have a correlation case
             try {
                 caseUUID = Case.getCurrentCaseThrows().getName();

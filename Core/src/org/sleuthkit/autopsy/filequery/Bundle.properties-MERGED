@@ -6,6 +6,21 @@ DataSourceModuleWrapper.fileTypeModule.text=File Type Identification module was 
 # {0} - dataSourceName
 DataSourceModuleWrapper.hashModule.text=Hash Lookup module was not run on data source: {0}\n
 DiscoveryTopComponent.name=\ File Discovery
+DiscoveryUiUtility.bytes.text=bytes
+DiscoveryUiUtility.gigaBytes.text=GB
+DiscoveryUiUtility.kiloBytes.text=KB
+DiscoveryUiUtility.megaBytes.text=MB
+# {0} - fileSize
+# {1} - units
+DiscoveryUiUtility.sizeLabel.text=Size: {0} {1}
+DiscoveryUiUtility.terraBytes.text=TB
+# {0} - otherInstanceCount
+DocumentPanel.nameLabel.more.text=\ and {0} more
+DocumentPanel.noImageExtraction.text=0 of ? images
+DocumentPanel.numberOfImages.noImages=No images
+# {0} - numberOfImages
+DocumentPanel.numberOfImages.text=1 of {0} images
+DocumentWrapper.previewInitialValue=Preview not generated yet.
 FileGroup.groupSortingAlgorithm.groupName.text=Group Name
 FileGroup.groupSortingAlgorithm.groupSize.text=Group Size
 # {0} - Data source name
@@ -13,6 +28,8 @@ FileGroup.groupSortingAlgorithm.groupSize.text=Group Size
 FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
 # {0} - Data source ID
 FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})
+FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview.
+FileSearch.documentSummary.noPreview=No preview available.
 FileSearch.FileTagGroupKey.noSets=None
 # {0} - file name
 FileSearch.genVideoThumb.progress.text=extracting temporary file {0}
@@ -83,7 +100,6 @@ FileSearchFiltering.DataSourceFilter.datasource={0}({1})
 # {0} - filters
 FileSearchFiltering.DataSourceFilter.desc=Files in data source(s): {0}
 FileSearchFiltering.DataSourceFilter.or=\ or 
-FileSearchFiltering.ExifFilter.desc=Files that contain EXIF data
 # {0} - filters
 FileSearchFiltering.FileTypeFilter.desc=Files with type: {0}
 FileSearchFiltering.FileTypeFilter.or=\ or 
@@ -120,10 +136,14 @@ FileSearchFiltering.SizeFilter.range=({0} to {1})
 # {0} - tag names
 FileSearchFiltering.TagsFilter.desc=Files that have been tagged {0}
 FileSearchFiltering.TagsFilter.or=\ or 
+FileSearchFiltering.UserCreatedFilter.desc=Files that contain EXIF data
 FileSearchPanel.dialogTitle.text=Test file search
 FileSearchPanel.sortingPanel.border.title=Grouping
 FileSearchPanel.searchButton.text=Show
 FileSearchPanel.addButton.text=Add
+FileSearchPanel.steptwo.documents=Step 2: Filter which documents to show
+FileSearchPanel.steptwo.images=Step 2: Filter which images to show
+FileSearchPanel.steptwo.videos=Step 2: Filter which videos to show
 FileSearchPanel.substringRadioButton.text=Substring
 FileSearchPanel.fullRadioButton.text=Full
 FileSearchPanel.parentCheckbox.text=Parent Folder:
@@ -150,7 +170,6 @@ FileSearchPanel.hashSetCheckbox.text=Hash Set:
 FileSearchPanel.tagsCheckbox.text=Tag:
 FileSearchPanel.interestingItemsCheckbox.text=Interesting Item:
 FileSearchPanel.scoreCheckbox.text=Has Score:
-FileSearchPanel.exifCheckbox.text=Possibly User Created
 FileSearchPanel.notableCheckbox.text=Must have been tagged as notable
 FileSearchPanel.objectsCheckbox.text=Object Detected:
 FileSorter.SortingMethod.datasource.displayName=Data Source
@@ -162,17 +181,9 @@ FileSorter.SortingMethod.fullPath.displayName=Full Path
 FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names
 GroupsListPanel.noResults.message.text=No results were found for the selected filters.
 GroupsListPanel.noResults.title.text=No results found
-ImageThumbnailPanel.bytes.text=bytes
-# {0} - numberOfInstances
-ImageThumbnailPanel.countLabel.text=Number of Instances: {0}
-ImageThumbnailPanel.gigaBytes.text=GB
 ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
-ImageThumbnailPanel.kiloBytes.text=KB
-ImageThumbnailPanel.megaBytes.text=MB
-# {0} - fileSize
-# {1} - units
-ImageThumbnailPanel.sizeLabel.text=Size: {0} {1}
-ImageThumbnailPanel.terraBytes.text=TB
+# {0} - otherInstanceCount
+ImageThumbnailPanel.nameLabel.more.text=\ and {0} more
 OpenFileDiscoveryAction.resultsIncomplete.text=Results may be incomplete
 ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
 ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
@@ -182,6 +193,7 @@ ResultFile.score.taggedFile.description=At least one instance of the file has be
 # {1} - totalPages
 ResultsPanel.currentPage.displayValue=Page: {0} of {1}
 ResultsPanel.currentPageLabel.text=Page: -
+ResultsPanel.documentPreview.text=Document preview creation cancelled.
 # {0} - selectedPage
 # {1} - maxPage
 ResultsPanel.invalidPageNumber.message=The selected page number {0} does not exist. Please select a value from 1 to {1}.
@@ -200,17 +212,22 @@ GroupListPanel.groupKeyList.border.title=Groups
 DiscoveryTopComponent.imagesButton.text=Images
 DiscoveryTopComponent.videosButton.text=Videos
 ResultsPanel.resultsSplitPane.toolTipText=
-FileSearchPanel.stepTwoLabel.text=Step 2: Filter which images to show
 FileSearchPanel.stepThreeLabel.text=Step 3: Choose display settings
 DiscoveryTopComponent.stepOneLabel.text=Step 1: Pick File Type
+DiscoveryTopComponent.documentsButton.text=Documents
+DocumentPanel.fileSizeLabel.toolTipText=
+DocumentPanel.isDeletedLabel.toolTipText=
+ImageThumbnailPanel.isDeletedLabel.toolTipText=
+FileSearchPanel.userCreatedCheckbox.text=Possibly User Created
+ResultsPanel.unableToCreate.text=Unable to create summary.
 ResultsPanel.viewFileInDir.name=View File in Directory
 VideoThumbnailPanel.bytes.text=bytes
-# {0} - numberOfInstances
-VideoThumbnailPanel.countLabel.text=Number of Instances: {0}
 VideoThumbnailPanel.deleted.text=All instances of file are deleted.
 VideoThumbnailPanel.gigaBytes.text=GB
 VideoThumbnailPanel.kiloBytes.text=KB
 VideoThumbnailPanel.megaBytes.text=MB
+# {0} - otherInstanceCount
+VideoThumbnailPanel.nameLabel.more.text=\ and {0} more
 # {0} - fileSize
 # {1} - units
 VideoThumbnailPanel.sizeLabel.text=Size: {0} {1}

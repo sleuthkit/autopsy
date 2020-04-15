@@ -61,8 +61,8 @@ final class DataSourceIntegrityIngestSettingsPanel extends IngestModuleIngestJob
 
         computeHashesCheckbox = new javax.swing.JCheckBox();
         verifyHashesCheckbox = new javax.swing.JCheckBox();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
+        ingestSettingsLabel = new javax.swing.JLabel();
+        noteLabel = new javax.swing.JLabel();
 
         setPreferredSize(new java.awt.Dimension(300, 155));
 
@@ -75,10 +75,10 @@ final class DataSourceIntegrityIngestSettingsPanel extends IngestModuleIngestJob
 
         org.openide.awt.Mnemonics.setLocalizedText(verifyHashesCheckbox, org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.verifyHashesCheckbox.text")); // NOI18N
 
-        jLabel3.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.jLabel3.text")); // NOI18N
+        ingestSettingsLabel.setFont(ingestSettingsLabel.getFont().deriveFont(ingestSettingsLabel.getFont().getStyle() | java.awt.Font.BOLD));
+        org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsLabel, org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.ingestSettingsLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(noteLabel, org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.noteLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -87,23 +87,23 @@ final class DataSourceIntegrityIngestSettingsPanel extends IngestModuleIngestJob
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1)
+                    .addComponent(noteLabel)
                     .addComponent(verifyHashesCheckbox)
                     .addComponent(computeHashesCheckbox)
-                    .addComponent(jLabel3))
+                    .addComponent(ingestSettingsLabel))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel3)
+                .addComponent(ingestSettingsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(computeHashesCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(verifyHashesCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel1)
+                .addComponent(noteLabel)
                 .addContainerGap(53, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -114,8 +114,8 @@ final class DataSourceIntegrityIngestSettingsPanel extends IngestModuleIngestJob
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox computeHashesCheckbox;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel ingestSettingsLabel;
+    private javax.swing.JLabel noteLabel;
     private javax.swing.JCheckBox verifyHashesCheckbox;
     // End of variables declaration//GEN-END:variables
 

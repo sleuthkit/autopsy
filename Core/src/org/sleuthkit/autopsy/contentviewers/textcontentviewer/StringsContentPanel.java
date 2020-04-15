@@ -133,7 +133,6 @@ public class StringsContentPanel extends javax.swing.JPanel {
         outputScrollPane.setPreferredSize(new java.awt.Dimension(640, 402));
 
         outputViewPane.setEditable(false);
-        outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
         outputViewPane.setPreferredSize(new java.awt.Dimension(100, 40));
         outputScrollPane.setViewportView(outputViewPane);
 

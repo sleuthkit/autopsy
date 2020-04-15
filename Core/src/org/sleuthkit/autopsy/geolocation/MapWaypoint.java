@@ -18,13 +18,18 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -63,6 +68,18 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
     private final static String HTML_PROP_FORMAT = "<b>%s: </b>%s<br>";
     static private final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.US);
 
+    private static final Map<Integer, Color> artifactTypesToColors = new HashMap<>();
+
+    static {
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID(), Color.BLUE);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID(), Color.RED);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID(), Color.CYAN);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID(), Color.GREEN);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID(), Color.ORANGE);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID(), Color.ORANGE);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID(), Color.CYAN);
+    }
+
     private final Waypoint dataModelWaypoint;
     private final GeoPosition position;
 
@@ -73,10 +90,10 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      * @param dmWaypoints
      *
      * @return List of MapWaypoint objects. List will be empty if dmWaypoints
-     *         was empty or null.
+     * was empty or null.
      */
-    static List<MapWaypoint> getWaypoints(List<Waypoint> dmWaypoints) {
-        List<MapWaypoint> mapPoints = new ArrayList<>();
+    static Set<MapWaypoint> getWaypoints(List<Waypoint> dmWaypoints) {
+        Set<MapWaypoint> mapPoints = new LinkedHashSet<>();
 
         if (dmWaypoints != null) {
 
@@ -95,7 +112,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      * @param mapWaypoints
      *
      * @return A list of Waypoint objects, or empty list if mapWaypoints was
-     *         null or empty.
+     * null or empty.
      */
     static List<Waypoint> getDataModelWaypoints(List<MapWaypoint> mapWaypoints) {
         List<Waypoint> waypoints = new ArrayList<>();
@@ -230,7 +247,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      * menu items can be put in a consistent order with other parts of the UI.
      *
      * @param artifact Artifact for the selected waypoint
-     * @param content  Artifact content
+     * @param content Artifact content
      *
      * @return List of JMenuItems for the DataModelActionFactory actions
      */
@@ -266,7 +283,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
     /**
      * Get the nicely formatted details for the given waypoint.
      *
-     * @param point  Waypoint object
+     * @param point Waypoint object
      * @param header String details header
      *
      * @return HTML formatted String of details for given waypoint
@@ -322,6 +339,22 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      */
     private String getTimeStamp(long timeStamp) {
         return DATE_FORMAT.format(new java.util.Date(timeStamp * 1000));
+    }
+
+    /**
+     *
+     * @return the waypoint color that represents the given artifact type id
+     */
+    static Color getColor(int artifactTypeId) {
+        return artifactTypesToColors.getOrDefault(artifactTypeId, Color.GRAY);
+    }
+
+    /**
+     *
+     * @return the color that this waypoint should be rendered
+     */
+    Color getColor() {
+        return getColor(dataModelWaypoint.getArtifact().getArtifactTypeID());
     }
 
     /**

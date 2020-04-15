@@ -50,14 +50,15 @@ import org.apache.commons.io.FileUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrClient;
-// ELTODO see if this is better: import org.apache.solr.client.solrj.impl.CloudSolrClient;
+import org.apache.solr.client.solrj.impl.HttpSolrClient; // for Single User mode
+// ELTODO import org.apache.solr.client.solrj.impl.CloudSolrClient; // for Solr Cloud mode
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import java.util.Properties;
+import java.util.concurrent.TimeoutException;
 import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
@@ -85,7 +86,7 @@ import org.sleuthkit.datamodel.Content;
 
 /**
  * Handles management of a either a local or centralized Solr server and its
- * cores.
+ * collections or cores.
  */
 public class Server {
 
@@ -241,6 +242,7 @@ public class Server {
     // A reference to the Solr server we are currently connected to for the Case.
     // This could be a local or remote server.
     private HttpSolrClient currentSolrServer;
+    //private CloudSolrClient currentSolrServer;
 
     private Collection currentCollection;
     private final ReentrantReadWriteLock currentCoreLock;
@@ -792,12 +794,18 @@ public class Server {
         "# {0} - core name", "Server.deleteCore.exception.msg=Failed to delete Solr core {0}",})
     void deleteCore(String coreName, CaseMetadata metadata) throws KeywordSearchServiceException {
         try {
+            /* ELTODO IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());
+            List<String> solrUrls = new ArrayList<>();
+            solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
+            CloudSolrClient solrServer = new CloudSolrClient.Builder(solrUrls).build();*/
+                
             HttpSolrClient solrServer;
             if (metadata.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 Integer localSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
                 solrServer = new HttpSolrClient.Builder("http://localhost:" + localSolrServerPort + "/solr").build(); //NON-NLS
             } else {
                 IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());
+                // ELTODO solrServer = new CloudSolrClient.Builder().withZkHost(zkHosts).build();
                 solrServer = new HttpSolrClient.Builder("http://" + properties.getHost() + ":" + properties.getPort() + "/solr").build(); //NON-NLS
             }
             connectToSolrServer(solrServer);
@@ -844,6 +852,7 @@ public class Server {
 
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
+                // ELTODO make embedded Solr work with localSolrServer
                 currentSolrServer = this.localSolrServer;
 
                 // check if the embedded Solr server is running
@@ -852,13 +861,20 @@ public class Server {
                     throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg")); 
                 }
                 
-                connectToEbmeddedSolrServer(currentSolrServer);                
+                // ELTODO connectToEbmeddedSolrServer(currentSolrServer);                
             } else {
                 IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+                /* ELTODO List<String> solrUrls = new ArrayList<>();
+                solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
+                solrUrls.add("http://review1:" + properties.getPort() + "/solr");
+                solrUrls.add("http://ingest9:" + properties.getPort() + "/solr");
+                currentSolrServer = new CloudSolrClient.Builder(solrUrls).build(); // (new CloudSolrClient.Builder(solrUrls));
+                currentSolrServer.connect(10, TimeUnit.SECONDS);*/
+
                 currentSolrServer = new HttpSolrClient.Builder("http://" + properties.getHost() + ":" + properties.getPort() + "/solr").build(); //NON-NLS
                 connectToSolrServer(currentSolrServer);
             }
-        } catch (SolrServerException | IOException ex) {
+        } catch (/* ELTODO SolrServerException | IOException*/ Exception ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
         }
 
@@ -873,34 +889,27 @@ public class Server {
                 if (!collectionExists(collectionName)) {
                     /*
                     * The core either does not exist or it is not loaded. Make a
-                    * request that will cause the core to be created if it does not
-                    * exist or loaded if it already exists.
+                    * request that will cause the core to be created.
                     */
-
-                    Properties properties = new Properties();
-                    properties.setProperty("dataDir", dataDir.getAbsolutePath());
-                    // properties.setProperty("transient", "true");
-                    // properties.setProperty("loadOnStartup", "false");
-
-                    Integer numShards = 1;
-                    Integer numNrtReplicas = 1;
-                    Integer numTlogReplicas = 0;
-                    Integer numPullReplicas = 0;
-                    CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas)
-                            .setProperties(properties);
-                    CollectionAdminResponse createResponse = createCollectionRequest.process(currentSolrServer);
-                    if (createResponse.isSuccess()) {
-                        logger.log(Level.INFO, "Collection {0} successfully created.", collectionName);
-                    } else {
-                        logger.log(Level.SEVERE, "Unable to create Solr collection {0}", collectionName); //NON-NLS
-                        throw new KeywordSearchModuleException(Bundle.Server_exceptionMessage_unableToCreateCollection());
-                    }
-
-                    /* If we need core name:
-                    Map<String, NamedList<Integer>> status = createResponse.getCollectionCoresStatus();
-                    existingCoreName = status.keySet().iterator().next();*/
-                    if (!collectionExists(collectionName)) {
-                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+                    int NUM_RETRIES = 10;
+                    boolean doRetry = false;
+                    for (int reTryAttempt = 0; reTryAttempt < NUM_RETRIES; reTryAttempt++) {
+                        try {
+                            doRetry = false;
+                            createMultiUserCollection(collectionName, dataDir.getAbsolutePath());
+                        } catch (Exception ex) {
+                            if (reTryAttempt >= NUM_RETRIES) {
+                                logger.log(Level.SEVERE, "Unable to create Solr collection " + collectionName, ex); //NON-NLS
+                                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
+                            } else {
+                                logger.log(Level.SEVERE, "Unable to create Solr collection " + collectionName + ". Re-trying...", ex); //NON-NLS
+                                Thread.sleep(1000L);
+                                doRetry = true;
+                            }
+                        }
+                        if (!doRetry) {
+                            break;
+                        }
                     }
                 } 
             } else {                
@@ -931,10 +940,47 @@ public class Server {
                 }
             }
 
-            return new Collection(collectionName, theCase.getCaseType(), index);
+            return new Collection(collectionName, theCase, index);
 
         } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Exception during Solr collection creation.", ex); //NON-NLS
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
+        }
+    }
+    
+    private void createMultiUserCollection(String collectionName, String dataDirPath) throws KeywordSearchModuleException, SolrServerException, IOException {
+        /*
+        * The core either does not exist or it is not loaded. Make a
+        * request that will cause the core to be created if it does not
+        * exist or loaded if it already exists.
+        */
+
+        Properties properties = new Properties(); 
+        properties.setProperty("dataDir", dataDirPath);
+        // properties.setProperty("transient", "true");
+        // properties.setProperty("loadOnStartup", "false");
+
+        Integer numShards = 1;
+        Integer numNrtReplicas = 1;
+        Integer numTlogReplicas = 0;
+        Integer numPullReplicas = 0;
+        CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas)
+                .setProperties(properties);
+        //CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas);
+
+        CollectionAdminResponse createResponse = createCollectionRequest.process(currentSolrServer);
+        if (createResponse.isSuccess()) {
+            logger.log(Level.INFO, "Collection {0} successfully created.", collectionName);
+        } else {
+            logger.log(Level.SEVERE, "Unable to create Solr collection {0}", collectionName); //NON-NLS
+            throw new KeywordSearchModuleException(Bundle.Server_exceptionMessage_unableToCreateCollection());
+        }
+
+        /* If we need core name:
+        Map<String, NamedList<Integer>> status = createResponse.getCollectionCoresStatus();
+        existingCoreName = status.keySet().iterator().next();*/
+        if (!collectionExists(collectionName)) {
+            throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
         }
     }
     
@@ -1080,7 +1126,7 @@ public class Server {
             }
         }
     }
-
+    
     /**
      * Helper class to store the current server properties
      */
@@ -1130,7 +1176,7 @@ public class Server {
         }
     }
 
-    NamedList<Object> request(SolrRequest request) throws SolrServerException, NoOpenCoreException {
+    NamedList<Object> request(SolrRequest request) throws SolrServerException, RemoteSolrException, NoOpenCoreException {
         currentCoreLock.readLock().lock();
         try {
             if (null == currentCollection) {
@@ -1160,7 +1206,7 @@ public class Server {
             }
             try {
                 return currentCollection.queryNumIndexedFiles();
-            } catch (SolrServerException | IOException ex) {
+            } catch (SolrServerException | RemoteSolrException | IOException ex) {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumIdxFiles.exception.msg"), ex);
             }
         } finally {
@@ -1499,6 +1545,7 @@ public class Server {
      * @throws IOException
      */
     void connectToSolrServer(HttpSolrClient solrServer) throws SolrServerException, IOException {
+    // ELTODO void connectToSolrServer(CloudSolrClient solrServer) throws SolrServerException, IOException {
         TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
         CollectionAdminRequest.ClusterStatus statusRequest = CollectionAdminRequest.getClusterStatus();
         CollectionAdminResponse statusResponse = statusRequest.process(solrServer);
@@ -1630,15 +1677,29 @@ public class Server {
 
         private final int QUERY_TIMEOUT_MILLISECONDS = 86400000; // 24 Hours = 86,400,000 Milliseconds
 
-        private Collection(String name, CaseType caseType, Index index) {
+        private Collection(String name, Case theCase, Index index) throws TimeoutException, InterruptedException {
             this.name = name;
-            this.caseType = caseType;
+            this.caseType = theCase.getCaseType();
             this.textIndex = index;
+
+            // ELTODO get this from some configuration or UI
+            //IndexingServerProperties properties = getMultiUserServerProperties(Case.getCurrentCase().getCaseDirectory());
+           
+            /*IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+            List<String> solrUrls = new ArrayList<>();
+            solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
+            solrUrls.add("http://review1:" + properties.getPort() + "/solr");
+            solrUrls.add("http://ingest9:" + properties.getPort() + "/solr");
+            solrClient = new CloudSolrClient.Builder(solrUrls).build();
+            solrClient.setDefaultCollection(name);
+            solrClient.connect(10, TimeUnit.SECONDS);*/
 
             this.solrClient = new HttpSolrClient.Builder(currentSolrServer.getBaseURL() + "/" + name)
                     .withSocketTimeout(QUERY_TIMEOUT_MILLISECONDS)
                     .allowCompression(true) // allowCompression defaults to false. Server side must support gzip or deflate for this to have any effect.
                     .build(); //NON-NLS
+            // ELTODO solrClient.withSocketTimeout(QUERY_TIMEOUT_MILLISECONDS);
+            // ELTODO solrClient.allowCompression(true);            
 
             //TODO test these settings
             //solrCore.setConnectionTimeout(1000);
@@ -1665,7 +1726,7 @@ public class Server {
             return solrClient.query(sq);
         }
 
-        private NamedList<Object> request(SolrRequest request) throws SolrServerException {
+        private NamedList<Object> request(SolrRequest request) throws SolrServerException, RemoteSolrException {
             try {
                 return solrClient.request(request);
             } catch (IOException e) {
@@ -1705,7 +1766,7 @@ public class Server {
         void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
             try {
                 solrClient.add(doc);
-            } catch (SolrServerException ex) {
+            } catch (SolrServerException | RemoteSolrException ex) {
                 logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex); //NON-NLS
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg", doc.getField("id")), ex); //NON-NLS

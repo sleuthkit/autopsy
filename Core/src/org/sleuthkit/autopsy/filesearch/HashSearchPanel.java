@@ -127,14 +127,11 @@ class HashSearchPanel extends javax.swing.JPanel {
         rightClickMenu.add(selectAllMenuItem);
 
         hashCheckBox.setText(org.openide.util.NbBundle.getMessage(HashSearchPanel.class, "HashSearchPanel.md5CheckBox.text")); // NOI18N
-        hashCheckBox.setFont(hashCheckBox.getFont().deriveFont(hashCheckBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         hashCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 hashCheckBoxActionPerformed(evt);
             }
         });
-
-        searchTextField.setFont(searchTextField.getFont().deriveFont(searchTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

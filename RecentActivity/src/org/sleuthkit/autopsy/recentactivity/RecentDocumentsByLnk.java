@@ -23,9 +23,10 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
@@ -41,6 +42,8 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.*;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 
 /**
  * Recent documents class that will extract recent documents in the form of .lnk
@@ -123,12 +126,53 @@ class RecentDocumentsByLnk extends Extract {
             BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
             if(bba != null) {
                 bbartifacts.add(bba);
+                bba = createAssociatedArtifact(path, bba);
+                if (bba != null) {
+                    bbartifacts.add(bba);
+                }
             }
         }
-        
+         
         postArtifacts(bbartifacts);
     }
 
+    /**
+     * Create associated artifacts using file name and path and the artifact it associates with
+     * 
+     * @param filePathName file and path of object being associated with
+     * 
+     * @param bba blackboard artifact to associate with
+     * 
+     * @returnv BlackboardArtifact or a null value 
+     */  
+    private BlackboardArtifact createAssociatedArtifact(String filePathName, BlackboardArtifact bba) {
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
+        String normalizePathName = FilenameUtils.normalize(filePathName, true);
+        String fileName = FilenameUtils.getName(normalizePathName);
+        String filePath = FilenameUtils.getPath(normalizePathName);
+        List<AbstractFile> sourceFiles;
+        try {
+            sourceFiles = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS
+            for (AbstractFile sourceFile : sourceFiles) {
+                if (sourceFile.getParentPath().endsWith(filePath)) {
+                    Collection<BlackboardAttribute> bbattributes2 = new ArrayList<>();
+                    bbattributes2.addAll(Arrays.asList(
+                         new BlackboardAttribute(TSK_ASSOCIATED_ARTIFACT, this.getName(),
+                         bba.getArtifactID())));
+
+                    BlackboardArtifact associatedObjectBba = createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, sourceFile, bbattributes2);
+                    if (associatedObjectBba != null) {
+                        return associatedObjectBba;
+                    }
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, String.format("Error finding actual file %s. file may not exist", filePathName)); //NON-NLS
+        }
+       
+        return null;
+    }
+    
     @Override
     public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;

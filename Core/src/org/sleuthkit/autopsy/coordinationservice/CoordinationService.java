@@ -50,11 +50,11 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 @ThreadSafe
 public final class CoordinationService {
 
-    private static final int SESSION_TIMEOUT_MILLISECONDS = 300000;
-    private static final int CONNECTION_TIMEOUT_MILLISECONDS = 300000;
-    private static final int ZOOKEEPER_SESSION_TIMEOUT_MILLIS = 3000;
-    private static final int ZOOKEEPER_CONNECTION_TIMEOUT_MILLIS = 15000;
-    private static final int PORT_OFFSET = 1000; // When run in Solr, ZooKeeper defaults to Solr port + 1000
+    private static final int SESSION_TIMEOUT_MILLISECONDS = 60000; // ELTODO
+    private static final int CONNECTION_TIMEOUT_MILLISECONDS = 60000; // ELTODO
+    private static final int ZOOKEEPER_SESSION_TIMEOUT_MILLIS = 60000;
+    private static final int ZOOKEEPER_CONNECTION_TIMEOUT_MILLIS = 60000;
+    private static final int PORT_OFFSET = 1000; // When run in Solr, ZooKeeper defaults to Solr port + 1000 // ELTODO
     private static final String DEFAULT_NAMESPACE_ROOT = "autopsy";
     @GuardedBy("CoordinationService.class")
     private static CoordinationService instance;
@@ -75,6 +75,7 @@ public final class CoordinationService {
         boolean result = false;
         Object workerThreadWaitNotifyLock = new Object();
         int zooKeeperServerPort = Integer.valueOf(UserPreferences.getIndexingServerPort()) + PORT_OFFSET;
+        // ELTODO String connectString = UserPreferences.getZkServerHost() + ":" + UserPreferences.getZkServerPort();
         String connectString = UserPreferences.getIndexingServerHost() + ":" + zooKeeperServerPort;
         ZooKeeper zooKeeper = new ZooKeeper(connectString, ZOOKEEPER_SESSION_TIMEOUT_MILLIS,
                 (WatchedEvent event) -> {
@@ -149,8 +150,8 @@ public final class CoordinationService {
          * Connect to ZooKeeper via Curator.
          */
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-        int zooKeeperServerPort = Integer.valueOf(UserPreferences.getIndexingServerPort()) + PORT_OFFSET;
-        String connectString = UserPreferences.getIndexingServerHost() + ":" + zooKeeperServerPort;
+        int zooKeeperServerPort = Integer.valueOf(UserPreferences.getZkServerPort());
+        String connectString = UserPreferences.getZkServerHost() + ":" + zooKeeperServerPort;
         curator = CuratorFrameworkFactory.newClient(connectString, SESSION_TIMEOUT_MILLISECONDS, CONNECTION_TIMEOUT_MILLISECONDS, retryPolicy);
         curator.start();
 

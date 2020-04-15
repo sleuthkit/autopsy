@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
+import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -34,9 +36,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
@@ -58,7 +61,6 @@ import org.jxmapviewer.viewer.DefaultTileFactory;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactory;
 import org.jxmapviewer.viewer.TileFactoryInfo;
-import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
 import org.jxmapviewer.viewer.WaypointRenderer;
 import org.openide.util.NbBundle.Messages;
@@ -69,7 +71,6 @@ import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.datamodel.TskCoreException;
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
-import org.jxmapviewer.viewer.DefaultWaypointRenderer;
 
 /**
  * The map panel. This panel contains the jxmapviewer MapViewer
@@ -82,6 +83,7 @@ final public class MapPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     private boolean zoomChanging;
     private KdTree<MapWaypoint> waypointTree;
+    private Set<MapWaypoint> waypointSet;
 
     private Popup currentPopup;
     private final PopupFactory popupFactory;
@@ -89,6 +91,9 @@ final public class MapPanel extends javax.swing.JPanel {
     private static final int POPUP_WIDTH = 300;
     private static final int POPUP_HEIGHT = 200;
     private static final int POPUP_MARGIN = 10;
+
+    private BufferedImage whiteWaypointImage;
+    private BufferedImage transparentWaypointImage;
 
     private MapWaypoint currentlySelectedWaypoint;
 
@@ -105,6 +110,13 @@ final public class MapPanel extends javax.swing.JPanel {
         zoomChanging = false;
         currentPopup = null;
         popupFactory = new PopupFactory();
+
+        try {
+            whiteWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_white.png"));
+            transparentWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_transparent.png"));
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to load geolocation waypoint images", ex);
+        }
 
         // ComponentListeners do not have a concept of resize event "complete"
         // therefore if we move the popup as the window resizes there will be 
@@ -123,7 +135,7 @@ final public class MapPanel extends javax.swing.JPanel {
                 try {
                     // Tell the old factory to cleanup
                     mapViewer.getTileFactory().dispose();
-                    
+
                     mapViewer.setTileFactory(getTileFactory());
                     initializeZoomSlider();
                 } catch (GeoLocationDataException ex) {
@@ -138,20 +150,18 @@ final public class MapPanel extends javax.swing.JPanel {
                 }
             }
         });
-        
-       
     }
 
     /**
      * Get a list of the waypoints that are currently visible in the viewport.
-     * 
+     *
      * @return A list of waypoints or empty list if none were found.
      */
     List<MapWaypoint> getVisibleWaypoints() {
 
         Rectangle viewport = mapViewer.getViewportBounds();
         List<MapWaypoint> waypoints = new ArrayList<>();
-        
+
         Iterator<MapWaypoint> iterator = waypointTree.iterator();
         while (iterator.hasNext()) {
             MapWaypoint waypoint = iterator.next();
@@ -195,35 +205,17 @@ final public class MapPanel extends javax.swing.JPanel {
         mapViewer.setCenterPosition(new GeoPosition(0, 0));
 
         // Basic painters for the way points. 
-        WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<Waypoint>() {
+        WaypointPainter<MapWaypoint> waypointPainter = new WaypointPainter<MapWaypoint>() {
             @Override
-            public Set<Waypoint> getWaypoints() {
-                //To assure that the currentlySelectedWaypoint is visible it needs
-                // to be painted last. LinkedHashSet has a predicable ordering.
-                Set<Waypoint> set = new LinkedHashSet<>();
-                if (waypointTree != null) {
-                    Iterator<MapWaypoint> iterator = waypointTree.iterator();
-                    while (iterator.hasNext()) {
-                        MapWaypoint point = iterator.next();
-                        set.add(point);
-                    }
-                    // Add the currentlySelectedWaypoint to the end so that
-                    // it will be painted last.
-                    if (currentlySelectedWaypoint != null) {
-                        set.remove(currentlySelectedWaypoint);
-                        set.add(currentlySelectedWaypoint);
-                    }
+            public Set<MapWaypoint> getWaypoints() {
+                if (currentlySelectedWaypoint != null) {
+                    waypointSet.remove(currentlySelectedWaypoint);
+                    waypointSet.add(currentlySelectedWaypoint);
                 }
-                return set;
+                return waypointSet;
             }
         };
-        
-        try {
-            waypointPainter.setRenderer(new MapWaypointRenderer());
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed to load waypoint image resource, using DefaultWaypointRenderer", ex);
-            waypointPainter.setRenderer(new DefaultWaypointRenderer());
-        }
+        waypointPainter.setRenderer(new MapWaypointRenderer());
 
         mapViewer.setOverlayPainter(waypointPainter);
     }
@@ -305,13 +297,12 @@ final public class MapPanel extends javax.swing.JPanel {
      *
      * @param waypoints List of waypoints
      */
-    void setWaypoints(List<MapWaypoint> waypoints) {
+    void setWaypoints(Set<MapWaypoint> waypoints) {
         waypointTree = new KdTree<>();
-
+        this.waypointSet = waypoints;
         for (MapWaypoint waypoint : waypoints) {
             waypointTree.add(waypoint);
         }
-
         mapViewer.repaint();
     }
 
@@ -323,7 +314,7 @@ final public class MapPanel extends javax.swing.JPanel {
     void setZoom(int zoom) {
         zoomChanging = true;
         mapViewer.setZoom(zoom);
-        zoomSlider.setValue((zoomSlider.getMaximum() + zoomSlider.getMinimum()) - zoom);
+        zoomSlider.setValue(zoom);
         zoomChanging = false;
     }
 
@@ -349,7 +340,7 @@ final public class MapPanel extends javax.swing.JPanel {
         try {
             List<MapWaypoint> waypoints = findClosestWaypoint(point);
             MapWaypoint waypoint = null;
-            if(waypoints.size() > 0) {
+            if (waypoints.size() > 0) {
                 waypoint = waypoints.get(0);
             }
             showPopupMenu(waypoint, point);
@@ -357,7 +348,7 @@ final public class MapPanel extends javax.swing.JPanel {
             // it the popup is currently visible
             if (waypoint != null && !waypoint.equals(currentlySelectedWaypoint)) {
                 currentlySelectedWaypoint = waypoint;
-                if(currentPopup != null) {
+                if (currentPopup != null) {
                     showDetailsPopup();
                 }
                 mapViewer.repaint();
@@ -371,7 +362,7 @@ final public class MapPanel extends javax.swing.JPanel {
      * Show the popup menu for the given waypoint and location.
      *
      * @param waypoint Selected waypoint
-     * @param point    Current mouse click location
+     * @param point Current mouse click location
      */
     private void showPopupMenu(MapWaypoint waypoint, Point point) throws TskCoreException {
         if (waypoint == null) {
@@ -418,10 +409,15 @@ final public class MapPanel extends javax.swing.JPanel {
 
             currentPopup = popupFactory.getPopup(this, detailPane, popupLocation.x, popupLocation.y);
             currentPopup.show();
-            
-            mapViewer.revalidate();
-            mapViewer.repaint();
+
+        } else {
+            if (currentPopup != null) {
+                currentPopup.hide();
+            }
         }
+
+        mapViewer.revalidate();
+        mapViewer.repaint();
     }
 
     /**
@@ -442,21 +438,21 @@ final public class MapPanel extends javax.swing.JPanel {
     /**
      * Find the waypoint that is closest to the given mouse click point.
      *
-     * @param mouseClickPoint The mouse click point
+     * @param clickPoint The mouse click point
      *
      * @return A waypoint that is within 10 pixels of the given point, or null
-     *         if none was found.
+     * if none was found.
      */
-    private List<MapWaypoint> findClosestWaypoint(Point mouseClickPoint) {
+    private List<MapWaypoint> findClosestWaypoint(Point clickPoint) {
         if (waypointTree == null) {
-            return null;
+            return new ArrayList<>();
         }
 
         // Convert the mouse click location to latitude & longitude
-        GeoPosition geopos = mapViewer.getTileFactory().pixelToGeo(mouseClickPoint, mapViewer.getZoom());
+        GeoPosition geopos = mapViewer.convertPointToGeoPosition(clickPoint);
 
-        // Get the 5 nearest neightbors to the point
-        Collection<MapWaypoint> waypoints = waypointTree.nearestNeighbourSearch(10, MapWaypoint.getDummyWaypoint(geopos));
+        // Get the nearest neightbors to the point
+        Collection<MapWaypoint> waypoints = waypointTree.nearestNeighbourSearch(1, MapWaypoint.getDummyWaypoint(geopos));
 
         if (waypoints == null || waypoints.isEmpty()) {
             return null;
@@ -470,13 +466,10 @@ final public class MapPanel extends javax.swing.JPanel {
         while (iterator.hasNext()) {
             MapWaypoint nextWaypoint = iterator.next();
 
-            Point2D point = mapViewer.getTileFactory().geoToPixel(nextWaypoint.getPosition(), mapViewer.getZoom());
+            Point2D point = mapViewer.convertGeoPositionToPoint(nextWaypoint.getPosition());
+            Rectangle rect = new Rectangle((int) point.getX() - (whiteWaypointImage.getWidth() / 2), (int) point.getY() - whiteWaypointImage.getHeight(), whiteWaypointImage.getWidth(), whiteWaypointImage.getHeight());
 
-            Rectangle rect = mapViewer.getViewportBounds();
-            Point converted_gp_pt = new Point((int) point.getX() - rect.x,
-                    (int) point.getY() - rect.y);
-
-            if (converted_gp_pt.distance(mouseClickPoint) < 10) {
+            if (rect.contains(clickPoint)) {
                 closestPoints.add(nextWaypoint);
             }
         }
@@ -548,6 +541,8 @@ final public class MapPanel extends javax.swing.JPanel {
         mapViewer = new org.jxmapviewer.JXMapViewer();
         zoomPanel = new javax.swing.JPanel();
         zoomSlider = new javax.swing.JSlider();
+        javax.swing.JButton zoomInBtn = new javax.swing.JButton();
+        javax.swing.JButton zoomOutBtn = new javax.swing.JButton();
 
         setFocusable(false);
         setLayout(new java.awt.BorderLayout());
@@ -573,6 +568,7 @@ final public class MapPanel extends javax.swing.JPanel {
         zoomPanel.setFocusable(false);
         zoomPanel.setOpaque(false);
         zoomPanel.setRequestFocusEnabled(false);
+        zoomPanel.setLayout(new java.awt.GridBagLayout());
 
         zoomSlider.setMaximum(15);
         zoomSlider.setMinimum(10);
@@ -580,6 +576,7 @@ final public class MapPanel extends javax.swing.JPanel {
         zoomSlider.setOrientation(javax.swing.JSlider.VERTICAL);
         zoomSlider.setPaintTicks(true);
         zoomSlider.setSnapToTicks(true);
+        zoomSlider.setInverted(true);
         zoomSlider.setMinimumSize(new java.awt.Dimension(35, 100));
         zoomSlider.setOpaque(false);
         zoomSlider.setPreferredSize(new java.awt.Dimension(35, 190));
@@ -588,23 +585,44 @@ final public class MapPanel extends javax.swing.JPanel {
                 zoomSliderStateChanged(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        zoomPanel.add(zoomSlider, gridBagConstraints);
 
-        javax.swing.GroupLayout zoomPanelLayout = new javax.swing.GroupLayout(zoomPanel);
-        zoomPanel.setLayout(zoomPanelLayout);
-        zoomPanelLayout.setHorizontalGroup(
-            zoomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(zoomPanelLayout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(zoomSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        zoomPanelLayout.setVerticalGroup(
-            zoomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, zoomPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(zoomSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0))
-        );
+        zoomInBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/plus-grey.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(zoomInBtn, org.openide.util.NbBundle.getMessage(MapPanel.class, "MapPanel.zoomInBtn.text")); // NOI18N
+        zoomInBtn.setBorder(null);
+        zoomInBtn.setBorderPainted(false);
+        zoomInBtn.setFocusPainted(false);
+        zoomInBtn.setRequestFocusEnabled(false);
+        zoomInBtn.setRolloverEnabled(false);
+        zoomInBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zoomInBtnActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        zoomPanel.add(zoomInBtn, gridBagConstraints);
+
+        zoomOutBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/minus-grey.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(zoomOutBtn, org.openide.util.NbBundle.getMessage(MapPanel.class, "MapPanel.zoomOutBtn.text")); // NOI18N
+        zoomOutBtn.setBorder(null);
+        zoomOutBtn.setBorderPainted(false);
+        zoomOutBtn.setFocusPainted(false);
+        zoomOutBtn.setRequestFocusEnabled(false);
+        zoomOutBtn.setRolloverEnabled(false);
+        zoomOutBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zoomOutBtnActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        zoomPanel.add(zoomOutBtn, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.anchor = java.awt.GridBagConstraints.SOUTHWEST;
@@ -635,22 +653,31 @@ final public class MapPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_mapViewerMouseReleased
 
     private void mapViewerMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mapViewerMouseMoved
-        GeoPosition geopos = mapViewer.getTileFactory().pixelToGeo(evt.getPoint(), mapViewer.getZoom());
+        GeoPosition geopos = mapViewer.convertPointToGeoPosition(evt.getPoint());
         firePropertyChange(CURRENT_MOUSE_GEOPOSITION, null, geopos);
     }//GEN-LAST:event_mapViewerMouseMoved
 
     private void mapViewerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mapViewerMouseClicked
-        if(!evt.isPopupTrigger() && SwingUtilities.isLeftMouseButton(evt)) {
+        if (!evt.isPopupTrigger() && SwingUtilities.isLeftMouseButton(evt)) {
             List<MapWaypoint> waypoints = findClosestWaypoint(evt.getPoint());
-            if(waypoints.size() > 0) {
+            if (waypoints.size() > 0) {
                 currentlySelectedWaypoint = waypoints.get(0);
-            } 
-            
-            
-//            currentlySelectedWaypoint = findClosestWaypoint(evt.getPoint());
+            } else {
+                currentlySelectedWaypoint = null;
+            }
             showDetailsPopup();
         }
     }//GEN-LAST:event_mapViewerMouseClicked
+
+    private void zoomInBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInBtnActionPerformed
+        int currentValue = mapViewer.getZoom();
+        setZoom(currentValue - 1);
+    }//GEN-LAST:event_zoomInBtnActionPerformed
+
+    private void zoomOutBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutBtnActionPerformed
+        int currentValue = mapViewer.getZoom();
+        setZoom(currentValue + 1);
+    }//GEN-LAST:event_zoomOutBtnActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -662,31 +689,67 @@ final public class MapPanel extends javax.swing.JPanel {
     /**
      * Renderer for the map waypoints.
      */
-    private class MapWaypointRenderer implements WaypointRenderer<Waypoint> {
-        private final BufferedImage defaultWaypointImage;
-        private final BufferedImage selectedWaypointImage;
-        
+    private class MapWaypointRenderer implements WaypointRenderer<MapWaypoint> {
+
+        private final Map<Color, BufferedImage> imageCache = new HashMap<>();
+
         /**
-         * Construct a WaypointRenederer
-         * 
-         * @throws IOException 
+         *
+         * @param waypoint the waypoint for which to get the color
+         * @param currentlySelectedWaypoint the waypoint that is currently
+         * selected
+         * @return the color that this waypoint should be rendered
          */
-        MapWaypointRenderer() throws IOException {
-            defaultWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_teal.png"));
-            selectedWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_yellow.png"));
+        private Color getColor(MapWaypoint waypoint, MapWaypoint currentlySelectedWaypoint) {
+            Color baseColor = waypoint.getColor();
+            if (waypoint.equals(currentlySelectedWaypoint)) {
+                // Highlight this waypoint since it is selected
+                return Color.YELLOW;
+            } else {
+                return baseColor;
+            }
         }
-        
+
+        /**
+         * Creates a waypoint image with the specified color
+         *
+         * @param color the color of the new waypoint image
+         * @return the new waypoint image
+         */
+        private BufferedImage createWaypointImage(Color color) {
+            int w = whiteWaypointImage.getWidth();
+            int h = whiteWaypointImage.getHeight();
+
+            BufferedImage ret = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+
+            Graphics2D g = ret.createGraphics();
+            g.drawImage(whiteWaypointImage, 0, 0, null);
+            g.setComposite(AlphaComposite.SrcIn);
+            g.setColor(color);
+            g.fillRect(0, 0, w, h);
+            g.setComposite(AlphaComposite.SrcAtop);
+            g.drawImage(transparentWaypointImage, 0, 0, null);
+            g.dispose();
+            return ret;
+        }
+
         @Override
-        public void paintWaypoint(Graphics2D gd, JXMapViewer jxmv, Waypoint waypoint) {
+        public void paintWaypoint(Graphics2D gd, JXMapViewer jxmv, MapWaypoint waypoint) {
+            Color color = getColor(waypoint, currentlySelectedWaypoint);
+
+            // Store computed images in cache for later use
+            BufferedImage image = imageCache.computeIfAbsent(color, k -> {
+                return createWaypointImage(color);
+            });
+
             Point2D point = jxmv.getTileFactory().geoToPixel(waypoint.getPosition(), jxmv.getZoom());
 
-            int x = (int)point.getX();
-            int y = (int)point.getY();
-            
-            BufferedImage image = (waypoint == currentlySelectedWaypoint ? selectedWaypointImage: defaultWaypointImage);
+            int x = (int) point.getX();
+            int y = (int) point.getY();
 
-            (gd.create()).drawImage(image, x -image.getWidth() / 2, y -image.getHeight(), null);
+            gd = (Graphics2D) gd.create();
+            gd.drawImage(image, x - image.getWidth() / 2, y - image.getHeight(), null);
+            gd.dispose();
         }
-        
     }
 }

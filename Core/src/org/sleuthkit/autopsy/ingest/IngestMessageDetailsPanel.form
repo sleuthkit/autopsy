@@ -76,7 +76,7 @@
             </Property>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
               <FontInfo relative="true">
-                <Font bold="false" component="messageDetailsPane" property="font" relativeSize="false" size="10"/>
+                <Font component="messageDetailsPane" property="font" relativeSize="true" size="-1"/>
               </FontInfo>
             </Property>
             <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -138,11 +138,6 @@
         </Component>
         <Component class="javax.swing.JButton" name="viewArtifactButton">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="viewArtifactButton" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/org/sleuthkit/autopsy/ingest/goto_res.png"/>
             </Property>
@@ -157,11 +152,6 @@
         </Component>
         <Component class="javax.swing.JButton" name="viewContentButton">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="viewContentButton" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/org/sleuthkit/autopsy/ingest/goto_dir.png"/>
             </Property>
