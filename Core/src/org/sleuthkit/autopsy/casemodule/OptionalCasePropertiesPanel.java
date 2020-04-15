@@ -382,12 +382,13 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         orgainizationPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactPhoneLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.lbPointOfContactPhoneLabel.text")); // NOI18N
-        lbPointOfContactPhoneLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbPointOfContactPhoneLabel.setMaximumSize(new java.awt.Dimension(182, 14));
         lbPointOfContactPhoneLabel.setMinimumSize(new java.awt.Dimension(82, 14));
-        lbPointOfContactPhoneLabel.setPreferredSize(new java.awt.Dimension(82, 14));
+        lbPointOfContactPhoneLabel.setPreferredSize(new java.awt.Dimension(120, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 12, 0, 0);
@@ -407,12 +408,13 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         orgainizationPanel.add(comboBoxOrgName, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactNameLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.lbPointOfContactNameLabel.text")); // NOI18N
-        lbPointOfContactNameLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbPointOfContactNameLabel.setMaximumSize(new java.awt.Dimension(182, 14));
         lbPointOfContactNameLabel.setMinimumSize(new java.awt.Dimension(82, 14));
-        lbPointOfContactNameLabel.setPreferredSize(new java.awt.Dimension(82, 14));
+        lbPointOfContactNameLabel.setPreferredSize(new java.awt.Dimension(120, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(13, 12, 0, 5);
@@ -420,9 +422,9 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnNewOrganization, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.bnNewOrganization.text")); // NOI18N
         bnNewOrganization.setMargin(new java.awt.Insets(2, 6, 2, 6));
-        bnNewOrganization.setMaximumSize(new java.awt.Dimension(123, 23));
+        bnNewOrganization.setMaximumSize(new java.awt.Dimension(160, 23));
         bnNewOrganization.setMinimumSize(new java.awt.Dimension(123, 23));
-        bnNewOrganization.setPreferredSize(new java.awt.Dimension(123, 23));
+        bnNewOrganization.setPreferredSize(new java.awt.Dimension(140, 23));
         bnNewOrganization.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnNewOrganizationActionPerformed(evt);
@@ -436,26 +438,26 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(8, 12, 0, 18);
         orgainizationPanel.add(bnNewOrganization, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 3;
-        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 4, 13, 18);
         orgainizationPanel.add(lbPointOfContactEmailText, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(13, 4, 0, 18);
         orgainizationPanel.add(lbPointOfContactNameText, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(lbOrganizationNameLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.lbOrganizationNameLabel.text")); // NOI18N
-        lbOrganizationNameLabel.setMaximumSize(new java.awt.Dimension(189, 14));
+        lbOrganizationNameLabel.setMaximumSize(new java.awt.Dimension(300, 14));
         lbOrganizationNameLabel.setMinimumSize(new java.awt.Dimension(189, 14));
-        lbOrganizationNameLabel.setPreferredSize(new java.awt.Dimension(189, 14));
+        lbOrganizationNameLabel.setPreferredSize(new java.awt.Dimension(220, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
@@ -466,20 +468,21 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         orgainizationPanel.add(lbOrganizationNameLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactEmailLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.lbPointOfContactEmailLabel.text")); // NOI18N
-        lbPointOfContactEmailLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbPointOfContactEmailLabel.setMaximumSize(new java.awt.Dimension(182, 14));
         lbPointOfContactEmailLabel.setMinimumSize(new java.awt.Dimension(82, 14));
-        lbPointOfContactEmailLabel.setPreferredSize(new java.awt.Dimension(82, 14));
+        lbPointOfContactEmailLabel.setPreferredSize(new java.awt.Dimension(120, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 12, 13, 0);
         orgainizationPanel.add(lbPointOfContactEmailLabel, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 4, 0, 18);
