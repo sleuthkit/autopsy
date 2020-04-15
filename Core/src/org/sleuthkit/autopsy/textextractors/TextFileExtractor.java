@@ -25,8 +25,10 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
+import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.textutils.EncodingUtils;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -38,6 +40,7 @@ public final class TextFileExtractor implements TextExtractor {
 
     private static final Logger logger = Logger.getLogger(TextFileExtractor.class.getName());
     private final AbstractFile file;
+    private static final String PLAIN_TEXT_MIME_TYPE = "text/plain";
 
     private Charset encoding = null;
 
@@ -73,7 +76,22 @@ public final class TextFileExtractor implements TextExtractor {
     }
 
     @Override
-    public boolean isSupported() {
-        return file.getMIMEType().equals("text/plain");
+    public boolean isSupported() {        
+        // get the MIME type
+        String mimeType = file.getMIMEType();
+        
+        // if it is not present, attempt to use the FileTypeDetector to determine
+        if (StringUtils.isEmpty(mimeType)) {
+            FileTypeDetector fileTypeDetector = null;
+            try {
+                fileTypeDetector = new FileTypeDetector();
+            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                logger.log(Level.SEVERE, "Unable to create file type detector for determining MIME type.");
+                return false;
+            }
+            mimeType = fileTypeDetector.getMIMEType(file);
+        }
+        
+        return PLAIN_TEXT_MIME_TYPE.equals(mimeType);
     }
 }
