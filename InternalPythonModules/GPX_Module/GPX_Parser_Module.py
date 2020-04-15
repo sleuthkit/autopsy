@@ -60,12 +60,17 @@ import gpxpy
 import gpxpy.gpx
 import gpxpy.parser
 
+# to get a random filename to prevent race conditions
+import uuid
+
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the analysis.
+
+
 class GPXParserDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
 
     moduleName = "GPX Parser"
-    
+
     def getModuleDisplayName(self):
         return self.moduleName
 
@@ -75,158 +80,175 @@ class GPXParserDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
     def getModuleVersionNumber(self):
         return "1.2"
 
-    def isDataSourceIngestModuleFactory(self):
+    def isFileIngestModuleFactory(self):
         return True
 
-    def createDataSourceIngestModule(self, ingestOptions):
+    def createFileIngestModule(self, ingestOptions):
         return GPXParserDataSourceIngestModule()
 
-    
-# Data Source-level ingest module. One gets created per data source.
-class GPXParserDataSourceIngestModule(DataSourceIngestModule):
 
-    logger = Logger.getLogger(GPXParserDataSourceIngestModuleFactory.moduleName)
+# Data Source-level ingest module. One gets created per data source.
+class GPXParserDataSourceIngestModule(FileIngestModule):
+
+    logger = Logger.getLogger(
+        GPXParserDataSourceIngestModuleFactory.moduleName)
     writeDebugMsgs = False
 
     def log(self, level, msg):
-        self.logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
+        self.logger.logp(level, self.__class__.__name__,
+                         inspect.stack()[1][3], msg)
 
     def __init__(self):
         self.context = None
-
-    # Where any setup and configuration is done.
-    def startUp(self, context):
-        self.context = context
-
-    # Where the analysis is done.
-    def process(self, dataSource, progressBar):
-
-        # We don't know how much work there is yet.
-        progressBar.switchToIndeterminate()
-        
-        # Get the case database and its blackboard.
-        skCase = Case.getCurrentCase().getSleuthkitCase()
-        blackboard = skCase.getBlackboard()
-
-        # Get any files with a .gpx extension.
-        # It would perhaps be better to get these files by MIME type instead.
-        # RC: It would also be better if this were a file level ingest module so it could process files extracted from archives.
-        fileManager = Case.getCurrentCase().getServices().getFileManager()        
-        files = fileManager.findFiles(dataSource, "%.gpx")
-
-        # Update the progress bar now that we know how much work there is to do.
-        numFiles = len(files)
-        if self.writeDebugMsgs: self.log(Level.INFO, "Found " + str(numFiles) + " GPX files") 
-        progressBar.switchToDeterminate(numFiles)
+        self.fileCount = 0
 
         # Get the module name, it will be needed for adding attributes
-        moduleName = GPXParserDataSourceIngestModuleFactory.moduleName
+        self.moduleName = GPXParserDataSourceIngestModuleFactory.moduleName
 
-        # Check if a folder for this module is present in the case Temp directory. 
+        # Check if a folder for this module is present in the case Temp directory.
         # If not, create it.
-        dirName = os.path.join(Case.getCurrentCase().getTempDirectory(), "GPX_Parser_Module")
+        self.dirName = os.path.join(
+            Case.getCurrentCase().getTempDirectory(), "GPX_Parser_Module")
         try:
-            os.stat(dirName)
+            os.stat(self.dirName)
         except:
-            os.mkdir(dirName)
+            os.mkdir(self.dirName)
 
-        # Create a temp file name. It appears that we cannot close and delete 
+    # Where any setup and configuration is done.
+
+    def startUp(self, context):
+        self.context = context
+        self.fileFound = 0
+
+    # Where the file analysis is done.
+    def process(self, file):
+        if not file.getName().lower().endswith(".gpx"):
+            return IngestModule.ProcessResult.OK
+
+        # Create a temp file name. It appears that we cannot close and delete
         # this file, but we can overwrite it for each file we need to process.
-        fileName = os.path.join(dirName, "tmp.gpx")
-        
-        fileCount = 0;
-        for file in files:
+        fileName = os.path.join(self.dirName, uuid.uuid4().hex + ".gpx")
 
-            # Create a GeoArtifactsHelper for this file.
-            geoArtifactHelper = GeoArtifactsHelper(skCase, moduleName, None, file) 
-            
-            # Check if the user pressed cancel while we were busy.
-            if self.context.isJobCancelled():
-                return IngestModule.ProcessResult.OK
+        # Create a GeoArtifactsHelper for this file.
+        geoArtifactHelper = GeoArtifactsHelper(skCase, moduleName, None, file)
 
-            if self.writeDebugMsgs: self.log(Level.INFO, "Processing " + file.getUniquePath() + " (objID = " + str(file.getId()) + ")")
-            fileCount += 1
+        if self.writeDebugMsgs:
+            self.log(Level.INFO, "Processing " + file.getUniquePath() +
+                     " (objID = " + str(file.getId()) + ")")
 
-            # Write the file so that it can be parsed by gpxpy.
-            localFile = File(fileName)
-            ContentUtils.writeToFile(file, localFile)
+        self.fileCount += 1
 
-            # Send the file to gpxpy for parsing.
-            gpxfile = open(fileName)
-            try:
-                gpx = gpxpy.parse(gpxfile)
-                if self.writeDebugMsgs: self.log(Level.INFO, "Parsed " + file.getUniquePath() + " (objID = " + str(file.getId()) + ")")
-            except Exception as e:
-                self.log(Level.WARNING, "Error parsing file " + file.getUniquePath() + " (objID = " + str(file.getId()) + "):" + str(e))
-                continue
-            
-            if gpx:
-                if self.writeDebugMsgs: self.log(Level.INFO, "Processing tracks from " + file.getUniquePath() + " (objID = " + str(file.getId()) + ")")
-                for track in gpx.tracks:                
-                    for segment in track.segments:
-                        geoPointList = GeoTrackPoints()
-                        for point in segment.points:
+        # Write the file so that it can be parsed by gpxpy.
+        localFile = File(fileName)
+        ContentUtils.writeToFile(file, localFile)
 
-                            elevation = 0
-                            if point.elevation != None:
-                                elevation = point.elevation
-                                
-                            timeStamp = 0                               
-                            try: 
-                                if (point.time != None):
-                                    timeStamp = long(time.mktime(point.time.timetuple()))                                    
-                            except Exception as e:                            
-                                self.log(Level.WARNING, "Error getting track timestamp from " + file.getUniquePath() + " (objID = " + str(file.getId()) + "):" + str(e))
+        # Send the file to gpxpy for parsing.
+        gpxfile = open(fileName)
+        try:
+            gpx = gpxpy.parse(gpxfile)
+            if self.writeDebugMsgs:
+                self.log(Level.INFO, "Parsed " + file.getUniquePath() +
+                         " (objID = " + str(file.getId()) + ")")
+        except Exception as e:
+            self.log(Level.WARNING, "Error parsing file " + file.getUniquePath() +
+                     " (objID = " + str(file.getId()) + "):" + str(e))
+            continue
 
-                            geoPointList.addPoint(TrackPoint(point.latitude, point.longitude, elevation, None, 0, 0, 0, timeStamp))
-                                                                                                             
+        if gpx:
+            if self.writeDebugMsgs:
+                self.log(Level.INFO, "Processing tracks from " +
+                         file.getUniquePath() + " (objID = " + str(file.getId()) + ")")
+
+            for track in gpx.tracks:
+                for segment in track.segments:
+                    geoPointList = GeoTrackPoints()
+                    for point in segment.points:
+
+                        elevation = 0
+                        if point.elevation != None:
+                            elevation = point.elevation
+
+                        timeStamp = 0
                         try:
-                            geoArtifactHelper.addTrack("Track", geoPointList, None)
-                        except Blackboard.BlackboardException as e:
-                            self.log(Level.SEVERE, "Error posting GPS track artifact for " + file.getUniquePath() + " (objID = " + str(file.getId()) + "):" +  e.getMessage())
-                        except TskCoreException as e:
-                            self.log(Level.SEVERE, "Error creating GPS track artifact for " + file.getUniquePath() + " (objID = " + str(file.getId()) + "):" +  e.getMessage())
-                            
-                if self.writeDebugMsgs: self.log(Level.INFO, "Processing waypoints from " + file.getUniquePath() + " (objID = " + str(file.getId()) + ")") 
-                for waypoint in gpx.waypoints:
-                    
+                            if (point.time != None):
+                                timeStamp = long(time.mktime(
+                                    point.time.timetuple()))
+                        except Exception as e:
+                            self.log(Level.WARNING, "Error getting track timestamp from " +
+                                     file.getUniquePath() + " (objID = " + str(file.getId()) + "):" + str(e))
+
+                        geoPointList.addPoint(TrackPoint(
+                            point.latitude, point.longitude, elevation, None, 0, 0, 0, timeStamp))
+
                     try:
-                        art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK)
-
-                        attributes = ArrayList()
-                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), moduleName, waypoint.latitude))
-                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), moduleName, waypoint.longitude))                    
-                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG.getTypeID(), moduleName, "Waypoint"))
-                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, waypoint.name))
-                        attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), moduleName, "GPXParser"))
-                        art.addAttributes(attributes)
-
-                        blackboard.postArtifact(art, moduleName)
-
+                        geoArtifactHelper.addTrack("Track", geoPointList, None)
                     except Blackboard.BlackboardException as e:
-                        self.log(Level.SEVERE, "Error posting GPS bookmark artifact for " + file.getUniquePath() + " (objID = " + str(file.getId()) + "):" +  e.getMessage())
+                        self.log(Level.SEVERE, "Error posting GPS track artifact for " +
+                                 file.getUniquePath() + " (objID = " + str(file.getId()) + "):" + e.getMessage())
                     except TskCoreException as e:
-                        self.log(Level.SEVERE, "Error creating GPS bookmark artifact for " + file.getUniquePath() + " (objID = " + str(file.getId()) + "):" +  e.getMessage())
+                        self.log(Level.SEVERE, "Error creating GPS track artifact for " +
+                                 file.getUniquePath() + " (objID = " + str(file.getId()) + "):" + e.getMessage())
 
-                if self.writeDebugMsgs: self.log(Level.INFO, "Processing routes from " + file.getUniquePath() + " (objID = " + str(file.getId()) + ")")
-                for route in gpx.routes:    
+            if self.writeDebugMsgs:
+                self.log(Level.INFO, "Processing waypoints from " +
+                         file.getUniquePath() + " (objID = " + str(file.getId()) + ")")
 
-                    geoWaypoints = GeoWaypoints()
+            for waypoint in gpx.waypoints:
 
-                    for point in route.points:
-                        geoWaypoints.addPoint(Waypoint(point.latitude, point.longitude, point.elevation, point.name))
-                    
-                    try:
-                        geoArtifactHelper.addRoute(None, None, geoWaypoints, None)
-                    except Blackboard.BlackboardException as e:
-                        self.log("Error posting GPS route artifact for " + file.getUniquePath() + " (objID = " + str(file.getId()) + "):" +  e.getMessage())
-                    except TskCoreException as e:
-                        self.log(Level.SEVERE, "Error creating GPS route artifact for " + file.getUniquePath() + " (objID = " + str(file.getId()) + "):" +  e.getMessage())
-                                
-            # Update the progress bar.
-            progressBar.progress(fileCount)
+                try:
+                    art = file.newArtifact(
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK)
 
-        # Post a message to the ingest messages inbox.
-        message = IngestMessage.createMessage(IngestMessage.MessageType.DATA, moduleName, "Processed %d files" % fileCount)
-        IngestServices.getInstance().postMessage(message)
-        return IngestModule.ProcessResult.OK;
+                    attributes = ArrayList()
+                    attributes.add(BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), moduleName, waypoint.latitude))
+                    attributes.add(BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), moduleName, waypoint.longitude))
+                    attributes.add(BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG.getTypeID(), moduleName, "Waypoint"))
+                    attributes.add(BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, waypoint.name))
+                    attributes.add(BlackboardAttribute(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), moduleName, "GPXParser"))
+                    art.addAttributes(attributes)
+
+                    blackboard.postArtifact(art, moduleName)
+
+                except Blackboard.BlackboardException as e:
+                    self.log(Level.SEVERE, "Error posting GPS bookmark artifact for " +
+                             file.getUniquePath() + " (objID = " + str(file.getId()) + "):" + e.getMessage())
+                except TskCoreException as e:
+                    self.log(Level.SEVERE, "Error creating GPS bookmark artifact for " +
+                             file.getUniquePath() + " (objID = " + str(file.getId()) + "):" + e.getMessage())
+
+            if self.writeDebugMsgs:
+                self.log(Level.INFO, "Processing routes from " +
+                         file.getUniquePath() + " (objID = " + str(file.getId()) + ")")
+
+            for route in gpx.routes:
+
+                geoWaypoints = GeoWaypoints()
+
+                for point in route.points:
+                    geoWaypoints.addPoint(
+                        Waypoint(point.latitude, point.longitude, point.elevation, point.name))
+
+                try:
+                    geoArtifactHelper.addRoute(None, None, geoWaypoints, None)
+                except Blackboard.BlackboardException as e:
+                    self.log("Error posting GPS route artifact for " + file.getUniquePath() +
+                             " (objID = " + str(file.getId()) + "):" + e.getMessage())
+                except TskCoreException as e:
+                    self.log(Level.SEVERE, "Error creating GPS route artifact for " +
+                             file.getUniquePath() + " (objID = " + str(file.getId()) + "):" + e.getMessage())
+
+        return IngestModule.ProcessResult.OK
+
+    # Where any shutdown code is run and resources are freed.
+
+    def shutDown(self):
+        # As a final part of this example, we'll send a message to the ingest inbox with the number of files found (in this thread)
+        message = IngestMessage.createMessage(
+            IngestMessage.MessageType.DATA, SampleJythonFileIngestModuleFactory.moduleName,
+            str(self.filesFound) + " files found")
+        ingestServices = IngestServices.getInstance().postMessage(message)
