@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import org.sleuthkit.autopsy.datamodel.AttachmentNode;
-import com.google.gson.Gson;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
@@ -33,6 +32,7 @@ import java.util.logging.Level;
 import javax.swing.JScrollPane;
 import javax.swing.text.JTextComponent;
 import org.apache.commons.lang3.StringUtils;
+import static org.apache.poi.hwpf.model.FileInformationBlock.logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.openide.explorer.ExplorerManager;
@@ -76,6 +76,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEX
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.FileAttachment;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.Attachment;
@@ -89,7 +90,8 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.URL
 public class MessageContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
     /**
-     * This is a text component viewer to be a child component to be placed in a {@link TranslatablePanel TranslatablePanel}.  
+     * This is a text component viewer to be a child component to be placed in a
+     * {@link TranslatablePanel TranslatablePanel}.
      */
     class TextComponent implements TranslatablePanel.ContentComponent {
 
@@ -439,11 +441,11 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      * Get the artifact associated with the given artifact, if there is one.
      *
      * @param artifact The artifact to get the associated artifact from. Must
-     * not be null
+     *                 not be null
      *
      * @throws TskCoreException If there is a critical error querying the DB.
      * @return An optional containing the artifact associated with the given
-     * artifact, if there is one.
+     *         artifact, if there is one.
      */
     private static Optional<BlackboardArtifact> getAssociatedArtifact(final BlackboardArtifact artifact) throws TskCoreException {
         BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_TYPE);
@@ -523,10 +525,10 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      * Is the given artifact one that can be shown in this viewer?
      *
      * @param nodeArtifact An artifact that might be a message. Must not be
-     * null.
+     *                     null.
      *
      * @return True if the given artifact can be shown as a message in this
-     * viewer.
+     *         viewer.
      */
     private static boolean isMessageArtifact(BlackboardArtifact nodeArtifact) {
         final int artifactTypeID = nodeArtifact.getArtifactTypeID();
@@ -543,6 +545,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      * the file, that artifact is returned.
      *
      * @param node Node to check.
+     *
      * @return Blackboard artifact for the node, null if there isn't any.
      */
     private BlackboardArtifact getNodeArtifact(Node node) {
@@ -592,7 +595,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      * Configure the text area at the given index to show the content of the
      * given type.
      *
-     * @param type The ATTRIBUT_TYPE to show in the indexed tab.
+     * @param type  The ATTRIBUT_TYPE to show in the indexed tab.
      * @param index The index of the text area to configure.
      *
      * @throws TskCoreException
@@ -628,33 +631,71 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         datetimeText.setEnabled(true);
     }
 
+    /**
+     * Retrieves the set of attachments present in the children of the
+     * BlackboardArtifact.
+     *
+     * @param artifact The artifact whose children will be used for attachments.
+     *
+     * @return The attachments found in the BlackboardArtifact.
+     *
+     * @throws TskCoreException
+     */
+    private static Set<Attachment> getAttachmentsFromChildren(BlackboardArtifact artifact) throws TskCoreException {
+        // For backward compatibility - email attachements are derived files and children of the email message artifact
+        Set<Attachment> attachments = new HashSet<>();
+        for (Content child : artifact.getChildren()) {
+            if (child instanceof AbstractFile) {
+                attachments.add(new FileAttachment((AbstractFile) child));
+            }
+        }
+        return attachments;
+    }
+
+    /**
+     * Retrieves the set of attachments present in the MessageAttachments object
+     * parsed from the blackboard attribute.
+     *
+     * @param attachmentsAttr The blackboard attribute to be parsed to a
+     *                        MessageAttachments object.
+     *
+     * @return The set of attachments present in the MessageAttachments object.
+     *
+     * @throws BlackboardJsonAttrUtil.InvalidJsonException If the
+     *                                                     BlackboardAttribute
+     *                                                     cannot be parsed to a
+     *                                                     MessageAttachments
+     *                                                     object.
+     */
+    private static Set<Attachment> getAttachmentsFromMessageAttachments(BlackboardAttribute attachmentsAttr) throws BlackboardJsonAttrUtil.InvalidJsonException {
+        Set<Attachment> attachments = new HashSet<>();
+        MessageAttachments msgAttachments = BlackboardJsonAttrUtil.fromAttribute(attachmentsAttr, MessageAttachments.class);
+        Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
+        for (FileAttachment fileAttachment : fileAttachments) {
+            attachments.add(fileAttachment);
+        }
+        Collection<URLAttachment> urlAttachments = msgAttachments.getUrlAttachments();
+        for (URLAttachment urlAttachment : urlAttachments) {
+            attachments.add(urlAttachment);
+        }
+        return attachments;
+    }
+
     private void configureAttachments() throws TskCoreException {
 
-        final Set<Attachment> attachments;
+        Set<Attachment> attachments;
 
         //  Attachments are specified in an attribute TSK_ATTACHMENTS as JSON attribute
         BlackboardAttribute attachmentsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
         if (attachmentsAttr != null) {
-
-            attachments = new HashSet<>();
-            String jsonVal = attachmentsAttr.getValueString();
-            MessageAttachments msgAttachments = new Gson().fromJson(jsonVal, MessageAttachments.class);
-
-            Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
-            for (FileAttachment fileAttachment : fileAttachments) {
-                attachments.add(fileAttachment);
+            try {
+                attachments = getAttachmentsFromMessageAttachments(attachmentsAttr);
+            } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
+                LOGGER.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
+                attachments = getAttachmentsFromChildren(artifact);
             }
-            Collection<URLAttachment> urlAttachments = msgAttachments.getUrlAttachments();
-            for (URLAttachment urlAttachment : urlAttachments) {
-                attachments.add(urlAttachment);
-            }
-        } else {    // For backward compatibility - email attachements are derived files and children of the email message artifact
-            attachments = new HashSet<>();
-            for (Content child : artifact.getChildren()) {
-                if (child instanceof AbstractFile) {
-                    attachments.add(new FileAttachment((AbstractFile) child));
-                }
-            }
+        } else {
+            attachments = getAttachmentsFromChildren(artifact);
         }
 
         final int numberOfAttachments = attachments.size();

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
-import com.google.gson.Gson;
 import java.util.logging.Level;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
@@ -40,6 +39,7 @@ import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
 
 /**
@@ -48,22 +48,22 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
 class MessageNode extends BlackboardArtifactNode {
 
     public static final String UNTHREADED_ID = "<UNTHREADED>";
-    
+
     private static final Logger logger = Logger.getLogger(MessageNode.class.getName());
-    
+
     private final String threadID;
-    
+
     private final Action preferredAction;
 
-    MessageNode(BlackboardArtifact artifact, String threadID,  Action preferredAction) {
+    MessageNode(BlackboardArtifact artifact, String threadID, Action preferredAction) {
         super(artifact);
-        
+
         this.preferredAction = preferredAction;
 
         final String stripEnd = StringUtils.stripEnd(artifact.getDisplayName(), "s"); // NON-NLS
         String removeEndIgnoreCase = StringUtils.removeEndIgnoreCase(stripEnd, "message"); // NON-NLS
         setDisplayName(removeEndIgnoreCase.isEmpty() ? stripEnd : removeEndIgnoreCase);
-        
+
         this.threadID = threadID;
     }
 
@@ -75,7 +75,7 @@ class MessageNode extends BlackboardArtifactNode {
         "MessageNode_Node_Property_Subject=Subject",
         "MessageNode_Node_Property_Attms=Attachments"
     })
-    
+
     @Override
     protected Sheet createSheet() {
         Sheet sheet = super.createSheet();
@@ -89,22 +89,22 @@ class MessageNode extends BlackboardArtifactNode {
 
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
-        
-        if(fromID == null ||
-                (fromID != TSK_EMAIL_MSG &&
-                fromID != TSK_MESSAGE)) {
+
+        if (fromID == null
+                || (fromID != TSK_EMAIL_MSG
+                && fromID != TSK_MESSAGE)) {
             return sheet;
         }
-        
-        sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","",threadID == null ? UNTHREADED_ID : threadID)); //NON-NLS
+
+        sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID", "", threadID == null ? UNTHREADED_ID : threadID)); //NON-NLS
         sheetSet.put(new NodeProperty<>("Subject", Bundle.MessageNode_Node_Property_Subject(), "",
-            getAttributeDisplayString(artifact, TSK_SUBJECT))); //NON-NLS
+                getAttributeDisplayString(artifact, TSK_SUBJECT))); //NON-NLS
         try {
             sheetSet.put(new NodeProperty<>("Attms", Bundle.MessageNode_Node_Property_Attms(), "", getAttachmentsCount())); //NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex); //NON-NLS
         }
-            
+
         switch (fromID) {
             case TSK_EMAIL_MSG:
                 sheetSet.put(new NodeProperty<>("From", Bundle.MessageNode_Node_Property_From(), "",
@@ -138,30 +138,31 @@ class MessageNode extends BlackboardArtifactNode {
     public String getSourceName() {
         return getDisplayName();
     }
-    
+
     String getThreadID() {
         return threadID;
     }
-    
+
     @Override
     public Action getPreferredAction() {
         return preferredAction;
     }
-    
+
     private int getAttachmentsCount() throws TskCoreException {
         final BlackboardArtifact artifact = getArtifact();
-        int attachmentsCount;
 
         //  Attachments are specified in an attribute TSK_ATTACHMENTS as JSON attribute
         BlackboardAttribute attachmentsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
         if (attachmentsAttr != null) {
-            String jsonVal = attachmentsAttr.getValueString();
-            MessageAttachments msgAttachments = new Gson().fromJson(jsonVal, MessageAttachments.class);
-            attachmentsCount = msgAttachments.getAttachmentsCount();
-        } else {    // legacy attachments may be children of message artifact.
-            attachmentsCount = artifact.getChildrenCount();
+            try {
+                MessageAttachments msgAttachments = BlackboardJsonAttrUtil.fromAttribute(attachmentsAttr, MessageAttachments.class);
+                return msgAttachments.getAttachmentsCount();
+            } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
+                logger.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
+            }
         }
 
-        return attachmentsCount;
+        // legacy attachments may be children of message artifact.
+        return artifact.getChildrenCount();
     }
 }

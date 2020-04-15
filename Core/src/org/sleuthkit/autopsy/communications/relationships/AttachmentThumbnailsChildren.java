@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
-import com.google.gson.Gson;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -38,6 +37,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.FileAttachment;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
 
@@ -69,6 +69,47 @@ final class AttachmentThumbnailsChildren extends Children.Keys<AbstractFile> {
         return new Node[]{new AttachementThumbnailNode(t)};
     }
 
+    /**
+     * Adds thumbnails based on MessageAttachments parsed in the
+     * BlackboardAttribute.
+     *
+     * @param bba             The pertinent BlackboardArtifact.
+     * @param attachmentsAttr The appropriate attribute for MessageAttachments.
+     * @param thumbnails      Parsed thumbnails will be added to this set.
+     *
+     * @throws BlackboardJsonAttrUtil.InvalidJsonException
+     * @throws TskCoreException
+     */
+    private static void addMessageAttachmentThumbnails(BlackboardArtifact bba, BlackboardAttribute attachmentsAttr,
+            Set<AbstractFile> thumbnails) throws BlackboardJsonAttrUtil.InvalidJsonException, TskCoreException {
+
+        MessageAttachments msgAttachments = BlackboardJsonAttrUtil.fromAttribute(attachmentsAttr, MessageAttachments.class);
+        Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
+        for (FileAttachment fileAttachment : fileAttachments) {
+            long attachedFileObjId = fileAttachment.getObjectId();
+            if (attachedFileObjId >= 0) {
+                AbstractFile attachedFile = bba.getSleuthkitCase().getAbstractFileById(attachedFileObjId);
+                thumbnails.add(attachedFile);
+            }
+        }
+    }
+
+    /**
+     * Adds thumbnails based on children in the BlackboardArtifact.
+     *
+     * @param bba        The BlackboardArtifact whose children will be used.
+     * @param thumbnails Thumbnails will be added to this set.
+     *
+     * @throws TskCoreException
+     */
+    private static void addChildrenThumbnails(BlackboardArtifact bba, Set<AbstractFile> thumbnails) throws TskCoreException {
+        for (Content childContent : bba.getChildren()) {
+            if (childContent instanceof AbstractFile) {
+                thumbnails.add((AbstractFile) childContent);
+            }
+        }
+    }
+
     @Override
     protected void addNotify() {
         super.addNotify();
@@ -89,24 +130,14 @@ final class AttachmentThumbnailsChildren extends Children.Keys<AbstractFile> {
                     // Get the attachments from TSK_ATTACHMENTS attribute.
                     BlackboardAttribute attachmentsAttr = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
                     if (attachmentsAttr != null) {
-
-                        String jsonVal = attachmentsAttr.getValueString();
-                        MessageAttachments msgAttachments = new Gson().fromJson(jsonVal, MessageAttachments.class);
-
-                        Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
-                        for (FileAttachment fileAttachment : fileAttachments) {
-                            long attachedFileObjId = fileAttachment.getObjectId();
-                            if (attachedFileObjId >= 0) {
-                                AbstractFile attachedFile = bba.getSleuthkitCase().getAbstractFileById(attachedFileObjId);
-                                thumbnails.add(attachedFile);
-                            }
+                        try {
+                            addMessageAttachmentThumbnails(bba, attachmentsAttr, thumbnails);
+                        } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
+                            LOGGER.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", bba.getName()), ex);
+                            addChildrenThumbnails(bba, thumbnails);
                         }
                     } else {    // backward compatibility - email message attachments are derived files, children of the message.
-                        for (Content childContent : bba.getChildren()) {
-                            if (childContent instanceof AbstractFile) {
-                                thumbnails.add((AbstractFile) childContent);
-                            }
-                        }
+                        addChildrenThumbnails(bba, thumbnails);
                     }
 
                 } catch (TskCoreException ex) {
