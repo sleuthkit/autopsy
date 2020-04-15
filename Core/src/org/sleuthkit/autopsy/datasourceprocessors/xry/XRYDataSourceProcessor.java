@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
@@ -204,12 +205,11 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
 
         try {
             XRYFolder xryFolder = new XRYFolder(selectedPath);
-            FileManager fileManager = Case.getCurrentCaseThrows()
-                    .getServices().getFileManager();
+            Case currentCase = Case.getCurrentCaseThrows();
             String uniqueUUID = UUID.randomUUID().toString();
             //Move heavy lifting to a background task.
             swingWorker = new XRYReportProcessorSwingWorker(xryFolder, progressMonitor,
-                    callback, fileManager, uniqueUUID);
+                    callback, currentCase, uniqueUUID);
             swingWorker.execute();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "[XRY DSP] No case is currently open.", ex);
@@ -238,11 +238,10 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
 
         try {
             XRYFolder xryFolder = new XRYFolder(dataSourcePath);
-            FileManager fileManager = Case.getCurrentCaseThrows()
-                    .getServices().getFileManager();
+            Case currentCase = Case.getCurrentCaseThrows();
             //Move heavy lifting to a background task.
             swingWorker = new XRYReportProcessorSwingWorker(xryFolder, progressMonitor,
-                    callBack, fileManager, deviceId);
+                    callBack, currentCase, deviceId);
             swingWorker.execute();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "[XRY DSP] No case is currently open.", ex);
@@ -273,20 +272,19 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
 
         private final DataSourceProcessorProgressMonitor progressMonitor;
         private final DataSourceProcessorCallback callback;
-        private final FileManager fileManager;
+        private final Case currentCase;
         private final XRYFolder xryFolder;
         private final String uniqueUUID;
 
         public XRYReportProcessorSwingWorker(XRYFolder folder,
                 DataSourceProcessorProgressMonitor progressMonitor,
                 DataSourceProcessorCallback callback,
-                FileManager fileManager,
-                String uniqueUUID) {
+                Case currentCase, String uniqueUUID) {
 
             this.xryFolder = folder;
             this.progressMonitor = progressMonitor;
             this.callback = callback;
-            this.fileManager = fileManager;
+            this.currentCase = currentCase;
             this.uniqueUUID = uniqueUUID;
         }
 
@@ -296,7 +294,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
             "XRYDataSourceProcessor.processingFiles=Processing all XRY files..."
         })
         protected LocalFilesDataSource doInBackground() throws TskCoreException,
-                TskDataException, IOException {
+                TskDataException, IOException, BlackboardException {
             progressMonitor.setProgressText(Bundle.XRYDataSourceProcessor_preppingFiles());
 
             List<Path> nonXRYFiles = xryFolder.getNonXRYFiles();
@@ -304,7 +302,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
                     //Map paths to string representations.
                     .map(Path::toString)
                     .collect(Collectors.toList());
-            LocalFilesDataSource dataSource = fileManager.addLocalFilesDataSource(
+            LocalFilesDataSource dataSource = currentCase.getServices().getFileManager().addLocalFilesDataSource(
                     uniqueUUID,
                     "XRY Text Export", //Name
                     "", //Timezone
@@ -313,7 +311,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
 
             //Process the report files.
             progressMonitor.setProgressText(Bundle.XRYDataSourceProcessor_processingFiles());
-            XRYReportProcessor.process(xryFolder, dataSource);
+            XRYReportProcessor.process(xryFolder, dataSource, currentCase.getSleuthkitCase());
             return dataSource;
         }
 

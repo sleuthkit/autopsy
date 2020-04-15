@@ -1,4 +1,4 @@
-This document outlines how to run a packaged version of Autopsy on Linux or OS X.  It does not cover how to compile it from source or the Windows installer.
+﻿This document outlines how to run a packaged version of Autopsy on Linux or OS X.  It does not cover how to compile it from source or the Windows installer.
 
 
 * Prerequisites *
@@ -17,9 +17,9 @@ The following need to be done at least once. They do not need to be repeated for
        % wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add -
        % echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list
        % sudo apt-get update
-       % sudo apt-get install bellsoft-java8=1.8.0.232+10
+       % sudo apt-get install bellsoft-java8-full
     2. Set JAVA_HOME
-       % export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-amd64
+       % export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-full-amd64
 
     NOTE: You may need to log out and back in again after setting JAVA_HOME before the Autopsy
           unix_setup.sh script can see the value.
@@ -27,7 +27,7 @@ The following need to be done at least once. They do not need to be repeated for
 -- OS X:
     1. Install BellSoft Java 8.
         % brew tap bell-sw/liberica
-        % brew cask install liberica-jdk8
+        % brew cask install liberica-jdk8-full
     2. Set JAVA_HOME environment variable to location of JRE installation.
        e.g. add the following to ~/.bashrc
            export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
@@ -80,6 +80,11 @@ Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libr
   (a) confirm that you have a version of Java 8 installed and
   (b) confirm that your JAVA_HOME environment variable is set correctly:
       % echo $JAVA_HOME
+      
+- If you see something like "cannot be opened because the developer cannot be verified." it is an indication 
+  that Gatekeeper is running and is stopping a file from being executed.  To fix this open a new terminal window
+  and enter the following command "sudo spctl --master-disable", you will be required to enter your password.  
+  This will allow any program to be be downloaded from anywhere and executed.
 
 * Limitations (Updated May 2018) *
 - Timeline does not work on OS X

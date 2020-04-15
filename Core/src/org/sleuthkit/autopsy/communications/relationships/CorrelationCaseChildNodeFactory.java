@@ -28,6 +28,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
@@ -45,7 +46,6 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
 
     private static final Logger logger = Logger.getLogger(CorrelationCaseChildNodeFactory.class.getName());
 
-    private Map<Integer, CorrelationAttributeInstance.Type> correlationTypeMap;
     private final Set<Account> accounts;
 
     /**
@@ -108,22 +108,15 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
      *
      * @throws CentralRepoException
      */
-    private CorrelationAttributeInstance.Type getCorrelationType(Account.Type accountType) throws CentralRepoException {
-        if (correlationTypeMap == null) {
-            correlationTypeMap = new HashMap<>();
-            List<CorrelationAttributeInstance.Type> correcationTypeList = CentralRepository.getInstance().getDefinedCorrelationTypes();
-            correcationTypeList.forEach((type) -> {
-                correlationTypeMap.put(type.getId(), type);
-            });
+    private CorrelationAttributeInstance.Type getCorrelationType(Account.Type accountType) throws CentralRepoException {        
+        String accountTypeStr = accountType.getTypeName();
+        if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false) {
+            CentralRepoAccount.CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
+            int corrTypeId = crAccountType.getCorrelationTypeId();
+            return CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
         }
-
-        if (Account.Type.EMAIL.equals(accountType)) {
-            return correlationTypeMap.get(CorrelationAttributeInstance.EMAIL_TYPE_ID);
-        } else if (Account.Type.PHONE.equals(accountType)) {
-            return correlationTypeMap.get(CorrelationAttributeInstance.PHONE_TYPE_ID);
-        } else {
-            return null;
-        }
+       
+        return null;
     }
 
     /**

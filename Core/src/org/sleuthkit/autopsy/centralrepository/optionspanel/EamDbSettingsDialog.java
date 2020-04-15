@@ -87,7 +87,6 @@ public class EamDbSettingsDialog extends JDialog {
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
     private final CentralRepoDbManager manager = new CentralRepoDbManager();
-    private final boolean isMultiUserSelectable = CentralRepoDbManager.isPostgresMultiuserAllowed();
     private final DbChoiceRenderer DB_CHOICE_RENDERER = new DbChoiceRenderer();
     
     public EamDbSettingsDialog() {
@@ -95,7 +94,7 @@ public class EamDbSettingsDialog extends JDialog {
     }
     
     private boolean isDbChoiceSelectable(CentralRepoDbChoice item) {
-        return (item != CentralRepoDbChoice.POSTGRESQL_MULTIUSER || isMultiUserSelectable);
+        return (item != CentralRepoDbChoice.POSTGRESQL_MULTIUSER || manager.isPostgresMultiuserAllowed());
     }
     
     
@@ -159,15 +158,15 @@ public class EamDbSettingsDialog extends JDialog {
      * @param dialog    If non-null value, validates settings and updates 'okay' button enabled state.
      * @return          Whether or not the ultimate status after prompts is okay to continue.
      */
-    @NbBundle.Messages({"EamDbSettingsDialog.okButton.corruptDatabaseExists.title=Error Loading Database",
-        "EamDbSettingsDialog.okButton.corruptDatabaseExists.message=Database exists but is not the right format. Manually delete it or choose a different path (if applicable).",
-        "EamDbSettingsDialog.okButton.createDbDialog.title=Database Does Not Exist",
-        "EamDbSettingsDialog.okButton.createDbDialog.message=Database does not exist, would you like to create it?",
-        "EamDbSettingsDialog.okButton.databaseConnectionFailed.title=Database Connection Failed",
-        "EamDbSettingsDialog.okButton.databaseConnectionFailed.message=Unable to connect to database. Please check your settings and try again.",
-        "EamDbSettingsDialog.okButton.createSQLiteDbError.message=Unable to create SQLite Database, please ensure location exists and you have write permissions and try again.",
-        "EamDbSettingsDialog.okButton.createPostgresDbError.message=Unable to create Postgres Database, please ensure address, port, and login credentials are correct for Postgres server and try again.",
-        "EamDbSettingsDialog.okButton.createDbError.title=Unable to Create Database"})
+    @NbBundle.Messages({"EamDbSettingsDialog.okButton.corruptDatabaseExists.title=Error Loading Central Repository Database",
+        "EamDbSettingsDialog.okButton.corruptDatabaseExists.message=Central Repository Database exists but is not the right format. Manually delete it or choose a different path (if applicable).",
+        "EamDbSettingsDialog.okButton.createDbDialog.title=Central Repository Database Does Not Exist",
+        "EamDbSettingsDialog.okButton.createDbDialog.message=Central Repository Database does not exist, would you like to create it?",
+        "EamDbSettingsDialog.okButton.databaseConnectionFailed.title=Central Repository Database Connection Failed",
+        "EamDbSettingsDialog.okButton.databaseConnectionFailed.message=Unable to connect to Central Repository Database. Please check your settings and try again.",
+        "EamDbSettingsDialog.okButton.createSQLiteDbError.message=Unable to create SQLite Central Repository Database, please ensure location exists and you have write permissions and try again.",
+        "EamDbSettingsDialog.okButton.createPostgresDbError.message=Unable to create Postgres Central Repository Database, please ensure address, port, and login credentials are correct for Postgres server and try again.",
+        "EamDbSettingsDialog.okButton.createDbError.title=Unable to Create Central Repository Database"})
     private static boolean promptTestStatusWarnings(CentralRepoDbManager manager, EamDbSettingsDialog dialog) {
         if (manager.getStatus() == DatabaseTestResult.CONNECTION_FAILED) {
             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
@@ -181,31 +180,43 @@ public class EamDbSettingsDialog extends JDialog {
                     Bundle.EamDbSettingsDialog_okButton_corruptDatabaseExists_title(),
                     JOptionPane.WARNING_MESSAGE);
         } else if (manager.getStatus() == DatabaseTestResult.DB_DOES_NOT_EXIST) {
-            //database doesn't exist. do you want to create?
-            if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
-                    Bundle.EamDbSettingsDialog_okButton_createDbDialog_message(),
-                    Bundle.EamDbSettingsDialog_okButton_createDbDialog_title(),
-                    JOptionPane.YES_NO_OPTION)) {
-                onUserPromptCreateDb(manager, dialog);
-            }
+            promptCreateDatabase(manager, dialog);
         }
 
         return (manager.getStatus() == DatabaseTestResult.TESTED_OK);
     }   
-
-    /**
-     * When a new database needs to be created on user selecting cr, this code will be ran when user selects create cr.
-     * @param manager       The manager handling the database creation.
-     * @param dialog        The dialog that prompted database creation.
+    
+    
+     /**
+     * This method prompts the user whether or not they would like to create a database in the instance that
+     * it doesn't exist.
+     * @param manager   The manager to use when setting up the database.
+     * @param dialog  If non-null value, validates settings and updates 'okay'
+     *                button enabled state.
+     *
+     * @return Whether or not the ultimate status after prompts is okay.
      */
-    private static void onUserPromptCreateDb(CentralRepoDbManager manager, EamDbSettingsDialog dialog) {
-        try {
-            manager.createDb();
-        } catch (CentralRepoException e) {
-            onPromptStatusError(manager);
+    public static boolean promptCreateDatabase(CentralRepoDbManager manager, EamDbSettingsDialog dialog) {
+        //database doesn't exist. do you want to create?
+        if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
+                Bundle.EamDbSettingsDialog_okButton_createDbDialog_message(),
+                Bundle.EamDbSettingsDialog_okButton_createDbDialog_title(),
+                JOptionPane.YES_NO_OPTION)) {
+            try {
+                manager.createDb();
+                
+            } catch (CentralRepoException e) {
+                onPromptStatusError(manager);
+                return false;
+            }
+            
+            if (dialog != null) {
+                dialog.valid();
+            }
+            return true;
         }
-        if (dialog != null)
-            dialog.valid();
+        
+        return manager.testStatus() == DatabaseTestResult.TESTED_OK;
     }
 
     
@@ -240,7 +251,6 @@ public class EamDbSettingsDialog extends JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        bnGrpDatabasePlatforms = new javax.swing.ButtonGroup();
         fcDatabasePath = new javax.swing.JFileChooser();
         pnButtons = new javax.swing.JPanel();
         bnCancel = new javax.swing.JButton();
@@ -369,7 +379,6 @@ public class EamDbSettingsDialog extends JDialog {
         dataBaseFileTextArea.setEditable(false);
         dataBaseFileTextArea.setBackground(new java.awt.Color(240, 240, 240));
         dataBaseFileTextArea.setColumns(20);
-        dataBaseFileTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         dataBaseFileTextArea.setLineWrap(true);
         dataBaseFileTextArea.setRows(3);
         dataBaseFileScrollPane.setViewportView(dataBaseFileTextArea);
@@ -521,8 +530,8 @@ public class EamDbSettingsDialog extends JDialog {
         "EamDbSettingsDialog.okButton.errorMsg.text=Please restart Autopsy to begin using the new database platform.",
         "EamDbSettingsDialog.okButton.connectionErrorMsg.text=Failed to connect to central repository database."})
     private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
-        testStatusAndCreate(this, manager, this);
-        dispose();
+        if (testStatusAndCreate(this, manager, this))
+            dispose();
     }//GEN-LAST:event_bnOkActionPerformed
 
     
@@ -576,6 +585,7 @@ public class EamDbSettingsDialog extends JDialog {
         return true;
     }
     
+        
     /**
      * This method returns if changes to the central repository configuration were
      * successfully applied.
@@ -804,7 +814,6 @@ public class EamDbSettingsDialog extends JDialog {
 
         @Override
         public void changedUpdate(DocumentEvent e) {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             manager.clearStatus();
             updateFullDbPath();
             valid();
@@ -812,7 +821,6 @@ public class EamDbSettingsDialog extends JDialog {
 
         @Override
         public void insertUpdate(DocumentEvent e) {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             manager.clearStatus();
             updateFullDbPath();
             valid();
@@ -820,7 +828,6 @@ public class EamDbSettingsDialog extends JDialog {
 
         @Override
         public void removeUpdate(DocumentEvent e) {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             manager.clearStatus();
             updateFullDbPath();
             valid();
@@ -832,7 +839,6 @@ public class EamDbSettingsDialog extends JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnCancel;
     private javax.swing.JButton bnDatabasePathFileOpen;
-    private javax.swing.ButtonGroup bnGrpDatabasePlatforms;
     private javax.swing.JButton bnOk;
     private javax.swing.JComboBox<org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice> cbDatabaseType;
     private javax.swing.JScrollPane dataBaseFileScrollPane;

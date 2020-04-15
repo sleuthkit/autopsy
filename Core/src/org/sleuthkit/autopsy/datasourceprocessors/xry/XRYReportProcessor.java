@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -43,7 +45,7 @@ final class XRYReportProcessor {
      * @throws IOException If an I/O exception occurs.
      * @throws TskCoreException If an error occurs adding artifacts.
      */
-    static void process(XRYFolder folder, Content parent) throws IOException, TskCoreException {
+    static void process(XRYFolder folder, Content parent, SleuthkitCase currentCase) throws IOException, TskCoreException, BlackboardException {
         //Get all XRY file readers from this folder.
         List<XRYFileReader> xryFileReaders = folder.getXRYFileReaders();
 
@@ -52,7 +54,7 @@ final class XRYReportProcessor {
                 String reportType = xryFileReader.getReportType();
                 if (XRYFileParserFactory.supports(reportType)) {
                     XRYFileParser parser = XRYFileParserFactory.get(reportType);
-                    parser.parse(xryFileReader, parent);
+                    parser.parse(xryFileReader, parent, currentCase);
                 } else {
                     logger.log(Level.WARNING, String.format("[XRY DSP] XRY File (in brackets) "
                             + "[ %s ] was found, but no parser to support its report type exists. "
