@@ -73,6 +73,9 @@ import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.datamodel.TskCoreException;
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
+import org.jxmapviewer.painter.CompoundPainter;
+import org.jxmapviewer.painter.Painter;
+import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
@@ -87,6 +90,7 @@ final public class MapPanel extends javax.swing.JPanel {
     private boolean zoomChanging;
     private KdTree<MapWaypoint> waypointTree;
     private Set<MapWaypoint> waypointSet;
+    private List<Set<MapWaypoint>> tracks = new ArrayList<>();
 
     private Popup currentPopup;
     private final PopupFactory popupFactory;
@@ -207,6 +211,10 @@ final public class MapPanel extends javax.swing.JPanel {
 
         mapViewer.setCenterPosition(new GeoPosition(0, 0));
 
+        initializePainter();
+    }
+    
+    void initializePainter() {
         // Basic painters for the way points. 
         WaypointPainter<MapWaypoint> waypointPainter = new WaypointPainter<MapWaypoint>() {
             @Override
@@ -219,8 +227,13 @@ final public class MapPanel extends javax.swing.JPanel {
             }
         };
         waypointPainter.setRenderer(new MapWaypointRenderer());
-
-        mapViewer.setOverlayPainter(waypointPainter);
+            
+        ArrayList<Painter<JXMapViewer>> painters = new ArrayList<>();
+        painters.add(new MapTrackRenderer(tracks));
+        painters.add(waypointPainter);
+        
+        CompoundPainter<JXMapViewer> compoundPainter = new CompoundPainter<>(painters);
+        mapViewer.setOverlayPainter(compoundPainter);
     }
 
     /**
@@ -307,6 +320,14 @@ final public class MapPanel extends javax.swing.JPanel {
             waypointTree.add(waypoint);
         }
         mapViewer.repaint();
+    }
+    
+    /**
+     * Stores the given List of tracks from which to draw paths later
+     * @param tracks 
+     */
+    void setTracks(List<Set<MapWaypoint>> tracks) {
+        this.tracks = tracks;
     }
 
     /**
@@ -739,7 +760,7 @@ final public class MapPanel extends javax.swing.JPanel {
         /**
          * Creates a waypoint image with the specified color
          *
-         * @param color the color of the new waypoint image
+         * @param color the color of the new image
          * @return the new waypoint image
          */
         private BufferedImage createWaypointImage(Color color) {
@@ -749,6 +770,7 @@ final public class MapPanel extends javax.swing.JPanel {
             BufferedImage ret = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 
             Graphics2D g = ret.createGraphics();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g.drawImage(whiteWaypointImage, 0, 0, null);
             g.setComposite(AlphaComposite.SrcIn);
             g.setColor(color);
@@ -760,31 +782,87 @@ final public class MapPanel extends javax.swing.JPanel {
         }
 
         @Override
-        public void paintWaypoint(Graphics2D gd, JXMapViewer jxmv, MapWaypoint waypoint) {
+        public void paintWaypoint(Graphics2D g, JXMapViewer map, MapWaypoint waypoint) {
             Color color = getColor(waypoint, currentlySelectedWaypoint);
             BufferedImage image;
             int artifactType = waypoint.getArtifactTypeID();
-
-            if (artifactType == ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID() ||
-                artifactType == ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID()) {
-                image = dotImageCache.computeIfAbsent(color, k -> {
-                    return createTrackDotImage(color);
-                });
-            } else {
-                // Store computed images in cache for later use
-                image = waypointImageCache.computeIfAbsent(color, k -> {
-                    return createWaypointImage(color);
-                });
-            }
-
-            Point2D point = jxmv.getTileFactory().geoToPixel(waypoint.getPosition(), jxmv.getZoom());
-
+            Point2D point = map.getTileFactory().geoToPixel(waypoint.getPosition(), map.getZoom());
             int x = (int) point.getX();
             int y = (int) point.getY();
 
-            gd = (Graphics2D) gd.create();
-            gd.drawImage(image, x - image.getWidth() / 2, y - image.getHeight(), null);
-            gd.dispose();
+            if (artifactType == ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID() ||
+                artifactType == ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID() || 
+                artifactType == ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID()) {
+                image = dotImageCache.computeIfAbsent(color, k -> {
+                    return createTrackDotImage(color);
+                });
+                // Center the dot on the GPS coordinate
+                y -= image.getHeight() / 2;
+            } else {
+                image = waypointImageCache.computeIfAbsent(color, k -> {
+                    return createWaypointImage(color);
+                });
+                // Align the bottom of the pin with the GPS coordinate
+                y -= image.getHeight();
+            }
+            // Center image horizontally on image
+            x -= image.getWidth() / 2;
+
+            g = (Graphics2D) g.create();
+            g.drawImage(image, x, y, null);
+            g.dispose();
+        }
+    }
+    
+    /**
+     * Renderer for map track routes
+     */
+    private class MapTrackRenderer implements Painter<JXMapViewer> {
+        private final List<Set<MapWaypoint>> tracks;
+        
+        MapTrackRenderer(List<Set<MapWaypoint>> tracks) {
+            this.tracks = tracks;
+        }
+        
+        private void drawRoute(Set<MapWaypoint> track, Graphics2D g, JXMapViewer map) {
+            int lastX = 0;
+            int lastY = 0;
+            
+            boolean first = true;
+            
+            for (MapWaypoint wp : track) {
+                Point2D p = map.getTileFactory().geoToPixel(wp.getPosition(), map.getZoom());
+                int thisX = (int) p.getX();
+                int thisY = (int) p.getY();
+                
+                if (first) {
+                    first = false;
+                } else {
+                    g.drawLine(lastX, lastY, thisX, thisY);
+                }
+                
+                lastX = thisX;
+                lastY = thisY;
+            }
+        }
+        
+        @Override
+        public void paint(Graphics2D g, JXMapViewer map, int w, int h) {
+            g = (Graphics2D) g.create();
+            
+            Rectangle bounds = map.getViewportBounds();
+            g.translate(-bounds.x, -bounds.y);
+            
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            g.setColor(Color.BLACK);
+            g.setStroke(new BasicStroke(2));
+            
+            for (Set<MapWaypoint> track : tracks) {
+                drawRoute(track, g, map);
+            }
+            
+            g.dispose();
         }
     }
 }

@@ -84,7 +84,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
     private final GeoPosition position;
 
     /**
-     * Returns a list of of MapWaypoint objects for the given list of
+     * Returns a list of MapWaypoint objects for the given list of
      * datamodel.Waypoint objects.
      *
      * @param dmWaypoints

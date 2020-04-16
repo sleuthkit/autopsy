@@ -98,7 +98,7 @@ public final class WaypointBuilder {
          *
          * @param wwaypoints This of waypoints.
          */
-        void process(List<Waypoint> wwaypoints);
+        void process(List<Waypoint> waypoints);
     }
 
     /**
@@ -479,6 +479,7 @@ public final class WaypointBuilder {
                 @Override
                 public void process(ResultSet rs) {
                     List<Waypoint> waypoints = new ArrayList<>();
+                    //List<List<Waypoint>> tracks = new ArrayList<>();
                     try {
                         while (rs.next()) {
                             int artifact_type_id = rs.getInt("artifact_type_id"); //NON-NLS
@@ -486,7 +487,12 @@ public final class WaypointBuilder {
 
                             ARTIFACT_TYPE type = ARTIFACT_TYPE.fromID(artifact_type_id);
                             if (artifactTypes.contains(type)) {
-                                waypoints.addAll(getWaypointForArtifact(skCase.getBlackboardArtifact(artifact_id), type));
+                                List<Waypoint> curWaypoints = getWaypointForArtifact(skCase.getBlackboardArtifact(artifact_id), type);
+                                /*if (type == ARTIFACT_TYPE.TSK_GPS_TRACKPOINT || 
+                                    type == ARTIFACT_TYPE.TSK_GPS_TRACK) {
+                                    //tracks.add(curWaypoints);
+                                }*/
+                                waypoints.addAll(curWaypoints);
                             }
 
                         }

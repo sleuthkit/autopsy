@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.geolocation.GeoFilterPanel.GeoFilter;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
+import org.sleuthkit.autopsy.geolocation.datamodel.Track;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -330,7 +331,7 @@ public final class GeolocationTopComponent extends TopComponent {
      *
      * @param waypointList
      */
-    void addWaypointsToMap(Set<MapWaypoint> waypointList) {
+    void addWaypointsToMap(Set<MapWaypoint> waypointList, List<Set<MapWaypoint>> tracks) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -347,6 +348,8 @@ public final class GeolocationTopComponent extends TopComponent {
                 }
                 mapPanel.clearWaypoints();
                 mapPanel.setWaypoints(waypointList);
+                mapPanel.setTracks(tracks);
+                mapPanel.initializePainter();
                 setWaypointLoading(false);
                 geoFilterPanel.setEnabled(true);
             }
@@ -499,8 +502,8 @@ public final class GeolocationTopComponent extends TopComponent {
         }
 
         @Override
-        void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints) {
-            addWaypointsToMap(mapWaypoints);
+        void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks) {
+            addWaypointsToMap(mapWaypoints, tracks);
         }
     }
 }
