@@ -105,6 +105,10 @@ class GPXParserDataSourceIngestModule(FileIngestModule):
         # Get the module name, it will be needed for adding attributes
         self.moduleName = GPXParserDataSourceIngestModuleFactory.moduleName
 
+        # Get the case database and its blackboard.
+        self.skCase = Case.getCurrentCase().getSleuthkitCase()
+        self.blackboard = self.skCase.getBlackboard()
+
         # Check if a folder for this module is present in the case Temp directory.
         # If not, create it.
         self.dirName = os.path.join(
@@ -118,7 +122,7 @@ class GPXParserDataSourceIngestModule(FileIngestModule):
 
     def startUp(self, context):
         self.context = context
-        self.fileFound = 0
+        self.fileCount = 0
 
     # Where the file analysis is done.
     def process(self, file):
@@ -130,7 +134,7 @@ class GPXParserDataSourceIngestModule(FileIngestModule):
         fileName = os.path.join(self.dirName, uuid.uuid4().hex + ".gpx")
 
         # Create a GeoArtifactsHelper for this file.
-        geoArtifactHelper = GeoArtifactsHelper(skCase, moduleName, None, file)
+        geoArtifactHelper = GeoArtifactsHelper(self.skCase, self.moduleName, None, file)
 
         if self.writeDebugMsgs:
             self.log(Level.INFO, "Processing " + file.getUniquePath() +
@@ -210,7 +214,7 @@ class GPXParserDataSourceIngestModule(FileIngestModule):
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), moduleName, "GPXParser"))
                     art.addAttributes(attributes)
 
-                    blackboard.postArtifact(art, moduleName)
+                    self.blackboard.postArtifact(art, self.moduleName)
 
                 except Blackboard.BlackboardException as e:
                     self.log(Level.SEVERE, "Error posting GPS bookmark artifact for " +
@@ -248,6 +252,6 @@ class GPXParserDataSourceIngestModule(FileIngestModule):
     def shutDown(self):
         # As a final part of this example, we'll send a message to the ingest inbox with the number of files found (in this thread)
         message = IngestMessage.createMessage(
-            IngestMessage.MessageType.DATA, SampleJythonFileIngestModuleFactory.moduleName,
-            str(self.filesFound) + " files found")
+            IngestMessage.MessageType.DATA, GPXParserDataSourceIngestModuleFactory.moduleName,
+            str(self.fileCount) + " files found")
         ingestServices = IngestServices.getInstance().postMessage(message)
