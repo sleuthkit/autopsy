@@ -103,6 +103,7 @@ final public class MapPanel extends javax.swing.JPanel {
     private BufferedImage transparentWaypointImage;
 
     private MapWaypoint currentlySelectedWaypoint;
+    private Set<MapWaypoint> currentlySelectedTrack;
 
     /**
      * Creates new form MapPanel
@@ -348,6 +349,7 @@ final public class MapPanel extends javax.swing.JPanel {
     void clearWaypoints() {
         waypointTree = null;
         currentlySelectedWaypoint = null;
+        currentlySelectedTrack = null;
         if (currentPopup != null) {
             currentPopup.hide();
         }
@@ -685,9 +687,17 @@ final public class MapPanel extends javax.swing.JPanel {
         if (!evt.isPopupTrigger() && SwingUtilities.isLeftMouseButton(evt)) {
             List<MapWaypoint> waypoints = findClosestWaypoint(evt.getPoint());
             if (waypoints.size() > 0) {
-                currentlySelectedWaypoint = waypoints.get(0);
+                MapWaypoint selection = waypoints.get(0);
+                currentlySelectedWaypoint = selection;
+                for (Set<MapWaypoint> track : tracks) {
+                    if (track.contains(selection)) {
+                        currentlySelectedTrack = track;
+                        break;
+                    }
+                }
             } else {
                 currentlySelectedWaypoint = null;
+                currentlySelectedTrack = null;
             }
             showDetailsPopup();
         }
@@ -721,13 +731,13 @@ final public class MapPanel extends javax.swing.JPanel {
         /**
          *
          * @param waypoint the waypoint for which to get the color
-         * @param currentlySelectedWaypoint the waypoint that is currently
          * selected
          * @return the color that this waypoint should be rendered
          */
-        private Color getColor(MapWaypoint waypoint, MapWaypoint currentlySelectedWaypoint) {
+        private Color getColor(MapWaypoint waypoint) {
             Color baseColor = waypoint.getColor();
-            if (waypoint.equals(currentlySelectedWaypoint)) {
+            if (waypoint.equals(currentlySelectedWaypoint) || 
+                    (currentlySelectedTrack != null && currentlySelectedTrack.contains(waypoint))) {
                 // Highlight this waypoint since it is selected
                 return Color.YELLOW;
             } else {
@@ -783,7 +793,7 @@ final public class MapPanel extends javax.swing.JPanel {
 
         @Override
         public void paintWaypoint(Graphics2D g, JXMapViewer map, MapWaypoint waypoint) {
-            Color color = getColor(waypoint, currentlySelectedWaypoint);
+            Color color = getColor(waypoint);
             BufferedImage image;
             int artifactType = waypoint.getArtifactTypeID();
             Point2D point = map.getTileFactory().geoToPixel(waypoint.getPosition(), map.getZoom());
