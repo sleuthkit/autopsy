@@ -203,15 +203,15 @@ class GPXParserDataSourceIngestModule(FileIngestModule):
 
                     attributes = ArrayList()
                     attributes.add(BlackboardAttribute(
-                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), moduleName, waypoint.latitude))
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), self.moduleName, waypoint.latitude))
                     attributes.add(BlackboardAttribute(
-                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), moduleName, waypoint.longitude))
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), self.moduleName, waypoint.longitude))
                     attributes.add(BlackboardAttribute(
-                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG.getTypeID(), moduleName, "Waypoint"))
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG.getTypeID(), self.moduleName, "Waypoint"))
                     attributes.add(BlackboardAttribute(
-                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, waypoint.name))
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), self.moduleName, waypoint.name))
                     attributes.add(BlackboardAttribute(
-                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), moduleName, "GPXParser"))
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), self.moduleName, "GPXParser"))
                     art.addAttributes(attributes)
 
                     self.blackboard.postArtifact(art, self.moduleName)
