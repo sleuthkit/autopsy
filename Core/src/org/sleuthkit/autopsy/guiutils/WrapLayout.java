@@ -195,7 +195,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * @return If components are to be vertically aligned along their bottom
      *         edge.
      */
-    public boolean getAlignOnBaseline() {
+    public boolean isAlignOnBaseline() {
         return alignOnBaseline;
     }
 
@@ -295,7 +295,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
         List<WrapLayoutRow> rows = getAllRows(components, true, targetDims.getInnerWidth());
 
         boolean ltr = target.getComponentOrientation().isLeftToRight();
-        boolean useBaseline = getAlignOnBaseline();
+        boolean useBaseline = isAlignOnBaseline();
 
         int rowY = targetDims.getInsets().top + getVerticalGap();
         int leftX = targetDims.getInsets().left + getHorizontalGap();
