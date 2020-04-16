@@ -44,7 +44,6 @@ from org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints import Tr
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestModule
 from org.sleuthkit.autopsy.ingest.IngestModule import IngestModuleException
-from org.sleuthkit.autopsy.ingest import DataSourceIngestModule
 from org.sleuthkit.autopsy.ingest import FileIngestModule
 from org.sleuthkit.autopsy.ingest import IngestModuleFactoryAdapter
 from org.sleuthkit.autopsy.ingest import IngestMessage
@@ -65,9 +64,7 @@ import uuid
 
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the analysis.
-
-
-class GPXParserDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
+class GPXParserFileIngestModuleFactory(IngestModuleFactoryAdapter):
 
     moduleName = "GPX Parser"
 
@@ -84,14 +81,14 @@ class GPXParserDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
         return True
 
     def createFileIngestModule(self, ingestOptions):
-        return GPXParserDataSourceIngestModule()
+        return GPXParserFileIngestModule()
 
 
-# Data Source-level ingest module. One gets created per data source.
-class GPXParserDataSourceIngestModule(FileIngestModule):
+# File level ingest module.
+class GPXParserFileIngestModule(FileIngestModule):
 
     logger = Logger.getLogger(
-        GPXParserDataSourceIngestModuleFactory.moduleName)
+        GPXParserFileIngestModuleFactory.moduleName)
     writeDebugMsgs = False
 
     def log(self, level, msg):
@@ -103,7 +100,7 @@ class GPXParserDataSourceIngestModule(FileIngestModule):
         self.fileCount = 0
 
         # Get the module name, it will be needed for adding attributes
-        self.moduleName = GPXParserDataSourceIngestModuleFactory.moduleName
+        self.moduleName = GPXParserFileIngestModuleFactory.moduleName
 
         # Get the case database and its blackboard.
         self.skCase = Case.getCurrentCase().getSleuthkitCase()
@@ -247,11 +244,9 @@ class GPXParserDataSourceIngestModule(FileIngestModule):
         self.fileCount += 1
         return IngestModule.ProcessResult.OK
 
-    # Where any shutdown code is run and resources are freed.
 
     def shutDown(self):
-        # As a final part of this example, we'll send a message to the ingest inbox with the number of files found (in this thread)
         message = IngestMessage.createMessage(
-            IngestMessage.MessageType.DATA, GPXParserDataSourceIngestModuleFactory.moduleName,
+            IngestMessage.MessageType.DATA, GPXParserFileIngestModuleFactory.moduleName,
             str(self.fileCount) + " files found")
         ingestServices = IngestServices.getInstance().postMessage(message)
