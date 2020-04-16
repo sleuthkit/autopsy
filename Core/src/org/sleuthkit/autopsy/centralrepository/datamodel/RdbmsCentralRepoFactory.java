@@ -169,7 +169,7 @@ public class RdbmsCentralRepoFactory {
                     }
                 }
                 // create Persona tables.
-                createPersonaTables(stmt);
+                createPersonaTables(stmt, selectedPlatform);
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
                 return false;
@@ -606,7 +606,7 @@ public class RdbmsCentralRepoFactory {
      * 
      * @return True if success, False otherwise.
      */
-    private boolean createPersonaTables(Statement stmt) throws SQLException {
+    static boolean createPersonaTables(Statement stmt, CentralRepoPlatforms selectedPlatform) throws SQLException {
         
         stmt.execute(getCreateConfidenceTableStatement(selectedPlatform));
         stmt.execute(getCreateExaminersTableStatement(selectedPlatform));
@@ -806,7 +806,7 @@ public class RdbmsCentralRepoFactory {
       * 
       * @return True if success, false otherwise.
       */
-    private static boolean insertDefaultPersonaTablesContent(Connection conn, CentralRepoPlatforms selectedPlatform) {
+    static boolean insertDefaultPersonaTablesContent(Connection conn, CentralRepoPlatforms selectedPlatform) {
 
         try (Statement stmt = conn.createStatement()) {
             // populate the confidence table
