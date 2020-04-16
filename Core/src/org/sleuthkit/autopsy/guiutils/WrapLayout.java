@@ -54,21 +54,19 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * subcomponents as well as the spacing between subcomponents and the
      * borders of the target component.
      *
-     * @serial
-     * @see #getHgap()
-     * @see #setHgap(int)
+     * @see #getHorizontalGap()
+     * @see #setHorizontalGap(int)
      */
-    private int hgap = 0;
+    private int horizontalGap = 0;
 
     /**
      * The vertical gap between neighboring rows as well as the spacing between
      * rows and the borders of the target component.
      *
-     * @serial
-     * @see #getVgap()
-     * @see #setVgap(int)
+     * @see #getVerticalGap()
+     * @see #setVerticalGap(int)
      */
-    private int vgap = 0;
+    private int verticalGap = 0;
 
     /**
      * If true, subcomponents will be aligned on their bottom edge. Otherwise,
@@ -94,15 +92,16 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
     /**
      * Constructs a new <code>WrapLayout</code>.
      *
-     * @param vgap The vertical gap spacing between rows of subcomponents as
-     *             well as the spacing between the target component and rows.
-     * @param hgap The horizontal gap spacing between neighboring subcomponents
-     *             as well as the spacing between the subcomponents and the
-     *             target component's border.
+     * @param verticalGap   The vertical gap spacing between rows of
+     *                      subcomponents as well as the spacing between the
+     *                      target component and rows.
+     * @param horizontalGap The horizontal gap spacing between neighboring
+     *                      subcomponents as well as the spacing between the
+     *                      subcomponents and the target component's border.
      */
-    public WrapLayout(int vgap, int hgap) {
-        this.vgap = vgap;
-        this.hgap = hgap;
+    public WrapLayout(int verticalGap, int horizontalGap) {
+        this.verticalGap = verticalGap;
+        this.horizontalGap = horizontalGap;
     }
 
     /**
@@ -137,19 +136,20 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * @return The horizontal gap between components and between the components
      *         and the borders of the <code>Container</code>.
      */
-    public int getHgap() {
-        return hgap;
+    public int getHorizontalGap() {
+        return horizontalGap;
     }
 
     /**
      * Sets the horizontal gap between neighboring subcomponents as well as the
      * spacing between subcomponents and the borders of the target component.
      *
-     * @param hgap The horizontal gap between components and between the
-     *             components and the borders of the <code>Container</code>.
+     * @param horizontalGap The horizontal gap between components and between
+     *                      the components and the borders of the
+     *                      <code>Container</code>.
      */
-    public void setHgap(int hgap) {
-        this.hgap = hgap;
+    public void setHorizontalGap(int horizontalGap) {
+        this.horizontalGap = horizontalGap;
     }
 
     /**
@@ -159,19 +159,20 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      * @return The vertical gap between components and between the components
      *         and the borders of the <code>Container</code>.
      */
-    public int getVgap() {
-        return vgap;
+    public int getVerticalGap() {
+        return verticalGap;
     }
 
     /**
      * Sets the vertical gap between neighboring rows as well as the spacing
      * between rows and the borders of the target component.
      *
-     * @param vgap The vertical gap between components and between the
-     *             components and the borders of the <code>Container</code>.
+     * @param verticalGap The vertical gap between components and between the
+     *                    components and the borders of the
+     *                    <code>Container</code>.
      */
-    public void setVgap(int vgap) {
-        this.vgap = vgap;
+    public void setVerticalGap(int verticalGap) {
+        this.verticalGap = verticalGap;
     }
 
     /**
@@ -296,9 +297,9 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
         boolean ltr = target.getComponentOrientation().isLeftToRight();
         boolean useBaseline = getAlignOnBaseline();
 
-        int rowY = targetDims.getInsets().top + getVgap();
-        int leftX = targetDims.getInsets().left + getHgap();
-        int rightX = targetDims.getOuterWidth() - targetDims.getInsets().right - getHgap();
+        int rowY = targetDims.getInsets().top + getVerticalGap();
+        int leftX = targetDims.getInsets().left + getHorizontalGap();
+        int rightX = targetDims.getOuterWidth() - targetDims.getInsets().right - getHorizontalGap();
 
         for (WrapLayoutRow row : rows) {
             int rowHeight = row.getHeight();
@@ -306,7 +307,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
             int curX = 0;
             if (row.getComponents() != null) {
                 for (Component origComp : row.getComponents()) {
-                    curX += setComponentDims(origComp, useBaseline, ltr, rowY, rowHeight, leftX, rightX, curX) + getHgap();
+                    curX += setComponentDims(origComp, useBaseline, ltr, rowY, rowHeight, leftX, rightX, curX) + getHorizontalGap();
                 }
             }
 
@@ -315,11 +316,11 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
                 // reverse opposite aligned for layout purposes since flipping ltr
                 Collections.reverse(row.getOppositeAligned());
                 for (Component oppAlignedComp : row.getOppositeAligned()) {
-                    curX += setComponentDims(oppAlignedComp, useBaseline, !ltr, rowY, rowHeight, leftX, rightX, curX) + getHgap();
+                    curX += setComponentDims(oppAlignedComp, useBaseline, !ltr, rowY, rowHeight, leftX, rightX, curX) + getHorizontalGap();
                 }
             }
 
-            rowY += rowHeight + getVgap();
+            rowY += rowHeight + getVerticalGap();
         }
     }
 
@@ -331,7 +332,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
     @Override
     public Dimension minimumLayoutSize(Container target) {
         Dimension minimum = layoutSize(target, false);
-        minimum.width -= (getHgap() + 1);
+        minimum.width -= (getHorizontalGap() + 1);
         return minimum;
     }
 
@@ -408,7 +409,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
         }
 
         Insets insets = container.getInsets();
-        int horizontalInsetsAndGap = insets.left + insets.right + (getHgap() * 2);
+        int horizontalInsetsAndGap = insets.left + insets.right + (getHorizontalGap() * 2);
         int maxWidth = targetWidth - horizontalInsetsAndGap;
 
         return new ParentDimensions(targetWidth, maxWidth, insets);
@@ -431,13 +432,13 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
         Integer containerHeight = rows.stream().map((r) -> r.getHeight()).reduce(0, Integer::sum);
         // add in vertical gap between rows
         if (rows.size() > 1) {
-            containerHeight += (rows.size() - 1) * getVgap();
+            containerHeight += (rows.size() - 1) * getVerticalGap();
         }
 
         containerHeight += targetDims.getInsets().top + targetDims.getInsets().bottom;
 
         Integer containerWidth = rows.stream().map((r) -> r.getWidth()).reduce(0, Math::max);
-        containerWidth += targetDims.getInsets().left + targetDims.getInsets().right + (getHgap() * 2);
+        containerWidth += targetDims.getInsets().left + targetDims.getInsets().right + (getHorizontalGap() * 2);
 
         //  When using a scroll pane or the DecoratedLookAndFeel we need to
         //  make sure the preferred size is less than the size of the
@@ -446,7 +447,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
         Container scrollPane = SwingUtilities.getAncestorOfClass(JScrollPane.class, target);
 
         if (scrollPane != null && target.isValid()) {
-            containerWidth -= (getHgap() + 1);
+            containerWidth -= (getHorizontalGap() + 1);
         }
 
         return new Dimension(containerWidth, containerHeight);
@@ -473,7 +474,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
          * @param height          The maximum height of the row.
          * @param width           The total width of the row.
          */
-        WrapLayoutRow(List<Component> components, List<Component> oppositeAligned, 
+        WrapLayoutRow(List<Component> components, List<Component> oppositeAligned,
                 int height, int width) {
             this.components = components;
             this.oppositeAligned = oppositeAligned;
@@ -537,7 +538,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      *
      * @return The list of rows ordered from top to bottom.
      */
-    private List<WrapLayoutRow> getAllRows(List<Component> components, 
+    private List<WrapLayoutRow> getAllRows(List<Component> components,
             boolean preferred, int maxWidth) {
         List<Component> originalComp
                 = components
@@ -572,7 +573,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
             WrapLayoutRow lastOrig = originalRowSet.get(originalRowSet.size() - 1);
             WrapLayoutRow firstOpp = oppositeRowSet.get(0);
 
-            int proposedRowWidth = lastOrig.getWidth() + firstOpp.getWidth() + getHgap();
+            int proposedRowWidth = lastOrig.getWidth() + firstOpp.getWidth() + getHorizontalGap();
             if (proposedRowWidth <= maxWidth) {
                 WrapLayoutRow middleRow = new WrapLayoutRow(lastOrig.getComponents(), firstOpp.getOppositeAligned(),
                         Math.max(lastOrig.getHeight(), firstOpp.getHeight()), proposedRowWidth);
@@ -601,7 +602,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
      *
      * @return The list of rows determined.
      */
-    private List<WrapLayoutRow> getRowSet(List<Component> components, 
+    private List<WrapLayoutRow> getRowSet(List<Component> components,
             boolean preferred, int maxWidth) {
         List<WrapLayoutRow> rows = new ArrayList<>();
 
@@ -623,7 +624,7 @@ public class WrapLayout implements LayoutManager, java.io.Serializable {
 
                 //  Add a horizontal gap for all components after the first
                 if (rowWidth != 0) {
-                    rowWidth += getHgap();
+                    rowWidth += getHorizontalGap();
                 }
 
                 rowComponents.add(m);
