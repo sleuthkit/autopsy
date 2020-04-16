@@ -61,7 +61,6 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -160,7 +159,7 @@ public class Case {
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static final Object caseActionSerializationLock = new Object();
     private static Future<?> backgroundOpenFileSystemsFuture = null;
-    private static final ExecutorService startIngestJobsExecutor
+    private static final ExecutorService backgroundOpenFileSystemsExecutor
             = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("Case-open-file-systems-%d").build());
     private static volatile Frame mainFrame;
     private static volatile Case currentCase;
@@ -2007,8 +2006,8 @@ public class Case {
 
     /**
      * Starts a background task that reads a sector from each file system of
-     * each image of a case to do an eager open of the filesystems in case. If
-     * this method is called before another background file system read has
+     * each image of a case to do an eager open of the filesystems in the case. 
+     * If this method is called before another background file system read has
      * finished the earlier one will be cancelled.
      *
      * @throws CaseActionCancelledException Exception thrown if task is
@@ -2018,13 +2017,13 @@ public class Case {
         "# {0} - case", "Case.openFileSystems.retrievingImages=Retrieving images for case: {0}...",
         "# {0} - image", "Case.openFileSystems.openingImage=Opening all filesystems for image: {0}..."
     })
-    private void openFileSystemsInBackground() throws CaseActionCancelledException {
+    private void openFileSystemsInBackground() {
         if (backgroundOpenFileSystemsFuture != null && !backgroundOpenFileSystemsFuture.isDone()) {
             backgroundOpenFileSystemsFuture.cancel(true);
         }
 
         BackgroundOpenFileSystemsTask backgroundTask = new BackgroundOpenFileSystemsTask(this.caseDb, new LoggingProgressIndicator());
-        backgroundOpenFileSystemsFuture = startIngestJobsExecutor.submit(backgroundTask);
+        backgroundOpenFileSystemsFuture = backgroundOpenFileSystemsExecutor.submit(backgroundTask);
     }
 
     /**
