@@ -159,8 +159,8 @@ public class Case {
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static final Object caseActionSerializationLock = new Object();
     private static Future<?> backgroundOpenFileSystemsFuture = null;
-    private static final ExecutorService backgroundOpenFileSystemsExecutor
-            = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("Case-open-file-systems-%d").build());
+    private static final ExecutorService openFileSystemsExecutor
+            = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("case-open-file-systems-%d").build());
     private static volatile Frame mainFrame;
     private static volatile Case currentCase;
     private final CaseMetadata metadata;
@@ -2023,7 +2023,7 @@ public class Case {
         }
 
         BackgroundOpenFileSystemsTask backgroundTask = new BackgroundOpenFileSystemsTask(this.caseDb, new LoggingProgressIndicator());
-        backgroundOpenFileSystemsFuture = backgroundOpenFileSystemsExecutor.submit(backgroundTask);
+        backgroundOpenFileSystemsFuture = openFileSystemsExecutor.submit(backgroundTask);
     }
 
     /**
