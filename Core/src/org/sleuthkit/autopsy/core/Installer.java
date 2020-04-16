@@ -405,6 +405,8 @@ public class Installer extends ModuleInstall {
                 JythonModuleLoader.getGeneralReportModules();
             }
             catch (Exception ex) {
+                // This is a firewall exception to ensure that any possible exception caused
+                // by this initial load of the Jython modules are caught and logged.
                 logger.log(Level.SEVERE, "There was an error while doing an initial load of python plugins.", ex);
             }
             
