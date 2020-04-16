@@ -81,7 +81,7 @@ As you will read in the later sections about the different module types, each Au
 
 \subsection mod_dev_aut_run1 Running Your Module During Development
 
-When you are developing your Autopsy module, you can simply choose "Run" on the module and it will launch the Autopsy platform with the module enabled in it.  This is also how you can debug the module. 
+When you are developing your Autopsy module, you can simply choose "Run" on the module and it will launch the Autopsy platform with the module enabled in it.  This is also how you can debug the module. If you want to apply changes during debugging and have not changed any method signatures, you can use the "Apply Code Changes" function in NetBeans.
 
 \subsection mod_dev_aut_deploy Deploying Your Module
 
