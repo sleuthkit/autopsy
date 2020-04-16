@@ -402,6 +402,7 @@ public class Installer extends ModuleInstall {
         Runnable loader = () -> {
             try {
                 JythonModuleLoader.getIngestModuleFactories();
+                JythonModuleLoader.getGeneralReportModules();
             }
             catch (Exception ex) {
                 logger.log(Level.SEVERE, "There was an error while doing an initial load of python plugins.", ex);
