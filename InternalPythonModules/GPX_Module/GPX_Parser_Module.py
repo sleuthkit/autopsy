@@ -64,6 +64,8 @@ import uuid
 
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the analysis.
+
+
 class GPXParserFileIngestModuleFactory(IngestModuleFactoryAdapter):
 
     moduleName = "GPX Parser"
@@ -131,7 +133,8 @@ class GPXParserFileIngestModule(FileIngestModule):
         fileName = os.path.join(self.dirName, uuid.uuid4().hex + ".gpx")
 
         # Create a GeoArtifactsHelper for this file.
-        geoArtifactHelper = GeoArtifactsHelper(self.skCase, self.moduleName, None, file)
+        geoArtifactHelper = GeoArtifactsHelper(
+            self.skCase, self.moduleName, None, file)
 
         if self.writeDebugMsgs:
             self.log(Level.INFO, "Processing " + file.getUniquePath() +
@@ -243,7 +246,6 @@ class GPXParserFileIngestModule(FileIngestModule):
 
         self.fileCount += 1
         return IngestModule.ProcessResult.OK
-
 
     def shutDown(self):
         message = IngestMessage.createMessage(
