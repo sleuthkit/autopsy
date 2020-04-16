@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +50,7 @@ class AddFileTypeDialog extends JDialog {
     }
 
     private static final long serialVersionUID = 1L;
-    private static final Dimension BUTTON_SIZE = new Dimension(65, 23);
+    private static final Dimension BUTTON_SIZE = new Dimension(85, 23);
     private FileType fileType;
     final private AddFileTypePanel addMimeTypePanel;
     private BUTTON_PRESSED result;
@@ -61,9 +61,10 @@ class AddFileTypeDialog extends JDialog {
      * Creates a dialog for creating a file type
      */
     @Messages({"AddMimeTypedialog.title=File Type"})
-     AddFileTypeDialog() {
+    AddFileTypeDialog() {
         super(WindowManager.getDefault().getMainWindow(), Bundle.AddMimeTypedialog_title(), true);
         addMimeTypePanel = new AddFileTypePanel();
+        init();
     }
 
     /**
@@ -74,22 +75,17 @@ class AddFileTypeDialog extends JDialog {
     AddFileTypeDialog(FileType fileType) {
         super(WindowManager.getDefault().getMainWindow(), Bundle.AddMimeTypedialog_title(), true);
         addMimeTypePanel = new AddFileTypePanel(fileType);
+        init();
     }
 
     /**
-     * Displays the add file type dialog.
-     *
+     * Do initialization of dialog components.
      */
-    @NbBundle.Messages({
+        @NbBundle.Messages({
         "AddMimeTypeDialog.addButton.title=OK",
         "AddMimeTypeDialog.cancelButton.title=Cancel"})
-    void display() {
+    private void init() {
         setLayout(new BorderLayout());
-
-        /**
-         * Center the dialog.
-         */
-        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
 
         /**
          * Get the default or saved ingest job settings for this context and use
@@ -120,15 +116,15 @@ class AddFileTypeDialog extends JDialog {
         //setting both max and preffered size appears to be necessary to change the button size
         cancelButton.setMaximumSize(BUTTON_SIZE);
         cancelButton.setPreferredSize(BUTTON_SIZE);
-        
+
         // Put the buttons in their own panel, under the settings panel.
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
-
         buttonPanel.add(okButton);
-        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
+        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 35), new Dimension(10, 35), new Dimension(10, 35)));
         buttonPanel.add(cancelButton);
-        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
+        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 35), new Dimension(10, 35), new Dimension(10, 35)));
+        buttonPanel.validate();
         add(buttonPanel, BorderLayout.LINE_END);
 
         /**
@@ -150,13 +146,23 @@ class AddFileTypeDialog extends JDialog {
             }
         });
         enableOkButton();
+        setResizable(false);
+        pack();
+    }
+
+    /**
+     * Displays the add file type dialog.
+     *
+     */
+    void display() {
+        /**
+         * Center the dialog.
+         */
+        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         /**
          * Show the dialog.
          */
-        pack();
-        setResizable(false);
         setVisible(true);
-
     }
 
     /**

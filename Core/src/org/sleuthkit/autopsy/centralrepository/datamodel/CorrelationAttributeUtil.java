@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -32,6 +34,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.CommunicationsUtils;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -59,25 +62,60 @@ public class CorrelationAttributeUtil {
         return Bundle.CorrelationAttributeUtil_emailaddresses_text();
     }
 
+    // Defines which artifact types act as the sources for CR data.
+    // Most notably, does not include KEYWORD HIT, CALLLOGS, MESSAGES, CONTACTS
+    // TSK_INTERESTING_ARTIFACT_HIT (See JIRA-6129 for more details on the
+    // interesting artifact hit).
+    
+    // IMPORTANT: This set should be updated for new artifacts types that need to
+    // be inserted into the CR.
+    private static final Set<Integer> SOURCE_TYPES_FOR_CR_INSERT = new HashSet<Integer>() {{
+        add(ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID());
+        add(ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID());
+        add(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID());
+        add(ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID());
+        add(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID());
+        add(ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID());
+        add(ARTIFACT_TYPE.TSK_WIFI_NETWORK_ADAPTER.getTypeID());
+        add(ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID());
+        add(ARTIFACT_TYPE.TSK_BLUETOOTH_ADAPTER.getTypeID());
+        add(ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID());
+        add(ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID());
+        add(ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID());
+        add(ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID());
+    }};
+
     /**
      * Makes zero to many correlation attribute instances from the attributes of
-     * an artifact.
-     *
-     * IMPORTANT: The correlation attribute instances are NOT added to the
-     * central repository by this method.
-     *
-     * @param artifact An artifact.
+     * artifacts that have correlatable data. The intention of this method is to
+     * use the results to save to the CR, not to correlate with them. If you 
+     * want to correlate, please use makeCorrAttrsForCorrelation. An artifact that can
+     * have correlatable data != An artifact that should be the source of data
+     * in the CR, so results may be un-necessarily incomplete.
+     * 
+     * @param artifact              An artifact.
      *
      * @return A list, possibly empty, of correlation attribute instances for
-     *         the artifact.
+     *          the artifact.
      */
-    public static List<CorrelationAttributeInstance> makeCorrAttrsFromArtifact(BlackboardArtifact artifact) {
-        return makeCorrAttrsFromArtifact(artifact, true );
+    public static List<CorrelationAttributeInstance> makeCorrAttrsToSave(BlackboardArtifact artifact) {
+        if(SOURCE_TYPES_FOR_CR_INSERT.contains(artifact.getArtifactTypeID())) {
+            // Restrict the correlation attributes to use for saving.
+            // The artifacts which are suitable for saving are a subset of the
+            // artifacts that are suitable for correlating.
+            return makeCorrAttrsForCorrelation(artifact);
+        }
+        // Return an empty collection.
+        return new ArrayList<>();
     }
-    
+
     /**
      * Makes zero to many correlation attribute instances from the attributes of
-     * an artifact.
+     * artifacts that have correlatable data. The intention of this method is to
+     * use the results to correlate with, not to save. If you 
+     * want to save, please use makeCorrAttrsToSave. An artifact that can
+     * have correlatable data != An artifact that should be the source of data
+     * in the CR, so results may be too lenient.
      *
      * IMPORTANT: The correlation attribute instances are NOT added to the
      * central repository by this method.
@@ -91,26 +129,22 @@ public class CorrelationAttributeUtil {
      * checking is easy to forget, while catching exceptions is enforced.
      *
      * @param artifact              An artifact.
-     * @param resolveSourceArtifact A flag to indicate whether to resolve the
-     *                              source artifact, if the given artifact is 
-     *                              of type TSK_INTERESTING_ARTIFACT_HIT.
      *
      * @return A list, possibly empty, of correlation attribute instances for
      *          the artifact.
      */
-    public static List<CorrelationAttributeInstance> makeCorrAttrsFromArtifact(BlackboardArtifact artifact, boolean resolveSourceArtifact) {
+    public static List<CorrelationAttributeInstance> makeCorrAttrsForCorrelation(BlackboardArtifact artifact) {
         List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
-        
-        // If the artifact is of type TSK_INTERESTING_ARTIFACT_HIT, and the caller 
-        // has not indicated to resolve the source artifact, then return an empty list.
-        if ((artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) && (resolveSourceArtifact == false) ) {
-            return correlationAttrs;
-        }
         try {
             BlackboardArtifact sourceArtifact = getCorrAttrSourceArtifact(artifact);
             if (sourceArtifact != null) {
                 int artifactTypeID = sourceArtifact.getArtifactTypeID();
-                if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()
+                if (artifactTypeID == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                    BlackboardAttribute setNameAttr = sourceArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+                    if (setNameAttr != null && CorrelationAttributeUtil.getEmailAddressAttrDisplayName().equals(setNameAttr.getValueString())) {
+                        makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                    }
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
@@ -143,6 +177,11 @@ public class CorrelationAttributeUtil {
 
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
                     makeCorrAttrFromAcctArtifact(correlationAttrs, sourceArtifact);
+
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
+                        || artifactTypeID == ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
+                        || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
+                    makeCorrAttrsFromCommunicationArtifacts(correlationAttrs, sourceArtifact);
                 }
             }
         } catch (CentralRepoException ex) {
@@ -156,6 +195,47 @@ public class CorrelationAttributeUtil {
             return correlationAttrs;
         }
         return correlationAttrs;
+    }
+
+    /**
+     * Makes a correlation attribute instance from a phone number attribute of an
+     * artifact.
+     *
+     * @param corrAttrInstances Correlation attributes will be added to this.
+     * @param artifact An artifact with a phone number attribute.
+     *
+     * @throws TskCoreException     If there is an error querying the case
+     *                              database.
+     * @throws CentralRepoException If there is an error querying the central
+     *                              repository.
+     */
+    private static void makeCorrAttrsFromCommunicationArtifacts(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact artifact) throws TskCoreException, CentralRepoException {
+        CorrelationAttributeInstance corrAttr = null;
+
+        /*
+         * Extract the phone number from the artifact attribute.
+         */
+        String value = null;
+        if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER))) {
+            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)).getValueString();
+        } else if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM))) {
+            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)).getValueString();
+        } else if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO))) {
+            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
+        }
+
+        /*
+         * Normalize the phone number.
+         */
+        if (value != null) {
+            if(CommunicationsUtils.isValidPhoneNumber(value)) {
+                value = CommunicationsUtils.normalizePhoneNum(value);
+                corrAttr = makeCorrAttr(artifact, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), value);
+                if(corrAttr != null) {
+                    corrAttrInstances.add(corrAttr);
+                }
+            }
+        }
     }
 
     /**
@@ -186,19 +266,11 @@ public class CorrelationAttributeUtil {
 
     /**
      * Makes a correlation attribute instance for an account artifact.
-     * 
+     *
      * Also creates an account in the CR DB if it doesn't exist.
      *
      * IMPORTANT: The correlation attribute instance is NOT added to the central
      * repository by this method.
-     *
-     * TODO (Jira-6088): The methods in this low-level, utility class should
-     * throw exceptions instead of logging them. The reason for this is that the
-     * clients of the utility class, not the utility class itself, should be in
-     * charge of error handling policy, per the Autopsy Coding Standard. Note
-     * that clients of several of these methods currently cannot determine
-     * whether receiving a null return value is an error or not, plus null
-     * checking is easy to forget, while catching exceptions is enforced.
      *
      * @param corrAttrInstances A list of correlation attribute instances.
      * @param acctArtifact      An account artifact.
@@ -206,13 +278,17 @@ public class CorrelationAttributeUtil {
      * @return The correlation attribute instance.
      */
     private static void makeCorrAttrFromAcctArtifact(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact acctArtifact) throws TskCoreException, CentralRepoException {
-       
+
         // Get the account type from the artifact
         BlackboardAttribute accountTypeAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
         String accountTypeStr = accountTypeAttribute.getValueString();
         
+        // @@TODO Vik-6136: CR currently does not know of custom account types.  
+        // Ensure there is a predefined account type for this account.
+        Account.Type predefinedAccountType = Account.Type.PREDEFINED_ACCOUNT_TYPES.stream().filter(type -> type.getTypeName().equalsIgnoreCase(accountTypeStr)).findAny().orElse(null);
+             
         // do not create any correlation attribute instance for a Device account
-        if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false) {
+        if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false && predefinedAccountType != null) {
 
             // Get the corresponding CentralRepoAccountType from the database.
             CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
@@ -441,10 +517,10 @@ public class CorrelationAttributeUtil {
                     file.getId());
 
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Error querying case database (%s)", file), ex); // NON-NLS            
+            logger.log(Level.SEVERE, String.format("Error querying case database (%s)", file), ex); // NON-NLS
             return null;
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS            
+            logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
             return null;
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS

@@ -56,7 +56,7 @@ public final class JythonModuleLoader {
      * @return A list of objects that implement the IngestModuleFactory
      *         interface.
      */
-    public static List<IngestModuleFactory> getIngestModuleFactories() {
+    public static synchronized List<IngestModuleFactory> getIngestModuleFactories() {
         return getInterfaceImplementations(new IngestModuleFactoryDefFilter(), IngestModuleFactory.class);
     }
 
@@ -66,7 +66,7 @@ public final class JythonModuleLoader {
      * @return A list of objects that implement the GeneralReportModule
      *         interface.
      */
-    public static List<GeneralReportModule> getGeneralReportModules() {
+    public static synchronized List<GeneralReportModule> getGeneralReportModules() {
         return getInterfaceImplementations(new GeneralReportModuleDefFilter(), GeneralReportModule.class);
     }
     @Messages({"JythonModuleLoader.pythonInterpreterError.title=Python Modules",

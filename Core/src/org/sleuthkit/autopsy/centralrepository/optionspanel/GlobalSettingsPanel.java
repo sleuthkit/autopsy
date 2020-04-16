@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
-import java.awt.Cursor;
 import java.awt.EventQueue;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.beans.PropertyChangeEvent;
@@ -43,7 +42,13 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import java.awt.Component;
+import java.beans.PropertyChangeSupport;
 import java.util.logging.Level;
+import javax.swing.ImageIcon;
+import org.openide.util.ImageUtilities;
+import org.sleuthkit.autopsy.centralrepository.datamodel.DatabaseTestResult;
+
+
 
 /**
  * Main settings panel for the Central Repository
@@ -54,25 +59,57 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(GlobalSettingsPanel.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.STARTED, IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
-    private final IngestJobEventPropertyChangeListener ingestJobEventListener;
 
+    // this allows property change events to be fired at a static level but listened to by instances
+    private static final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(GlobalSettingsPanel.class);
+    
+    // tracks the last known instance property change listener so that only one GlobalSettingsPanel is listening for events
+    private static PropertyChangeListener lastRegistered = null;
+    
+    private final IngestJobEventPropertyChangeListener ingestJobEventListener;
+    
+    private final ImageIcon goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/good.png", false));
+    private final ImageIcon badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/bad.png", false));
+    
+    
     /**
      * Creates new form EamOptionsPanel
      */
     public GlobalSettingsPanel() {
         ingestJobEventListener = new IngestJobEventPropertyChangeListener();
-
-        // listen for change events in currently saved choice
-        CentralRepoDbManager.addPropertyChangeListener((PropertyChangeEvent evt) -> ingestStateUpdated(Case.isCaseOpen()));
         initComponents();
         customizeComponents();
+        setupSettingsChangeListeners();
         addIngestJobEventsListener();
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             //disable when case is open, enable when case is closed
             ingestStateUpdated(evt.getNewValue() != null);
         });
     }
+    
+    
+    /**
+     * Sets up this instance's listener for the GlobalSettingsPanel's changes.
+     */
+    private void setupSettingsChangeListeners() {
+        // listen for change events in currently saved choice
+        if (lastRegistered != null) {
+            CentralRepoDbManager.removePropertyChangeListener(lastRegistered);
+            GlobalSettingsPanel.propertyChangeSupport.removePropertyChangeListener(lastRegistered);
+        }
+        
+        lastRegistered = this::onSettingsChange;
+        CentralRepoDbManager.addPropertyChangeListener(lastRegistered);
+        GlobalSettingsPanel.propertyChangeSupport.addPropertyChangeListener(lastRegistered);
+    }
+    
+    
+    private void onSettingsChange(PropertyChangeEvent evt) {
+        ingestStateUpdated(Case.isCaseOpen());
+        clearStatus();
+    }
 
+    
     private void customizeComponents() {
         setName(NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.pnCorrelationProperties.border.title"));
     }
@@ -121,24 +158,23 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     public static void onMultiUserChange(Component parent, boolean muPreviouslySelected, boolean muCurrentlySelected) {
         boolean crEnabled = CentralRepoDbUtil.allowUseOfCentralRepository();
         boolean crMultiUser = CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
-        boolean crDisabledDueToFailure = CentralRepoDbManager.isDisabledDueToFailure();
 
         if (!muPreviouslySelected && muCurrentlySelected) {
             SwingUtilities.invokeLater(() -> {
                 if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(parent,
                         "<html><body>"
                         + "<div style='width: 400px;'>"
-                        + "<p>" + NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.enable.description") + "</p>"
-                        + "<p style='margin-top: 10px'>" + NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.enable.description2") + "</p>"
+                        + "<p>" + Bundle.GlobalSettingsPanel_onMultiUserChange_enable_description() + "</p>"
+                        + "<p style='margin-top: 10px'>" + Bundle.GlobalSettingsPanel_onMultiUserChange_enable_description2() + "</p>"
                         + "</div>"
                         + "</body></html>",
-                        NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.enable.title"),
+                        Bundle.GlobalSettingsPanel_onMultiUserChange_enable_title(),
                         JOptionPane.YES_NO_OPTION)) {
 
                     // setup database for CR
                     CentralRepoDbUtil.setUseCentralRepo(true);
                     CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.POSTGRESQL_MULTIUSER);
-                    handleDbChange(parent);
+                    checkStatusAndCreateDb(parent);
                 }
             });
         } // moving from selected to not selected && 'PostgreSQL using multi-user settings' is selected
@@ -148,11 +184,22 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             });
         } // changing multi-user settings connection && 'PostgreSQL using multi-user settings' is selected && 
         // central repo either enabled or was disabled due to error
-        else if (muPreviouslySelected && muCurrentlySelected && crMultiUser && (crEnabled || crDisabledDueToFailure)) {
-            // test databse for CR change
-            CentralRepoDbUtil.setUseCentralRepo(true);
-            handleDbChange(parent);
+        else if (muPreviouslySelected && muCurrentlySelected && crEnabled && crMultiUser) {
+            GlobalSettingsPanel.propertyChangeSupport.firePropertyChange("multiuserSettingsChanged", null, null);
+            checkStatusAndCreateDb(parent);
         }
+    }
+    
+    
+    /**
+     * Checks the status of current connectivity for CR and reports any issues.  Will also prompt user to create
+     * database if cr database is absent.
+     * @param parent    the parent component to which the dialogs will be associated.
+     */
+    private static void checkStatusAndCreateDb(Component parent) {
+        SwingUtilities.invokeLater(() -> {
+            EamDbSettingsDialog.testStatusAndCreate(parent, new CentralRepoDbManager());
+        });
     }
 
     /**
@@ -165,28 +212,27 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     @NbBundle.Messages({
         "GlobalSettingsPanel.onMultiUserChange.disabledMu.title=Central Repository Change Necessary",
         "GlobalSettingsPanel.onMultiUserChange.disabledMu.description=The Central Repository will be reconfigured to use a local SQLite database.",
-        "GlobalSettingsPanel.onMultiUserChange.disabledMu.description2=Press Configure PostgreSQL to change to a PostgreSQL database."
+        "GlobalSettingsPanel.onMultiUserChange.disabledMu.description2=Press Configure PostgreSQL to change to a PostgreSQL database.",
+        "GlobalSettingsPanel.askForCentralRepoDbChoice.sqliteChoice.text=Use SQLite",
+        "GlobalSettingsPanel.askForCentralRepoDbChoice.customPostgrestChoice.text=Configure PostgreSQL",
+        "GlobalSettingsPanel.askForCentralRepoDbChoice.disableChoice.text=Disable Central Repository"
     })
     private static void askForCentralRepoDbChoice(Component parent) {
-        // disable central repository until user makes choice
-        CentralRepoDbUtil.setUseCentralRepo(false);
-        CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED, false);
-
         Object[] options = {
-            "Use SQLite",
-            "Configure PostgreSQL",
-            "Disable Central Repository"
+            Bundle.GlobalSettingsPanel_askForCentralRepoDbChoice_sqliteChoice_text(),
+            Bundle.GlobalSettingsPanel_askForCentralRepoDbChoice_customPostgrestChoice_text(),
+            Bundle.GlobalSettingsPanel_askForCentralRepoDbChoice_disableChoice_text()
         };
 
         int result = JOptionPane.showOptionDialog(
                 parent,
                 "<html><body>"
                 + "<div style='width: 400px;'>"
-                + "<p>" + NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.description") + "</p>"
-                + "<p style='margin-top: 10px'>" + NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.description2") + "</p>"
+                + "<p>" + Bundle.GlobalSettingsPanel_onMultiUserChange_disabledMu_description() + "</p>"
+                + "<p style='margin-top: 10px'>" + Bundle.GlobalSettingsPanel_onMultiUserChange_disabledMu_description2() + "</p>"
                 + "</div>"
                 + "</body></html>",
-                NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.onMultiUserChange.disabledMu.title"),
+                Bundle.GlobalSettingsPanel_onMultiUserChange_disabledMu_title(),
                 JOptionPane.YES_NO_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE,
                 null,
@@ -200,13 +246,55 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             invokeCrChoice(parent, CentralRepoDbChoice.POSTGRESQL_CUSTOM);
         }
     }
+    
+    @NbBundle.Messages({
+        "GlobalSettingsPanel.testCurrentConfiguration.dbDoesNotExist.message=Database does not exist.",
+    })
+    private boolean testCurrentConfiguration() {
+        if (CentralRepoDbManager.getSavedDbChoice() == null || 
+                CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.DISABLED || 
+                !CentralRepoDbUtil.allowUseOfCentralRepository())
+            return false;
+        
+        CentralRepoDbManager manager = new CentralRepoDbManager();
+        DatabaseTestResult testResult = manager.testStatus();
+        
+        // if database doesn't exist, prompt user to create database
+        if (testResult == DatabaseTestResult.DB_DOES_NOT_EXIST) {
+            boolean success = EamDbSettingsDialog.promptCreateDatabase(manager, null);
+            if (success)
+                testResult = DatabaseTestResult.TESTED_OK;
+        }
+        
+        // display to the user the status
+        switch (testResult) {
+            case TESTED_OK: return showStatusOkay();
+            case DB_DOES_NOT_EXIST: return showStatusFail(Bundle.GlobalSettingsPanel_testCurrentConfiguration_dbDoesNotExist_message());
+            case SCHEMA_INVALID: return showStatusFail(Bundle.EamDbSettingsDialog_okButton_corruptDatabaseExists_message());
+            case CONNECTION_FAILED: 
+            default: 
+                return showStatusFail(Bundle.EamDbSettingsDialog_okButton_databaseConnectionFailed_message());
+        }
+    }
 
-    private static void handleDbChange(Component parent) {
-        SwingUtilities.invokeLater(() -> {
-            if (!EamDbSettingsDialog.testStatusAndCreate(parent, new CentralRepoDbManager())) {
-                CentralRepoDbManager.disableDueToFailure();
-            }
-        });
+    private boolean showStatusOkay() {
+        return setStatus(goodIcon, " ");
+    }
+    
+    private boolean showStatusFail(String message) {
+        return setStatus(badIcon, message);
+    }
+
+    private void clearStatus() {
+        setStatus(null, " ");
+    }
+    
+    private boolean setStatus(ImageIcon icon, String text) {
+        synchronized (testStatusLabel) {
+            testStatusLabel.setIcon(icon);
+            testStatusLabel.setText(text);
+            return true;   
+        }
     }
 
     /**
@@ -230,6 +318,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         lbDbPlatformValue = new javax.swing.JLabel();
         lbDbNameValue = new javax.swing.JLabel();
         lbDbLocationValue = new javax.swing.JLabel();
+        bnTestConfigure = new javax.swing.JButton();
+        testStatusLabel = new javax.swing.JLabel();
         pnCorrelationProperties = new javax.swing.JPanel();
         bnManageTypes = new javax.swing.JButton();
         correlationPropertiesScrollPane = new javax.swing.JScrollPane();
@@ -278,6 +368,20 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(bnTestConfigure, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnTestConfigure.text")); // NOI18N
+        bnTestConfigure.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnTestConfigureActionPerformed(evt);
+            }
+        });
+
+        testStatusLabel.setFont(testStatusLabel.getFont().deriveFont(testStatusLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        testStatusLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(testStatusLabel, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.testStatusLabel.text")); // NOI18N
+        testStatusLabel.setToolTipText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.testStatusLabel.toolTipText")); // NOI18N
+        testStatusLabel.setMaximumSize(new java.awt.Dimension(387, 16));
+        testStatusLabel.setPreferredSize(new java.awt.Dimension(387, 16));
+
         javax.swing.GroupLayout pnDatabaseConfigurationLayout = new javax.swing.GroupLayout(pnDatabaseConfiguration);
         pnDatabaseConfiguration.setLayout(pnDatabaseConfigurationLayout);
         pnDatabaseConfigurationLayout.setHorizontalGroup(
@@ -286,18 +390,24 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addContainerGap()
                 .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
-                        .addComponent(bnDbConfigure)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
                         .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(lbDbPlatformTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lbDbNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lbDbLocationLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(lbDbNameValue, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 936, Short.MAX_VALUE)
+                            .addComponent(lbDbNameValue, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lbDbPlatformValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lbDbLocationValue, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, pnDatabaseConfigurationLayout.createSequentialGroup()
+                                .addComponent(lbDbLocationValue, javax.swing.GroupLayout.DEFAULT_SIZE, 255, Short.MAX_VALUE)
+                                .addGap(681, 681, 681))))
+                    .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
+                        .addComponent(bnDbConfigure)
+                        .addGap(18, 18, 18)
+                        .addComponent(bnTestConfigure)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(testStatusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 675, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         pnDatabaseConfigurationLayout.setVerticalGroup(
             pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -315,7 +425,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                     .addComponent(lbDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lbDbLocationValue, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(bnDbConfigure)
+                .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(testStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(bnDbConfigure)
+                        .addComponent(bnTestConfigure)))
                 .addGap(8, 8, 8))
         );
 
@@ -359,7 +473,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         pnCorrelationPropertiesLayout.setVerticalGroup(
             pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnCorrelationPropertiesLayout.createSequentialGroup()
-                .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 28, Short.MAX_VALUE)
+                .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bnManageTypes)
                 .addGap(8, 8, 8))
@@ -472,13 +586,13 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.DEFAULT_SIZE, 1010, Short.MAX_VALUE)
+                    .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.DEFAULT_SIZE, 1016, Short.MAX_VALUE)
                     .addComponent(organizationPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(casesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(cbUseCentralRepo, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(ingestRunningWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 844, Short.MAX_VALUE))
+                        .addComponent(cbUseCentralRepo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ingestRunningWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 840, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, 974, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -532,7 +646,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         boolean changed = invokeCrChoice(this, null);
         if (changed) {
             load(); // reload db settings content and update buttons
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_bnDbConfigureActionPerformed
 
@@ -549,19 +662,13 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private void cbUseCentralRepoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbUseCentralRepoActionPerformed
         //if saved setting is disabled checkbox should be disabled already 
         store();
-
-        // if moving to using CR, multi-user mode is disabled and selection is multiuser settings, set to disabled
-        if (cbUseCentralRepo.isSelected()
-                && !CentralRepoDbManager.isPostgresMultiuserAllowed()
-                && CentralRepoDbManager.getSavedDbChoice() == CentralRepoDbChoice.POSTGRESQL_MULTIUSER) {
-
-            CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.DISABLED);
-        }
-
         load();
         this.ingestStateUpdated(Case.isCaseOpen());
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_cbUseCentralRepoActionPerformed
+
+    private void bnTestConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestConfigureActionPerformed
+        testCurrentConfiguration();
+    }//GEN-LAST:event_bnTestConfigureActionPerformed
 
     @Override
     @Messages({"GlobalSettingsPanel.validationerrMsg.mustConfigure=Configure the database to enable this module."})
@@ -691,6 +798,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
         enableDatabaseConfigureButton(cbUseCentralRepo.isSelected() && !caseIsOpen);
     }
+    
+    
 
     /**
      * Enable the Configure button
@@ -702,8 +811,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private void enableDatabaseConfigureButton(Boolean enable) {
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         ingestRunningWarningLabel.setVisible(ingestRunning);
+
         pnDatabaseConfiguration.setEnabled(enable && !ingestRunning);
         bnDbConfigure.setEnabled(enable && !ingestRunning);
+        bnTestConfigure.setEnabled(enable && !ingestRunning);
         lbDbLocationLabel.setEnabled(enable && !ingestRunning);
         lbDbLocationValue.setEnabled(enable && !ingestRunning);
         lbDbNameLabel.setEnabled(enable && !ingestRunning);
@@ -738,6 +849,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnDbConfigure;
     private javax.swing.JButton bnManageTypes;
+    private javax.swing.JButton bnTestConfigure;
     private javax.swing.JPanel casesPanel;
     private javax.swing.JScrollPane casesScrollPane;
     private javax.swing.JTextArea casesTextArea;
@@ -762,5 +874,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private javax.swing.JPanel pnDatabaseConfiguration;
     private javax.swing.JButton showCasesButton;
     private javax.swing.JTextField tbOops;
+    private javax.swing.JLabel testStatusLabel;
     // End of variables declaration//GEN-END:variables
 }

@@ -18,8 +18,11 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
+import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -363,21 +366,17 @@ class GeoFilterPanel extends javax.swing.JPanel {
          * for the numbers of days after the most recent waypoint, not the
          * current date.
          *
-         * @param showAll           True if all waypoints should be shown
-         * @param withoutTimeStamp  True to show waypoints without timeStamps,
-         *                          this filter is only applicable if
-         *                          mostRecentNumDays is true
+         * @param showAll True if all waypoints should be shown
+         * @param withoutTimeStamp True to show waypoints without timeStamps,
+         * this filter is only applicable if mostRecentNumDays is true
          * @param mostRecentNumDays Show Waypoint for the most recent given
-         *                          number of days. This parameter is ignored if
-         *                          showAll is true.
-         * @param dataSources       A list of dataSources to filter waypoint
-         *                          for.
-         * @param artifactTypes     A list of artifactTypes to filter waypoint
-         *                          for.
+         * number of days. This parameter is ignored if showAll is true.
+         * @param dataSources A list of dataSources to filter waypoint for.
+         * @param artifactTypes A list of artifactTypes to filter waypoint for.
          */
         GeoFilter(boolean showAll, boolean withoutTimeStamp,
-                  int mostRecentNumDays, List<DataSource> dataSources,
-                  List<ARTIFACT_TYPE> artifactTypes) {
+                int mostRecentNumDays, List<DataSource> dataSources,
+                List<ARTIFACT_TYPE> artifactTypes) {
             this.showAll = showAll;
             this.showWithoutTimeStamp = withoutTimeStamp;
             this.mostRecentNumDays = mostRecentNumDays;
@@ -420,7 +419,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
          * all datasources should be include.
          *
          * @return A list of dataSources or null if all dataSources should be
-         *         included.
+         * included.
          */
         List<DataSource> getDataSources() {
             return Collections.unmodifiableList(dataSources);
@@ -439,14 +438,16 @@ class GeoFilterPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Container for data sources and artifact types to be given as filter options
+     * Container for data sources and artifact types to be given as filter
+     * options
      */
     final private class Sources {
+
         final List<Pair<String, DataSource>> dataSources;
         final Map<ARTIFACT_TYPE, Long> artifactTypes;
 
         private Sources(List<Pair<String, DataSource>> dataSources,
-                        Map<ARTIFACT_TYPE, Long> artifactTypes) {
+                Map<ARTIFACT_TYPE, Long> artifactTypes) {
             this.dataSources = dataSources;
             this.artifactTypes = artifactTypes;
         }
@@ -454,9 +455,9 @@ class GeoFilterPanel extends javax.swing.JPanel {
 
     /**
      * SwingWorker for updating the list of valid data sources.
-     * 
-     * doInBackground creates a list of Pair objects that contain the 
-     * display name of the data source and the data source object. 
+     *
+     * doInBackground creates a list of Pair objects that contain the display
+     * name of the data source and the data source object.
      */
     final private class DataSourceUpdater extends SwingWorker<Sources, Void> {
 
@@ -484,13 +485,13 @@ class GeoFilterPanel extends javax.swing.JPanel {
         /**
          * Returns a Map representing the number of sources found for each
          * artifact type. If no data was found, an empty map is returned.
-         * 
+         *
          * @param sleuthkitCase The current sleuthkitCase
-         * @param dataSource 
-         * 
+         * @param dataSource
+         *
          * @return True if the data source as at least one TSK_GPS_XXXX
-         * 
-         * @throws TskCoreException 
+         *
+         * @throws TskCoreException
          */
         private Map<ARTIFACT_TYPE, Long> getGPSDataSources(SleuthkitCase sleuthkitCase, DataSource dataSource) throws TskCoreException {
             HashMap<ARTIFACT_TYPE, Long> ret = new HashMap<>();
@@ -501,6 +502,26 @@ class GeoFilterPanel extends javax.swing.JPanel {
                 }
             }
             return ret;
+        }
+
+        /**
+         * Returns a new ImageIcon for the given artifact type ID representing
+         * the type's waypoint color
+         *
+         * @param artifactTypeId The artifact type id
+         *
+         * @return the ImageIcon
+         */
+        private ImageIcon getImageIcon(int artifactTypeId) {
+            Color color = MapWaypoint.getColor(artifactTypeId);
+            BufferedImage img = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+
+            Graphics g = img.createGraphics();
+            g.setColor(color);
+            g.fillRect(0, 0, 16, 16);
+            g.dispose();
+
+            return new ImageIcon(img);
         }
 
         @Override
@@ -523,8 +544,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
                 }
                 for (Map.Entry<ARTIFACT_TYPE, Long> entry : sources.artifactTypes.entrySet()) {
                     String dispName = entry.getKey().getDisplayName() + " (" + entry.getValue() + ")";
-                    String iconPath = IconsUtil.getIconFilePath(entry.getKey().getTypeID());
-                    Icon icon = new ImageIcon(getClass().getResource(iconPath));
+                    Icon icon = getImageIcon(entry.getKey().getTypeID());
                     atCheckboxPanel.addElement(dispName, icon, entry.getKey());
                 }
             }

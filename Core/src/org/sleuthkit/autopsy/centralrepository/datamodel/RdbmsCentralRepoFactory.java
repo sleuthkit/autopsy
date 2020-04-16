@@ -168,8 +168,8 @@ public class RdbmsCentralRepoFactory {
                         stmt.execute(String.format(getReferenceTypeValueKnownstatusIndexTemplate(), reference_type_dbname, reference_type_dbname));
                     }
                 }
-                // @TODO: uncomment this when ready to create Persona tables.
-                //createPersonaTables(stmt);
+                // create Persona tables.
+                createPersonaTables(stmt, selectedPlatform);
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
                 return false;
@@ -199,10 +199,9 @@ public class RdbmsCentralRepoFactory {
             }
 
             result = CentralRepoDbUtil.insertDefaultCorrelationTypes(conn)
-                    && CentralRepoDbUtil.insertDefaultOrganization(conn) &&
-                    RdbmsCentralRepoFactory.insertDefaultAccountsTablesContent(conn, selectedPlatform );
-                    // @TODO: uncomment when ready to create/populate persona tables
-                   // && insertDefaultPersonaTablesContent(conn);
+                    && CentralRepoDbUtil.insertDefaultOrganization(conn) 
+                    && RdbmsCentralRepoFactory.insertDefaultAccountsTablesContent(conn, selectedPlatform )
+                    && insertDefaultPersonaTablesContent(conn, selectedPlatform);
 
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, String.format("Failed to populate default data in CR tables."), ex);
@@ -607,7 +606,7 @@ public class RdbmsCentralRepoFactory {
      * 
      * @return True if success, False otherwise.
      */
-    private boolean createPersonaTables(Statement stmt) throws SQLException {
+    static boolean createPersonaTables(Statement stmt, CentralRepoPlatforms selectedPlatform) throws SQLException {
         
         stmt.execute(getCreateConfidenceTableStatement(selectedPlatform));
         stmt.execute(getCreateExaminersTableStatement(selectedPlatform));
@@ -807,7 +806,7 @@ public class RdbmsCentralRepoFactory {
       * 
       * @return True if success, false otherwise.
       */
-    private static boolean insertDefaultPersonaTablesContent(Connection conn, CentralRepoPlatforms selectedPlatform) {
+    static boolean insertDefaultPersonaTablesContent(Connection conn, CentralRepoPlatforms selectedPlatform) {
 
         try (Statement stmt = conn.createStatement()) {
             // populate the confidence table
