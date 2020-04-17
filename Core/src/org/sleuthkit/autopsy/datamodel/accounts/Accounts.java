@@ -391,17 +391,28 @@ final public class Accounts implements AutopsyVisitableItem {
             list.addAll(accountTypeResults.getTypes());
             return true;
         }
+        
+        /**
+         * Registers the given node with the reviewStatusBus and returns
+         * the node wrapped in an array.
+         * @param node      The node to be wrapped.
+         * @return          The array containing this node.
+         */
+        private Node[] getNodeArr(Node node) {
+            reviewStatusBus.register(node);
+            return new Node[]{node};
+        }
 
         @Override
         protected Node[] createNodesForKey(String acountTypeName) {
 
             if (Account.Type.CREDIT_CARD.getTypeName().equals(acountTypeName)) {
-                return new Node[]{new CreditCardNumberAccountTypeNode()};
+                return getNodeArr(new CreditCardNumberAccountTypeNode());
             } else {
 
                 try {
                     Account.Type accountType = skCase.getCommunicationsManager().getAccountType(acountTypeName);
-                    return new Node[]{new DefaultAccountTypeNode(accountType)};
+                    return getNodeArr(new DefaultAccountTypeNode(accountType));
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error getting display name for account type. ", ex);
                 }
@@ -580,11 +591,20 @@ final public class Accounts implements AutopsyVisitableItem {
             return getClass().getName();
         }
         
-        /**
-         * Subscribes to the event bus to get the latest counts for the account type and 
-         * then update the name.
-         */
+        
         @Subscribe
+        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            updateName();
+        }
+
+        @Subscribe
+        void handleDataAdded(ModuleDataEvent event) {
+            updateName();
+        }
+        
+        /**
+         * Gets the latest counts for the account type and then updates the name.
+         */
         public void updateName() {
             setName(String.format("%s (%d)", accountType.getDisplayName(), accountTypeResults.getCount(accountType.getTypeName())));
         }
@@ -719,12 +739,20 @@ final public class Accounts implements AutopsyVisitableItem {
         }
         
         /**
-         * Subscribes to the event bus to get the latest counts for the account type and 
-         * then update the name.
+         * Gets the latest counts for the account type and then updates the name.
          */
-        @Subscribe
         public void updateName() {
             setName(String.format("%s (%d)", Account.Type.CREDIT_CARD.getDisplayName(), accountTypeResults.getCount(Account.Type.CREDIT_CARD.getTypeName())));
+        }
+        
+        @Subscribe
+        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            updateName();
+        }
+
+        @Subscribe
+        void handleDataAdded(ModuleDataEvent event) {
+            updateName();
         }
 
         @Override
