@@ -33,6 +33,7 @@ import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
+import java.util.Locale;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -66,7 +67,6 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.HashSet;
-import static java.util.Locale.US;
 import static java.util.TimeZone.getTimeZone;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -494,7 +494,7 @@ class ExtractRegistry extends Extract {
                     //sometimes etime will be an empty string and therefore can not be parsed into a date
                     if (etime != null && !etime.isEmpty()) {
                         try {
-                            mtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
+                            mtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", Locale.US).parse(etime).getTime();
                             String Tempdate = mtime.toString();
                             mtime = Long.valueOf(Tempdate) / MS_IN_SEC;
                         } catch (ParseException ex) {
@@ -559,7 +559,7 @@ class ExtractRegistry extends Extract {
                                     case "InstallDate": //NON-NLS
                                         if (value != null && !value.isEmpty()) {
                                             try {
-                                                installtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
+                                                installtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", Locale.US).parse(value).getTime();
                                                 String Tempdate = installtime.toString();
                                                 installtime = Long.valueOf(Tempdate) / MS_IN_SEC;
                                             } catch (ParseException e) {
@@ -738,7 +738,7 @@ class ExtractRegistry extends Extract {
                                         try {
                                             String mTimeAttr = artnode.getAttribute("mtime");
                                             if (mTimeAttr != null && !mTimeAttr.isEmpty()) {
-                                                itemMtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(mTimeAttr).getTime(); //NON-NLS
+                                                itemMtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", Locale.US).parse(mTimeAttr).getTime(); //NON-NLS
                                                 itemMtime /= MS_IN_SEC;
                                             }
                                         } catch (ParseException ex) {
@@ -998,7 +998,7 @@ class ExtractRegistry extends Extract {
     Collection<BlackboardAttribute> getAttributesForAccount(Map<String, String> userInfo, List<String> groupList, boolean existingUser, AbstractFile regAbstractFile) throws ParseException {
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
-        SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'");
+        SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", Locale.US);
         regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
 
         if (!existingUser) {
@@ -1241,7 +1241,7 @@ class ExtractRegistry extends Extract {
     private void parseAdobeMRUList(AbstractFile regFile, BufferedReader reader, String comment) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
-        SimpleDateFormat adobePluginDateFormat = new SimpleDateFormat("yyyyMMddHHmmssZ", US);
+        SimpleDateFormat adobePluginDateFormat = new SimpleDateFormat("yyyyMMddHHmmssZ", Locale.US);
         Long adobeUsedTime = Long.valueOf(0);
         while (!line.contains(SECTION_DIVIDER)) {
             line = reader.readLine();
@@ -1543,7 +1543,7 @@ class ExtractRegistry extends Extract {
         String userProfile = regFile.getParentPath();
         userProfile = userProfile.substring(0, userProfile.length() - 1);
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
-        SimpleDateFormat pluginDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy", US);
+        SimpleDateFormat pluginDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy", Locale.US);
         Long usedTime = Long.valueOf(0);
         String line = reader.readLine();
         while (!line.contains(SECTION_DIVIDER)) {
