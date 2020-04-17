@@ -50,7 +50,6 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.geolocation.GeoFilterPanel.GeoFilter;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
-import org.sleuthkit.autopsy.geolocation.datamodel.Track;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
