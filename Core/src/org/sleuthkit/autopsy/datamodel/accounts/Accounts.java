@@ -260,7 +260,7 @@ final public class Accounts implements AutopsyVisitableItem {
      * Tracks the account types and the number of account types found.
      */
     private class AccountTypeResults {
-        private Map<String, Long> counts = new HashMap<>();
+        private final Map<String, Long> counts = new HashMap<>();
         
         AccountTypeResults() {
             update();
