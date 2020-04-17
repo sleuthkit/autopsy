@@ -24,6 +24,11 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
  * Utility methods for handling icons
  */
 public final class IconsUtil {
+    /**
+     * The base path for images.
+     */
+    private static final String BASE_PATH = "org/sleuthkit/autopsy/images/";
+    
     private IconsUtil() {
 
     }
@@ -106,6 +111,6 @@ public final class IconsUtil {
         } else {
             imageFile = "artifact-icon.png"; //NON-NLS
         }
-        return "/org/sleuthkit/autopsy/images/" + imageFile;
+        return BASE_PATH + imageFile;
     }
 }

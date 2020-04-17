@@ -260,7 +260,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         String displayName = srcContent.getName();
         setDisplayName(displayName);
         setShortDescription(displayName);
-        setIconBaseWithExtension(iconPath);
+        setIconBaseWithExtension(iconPath != null && iconPath.startsWith("/") ? iconPath.substring(1) : iconPath);
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
     }
 
