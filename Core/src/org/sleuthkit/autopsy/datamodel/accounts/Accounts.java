@@ -514,7 +514,7 @@ final public class Accounts implements AutopsyVisitableItem {
             super(Children.create(new DefaultAccountFactory(accountType), true), Lookups.singleton(accountType));
             setName(accountType.getDisplayName());
             String iconPath = getIconFilePath(accountType);
-            this.setIconBaseWithExtension(iconPath != null && iconPath.startsWith("/") ? iconPath.substring(1) : iconPath);   //NON-NLS
+            this.setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);   //NON-NLS
         }
 
         @Override

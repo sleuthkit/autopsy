@@ -49,7 +49,7 @@ final class AccountDeviceInstanceNode extends AbstractNode {
         setName(account.getTypeSpecificID());
         setDisplayName(getName());
         String iconPath = Utils.getIconFilePath(account.getAccountType());
-        this.setIconBaseWithExtension(iconPath != null && iconPath.startsWith("/") ? iconPath.substring(1) : iconPath);
+        this.setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
     }
 
     AccountDeviceInstance getAccountDeviceInstance() {

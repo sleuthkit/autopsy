@@ -291,7 +291,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             super.setName(type.getTypeName());
             this.type = type;
             String iconPath = IconsUtil.getIconFilePath(type.getTypeID());
-            setIconBaseWithExtension(iconPath != null && iconPath.startsWith("/") ? iconPath.substring(1) : iconPath);
+            setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
             updateDisplayName();
         }
 
