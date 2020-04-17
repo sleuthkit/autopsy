@@ -104,19 +104,15 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         setModal(true);
         setResizable(false);
 
-        INDEXING_PROGBAR.setFont(INDEXING_PROGBAR.getFont().deriveFont(INDEXING_PROGBAR.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-
         GO_GET_COFFEE_LABEL.setDisplayedMnemonic('H');
-        GO_GET_COFFEE_LABEL.setFont(GO_GET_COFFEE_LABEL.getFont().deriveFont(GO_GET_COFFEE_LABEL.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(GO_GET_COFFEE_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.GO_GET_COFFEE_LABEL.text")); // NOI18N
 
-        CURRENTLYON_LABEL.setFont(CURRENTLYON_LABEL.getFont().deriveFont(CURRENTLYON_LABEL.getFont().getStyle() & ~java.awt.Font.BOLD, 14));
+        CURRENTLYON_LABEL.setFont(CURRENTLYON_LABEL.getFont().deriveFont(CURRENTLYON_LABEL.getFont().getSize()+3f));
         org.openide.awt.Mnemonics.setLocalizedText(CURRENTLYON_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CURRENTLYON_LABEL.text")); // NOI18N
 
-        CURRENTDB_LABEL.setFont(CURRENTDB_LABEL.getFont().deriveFont(CURRENTDB_LABEL.getFont().getStyle() & ~java.awt.Font.BOLD, 14));
+        CURRENTDB_LABEL.setFont(CURRENTDB_LABEL.getFont().deriveFont(CURRENTDB_LABEL.getFont().getSize()+3f));
         org.openide.awt.Mnemonics.setLocalizedText(CURRENTDB_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CURRENTDB_LABEL.text")); // NOI18N
 
-        CANCEL_BUTTON.setFont(CANCEL_BUTTON.getFont().deriveFont(CANCEL_BUTTON.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(CANCEL_BUTTON, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CANCEL_BUTTON.text")); // NOI18N
         CANCEL_BUTTON.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {

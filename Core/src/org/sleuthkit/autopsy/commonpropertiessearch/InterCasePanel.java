@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.commonpropertiessearch;
 
 import org.sleuthkit.autopsy.guiutils.DataSourceComboBoxModel;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +119,14 @@ public final class InterCasePanel extends javax.swing.JPanel {
     void setupCorrelationTypeFilter() {
         this.correlationTypeFilters = new HashMap<>();
         try {
-            List<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getCorrelationTypes();
+            List<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getDefinedCorrelationTypes();
+            Collections.sort(types, new Comparator<CorrelationAttributeInstance.Type>() {
+                //The types should be sorted so that the File type is the first item in the combo box.
+                @Override
+                public int compare(CorrelationAttributeInstance.Type type1, CorrelationAttributeInstance.Type type2) {
+                    return Integer.compare(type1.getId(), type2.getId());
+                }
+            });
             for (CorrelationAttributeInstance.Type type : types) {
                 correlationTypeFilters.put(type.getDisplayName(), type);
                 this.correlationTypeComboBox.addItem(type.getDisplayName());
@@ -295,7 +303,7 @@ public final class InterCasePanel extends javax.swing.JPanel {
 
 
     private void correlationTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_correlationTypeComboBoxActionPerformed
-        boolean enableFileTypesFilter = this.correlationTypeComboBox.getSelectedItem().equals("Files"); 
+        boolean enableFileTypesFilter = this.correlationTypeComboBox.getSelectedItem().equals("Files");
         categoriesLabel.setEnabled(enableFileTypesFilter);
         allFileCategoriesRadioButton.setEnabled(enableFileTypesFilter);
         selectedFileCategoriesButton.setEnabled(enableFileTypesFilter);
@@ -329,8 +337,8 @@ public final class InterCasePanel extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Get the map of cases which was used to populate the combo box on
-     * this panel.
+     * Get the map of cases which was used to populate the combo box on this
+     * panel.
      *
      * @return an unmodifiable copy of the map of cases
      */
@@ -339,8 +347,8 @@ public final class InterCasePanel extends javax.swing.JPanel {
     }
 
     /**
-     * Set the datamodel for the combo box which displays the cases in
-     * the central repository
+     * Set the datamodel for the combo box which displays the cases in the
+     * central repository
      *
      * @param dataSourceComboBoxModel the DataSourceComboBoxModel to use
      */

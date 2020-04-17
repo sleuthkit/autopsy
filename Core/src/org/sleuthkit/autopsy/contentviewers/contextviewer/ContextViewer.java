@@ -96,7 +96,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
         jSourcePanel.setBackground(javax.swing.UIManager.getDefaults().getColor("window"));
 
-        jSourceLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jSourceLabel.setFont(jSourceLabel.getFont().deriveFont(jSourceLabel.getFont().getStyle() | java.awt.Font.BOLD, jSourceLabel.getFont().getSize()+1));
         org.openide.awt.Mnemonics.setLocalizedText(jSourceLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceLabel.text")); // NOI18N
 
         javax.swing.GroupLayout jSourcePanelLayout = new javax.swing.GroupLayout(jSourcePanel);
@@ -118,7 +118,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
         jUsagePanel.setBackground(javax.swing.UIManager.getDefaults().getColor("window"));
 
-        jUsageLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jUsageLabel.setFont(jUsageLabel.getFont().deriveFont(jUsageLabel.getFont().getStyle() | java.awt.Font.BOLD, jUsageLabel.getFont().getSize()+1));
         org.openide.awt.Mnemonics.setLocalizedText(jUsageLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageLabel.text")); // NOI18N
 
         javax.swing.GroupLayout jUsagePanelLayout = new javax.swing.GroupLayout(jUsagePanel);
@@ -434,8 +434,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         BlackboardAttribute attribute = attributesMap.get(dateTimeType);
                 
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == artifact.getArtifactTypeID()) {
-            if (attribute.getValueLong() > 0) {
-                appendAttributeString(sb, dateTimeType, attributesMap, Bundle.ContextViewer_on());
+            if (attribute != null && attribute.getValueLong() > 0) {
+                appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, attributesMap, Bundle.ContextViewer_on());
             } else {
                 sb.append(Bundle.ContextViewer_unknown());
             }

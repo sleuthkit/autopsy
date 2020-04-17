@@ -39,16 +39,6 @@ import org.sleuthkit.autopsy.coreutils.Version;
  * central repository, sets up a default, single-user SQLite central repository
  * if no central repository is configured, and updates the central repository
  * schema as required.
- *
- * TODO (Jira-6108): At first glance, this package seems to have become a rather
- * strange package for the "package installer" for the CR to reside in. The
- * org.sleuthkit.autopsy.centralrepository package would seem to be more
- * appropriate with so much going on. However, having a central repository
- * schema update occur in a "package installer" with no user feedback is not
- * optimal. Furthermore, for a multi-user (collaborative) installation, a schema
- * update should be done in a more controlled way by acquiring an exclusive
- * coordination service lock and requiring shared locks to be acquired by nodes
- * with open cases.
  */
 public class Installer extends ModuleInstall {
 
@@ -84,9 +74,8 @@ public class Installer extends ModuleInstall {
 
     /*
      * Adds/removes application event listeners responsible for adding data to
-     * the central repository, sets up a default, single-user SQLite central
-     * repository if no central repository is configured, and updates the
-     * central repository schema as required.
+     * the central repository and sets up a default, single-user SQLite central
+     * repository if no central repository is configured.
      *
      * Called by the registered Installer for the Autopsy-Core module located in
      * the org.sleuthkit.autopsy.core package when the already installed
@@ -105,8 +94,6 @@ public class Installer extends ModuleInstall {
         if (Version.getBuildType() == Version.Type.RELEASE) {
             setupDefaultCentralRepository();
         }
-
-        updateCentralRepoSchema();
     }
 
     /**
@@ -114,7 +101,7 @@ public class Installer extends ModuleInstall {
      * central repository.
      */
     private void addApplicationEventListeners() {
-        Case.addPropertyChangeListener(caseEventListener);
+        caseEventListener.installListeners();
         ingestEventListener.installListeners();
     }
 
@@ -199,20 +186,6 @@ public class Installer extends ModuleInstall {
     }
 
     /**
-     * Update the central repository schema.
-     */
-    private void updateCentralRepoSchema() {
-        try {
-            CentralRepoDbManager.upgradeDatabase();
-        } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "An error occurred updating the central repository schema", ex);
-            if (RuntimeProperties.runningWithGUI()) {
-                doMessageBoxIfRunningInGUI(ex);
-            }
-        }
-    }
-
-    /**
      * Display a central repository exception in a message box if running with a
      * GUI.
      *
@@ -253,7 +226,7 @@ public class Installer extends ModuleInstall {
          * 
          * THIS CODE IS NEVER EXECUTED.
          */
-        Case.removePropertyChangeListener(caseEventListener);
+        caseEventListener.uninstallListeners();
         caseEventListener.shutdown();
         ingestEventListener.shutdown();
         ingestEventListener.uninstallListeners();

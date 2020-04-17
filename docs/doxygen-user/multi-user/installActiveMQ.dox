@@ -8,14 +8,14 @@ ActiveMQ is a messaging service that allows the Autopsy clients to communicate w
 \section install_activemq_prereq Prerequisites
 
 You will need:
-- 64-bit version of the Java Runtime Environment (JRE) from http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. 
+- 64-bit version of the Java 8 Runtime Environment (JRE) from https://github.com/ojdkbuild/ojdkbuild (<a href="https://github.com/ojdkbuild/ojdkbuild/releases/download/java-1.8.0-openjdk-1.8.0.242-1.b08/java-1.8.0-openjdk-1.8.0.242-1.b08.ojdkbuild.windows.x86_64.msi"> Link to installer</a>)
 - Download ActiveMQ from: http://activemq.apache.org/download.html . Autopsy has been tested with ActiveMQ version 5.14.0.
 
 
 \section install_activemq_install Installation
 
 \subsection install_activemq_install_java JRE Installation
-Install the Java JRE if needed. You can test this by running _where java_ from the command line. If you see output like the yellow results below, you have a JRE.
+Install the Java JRE if needed. You can test this by running _where java_ from the command line. If you see output similar to the results below, you have a JRE.
 <br><br>
 \image html wherejava.PNG
 <br><br>   

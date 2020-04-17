@@ -43,7 +43,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
@@ -110,7 +109,7 @@ import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.uicomponents.WrapLayout;
+import org.sleuthkit.autopsy.guiutils.WrapLayout;
 /**
  * A panel that goes in the Visualize tab of the Communications Visualization
  * Tool. Hosts an JGraphX mxGraphComponent that implements the communications
@@ -245,7 +244,7 @@ final public class VisualizationPanel extends JPanel {
 
         setStateButtonsEnabled();
         
-        toolbar.setLayout(new WrapLayout(FlowLayout.LEFT));
+        toolbar.setLayout(new WrapLayout());
     }
     
     @Subscribe

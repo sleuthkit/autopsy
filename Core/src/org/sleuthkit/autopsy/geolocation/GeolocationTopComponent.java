@@ -166,7 +166,6 @@ public final class GeolocationTopComponent extends TopComponent {
                             Bundle.GLTopComponent_No_dataSource_message(),
                             Bundle.GLTopComponent_No_dataSource_Title(),
                             JOptionPane.ERROR_MESSAGE);
-
                 }
             }
 
@@ -290,7 +289,7 @@ public final class GeolocationTopComponent extends TopComponent {
             filters = geoFilterPanel.getFilterState();
         } catch (GeoLocationUIException ex) {
             JOptionPane.showMessageDialog(this,
-                    Bundle.GeoTopComponent_filer_data_invalid_msg(),
+                    ex.getMessage(),
                     Bundle.GeoTopComponent_filer_data_invalid_Title(),
                     JOptionPane.INFORMATION_MESSAGE);
             return;

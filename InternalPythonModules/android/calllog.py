@@ -103,8 +103,8 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                                         calleeId = None
                                         
                                         timeStamp = resultSet.getLong("date") / 1000
-                                         
                                         number = resultSet.getString("number")
+                                            
                                         duration = resultSet.getLong("duration") # duration of call is in seconds
                                         name = resultSet.getString("name") # name of person dialed or called. None if unregistered
 

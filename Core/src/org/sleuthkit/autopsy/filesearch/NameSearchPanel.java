@@ -128,7 +128,6 @@ class NameSearchPanel extends javax.swing.JPanel {
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        nameCheckBox.setFont(nameCheckBox.getFont().deriveFont(nameCheckBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         nameCheckBox.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.nameCheckBox.text")); // NOI18N
         nameCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -136,10 +135,9 @@ class NameSearchPanel extends javax.swing.JPanel {
             }
         });
 
-        searchTextField.setFont(searchTextField.getFont().deriveFont(searchTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         searchTextField.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.searchTextField.text")); // NOI18N
 
-        noteNameLabel.setFont(noteNameLabel.getFont().deriveFont(noteNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 10));
+        noteNameLabel.setFont(noteNameLabel.getFont().deriveFont(noteNameLabel.getFont().getSize()-1f));
         noteNameLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         noteNameLabel.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.noteNameLabel.text")); // NOI18N
         noteNameLabel.setVerticalAlignment(javax.swing.SwingConstants.TOP);

@@ -37,6 +37,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.Blackboard;
@@ -96,84 +97,6 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
     public SleuthkitCase getSleuthkitCase() {
         return skCase;
-    }
-
-    @SuppressWarnings("deprecation")
-    static String getIconFilePath(int typeID) {
-        String filePath = "org/sleuthkit/autopsy/images/"; //NON-NLS
-        if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
-            return filePath + "bookmarks.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
-            return filePath + "cookies.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
-            return filePath + "history.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
-            return filePath + "downloads.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()) {
-            return filePath + "recent_docs.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID()) {
-            return filePath + "gps_trackpoint.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
-            return filePath + "programs.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
-            return filePath + "usb_devices.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
-            return filePath + "mail-icon-16.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXTRACTED_TEXT.getTypeID()) {
-            return filePath + "text-file.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
-            return filePath + "searchquery.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
-            return filePath + "camera-icon-16.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO.getTypeID()) {
-            return filePath + "computer.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT.getTypeID()) {
-            return filePath + "account-icon-16.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID()) {
-            return filePath + "contact.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
-            return filePath + "message.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()) {
-            return filePath + "calllog.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALENDAR_ENTRY.getTypeID()) {
-            return filePath + "calendar.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_SPEED_DIAL_ENTRY.getTypeID()) {
-            return filePath + "speeddialentry.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID()) {
-            return filePath + "bluetooth.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()) {
-            return filePath + "gpsfav.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID()) {
-            return filePath + "gps-lastlocation.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID()) {
-            return filePath + "gps-search.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID()) {
-            return filePath + "installed.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()
-                || typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID()) {
-            return filePath + "encrypted-file.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
-            return filePath + "mismatch-16.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID()) {
-            return filePath + "gps_trackpoint.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_REMOTE_DRIVE.getTypeID()) {
-            return filePath + "drive_network.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED.getTypeID()) {
-            return filePath + "face.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID()) {
-            return filePath + "network-wifi.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK_ADAPTER.getTypeID()) {
-            return filePath + "network-wifi.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID()) {
-            return filePath + "sim_card.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_ADAPTER.getTypeID()) {
-            return filePath + "Bluetooth.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID()) {
-            return filePath + "devices.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_VERIFICATION_FAILED.getTypeID()) {
-            return filePath + "validationFailed.png"; //NON-NLS
-        }
-        return filePath + "artifact-icon.png"; //NON-NLS
     }
 
     public class RootNode extends DisplayableItemNode {
@@ -243,7 +166,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             doNotShow.add(new BlackboardArtifact.Type(TSK_DATA_SOURCE_USAGE));
             doNotShow.add(new BlackboardArtifact.Type(TSK_DOWNLOAD_SOURCE));
             doNotShow.add(new BlackboardArtifact.Type(TSK_TL_EVENT));
-            
+
             //This is not meant to be shown in the UI at all. It is more of a meta artifact.
             doNotShow.add(new BlackboardArtifact.Type(TSK_ASSOCIATED_OBJECT));
         }
@@ -367,7 +290,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             super(Children.create(new ArtifactFactory(type), true), Lookups.singleton(type.getDisplayName()));
             super.setName(type.getTypeName());
             this.type = type;
-            this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(type.getTypeID())); //NON-NLS
+            this.setIconBaseWithExtension(IconsUtil.getIconFilePath(type.getTypeID())); //NON-NLS
             updateDisplayName();
         }
 
@@ -510,12 +433,12 @@ public class ExtractedContent implements AutopsyVisitableItem {
             if (skCase != null) {
                 try {
                     List<BlackboardArtifact> arts;
-                    if(filteringDSObjId > 0) {
+                    if (filteringDSObjId > 0) {
                         arts = blackboard.getArtifacts(type.getTypeID(), filteringDSObjId);
                     } else {
                         arts = skCase.getBlackboardArtifacts(type.getTypeID());
                     }
-                    for(BlackboardArtifact art: arts) {
+                    for (BlackboardArtifact art : arts) {
                         //Cache attributes while we are off the EDT.
                         //See JIRA-5969
                         art.getAttributes();

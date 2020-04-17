@@ -126,7 +126,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -167,7 +167,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -208,7 +208,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -250,7 +250,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -292,7 +292,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -334,7 +334,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -376,7 +376,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -417,7 +417,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -458,7 +458,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoExceptionex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
