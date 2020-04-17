@@ -69,6 +69,7 @@ final class ExtractSru extends Extract {
     private static final String NETWORK_USAGE_ARTIFACT_NAME = "RA_SRU_NETWORK_USAGE"; //NON-NLS
     private static final String APPLICATION_RESOURCE_ARTIFACT_NAME = "RA_SRU_APPLICATION_RESOURCE"; //NON-NLS
     private static final String NETWORK_PROFILE_NAME_ATTRIBUTE_NAME = "RA_SRU_NETWORK_PROFILE_NAME"; //NON-NLS
+    private static final String NETWORK_USAGE_SOURCE_NAME = "System Resource Usage - Network Usage";
 
     private static final String ARTIFACT_ATTRIBUTE_NAME = "TSK_ARTIFACT_NAME"; //NON-NLS
     private static final String BACKGROUND_CYCLE_TIME_ART_NAME = "RA_BACKGROUND_CYCLE_TIME"; //NON-NLS
@@ -302,8 +303,8 @@ final class ExtractSru extends Extract {
         List<BlackboardArtifact> bba = new ArrayList<>();
 
         try {
-            bytesSentAttributeType = currentCase.getSleuthkitCase().getAttributeType(BYTES_SENT_ART_NAME);
-            bytesRecvAttributeType = currentCase.getSleuthkitCase().getAttributeType(BYTES_RECEIVED_ART_NAME);
+//            bytesSentAttributeType = currentCase.getSleuthkitCase().getAttributeType(BYTES_SENT_ART_NAME);
+//            bytesRecvAttributeType = currentCase.getSleuthkitCase().getAttributeType(BYTES_RECEIVED_ART_NAME);
             artifactType = currentCase.getSleuthkitCase().getArtifactType(NETWORK_USAGE_ARTIFACT_NAME);
             networkProfileName = currentCase.getSleuthkitCase().getAttributeType(NETWORK_PROFILE_NAME_ATTRIBUTE_NAME);
         } catch (TskCoreException ex) {
@@ -345,9 +346,11 @@ final class ExtractSru extends Extract {
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
                                 executionTime),
                         new BlackboardAttribute(
-                                bytesSentAttributeType, getName(), bytesSent),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BYTES_SENT, getName(), bytesSent),
                         new BlackboardAttribute(
-                                bytesRecvAttributeType, getName(), bytesRecvd));
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BYTES_RECEIVED, getName(), bytesRecvd),
+                        new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), NETWORK_USAGE_SOURCE_NAME));
 
                 try {
                     BlackboardArtifact bbart = sruAbstractFile.newArtifact(artifactType.getTypeID());
