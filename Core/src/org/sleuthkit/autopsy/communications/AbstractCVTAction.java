@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.communications;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
@@ -39,7 +40,10 @@ abstract class AbstractCVTAction extends AbstractAction implements Presenter.Pop
      * @return The selected accounts
      */
     Collection<? extends AccountDeviceInstance> getSelectedAccounts() {
-        return  Utilities.actionsGlobalContext().lookupAll(AccountDeviceInstance.class);
+        return  Utilities.actionsGlobalContext().lookupAll(AccountDeviceInstanceKey.class)
+            .stream()
+            .map((adiKey -> adiKey.getAccountDeviceInstance()))
+            .collect(Collectors.toSet());
     }
 
     @Override

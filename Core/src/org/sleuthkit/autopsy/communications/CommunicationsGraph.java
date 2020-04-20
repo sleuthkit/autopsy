@@ -213,10 +213,11 @@ final class CommunicationsGraph extends mxGraph {
             }
                         
             double size = Math.sqrt(adiRelationshipsCount) + 10;
-
+            AccountDeviceInstanceKey adiKey = new AccountDeviceInstanceKey(adi, currentFilter, adiRelationshipsCount);
+            
             mxCell newVertex = (mxCell) insertVertex(
                     getDefaultParent(),
-                    name, adi,
+                    name, adiKey,
                     Math.random() * 400,
                     Math.random() * 400,
                     size,
