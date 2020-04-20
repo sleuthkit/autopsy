@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.Set;
 import org.sleuthkit.autopsy.communications.FiltersPanel.DateControlState;
 import org.sleuthkit.autopsy.coreutils.History;
-import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 
