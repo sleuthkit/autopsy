@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import org.sleuthkit.autopsy.datamodel.AttachmentNode;
-import com.google.gson.Gson;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
@@ -76,6 +75,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEX
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.FileAttachment;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.Attachment;
@@ -637,16 +637,19 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         if (attachmentsAttr != null) {
 
             attachments = new HashSet<>();
-            String jsonVal = attachmentsAttr.getValueString();
-            MessageAttachments msgAttachments = new Gson().fromJson(jsonVal, MessageAttachments.class);
-
-            Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
-            for (FileAttachment fileAttachment : fileAttachments) {
-                attachments.add(fileAttachment);
-            }
-            Collection<URLAttachment> urlAttachments = msgAttachments.getUrlAttachments();
-            for (URLAttachment urlAttachment : urlAttachments) {
-                attachments.add(urlAttachment);
+            try {
+                MessageAttachments msgAttachments = BlackboardJsonAttrUtil.fromAttribute(attachmentsAttr, MessageAttachments.class);
+                Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
+                for (FileAttachment fileAttachment : fileAttachments) {
+                    attachments.add(fileAttachment);
+                }
+                Collection<URLAttachment> urlAttachments = msgAttachments.getUrlAttachments();
+                for (URLAttachment urlAttachment : urlAttachments) {
+                    attachments.add(urlAttachment);
+                }
+            } 
+            catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
+                LOGGER.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
             }
         } else {    // For backward compatibility - email attachements are derived files and children of the email message artifact
             attachments = new HashSet<>();

@@ -65,7 +65,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     static final String SCHEMA_MINOR_VERSION_KEY = "SCHEMA_MINOR_VERSION";
     static final String CREATION_SCHEMA_MAJOR_VERSION_KEY = "CREATION_SCHEMA_MAJOR_VERSION";
     static final String CREATION_SCHEMA_MINOR_VERSION_KEY = "CREATION_SCHEMA_MINOR_VERSION";
-    static final CaseDbSchemaVersionNumber SOFTWARE_CR_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 4);
+    static final CaseDbSchemaVersionNumber SOFTWARE_CR_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 5);
 
     protected final List<CorrelationAttributeInstance.Type> defaultCorrelationTypes;
 
@@ -3786,6 +3786,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
 
             // Upgrade to 1.4
             (new CentralRepoDbUpgrader13To14()).upgradeSchema(dbSchemaVersion, conn);
+            
+            // Upgrade to 1.5
+            (new CentralRepoDbUpgrader14To15()).upgradeSchema(dbSchemaVersion, conn);
 
             updateSchemaVersion(conn);
             conn.commit();

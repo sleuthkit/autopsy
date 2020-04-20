@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
-import com.google.gson.Gson;
 import java.util.logging.Level;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
@@ -40,6 +39,7 @@ import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
 
 /**
@@ -155,9 +155,14 @@ class MessageNode extends BlackboardArtifactNode {
         //  Attachments are specified in an attribute TSK_ATTACHMENTS as JSON attribute
         BlackboardAttribute attachmentsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
         if (attachmentsAttr != null) {
-            String jsonVal = attachmentsAttr.getValueString();
-            MessageAttachments msgAttachments = new Gson().fromJson(jsonVal, MessageAttachments.class);
-            attachmentsCount = msgAttachments.getAttachmentsCount();
+            try {
+                MessageAttachments msgAttachments = BlackboardJsonAttrUtil.fromAttribute(attachmentsAttr, MessageAttachments.class);
+                return msgAttachments.getAttachmentsCount();
+            } 
+            catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
+                logger.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
+                return 0;
+            }
         } else {    // legacy attachments may be children of message artifact.
             attachmentsCount = artifact.getChildrenCount();
         }

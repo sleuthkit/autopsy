@@ -18,10 +18,14 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -34,8 +38,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
@@ -67,6 +73,9 @@ import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.datamodel.TskCoreException;
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
+import org.jxmapviewer.painter.CompoundPainter;
+import org.jxmapviewer.painter.Painter;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
  * The map panel. This panel contains the jxmapviewer MapViewer
@@ -80,6 +89,7 @@ final public class MapPanel extends javax.swing.JPanel {
     private boolean zoomChanging;
     private KdTree<MapWaypoint> waypointTree;
     private Set<MapWaypoint> waypointSet;
+    private List<Set<MapWaypoint>> tracks = new ArrayList<>();
 
     private Popup currentPopup;
     private final PopupFactory popupFactory;
@@ -88,10 +98,11 @@ final public class MapPanel extends javax.swing.JPanel {
     private static final int POPUP_HEIGHT = 200;
     private static final int POPUP_MARGIN = 10;
 
-    private BufferedImage defaultWaypointImage;
-    private BufferedImage selectedWaypointImage;
+    private BufferedImage whiteWaypointImage;
+    private BufferedImage transparentWaypointImage;
 
     private MapWaypoint currentlySelectedWaypoint;
+    private Set<MapWaypoint> currentlySelectedTrack;
 
     /**
      * Creates new form MapPanel
@@ -108,8 +119,8 @@ final public class MapPanel extends javax.swing.JPanel {
         popupFactory = new PopupFactory();
 
         try {
-            defaultWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_teal.png"));
-            selectedWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_yellow.png"));
+            whiteWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_white.png"));
+            transparentWaypointImage = ImageIO.read(getClass().getResource("/org/sleuthkit/autopsy/images/waypoint_transparent.png"));
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to load geolocation waypoint images", ex);
         }
@@ -200,6 +211,10 @@ final public class MapPanel extends javax.swing.JPanel {
 
         mapViewer.setCenterPosition(new GeoPosition(0, 0));
 
+        initializePainter();
+    }
+
+    void initializePainter() {
         // Basic painters for the way points. 
         WaypointPainter<MapWaypoint> waypointPainter = new WaypointPainter<MapWaypoint>() {
             @Override
@@ -213,7 +228,12 @@ final public class MapPanel extends javax.swing.JPanel {
         };
         waypointPainter.setRenderer(new MapWaypointRenderer());
 
-        mapViewer.setOverlayPainter(waypointPainter);
+        ArrayList<Painter<JXMapViewer>> painters = new ArrayList<>();
+        painters.add(new MapTrackRenderer(tracks));
+        painters.add(waypointPainter);
+
+        CompoundPainter<JXMapViewer> compoundPainter = new CompoundPainter<>(painters);
+        mapViewer.setOverlayPainter(compoundPainter);
     }
 
     /**
@@ -303,6 +323,15 @@ final public class MapPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Stores the given List of tracks from which to draw paths later
+     *
+     * @param tracks
+     */
+    void setTracks(List<Set<MapWaypoint>> tracks) {
+        this.tracks = tracks;
+    }
+
+    /**
      * Set the current zoom level.
      *
      * @param zoom
@@ -310,7 +339,7 @@ final public class MapPanel extends javax.swing.JPanel {
     void setZoom(int zoom) {
         zoomChanging = true;
         mapViewer.setZoom(zoom);
-        zoomSlider.setValue((zoomSlider.getMaximum() + zoomSlider.getMinimum()) - zoom);
+        zoomSlider.setValue(zoom);
         zoomChanging = false;
     }
 
@@ -320,6 +349,7 @@ final public class MapPanel extends javax.swing.JPanel {
     void clearWaypoints() {
         waypointTree = null;
         currentlySelectedWaypoint = null;
+        currentlySelectedTrack = null;
         if (currentPopup != null) {
             currentPopup.hide();
         }
@@ -358,7 +388,7 @@ final public class MapPanel extends javax.swing.JPanel {
      * Show the popup menu for the given waypoint and location.
      *
      * @param waypoint Selected waypoint
-     * @param point    Current mouse click location
+     * @param point Current mouse click location
      */
     private void showPopupMenu(MapWaypoint waypoint, Point point) throws TskCoreException {
         if (waypoint == null) {
@@ -437,7 +467,7 @@ final public class MapPanel extends javax.swing.JPanel {
      * @param clickPoint The mouse click point
      *
      * @return A waypoint that is within 10 pixels of the given point, or null
-     *         if none was found.
+     * if none was found.
      */
     private List<MapWaypoint> findClosestWaypoint(Point clickPoint) {
         if (waypointTree == null) {
@@ -463,7 +493,7 @@ final public class MapPanel extends javax.swing.JPanel {
             MapWaypoint nextWaypoint = iterator.next();
 
             Point2D point = mapViewer.convertGeoPositionToPoint(nextWaypoint.getPosition());
-            Rectangle rect = new Rectangle((int) point.getX() - (defaultWaypointImage.getWidth() / 2), (int) point.getY() - defaultWaypointImage.getHeight(), defaultWaypointImage.getWidth(), defaultWaypointImage.getHeight());
+            Rectangle rect = new Rectangle((int) point.getX() - (whiteWaypointImage.getWidth() / 2), (int) point.getY() - whiteWaypointImage.getHeight(), whiteWaypointImage.getWidth(), whiteWaypointImage.getHeight());
 
             if (rect.contains(clickPoint)) {
                 closestPoints.add(nextWaypoint);
@@ -572,6 +602,7 @@ final public class MapPanel extends javax.swing.JPanel {
         zoomSlider.setOrientation(javax.swing.JSlider.VERTICAL);
         zoomSlider.setPaintTicks(true);
         zoomSlider.setSnapToTicks(true);
+        zoomSlider.setInverted(true);
         zoomSlider.setMinimumSize(new java.awt.Dimension(35, 100));
         zoomSlider.setOpaque(false);
         zoomSlider.setPreferredSize(new java.awt.Dimension(35, 190));
@@ -656,9 +687,17 @@ final public class MapPanel extends javax.swing.JPanel {
         if (!evt.isPopupTrigger() && SwingUtilities.isLeftMouseButton(evt)) {
             List<MapWaypoint> waypoints = findClosestWaypoint(evt.getPoint());
             if (waypoints.size() > 0) {
-                currentlySelectedWaypoint = waypoints.get(0);
+                MapWaypoint selection = waypoints.get(0);
+                currentlySelectedWaypoint = selection;
+                for (Set<MapWaypoint> track : tracks) {
+                    if (track.contains(selection)) {
+                        currentlySelectedTrack = track;
+                        break;
+                    }
+                }
             } else {
                 currentlySelectedWaypoint = null;
+                currentlySelectedTrack = null;
             }
             showDetailsPopup();
         }
@@ -686,16 +725,154 @@ final public class MapPanel extends javax.swing.JPanel {
      */
     private class MapWaypointRenderer implements WaypointRenderer<MapWaypoint> {
 
-        @Override
-        public void paintWaypoint(Graphics2D gd, JXMapViewer jxmv, MapWaypoint waypoint) {
-            Point2D point = jxmv.getTileFactory().geoToPixel(waypoint.getPosition(), jxmv.getZoom());
+        private final Map<Color, BufferedImage> dotImageCache = new HashMap<>();
+        private final Map<Color, BufferedImage> waypointImageCache = new HashMap<>();
 
+        /**
+         *
+         * @param waypoint the waypoint for which to get the color selected
+         * @return the color that this waypoint should be rendered
+         */
+        private Color getColor(MapWaypoint waypoint) {
+            Color baseColor = waypoint.getColor();
+            if (waypoint.equals(currentlySelectedWaypoint)
+                    || (currentlySelectedTrack != null && currentlySelectedTrack.contains(waypoint))) {
+                // Highlight this waypoint since it is selected
+                return Color.YELLOW;
+            } else {
+                return baseColor;
+            }
+        }
+
+        /**
+         * Creates a dot image with the specified color
+         *
+         * @param color the color of the new image
+         * @return the new dot image
+         */
+        private BufferedImage createTrackDotImage(Color color) {
+            int w = 10;
+            int h = 10;
+
+            BufferedImage ret = new BufferedImage(w + 2, h + 2, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = ret.createGraphics();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setColor(color);
+            g.fillOval(1, 1, w, h);
+            g.setColor(Color.BLACK);
+            g.setStroke(new BasicStroke(1));
+            g.drawOval(1, 1, w, h);
+            g.dispose();
+            return ret;
+        }
+
+        /**
+         * Creates a waypoint image with the specified color
+         *
+         * @param color the color of the new image
+         * @return the new waypoint image
+         */
+        private BufferedImage createWaypointImage(Color color) {
+            int w = whiteWaypointImage.getWidth();
+            int h = whiteWaypointImage.getHeight();
+
+            BufferedImage ret = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+
+            Graphics2D g = ret.createGraphics();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.drawImage(whiteWaypointImage, 0, 0, null);
+            g.setComposite(AlphaComposite.SrcIn);
+            g.setColor(color);
+            g.fillRect(0, 0, w, h);
+            g.setComposite(AlphaComposite.SrcAtop);
+            g.drawImage(transparentWaypointImage, 0, 0, null);
+            g.dispose();
+            return ret;
+        }
+
+        @Override
+        public void paintWaypoint(Graphics2D g, JXMapViewer map, MapWaypoint waypoint) {
+            Color color = getColor(waypoint);
+            BufferedImage image;
+            int artifactType = waypoint.getArtifactTypeID();
+            Point2D point = map.getTileFactory().geoToPixel(waypoint.getPosition(), map.getZoom());
             int x = (int) point.getX();
             int y = (int) point.getY();
 
-            BufferedImage image = (waypoint == currentlySelectedWaypoint ? selectedWaypointImage : defaultWaypointImage);
+            if (artifactType == ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID()
+                    || artifactType == ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID()
+                    || artifactType == ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID()) {
+                image = dotImageCache.computeIfAbsent(color, k -> {
+                    return createTrackDotImage(color);
+                });
+                // Center the dot on the GPS coordinate
+                y -= image.getHeight() / 2;
+            } else {
+                image = waypointImageCache.computeIfAbsent(color, k -> {
+                    return createWaypointImage(color);
+                });
+                // Align the bottom of the pin with the GPS coordinate
+                y -= image.getHeight();
+            }
+            // Center image horizontally on image
+            x -= image.getWidth() / 2;
 
-            (gd.create()).drawImage(image, x - image.getWidth() / 2, y - image.getHeight(), null);
+            Graphics2D g2d = (Graphics2D) g.create();
+            g2d.drawImage(image, x, y, null);
+            g2d.dispose();
+        }
+    }
+
+    /**
+     * Renderer for map track routes
+     */
+    private class MapTrackRenderer implements Painter<JXMapViewer> {
+
+        private final List<Set<MapWaypoint>> tracks;
+
+        MapTrackRenderer(List<Set<MapWaypoint>> tracks) {
+            this.tracks = tracks;
+        }
+
+        private void drawRoute(Set<MapWaypoint> track, Graphics2D g, JXMapViewer map) {
+            int lastX = 0;
+            int lastY = 0;
+
+            boolean first = true;
+
+            for (MapWaypoint wp : track) {
+                Point2D p = map.getTileFactory().geoToPixel(wp.getPosition(), map.getZoom());
+                int thisX = (int) p.getX();
+                int thisY = (int) p.getY();
+
+                if (first) {
+                    first = false;
+                } else {
+                    g.drawLine(lastX, lastY, thisX, thisY);
+                }
+
+                lastX = thisX;
+                lastY = thisY;
+            }
+        }
+
+        @Override
+        public void paint(Graphics2D g, JXMapViewer map, int w, int h) {
+            Graphics2D g2d = (Graphics2D) g.create();
+
+            Rectangle bounds = map.getViewportBounds();
+            g2d.translate(-bounds.x, -bounds.y);
+
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            g2d.setColor(Color.BLACK);
+            g2d.setStroke(new BasicStroke(2));
+
+            for (Set<MapWaypoint> track : tracks) {
+                drawRoute(track, g2d, map);
+            }
+
+            g2d.dispose();
         }
     }
 }

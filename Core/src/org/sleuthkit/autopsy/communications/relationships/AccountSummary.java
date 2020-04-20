@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
-import com.google.gson.Gson;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +33,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.FileAttachment;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
 import org.sleuthkit.datamodel.CommunicationsUtils;
+import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
 
 /**
  * 
@@ -137,20 +137,23 @@ class AccountSummary {
                 // count the attachments from the TSK_ATTACHMENTS attribute.
                 BlackboardAttribute attachmentsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
                 if (attachmentsAttr != null) {
-                    String jsonVal = attachmentsAttr.getValueString();
-                    MessageAttachments msgAttachments = new Gson().fromJson(jsonVal, MessageAttachments.class);
-
-                    Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
-                    for (FileAttachment fileAttachment : fileAttachments) {
-                        attachmentCnt++;
-                        long attachedFileObjId = fileAttachment.getObjectId();
-                        if (attachedFileObjId >= 0) {
-                            AbstractFile attachedFile = artifact.getSleuthkitCase().getAbstractFileById(attachedFileObjId);
-                            if (ImageUtils.thumbnailSupported(attachedFile)) {
-                                mediaCnt++;
-                            }  
+                    try {
+                        MessageAttachments msgAttachments = BlackboardJsonAttrUtil.fromAttribute(attachmentsAttr, MessageAttachments.class);
+                        Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
+                        for (FileAttachment fileAttachment : fileAttachments) {
+                            attachmentCnt++;
+                            long attachedFileObjId = fileAttachment.getObjectId();
+                            if (attachedFileObjId >= 0) {
+                                AbstractFile attachedFile = artifact.getSleuthkitCase().getAbstractFileById(attachedFileObjId);
+                                if (ImageUtils.thumbnailSupported(attachedFile)) {
+                                    mediaCnt++;
+                                }  
+                            }
                         }
-                    }
+                    } 
+                    catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
+                        logger.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
+                    }                    
                 } else {  // backward compatibility - email message attachments are derived files, children of the message.
                     attachmentCnt += artifact.getChildrenCount();
                     for (Content childContent : artifact.getChildren()) {

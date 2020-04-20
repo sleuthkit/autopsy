@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -64,6 +66,15 @@ final class CaseEventListener implements PropertyChangeListener {
     private static final Logger LOGGER = Logger.getLogger(CaseEventListener.class.getName());
     private final ExecutorService jobProcessingExecutor;
     private static final String CASE_EVENT_THREAD_NAME = "Case-Event-Listener-%d";
+    
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(
+            Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED,
+            Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED, Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED,
+            Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED,
+            Case.Events.DATA_SOURCE_ADDED, 
+            Case.Events.TAG_DEFINITION_CHANGED,
+            Case.Events.CURRENT_CASE,
+            Case.Events.DATA_SOURCE_NAME_CHANGED);
 
     CaseEventListener() {
         jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(CASE_EVENT_THREAD_NAME).build());
@@ -82,6 +93,9 @@ final class CaseEventListener implements PropertyChangeListener {
             LOGGER.log(Level.SEVERE, "Failed to get instance of db manager.", ex);
             return;
         }
+        
+        // If any changes are made to which event types are handled the change 
+        // must also be made to CASE_EVENTS_OF_INTEREST.
         switch (Case.Events.valueOf(evt.getPropertyName())) {
             case CONTENT_TAG_ADDED:
             case CONTENT_TAG_DELETED: {
@@ -112,6 +126,20 @@ final class CaseEventListener implements PropertyChangeListener {
             }
             break;
         }
+    }
+    
+    /*
+     * Add all of our Case Event Listeners to the case.
+     */
+    void installListeners() {
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this);
+    }
+
+    /*
+     * Remove all of our Case Event Listeners from the case.
+     */
+    void uninstallListeners() {
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this);
     }
 
     private final class ContentTagTask implements Runnable {
