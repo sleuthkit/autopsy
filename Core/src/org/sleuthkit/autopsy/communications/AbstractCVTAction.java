@@ -24,6 +24,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
 import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
 
 /**
  * Base class for actions that act on the selected AccountDeviceInstanceKeys.
@@ -37,8 +38,8 @@ abstract class AbstractCVTAction extends AbstractAction implements Presenter.Pop
      *
      * @return The selected accounts
      */
-    Collection<? extends AccountDeviceInstanceKey> getSelectedAccounts() {
-        return  Utilities.actionsGlobalContext().lookupAll(AccountDeviceInstanceKey.class);
+    Collection<? extends AccountDeviceInstance> getSelectedAccounts() {
+        return  Utilities.actionsGlobalContext().lookupAll(AccountDeviceInstance.class);
     }
 
     @Override
