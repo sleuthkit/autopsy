@@ -57,12 +57,10 @@ public class PDFViewer implements FileTypeViewer {
 
     private JPanel container;
     private final PropertiesManager propsManager;
-    private final ResourceBundle defaultMessageBundle;
 
     public PDFViewer() {
         container = createNewContainer();
         propsManager = getCustomProperties();
-        defaultMessageBundle = ResourceBundle.getBundle(PropertiesManager.DEFAULT_MESSAGE_BUNDLE);
     }
 
     @Override
@@ -172,6 +170,7 @@ public class PDFViewer implements FileTypeViewer {
         // save configuration changes to disk.
         props.setProperty("application.showLocalStorageDialogs", "false");
 
+        ResourceBundle defaultMessageBundle = ResourceBundle.getBundle(PropertiesManager.DEFAULT_MESSAGE_BUNDLE);
         return new PropertiesManager(System.getProperties(), props, defaultMessageBundle);
     }
 
