@@ -56,7 +56,7 @@ import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.uicomponents.WrapLayout;
+import org.sleuthkit.autopsy.guiutils.WrapLayout;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -127,7 +127,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         // The GUI builder is using FlowLayout therefore this change so have no
         // impact on the initally designed layout.  This change will just effect
         // how the components are laid out as size of the window changes.
-        buttonBarPanel.setLayout(new WrapLayout(java.awt.FlowLayout.LEFT));
+        buttonBarPanel.setLayout(new WrapLayout());
     }
 
     /**
