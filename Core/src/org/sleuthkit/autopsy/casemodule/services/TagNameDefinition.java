@@ -96,11 +96,11 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         this.color = color;
         this.knownStatus = status;
     }
-    
+
     static Collection<TagNameDefinition> getStandardTagNameDefinitions() {
         return STANDARD_TAGS_DEFINITIONS.values();
     }
-    
+
     static Collection<TagNameDefinition> getProjectVICDefaultDefinitions() {
         return PROJECT_VIC_TAG_DEFINITIONS.values();
     }
@@ -109,7 +109,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         List<String> strList = new ArrayList<>();
         strList.addAll(STANDARD_TAGS_DEFINITIONS.keySet());
         strList.addAll(PROJECT_VIC_TAG_DEFINITIONS.keySet());
-        
+
         return strList;
     }
 
@@ -226,14 +226,14 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     /**
      * Gets tag name definitions from the tag settings file as well as the
      * default tag name definitions.
-     * 
-     * The currently custom tags properties are stored in one string property value 
-     * separated by ;.  The properties of an individual tag are comma separated
-     * in the format of:
+     *
+     * The currently custom tags properties are stored in one string property
+     * value separated by ;. The properties of an individual tag are comma
+     * separated in the format of:
      * tag_name,tag_description,tag_color,known_status
-     * 
-     * In prior versions of autopsy the known_status was stored in the central repository, 
-     * therefore the properties file only had three values.
+     *
+     * In prior versions of autopsy the known_status was stored in the central
+     * repository, therefore the properties file only had three values.
      *
      * @return A set of tag name definition objects.
      */
@@ -253,19 +253,19 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
                 // Get the known status from the Central Repository
                 String crTagKnownProp = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
                 List<String> knownTagNameList = new ArrayList<>();
-                if(crTagKnownProp != null && !crTagKnownProp.isEmpty()) {
+                if (crTagKnownProp != null && !crTagKnownProp.isEmpty()) {
                     knownTagNameList.addAll(Arrays.asList(crTagKnownProp.split(",")));
                 }
-                
+
                 tagDefinitions = buildTagNameDefinitions(customTagDefinitions, knownTagNameList);
             } else if (numberOfAttributes == 4) {
                 tagDefinitions = buildTagNameDefinitions(customTagDefinitions);
             }
-            
+
             // Remove the standard and project vic tags.
             List<String> standardTagNames = getStandardTagNames();
-            for(TagNameDefinition def: tagDefinitions) {
-                if(!standardTagNames.contains(def.getDisplayName())) {
+            for (TagNameDefinition def : tagDefinitions) {
+                if (!standardTagNames.contains(def.getDisplayName())) {
                     tagNames.add(def);
                 }
             }
@@ -274,32 +274,32 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     }
 
     /**
-     * Returns a list of TagNameDefinitons created by merging the tag data 
-     * from the properties file and the known status information from the central
+     * Returns a list of TagNameDefinitons created by merging the tag data from
+     * the properties file and the known status information from the central
      * repository.
-     * 
-     * @param tagProperties             List of description strings.
-     * @param centralRepoNotableTags    List of known tag names.
-     * 
+     *
+     * @param tagProperties          List of description strings.
+     * @param centralRepoNotableTags List of known tag names.
+     *
      * @return A list of TagNameDefinitions.
      */
     private static List<TagNameDefinition> buildTagNameDefinitions(List<String> tagProperties, List<String> centralRepoNotableTags) {
         List<TagNameDefinition> tagNameDefinitions = new ArrayList<>();
-        
+
         for (String propertyString : tagProperties) {
             // Split the property into attributes
             String[] attributes = propertyString.split(","); //get the attributes
             String tagName = attributes[0];
             TskData.FileKnown knownStatus = TskData.FileKnown.UNKNOWN;
-            
-            if(centralRepoNotableTags.contains(tagName)) {
+
+            if (centralRepoNotableTags.contains(tagName)) {
                 knownStatus = TskData.FileKnown.BAD;
             }
-            
+
             tagNameDefinitions.add(new TagNameDefinition(tagName, attributes[1],
-                        TagName.HTML_COLOR.valueOf(attributes[2]), knownStatus)); 
+                    TagName.HTML_COLOR.valueOf(attributes[2]), knownStatus));
         }
-        
+
         return tagNameDefinitions;
     }
 
@@ -308,14 +308,14 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      * preserved across cases.
      *
      * @param tagProperties           List of description strings.
-     * 
+     *
      * @param standardTagsToBeCreated the list of standard tags which have yet
      *                                to be created
      *
      * @return tagNames a list of TagNameDefinitions
      */
     private static List<TagNameDefinition> buildTagNameDefinitions(List<String> tagProperties) {
-         List<TagNameDefinition> tagNameDefinitions = new ArrayList<>();
+        List<TagNameDefinition> tagNameDefinitions = new ArrayList<>();
         for (String tagNameTuple : tagProperties) {
             String[] tagNameAttributes = tagNameTuple.split(","); //get the attributes
             tagNameDefinitions.add(new TagNameDefinition(tagNameAttributes[0], tagNameAttributes[1],
