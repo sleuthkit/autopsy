@@ -23,8 +23,6 @@ There is no need for manual installation of additional dependencies if the Windo
 
 If you want the Japanese localized version, you must have the Japanese language pack (http://support.microsoft.com/kb/972813) installed and the default locale set to JA. (http://windows.microsoft.com/en-us/windows/change-system-locale#1TC=windows-7).
 
-Refer to the KNOWN_ISSUES.txt file for known bugs that could cause investigation problems. 
-
 
 SUPPORT
 

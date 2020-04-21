@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
 /**
  * Wrapper over Installers in packages in Core module. This is the main
@@ -389,7 +390,28 @@ public class Installer extends ModuleInstall {
                 logger.log(Level.WARNING, msg, e);
             }
         }
-        logger.log(Level.INFO, "Autopsy Core restore completed"); //NON-NLS        
+        logger.log(Level.INFO, "Autopsy Core restore completed"); //NON-NLS    
+        preloadJython();
+    }
+    
+    
+    /**
+     * Runs an initial load of the Jython modules to speed up subsequent loads.
+     */
+    private void preloadJython() {
+        Runnable loader = () -> {
+            try {
+                JythonModuleLoader.getIngestModuleFactories();
+                JythonModuleLoader.getGeneralReportModules();
+            }
+            catch (Exception ex) {
+                // This is a firewall exception to ensure that any possible exception caused
+                // by this initial load of the Jython modules are caught and logged.
+                logger.log(Level.SEVERE, "There was an error while doing an initial load of python plugins.", ex);
+            }
+            
+        };
+        new Thread(loader).start();
     }
 
     @Override

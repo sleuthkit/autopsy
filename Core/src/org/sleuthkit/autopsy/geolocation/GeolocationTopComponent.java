@@ -330,7 +330,7 @@ public final class GeolocationTopComponent extends TopComponent {
      *
      * @param waypointList
      */
-    void addWaypointsToMap(Set<MapWaypoint> waypointList) {
+    void addWaypointsToMap(Set<MapWaypoint> waypointList, List<Set<MapWaypoint>> tracks) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -347,6 +347,8 @@ public final class GeolocationTopComponent extends TopComponent {
                 }
                 mapPanel.clearWaypoints();
                 mapPanel.setWaypoints(waypointList);
+                mapPanel.setTracks(tracks);
+                mapPanel.initializePainter();
                 setWaypointLoading(false);
                 geoFilterPanel.setEnabled(true);
             }
@@ -499,8 +501,8 @@ public final class GeolocationTopComponent extends TopComponent {
         }
 
         @Override
-        void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints) {
-            addWaypointsToMap(mapWaypoints);
+        void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks) {
+            addWaypointsToMap(mapWaypoints, tracks);
         }
     }
 }

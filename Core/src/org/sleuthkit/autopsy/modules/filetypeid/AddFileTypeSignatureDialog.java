@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 final class AddFileTypeSignatureDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
-    private static final Dimension BUTTON_SIZE = new Dimension(65, 23);
+    private static final Dimension BUTTON_SIZE = new Dimension(85, 23);
     private final AddFileTypeSignaturePanel addFileTypeSigPanel;
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesAction.class, "RunIngestModulesAction.name");
     private Signature signature;
@@ -63,7 +63,7 @@ final class AddFileTypeSignatureDialog extends JDialog {
     AddFileTypeSignatureDialog() {
         super(WindowManager.getDefault().getMainWindow(), TITLE, true);
         this.addFileTypeSigPanel = new AddFileTypeSignaturePanel();
-        this.display(true);
+        init();
     }
 
     /**
@@ -74,42 +74,11 @@ final class AddFileTypeSignatureDialog extends JDialog {
     AddFileTypeSignatureDialog(Signature toEdit) {
         super(WindowManager.getDefault().getMainWindow(), TITLE, true);
         this.addFileTypeSigPanel = new AddFileTypeSignaturePanel(toEdit);
-        this.display(false);
+        init();
     }
 
-    /**
-     * Gets the signature that was created by this dialog.
-     *
-     * @return the signature.
-     */
-    public Signature getSignature() {
-        return signature;
-    }
-
-    /**
-     * Gets which button was pressed (OK or Cancel).
-     *
-     * @return The result.
-     */
-    public BUTTON_PRESSED getResult() {
-        return result;
-    }
-
-    /**
-     * Displays the add signature dialog.
-     *
-     * @param add Whether or not this is an edit or a new window.
-     */
-    @Messages({
-        "AddFileTypeSignatureDialog.addButton.title=OK",
-        "AddFileTypeSignatureDialog.cancelButton.title=Cancel"})
-    void display(boolean add) {
+    private void init() {
         setLayout(new BorderLayout());
-
-        /**
-         * Center the dialog.
-         */
-        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
 
         /**
          * Get the default or saved ingest job settings for this context and use
@@ -141,14 +110,15 @@ final class AddFileTypeSignatureDialog extends JDialog {
         //setting both max and preffered size appears to be necessary to change the button size
         cancelButton.setMaximumSize(BUTTON_SIZE);
         cancelButton.setPreferredSize(BUTTON_SIZE);
-        
+
         // Put the buttons in their own panel, under the settings panel.
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
         buttonPanel.add(okButton);
-        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
+        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 35), new Dimension(10, 35), new Dimension(10, 35)));
         buttonPanel.add(cancelButton);
-        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 10), new Dimension(10, 10), new Dimension(10, 10)));
+        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10, 35), new Dimension(10, 35), new Dimension(10, 35)));
+        buttonPanel.validate();
         add(buttonPanel, BorderLayout.LINE_END);
 
         /**
@@ -161,12 +131,44 @@ final class AddFileTypeSignatureDialog extends JDialog {
                 doButtonAction(false);
             }
         });
+        setResizable(false);
+        pack();
+    }
 
+    /**
+     * Gets the signature that was created by this dialog.
+     *
+     * @return the signature.
+     */
+    public Signature getSignature() {
+        return signature;
+    }
+
+    /**
+     * Gets which button was pressed (OK or Cancel).
+     *
+     * @return The result.
+     */
+    public BUTTON_PRESSED getResult() {
+        return result;
+    }
+
+    /**
+     * Displays the add signature dialog.
+     *
+     * @param add Whether or not this is an edit or a new window.
+     */
+    @Messages({
+        "AddFileTypeSignatureDialog.addButton.title=OK",
+        "AddFileTypeSignatureDialog.cancelButton.title=Cancel"})
+    void display(boolean add) {      
+        /**
+         * Center the dialog.
+         */
+        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         /**
          * Show the dialog.
          */
-        pack();
-        setResizable(false);
         setVisible(true);
     }
 

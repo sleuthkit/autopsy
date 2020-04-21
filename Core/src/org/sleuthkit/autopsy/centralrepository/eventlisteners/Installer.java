@@ -101,7 +101,7 @@ public class Installer extends ModuleInstall {
      * central repository.
      */
     private void addApplicationEventListeners() {
-        Case.addPropertyChangeListener(caseEventListener);
+        caseEventListener.installListeners();
         ingestEventListener.installListeners();
     }
 
@@ -226,7 +226,7 @@ public class Installer extends ModuleInstall {
          * 
          * THIS CODE IS NEVER EXECUTED.
          */
-        Case.removePropertyChangeListener(caseEventListener);
+        caseEventListener.uninstallListeners();
         caseEventListener.shutdown();
         ingestEventListener.shutdown();
         ingestEventListener.uninstallListeners();
