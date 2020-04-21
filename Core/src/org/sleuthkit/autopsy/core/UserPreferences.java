@@ -347,7 +347,7 @@ public final class UserPreferences {
     }
     
     public static String getZkServerHost() {
-        return preferences.get(ZK_SERVER_HOST, "Ingest10"); // ELTODO change default
+        return preferences.get(ZK_SERVER_HOST, "localhost"); // ELTODO change default
     }
     
     public static void setZkServerHost(String hostName) {
@@ -356,7 +356,7 @@ public final class UserPreferences {
 
     public static List<String> getAllIndexingServers() {
         List<String> servers = new ArrayList<>();
-        String listOfServers = preferences.get(INDEXING_SERVER_LIST, "Solr1:8983,review1:8983,ingest9:8983"); // ELTODO change default
+        String listOfServers = preferences.get(INDEXING_SERVER_LIST, "localhost:8983"); // ELTODO change default
         if (listOfServers.isEmpty()) {
             return servers;
         }

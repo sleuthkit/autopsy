@@ -173,17 +173,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             if (solrUrls.isEmpty()) {
                 solrUrls.add("http://" + host + ":" + port + "/solr");
             }
-            //solrUrls.add("http://" + host + ":" + port + "/solr");
-            //solrUrls.add("http://review1:" + port + "/solr");
-            //solrUrls.add("http://ingest9:" + port + "/solr");
-            solrServer = new CloudSolrClient.Builder(solrUrls).build();
-            //solrServer = new CloudSolrClient.Builder().withZkHost(zkHosts).build();
-            //solrServer.setZkClientTimeout(30000);
-            //solrServer.setZkConnectTimeout(30000);
-            solrServer.connect(10, TimeUnit.SECONDS);
-            
-            //solrServer = new CloudSolrClient(zkHosts);
-            // ELTODO KeywordSearch.getServer().connectToSolrServer(solrServer);
+            // ELTODO UNCOMMENT solrServer = new CloudSolrClient.Builder(solrUrls).build();
+            // ELTODO UNCOMMENT solrServer.connect(10, TimeUnit.SECONDS);
         /* ELTODO } catch (SolrServerException ex) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort")); //NON-NLS*/
         } catch (/*ELTODO IOException*/ Exception ex) {
