@@ -571,8 +571,9 @@ final public class Accounts implements AutopsyVisitableItem {
         
         private DefaultAccountTypeNode(Account.Type accountType) {
             super(Children.create(new DefaultAccountFactory(accountType), true), Lookups.singleton(accountType));
-            this.setIconBaseWithExtension(getIconFilePath(accountType));   //NON-NLS
             this.accountType = accountType;
+            String iconPath = getIconFilePath(accountType);
+            this.setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);   //NON-NLS
             updateName();
         }
 
