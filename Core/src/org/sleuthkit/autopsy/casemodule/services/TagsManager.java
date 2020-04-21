@@ -173,19 +173,19 @@ public class TagsManager implements Closeable {
         this.caseDb = caseDb;
 
         // Add standard tags and  the Project VIC default tag set and tags.
-        TaggingManager taggingMgr = caseDb.getTagsManager();
+        TaggingManager taggingMgr = caseDb.getTaggingManager();
         try {
             List<TagSet> setList = taggingMgr.getTagSets();
             if (setList.isEmpty()) {
                 //Assume new case and add Project VIC tags.
                 TagSet set = taggingMgr.addTagSet("Project VIC (United States)");
 
-                for (TagNameDefinition def : TagNameDefinition.PROJECT_VIC_DEFAULT_TAGS.values()) {
+                for (TagNameDefinition def : TagNameDefinition.getProjectVICDefaultDefinitions()) {
                     TagName tagName = caseDb.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus());
                     taggingMgr.addTagNameToTagSet(set, tagName);
                 }
 
-                for (TagNameDefinition def : TagNameDefinition.STANDARD_TAGS.values()) {
+                for (TagNameDefinition def : TagNameDefinition.getStandardTagNameDefinitions()) {
                     caseDb.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus());
                 }
             }
@@ -475,7 +475,7 @@ public class TagsManager implements Closeable {
      *                          database.
      */
     public ContentTag addContentTag(Content content, TagName tagName, String comment, long beginByteOffset, long endByteOffset) throws TskCoreException {
-        TaggingManager.ContentTagChange tagChange = caseDb.getTagsManager().addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
+        TaggingManager.ContentTagChange tagChange = caseDb.getTaggingManager().addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
         try {
             Case currentCase = Case.getCurrentCaseThrows();
 
@@ -699,7 +699,7 @@ public class TagsManager implements Closeable {
      *                          database.
      */
     public BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
-        TaggingManager.BlackboardArtifactTagChange tagChange = caseDb.getTagsManager().addArtifactTag(artifact, tagName, comment);
+        TaggingManager.BlackboardArtifactTagChange tagChange = caseDb.getTaggingManager().addArtifactTag(artifact, tagName, comment);
         try {
             Case currentCase = Case.getCurrentCaseThrows();
 
