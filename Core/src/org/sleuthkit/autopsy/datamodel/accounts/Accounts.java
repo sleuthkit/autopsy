@@ -280,7 +280,7 @@ final public class Accounts implements AutopsyVisitableItem {
          * @return      An alphabetically organized list of all the account types.
          */
         List<String> getTypes() {
-            List<String> types = new ArrayList(counts.keySet());
+            List<String> types = new ArrayList<>(counts.keySet());
             Collections.sort(types);
             return types;
         }
