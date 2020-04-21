@@ -150,8 +150,8 @@ public final class CoordinationService {
          * Connect to ZooKeeper via Curator.
          */
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-        int zooKeeperServerPort = Integer.valueOf(UserPreferences.getZkServerPort());
-        String connectString = UserPreferences.getZkServerHost() + ":" + zooKeeperServerPort;
+        int zooKeeperServerPort = Integer.valueOf(UserPreferences.getIndexingServerPort()) + PORT_OFFSET;
+        String connectString = UserPreferences.getIndexingServerHost() + ":" + zooKeeperServerPort;
         curator = CuratorFrameworkFactory.newClient(connectString, SESSION_TIMEOUT_MILLISECONDS, CONNECTION_TIMEOUT_MILLISECONDS, retryPolicy);
         curator.start();
 
