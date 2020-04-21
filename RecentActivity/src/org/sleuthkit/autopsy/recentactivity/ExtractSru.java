@@ -66,16 +66,10 @@ final class ExtractSru extends Extract {
 
     private IngestJobContext context;
 
-    private static final String NETWORK_USAGE_ARTIFACT_NAME = "RA_SRU_NETWORK_USAGE"; //NON-NLS
-    private static final String APPLICATION_RESOURCE_ARTIFACT_NAME = "RA_SRU_APPLICATION_RESOURCE"; //NON-NLS
-    private static final String NETWORK_PROFILE_NAME_ATTRIBUTE_NAME = "RA_SRU_NETWORK_PROFILE_NAME"; //NON-NLS
+    private static final String APPLICATION_USAGE_SOURCE_NAME = "System Resource Usage - Application Usage"; //NON-NLS
     private static final String NETWORK_USAGE_SOURCE_NAME = "System Resource Usage - Network Usage";
 
     private static final String ARTIFACT_ATTRIBUTE_NAME = "TSK_ARTIFACT_NAME"; //NON-NLS
-    private static final String BACKGROUND_CYCLE_TIME_ART_NAME = "RA_BACKGROUND_CYCLE_TIME"; //NON-NLS
-    private static final String FOREGROUND_CYCLE_TIME_ART_NAME = "RA_FOREGROUND_CYCLE_TIME"; //NON-NLS
-    private static final String BYTES_SENT_ART_NAME = "RA_BYTES_SENT"; //NON-NLS
-    private static final String BYTES_RECEIVED_ART_NAME = "RA_BYTES_RECEIVED"; //NON-NLS
 
     private static final String MODULE_NAME = "extractSRU"; //NON-NLS
 
@@ -98,12 +92,6 @@ final class ExtractSru extends Extract {
     void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
 
         this.context = context;
-
-        try {
-            createSruArtifactType();
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, String.format("%s or $s may not have been created.", NETWORK_USAGE_ARTIFACT_NAME, APPLICATION_RESOURCE_ARTIFACT_NAME), ex);
-        }
 
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
         String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru"); //NON-NLS
@@ -193,8 +181,6 @@ final class ExtractSru extends Extract {
 
         try {
             extractSruFiles(sruDumper, sruFileName, tempOutFile, tempDirPath, softwareHiveFileName);
-            createSruAttributeType();
-            createSruArtifactType();
             findSruExecutedFiles(tempOutFile, dataSource);
             createNetUsageArtifacts(tempOutFile, sruAbstractFile);
             createAppUsageArtifacts(tempOutFile, sruAbstractFile);
@@ -295,24 +281,9 @@ final class ExtractSru extends Extract {
     }
  
     private void createNetUsageArtifacts(String sruDb, AbstractFile sruAbstractFile) {
-        Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
-        BlackboardAttribute.Type bytesSentAttributeType;
-        BlackboardAttribute.Type bytesRecvAttributeType;
-        BlackboardAttribute.Type networkProfileName;
-        BlackboardArtifact.Type artifactType;
         List<BlackboardArtifact> bba = new ArrayList<>();
 
-        try {
-//            bytesSentAttributeType = currentCase.getSleuthkitCase().getAttributeType(BYTES_SENT_ART_NAME);
-//            bytesRecvAttributeType = currentCase.getSleuthkitCase().getAttributeType(BYTES_RECEIVED_ART_NAME);
-            artifactType = currentCase.getSleuthkitCase().getArtifactType(NETWORK_USAGE_ARTIFACT_NAME);
-            networkProfileName = currentCase.getSleuthkitCase().getAttributeType(NETWORK_PROFILE_NAME_ATTRIBUTE_NAME);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting Net Usage Attribute's and Artifact.", ex);//NON-NLS
-            return;
-        }
-
-        String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, Application_Name, User_Name, Profile_Name,"
+        String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, Application_Name, User_Name, "
                 + " bytesSent, BytesRecvd FROM network_Usage , SruDbIdMapTable " 
                 + " where appId = IdIndex and IdType = 0 order by ExecutionTime;"; //NON-NLS
 
@@ -331,7 +302,6 @@ final class ExtractSru extends Extract {
                 Long bytesSent = new Long(resultSet.getInt("bytesSent")); //NON-NLS
                 Long bytesRecvd = new Long(resultSet.getInt("BytesRecvd")); //NON-NLS
                 String userName = resultSet.getString("User_Name"); //NON-NLS
-                String profileName = resultSet.getString("Profile_Name"); //NON-NLS
 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
@@ -340,8 +310,6 @@ final class ExtractSru extends Extract {
                         new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getName(),
                                 userName), 
-                        new BlackboardAttribute(
-                                networkProfileName, getName(), profileName),
                         new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
                                 executionTime),
@@ -353,7 +321,7 @@ final class ExtractSru extends Extract {
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), NETWORK_USAGE_SOURCE_NAME));
 
                 try {
-                    BlackboardArtifact bbart = sruAbstractFile.newArtifact(artifactType.getTypeID());
+                    BlackboardArtifact bbart = sruAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
                     bbart.addAttributes(bbattributes);
                     bba.add(bbart);
                     BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), bbart);
@@ -377,23 +345,10 @@ final class ExtractSru extends Extract {
     }
 
     private void createAppUsageArtifacts(String sruDb, AbstractFile sruAbstractFile) {
-        Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
-        BlackboardAttribute.Type fgCycleTimeAttributeType;
-        BlackboardAttribute.Type bgCycleTimeAttributeType;
-        BlackboardArtifact.Type artifactType;
         List<BlackboardArtifact> bba = new ArrayList<>();
 
-        try {
-            fgCycleTimeAttributeType = currentCase.getSleuthkitCase().getAttributeType(FOREGROUND_CYCLE_TIME_ART_NAME);
-            bgCycleTimeAttributeType = currentCase.getSleuthkitCase().getAttributeType(BACKGROUND_CYCLE_TIME_ART_NAME);
-            artifactType = currentCase.getSleuthkitCase().getArtifactType(APPLICATION_RESOURCE_ARTIFACT_NAME);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting APP Usage Attribute's and Artifact.", ex);//NON-NLS
-            return;
-        }
-
-        String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, Application_Name, User_Name,"
-                + " foregroundCycleTime, backgroundCycleTime FROM Application_Resource_Usage, SruDbIdMapTable WHERE "
+        String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, Application_Name, User_Name "
+                + " FROM Application_Resource_Usage, SruDbIdMapTable WHERE "
                 + " idType = 0 and idIndex = appId order by ExecutionTime;"; //NON-NLS
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + sruDb); //NON-NLS
@@ -408,8 +363,6 @@ final class ExtractSru extends Extract {
 
                 String applicationName = resultSet.getString("Application_Name"); //NON-NLS
                 Long executionTime = new Long(resultSet.getInt("ExecutionTime")); //NON-NLS
-                Long fgCycleTime = new Long(resultSet.getInt("foregroundCycleTime")); //NON-NLS
-                Long bgCycleTime = new Long(resultSet.getInt("backgroundCycleTime")); //NON-NLS
                 String userName = resultSet.getString("User_Name");
 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
@@ -422,15 +375,11 @@ final class ExtractSru extends Extract {
                         new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
                                 executionTime),
-                        new BlackboardAttribute(
-                                fgCycleTimeAttributeType, getName(),
-                                fgCycleTime),
-                        new BlackboardAttribute(
-                                bgCycleTimeAttributeType, getName(),
-                                bgCycleTime));
+                         new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), APPLICATION_USAGE_SOURCE_NAME));
 
                 try {
-                    BlackboardArtifact bbart = sruAbstractFile.newArtifact(artifactType.getTypeID());
+                    BlackboardArtifact bbart = sruAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
                     bbart.addAttributes(bbattributes);
                     bba.add(bbart);
                     BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), bbart);
@@ -477,67 +426,6 @@ final class ExtractSru extends Extract {
         }
        
         return null;
-    }
-
-    /**
-     * Create artifact type's for System Resource Usage.
-     *
-     * @throws TskCoreException
-     */
-    private void createSruArtifactType() throws TskCoreException {
-
-        try {
-            tskCase.addBlackboardArtifactType(NETWORK_USAGE_ARTIFACT_NAME, "SRU Network Usage"); //NON-NLS
-        } catch (TskDataException ex) {
-            logger.log(Level.INFO, String.format("%s may have already been defined for this case", NETWORK_USAGE_ARTIFACT_NAME));
-        }
-        try {
-            tskCase.addBlackboardArtifactType(APPLICATION_RESOURCE_ARTIFACT_NAME, "SRU Application Resource Usage"); //NON-NLS
-        } catch (TskDataException ex) {
-            logger.log(Level.INFO, String.format("%s may have already been defined for this case", APPLICATION_RESOURCE_ARTIFACT_NAME));
-        }
-
-    }
-
-    /**
-     * Create System Resource Usage Attribute type's.
-     *
-     * @throws TskCoreException
-     */
-    private void createSruAttributeType() throws TskCoreException {
-
-        try {
-            tskCase.addArtifactAttributeType(ARTIFACT_ATTRIBUTE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Artifact Name"); //NON-NLS
-        } catch (TskDataException ex) {
-            logger.log(Level.INFO, String.format("%s may have already been defined for this case", ARTIFACT_ATTRIBUTE_NAME));
-        }
-        try {
-            tskCase.addArtifactAttributeType(BACKGROUND_CYCLE_TIME_ART_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG, "Background Cycle Time"); //NON-NLS
-        } catch (TskDataException ex) {
-            logger.log(Level.INFO, String.format("%s may have already been defined for this case", BACKGROUND_CYCLE_TIME_ART_NAME));
-        }
-        try {
-            tskCase.addArtifactAttributeType(FOREGROUND_CYCLE_TIME_ART_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG, "Foreground Cycle Time"); //NON-NLS
-        } catch (TskDataException ex) {
-            logger.log(Level.INFO, String.format("%s may have already been defined for this case", FOREGROUND_CYCLE_TIME_ART_NAME));
-        }
-        try {
-            tskCase.addArtifactAttributeType(BYTES_SENT_ART_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG, "Bytes Sent"); //NON-NLS
-        } catch (TskDataException ex) {
-            logger.log(Level.INFO, String.format("%s may have already been defined for this case", BYTES_SENT_ART_NAME));
-        }
-        try {
-            tskCase.addArtifactAttributeType(BYTES_RECEIVED_ART_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG, "Bytes Received"); //NON-NLS
-        } catch (TskDataException ex) {
-            logger.log(Level.INFO, String.format("%s may have already been defined for this case", BYTES_RECEIVED_ART_NAME));
-        }
-
-        try {
-            tskCase.addArtifactAttributeType(NETWORK_PROFILE_NAME_ATTRIBUTE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Network Profile Name");
-        } catch (TskDataException ex) {
-            logger.log(Level.INFO, String.format("%s may have already been defined for this case", BYTES_RECEIVED_ART_NAME));
-        }
-
     }
 
 }
