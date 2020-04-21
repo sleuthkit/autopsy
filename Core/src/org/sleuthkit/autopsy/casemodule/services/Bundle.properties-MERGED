@@ -1,3 +1,9 @@
+Category.five=CAT-5: Non-pertinent
+Category.four=CAT-4: Exemplar/Comparison (Internal Use Only)
+Category.one=CAT-1: Child Exploitation (Illegal)
+Category.three=CAT-3: CGI/Animation (Child Exploitive)
+Category.two=CAT-2: Child Exploitation (Non-Illegal/Age Difficult)
+Category.zero=CAT-0: Uncategorized
 OptionsCategory_Name_TagNamesOptions=Tags
 OptionsCategory_TagNames=TagNames
 TagNameDefinition.predefTagNames.bookmark.text=Bookmark

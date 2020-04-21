@@ -140,7 +140,7 @@ final class TagNameDialog extends javax.swing.JDialog {
                 return;
             }
             //if a tag name contains illegal characters and is not the name of one of the standard tags
-            if (TagsManager.containsIllegalCharacters(newTagDisplayName) && !TagNameDefinition.getStandardTagNames().contains(newTagDisplayName)) {
+            if (TagsManager.containsIllegalCharacters(newTagDisplayName)) {
                 JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.message"),
                         NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.title"),
