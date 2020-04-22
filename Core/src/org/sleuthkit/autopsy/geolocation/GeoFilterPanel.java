@@ -523,7 +523,12 @@ class GeoFilterPanel extends javax.swing.JPanel {
                     resultSet.next();
                     count = resultSet.getLong("count");
                 } catch (SQLException ex) {
-                    Exceptions.printStackTrace(ex);
+                    Throwable cause = ex.getCause();
+                    if (cause != null) {
+                        logger.log(Level.SEVERE, cause.getMessage(), cause);
+                    } else {
+                        logger.log(Level.SEVERE, ex.getMessage(), ex);
+                    }
                 }
             }
             return count;
