@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
 import java.awt.Component;
+import java.awt.Dialog;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.DefaultListCellRenderer;
@@ -51,12 +52,41 @@ public final class ManageOrganizationsDialog extends JDialog {
 
     @Messages({"ManageOrganizationsDialog.title.text=Manage Organizations"})
     /**
-     * Creates new form ManageOrganizationsPanel
+     * Creates new form ManageOrganizationsPanel.
+     * @param parent      The dialog parent.
      */
-    public ManageOrganizationsDialog() {
-        super((JFrame) WindowManager.getDefault().getMainWindow(),
+    public ManageOrganizationsDialog(Dialog parent) {
+        super(parent,
                 Bundle.ManageOrganizationsDialog_title_text(),
                 true); // NON-NLS
+        init();
+    }
+    
+    
+    /**
+     * Creates new form ManageOrganizationsPanel.
+     * @param parent        The JFrame parent.
+     */
+    public ManageOrganizationsDialog(JFrame parent) {
+        super(parent,
+                Bundle.ManageOrganizationsDialog_title_text(),
+                true); // NON-NLS
+        init();
+    }
+    
+    
+    /**
+     * Creates new form ManageOrganizationsPanel.
+     */
+    public ManageOrganizationsDialog() {
+        this((JFrame) WindowManager.getDefault().getMainWindow());
+    }
+    
+    
+    /**
+     * To be run as a part of constructor initialization.
+     */
+    private void init() {
         initComponents();
         try {
             this.dbManager = CentralRepository.getInstance();
@@ -85,6 +115,7 @@ public final class ManageOrganizationsDialog extends JDialog {
     private void display() {
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setVisible(true);
+        toFront();
     }
 
     private void populateListAndSelect(CentralRepoOrganization selected) throws CentralRepoException {

@@ -98,7 +98,7 @@ public final class WaypointBuilder {
          *
          * @param wwaypoints This of waypoints.
          */
-        void process(List<Waypoint> wwaypoints);
+        void process(List<Waypoint> waypoints);
     }
 
     /**

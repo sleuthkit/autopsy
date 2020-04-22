@@ -34,8 +34,8 @@ final class DiscoveryUiUtils {
     private static final int ICON_SIZE = 16;
     private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
     private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
-    private static final String DELETE_ICON_PATH = "/org/sleuthkit/autopsy/images/file-icon-deleted.png";
-    private static final String UNSUPPORTED_DOC_PATH = "/org/sleuthkit/autopsy/images/image-extraction-not-supported.png";
+    private static final String DELETE_ICON_PATH = "org/sleuthkit/autopsy/images/file-icon-deleted.png";
+    private static final String UNSUPPORTED_DOC_PATH = "org/sleuthkit/autopsy/images/image-extraction-not-supported.png";
     private static final ImageIcon INTERESTING_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(YELLOW_CIRCLE_ICON_PATH, false));
     private static final ImageIcon NOTABLE_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(RED_CIRCLE_ICON_PATH, false));
     private static final ImageIcon DELETED_ICON = new ImageIcon(ImageUtilities.loadImage(DELETE_ICON_PATH, false));

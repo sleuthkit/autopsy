@@ -290,7 +290,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
             super(Children.create(new ArtifactFactory(type), true), Lookups.singleton(type.getDisplayName()));
             super.setName(type.getTypeName());
             this.type = type;
-            this.setIconBaseWithExtension(IconsUtil.getIconFilePath(type.getTypeID())); //NON-NLS
+            String iconPath = IconsUtil.getIconFilePath(type.getTypeID());
+            setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
             updateDisplayName();
         }
 
