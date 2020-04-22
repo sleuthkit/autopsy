@@ -58,7 +58,7 @@ public class ContentTagDeletedEvent extends TagDeletedEvent<ContentTag> implemen
         private final long beginByteOffset;
         private final long endByteOffset;
 
-        private DeletedContentTagInfo(ContentTag deletedTag) {
+        DeletedContentTagInfo(ContentTag deletedTag) {
             super(deletedTag);
             beginByteOffset = deletedTag.getBeginByteOffset();
             endByteOffset = deletedTag.getEndByteOffset();
