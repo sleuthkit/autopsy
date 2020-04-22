@@ -36,5 +36,5 @@ public interface CentralRepositoryDbQueryCallback {
      * @throws CentralRepoException In case of an error processing the result set.
      * @throws SQLException In case of a SQL error in processing the result set.
      */
-    public void process(ResultSet rs) throws CentralRepoException, SQLException;
+    void process(ResultSet rs) throws CentralRepoException, SQLException;
 }

@@ -26,13 +26,14 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Locale;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import junit.framework.Test;
 import org.apache.commons.io.FileUtils;
 
 import org.netbeans.junit.NbModuleSuite;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.PersonaManager.addAccountToPersona;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.PersonaHelper.addAccountToPersona;
 import org.sleuthkit.datamodel.Account;
 
 
@@ -116,6 +117,10 @@ public class CentralRepoPersonasTest  extends TestCase {
      * 
      */
     public void testBasicPersonaCreation() {
+            
+        //final String DATE_FORMAT_STRING = "yyyy/MM/dd HH:mm:ss"; //NON-NLS
+        //final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STRING, Locale.US);
+            
         try {
             
             // Step 1: Create an account
@@ -131,7 +136,7 @@ public class CentralRepoPersonasTest  extends TestCase {
             String personaName = "Baloo McDog";
             String comment = "The best dog ever";
             Persona.PersonaStatus status = Persona.PersonaStatus.ACTIVE;
-            PersonaAccount pa1 = PersonaManager.createPersonaForAccount(personaName, comment , status, phoneAccount1, "Because I said so", Persona.Confidence.LOW );
+            PersonaAccount pa1 = PersonaHelper.createPersonaForAccount(personaName, comment , status, phoneAccount1, "Because I said so", Persona.Confidence.LOW );
                 
 
             Persona dogPersona = pa1.getPersona();
@@ -146,32 +151,35 @@ public class CentralRepoPersonasTest  extends TestCase {
             Assert.assertEquals(pa1.getConfidence(), Persona.Confidence.LOW);
 
             // Step 3. Add Persona Aliases
-            PersonaAlias alias1 = PersonaManager.addPersonaAlias(dogPersona, "Good Boy", "Coz he's is the best dog ever", Persona.Confidence.MEDIUM);
-            PersonaAlias alias2 = PersonaManager.addPersonaAlias(dogPersona, "WoofWoof", "How many dumb comments can I come up with?", Persona.Confidence.LOW);
+            PersonaAlias alias1 = PersonaHelper.addPersonaAlias(dogPersona, "Good Boy", "Coz he's is the best dog ever", Persona.Confidence.MEDIUM);
+            PersonaAlias alias2 = PersonaHelper.addPersonaAlias(dogPersona, "WoofWoof", "How many dumb comments can I come up with?", Persona.Confidence.LOW);
 
             Assert.assertNotNull(alias1);
             Assert.assertNotNull(alias2);
 
             
             //Step 4: Add Persona metadata
-            PersonaMetadata metadata1 = PersonaManager.addPersonaMetadata(dogPersona, "Color", "Black", "He's got thick black hair.", Persona.Confidence.MEDIUM);
-            PersonaMetadata metadata2 = PersonaManager.addPersonaMetadata(dogPersona, "Gender", "Male", "Because...", Persona.Confidence.LOW);
+            PersonaMetadata metadata1 = PersonaHelper.addPersonaMetadata(dogPersona, "Color", "Black", "He's got thick black hair.", Persona.Confidence.MEDIUM);
+            PersonaMetadata metadata2 = PersonaHelper.addPersonaMetadata(dogPersona, "Gender", "Male", "Because...", Persona.Confidence.LOW);
 
             Assert.assertNotNull(metadata1);
             Assert.assertNotNull(metadata2);
 
             // get all aliases for persona
-            Collection<PersonaAlias> aliases = PersonaManager.getPersonaAliases(dogPersona.getId());
+            Collection<PersonaAlias> aliases = PersonaHelper.getPersonaAliases(dogPersona.getId());
             Assert.assertEquals(2, aliases.size());
             for (PersonaAlias alias: aliases) {
-                System.out.println("Alias: "+ alias.getAlias()) ;
+                //System.out.println("Alias: "+ alias.getAlias()) ;
+                Assert.assertFalse(alias.getAlias().isEmpty());
             }
             
             // get all metadata for persona 
-            Collection<PersonaMetadata> metadataList = PersonaManager.getPersonaMetadata(dogPersona.getId());
+            Collection<PersonaMetadata> metadataList = PersonaHelper.getPersonaMetadata(dogPersona.getId());
             Assert.assertEquals(2, metadataList.size());
             for (PersonaMetadata md: metadataList) {
-                System.out.println(String.format("Metadata: %s : %s", md.getName(), md.getValue())) ;
+                //System.out.println(String.format("Metadata: %s : %s", md.getName(), md.getValue())) ;
+                Assert.assertFalse(md.getName().isEmpty());
+                Assert.assertFalse(md.getValue().isEmpty());
             }
             
             
@@ -184,32 +192,38 @@ public class CentralRepoPersonasTest  extends TestCase {
                     .getOrCreateAccount(facebookAccountType, "BalooSherkhan");
             
             // Add account to persona
-             PersonaAccount pa2 =  addAccountToPersona( dogPersona,  catdogFBAccount,  "Looks like dog, barks like a dog...",  Persona.Confidence.MEDIUM);
+            addAccountToPersona( dogPersona,  catdogFBAccount,  "Looks like dog, barks like a dog...",  Persona.Confidence.MEDIUM);
             
              // Get all acounts for the persona...
-            Collection<PersonaAccount> personaAccounts = PersonaManager.getPersonaAccountsForPersona(dogPersona.getId());
+            Collection<PersonaAccount> personaAccounts = PersonaHelper.getPersonaAccountsForPersona(dogPersona.getId());
             
             Assert.assertEquals(2, personaAccounts.size());
-            final String DATE_FORMAT_STRING = "yyyy/MM/dd HH:mm:ss"; //NON-NLS
-            final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STRING);
             
             for (PersonaAccount pa: personaAccounts) {
-                System.out.println(String.format("PersonaAccount: Justification = %s : Date Added = %s", pa.getJustification(), DATE_FORMAT.format(new Date(pa.getDateAdded())))) ;
+                //System.out.println(String.format("PersonaAccount: Justification = %s : Date Added = %s", pa.getJustification(), DATE_FORMAT.format(new Date(pa.getDateAdded())))) ;
+                Assert.assertFalse(pa.getJustification().isEmpty());
+                Assert.assertFalse(pa.getAccount().getTypeSpecificId().isEmpty());
+                Assert.assertTrue(pa.getDateAdded() > 0);
+                Assert.assertTrue(pa.getPersona().getCreatedDate()> 0);
             }
             
             // Create a Second Persona associated with same account
             String catPersonaName = "SherKhan";
             String comment2 = "The fiercest cat alive.";
            
-            PersonaAccount pa3 = PersonaManager.createPersonaForAccount(catPersonaName, comment2 , Persona.PersonaStatus.ACTIVE, catdogFBAccount, "Smells like a cat.", Persona.Confidence.LOW );
-            Persona catPersona = pa3.getPersona();
+            PersonaHelper.createPersonaForAccount(catPersonaName, comment2 , Persona.PersonaStatus.ACTIVE, catdogFBAccount, "Smells like a cat.", Persona.Confidence.LOW );
             
             // Get ALL personas for an account
-            Collection<PersonaAccount> personaAccounts2 = PersonaManager.getPersonaAccountsForAccount(catdogFBAccount.getAccountId());
+            Collection<PersonaAccount> personaAccounts2 = PersonaHelper.getPersonaAccountsForAccount(catdogFBAccount.getAccountId());
             
             Assert.assertEquals(2, personaAccounts2.size());
             for (PersonaAccount pa: personaAccounts2) {
-                System.out.println(String.format("PersonaAccount: Justification = %s : Date Added = %s", pa.getJustification(), DATE_FORMAT.format(new Date(pa.getDateAdded())))) ;
+                //System.out.println(String.format("PersonaAccount: Justification = %s : Date Added = %s", pa.getJustification(), DATE_FORMAT.format(new Date(pa.getDateAdded())))) ;
+                Assert.assertFalse(pa.getJustification().isEmpty());
+                Assert.assertFalse(pa.getAccount().getTypeSpecificId().isEmpty());
+                Assert.assertTrue(pa.getDateAdded() > 0);
+                Assert.assertTrue(pa.getPersona().getCreatedDate()> 0);
+                Assert.assertFalse(pa.getPersona().getName().isEmpty());
             }
             
             

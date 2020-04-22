@@ -38,7 +38,14 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.Persona.PersonaStatus;
  *  Provides APIs to create, modify and retrieve Persona.
  * 
  */
-public class PersonaManager {
+public class PersonaHelper {
+    
+   /**
+     * Empty private constructor
+     */
+    private PersonaHelper() {
+        
+    }
     
     /**
      * Creates a Persona and associates the specified account with it.

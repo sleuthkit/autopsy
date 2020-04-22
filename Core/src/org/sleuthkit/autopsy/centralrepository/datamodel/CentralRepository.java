@@ -830,7 +830,7 @@ public interface CentralRepository {
      * 
      * @throws CentralRepoException  If there is an error.
      */
-    public void executeInsertSQL(String sql) throws CentralRepoException;
+    void executeInsertSQL(String sql) throws CentralRepoException;
     
     /**
      * Executes a SELECT sql statement on the central repository database.
@@ -840,7 +840,7 @@ public interface CentralRepository {
      * 
      * @throws CentralRepoException If there is an error.
      */
-    public void executeSelectSQL(String sql, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException;
+    void executeSelectSQL(String sql, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException;
     
     /**
      * Get account type by type name.
