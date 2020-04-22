@@ -37,7 +37,6 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingWorker;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -486,36 +485,35 @@ class GeoFilterPanel extends javax.swing.JPanel {
         }
 
         /**
-         * Get a count of TSK_METADATA_EXIF artifacts containing GPS data for
+         * Get a count of artifacts of the given type containing GPS data for
          * the given data case and source. Does not include rejected artifacts.
          *
          * @param sleuthkitCase
-         * @param dataSourceID
+         * @param dataSource
+         * @param artifactType
          *
          * @return The artifacts count that match the criteria
          *
          * @throws TskCoreException
          */
-        public long getExifGPSDataCount(SleuthkitCase sleuthkitCase, DataSource dataSource) throws TskCoreException {
+        public long getGPSDataCount(SleuthkitCase sleuthkitCase,
+                DataSource dataSource, BlackboardArtifact.ARTIFACT_TYPE artifactType) throws TskCoreException {
             long count = 0;
             String queryStr
-                    = "SELECT count(*) AS count FROM"
-                    + " ("
-                    + " SELECT artifact_obj_id, group_concat(attribute_type_id) FROM"
+                    = "SELECT count(DISTINCT artifact_id) AS count FROM"
                     + " ("
                     + " SELECT * FROM blackboard_artifacts as arts"
                     + " INNER JOIN blackboard_attributes as attrs"
                     + " ON attrs.artifact_id = arts.artifact_id"
-                    + " WHERE arts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()
+                    + " WHERE arts.artifact_type_id = " + artifactType.getTypeID()
                     + " AND arts.data_source_obj_id = " + dataSource.getId()
                     + " AND arts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID()
                     + " AND"
                     + " ("
                     + "attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()
                     + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()
+                    + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_TRACKPOINTS.getTypeID()
                     + " )"
-                    + " )"
-                    + "GROUP BY artifact_obj_id"
                     + " )";
             try (SleuthkitCase.CaseDbQuery queryResult = sleuthkitCase.executeQuery(queryStr)) {
                 ResultSet resultSet = queryResult.getResultSet();
@@ -548,12 +546,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         private Map<ARTIFACT_TYPE, Long> getGPSDataSources(SleuthkitCase sleuthkitCase, DataSource dataSource) throws TskCoreException {
             HashMap<ARTIFACT_TYPE, Long> ret = new HashMap<>();
             for (BlackboardArtifact.ARTIFACT_TYPE type : GPS_ARTIFACT_TYPES) {
-                long count;
-                if (type == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF) {
-                    count = getExifGPSDataCount(sleuthkitCase, dataSource);
-                } else {
-                    count = sleuthkitCase.getBlackboardArtifactsTypeCount(type.getTypeID(), dataSource.getId());
-                }
+                long count = getGPSDataCount(sleuthkitCase, dataSource, type);
                 if (count > 0) {
                     ret.put(type, count);
                 }
