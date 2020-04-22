@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
+import org.sleuthkit.datamodel.Examiner;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -101,6 +102,11 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     // Update Test code if this changes.  It's hard coded there.
     static final int DEFAULT_BULK_THRESHHOLD = 1000;
 
+    private Examiner cachedCurrentExaminer = null;
+    
+    private static final int QUERY_STR_MAX_LEN = 1000;
+    
+    
     /**
      * Connect to the DB and initialize it.
      *
@@ -2486,6 +2492,114 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         }
     }        
 
+    /**
+     * Updates the examiners table, by adding current logged in user to
+     * examiners table, if not already in there.
+     * 
+     * @throws CentralRepoException If there is an error.
+     *
+     */
+    @Override
+    public void updateExaminers() throws CentralRepoException {
+
+        String loginName = System.getProperty("user.name");
+        if (loginName.isEmpty()) {
+            logger.log(Level.SEVERE, "Cannot determine logged in user name");
+            return;
+        }
+
+        try (Connection connection = connect();
+                Statement statement = connection.createStatement();) {
+
+            String insertSQL;
+            switch (CentralRepoDbManager.getSavedDbChoice().getDbPlatform()) {
+                case POSTGRESQL:
+                    insertSQL = "INSERT INTO examiners (login_name) VALUES ('" + loginName + "')" + getConflictClause();  //NON-NLS
+                    break;
+                case SQLITE:
+                    insertSQL = "INSERT OR IGNORE INTO examiners (login_name) VALUES ('" + loginName + "')";
+                    break;
+                default:
+                    throw new CentralRepoException(String.format("Cannot add examiner to currently selected CR database platform %s", CentralRepoDbManager.getSavedDbChoice().getDbPlatform()));
+            }
+            statement.execute(insertSQL); //NON-NLS
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error inserting row in examiners", ex);
+        }
+    }
+
+    @Override
+    public Examiner getCurrentCentralRepoExaminer() throws CentralRepoException {
+
+        // return cached value if there's one
+        if (cachedCurrentExaminer != null) {
+            return cachedCurrentExaminer;
+        }
+        String loginName = System.getProperty("user.name");
+        if (loginName == null || loginName.isEmpty()) {
+            throw new CentralRepoException("Failed to determine logged in user name.");
+        }
+
+        String querySQL = "SELECT * FROM examiners WHERE login_name = '" + loginName + "'";
+
+        try (Connection connection = connect();
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(querySQL);) {
+
+            if (resultSet.next()) {
+                cachedCurrentExaminer = new Examiner(resultSet.getLong("id"), resultSet.getString("login_name"), resultSet.getString("display_name"));
+                return cachedCurrentExaminer;
+            } else {
+                throw new CentralRepoException("Error getting examiner for name = " + loginName);
+            }
+
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error getting examiner for name = " + loginName, ex);
+        }
+    }
+
+    @Override
+    public void executeInsertSQL(String insertClause) throws CentralRepoException {
+
+        if (insertClause == null) {
+            throw new CentralRepoException("Insert SQL is null");
+        }
+
+        String sql = getPlatformSpecificInsertSQL(insertClause);
+        try (Connection conn = connect();
+                PreparedStatement preparedStatement = conn.prepareStatement(sql);) {
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new CentralRepoException(String.format("Error running SQL %s, exception = %s", sql, ex.getMessage()), ex);
+        }
+    }
+
+    @Override
+    public void executeSelectSQL(String selectSQL, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException {
+        if (queryCallback == null) {
+            throw new CentralRepoException("Query callback is null");
+        }
+
+        if (selectSQL == null) {
+            throw new CentralRepoException("Select SQL is null");
+        }
+
+        StringBuilder sqlSb = new StringBuilder(QUERY_STR_MAX_LEN);
+        if (selectSQL.trim().toUpperCase().startsWith("SELECT") == false) {
+            sqlSb.append("SELECT ");
+        }
+
+        sqlSb.append(selectSQL);
+
+        try (Connection conn = connect();
+                PreparedStatement preparedStatement = conn.prepareStatement(sqlSb.toString());
+                ResultSet resultSet = preparedStatement.executeQuery();) {
+            queryCallback.process(resultSet);
+        } catch (SQLException ex) {
+            throw new CentralRepoException(String.format("Error running SQL %s, exception = %s", selectSQL, ex.getMessage()), ex);
+        }
+    }
+    
     @Override
     public CentralRepoOrganization newOrganization(CentralRepoOrganization eamOrg) throws CentralRepoException {
         if (eamOrg == null) {
@@ -3489,6 +3603,19 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         );
     }
 
+    private String getPlatformSpecificInsertSQL(String sql) throws CentralRepoException {
+
+        switch (CentralRepoDbManager.getSavedDbChoice().getDbPlatform()) {
+            case POSTGRESQL:
+                return "INSERT " + sql + " ON CONFLICT DO NOTHING"; //NON-NLS
+            case SQLITE:
+               return "INSERT OR IGNORE " + sql;
+                
+            default:
+                throw new CentralRepoException("Unknown Central Repo DB platform" + CentralRepoDbManager.getSavedDbChoice().getDbPlatform());
+        }
+    }
+    
     /**
      * Determine if a specific column already exists in a specific table
      *

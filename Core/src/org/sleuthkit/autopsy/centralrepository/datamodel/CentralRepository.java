@@ -25,6 +25,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.datamodel.Examiner;
 
 /**
  * Main interface for interacting with the database
@@ -159,6 +160,23 @@ public interface CentralRepository {
      * @param eamCase The case to update
      */
     void updateCase(CorrelationCase eamCase) throws CentralRepoException;
+    
+    /**
+     * Updates the examiners table, by adding current logged in user to
+     * examiners table, if not already in there.
+     * 
+     * @throws CentralRepoException If there is an error.
+     *
+     */
+    void updateExaminers() throws CentralRepoException;
+
+    /**
+     * Get the Examiner object for the current logged in user.
+     *
+     * @return Examiner Current examiner.
+     * @throws CentralRepoException
+     */
+    Examiner getCurrentCentralRepoExaminer() throws CentralRepoException;
 
     /**
      * Retrieves Central Repo case based on an Autopsy Case
@@ -805,6 +823,24 @@ public interface CentralRepository {
      */
     public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws CentralRepoException;     
     
+    
+    /**
+     * Executes an INSERT sql statement on the central repository database.
+     * @param sql INSERT sql to execute.
+     * 
+     * @throws CentralRepoException  If there is an error.
+     */
+    public void executeInsertSQL(String sql) throws CentralRepoException;
+    
+    /**
+     * Executes a SELECT sql statement on the central repository database.
+     * 
+     * @param sql SELECT sql to execute.
+     * @param queryCallback Query callback to handle the result of the query.
+     * 
+     * @throws CentralRepoException If there is an error.
+     */
+    public void executeSelectSQL(String sql, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException;
     
     /**
      * Get account type by type name.

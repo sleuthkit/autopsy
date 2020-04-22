@@ -18,13 +18,15 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import org.sleuthkit.datamodel.Examiner;
+
 /**
  * This class abstracts a persona.
  *
  * An examiner may create a persona from an account.
  *
  */
-class Persona {
+public class Persona {
 
     /**
      * Defines level of confidence in assigning a persona to an account.
@@ -50,9 +52,19 @@ class Persona {
             return name;
         }
 
-        public int getLevel() {
+        public int getLevelId() {
             return this.level_id;
         }
+        
+        static Confidence fromId(int value) {
+            for (Confidence confidence : Confidence.values()) {
+                if (confidence.getLevelId() == value) {
+                    return confidence;
+                }
+            }
+            return Confidence.UNKNOWN;
+        }
+        
     }
 
     /**
@@ -79,9 +91,72 @@ class Persona {
             return description;
         }
 
-        public int getStatus() {
+        public int getStatusId() {
             return this.status_id;
         }
+        
+        static PersonaStatus fromId(int value) {
+            for (PersonaStatus status : PersonaStatus.values()) {
+                if (status.getStatusId() == value) {
+                    return status;
+                }
+            }
+            return PersonaStatus.UNKNOWN;
+        }
+    }
+    
+    
+    // primary key in the Personas table in CR database
+    private final long id;
+    private final String uuidStr;
+    private final String name;
+    private final String comment;
+    private final long createdDate;
+    private final long modifiedDate;
+    private final PersonaStatus status;
+    private final Examiner examiner;
+    
+    public long getId() {
+        return id;
+    }
+
+    public String getUuidStr() {
+        return uuidStr;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public long getCreatedDate() {
+        return createdDate;
+    }
+
+    public long getModifiedDate() {
+        return modifiedDate;
+    }
+    
+    public PersonaStatus getStatus() {
+        return status;
+    }
+
+    public Examiner getExaminer() {
+        return examiner;
+    }
+    
+    Persona(long id, String uuidStr, String name, String comment, long created_date, long modified_date, PersonaStatus status, Examiner examiner) {
+        this.id = id;
+        this.uuidStr = uuidStr;
+        this.name = name;
+        this.comment = comment;
+        this.createdDate = created_date;
+        this.modifiedDate = modified_date;
+        this.status = status;
+        this.examiner = examiner;
     }
 
 }

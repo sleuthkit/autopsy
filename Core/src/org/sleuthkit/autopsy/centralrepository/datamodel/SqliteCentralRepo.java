@@ -78,6 +78,8 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
     private SqliteCentralRepo() throws CentralRepoException {
         dbSettings = new SqliteCentralRepoSettings();
         bulkArtifactsThreshold = dbSettings.getBulkThreshold();
+        
+        this.updateExaminers();
     }
 
     @Override
@@ -833,6 +835,36 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
         }        
     }      
 
+    @Override
+    public void executeInsertSQL(String insertSQL) throws CentralRepoException {
+        try {
+            acquireSharedLock();
+            super.executeInsertSQL(insertSQL);
+        } finally {
+            releaseSharedLock();
+        }
+    }
+    
+    @Override
+    public void executeSelectSQL(String selectSQL, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException {
+        try {
+            acquireSharedLock();
+            super.executeSelectSQL(selectSQL, queryCallback);
+        } finally {
+            releaseSharedLock();
+        }
+    }
+    
+    @Override
+    public void updateExaminers() throws CentralRepoException {
+        try {
+            acquireSharedLock();
+            super.updateExaminers();
+        } finally {
+            releaseSharedLock();
+        }
+    }
+    
     /**
      * Check whether a reference set with the given name/version is in the
      * central repo. Used to check for name collisions when creating reference
