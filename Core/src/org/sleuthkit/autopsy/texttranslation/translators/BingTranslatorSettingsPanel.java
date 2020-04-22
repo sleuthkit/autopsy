@@ -32,7 +32,15 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import java.awt.Desktop;
+import java.net.URISyntaxException;
+import java.net.URL;
 import org.apache.commons.lang3.StringUtils;
+import org.netbeans.core.actions.HTMLViewAction;
+import org.openide.awt.HtmlBrowser;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 
 /**
@@ -75,6 +83,23 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         populateComboBox();
         selectLanguageByCode(code);
         targetLanguageCode = code;
+        
+        instructionsTextArea.addHyperlinkListener(new HyperlinkListener() {
+            @Override
+            public void hyperlinkUpdate(HyperlinkEvent e) {
+                if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                    // Try to display the URL in the user's browswer. 
+                    if(Desktop.isDesktopSupported()) {
+                        try {
+                            Desktop.getDesktop().browse(e.getURL().toURI());
+                        } catch (IOException | URISyntaxException ex) {
+                            logger.log(Level.WARNING, "Failed to display URL in external viewer", ex);
+                        }
+                    }
+
+                }
+            }
+        });
     }
 
     /**
@@ -140,7 +165,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         testResultValueLabel = new javax.swing.JLabel();
         authenticationKeyLabel = new javax.swing.JLabel();
         instructionsScrollPane = new javax.swing.JScrollPane();
-        instructionsTextArea = new javax.swing.JTextArea();
+        instructionsTextArea = new javax.swing.JTextPane();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
 
         setLayout(new java.awt.GridBagLayout());
@@ -265,12 +290,8 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
 
         instructionsTextArea.setEditable(false);
         instructionsTextArea.setBackground(new java.awt.Color(240, 240, 240));
-        instructionsTextArea.setColumns(20);
-        instructionsTextArea.setLineWrap(true);
-        instructionsTextArea.setRows(4);
-        instructionsTextArea.setText(org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.instructionsTextArea.text")); // NOI18N
-        instructionsTextArea.setWrapStyleWord(true);
-        instructionsTextArea.setCaretPosition(0);
+        instructionsTextArea.setContentType("text/html"); // NOI18N
+        instructionsTextArea.setText(org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.instructionsTextArea.text_1")); // NOI18N
         instructionsTextArea.setMaximumSize(new java.awt.Dimension(1000, 200));
         instructionsTextArea.setPreferredSize(new java.awt.Dimension(164, 78));
         instructionsScrollPane.setViewportView(instructionsTextArea);
@@ -316,7 +337,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JTextField authenticationKeyField;
     private javax.swing.JLabel authenticationKeyLabel;
     private javax.swing.JScrollPane instructionsScrollPane;
-    private javax.swing.JTextArea instructionsTextArea;
+    private javax.swing.JTextPane instructionsTextArea;
     private javax.swing.JLabel resultLabel;
     private javax.swing.JComboBox<LanguageWrapper> targetLanguageComboBox;
     private javax.swing.JLabel targetLanguageLabel;
