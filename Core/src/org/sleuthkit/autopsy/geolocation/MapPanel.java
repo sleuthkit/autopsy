@@ -88,7 +88,7 @@ final public class MapPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(MapPanel.class.getName());
 
     private static final long serialVersionUID = 1L;
-    private static final HashSet<Integer> DOT_WAYPOINT_TYPES = new HashSet<>();
+    private static final Set<Integer> DOT_WAYPOINT_TYPES = new HashSet<>();
     private static final int DOT_SIZE = 12;
 
     private boolean zoomChanging;
