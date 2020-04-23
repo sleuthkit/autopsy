@@ -36,11 +36,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.Desktop;
 import java.net.URISyntaxException;
-import java.net.URL;
 import org.apache.commons.lang3.StringUtils;
-import org.netbeans.core.actions.HTMLViewAction;
-import org.openide.awt.HtmlBrowser;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 
 /**
