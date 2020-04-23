@@ -513,13 +513,14 @@ class GeoFilterPanel extends javax.swing.JPanel {
                     + "attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()
                     + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()
                     + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_TRACKPOINTS.getTypeID()
+                    + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_WAYPOINTS.getTypeID()
                     + " )"
                     + " )";
             try (SleuthkitCase.CaseDbQuery queryResult = sleuthkitCase.executeQuery(queryStr)) {
-                ResultSet resultSet = queryResult.getResultSet();
-                try {
-                    resultSet.next();
-                    count = resultSet.getLong("count");
+                try (ResultSet resultSet = queryResult.getResultSet()) {
+                    if (resultSet.next()) {
+                        count = resultSet.getLong("count");
+                    }
                 } catch (SQLException ex) {
                     Throwable cause = ex.getCause();
                     if (cause != null) {
