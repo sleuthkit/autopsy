@@ -38,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -877,7 +878,6 @@ public class Server {
     })
     private Collection openCore(Case theCase, Index index) throws KeywordSearchModuleException {
 
-        List<String> solrUrls = new ArrayList<>();
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 // ELTODO make embedded Solr work with localSolrServer
@@ -891,13 +891,31 @@ public class Server {
                 
                 // ELTODO connectToEbmeddedSolrServer(currentSolrServer);                
             } else {
-                //IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
-                List<String> solrServerList = UserPreferences.getAllIndexingServers();
+                /*List<String> solrServerList = UserPreferences.getAllIndexingServers();
                 for (String server : solrServerList) {
                     solrUrls.add("http://" + server + "/solr"); // ELTODO optimize this
                     logger.log(Level.INFO, "Using Solr server: {0}", server);
-                }                
+                }*/
+                // connect to the Solr server that was specified in MU options
+                List<String> solrUrls = new ArrayList<>();
+                solrUrls.add("http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr");
                 currentSolrServer = getCloudSolrClient(solrUrls);
+                
+                // get list of all live Solr servers in the cluster
+                List<String> solrServerList = getSolrServerList();
+                if (solrServerList.size() > 1) {
+                    // there are multiple Solr servers in the Solr Cloud
+                    solrUrls.clear();
+                    for (String server : solrServerList) {
+                        String severHostName = server.substring(0, server.indexOf("_solr"));
+                        solrUrls.add("http://" + severHostName + "/solr"); // ELTODO optimize this
+                        logger.log(Level.INFO, "Using Solr server: {0}", server);
+                    }
+                    // connect to all live Solr servers
+                    currentSolrServer = getCloudSolrClient(solrUrls);
+                }
+                UserPreferences.setMaxNumShards(solrUrls.size());
+                UserPreferences.setMaxNumShards(1); // ELTODO REMOVE THIS!
                 currentSolrServer.setDefaultCollection(null);
                 
                 // ELTODO currentSolrServer = new CloudSolrClient.Builder(solrUrls).build(); // (new CloudSolrClient.Builder(solrUrls));
@@ -925,6 +943,7 @@ public class Server {
             }
 
             String collectionName = index.getIndexName();
+            
             if (theCase.getCaseType() == CaseType.MULTI_USER_CASE) {
                 if (!clusterStatusWithCollection(collectionName)) {
                 // ELTODO if (!collectionExists(collectionName)) {
@@ -937,7 +956,7 @@ public class Server {
                     for (int reTryAttempt = 0; reTryAttempt < NUM_RETRIES; reTryAttempt++) {
                         try {
                             doRetry = false;
-                            createMultiUserCollection(collectionName, dataDir.getAbsolutePath(), solrUrls.size());
+                            createMultiUserCollection(collectionName, dataDir.getAbsolutePath(), UserPreferences.getMaxNumShards());
                         } catch (Exception ex) {
                             if (reTryAttempt >= NUM_RETRIES) {
                                 logger.log(Level.SEVERE, "Unable to create Solr collection " + collectionName, ex); //NON-NLS
@@ -1696,8 +1715,36 @@ public class Server {
         HealthMonitor.submitTimingMetric(metric);
     }
     
+    private List<String> getSolrServerList() throws SolrServerException, IOException {
+        
+        CollectionAdminRequest.ClusterStatus statusRequest = CollectionAdminRequest.getClusterStatus();
+        CollectionAdminResponse statusResponse;
+        try {
+            statusResponse = statusRequest.process(currentSolrServer);
+        } catch (RemoteSolrException ex) {
+            // collection doesn't exist
+            return Collections.EMPTY_LIST;
+        }                
+        if (statusResponse == null) {
+            return Collections.EMPTY_LIST;
+        }
+        
+        NamedList error = (NamedList) statusResponse.getResponse().get("error");
+        if (error != null) {
+            return Collections.EMPTY_LIST;
+        }        
+        
+        // For some reason this returns info about all collections even though it's supposed to only return about the one we are requesting
+        NamedList cluster = (NamedList) statusResponse.getResponse().get("cluster");
+        ArrayList<String> live_nodes = (ArrayList) cluster.get("live_nodes");
+        return live_nodes;
+    }
+    
     private boolean collectionExists(String collectionName) throws SolrServerException, IOException {
 
+        // ELTODO investigate this. Get exception "Solr instance is not running in SolrCloud mode"
+        // List<String> list = CollectionAdminRequest.listCollections(localSolrServer);
+        
         CollectionAdminRequest.ClusterStatus statusRequest = CollectionAdminRequest.getClusterStatus().setCollectionName(collectionName);
         CollectionAdminResponse statusResponse;
         try {

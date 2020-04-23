@@ -61,6 +61,7 @@ public final class UserPreferences {
     public static final String INDEXING_SERVER_HOST = "IndexingServerHost"; //NON-NLS
     public static final String INDEXING_SERVER_PORT = "IndexingServerPort"; //NON-NLS
     public static final String INDEXING_SERVER_LIST = "IndexingServerList"; //NON-NLS
+    public static final String INDEXING_MAX_SHARDS = "IndexingMaxShards"; //NON-NLS
     public static final String ZK_SERVER_HOST = "ZookeeperServerHost"; //NON-NLS
     public static final String ZK_SERVER_PORT = "ZookeeperServerPort"; //NON-NLS
     private static final String MESSAGE_SERVICE_PASSWORD = "MessageServicePassword"; //NON-NLS
@@ -354,6 +355,7 @@ public final class UserPreferences {
         preferences.put(ZK_SERVER_HOST, hostName);
     }
 
+    // ELTODO remove this, using clusterstate instead
     public static List<String> getAllIndexingServers() {
         List<String> servers = new ArrayList<>();
         String listOfServers = preferences.get(INDEXING_SERVER_LIST, "localhost:8983"); // ELTODO change default
@@ -371,6 +373,14 @@ public final class UserPreferences {
 
     public static void setZkServerPort(int port) {
         preferences.putInt(ZK_SERVER_PORT, port);
+    }
+    
+    public static void setMaxNumShards(int maxShards) {
+        preferences.putInt(INDEXING_MAX_SHARDS, maxShards);
+    }
+
+    public static int getMaxNumShards() {
+        return preferences.getInt(INDEXING_MAX_SHARDS, 1);
     }
 
     public static void setTextTranslatorName(String textTranslatorName) {
