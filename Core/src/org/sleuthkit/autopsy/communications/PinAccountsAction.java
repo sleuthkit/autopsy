@@ -32,7 +32,7 @@ import org.openide.util.NbBundle;
 final class PinAccountsAction extends AbstractCVTAction {
 
     static private final ImageIcon ICON = ImageUtilities.loadImageIcon(
-            "/org/sleuthkit/autopsy/communications/images/marker--plus.png", false);
+            "org/sleuthkit/autopsy/communications/images/marker--plus.png", false);
     private static final String SINGULAR_TEXT = Bundle.PinAccountsAction_singularText();
     private static final String PLURAL_TEXT = Bundle.PinAccountsAction_pluralText();
 
