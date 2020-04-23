@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -1953,13 +1954,16 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         }
 
         Connection conn = connect();
-
+        
+        // only update comment field if the value provided is non-null
+        boolean updateComment = !StringUtils.isEmpty(eamArtifact.getComment());
+        
         PreparedStatement preparedUpdate = null;
         PreparedStatement preparedQuery = null;
         ResultSet resultSet = null;
 
         String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
-
+        
         String sqlQuery
                 = "SELECT id FROM "
                 + tableName
@@ -1971,8 +1975,12 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         String sqlUpdate
                 = "UPDATE "
                 + tableName
-                + " SET known_status=?, comment=? "
-                + "WHERE id=?";
+                + " SET known_status=?";
+        
+                if (updateComment)
+                    sqlUpdate += ", comment=?";
+                            
+                sqlUpdate += " WHERE id=?";
 
         try {
             preparedQuery = conn.prepareStatement(sqlQuery);
@@ -1989,12 +1997,12 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                 // NOTE: if the user tags the same instance as BAD multiple times,
                 // the comment from the most recent tagging is the one that will
                 // prevail in the DB.
-                if ("".equals(eamArtifact.getComment())) {
-                    preparedUpdate.setNull(2, Types.INTEGER);
-                } else {
+                if (updateComment) {
                     preparedUpdate.setString(2, eamArtifact.getComment());
+                    preparedUpdate.setInt(3, instance_id);
+                } else {
+                    preparedUpdate.setInt(2, instance_id);
                 }
-                preparedUpdate.setInt(3, instance_id);
 
                 preparedUpdate.executeUpdate();
             } else {
