@@ -516,18 +516,17 @@ class GeoFilterPanel extends javax.swing.JPanel {
                     + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_WAYPOINTS.getTypeID()
                     + " )"
                     + " )";
-            try (SleuthkitCase.CaseDbQuery queryResult = sleuthkitCase.executeQuery(queryStr)) {
-                try (ResultSet resultSet = queryResult.getResultSet()) {
-                    if (resultSet.next()) {
-                        count = resultSet.getLong("count");
-                    }
-                } catch (SQLException ex) {
-                    Throwable cause = ex.getCause();
-                    if (cause != null) {
-                        logger.log(Level.SEVERE, cause.getMessage(), cause);
-                    } else {
-                        logger.log(Level.SEVERE, ex.getMessage(), ex);
-                    }
+            try (SleuthkitCase.CaseDbQuery queryResult = sleuthkitCase.executeQuery(queryStr);
+                    ResultSet resultSet = queryResult.getResultSet()) {
+                if (resultSet.next()) {
+                    count = resultSet.getLong("count");
+                }
+            } catch (SQLException ex) {
+                Throwable cause = ex.getCause();
+                if (cause != null) {
+                    logger.log(Level.SEVERE, cause.getMessage(), cause);
+                } else {
+                    logger.log(Level.SEVERE, ex.getMessage(), ex);
                 }
             }
             return count;
