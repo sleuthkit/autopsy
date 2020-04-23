@@ -209,7 +209,7 @@ final class CommunicationsGraph extends mxGraph {
             try {
                 adiRelationshipsCount = commsManager.getRelationshipSourcesCount(accountDeviceInstance, currentFilter);
             } catch (TskCoreException tskCoreException) {
-                logger.log(Level.SEVERE, "Error", tskCoreException);
+                logger.log(Level.SEVERE, "There was an error fetching relationships for the node: " + accountDeviceInstance, tskCoreException);
             }
                         
             double size = Math.sqrt(adiRelationshipsCount) + 10;
