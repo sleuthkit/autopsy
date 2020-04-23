@@ -122,7 +122,7 @@ public class PersonaHelper {
 
                 PersonaStatus status = PersonaStatus.fromId(rs.getInt("status_id"));
                 persona = new Persona(
-                        rs.getInt("examiner_id"),
+                        rs.getInt("id"),
                         rs.getString("uuid"),
                         rs.getString("name"),
                         rs.getString("comment"),

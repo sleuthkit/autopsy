@@ -222,7 +222,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     /**
      * Reset the contents of the caches associated with EamDb results.
      */
-    protected final void clearCaches() {
+    @Override
+    public final void clearCaches() {
         synchronized(typeCache) {
             typeCache.invalidateAll();
             isCRTypeCacheInitialized = false;
@@ -231,6 +232,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         caseCacheById.invalidateAll();
         dataSourceCacheByDsObjectId.invalidateAll();
         dataSourceCacheById.invalidateAll();
+        accountsCache.invalidateAll();
+        cachedCurrentExaminer = null;
     }
 
     /**
