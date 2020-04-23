@@ -160,18 +160,20 @@ final class CaseEventListener implements PropertyChangeListener {
 
             AbstractFile af;
             TskData.FileKnown knownStatus;
-            String comment;
+            String comment = null;
+            boolean isTagDelete;
             if (Case.Events.valueOf(event.getPropertyName()) == Case.Events.CONTENT_TAG_ADDED) {
                 // For added tags, we want to change the known status to BAD if the 
                 // tag that was just added is in the list of central repo tags.
                 final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) event;
                 final ContentTag tagAdded = tagAddedEvent.getAddedTag();
-
+                comment = tagAdded.getComment();
+                isTagDelete = true;
+                        
                 if (TagsManager.getNotableTagDisplayNames().contains(tagAdded.getName().getDisplayName())) {
                     if (tagAdded.getContent() instanceof AbstractFile) {
                         af = (AbstractFile) tagAdded.getContent();
                         knownStatus = TskData.FileKnown.BAD;
-                        comment = tagAdded.getComment();
                     } else {
                         LOGGER.log(Level.WARNING, "Error updating non-file object");
                         return;
@@ -186,7 +188,9 @@ final class CaseEventListener implements PropertyChangeListener {
                 //   - There are no remaining tags that are notable 
                 final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) event;
                 long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
-
+                comment = tagDeletedEvent.getDeletedTagInfo().getComment();
+                isTagDelete = false;
+                
                 String tagName = tagDeletedEvent.getDeletedTagInfo().getName().getDisplayName();
                 if (!TagsManager.getNotableTagDisplayNames().contains(tagName)) {
                     // If the tag that got removed isn't on the list of central repo tags, do nothing
@@ -209,7 +213,6 @@ final class CaseEventListener implements PropertyChangeListener {
                         if (content instanceof AbstractFile) {
                             af = (AbstractFile) content;
                             knownStatus = TskData.FileKnown.UNKNOWN;
-                            comment = "";
                         } else {
                             LOGGER.log(Level.WARNING, "Error updating non-file object");
                             return;
@@ -225,11 +228,12 @@ final class CaseEventListener implements PropertyChangeListener {
             }
 
             final CorrelationAttributeInstance eamArtifact = CorrelationAttributeUtil.makeCorrAttrFromFile(af);
+            eamArtifact.setComment(comment);
 
             if (eamArtifact != null) {
                 // send update to Central Repository db
                 try {
-                    dbManager.setAttributeInstanceKnownStatus(eamArtifact, knownStatus);
+                    dbManager.setAttributeInstanceKnownStatus(eamArtifact, knownStatus, isTagDelete);
                 } catch (CentralRepoException ex) {
                     LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database while setting artifact known status.", ex); //NON-NLS
                 }
@@ -257,12 +261,14 @@ final class CaseEventListener implements PropertyChangeListener {
             BlackboardArtifact bbArtifact;
             TskData.FileKnown knownStatus;
             String comment;
+            boolean isTagDeleted;
             if (Case.Events.valueOf(event.getPropertyName()) == Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED) {
                 // For added tags, we want to change the known status to BAD if the 
                 // tag that was just added is in the list of central repo tags.
                 final BlackBoardArtifactTagAddedEvent tagAddedEvent = (BlackBoardArtifactTagAddedEvent) event;
                 final BlackboardArtifactTag tagAdded = tagAddedEvent.getAddedTag();
-
+                isTagDeleted = false;
+                
                 if (TagsManager.getNotableTagDisplayNames().contains(tagAdded.getName().getDisplayName())) {
                     content = tagAdded.getContent();
                     bbArtifact = tagAdded.getArtifact();
@@ -286,7 +292,8 @@ final class CaseEventListener implements PropertyChangeListener {
                 final BlackBoardArtifactTagDeletedEvent tagDeletedEvent = (BlackBoardArtifactTagDeletedEvent) event;
                 long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
                 long artifactID = tagDeletedEvent.getDeletedTagInfo().getArtifactID();
-
+                isTagDeleted = true;
+                
                 String tagName = tagDeletedEvent.getDeletedTagInfo().getName().getDisplayName();
                 if (!TagsManager.getNotableTagDisplayNames().contains(tagName)) {
                     // If the tag that got removed isn't on the list of central repo tags, do nothing
@@ -328,7 +335,7 @@ final class CaseEventListener implements PropertyChangeListener {
             for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                 eamArtifact.setComment(comment);
                 try {
-                    dbManager.setAttributeInstanceKnownStatus(eamArtifact, knownStatus);
+                    dbManager.setAttributeInstanceKnownStatus(eamArtifact, knownStatus, isTagDeleted);
                 } catch (CentralRepoException ex) {
                     LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database while setting artifact known status.", ex); //NON-NLS
                 }
@@ -399,7 +406,7 @@ final class CaseEventListener implements PropertyChangeListener {
                         //with the initial set of correlation attributes this should be a single correlation attribute
                         List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsForCorrelation(bbTag.getArtifact());
                         for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
-                            CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
+                            CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus(), false);
                         }
                     }
                 }
@@ -437,7 +444,7 @@ final class CaseEventListener implements PropertyChangeListener {
                         if (taggedContent instanceof AbstractFile) {                            
                             final CorrelationAttributeInstance eamArtifact = CorrelationAttributeUtil.makeCorrAttrFromFile((AbstractFile)taggedContent);
                             if (eamArtifact != null) {
-                                CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
+                                CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus(), false);
                             }
                         }
                     }

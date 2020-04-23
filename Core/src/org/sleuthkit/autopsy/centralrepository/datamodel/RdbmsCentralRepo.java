@@ -1936,9 +1936,10 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
      * @param knownStatus The status to change the artifact to. Should never be
      *                    KNOWN
+     * @param isTagDelete If the action is to delete a previously added tag.
      */
     @Override
-    public void setAttributeInstanceKnownStatus(CorrelationAttributeInstance eamArtifact, TskData.FileKnown knownStatus) throws CentralRepoException {
+    public void setAttributeInstanceKnownStatus(CorrelationAttributeInstance eamArtifact, TskData.FileKnown knownStatus, boolean isTagDelete) throws CentralRepoException {
         if (eamArtifact == null) {
             throw new CentralRepoException("CorrelationAttribute is null");
         }
@@ -1955,32 +1956,19 @@ abstract class RdbmsCentralRepo implements CentralRepository {
 
         Connection conn = connect();
         
-        // only update comment field if the value provided is non-null
-        boolean updateComment = !StringUtils.isEmpty(eamArtifact.getComment());
-        
-        PreparedStatement preparedUpdate = null;
         PreparedStatement preparedQuery = null;
+        PreparedStatement preparedUpdate = null;
         ResultSet resultSet = null;
 
         String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         
         String sqlQuery
-                = "SELECT id FROM "
+                = "SELECT id, comment FROM "
                 + tableName
                 + " WHERE case_id=? "
                 + "AND data_source_id=? "
                 + "AND value=? "
                 + "AND file_path=?";
-
-        String sqlUpdate
-                = "UPDATE "
-                + tableName
-                + " SET known_status=?";
-        
-                if (updateComment)
-                    sqlUpdate += ", comment=?";
-                            
-                sqlUpdate += " WHERE id=?";
 
         try {
             preparedQuery = conn.prepareStatement(sqlQuery);
@@ -1990,21 +1978,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             preparedQuery.setString(4, eamArtifact.getFilePath());
             resultSet = preparedQuery.executeQuery();
             if (resultSet.next()) {
-                int instance_id = resultSet.getInt("id");
-                preparedUpdate = conn.prepareStatement(sqlUpdate);
-
-                preparedUpdate.setByte(1, knownStatus.getFileKnownValue());
-                // NOTE: if the user tags the same instance as BAD multiple times,
-                // the comment from the most recent tagging is the one that will
-                // prevail in the DB.
-                if (updateComment) {
-                    preparedUpdate.setString(2, eamArtifact.getComment());
-                    preparedUpdate.setInt(3, instance_id);
-                } else {
-                    preparedUpdate.setInt(2, instance_id);
-                }
-
-                preparedUpdate.executeUpdate();
+                preparedUpdate = updateCRKnownStatusComment(conn, resultSet, tableName, eamArtifact, knownStatus, isTagDelete);
             } else {
                 // In this case, the user is tagging something that isn't in the database,
                 // which means the case and/or datasource may also not be in the database.
@@ -2027,6 +2001,66 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             CentralRepoDbUtil.closeResultSet(resultSet);
             CentralRepoDbUtil.closeConnection(conn);
         }
+    }
+    
+    private PreparedStatement updateCRKnownStatusComment(
+            Connection conn, ResultSet resultSet, String tableName, 
+            CorrelationAttributeInstance eamArtifact, TskData.FileKnown knownStatus, boolean isTagDelete) throws SQLException {
+        
+        int instanceId = resultSet.getInt("id");
+        String prevComment = resultSet.getString("comment");
+        String curComment = eamArtifact.getComment();
+        
+        String newComment;
+        boolean updateComment;
+
+        if (isTagDelete && StringUtils.equals(prevComment, curComment)) {
+            // if deleting the same tag comment as previous, wipe out previous comment
+            newComment = null;
+            updateComment = true;
+        } 
+        else if (!isTagDelete && !StringUtils.isEmpty(curComment)) {
+            // if adding the comment and there is an actual value for the comment
+            newComment = curComment;
+            updateComment = true;
+        }
+        else {
+            newComment = null;
+            updateComment = false;
+        }
+
+        String sqlUpdate
+                = "UPDATE "
+                + tableName
+                + " SET known_status=?";
+        
+                if (updateComment)
+                    sqlUpdate += ", comment=?";
+                            
+                sqlUpdate += " WHERE id=?";
+
+        PreparedStatement preparedUpdate = conn.prepareStatement(sqlUpdate);
+
+        preparedUpdate.setByte(1, knownStatus.getFileKnownValue());
+        // NOTE: if the user tags the same instance as BAD multiple times,
+        // the comment from the most recent tagging is the one that will
+        // prevail in the DB.
+
+        if (updateComment) {
+            if (newComment == null) {
+                preparedUpdate.setNull(2, Types.INTEGER);
+            }
+            else {
+                preparedUpdate.setString(2, newComment);
+            }
+            preparedUpdate.setInt(3, instanceId);
+        } else {
+            preparedUpdate.setInt(2, instanceId);
+        }
+
+
+        preparedUpdate.executeUpdate();
+        return preparedUpdate;
     }
 
     /**
