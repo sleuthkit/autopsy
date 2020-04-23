@@ -25,11 +25,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
-import org.apache.commons.lang.StringUtils;
-import org.sleuthkit.datamodel.SleuthkitCase;
+import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.datamodel.Examiner;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona.PersonaStatus;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 
 
@@ -39,6 +39,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.Persona.PersonaStatus;
  * 
  */
 public class PersonaHelper {
+    
+    // Persona name to use if no name is specified.
+    private static final String DEFAULT_PERSONA_NAME = "NoName";
     
    /**
      * Empty private constructor
@@ -71,7 +74,7 @@ public class PersonaHelper {
     /**
      * Inserts a row in the Persona tables.
      *
-     * @param name Persona name.
+     * @param name Persona name, may be null - default name is used in that case.
      * @param comment Comment to associate with persona, may be null.
      * @param status Persona status.
      *
@@ -90,7 +93,7 @@ public class PersonaHelper {
         String insertClause = " INTO personas (uuid, comment, name, created_date, modified_date, status_id, examiner_id ) "
 					+ "VALUES ( '" + uuidStr + "', "
 					+ "'" + ((StringUtils.isBlank(comment) ?  "" : SleuthkitCase.escapeSingleQuotes(comment)))  + "',"
-                                        + "'" + ((StringUtils.isBlank(name) ?  "" : name))  + "',"
+                                        + "'" + ((StringUtils.isBlank(name) ?  DEFAULT_PERSONA_NAME : SleuthkitCase.escapeSingleQuotes(name)))  + "',"
                                         + timeStampMillis.toString() + ","
                                         + timeStampMillis.toString() + ","
                                         + status.getStatusId() + ","

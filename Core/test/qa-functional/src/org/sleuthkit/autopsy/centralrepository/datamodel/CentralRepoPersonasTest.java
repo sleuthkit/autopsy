@@ -228,4 +228,36 @@ public class CentralRepoPersonasTest  extends TestCase {
              Assert.fail("Didn't expect an exception here. Exception: " + ex);
         }
     }
+    
+    /**
+     * Tests edge cases, error cases
+     */
+    public void testPersonaCreationEdgeCases() {
+         
+        // Test1: Persona with no name 
+        {
+            try {
+                // Create an email account
+                CentralRepoAccount.CentralRepoAccountType emailAccountType = CentralRepository
+                        .getInstance()
+                        .getAccountTypeByName(Account.Type.EMAIL.getTypeName());
+
+                CentralRepoAccount emailAccount1 = CentralRepository.getInstance()
+                        .getOrCreateAccount(emailAccountType, "tbigbos@ringobaby344.cf");
+
+                // Create a Persona with no name
+                PersonaAccount pa1 = PersonaHelper.createPersonaForAccount(null, "A persona with no name",
+                        Persona.PersonaStatus.ACTIVE, emailAccount1, "Becuase that's a curious looking email address", Persona.Confidence.LOW);
+                
+                // Verify Persona has a default name
+                Assert.assertEquals("NoName", pa1.getPersona().getName());
+                
+            } catch (CentralRepoException ex) {
+                Assert.fail("No name persona test failed. Exception: " + ex);
+            }
+        }
+        
+        
+
+     }
 }
