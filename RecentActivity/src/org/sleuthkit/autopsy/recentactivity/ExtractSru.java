@@ -53,7 +53,6 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASS
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
 
 
 /**
@@ -69,13 +68,15 @@ final class ExtractSru extends Extract {
     private static final String APPLICATION_USAGE_SOURCE_NAME = "System Resource Usage - Application Usage"; //NON-NLS
     private static final String NETWORK_USAGE_SOURCE_NAME = "System Resource Usage - Network Usage";
 
-    private static final String ARTIFACT_ATTRIBUTE_NAME = "TSK_ARTIFACT_NAME"; //NON-NLS
+//    private static final String ARTIFACT_ATTRIBUTE_NAME = "TSK_ARTIFACT_NAME"; //NON-NLS
 
     private static final String MODULE_NAME = "extractSRU"; //NON-NLS
 
     private static final String SRU_TOOL_FOLDER = "markmckinnon"; //NON-NLS
-    private static final String SRU_TOOL_NAME_WINDOWS_32 = "export_srudb_32.exe"; //NON-NLS
-    private static final String SRU_TOOL_NAME_WINDOWS_64 = "export_srudb_64.exe"; //NON-NLS
+    private static final String SRU_TOOL_NAME_WINDOWS_32 = "Export_Srudb_32.exe"; //NON-NLS
+    private static final String SRU_TOOL_NAME_WINDOWS_64 = "Export_Srudb_64.exe"; //NON-NLS
+    private static final String SRU_TOOL_NAME_LINUX = "Export_Srudb_Linux.exe"; //NON-NLS
+    private static final String SRU_TOOL_NAME_MAC = "Export_Srudb_Mac.exe"; //NON-NLS
     private static final String SRU_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
     private static final String SRU_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
     
@@ -218,10 +219,18 @@ final class ExtractSru extends Extract {
 
     private String getPathForSruDumper() {
         Path path = null;
-        if (PlatformUtil.is64BitOS()) {
-            path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_WINDOWS_64);
+        if (PlatformUtil.isWindowsOS()) {
+            if (PlatformUtil.is64BitOS()) {
+                path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_WINDOWS_64);
+            } else {
+                path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_WINDOWS_32);            
+            }
         } else {
-            path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_WINDOWS_32);            
+            if (PlatformUtil.getOSName() == "Linux") {
+                path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_LINUX);
+            } else {
+                path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_MAC);                
+            }
         }
         File sruToolFile = InstalledFileLocator.getDefault().locate(path.toString(),
                 ExtractSru.class.getPackage().getName(), false);
