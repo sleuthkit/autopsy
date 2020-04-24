@@ -104,15 +104,12 @@ final class ExtractSru extends Extract {
         this.context = context;
 
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-        String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru"); //NON-NLS
         String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + "sru"; //NON-NLS
 
         File dir = new File(modOutPath);
         if (dir.exists() == false) {
             dir.mkdirs();
         }
-
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
 
         List<AbstractFile> softwareHiveFiles;
 
@@ -125,13 +122,15 @@ final class ExtractSru extends Extract {
         }
 
         String softwareHiveFileName = null;
-        AbstractFile softwareHiveAbstractFile = null;
+        String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru"); //NON-NLS
 
         for (AbstractFile softwareFile : softwareHiveFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
+    
+            AbstractFile softwareHiveAbstractFile = null;
   
             if (softwareFile.getParentPath().endsWith("/config/")) {
                 softwareHiveFileName = tempDirPath + File.separator + softwareFile.getId() + "_" + softwareFile.getName();
@@ -285,7 +284,6 @@ final class ExtractSru extends Extract {
                 if (fileName.contains(" [")) {
                     fileName = fileName.substring(0, fileName.indexOf(" ["));
                 }
-                fileName.trim();
                 List<AbstractFile> sourceFiles;
                 try {
                     sourceFiles = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS
@@ -323,9 +321,9 @@ final class ExtractSru extends Extract {
                 }
 
                 String applicationName = resultSet.getString("Application_Name"); //NON-NLS
-                Long executionTime = new Long(resultSet.getInt("ExecutionTime")); //NON-NLS
-                Long bytesSent = new Long(resultSet.getInt("bytesSent")); //NON-NLS
-                Long bytesRecvd = new Long(resultSet.getInt("BytesRecvd")); //NON-NLS
+                Long executionTime = Long.valueOf(resultSet.getInt("ExecutionTime")); //NON-NLS
+                Long bytesSent = Long.valueOf(resultSet.getInt("bytesSent")); //NON-NLS
+                Long bytesRecvd = Long.valueOf(resultSet.getInt("BytesRecvd")); //NON-NLS
                 String userName = resultSet.getString("User_Name"); //NON-NLS
 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
