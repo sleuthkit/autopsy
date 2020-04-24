@@ -168,7 +168,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) event;
                 final ContentTag tagAdded = tagAddedEvent.getAddedTag();
                 comment = tagAdded.getComment();
-                isTagDelete = true;
+                isTagDelete = false;
                         
                 if (TagsManager.getNotableTagDisplayNames().contains(tagAdded.getName().getDisplayName())) {
                     if (tagAdded.getContent() instanceof AbstractFile) {
@@ -189,7 +189,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) event;
                 long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
                 comment = tagDeletedEvent.getDeletedTagInfo().getComment();
-                isTagDelete = false;
+                isTagDelete = true;
                 
                 String tagName = tagDeletedEvent.getDeletedTagInfo().getName().getDisplayName();
                 if (!TagsManager.getNotableTagDisplayNames().contains(tagName)) {
