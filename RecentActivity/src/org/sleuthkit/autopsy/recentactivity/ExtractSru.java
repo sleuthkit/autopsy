@@ -76,7 +76,7 @@ final class ExtractSru extends Extract {
     private static final String SRU_TOOL_NAME_WINDOWS_32 = "Export_Srudb_32.exe"; //NON-NLS
     private static final String SRU_TOOL_NAME_WINDOWS_64 = "Export_Srudb_64.exe"; //NON-NLS
     private static final String SRU_TOOL_NAME_LINUX = "Export_Srudb_Linux.exe"; //NON-NLS
-    private static final String SRU_TOOL_NAME_MAC = "Export_Srudb_Mac.exe"; //NON-NLS
+    private static final String SRU_TOOL_NAME_MAC = "Export_srudb_macos"; //NON-NLS
     private static final String SRU_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
     private static final String SRU_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
     
@@ -89,6 +89,15 @@ final class ExtractSru extends Extract {
         this.moduleName = Bundle.ExtractSru_module_name();
     }
 
+    @Messages({
+        "ExtractSru_process_errormsg_find_software_hive=Unable to find SOFTWARE HIVE file",
+        "ExtractSru_process_errormsg_find_srudb_dat=Unable to find srudb.dat file",
+        "ExtractSru_process_errormsg_write_software_hive=Unable to write SOFTWARE HIVE file",
+        "ExtractSru_process_errormsg_write_srudb_dat=Unable to write srudb.dat file",
+        "ExtractSru_error_finding_export_srudb_program=Error finding export_srudb program",
+        "ExtractSru_process_error_executing_export_srudb_program=Error running export_srudb program"
+    })
+    
     @Override
     void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
 
@@ -96,9 +105,9 @@ final class ExtractSru extends Extract {
 
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
         String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru"); //NON-NLS
-        String tempOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + "sru"; //NON-NLS
+        String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + "sru"; //NON-NLS
 
-        File dir = new File(tempOutPath);
+        File dir = new File(modOutPath);
         if (dir.exists() == false) {
             dir.mkdirs();
         }
@@ -110,6 +119,7 @@ final class ExtractSru extends Extract {
         try {
             softwareHiveFiles = fileManager.findFiles(dataSource, "SOFTWARE"); //NON-NLS            
         } catch (TskCoreException ex) {
+            this.addErrorMessage(Bundle.ExtractSru_process_errormsg_find_software_hive());
             logger.log(Level.WARNING, "Unable to find SOFTWARE HIVE file.", ex); //NON-NLS
             return;  // No need to continue
         }
@@ -130,7 +140,9 @@ final class ExtractSru extends Extract {
                 try {
                     ContentUtils.writeToFile(softwareFile, new File(softwareHiveFileName));
                 } catch (IOException ex) {
+                    this.addErrorMessage(Bundle.ExtractSru_process_errormsg_find_software_hive());
                     logger.log(Level.WARNING, String.format("Unable to write %s to temp directory. File name: %s", softwareFile.getName(), softwareFile), ex); //NON-NLS
+                    return;
                 }
             }
         }
@@ -140,6 +152,7 @@ final class ExtractSru extends Extract {
         try {
             sruFiles = fileManager.findFiles(dataSource, "SRUDB.DAT"); //NON-NLS            
         } catch (TskCoreException ex) {
+            this.addErrorMessage(Bundle.ExtractSru_process_errormsg_find_srudb_dat());
             logger.log(Level.WARNING, "Unable to find SRUDB.DAT file.", ex); //NON-NLS
             return;  // No need to continue
         }
@@ -155,29 +168,33 @@ final class ExtractSru extends Extract {
             }
 
             sruFileName = tempDirPath + File.separator + sruFile.getId() + "_" + sruFile.getName();
-            tempOutFile = tempDirPath + File.separator + sruFile.getId() + "_srudb.db3";
+            tempOutFile = modOutPath + File.separator + sruFile.getId() + "_srudb.db3";
             sruAbstractFile = sruFile;
 
             try {
                 ContentUtils.writeToFile(sruFile, new File(sruFileName));
             } catch (IOException ex) {
+                this.addErrorMessage(Bundle.ExtractSru_process_errormsg_write_srudb_dat());
                 logger.log(Level.WARNING, String.format("Unable to write %s to temp directory. File name: %s", sruFile.getName(), sruFile), ex); //NON-NLS
+                return;
             }
 
         }
 
         final String sruDumper = getPathForSruDumper();
         if (sruDumper == null) {
+            this.addErrorMessage(Bundle.ExtractSru_error_finding_export_srudb_program());
             logger.log(Level.SEVERE, "Error finding export_srudb program"); //NON-NLS
-            return; //If we cannot find the ESEDatabaseView we cannot proceed
+            return; //If we cannot find the export_srudb program we cannot proceed
         }
 
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
         if (sruFileName == null) {
+            this.addErrorMessage(Bundle.ExtractSru_process_errormsg_find_srudb_dat());
             logger.log(Level.SEVERE, "SRUDB.dat file not found"); //NON-NLS
-            return; //If we cannot find the ESEDatabaseView we cannot proceed
+            return; //If we cannot find the srudb.dat file we cannot proceed
         }
 
         try {
@@ -185,9 +202,10 @@ final class ExtractSru extends Extract {
             findSruExecutedFiles(tempOutFile, dataSource);
             createNetUsageArtifacts(tempOutFile, sruAbstractFile);
             createAppUsageArtifacts(tempOutFile, sruAbstractFile);
-        } finally {
-            return;
-        }
+        } catch (IOException ex) {
+            this.addErrorMessage(Bundle.ExtractSru_process_error_executing_export_srudb_program());
+            logger.log(Level.SEVERE, "SRUDB.dat file not found"); //NON-NLS
+        } 
     }
 
     /**
@@ -200,7 +218,7 @@ final class ExtractSru extends Extract {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    void extractSruFiles(String sruExePath, String sruFile, String tempOutFile, String tempOutPath, String softwareHiveFile) throws FileNotFoundException, IOException {
+    void extractSruFiles(String sruExePath, String sruFile, String tempOutFile, String tempOutPath, String softwareHiveFile) throws IOException {
         final Path outputFilePath = Paths.get(tempOutPath, SRU_OUTPUT_FILE_NAME);
         final Path errFilePath = Paths.get(tempOutPath, SRU_ERROR_FILE_NAME);
 
@@ -226,7 +244,7 @@ final class ExtractSru extends Extract {
                 path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_WINDOWS_32);            
             }
         } else {
-            if (PlatformUtil.getOSName() == "Linux") {
+            if ("Linux".equals(PlatformUtil.getOSName())) {
                 path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_LINUX);
             } else {
                 path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_MAC);                
@@ -282,10 +300,8 @@ final class ExtractSru extends Extract {
                 }
             }
         } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
+            logger.log(Level.WARNING, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
-
-        logger.log(Level.WARNING, "Error finding actual file %s. file may not exist"); //NON-NLS
 
     }
  
