@@ -496,7 +496,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
          *
          * @throws TskCoreException
          */
-        public long getGPSDataCount(SleuthkitCase sleuthkitCase,
+        private long getGPSDataCount(SleuthkitCase sleuthkitCase,
                 DataSource dataSource, BlackboardArtifact.ARTIFACT_TYPE artifactType) throws TskCoreException {
             long count = 0;
             String queryStr
