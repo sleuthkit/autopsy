@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -57,6 +58,8 @@ public final class DrawableTagsManager {
     /** The tag name corresponding to the "built-in" tag "Follow Up" */
     private final TagName followUpTagName;
     private final TagName bookmarkTagName;
+    
+    private final ImageGalleryController controller;
 
     /**
      * Used to distribute TagsChangeEvents
@@ -74,6 +77,7 @@ public final class DrawableTagsManager {
         this.autopsyTagsManager = controller.getCase().getServices().getTagsManager();
         followUpTagName = getTagName(Bundle.DrawableTagsManager_followUp());
         bookmarkTagName = getTagName(Bundle.DrawableTagsManager_bookMark());
+        this.controller = controller; 
     }
 
     /**
@@ -129,10 +133,21 @@ public final class DrawableTagsManager {
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<TagName> getNonCategoryTagNames() throws TskCoreException {
-        return autopsyTagsManager.getAllTagNames().stream()
-                .filter(CategoryManager::isNotCategoryTagName)
-                .distinct().sorted()
-                .collect(Collectors.toList());
+//        return autopsyTagsManager.getAllTagNames().stream()
+//                .filter(CategoryManager::isNotCategoryTagName)
+//                .distinct().sorted()
+//                .collect(Collectors.toList());
+
+        // Put back in abc order.
+        List<TagName> nonCategoryTagNames = new ArrayList<>();
+        List<TagName> allTags = autopsyTagsManager.getAllTagNames();
+        for(TagName tag: allTags) {
+            if(tag.getId() == 0) {
+                nonCategoryTagNames.add(tag);
+            }
+        }
+        
+        return nonCategoryTagNames;
     }
 
     /**
@@ -144,10 +159,13 @@ public final class DrawableTagsManager {
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<TagName> getCategoryTagNames() throws TskCoreException {
-        return autopsyTagsManager.getAllTagNames().stream()
-                .filter(CategoryManager::isCategoryTagName)
-                .distinct().sorted()
-                .collect(Collectors.toList());
+//        return autopsyTagsManager.getAllTagNames().stream()
+//                .filter(controller.getCategoryManager()::isCategoryTagName)
+//                .distinct().sorted()
+//                .collect(Collectors.toList());
+
+        // Put back into abc order
+        return controller.getCategoryManager().getCategorySet().getTagNames();
     }
 
     /**

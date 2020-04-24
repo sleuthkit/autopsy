@@ -220,13 +220,13 @@ public class Toolbar extends ToolBar {
         });
         initTagMenuButton();
 
-        CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(DhsImageCategory.FIVE, controller);
+        CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(controller.getCategoryManager().getCategories().get(0), controller);
         catGroupMenuButton.setOnAction(cat5GroupAction);
         catGroupMenuButton.setText(cat5GroupAction.getText());
         catGroupMenuButton.setGraphic(cat5GroupAction.getGraphic());
         catGroupMenuButton.showingProperty().addListener(showing -> {
             if (catGroupMenuButton.isShowing()) {
-                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(DhsImageCategory.values()),
+                List<MenuItem> categoryMenues = Lists.transform(controller.getCategoryManager().getCategories(),
                         cat -> GuiUtils.createAutoAssigningMenuItem(catGroupMenuButton, new CategorizeGroupAction(cat, controller)));
                 catGroupMenuButton.getItems().setAll(categoryMenues);
             }

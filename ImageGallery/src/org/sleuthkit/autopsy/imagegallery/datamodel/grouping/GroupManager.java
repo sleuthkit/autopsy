@@ -194,7 +194,7 @@ public class GroupManager {
                     resultSet.add(new GroupKey(attr, val, file.getDataSource()));
                 } else if (attr == DrawableAttribute.TAGS) {
                     //don't show groups for the categories when grouped by tags.
-                    if (CategoryManager.isNotCategoryTagName((TagName) val)) {
+                    if (controller.getCategoryManager().isNotCategoryTagName((TagName) val)) {
                         resultSet.add(new GroupKey(attr, val, null));
                     }
                 } else {
@@ -552,14 +552,14 @@ public class GroupManager {
     synchronized public void handleTagAdded(ContentTagAddedEvent evt) {
         GroupKey<?> newGroupKey = null;
         final long fileID = evt.getAddedTag().getContent().getId();
-        if (getGroupBy() == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(evt.getAddedTag().getName())) {
-            newGroupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getAddedTag().getName()), getDataSource());
+        if (getGroupBy() == DrawableAttribute.CATEGORY && controller.getCategoryManager().isCategoryTagName(evt.getAddedTag().getName())) {
+            newGroupKey = new GroupKey<>(DrawableAttribute.CATEGORY, evt.getAddedTag().getName(), getDataSource());
             for (GroupKey<?> oldGroupKey : groupMap.keySet()) {
                 if (oldGroupKey.equals(newGroupKey) == false) {
                     removeFromGroup(oldGroupKey, fileID);
                 }
             }
-        } else if (getGroupBy() == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(evt.getAddedTag().getName())) {
+        } else if (getGroupBy() == DrawableAttribute.TAGS && controller.getCategoryManager().isNotCategoryTagName(evt.getAddedTag().getName())) {
             newGroupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getAddedTag().getName(), getDataSource());
         }
         if (newGroupKey != null) {
@@ -605,18 +605,14 @@ public class GroupManager {
         GroupKey<?> groupKey = null;
         final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
         final TagName deletedTagName = deletedTagInfo.getName();
-        if (getGroupBy() == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(deletedTagName)) {
-            groupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(deletedTagName), null);
-        } else if (getGroupBy() == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(deletedTagName)) {
+        if (getGroupBy() == DrawableAttribute.CATEGORY && controller.getCategoryManager().isCategoryTagName(deletedTagName)) {
+            groupKey = new GroupKey<>(DrawableAttribute.CATEGORY, deletedTagName, null);
+        } else if (getGroupBy() == DrawableAttribute.TAGS && controller.getCategoryManager().isNotCategoryTagName(deletedTagName)) {
             groupKey = new GroupKey<>(DrawableAttribute.TAGS, deletedTagName, null);
         }
         if (groupKey != null) {
             final long fileID = deletedTagInfo.getContentID();
             DrawableGroup g = removeFromGroup(groupKey, fileID);
-
-            if (controller.getCategoryManager().getTagName(DhsImageCategory.ZERO).equals(deletedTagName) == false) {
-                addFileToGroup(null, new GroupKey<>(DrawableAttribute.CATEGORY, DhsImageCategory.ZERO, null), fileID);
-            }
         }
     }
 
@@ -944,11 +940,11 @@ public class GroupManager {
                 switch (groupBy.attrName) {
                     //these cases get special treatment
                     case CATEGORY:
-                        results.putAll(null, Arrays.asList(DhsImageCategory.values()));
+                        results.putAll(null, controller.getCategoryManager().getCategories());
                         break;
                     case TAGS:
                         results.putAll(null, controller.getTagsManager().getTagNamesInUse().stream()
-                                .filter(CategoryManager::isNotCategoryTagName)
+                                .filter(controller.getCategoryManager()::isNotCategoryTagName)
                                 .collect(Collectors.toList()));
                         break;
 

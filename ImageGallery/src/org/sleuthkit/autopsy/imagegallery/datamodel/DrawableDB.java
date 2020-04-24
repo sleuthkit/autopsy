@@ -2269,9 +2269,9 @@ public final class DrawableDB {
      *
      * @return the number of the with the given category
      */
-    public long getCategoryCount(DhsImageCategory cat) {
+    public long getCategoryCount(TagName tagName) {
         try {
-            TagName tagName = controller.getTagsManager().getTagName(cat);
+//            TagName tagName = controller.getTagsManager().getTagName(cat);
             if (nonNull(tagName)) {
                 return caseDb.getContentTagsByTagName(tagName).stream()
                         .map(ContentTag::getContent)

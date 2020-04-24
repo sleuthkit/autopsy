@@ -24,7 +24,6 @@ import static com.google.common.collect.Lists.transform;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
 import java.util.Arrays;
-import static java.util.Arrays.asList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,7 +49,6 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableSet;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -111,7 +109,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
@@ -134,6 +131,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import static org.sleuthkit.autopsy.imagegallery.gui.GuiUtils.createAutoAssigningMenuItem;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import static org.sleuthkit.autopsy.imagegallery.utils.TaskUtils.addFXCallback;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -353,24 +351,24 @@ public class GroupPane extends BorderPane {
         return grouping.getReadOnlyProperty();
     }
 
-    private ToggleButton getToggleForCategory(DhsImageCategory category) {
-        switch (category) {
-            case ZERO:
-                return cat0Toggle;
-            case ONE:
-                return cat1Toggle;
-            case TWO:
-                return cat2Toggle;
-            case THREE:
-                return cat3Toggle;
-            case FOUR:
-                return cat4Toggle;
-            case FIVE:
-                return cat5Toggle;
-            default:
-                throw new UnsupportedOperationException("Unknown category: " + category.name());
-        }
-    }
+//    private ToggleButton getToggleForCategory(TagName category) {
+//        switch (category) {
+//            case ZERO:
+//                return cat0Toggle;
+//            case ONE:
+//                return cat1Toggle;
+//            case TWO:
+//                return cat2Toggle;
+//            case THREE:
+//                return cat3Toggle;
+//            case FOUR:
+//                return cat4Toggle;
+//            case FIVE:
+//                return cat5Toggle;
+//            default:
+//                throw new UnsupportedOperationException("Unknown category: " + category.name());
+//        }
+//    }
 
     /**
      * called automatically during constructor by FXMLConstructor.
@@ -399,16 +397,16 @@ public class GroupPane extends BorderPane {
         assert tileToggle != null : "fx:id=\"tileToggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
         assert seenByOtherExaminersCheckBox != null : "fx:id=\"seenByOtherExaminersCheckBox\" was not injected: check your FXML file 'GroupPane.fxml'.";
 
-        for (DhsImageCategory cat : DhsImageCategory.values()) {
-            ToggleButton toggleForCategory = getToggleForCategory(cat);
-            toggleForCategory.setBorder(new Border(new BorderStroke(cat.getColor(), BorderStrokeStyle.SOLID, CORNER_RADII_2, BORDER_WIDTHS_2)));
+        for(TagName tagName : controller.getCategoryManager().getCategories()) {
+            ToggleButton toggleForCategory = getToggleForCategory(tagName);
+            toggleForCategory.setBorder(new Border(new BorderStroke(Color.web(tagName.getColor().getHexColorCode()), BorderStrokeStyle.SOLID, CORNER_RADII_2, BORDER_WIDTHS_2)));
             toggleForCategory.getStyleClass().remove("radio-button");
             toggleForCategory.getStyleClass().add("toggle-button");
             toggleForCategory.selectedProperty().addListener((ov, wasSelected, toggleSelected) -> {
                 if (toggleSelected && slideShowPane != null) {
                     slideShowPane.getFileID().ifPresent(fileID -> {
                         selectionModel.clearAndSelect(fileID);
-                        new CategorizeAction(controller, cat, ImmutableSet.of(fileID)).handle(null);
+                        new CategorizeAction(controller, tagName, ImmutableSet.of(fileID)).handle(null);
                     });
                 }
             });
@@ -447,14 +445,14 @@ public class GroupPane extends BorderPane {
                 },
                 throwable -> logger.log(Level.SEVERE, "Error getting tag names.", throwable)//NON-NLS
         );
-        CategorizeSelectedFilesAction cat5SelectedAction = new CategorizeSelectedFilesAction(DhsImageCategory.FIVE, controller);
+        CategorizeSelectedFilesAction cat5SelectedAction = new CategorizeSelectedFilesAction(controller.getCategoryManager().getCategories().get(0), controller);
 
         catSelectedSplitMenu.setOnAction(cat5SelectedAction);
 
         catSelectedSplitMenu.setText(cat5SelectedAction.getText());
         catSelectedSplitMenu.setGraphic(cat5SelectedAction.getGraphic());
 
-        List<MenuItem> categoryMenues = transform(asList(DhsImageCategory.values()),
+        List<MenuItem> categoryMenues = transform(controller.getCategoryManager().getCategories(),
                 cat -> createAutoAssigningMenuItem(catSelectedSplitMenu, new CategorizeSelectedFilesAction(cat, controller)));
         catSelectedSplitMenu.getItems().setAll(categoryMenues);
 
@@ -775,40 +773,7 @@ public class GroupPane extends BorderPane {
                     selectAllFiles();
                     t.consume();
                 }
-                ObservableSet<Long> selected = selectionModel.getSelected();
-                if (selected.isEmpty() == false) {
-                    DhsImageCategory cat = keyCodeToCat(t.getCode());
-                    if (cat != null) {
-                        new CategorizeAction(controller, cat, selected).handle(null);
-                    }
-                }
             }
-        }
-
-        private DhsImageCategory keyCodeToCat(KeyCode t) {
-            if (t != null) {
-                switch (t) {
-                    case NUMPAD0:
-                    case DIGIT0:
-                        return DhsImageCategory.ZERO;
-                    case NUMPAD1:
-                    case DIGIT1:
-                        return DhsImageCategory.ONE;
-                    case NUMPAD2:
-                    case DIGIT2:
-                        return DhsImageCategory.TWO;
-                    case NUMPAD3:
-                    case DIGIT3:
-                        return DhsImageCategory.THREE;
-                    case NUMPAD4:
-                    case DIGIT4:
-                        return DhsImageCategory.FOUR;
-                    case NUMPAD5:
-                    case DIGIT5:
-                        return DhsImageCategory.FIVE;
-                }
-            }
-            return null;
         }
 
         private void handleArrows(KeyEvent t) {

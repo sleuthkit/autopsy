@@ -94,7 +94,7 @@ public abstract class DrawableFile {
 
     private final SimpleBooleanProperty analyzed;
 
-    private final SimpleObjectProperty<DhsImageCategory> category = new SimpleObjectProperty<>(null);
+    private final SimpleObjectProperty<TagName> categoryTagName = new SimpleObjectProperty<>(null);
 
     private String make;
 
@@ -229,39 +229,20 @@ public abstract class DrawableFile {
         return "";
     }
 
-    public void setCategory(DhsImageCategory category) {
+    public void setCategory(TagName category) {
         categoryProperty().set(category);
 
     }
 
-    public DhsImageCategory getCategory() {
-        updateCategory();
-        return category.get();
+    public TagName getCategory() {
+        return categoryTagName.get();
     }
 
-    public SimpleObjectProperty<DhsImageCategory> categoryProperty() {
-        return category;
+    public SimpleObjectProperty<TagName> categoryProperty() {
+        return categoryTagName;
     }
 
-    /**
-     * set the category property to the most severe one found
-     */
-    private void updateCategory() {
-        try {
-            category.set(getContentTags().stream()
-                    .map(Tag::getName).filter(CategoryManager::isCategoryTagName)
-                    .map(TagName::getDisplayName)
-                    .map(DhsImageCategory::fromDisplayName)
-                    .sorted().findFirst() //sort by severity and take the first
-                    .orElse(DhsImageCategory.ZERO)
-            );
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "problem looking up category for " + this.getContentPathSafe(), ex); //NON-NLS
-        } catch (IllegalStateException ex) {
-            // We get here many times if the case is closed during ingest, so don't print out a ton of warnings.
-        }
-    }
-
+    
     private List<ContentTag> getContentTags() throws TskCoreException {
         return getSleuthkitCase().getContentTagsByContent(file);
     }

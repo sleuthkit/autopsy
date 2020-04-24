@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  * Interface for classes that are views of a single DrawableFile. Implementation
@@ -115,38 +116,23 @@ public interface DrawableView {
 
     }
 
-    static Border getCategoryBorder(DhsImageCategory category) {
+    static Border getCategoryBorder(TagName category) {
         if (category != null) {
-            switch (category) {
-                case ONE:
-                    return CAT1_BORDER;
-                case TWO:
-                    return CAT2_BORDER;
-                case THREE:
-                    return CAT3_BORDER;
-                case FOUR:
-                    return CAT4_BORDER;
-                case FIVE:
-                    return CAT5_BORDER;
-                case ZERO:
-                default:
-                    return CAT0_BORDER;
-
-            }
+            return CAT3_BORDER;
         } else {
             return CAT0_BORDER;
         }
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
-    default DhsImageCategory updateCategory() {
+    default TagName updateCategory() {
         if (getFile().isPresent()) {
-            final DhsImageCategory category = getFile().map(DrawableFile::getCategory).orElse(DhsImageCategory.ZERO);
-            final Border border = hasHashHit() && (category == DhsImageCategory.ZERO) ? HASH_BORDER : getCategoryBorder(category);
+            final TagName tagNameCat = getFile().map(DrawableFile::getCategory).orElse(null);
+            final Border border = hasHashHit() ? HASH_BORDER : getCategoryBorder(tagNameCat);
             Platform.runLater(() -> getCategoryBorderRegion().setBorder(border));
-            return category;
+            return tagNameCat;
         } else {
-            return DhsImageCategory.ZERO;
+            return null;
         }
     }
 }
