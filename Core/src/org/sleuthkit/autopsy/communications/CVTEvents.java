@@ -24,6 +24,7 @@ import java.util.Collection;
 import org.sleuthkit.autopsy.communications.FiltersPanel.DateControlState;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.autopsy.communications.StateManager.CommunicationsState;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
 
 /**
  * Provide the singleton EventBus.
@@ -73,19 +74,19 @@ final class CVTEvents {
      */
     static final class PinAccountsEvent {
 
-        private final ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances;
+        private final ImmutableSet<AccountDeviceInstance> accounInstances;
         private final boolean replace;
 
         public boolean isReplace() {
             return replace;
         }
 
-        ImmutableSet<AccountDeviceInstanceKey> getAccountDeviceInstances() {
-            return accountDeviceInstances;
+        ImmutableSet<AccountDeviceInstance> getAccountDeviceInstances() {
+            return accounInstances;
         }
 
-        PinAccountsEvent(Collection<? extends AccountDeviceInstanceKey> accountDeviceInstances, boolean replace) {
-            this.accountDeviceInstances = ImmutableSet.copyOf(accountDeviceInstances);
+        PinAccountsEvent(Collection<? extends AccountDeviceInstance> accountDeviceInstances, boolean replace) {
+            this.accounInstances = ImmutableSet.copyOf(accountDeviceInstances);
             this.replace = replace;
         }
     }
@@ -95,14 +96,14 @@ final class CVTEvents {
      */
     static final class UnpinAccountsEvent {
 
-        private final ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances;
+        private final ImmutableSet<AccountDeviceInstance> accountInstances;
 
-        public ImmutableSet<AccountDeviceInstanceKey> getAccountDeviceInstances() {
-            return accountDeviceInstances;
+        public ImmutableSet<AccountDeviceInstance> getAccountDeviceInstances() {
+            return accountInstances;
         }
 
-         UnpinAccountsEvent(Collection<? extends AccountDeviceInstanceKey> accountDeviceInstances) {
-            this.accountDeviceInstances = ImmutableSet.copyOf(accountDeviceInstances);
+         UnpinAccountsEvent(Collection<? extends AccountDeviceInstance> accountDeviceInstances) {
+            this.accountInstances = ImmutableSet.copyOf(accountDeviceInstances);
         }
     }
     
