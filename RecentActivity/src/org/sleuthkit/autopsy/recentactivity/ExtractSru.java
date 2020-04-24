@@ -51,7 +51,6 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOC
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 
@@ -130,11 +129,8 @@ final class ExtractSru extends Extract {
                 return;
             }
     
-            AbstractFile softwareHiveAbstractFile = null;
-  
             if (softwareFile.getParentPath().endsWith("/config/")) {
                 softwareHiveFileName = tempDirPath + File.separator + softwareFile.getId() + "_" + softwareFile.getName();
-                softwareHiveAbstractFile = softwareFile;
 
                 try {
                     ContentUtils.writeToFile(softwareFile, new File(softwareHiveFileName));
@@ -385,7 +381,7 @@ final class ExtractSru extends Extract {
                 }
 
                 String applicationName = resultSet.getString("Application_Name"); //NON-NLS
-                Long executionTime = new Long(resultSet.getInt("ExecutionTime")); //NON-NLS
+                Long executionTime = Long.valueOf(resultSet.getInt("ExecutionTime")); //NON-NLS
                 String userName = resultSet.getString("User_Name");
 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
