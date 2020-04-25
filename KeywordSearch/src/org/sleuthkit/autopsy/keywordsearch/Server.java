@@ -41,7 +41,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -878,6 +877,7 @@ public class Server {
     })
     private Collection openCore(Case theCase, Index index) throws KeywordSearchModuleException {
 
+        List<String> solrUrls = new ArrayList<>();
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 // ELTODO make embedded Solr work with localSolrServer
@@ -897,7 +897,6 @@ public class Server {
                     logger.log(Level.INFO, "Using Solr server: {0}", server);
                 }*/
                 // connect to the Solr server that was specified in MU options
-                List<String> solrUrls = new ArrayList<>();
                 solrUrls.add("http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr");
                 currentSolrServer = getCloudSolrClient(solrUrls);
                 
@@ -1013,7 +1012,7 @@ public class Server {
                 }
             }
 
-            return new Collection(collectionName, theCase, index);
+            return new Collection(collectionName, theCase, index, solrUrls);
 
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Exception during Solr collection creation.", ex); //NON-NLS
@@ -1862,7 +1861,7 @@ public class Server {
 
         private final int QUERY_TIMEOUT_MILLISECONDS = 86400000; // 24 Hours = 86,400,000 Milliseconds
 
-        private Collection(String name, Case theCase, Index index) throws TimeoutException, InterruptedException {
+        private Collection(String name, Case theCase, Index index, List<String> solrUrls) throws TimeoutException, InterruptedException {
             this.name = name;
             this.caseType = theCase.getCaseType();
             this.textIndex = index;
@@ -1871,12 +1870,12 @@ public class Server {
             //IndexingServerProperties properties = getMultiUserServerProperties(Case.getCurrentCase().getCaseDirectory());
            
             //IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
-            List<String> solrUrls = new ArrayList<>();
+            /*List<String> solrUrls = new ArrayList<>();
             List<String> solrServerList = UserPreferences.getAllIndexingServers();
             for (String server : solrServerList) {
                 solrUrls.add("http://" + server + "/solr"); // ELTODO optimize this
                 logger.log(Level.INFO, "Using Solr server: {0}", server);
-            }
+            }*/
             solrClient = getCloudSolrClient(solrUrls);
             solrClient.setDefaultCollection(name); // ELTODO do we care that this solrClient instance gets reused?
             // ELTODO solrClient.connect(10, TimeUnit.SECONDS);
