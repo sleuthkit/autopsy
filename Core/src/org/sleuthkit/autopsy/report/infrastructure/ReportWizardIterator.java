@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.report.infrastructure;
 
 import java.awt.Component;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -38,6 +39,7 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
     private final ReportWizardPanel2 tableConfigPanel;
     private final ReportWizardFileOptionsPanel fileConfigPanel;
     private final ReportWizardPortableCaseOptionsPanel portableCaseConfigPanel;
+    private final ReportWizardDataSourceSelectionPanel dataSourceSelectionPanel;
 
     private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
 
@@ -78,8 +80,10 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
             fileConfigPanel = new ReportWizardFileOptionsPanel(null);
             portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(null, useCaseSpecificData);
         }
+        
+        dataSourceSelectionPanel = new ReportWizardDataSourceSelectionPanel();
 
-        allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel, portableCaseConfigPanel};
+        allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, dataSourceSelectionPanel, tableConfigPanel, fileConfigPanel, portableCaseConfigPanel};
         tableConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel};
         fileConfigPanels = new WizardDescriptor.Panel[]{firstPanel, fileConfigPanel};
         portableCaseConfigPanels = new WizardDescriptor.Panel[]{firstPanel, portableCaseConfigPanel};
@@ -113,13 +117,19 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
      * @param moreConfig  true if a GeneralReportModule was selected
      * @param tableConfig true if a TReportModule was selected
      */
-    private void enableConfigPanels(boolean generalModule, boolean tableModule, boolean portableCaseModule) {
+    private void enableConfigPanels(boolean generalModule, boolean tableModule, boolean portableCaseModule, boolean showDataSourceSelectionPanel) {
         if (generalModule) {
-            // General Module selected, no additional panels
+            if(showDataSourceSelectionPanel) {
+                panels = Arrays.asList(firstPanel, dataSourceSelectionPanel);
+            }
         } else if (tableModule) {
             // Table Module selected, need Artifact Configuration Panel
             // (ReportWizardPanel2)
             panels = Arrays.asList(tableConfigPanels);
+            if(showDataSourceSelectionPanel) {
+                panels = new ArrayList<>(panels);
+                panels.add(1, dataSourceSelectionPanel);
+            }
         } else if (portableCaseModule) {
             // Portable Case Module selected, need Portable Case Configuration Panel
             // (ReportWizardPortableCaseOptionsPanel)
@@ -164,7 +174,8 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
             generalModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("generalModule", true); //NON-NLS
             tableModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("tableModule", true); //NON-NLS
             portableModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("portableCaseModule", true); //NON-NLS
-            enableConfigPanels(generalModule, tableModule, portableModule);
+            boolean showDataSourceSelectionPanel = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("showDataSourceSelectionPanel", false); // NON-NLS
+            enableConfigPanels(generalModule, tableModule, portableModule, showDataSourceSelectionPanel);
         }
 
         index++;

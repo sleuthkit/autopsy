@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2019 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
+import org.sleuthkit.autopsy.report.GeneralReportSettings;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -208,7 +209,7 @@ public class ReportGenerator {
                     if (module instanceof GeneralReportModule) {
 
                         // generate report
-                        generateGeneralReport((GeneralReportModule) module);
+                        generateGeneralReport((GeneralReportModule) module, config.getGeneralReportSettings());
 
                     } else if (module instanceof TableReportModule) {
 
@@ -297,11 +298,11 @@ public class ReportGenerator {
     /**
      * Run the GeneralReportModules using a SwingWorker.
      */
-    private void generateGeneralReport(GeneralReportModule generalReportModule) throws IOException {
+    private void generateGeneralReport(GeneralReportModule generalReportModule, GeneralReportSettings reportSettings) throws IOException {
         if (generalReportModule != null) {
             String reportDir = createReportDirectory(generalReportModule);
             setupProgressPanel(generalReportModule, reportDir);
-            generalReportModule.generateReport(reportDir, progressIndicator);
+            generalReportModule.generateReport(reportDir, reportSettings, progressIndicator);
         }
     }
 

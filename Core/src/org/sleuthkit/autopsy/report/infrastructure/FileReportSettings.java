@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.report.infrastructure;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,6 +32,7 @@ final class FileReportSettings implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private Map<FileReportDataTypes, Boolean> filePropertiesInfo = new HashMap<>();
+    private List<Long> dataSourcesToProcess;
 
     /**
      * Creates FileReportSettings object.
@@ -48,5 +51,19 @@ final class FileReportSettings implements Serializable {
      */
     Map<FileReportDataTypes, Boolean> getFileProperties() {
         return filePropertiesInfo;
+    }
+    
+    /**
+     * Returns the data sources to process
+     */
+    List<Long> getDataSourcesToProcess() {
+        return dataSourcesToProcess;
+    }
+    
+    /**
+     * Sets the data sources to process
+     */
+    void setDataSourcesToProcess(List<Long> dataSourcesToProcess) {
+        this.dataSourcesToProcess = new ArrayList<>(dataSourcesToProcess);
     }
 }

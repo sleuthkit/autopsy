@@ -35,6 +35,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.Namespace;
@@ -49,9 +50,11 @@ import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.autopsy.geolocation.datamodel.Track;
 import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder;
+import org.sleuthkit.autopsy.report.GeneralReportSettings;
 import org.sleuthkit.autopsy.report.ReportBranding;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -80,6 +83,8 @@ public final class KMLReport implements GeneralReportModule {
     private Element gpsSearchesFolder;
     private Element gpsTrackpointsFolder;
     private Element gpsTracksFolder;
+    
+    private GeneralReportSettings settings;
 
     private List<Waypoint> waypointList = null;
 
@@ -153,15 +158,21 @@ public final class KMLReport implements GeneralReportModule {
         this.waypointList = waypointList;
         generateReport(baseReportDir, progressPanel);
     }
-
+    
     @Override
-    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
+    public boolean supportsDataSourceSelection() {
+        return true;
+    }
+    
+    @Override
+    public void generateReport(String baseReportDir, GeneralReportSettings settings, ReportProgressPanel progressPanel) {
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
+        this.settings = settings;
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(true);
         progressPanel.start();
@@ -181,7 +192,7 @@ public final class KMLReport implements GeneralReportModule {
             makeRoutes(skCase);
             makeTracks(skCase);
             addLocationsToReport(skCase, baseReportDir);
-        } catch (GeoLocationDataException | IOException ex) {
+        } catch (GeoLocationDataException | IOException | TskCoreException ex) {
             errorMessage = "Failed to complete report.";
             logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
@@ -223,6 +234,23 @@ public final class KMLReport implements GeneralReportModule {
         }
 
         progressPanel.complete(result, errorMessage);
+    }
+
+    @Override
+    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {       
+        try {        
+            GeneralReportSettings settings = new GeneralReportSettings();
+            currentCase = Case.getCurrentCaseThrows();
+            // Process all data sources if none are provided.
+            List<Long> selections = currentCase.getDataSources()
+                    .stream()
+                    .map(Content::getId)
+                    .collect(Collectors.toList());
+            settings.setDataSourcesToProcess(selections);
+            generateReport(baseReportDir, settings, progressPanel);
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.SEVERE, "Exception while accessing case resources.", ex); //NON-NLS
+        }
     }
 
     /**
@@ -318,8 +346,14 @@ public final class KMLReport implements GeneralReportModule {
      *
      * @throws IOException
      */
-    void addExifMetadataContent(List<Waypoint> points, String baseReportDirectory) throws IOException {
+    void addExifMetadataContent(List<Waypoint> points, String baseReportDirectory) throws IOException, TskCoreException {
         for (Waypoint point : points) {
+            long pointDataSource = point.getArtifact().getDataSource().getId();
+            // Skip this point if its not in the data sources list.
+            if(!settings.getDataSourcesToProcess().contains(pointDataSource)) {
+                continue;
+            }
+            
             Element mapPoint = makePoint(point);
             if (mapPoint == null) {
                 return;
@@ -352,7 +386,7 @@ public final class KMLReport implements GeneralReportModule {
      * @throws TskCoreException
      * @throws IOException
      */
-    void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws GeoLocationDataException, IOException {
+    void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws GeoLocationDataException, IOException, TskCoreException {
         if (waypointList == null) {
             addExifMetadataContent(WaypointBuilder.getEXIFWaypoints(skCase), baseReportDir);
             addWaypoints(WaypointBuilder.getBookmarkWaypoints(skCase), gpsBookmarksFolder, FeatureColor.BLUE, Bundle.Waypoint_Bookmark_Display_String());
@@ -376,9 +410,13 @@ public final class KMLReport implements GeneralReportModule {
      * @param folder        The Element folder to add the points to
      * @param waypointColor The color the waypoint should appear in the report
      */
-    void addWaypoints(List<Waypoint> points, Element folder, FeatureColor waypointColor, String headerLabel) {
+    void addWaypoints(List<Waypoint> points, Element folder, FeatureColor waypointColor, String headerLabel) throws TskCoreException {
         for (Waypoint point : points) {
-            addContent(folder, point.getLabel(), waypointColor, getFormattedDetails(point, headerLabel), point.getTimestamp(), makePoint(point), point.getLatitude(), point.getLongitude());
+            long pointDataSource = point.getArtifact().getDataSource().getId();
+            // Only add this waypoint if its in the data sources list.
+            if(settings.getDataSourcesToProcess().contains(pointDataSource)) {
+                addContent(folder, point.getLabel(), waypointColor, getFormattedDetails(point, headerLabel), point.getTimestamp(), makePoint(point), point.getLatitude(), point.getLongitude());
+            }
         }
     }
 
@@ -408,7 +446,7 @@ public final class KMLReport implements GeneralReportModule {
      *
      * @throws TskCoreException
      */
-    void makeRoutes(SleuthkitCase skCase) throws GeoLocationDataException {
+    void makeRoutes(SleuthkitCase skCase) throws GeoLocationDataException, TskCoreException {
         List<Route> routes = null;
 
         if (waypointList == null) {
@@ -418,7 +456,11 @@ public final class KMLReport implements GeneralReportModule {
         }
 
         for (Route route : routes) {
-            addRouteToReport(route);
+            long routeDataSource = route.getArtifact().getDataSource().getId();
+            // Only add routes that are in the data sources list
+            if(settings.getDataSourcesToProcess().contains(routeDataSource)) {
+                addRouteToReport(route);   
+            }
         }
     }
 
@@ -479,7 +521,7 @@ public final class KMLReport implements GeneralReportModule {
      *
      * @throws TskCoreException
      */
-    void makeTracks(SleuthkitCase skCase) throws GeoLocationDataException {
+    void makeTracks(SleuthkitCase skCase) throws GeoLocationDataException, TskCoreException {
         List<Track> tracks = null;
 
         if (waypointList == null) {
@@ -489,7 +531,11 @@ public final class KMLReport implements GeneralReportModule {
         }
 
         for (Track track : tracks) {
-            addTrackToReport(track);
+            long trackDataSource = track.getArtifact().getDataSource().getId();
+            // Only add tracks that are in the data sources list
+            if(settings.getDataSourcesToProcess().contains(trackDataSource)) {
+                addTrackToReport(track);
+            }
         }
     }
 

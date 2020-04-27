@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.geolocation;
+package org.sleuthkit.autopsy.corecomponents;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -26,9 +26,9 @@ import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 
 /**
- * A panel for showing Content objects in a check box list.
+ * A panel for showing any object in a check box list.
  */
-final class CheckBoxListPanel<T> extends javax.swing.JPanel {
+public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -38,7 +38,7 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
     /**
      * Creates new CheckboxFilterPanel
      */
-    CheckBoxListPanel() {
+    public CheckBoxListPanel() {
         initComponents();
 
         checkboxList = new CheckBoxJList<>();
@@ -52,7 +52,7 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      * @param displayName display name for the checkbox
      * @param obj         Object that the checkbox represents
      */
-    void addElement(String displayName, Icon icon, T obj) {
+    public void addElement(String displayName, Icon icon, T obj) {
         ObjectCheckBox<T> newCheckBox = new ObjectCheckBox<>(displayName, icon, true, obj);
         
         if(!model.contains(newCheckBox)) {
@@ -63,11 +63,11 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
     /**
      * Remove all objects from the checkbox list.
      */
-    void clearList() {
+    public void clearList() {
         model.removeAllElements();
     }
     
-    boolean isEmpty() {
+    public boolean isEmpty() {
         return model.isEmpty();
     }
     
@@ -84,7 +84,7 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      *
      * @return List of selected elements.
      */
-    List<T> getSelectedElements() {
+    public List<T> getSelectedElements() {
         List<T> selectedElements = new ArrayList<>();
         Enumeration<ObjectCheckBox<T>> elements = model.elements();
 
@@ -103,7 +103,7 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      *
      * @param selected True to check the boxes, false to unchecked
      */
-    void setSetAllSelected(boolean selected) {
+    public void setSetAllSelected(boolean selected) {
         Enumeration<ObjectCheckBox<T>> enumeration = model.elements();
         while (enumeration.hasMoreElements()) {
             ObjectCheckBox<T> element = enumeration.nextElement();
@@ -119,7 +119,7 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      *
      * @param title Panel title or null for no title.
      */
-    void setPanelTitle(String title) {
+    public void setPanelTitle(String title) {
         titleLabel.setText(title);
     }
 
@@ -128,7 +128,7 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      *
      * @param icon Icon to set or null for no icon
      */
-    void setPanelTitleIcon(Icon icon) {
+    public void setPanelTitleIcon(Icon icon) {
         titleLabel.setIcon(icon);
     }
 
