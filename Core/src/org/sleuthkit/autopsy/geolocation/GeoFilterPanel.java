@@ -23,6 +23,8 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,9 +40,9 @@ import javax.swing.SwingWorker;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -483,6 +485,54 @@ class GeoFilterPanel extends javax.swing.JPanel {
         }
 
         /**
+         * Get a count of artifacts of the given type containing GPS data for
+         * the given data case and source. Does not include rejected artifacts.
+         *
+         * @param sleuthkitCase
+         * @param dataSource
+         * @param artifactType
+         *
+         * @return The artifacts count that match the criteria
+         *
+         * @throws TskCoreException
+         */
+        private long getGPSDataCount(SleuthkitCase sleuthkitCase,
+                DataSource dataSource, BlackboardArtifact.ARTIFACT_TYPE artifactType) throws TskCoreException {
+            long count = 0;
+            String queryStr
+                    = "SELECT count(DISTINCT artifact_id) AS count FROM"
+                    + " ("
+                    + " SELECT * FROM blackboard_artifacts as arts"
+                    + " INNER JOIN blackboard_attributes as attrs"
+                    + " ON attrs.artifact_id = arts.artifact_id"
+                    + " WHERE arts.artifact_type_id = " + artifactType.getTypeID()
+                    + " AND arts.data_source_obj_id = " + dataSource.getId()
+                    + " AND arts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID()
+                    + " AND"
+                    + " ("
+                    + "attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()
+                    + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()
+                    + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_TRACKPOINTS.getTypeID()
+                    + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_WAYPOINTS.getTypeID()
+                    + " )"
+                    + " )";
+            try (SleuthkitCase.CaseDbQuery queryResult = sleuthkitCase.executeQuery(queryStr);
+                    ResultSet resultSet = queryResult.getResultSet()) {
+                if (resultSet.next()) {
+                    count = resultSet.getLong("count");
+                }
+            } catch (SQLException ex) {
+                Throwable cause = ex.getCause();
+                if (cause != null) {
+                    logger.log(Level.SEVERE, cause.getMessage(), cause);
+                } else {
+                    logger.log(Level.SEVERE, ex.getMessage(), ex);
+                }
+            }
+            return count;
+        }
+
+        /**
          * Returns a Map representing the number of sources found for each
          * artifact type. If no data was found, an empty map is returned.
          *
@@ -496,7 +546,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         private Map<ARTIFACT_TYPE, Long> getGPSDataSources(SleuthkitCase sleuthkitCase, DataSource dataSource) throws TskCoreException {
             HashMap<ARTIFACT_TYPE, Long> ret = new HashMap<>();
             for (BlackboardArtifact.ARTIFACT_TYPE type : GPS_ARTIFACT_TYPES) {
-                long count = sleuthkitCase.getBlackboardArtifactsTypeCount(type.getTypeID(), dataSource.getId());
+                long count = getGPSDataCount(sleuthkitCase, dataSource, type);
                 if (count > 0) {
                     ret.put(type, count);
                 }

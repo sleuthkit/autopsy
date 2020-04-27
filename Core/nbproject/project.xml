@@ -356,6 +356,14 @@
                 <binary-origin>release\modules\ext\commons-lang3-3.8.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/batik-xml-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-xml-1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jai_core-1.1.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jai_core-1.1.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/gax-grpc-1.44.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/gax-grpc-1.44.0.jar</binary-origin>
             </class-path-extension>
@@ -370,6 +378,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/opencensus-api-0.19.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/opencensus-api-0.19.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/batik-svg-dom-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-svg-dom-1.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/gax-httpjson-0.61.0.jar</runtime-relative-path>
@@ -480,6 +492,10 @@
                 <binary-origin>release/modules/ext/xmpcore-5.1.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/batik-util-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-util-1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/javax.activation-1.2.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\javax.activation-1.2.0.jar</binary-origin>
             </class-path-extension>
@@ -498,6 +514,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jgraphx-4.1.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jgraphx-4.1.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/DatCon.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/DatCon.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/java-libpst-0.8.1.jar</runtime-relative-path>
@@ -536,10 +556,6 @@
                 <binary-origin>release/modules/ext/google-http-client-1.29.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.9.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.9.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/bcpkix-jdk15on-1.60.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\bcpkix-jdk15on-1.60.jar</binary-origin>
             </class-path-extension>
@@ -550,6 +566,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.7.25.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\slf4j-api-1.7.25.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/bcprov-ext-jdk15on-1.54.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcprov-ext-jdk15on-1.54.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/google-cloud-core-1.70.0.jar</runtime-relative-path>
@@ -620,6 +640,14 @@
                 <binary-origin>release/modules/ext/commons-validator-1.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.9.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.9.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/decodetect-core-0.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/decodetect-core-0.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jbig2-imageio-3.0.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jbig2-imageio-3.0.2.jar</binary-origin>
             </class-path-extension>
@@ -666,6 +694,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/SparseBitSet-1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/SparseBitSet-1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/batik-svggen-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-svggen-1.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
@@ -736,6 +768,10 @@
                 <binary-origin>release/modules/ext/postgresql-9.4.1211.jre7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jai_imageio-1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jai_imageio-1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/httpclient-4.5.6.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\httpclient-4.5.6.jar</binary-origin>
             </class-path-extension>
@@ -746,6 +782,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/fontbox-2.0.13.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\fontbox-2.0.13.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/icepdf-core-6.2.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/icepdf-core-6.2.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/activemq-all-5.11.1.jar</runtime-relative-path>
@@ -764,6 +804,10 @@
                 <binary-origin>release\modules\ext\dec-0.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/batik-dom-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-dom-1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/google-http-client-jackson2-1.29.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/google-http-client-jackson2-1.29.0.jar</binary-origin>
             </class-path-extension>
@@ -780,6 +824,14 @@
                 <binary-origin>release/modules/ext/sevenzipjbinding-AllPlatforms.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jutf7-1.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/batik-awt-util-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-awt-util-1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/google-api-services-translate-v2-rev20170525-1.27.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/google-api-services-translate-v2-rev20170525-1.27.0.jar</binary-origin>
             </class-path-extension>
@@ -788,24 +840,16 @@
                 <binary-origin>release/modules/ext/webp-imageio-sejda-0.1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/icepdf-viewer-6.2.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/icepdf-viewer-6.2.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/bcmail-jdk15on-1.60.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\bcmail-jdk15on-1.60.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/vorbis-java-tika-0.8.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\vorbis-java-tika-0.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/decodetect-core-0.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/decodetect-core-0.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jutf7-1.0.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/DatCon.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/DatCon.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>
