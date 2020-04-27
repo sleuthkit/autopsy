@@ -1120,6 +1120,31 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
         
 
+    
+    @Override
+    public Collection<CentralRepoAccountType> getAllAccountTypes() throws CentralRepoException {
+        
+        Collection<CentralRepoAccountType> accountTypes = new ArrayList<>();
+        
+        String sql = "SELECT * FROM account_types";
+        try ( Connection conn = connect();
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);) {
+
+           
+            try (ResultSet resultSet = preparedStatement.executeQuery();) {
+                while (resultSet.next()) {
+                    Account.Type acctType = new Account.Type(resultSet.getString("type_name"), resultSet.getString("display_name"));
+                    CentralRepoAccountType crAccountType = new CentralRepoAccountType(resultSet.getInt("id"), acctType, resultSet.getInt("correlation_type_id"));
+                    
+                    accountTypes.add(crAccountType);
+                } 
+            }
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error getting account types from central repository.", ex); // NON-NLS
+        } 
+        return accountTypes;
+    }
+    
     /**
      * Gets the CR account type for the specified type name.
      * 

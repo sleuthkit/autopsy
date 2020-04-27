@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
@@ -851,6 +852,15 @@ public interface CentralRepository {
      */
     CentralRepoAccountType getAccountTypeByName(String accountTypeName) throws CentralRepoException;
      
+    /**
+     * Gets all account types.
+     * 
+     * @return Collection of all CR account types in the database.
+     * 
+     * @throws CentralRepoException 
+     */
+    Collection<CentralRepoAccountType> getAllAccountTypes() throws CentralRepoException;
+    
     /**
      * Get an account from the accounts table matching the given type/ID.  
      * Inserts a row if one doesn't exists.

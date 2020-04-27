@@ -49,22 +49,42 @@ public class CentralRepoPersonasTest  extends TestCase {
     private static final long CASE_1_DATA_SOURCE_1_ID = 11;
     private static final long CASE_1_DATA_SOURCE_2_ID = 12;
     private static final long CASE_2_DATA_SOURCE_1_ID = 21;
+    
+    private static final long CASE_3_DATA_SOURCE_1_ID = 31;
+    private static final long CASE_3_DATA_SOURCE_2_ID = 32;
+    
+    private static final long CASE_4_DATA_SOURCE_1_ID = 41;
+    
 
     private static final String PHONE_NUM_1 = "+1 441-231-2552";
     
     
     private static final String FACEBOOK_ID_CATDOG = "BalooSherkhan";
-    private static final String EMAIL_ID_1 = "rkipling@junglebook.com";
+   
+    private static final String DOG_EMAIL_ID = "superpupper@junglebook.com";
+    private static final String CAT_WHATSAPP_ID = "111 222 3333";
+    private static final String EMAIL_ID_1 = "rkipling@jungle.book";
     
+    private static final String HOLMES_SKYPE_ID = "live:holmes@221baker.com";
+     
     
     private static final String DOG_PERSONA_NAME = "Baloo McDog";
     private static final String CAT_PERSONA_NAME = "SherKhan";
+    private static final String HOLMES_PERSONA_NAME = "Sherlock Holmes";
      
     private CorrelationCase case1;
     private CorrelationCase case2;
+    private CorrelationCase case3;
+    private CorrelationCase case4;
+    
     private CorrelationDataSource dataSource1fromCase1;
     private CorrelationDataSource dataSource2fromCase1;
     private CorrelationDataSource dataSource1fromCase2;
+    
+    private CorrelationDataSource dataSource1fromCase3;
+    private CorrelationDataSource dataSource2fromCase3;
+    private CorrelationDataSource dataSource1fromCase4;
+    
     private CentralRepoOrganization org1;
     private CentralRepoOrganization org2;
     
@@ -147,7 +167,15 @@ public class CentralRepoPersonasTest  extends TestCase {
             case2 = new CorrelationCase("case2_uuid", "case2");
             case2 = CentralRepository.getInstance().newCase(case2);
             assertTrue("Failed to create test object case2", case2 != null);
-
+            
+            case3 = new CorrelationCase("case3_uuid", "case3");
+            case3 = CentralRepository.getInstance().newCase(case3);
+            assertTrue("Failed to create test object case3", case3 != null);
+            
+            case4 = new CorrelationCase("case4_uuid", "case4");
+            case4 = CentralRepository.getInstance().newCase(case4);
+            assertTrue("Failed to create test object case4", case4 != null);
+            
             dataSource1fromCase1 = new CorrelationDataSource(case1, "dataSource1_deviceID", "dataSource1", CASE_1_DATA_SOURCE_1_ID, null, null, null);
             CentralRepository.getInstance().newDataSource(dataSource1fromCase1);
             dataSource1fromCase1 = CentralRepository.getInstance().getDataSource(case1, dataSource1fromCase1.getDataSourceObjectID());
@@ -163,6 +191,21 @@ public class CentralRepoPersonasTest  extends TestCase {
             dataSource1fromCase2 = CentralRepository.getInstance().getDataSource(case2, dataSource1fromCase2.getDataSourceObjectID());
             assertTrue("Failed to create test object dataSource1fromCase2", dataSource1fromCase2 != null);
 
+            dataSource1fromCase3 = new CorrelationDataSource(case3, "dataSource4_deviceID", "dataSource4", CASE_3_DATA_SOURCE_1_ID, null, null, null);
+            CentralRepository.getInstance().newDataSource(dataSource1fromCase3);
+            dataSource1fromCase3 = CentralRepository.getInstance().getDataSource(case3, dataSource1fromCase3.getDataSourceObjectID());
+            assertTrue("Failed to create test object dataSource1fromCase3", dataSource1fromCase3 != null);
+
+            dataSource2fromCase3 = new CorrelationDataSource(case3, "dataSource5_deviceID", "dataSource5", CASE_3_DATA_SOURCE_2_ID, null, null, null);
+            CentralRepository.getInstance().newDataSource(dataSource2fromCase3);
+            dataSource2fromCase3 = CentralRepository.getInstance().getDataSource(case3, dataSource2fromCase3.getDataSourceObjectID());
+            assertTrue("Failed to create test object dataSource2fromCase3", dataSource2fromCase3 != null);
+            
+            dataSource1fromCase4 = new CorrelationDataSource(case4, "dataSource6_deviceID", "dataSource6", CASE_4_DATA_SOURCE_1_ID, null, null, null);
+            CentralRepository.getInstance().newDataSource(dataSource1fromCase4);
+            dataSource1fromCase4 = CentralRepository.getInstance().getDataSource(case4, dataSource1fromCase4.getDataSourceObjectID());
+            assertTrue("Failed to create test object dataSource1fromCase4", dataSource1fromCase4 != null);
+            
             org1 = new CentralRepoOrganization("org1");
             org1 = CentralRepository.getInstance().newOrganization(org1);
 
@@ -335,11 +378,20 @@ public class CentralRepoPersonasTest  extends TestCase {
     
     /**
      * Tests Personas & X_Accounts and X_instances in the context of Case/data source.
+     *  There are 4 Cases. 
+     *  - Case1 has 2 data sources, case2 has 1.
+     *  - Case3 has 2 data sources, case4 has 1.
+     *  There are 3 personas - A Cat, a Dog, and Sherlock Holmes. 
+     *  Cat & Dog share a FB account - with 3 instances split over the 2 cases - Case1 & Case2.
+     *  Dog has his his own email account - with one instance in Case1
+     *  Cat has his own WhatsApp account. - with 2 instances - in Case1 & Case2
+     *  Sherlock has a Skype account - with 1 instance in Case 3.
+     *  Case 4 has no personas or accounts
      */
     public void testPersonaWithCases() {
         
         try {
-        // Create an account
+        // Create an account - Cat and Dog have a shared FB account
         CentralRepoAccount catdogFBAccount = CentralRepository.getInstance()
                     .getOrCreateAccount(facebookAccountType, FACEBOOK_ID_CATDOG);
         
@@ -357,8 +409,6 @@ public class CentralRepoPersonasTest  extends TestCase {
         CentralRepository.getInstance().addArtifactInstance(fbAcctInstance1);
         
             
-            
-        
         // Create account instance attribute for that account, on Case 1, DS 2
         CorrelationAttributeInstance fbAcctInstance2 = new CorrelationAttributeInstance(facebookInstanceType, FACEBOOK_ID_CATDOG,
                     -1,
@@ -369,7 +419,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                     TskData.FileKnown.UNKNOWN,
                     1002L, catdogFBAccount.getAccountId());
         
-            CentralRepository.getInstance().addArtifactInstance(fbAcctInstance2);
+        CentralRepository.getInstance().addArtifactInstance(fbAcctInstance2);
             
             
         // Create account instance attribute for that account, on Case 1, DS 2
@@ -384,24 +434,208 @@ public class CentralRepoPersonasTest  extends TestCase {
         CentralRepository.getInstance().addArtifactInstance(fbAcctInstance3);
         
         
-        // Create Persona for that account
-         
+        // Create Persona for the Dog, using the shared FB account
         String comment = "The best dog ever";
         Persona.PersonaStatus status = Persona.PersonaStatus.ACTIVE;
         PersonaAccount pa1 = PersonaHelper.createPersonaForAccount(DOG_PERSONA_NAME, 
                                 comment , 
                                 status, catdogFBAccount, "Because I said so", Persona.Confidence.LOW );
+        Persona dogPersona = pa1.getPersona();
                
         
-        // Test that getting all Personas for Case 1  includes the persona above
-        // Test that getting all Personas for Case 2  includes the persona above
-        // Test that getting all Personas for DS 1  includes the persona above
-        // Test that getting all Personas for DS 2  includes the persona above
+      
+        // create a second persona for the same account - Cat has the same FB account as dog
+        String comment2 = "The fiercest cat alive.";
+        PersonaAccount pa2 = PersonaHelper.createPersonaForAccount(CAT_PERSONA_NAME, 
+                                 comment2 , Persona.PersonaStatus.ACTIVE, 
+                                 catdogFBAccount, "Smells like a cat.", Persona.Confidence.LOW );
+        
+        Persona catPersona = pa2.getPersona();
+        Assert.assertNotNull(pa2);
+        Assert.assertTrue(pa2.getPersona().getName().equalsIgnoreCase(CAT_PERSONA_NAME));
         
         
-        // Test that getting cases for the Persona returns Case 1 & 2
-        // Test that getting data sources for the Persona returns Case1_DS1 & Case1_DS2 & Case2_DS1
         
+        // Add a 2nd account to the Dog - dog has his own email 
+         CentralRepoAccount dogEmailAccount = CentralRepository.getInstance()
+                    .getOrCreateAccount(emailAccountType, DOG_EMAIL_ID);
+         
+         // Add an instance of dog email 
+         CorrelationAttributeInstance dogEmailAcctInstance = new CorrelationAttributeInstance(emailInstanceType, DOG_EMAIL_ID,
+                    -1,
+                    case1,
+                    dataSource2fromCase1,
+                    "path3",
+                    "",
+                    TskData.FileKnown.UNKNOWN,
+                    1002L, 
+                  dogEmailAccount.getAccountId());
+        
+        CentralRepository.getInstance().addArtifactInstance(dogEmailAcctInstance);
+        
+        PersonaAccount pa3 = addAccountToPersona( dogPersona,  dogEmailAccount,  "Thats definitely a dog email account",  Persona.Confidence.MEDIUM);
+        Assert.assertNotNull(pa3);
+        Assert.assertTrue(pa3.getPersona().getName().equalsIgnoreCase(DOG_PERSONA_NAME));
+        
+        
+        // create a WhatsApp account for cat, add 2 instances, and then add that to Cat persona
+        CentralRepoAccount catWhatsAppAccount = CentralRepository.getInstance()
+                    .getOrCreateAccount(whatsAppAccountType, CAT_WHATSAPP_ID);
+         
+         // Add 2 instances of cat whatsApp  
+        CorrelationAttributeInstance catWhatsAppAccountInstance1 = new CorrelationAttributeInstance(whatsAppInstanceType, CAT_WHATSAPP_ID,
+                    -1,
+                    case1,
+                    dataSource1fromCase1,
+                    "path4",
+                    "",
+                    TskData.FileKnown.UNKNOWN,
+                    1005L, 
+                  catWhatsAppAccount.getAccountId());
+        CentralRepository.getInstance().addArtifactInstance(catWhatsAppAccountInstance1);
+        
+         CorrelationAttributeInstance catWhatsAppAccountInstance2 = new CorrelationAttributeInstance(whatsAppInstanceType, CAT_WHATSAPP_ID,
+                    -1,
+                    case2,
+                    dataSource1fromCase2,
+                    "path5",
+                    "",
+                    TskData.FileKnown.UNKNOWN,
+                    1006L, 
+                  catWhatsAppAccount.getAccountId());
+        CentralRepository.getInstance().addArtifactInstance(catWhatsAppAccountInstance2);
+        
+        
+        PersonaAccount pa4 = addAccountToPersona( catPersona,  catWhatsAppAccount,  "The cat has a WhatsApp account",  Persona.Confidence.MEDIUM);
+        Assert.assertNotNull(pa4);
+        Assert.assertTrue(pa4.getPersona().getName().equalsIgnoreCase(CAT_PERSONA_NAME));
+        
+        
+        
+        Collection<CentralRepoAccount> dogAccounts =  PersonaHelper.getAccountsForPersona(dogPersona.getId());
+        Assert.assertEquals(2, dogAccounts.size()); // Dog has 2 accounts.
+        for (CentralRepoAccount acct:dogAccounts) {
+            System.out.println("Dog Account id : " + acct.getTypeSpecificId());
+        }
+        
+        
+        Collection<CentralRepoAccount> catAccounts =  PersonaHelper.getAccountsForPersona(catPersona.getId());
+        Assert.assertEquals(2, catAccounts.size()); // cat has 2 accounts.
+        for (CentralRepoAccount acct:catAccounts) {
+            System.out.println("Cat Account id : " + acct.getTypeSpecificId());
+        }
+        
+        // create account and Persona for Sherlock Holmes.
+       // Create a Skype Account
+        CentralRepoAccount holmesSkypeAccount = CentralRepository.getInstance()
+                    .getOrCreateAccount(skypeAccountType, HOLMES_SKYPE_ID);
+         
+         // Add an instance of Skype account to Case3/DS1
+         CorrelationAttributeInstance skypeAcctInstance = new CorrelationAttributeInstance(skypeInstanceType, HOLMES_SKYPE_ID,
+                    -1,
+                    case3,
+                    dataSource1fromCase3,
+                    "path8",
+                    "",
+                    TskData.FileKnown.UNKNOWN,
+                    1011L, 
+                  holmesSkypeAccount.getAccountId());
+        CentralRepository.getInstance().addArtifactInstance(skypeAcctInstance);
+        
+        
+        // Create a person for the Skype account
+        PersonaAccount pa5 = PersonaHelper.createPersonaForAccount(HOLMES_PERSONA_NAME, 
+                                 "Has a Pipe in his mouth." , Persona.PersonaStatus.ACTIVE, 
+                                 holmesSkypeAccount, "The name says it all.", Persona.Confidence.LOW );
+        
+        Persona holmesPersona = pa5.getPersona();
+        Assert.assertNotNull(pa5);
+        Assert.assertTrue(pa5.getPersona().getName().equalsIgnoreCase(HOLMES_PERSONA_NAME));
+        
+        
+     
+        // Test that getting cases for Persona 
+        Collection<CorrelationCase> dogCases = PersonaHelper.getCasesForPersona(dogPersona.getId());
+        Assert.assertEquals(2, dogCases.size()); // dog appears in 2 cases.
+        for (CorrelationCase dc: dogCases) {
+            System.out.println("Dog Case UUID : " + dc.getCaseUUID());
+        }
+        
+        Collection<CorrelationCase> catCases = PersonaHelper.getCasesForPersona(catPersona.getId());
+        Assert.assertEquals(2, catCases.size()); // cat appears in 2 cases.
+        for (CorrelationCase cc: catCases) {
+            System.out.println("Cat Case UUID : " + cc.getCaseUUID());
+        }
+        
+        Collection<CorrelationCase> holmesCases = PersonaHelper.getCasesForPersona(holmesPersona.getId());
+        Assert.assertEquals(1, holmesCases.size()); // Holmes appears in 1 case.
+        for (CorrelationCase hc: holmesCases) {
+            System.out.println("Holmes Case UUID : " + hc.getCaseUUID());
+        }
+        
+        
+        // Test that getting data sources for the Persona - 
+        Collection<CorrelationDataSource> dogDatasources = PersonaHelper.getDataSourcesForPersona(dogPersona.getId());
+        Assert.assertEquals(3, dogDatasources.size()); // dog appears in 2 cases in 3 data sources.
+        for (CorrelationDataSource dds: dogDatasources) {
+            System.out.println("Dog DS DeviceID : " + dds.getDeviceID());
+        }
+        
+         Collection<CorrelationDataSource> catDatasources = PersonaHelper.getDataSourcesForPersona(catPersona.getId());
+        Assert.assertEquals(3, catDatasources.size()); // cat appears in 2 cases in 3 data sources.
+        for (CorrelationDataSource cds: catDatasources) {
+            System.out.println("Cat DS DeviceID : " + cds.getDeviceID());
+        }
+        
+        Collection<CorrelationDataSource> holmesDatasources = PersonaHelper.getDataSourcesForPersona(holmesPersona.getId());
+        Assert.assertEquals(1, holmesDatasources.size()); // Holmes appears in 1 cases in 1 data source.
+        for (CorrelationDataSource hds: holmesDatasources) {
+            System.out.println("Holmes DS DeviceID : " + hds.getDeviceID());
+        }
+        
+        // Test getting peronas by case.
+         
+        
+        // Test that getting all Personas for Case 1  - Case1 has 2 persona - Cat & Dog
+        Collection<Persona> case1Persona = PersonaHelper.getPersonasForCase(case1);
+        Assert.assertEquals(2, case1Persona.size()); // 
+        
+        // Test that getting all Personas for Case 2  - Case2 has 2 persona - Cat & Dog
+        Collection<Persona> case2Persona = PersonaHelper.getPersonasForCase(case2);
+        Assert.assertEquals(2, case2Persona.size()); // 
+        
+         // Test that getting all Personas for Case 3  - Case3 has 1 persona - Holmes
+        Collection<Persona> case3Persona = PersonaHelper.getPersonasForCase(case3);
+        Assert.assertEquals(1, case3Persona.size()); // 
+        
+         // Test that getting all Personas for Case 4  - Case4 has no persona
+        Collection<Persona> case4Persona = PersonaHelper.getPersonasForCase(case4);
+        Assert.assertEquals(0, case4Persona.size()); // 
+          
+    
+        // Test getting peronas by data source.
+    
+        // Test that getting all Personas for DS 1 
+        Collection<Persona> ds1Persona = PersonaHelper.getPersonaForDataSource(dataSource1fromCase1);
+        Assert.assertEquals(2, ds1Persona.size()); // 
+        
+        Collection<Persona> ds2Persona = PersonaHelper.getPersonaForDataSource(dataSource2fromCase1);
+        Assert.assertEquals(2, ds2Persona.size()); // 
+        
+        Collection<Persona> ds3Persona = PersonaHelper.getPersonaForDataSource(dataSource1fromCase2);
+        Assert.assertEquals(2, ds3Persona.size()); // 
+        
+        Collection<Persona> ds4Persona = PersonaHelper.getPersonaForDataSource(dataSource1fromCase3);
+        Assert.assertEquals(1, ds4Persona.size()); // 
+        
+        Collection<Persona> ds5Persona = PersonaHelper.getPersonaForDataSource(dataSource2fromCase3);
+        Assert.assertEquals(0, ds5Persona.size()); // 
+        
+        Collection<Persona> ds6Persona = PersonaHelper.getPersonaForDataSource(dataSource1fromCase4);
+        Assert.assertEquals(0, ds6Persona.size()); // 
+        
+        
+       
         }
          catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
@@ -434,6 +668,5 @@ public class CentralRepoPersonasTest  extends TestCase {
         }
         
         
-
      }
 }
