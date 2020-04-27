@@ -67,7 +67,6 @@ public class ReportWizardDataSourceSelectionPanel implements WizardDescriptor.Fi
     public CheckBoxListPanel<Long> getComponent() {
         if (dataSourcesSelectionPanel == null) {
             dataSourcesSelectionPanel = new CheckBoxListPanel<>();
-            dataSourcesSelectionPanel.setPanelTitle("");
             dataSourcesSelectionPanel.setName(Bundle.ReportWizardDataSourceSelectionPanel_title());
             try {
                 List<Content> dataSources = Case.getCurrentCase().getDataSources();
