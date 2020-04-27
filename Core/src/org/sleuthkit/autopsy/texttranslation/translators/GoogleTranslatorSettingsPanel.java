@@ -24,17 +24,21 @@ import com.google.cloud.translate.Language;
 import com.google.cloud.translate.Translate;
 import com.google.cloud.translate.TranslateOptions;
 import com.google.cloud.translate.Translation;
+import java.awt.Desktop;
 import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
@@ -59,6 +63,23 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         targetLanguageCode = languageCode;
         credentialsPathField.setText(credentialsPath);
         populateTargetLanguageComboBox();
+        
+        instructionsTextArea.addHyperlinkListener(new HyperlinkListener() {
+            @Override
+            public void hyperlinkUpdate(HyperlinkEvent e) {
+                if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                    // Try to display the URL in the user's browswer. 
+                    if(Desktop.isDesktopSupported()) {
+                        try {
+                            Desktop.getDesktop().browse(e.getURL().toURI());
+                        } catch (IOException | URISyntaxException ex) {
+                            logger.log(Level.WARNING, "Failed to display URL in external viewer", ex);
+                        }
+                    }
+
+                }
+            }
+        });
     }
 
     /**
@@ -198,7 +219,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         testUntranslatedTextField = new javax.swing.JTextField();
         testButton = new javax.swing.JButton();
         instructionsScrollPane = new javax.swing.JScrollPane();
-        instructionsTextArea = new javax.swing.JTextArea();
+        instructionsTextArea = new javax.swing.JTextPane();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
 
         setLayout(new java.awt.GridBagLayout());
@@ -335,12 +356,8 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
 
         instructionsTextArea.setEditable(false);
         instructionsTextArea.setBackground(new java.awt.Color(240, 240, 240));
-        instructionsTextArea.setColumns(20);
-        instructionsTextArea.setLineWrap(true);
-        instructionsTextArea.setRows(4);
+        instructionsTextArea.setContentType("text/html"); // NOI18N
         instructionsTextArea.setText(org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.instructionsTextArea.text")); // NOI18N
-        instructionsTextArea.setWrapStyleWord(true);
-        instructionsTextArea.setCaretPosition(0);
         instructionsTextArea.setMaximumSize(new java.awt.Dimension(1000, 200));
         instructionsTextArea.setPreferredSize(new java.awt.Dimension(164, 78));
         instructionsScrollPane.setViewportView(instructionsTextArea);
@@ -405,7 +422,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JButton browseButton;
     private javax.swing.JTextField credentialsPathField;
     private javax.swing.JScrollPane instructionsScrollPane;
-    private javax.swing.JTextArea instructionsTextArea;
+    private javax.swing.JTextPane instructionsTextArea;
     private javax.swing.JLabel resultLabel;
     private javax.swing.JComboBox<org.sleuthkit.autopsy.texttranslation.translators.LanguageWrapper> targetLanguageComboBox;
     private javax.swing.JButton testButton;
