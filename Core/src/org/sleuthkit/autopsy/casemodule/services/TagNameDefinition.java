@@ -24,14 +24,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.annotation.concurrent.Immutable;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -48,20 +47,21 @@ import org.sleuthkit.datamodel.TskData;
 final class TagNameDefinition implements Comparable<TagNameDefinition> {
 
     private static final Logger LOGGER = Logger.getLogger(TagNameDefinition.class.getName());
-    @NbBundle.Messages({"TagNameDefinition.predefTagNames.bookmark.text=Bookmark",
+    @Messages({
+        "TagNameDefinition.predefTagNames.bookmark.text=Bookmark",
         "TagNameDefinition.predefTagNames.followUp.text=Follow Up",
-        "TagNameDefinition.predefTagNames.notableItem.text=Notable Item",
-        "Category.one=CAT-1: Child Exploitation (Illegal)",
-        "Category.two=CAT-2: Child Exploitation (Non-Illegal/Age Difficult)",
-        "Category.three=CAT-3: CGI/Animation (Child Exploitive)",
-        "Category.four=CAT-4: Exemplar/Comparison (Internal Use Only)",
-        "Category.five=CAT-5: Non-pertinent",
-        "Category.zero=CAT-0: Uncategorized"})
+        "TagNameDefinition.predefTagNames.notableItem.text=Notable Item",})
 
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS 
     private static final String TAG_SETTING_VERSION_KEY = "CustomTagNameVersion";
     private static final int TAG_SETTINGS_VERSION = 1;
+
+    private static final String CATEGORY_ONE_NAME = "CAT-1: Child Exploitation (Illegal)";
+    private static final String CATEGORY_TWO_NAME = "CAT-2: Child Exploitation (Non-Illegal/Age Difficult)";
+    private static final String CATEGORY_THREE_NAME = "CAT-3: CGI/Animation (Child Exploitive)";
+    private static final String CATEGORY_FOUR_NAME = "CAT-4: Exemplar/Comparison (Internal Use Only)";
+    private static final String CATEGORY_FIVE_NAME = "CAT-5: Non-pertinent";
 
     private final String displayName;
     private final String description;
@@ -76,11 +76,11 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         STANDARD_TAGS_DEFINITIONS.put(Bundle.TagNameDefinition_predefTagNames_followUp_text(), new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_followUp_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
         STANDARD_TAGS_DEFINITIONS.put(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
 
-        PROJECT_VIC_TAG_DEFINITIONS.put(Bundle.Category_one(), new TagNameDefinition(Bundle.Category_one(), "", TagName.HTML_COLOR.RED, TskData.FileKnown.BAD));
-        PROJECT_VIC_TAG_DEFINITIONS.put(Bundle.Category_two(), new TagNameDefinition(Bundle.Category_two(), "", TagName.HTML_COLOR.LIME, TskData.FileKnown.BAD));
-        PROJECT_VIC_TAG_DEFINITIONS.put(Bundle.Category_three(), new TagNameDefinition(Bundle.Category_three(), "", TagName.HTML_COLOR.YELLOW, TskData.FileKnown.BAD));
-        PROJECT_VIC_TAG_DEFINITIONS.put(Bundle.Category_four(), new TagNameDefinition(Bundle.Category_four(), "", TagName.HTML_COLOR.PURPLE, TskData.FileKnown.UNKNOWN));
-        PROJECT_VIC_TAG_DEFINITIONS.put(Bundle.Category_five(), new TagNameDefinition(Bundle.Category_five(), "", TagName.HTML_COLOR.SILVER, TskData.FileKnown.UNKNOWN));
+        PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_ONE_NAME, new TagNameDefinition(CATEGORY_ONE_NAME, "", TagName.HTML_COLOR.RED, TskData.FileKnown.BAD));
+        PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_TWO_NAME, new TagNameDefinition(CATEGORY_TWO_NAME, "", TagName.HTML_COLOR.LIME, TskData.FileKnown.BAD));
+        PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_THREE_NAME, new TagNameDefinition(CATEGORY_THREE_NAME, "", TagName.HTML_COLOR.YELLOW, TskData.FileKnown.BAD));
+        PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_FOUR_NAME, new TagNameDefinition(CATEGORY_FOUR_NAME, "", TagName.HTML_COLOR.PURPLE, TskData.FileKnown.UNKNOWN));
+        PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_FIVE_NAME, new TagNameDefinition(CATEGORY_FIVE_NAME, "", TagName.HTML_COLOR.SILVER, TskData.FileKnown.UNKNOWN));
     }
 
     /**
@@ -99,12 +99,12 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         this.knownStatus = status;
     }
 
-    static Collection<TagNameDefinition> getStandardTagNameDefinitions() {
-        return STANDARD_TAGS_DEFINITIONS.values();
+    static Collection<TagNameDefinition> getProjectVICDefaultDefinitions() {
+        return Collections.unmodifiableCollection(PROJECT_VIC_TAG_DEFINITIONS.values());
     }
 
-    static Collection<TagNameDefinition> getProjectVICDefaultDefinitions() {
-        return PROJECT_VIC_TAG_DEFINITIONS.values();
+    static Collection<TagNameDefinition> getStandardTagNameDefinitions() {
+        return Collections.unmodifiableCollection(STANDARD_TAGS_DEFINITIONS.values());
     }
 
     static List<String> getStandardTagNames() {
@@ -316,12 +316,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
                 if (attributes.length == 3) {
                     // If notableTagList is null load it from the CR.
                     if (notableTagList == null) {
-                        String notableTagsProp = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
-                        if (notableTagsProp != null && !notableTagsProp.isEmpty()) {
-                            notableTagList = Arrays.asList(notableTagsProp.split(","));
-                        } else {
-                            notableTagList = new ArrayList<>();
-                        }
+                        notableTagList = getCRNotableList();
                     } else {
                         if (notableTagList.contains(attributes[0])) {
                             fileKnown = TskData.FileKnown.BAD;
@@ -334,8 +329,6 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
                 definitions.add(new TagNameDefinition(attributes[0], attributes[1],
                         TagName.HTML_COLOR.valueOf(attributes[2]), fileKnown));
             }
-        } else {
-            // FUTURE UPDATES HERE
         }
 
         if (definitions.isEmpty()) {
@@ -357,8 +350,22 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     }
 
     /**
-     * Base on the version in the Tags property file, returns whether or not the
-     * file needs updating.
+     * Returns a list notable tag names from the CR bagTag list.
+     *
+     * @return A list of tag names, or empty list if none were found.
+     */
+    private static List<String> getCRNotableList() {
+        String notableTagsProp = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
+        if (notableTagsProp != null && !notableTagsProp.isEmpty()) {
+            return Arrays.asList(notableTagsProp.split(","));
+        }
+
+        return new ArrayList<>();
+    }
+
+    /**
+     * Based on the version in the Tags property file, returns whether or not
+     * the file needs updating.
      *
      * @return
      */

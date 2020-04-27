@@ -55,6 +55,8 @@ public class TagsManager implements Closeable {
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
     private final SleuthkitCase caseDb;
 
+    static String DEFAULT_TAG_SET_NAME = "Project VIC (United States)";
+
     static {
 
         //Create the contentviewer tags table if the current case does not 
@@ -178,12 +180,12 @@ public class TagsManager implements Closeable {
             List<TagSet> setList = taggingMgr.getTagSets();
             if (setList.isEmpty()) {
                 //Assume new case and add Project VIC tags.
-                TagSet set = taggingMgr.addTagSet("Project VIC (United States)");
 
+                List<TagName> tagNameList = new ArrayList<>();
                 for (TagNameDefinition def : TagNameDefinition.getProjectVICDefaultDefinitions()) {
-                    TagName tagName = caseDb.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus());
-                    taggingMgr.addTagNameToTagSet(set, tagName);
+                    tagNameList.add(caseDb.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus()));
                 }
+                taggingMgr.addTagSet(DEFAULT_TAG_SET_NAME, tagNameList);
 
                 for (TagNameDefinition def : TagNameDefinition.getStandardTagNameDefinitions()) {
                     caseDb.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus());
