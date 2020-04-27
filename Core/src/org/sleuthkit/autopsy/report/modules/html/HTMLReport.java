@@ -1343,7 +1343,7 @@ public class HTMLReport implements TableReportModule {
     @Messages({
         "ReportHTML.writeSum.case=Case:",
         "ReportHTML.writeSum.caseNumber=Case Number:",
-        "ReportHTML.writeSum.caseNumImages=Number of Images:",
+        "ReportHTML.writeSum.caseNumImages=Number of data sources in case:",
         "ReportHTML.writeSum.caseNotes=Notes:",
         "ReportHTML.writeSum.examiner=Examiner:"
     })
