@@ -21,19 +21,24 @@ package org.sleuthkit.autopsy.contentviewers;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import org.icepdf.core.SecurityCallback;
 
 import org.openide.util.NbBundle;
 
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
@@ -42,6 +47,7 @@ import org.icepdf.core.exceptions.PDFSecurityException;
 import org.icepdf.core.pobjects.Document;
 
 import org.icepdf.ri.common.ComponentKeyBinding;
+import org.icepdf.ri.common.MyGUISecurityCallback;
 import org.icepdf.ri.common.SwingController;
 import org.icepdf.ri.common.SwingViewBuilder;
 import org.icepdf.ri.common.views.DocumentViewControllerImpl;
@@ -51,14 +57,14 @@ import org.icepdf.ri.util.PropertiesManager;
 /**
  * Application content viewer for PDF files.
  */
-public class PDFViewer implements FileTypeViewer {
+final class PDFViewer implements FileTypeViewer {
 
     private static final Logger logger = Logger.getLogger(PDFViewer.class.getName());
 
     private JPanel container;
     private final PropertiesManager propsManager;
 
-    public PDFViewer() {
+    PDFViewer() {
         container = createNewContainer();
         propsManager = getCustomProperties();
     }
@@ -97,7 +103,13 @@ public class PDFViewer implements FileTypeViewer {
             protected Document doInBackground() throws PDFException, PDFSecurityException, IOException {
                 ReadContentInputStream stream = new ReadContentInputStream(file);
                 Document doc = new Document();
-                // This will read the stream into memory.
+
+                // Prompts the user for a password if the document is password
+                // protected.
+                doc.setSecurityCallback(createPasswordDialogCallback());
+
+                // This will read the stream into memory and invoke the
+                // security callback if needed.
                 doc.setInputStream(stream, null);
                 return doc;
             }
@@ -188,5 +200,28 @@ public class PDFViewer implements FileTypeViewer {
     })
     private void showEncryptionDialog() {
         MessageNotifyUtil.Message.error(Bundle.PDFViewer_encryptedDialog());
+    }
+
+    /**
+     * Creates a callback that will prompt the user for password input.
+     */
+    private SecurityCallback createPasswordDialogCallback() {
+        // MyGUISecurityCallback is a reference implementation from IcePDF.
+        return new MyGUISecurityCallback(null, ResourceBundle.getBundle(PropertiesManager.DEFAULT_MESSAGE_BUNDLE)) {
+            private String password;
+
+            @Override
+            public String requestPassword(Document document) {
+                try {
+                    SwingUtilities.invokeAndWait(() -> {
+                        // Show the password dialog on the EDT.
+                        this.password = super.requestPassword(document);
+                    });
+                    return this.password;
+                } catch (InterruptedException | InvocationTargetException ex) {
+                    return null;
+                }
+            }
+        };
     }
 }
