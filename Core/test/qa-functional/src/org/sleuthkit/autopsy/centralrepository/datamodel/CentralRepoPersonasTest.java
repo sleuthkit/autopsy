@@ -45,7 +45,20 @@ public class CentralRepoPersonasTest  extends TestCase {
     
      private final Path testDirectory = Paths.get(System.getProperty("java.io.tmpdir"), "CentralRepoDatamodelTest");
      
-     
+    
+    private static final String CASE_1_UUID = "case1_uuid";
+    private static final String CASE_2_UUID = "case2_uuid";
+    private static final String CASE_3_UUID = "case3_uuid";
+    private static final String CASE_4_UUID = "case4_uuid";
+    
+    private static final String DS1_DEVICEID = "dataSource1_deviceID";
+    private static final String DS2_DEVICEID = "dataSource2_deviceID";
+    private static final String DS3_DEVICEID = "dataSource3_deviceID";
+    private static final String DS4_DEVICEID = "dataSource4_deviceID";
+    private static final String DS5_DEVICEID = "dataSource5_deviceID";
+    private static final String DS6_DEVICEID = "dataSource6_deviceID";
+         
+  
     private static final long CASE_1_DATA_SOURCE_1_ID = 11;
     private static final long CASE_1_DATA_SOURCE_2_ID = 12;
     private static final long CASE_2_DATA_SOURCE_1_ID = 21;
@@ -71,6 +84,7 @@ public class CentralRepoPersonasTest  extends TestCase {
     private static final String DOG_PERSONA_NAME = "Baloo McDog";
     private static final String CAT_PERSONA_NAME = "SherKhan";
     private static final String HOLMES_PERSONA_NAME = "Sherlock Holmes";
+    
      
     private CorrelationCase case1;
     private CorrelationCase case2;
@@ -160,48 +174,48 @@ public class CentralRepoPersonasTest  extends TestCase {
         
          // Set up some default objects to be used by the tests
         try {
-            case1 = new CorrelationCase("case1_uuid", "case1");
+            case1 = new CorrelationCase(CASE_1_UUID, "case1");
             case1 = CentralRepository.getInstance().newCase(case1);
             assertTrue("Failed to create test object case1", case1 != null);
 
-            case2 = new CorrelationCase("case2_uuid", "case2");
+            case2 = new CorrelationCase(CASE_2_UUID, "case2");
             case2 = CentralRepository.getInstance().newCase(case2);
             assertTrue("Failed to create test object case2", case2 != null);
             
-            case3 = new CorrelationCase("case3_uuid", "case3");
+            case3 = new CorrelationCase(CASE_3_UUID, "case3");
             case3 = CentralRepository.getInstance().newCase(case3);
             assertTrue("Failed to create test object case3", case3 != null);
             
-            case4 = new CorrelationCase("case4_uuid", "case4");
+            case4 = new CorrelationCase(CASE_4_UUID, "case4");
             case4 = CentralRepository.getInstance().newCase(case4);
             assertTrue("Failed to create test object case4", case4 != null);
             
-            dataSource1fromCase1 = new CorrelationDataSource(case1, "dataSource1_deviceID", "dataSource1", CASE_1_DATA_SOURCE_1_ID, null, null, null);
+            dataSource1fromCase1 = new CorrelationDataSource(case1, DS1_DEVICEID, "dataSource1", CASE_1_DATA_SOURCE_1_ID, null, null, null);
             CentralRepository.getInstance().newDataSource(dataSource1fromCase1);
             dataSource1fromCase1 = CentralRepository.getInstance().getDataSource(case1, dataSource1fromCase1.getDataSourceObjectID());
             assertTrue("Failed to create test object dataSource1fromCase1", dataSource1fromCase1 != null);
 
-            dataSource2fromCase1 = new CorrelationDataSource(case1, "dataSource2_deviceID", "dataSource2", CASE_1_DATA_SOURCE_2_ID, null, null, null);
+            dataSource2fromCase1 = new CorrelationDataSource(case1, DS2_DEVICEID, "dataSource2", CASE_1_DATA_SOURCE_2_ID, null, null, null);
             CentralRepository.getInstance().newDataSource(dataSource2fromCase1);
             dataSource2fromCase1 = CentralRepository.getInstance().getDataSource(case1, dataSource2fromCase1.getDataSourceObjectID());
             assertTrue("Failed to create test object dataSource2fromCase1", dataSource2fromCase1 != null);
 
-            dataSource1fromCase2 = new CorrelationDataSource(case2, "dataSource3_deviceID", "dataSource3", CASE_2_DATA_SOURCE_1_ID, null, null, null);
+            dataSource1fromCase2 = new CorrelationDataSource(case2, DS3_DEVICEID, "dataSource3", CASE_2_DATA_SOURCE_1_ID, null, null, null);
             CentralRepository.getInstance().newDataSource(dataSource1fromCase2);
             dataSource1fromCase2 = CentralRepository.getInstance().getDataSource(case2, dataSource1fromCase2.getDataSourceObjectID());
             assertTrue("Failed to create test object dataSource1fromCase2", dataSource1fromCase2 != null);
 
-            dataSource1fromCase3 = new CorrelationDataSource(case3, "dataSource4_deviceID", "dataSource4", CASE_3_DATA_SOURCE_1_ID, null, null, null);
+            dataSource1fromCase3 = new CorrelationDataSource(case3, DS4_DEVICEID, "dataSource4", CASE_3_DATA_SOURCE_1_ID, null, null, null);
             CentralRepository.getInstance().newDataSource(dataSource1fromCase3);
             dataSource1fromCase3 = CentralRepository.getInstance().getDataSource(case3, dataSource1fromCase3.getDataSourceObjectID());
             assertTrue("Failed to create test object dataSource1fromCase3", dataSource1fromCase3 != null);
 
-            dataSource2fromCase3 = new CorrelationDataSource(case3, "dataSource5_deviceID", "dataSource5", CASE_3_DATA_SOURCE_2_ID, null, null, null);
+            dataSource2fromCase3 = new CorrelationDataSource(case3, DS5_DEVICEID, "dataSource5", CASE_3_DATA_SOURCE_2_ID, null, null, null);
             CentralRepository.getInstance().newDataSource(dataSource2fromCase3);
             dataSource2fromCase3 = CentralRepository.getInstance().getDataSource(case3, dataSource2fromCase3.getDataSourceObjectID());
             assertTrue("Failed to create test object dataSource2fromCase3", dataSource2fromCase3 != null);
             
-            dataSource1fromCase4 = new CorrelationDataSource(case4, "dataSource6_deviceID", "dataSource6", CASE_4_DATA_SOURCE_1_ID, null, null, null);
+            dataSource1fromCase4 = new CorrelationDataSource(case4, DS6_DEVICEID, "dataSource6", CASE_4_DATA_SOURCE_1_ID, null, null, null);
             CentralRepository.getInstance().newDataSource(dataSource1fromCase4);
             dataSource1fromCase4 = CentralRepository.getInstance().getDataSource(case4, dataSource1fromCase4.getDataSourceObjectID());
             assertTrue("Failed to create test object dataSource1fromCase4", dataSource1fromCase4 != null);
@@ -514,15 +528,19 @@ public class CentralRepoPersonasTest  extends TestCase {
         
         Collection<CentralRepoAccount> dogAccounts =  PersonaHelper.getAccountsForPersona(dogPersona.getId());
         Assert.assertEquals(2, dogAccounts.size()); // Dog has 2 accounts.
-        for (CentralRepoAccount acct:dogAccounts) {
-            System.out.println("Dog Account id : " + acct.getTypeSpecificId());
-        }
+        for (CentralRepoAccount acct : dogAccounts) {
+                Assert.assertTrue(acct.getTypeSpecificId().equalsIgnoreCase(FACEBOOK_ID_CATDOG)
+                        || acct.getTypeSpecificId().equalsIgnoreCase(DOG_EMAIL_ID));
+                // System.out.println("Dog Account id : " + acct.getTypeSpecificId());
+            }
         
         
         Collection<CentralRepoAccount> catAccounts =  PersonaHelper.getAccountsForPersona(catPersona.getId());
         Assert.assertEquals(2, catAccounts.size()); // cat has 2 accounts.
         for (CentralRepoAccount acct:catAccounts) {
-            System.out.println("Cat Account id : " + acct.getTypeSpecificId());
+            //System.out.println("Cat Account id : " + acct.getTypeSpecificId());
+            Assert.assertTrue(acct.getTypeSpecificId().equalsIgnoreCase(FACEBOOK_ID_CATDOG)
+                        || acct.getTypeSpecificId().equalsIgnoreCase(CAT_WHATSAPP_ID));
         }
         
         // create account and Persona for Sherlock Holmes.
@@ -558,19 +576,24 @@ public class CentralRepoPersonasTest  extends TestCase {
         Collection<CorrelationCase> dogCases = PersonaHelper.getCasesForPersona(dogPersona.getId());
         Assert.assertEquals(2, dogCases.size()); // dog appears in 2 cases.
         for (CorrelationCase dc: dogCases) {
-            System.out.println("Dog Case UUID : " + dc.getCaseUUID());
+            Assert.assertTrue(dc.getCaseUUID().equalsIgnoreCase(CASE_1_UUID) 
+                             || dc.getCaseUUID().equalsIgnoreCase(CASE_2_UUID));
+            //System.out.println("Dog Case UUID : " + dc.getCaseUUID());
         }
         
         Collection<CorrelationCase> catCases = PersonaHelper.getCasesForPersona(catPersona.getId());
         Assert.assertEquals(2, catCases.size()); // cat appears in 2 cases.
         for (CorrelationCase cc: catCases) {
-            System.out.println("Cat Case UUID : " + cc.getCaseUUID());
+             Assert.assertTrue(cc.getCaseUUID().equalsIgnoreCase(CASE_1_UUID) 
+                             || cc.getCaseUUID().equalsIgnoreCase(CASE_2_UUID));
+            //System.out.println("Cat Case UUID : " + cc.getCaseUUID());
         }
         
         Collection<CorrelationCase> holmesCases = PersonaHelper.getCasesForPersona(holmesPersona.getId());
         Assert.assertEquals(1, holmesCases.size()); // Holmes appears in 1 case.
         for (CorrelationCase hc: holmesCases) {
-            System.out.println("Holmes Case UUID : " + hc.getCaseUUID());
+            Assert.assertTrue(hc.getCaseUUID().equalsIgnoreCase(CASE_3_UUID));
+            //System.out.println("Holmes Case UUID : " + hc.getCaseUUID());
         }
         
         
@@ -578,24 +601,30 @@ public class CentralRepoPersonasTest  extends TestCase {
         Collection<CorrelationDataSource> dogDatasources = PersonaHelper.getDataSourcesForPersona(dogPersona.getId());
         Assert.assertEquals(3, dogDatasources.size()); // dog appears in 2 cases in 3 data sources.
         for (CorrelationDataSource dds: dogDatasources) {
-            System.out.println("Dog DS DeviceID : " + dds.getDeviceID());
+            Assert.assertTrue(dds.getDeviceID().equalsIgnoreCase(DS1_DEVICEID)
+                    || dds.getDeviceID().equalsIgnoreCase(DS2_DEVICEID)
+                    || dds.getDeviceID().equalsIgnoreCase(DS3_DEVICEID));
+            //System.out.println("Dog DS DeviceID : " + dds.getDeviceID());
         }
         
          Collection<CorrelationDataSource> catDatasources = PersonaHelper.getDataSourcesForPersona(catPersona.getId());
         Assert.assertEquals(3, catDatasources.size()); // cat appears in 2 cases in 3 data sources.
         for (CorrelationDataSource cds: catDatasources) {
-            System.out.println("Cat DS DeviceID : " + cds.getDeviceID());
+            Assert.assertTrue(cds.getDeviceID().equalsIgnoreCase(DS1_DEVICEID)
+                    || cds.getDeviceID().equalsIgnoreCase(DS2_DEVICEID)
+                    || cds.getDeviceID().equalsIgnoreCase(DS3_DEVICEID));
+            //System.out.println("Cat DS DeviceID : " + cds.getDeviceID());
         }
         
         Collection<CorrelationDataSource> holmesDatasources = PersonaHelper.getDataSourcesForPersona(holmesPersona.getId());
         Assert.assertEquals(1, holmesDatasources.size()); // Holmes appears in 1 cases in 1 data source.
         for (CorrelationDataSource hds: holmesDatasources) {
-            System.out.println("Holmes DS DeviceID : " + hds.getDeviceID());
+             Assert.assertTrue(hds.getDeviceID().equalsIgnoreCase(DS4_DEVICEID));
+            //System.out.println("Holmes DS DeviceID : " + hds.getDeviceID());
         }
         
         // Test getting peronas by case.
          
-        
         // Test that getting all Personas for Case 1  - Case1 has 2 persona - Cat & Dog
         Collection<Persona> case1Persona = PersonaHelper.getPersonasForCase(case1);
         Assert.assertEquals(2, case1Persona.size()); // 
@@ -635,7 +664,6 @@ public class CentralRepoPersonasTest  extends TestCase {
         Assert.assertEquals(0, ds6Persona.size()); // 
         
         
-       
         }
          catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);

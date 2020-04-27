@@ -30,7 +30,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.datamodel.Examiner;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona.PersonaStatus;
-import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -735,15 +734,13 @@ public class PersonaHelper {
         CorrelationAttributeInstance.Type correlationType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
 
         String instanceTableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(correlationType);
-        String querySql = "SELECT " + instanceTableName + ".account_id, case_id, data_source_id, "
+        return "SELECT " + instanceTableName + ".account_id, case_id, data_source_id, "
                 + " personas.id as persona_id, personas.uuid, personas.name, personas.comment, personas.created_date, personas.modified_date, personas.status_id, "
                 + " personas.examiner_id as persona_examiner_id, persona_examiner.login_name as persona_examiner_login_name, persona_examiner.display_name as persona_examiner_display_name "
                 + " FROM " + instanceTableName
                 + " JOIN persona_accounts as pa on pa.account_id = " + instanceTableName + ".account_id"
                 + " JOIN personas as personas on personas.id = pa.persona_id"
                 + " JOIN examiners as persona_examiner ON persona_examiner.id = personas.examiner_id ";
-
-        return querySql;
 
     }
 
