@@ -31,6 +31,7 @@ import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.CheckBoxListPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -46,18 +47,43 @@ public class ReportWizardDataSourceSelectionPanel implements WizardDescriptor.Fi
     private WizardDescriptor wiz;
 
     private final JButton finishButton;
+    private final JButton nextButton;
 
+    @NbBundle.Messages({
+        "ReportWizardDataSourceSelectionPanel.nextButton.text=Next",
+        "ReportWizardDataSourceSelectionPanel.finishButton.text=Finish"
+    })
     public ReportWizardDataSourceSelectionPanel() {
-        finishButton = new JButton(
-                NbBundle.getMessage(this.getClass(), "ReportWizardFileOptionsPanel.finishButton.text"));
+        nextButton = new JButton(Bundle.ReportWizardDataSourceSelectionPanel_nextButton_text());
+        finishButton = new JButton(Bundle.ReportWizardDataSourceSelectionPanel_finishButton_text());
         finishButton.setEnabled(false);
+        nextButton.setEnabled(false);
 
-        finishButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        finishButton.addActionListener(createFinishButtonActionListener());
+        nextButton.addActionListener(createNextButtonActionListener());
+    }
+    
+    @NbBundle.Messages({
+        "ReportWizardDataSourceSelectionPanel.confirmEmptySelection=Are you sure you want to proceed with no selections?"
+    })
+    private ActionListener createNextButtonActionListener() {
+        return (ActionEvent e) -> {
+            if(!dataSourcesSelectionPanel.getSelectedElements().isEmpty()) {
+                wiz.doNextClick();
+            } else if(MessageNotifyUtil.Message.confirm(Bundle.ReportWizardDataSourceSelectionPanel_confirmEmptySelection())) {
+                wiz.doNextClick();
+            }
+        };
+    }
+    
+    private ActionListener createFinishButtonActionListener() {
+        return (ActionEvent e) -> {
+            if(!dataSourcesSelectionPanel.getSelectedElements().isEmpty()) {
+                wiz.doFinishClick();
+            } else if(MessageNotifyUtil.Message.confirm(Bundle.ReportWizardDataSourceSelectionPanel_confirmEmptySelection())) {
                 wiz.doFinishClick();
             }
-        });
+        };
     }
 
     @NbBundle.Messages({
@@ -90,9 +116,10 @@ public class ReportWizardDataSourceSelectionPanel implements WizardDescriptor.Fi
     @Override
     public void readSettings(WizardDescriptor data) {
         this.wiz = data;
-        wiz.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, finishButton, WizardDescriptor.CANCEL_OPTION});
+        wiz.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, nextButton, finishButton, WizardDescriptor.CANCEL_OPTION});
 
         boolean generalModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("generalModule", true); //NON-NLS
+        nextButton.setEnabled(!generalModule);
         finishButton.setEnabled(generalModule);
     }
 
