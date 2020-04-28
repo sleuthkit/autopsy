@@ -130,7 +130,7 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
         }
         
         // HTML reports in initial PR
-        if(tableModuleSelection != null && tableModuleSelection instanceof HTMLReport) {
+        if(tableModuleSelection instanceof HTMLReport) {
             prefs.putBoolean("showDataSourceSelectionPanel", true);
         }
     }

@@ -29,6 +29,7 @@ public class GeneralReportSettings implements Serializable {
     private static final long serialVersionUID = 1L;
     
     private List<Long> dataSourcesToProcess;
+    private String reportDirectoryPath;
     
     public List<Long> getDataSourcesToProcess() {
         return dataSourcesToProcess;
@@ -36,5 +37,13 @@ public class GeneralReportSettings implements Serializable {
     
     public void setDataSourcesToProcess(List<Long> dataSourcesToProcess) {
         this.dataSourcesToProcess = new ArrayList<>(dataSourcesToProcess);
+    }
+    
+    public String getReportDirectoryPath() {
+        return this.reportDirectoryPath;
+    } 
+    
+    public void setReportDirectoryPath(String reportDirectoryPath) {
+        this.reportDirectoryPath = reportDirectoryPath;
     }
 }

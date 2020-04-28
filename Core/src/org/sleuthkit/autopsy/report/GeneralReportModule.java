@@ -45,16 +45,16 @@ public interface GeneralReportModule extends ReportModule {
 
     /**
      * Called to generate the report. Method is responsible for saving the file
-     * at the path specified and updating progress via the progressPanel object.
-     * Configuration parameters can be passed in the settings class. Modules should
-     * try to respond to all configuration parameters.
+     * and updating progress via the progressPanel object. Configuration
+     * parameters are passed in the settings class, most notably the directory
+     * to save the report. Modules should try to respond to all configuration
+     * parameters.
      *
-     * @param baseReportDir Base directory that reports are being stored in.
-     * Report should go into baseReportDir + getRelativeFilePath().
-     * @param settings Configuration parameters to customize the report generation process
+     * @param settings Configuration parameters to customize the report
+     * generation process
      * @param progressPanel panel to update the report's progress with
      */
-    default void generateReport(String baseReportDir, GeneralReportSettings settings, ReportProgressPanel progressPanel) {
-        generateReport(baseReportDir, progressPanel);
+    default void generateReport(GeneralReportSettings settings, ReportProgressPanel progressPanel) {
+        generateReport(settings.getReportDirectoryPath(), progressPanel);
     }
 }

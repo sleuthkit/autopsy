@@ -165,13 +165,14 @@ public final class KMLReport implements GeneralReportModule {
     }
     
     @Override
-    public void generateReport(String baseReportDir, GeneralReportSettings settings, ReportProgressPanel progressPanel) {
+    public void generateReport(GeneralReportSettings settings, ReportProgressPanel progressPanel) {
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
+        String baseReportDir = settings.getReportDirectoryPath();
         this.settings = settings;
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(true);
@@ -239,15 +240,16 @@ public final class KMLReport implements GeneralReportModule {
     @Override
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {       
         try {        
-            GeneralReportSettings settings = new GeneralReportSettings();
+            GeneralReportSettings reportSettings = new GeneralReportSettings();
             currentCase = Case.getCurrentCaseThrows();
             // Process all data sources if none are provided.
             List<Long> selections = currentCase.getDataSources()
                     .stream()
                     .map(Content::getId)
                     .collect(Collectors.toList());
-            settings.setDataSourcesToProcess(selections);
-            generateReport(baseReportDir, settings, progressPanel);
+            reportSettings.setDataSourcesToProcess(selections);
+            reportSettings.setReportDirectoryPath(baseReportDir);
+            generateReport(reportSettings, progressPanel);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Exception while accessing case resources.", ex); //NON-NLS
         }

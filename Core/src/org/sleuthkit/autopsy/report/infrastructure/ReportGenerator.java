@@ -302,7 +302,8 @@ public class ReportGenerator {
         if (generalReportModule != null) {
             String reportDir = createReportDirectory(generalReportModule);
             setupProgressPanel(generalReportModule, reportDir);
-            generalReportModule.generateReport(reportDir, reportSettings, progressIndicator);
+            reportSettings.setReportDirectoryPath(reportDir);
+            generalReportModule.generateReport(reportSettings, progressIndicator);
         }
     }
 
