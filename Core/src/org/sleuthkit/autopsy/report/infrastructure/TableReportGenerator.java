@@ -367,14 +367,12 @@ class TableReportGenerator {
         // Give the modules the rows for the content tags. 
         for (ContentTag tag : tags) {
             try {
-                long dataSourceId = tag.getContent().getDataSource().getId();
-                // Skip tags that are not in the data sources list
-                if(!this.settings.getDataSourcesToProcess().contains(dataSourceId)) {
+                if(shouldFilterFromReport(tag.getContent())) {
                     continue;
                 }
             } catch (TskCoreException ex) {
                 errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetContentTags"));
-                logger.log(Level.SEVERE, "failed to get data source of content tag", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Failed to access content data from the case database.", ex); //NON-NLS
                 return;
             }
             
@@ -459,14 +457,12 @@ class TableReportGenerator {
         // Give the modules the rows for the content tags. 
         for (BlackboardArtifactTag tag : tags) {
             try {
-                long dataSourceId = tag.getContent().getDataSource().getId();
-                // Skip tags that are not in the data sources list
-                if (!this.settings.getDataSourcesToProcess().contains(dataSourceId)) {
+                if(shouldFilterFromReport(tag.getContent())) {
                     continue;
                 }
             }  catch (TskCoreException ex) {
                 errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetBBArtifactTags"));
-                logger.log(Level.SEVERE, "failed to get data source of blackboard artifact tag", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Failed to access content data from the case database.", ex); //NON-NLS
                 return;
             }
             
@@ -823,9 +819,7 @@ class TableReportGenerator {
                     AbstractFile f = openCase.getSleuthkitCase().getAbstractFileById(objId);
                     if (f != null) {
                         uniquePath = openCase.getSleuthkitCase().getAbstractFileById(objId).getUniquePath();
-                        long dataSourceId = f.getDataSource().getId();
-                        // Skip files that are not in the data sources list
-                        if(!this.settings.getDataSourcesToProcess().contains(dataSourceId)) {
+                        if(shouldFilterFromReport(f)) {
                             continue;
                         }
                     }
@@ -985,9 +979,7 @@ class TableReportGenerator {
                     AbstractFile f = openCase.getSleuthkitCase().getAbstractFileById(objId);
                     if (f != null) {
                         uniquePath = openCase.getSleuthkitCase().getAbstractFileById(objId).getUniquePath();
-                        long dataSourceId = f.getDataSource().getId();
-                        // Skip files that are not in the data sources list.
-                        if(!this.settings.getDataSourcesToProcess().contains(dataSourceId)) {
+                        if(shouldFilterFromReport(f)) {
                             continue;
                         }
                     }
@@ -1232,9 +1224,7 @@ class TableReportGenerator {
         List<ArtifactData> artifacts = new ArrayList<>();
         try {
             for (BlackboardArtifact artifact : Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifacts(type.getTypeID())) {
-                long dataSourceId = artifact.getDataSource().getId();
-                // Skip artifacts that are not in the data sources list
-                if(!this.settings.getDataSourcesToProcess().contains(dataSourceId)) {
+                if(shouldFilterFromReport(artifact)) {
                     continue;
                 }
                 
@@ -1831,6 +1821,15 @@ class TableReportGenerator {
         }
         return "";
 
+    }
+    
+    /**
+     * Indicates if the content should be filtered from the report.
+     */
+    private boolean shouldFilterFromReport(Content content) throws TskCoreException {
+        long dataSourceId = content.getDataSource().getId();
+        return this.settings.getDataSourcesToProcess() != null && 
+                !this.settings.getDataSourcesToProcess().contains(dataSourceId);
     }
 
     /**

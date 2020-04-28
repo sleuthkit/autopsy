@@ -125,12 +125,14 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
         FileReportSettings fileSettings = (FileReportSettings) wiz.getProperty("fileReportSettings");
         TableReportSettings tableSettings = (TableReportSettings) wiz.getProperty("tableReportSettings");
         GeneralReportSettings generalSettings = new GeneralReportSettings();
-        generalSettings.setDataSourcesToProcess(selectedDataSourceIds);
-        if(fileSettings != null) {
-            fileSettings.setDataSourcesToProcess(selectedDataSourceIds);
-        }
-        if(tableSettings != null) {
-            tableSettings.setDataSourcesToProcess(selectedDataSourceIds);
+        if(selectedDataSourceIds != null) {
+            generalSettings.setDataSourcesToProcess(selectedDataSourceIds);
+            if(fileSettings != null) {
+                fileSettings.setDataSourcesToProcess(selectedDataSourceIds);
+            }
+            if(tableSettings != null) {
+                tableSettings.setDataSourcesToProcess(selectedDataSourceIds);
+            }
         }
         
         reportingConfig.setFileReportSettings(fileSettings);

@@ -350,9 +350,7 @@ public final class KMLReport implements GeneralReportModule {
      */
     void addExifMetadataContent(List<Waypoint> points, String baseReportDirectory) throws IOException, TskCoreException {
         for (Waypoint point : points) {
-            long pointDataSource = point.getArtifact().getDataSource().getId();
-            // Skip this point if its not in the data sources list.
-            if(!settings.getDataSourcesToProcess().contains(pointDataSource)) {
+            if(shouldFilterFromReport(point.getArtifact())) {
                 continue;
             }
             
@@ -414,11 +412,10 @@ public final class KMLReport implements GeneralReportModule {
      */
     void addWaypoints(List<Waypoint> points, Element folder, FeatureColor waypointColor, String headerLabel) throws TskCoreException {
         for (Waypoint point : points) {
-            long pointDataSource = point.getArtifact().getDataSource().getId();
-            // Only add this waypoint if its in the data sources list.
-            if(settings.getDataSourcesToProcess().contains(pointDataSource)) {
-                addContent(folder, point.getLabel(), waypointColor, getFormattedDetails(point, headerLabel), point.getTimestamp(), makePoint(point), point.getLatitude(), point.getLongitude());
+            if(shouldFilterFromReport(point.getArtifact())) {
+                continue;
             }
+            addContent(folder, point.getLabel(), waypointColor, getFormattedDetails(point, headerLabel), point.getTimestamp(), makePoint(point), point.getLatitude(), point.getLongitude());
         }
     }
 
@@ -458,11 +455,10 @@ public final class KMLReport implements GeneralReportModule {
         }
 
         for (Route route : routes) {
-            long routeDataSource = route.getArtifact().getDataSource().getId();
-            // Only add routes that are in the data sources list
-            if(settings.getDataSourcesToProcess().contains(routeDataSource)) {
-                addRouteToReport(route);   
+            if(shouldFilterFromReport(route.getArtifact())) {
+                continue;
             }
+            addRouteToReport(route);   
         }
     }
 
@@ -533,11 +529,10 @@ public final class KMLReport implements GeneralReportModule {
         }
 
         for (Track track : tracks) {
-            long trackDataSource = track.getArtifact().getDataSource().getId();
-            // Only add tracks that are in the data sources list
-            if(settings.getDataSourcesToProcess().contains(trackDataSource)) {
-                addTrackToReport(track);
+            if(shouldFilterFromReport(track.getArtifact())) {
+                continue;
             }
+            addTrackToReport(track);
         }
     }
 
@@ -924,5 +919,14 @@ public final class KMLReport implements GeneralReportModule {
         }
 
         return String.format("%.2f, %.2f", latitude, longitude);
+    }
+    
+    /**
+     * Indicates if the content should be filtered from the report.
+     */
+    private boolean shouldFilterFromReport(Content content) throws TskCoreException {
+        long dataSourceId = content.getDataSource().getId();
+        return this.settings.getDataSourcesToProcess() != null && 
+                !this.settings.getDataSourcesToProcess().contains(dataSourceId);
     }
 }
