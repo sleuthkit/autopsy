@@ -101,16 +101,13 @@ final class ExtractSru extends Extract {
 
         this.context = context;
 
-        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-        String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + "sru"; //NON-NLS
-
+        String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + "sru";
         File dir = new File(modOutPath);
         if (dir.exists() == false) {
             dir.mkdirs();
         }
 
         String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru"); //NON-NLS
-//        String softwareHiveFileName = null;
         String softwareHiveFileName = getSoftwareHiveFile(dataSource, tempDirPath);
       
         if (softwareHiveFileName  == null) {
@@ -119,6 +116,7 @@ final class ExtractSru extends Extract {
     
         List<AbstractFile> sruFiles;
 
+        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
         try {
             sruFiles = fileManager.findFiles(dataSource, "SRUDB.DAT"); //NON-NLS            
         } catch (TskCoreException ex) {
@@ -128,17 +126,13 @@ final class ExtractSru extends Extract {
         }
 
         String sruFileName = null;
-        String tempOutFile = null;
         AbstractFile sruAbstractFile = null;
-
+        String modOutFile = null;
+        
         for (AbstractFile sruFile : sruFiles) {
 
-            if (context.dataSourceIngestIsCancelled()) {
-                return;
-            }
-
             sruFileName = tempDirPath + File.separator + sruFile.getId() + "_" + sruFile.getName();
-            tempOutFile = modOutPath + File.separator + sruFile.getId() + "_srudb.db3";
+            modOutFile =  modOutPath + File.separator + sruFile.getId() + "_srudb.db3";
             sruAbstractFile = sruFile;
 
             try {
@@ -168,10 +162,10 @@ final class ExtractSru extends Extract {
         }
 
         try {
-            extractSruFiles(sruDumper, sruFileName, tempOutFile, tempDirPath, softwareHiveFileName);
-            findSruExecutedFiles(tempOutFile, dataSource);
-            createNetUsageArtifacts(tempOutFile, sruAbstractFile);
-            createAppUsageArtifacts(tempOutFile, sruAbstractFile);
+            extractSruFiles(sruDumper, sruFileName, modOutFile, tempDirPath, softwareHiveFileName);
+            findSruExecutedFiles(modOutFile, dataSource);
+            createNetUsageArtifacts(modOutFile, sruAbstractFile);
+            createAppUsageArtifacts(modOutFile, sruAbstractFile);
         } catch (IOException ex) {
             this.addErrorMessage(Bundle.ExtractSru_process_error_executing_export_srudb_program());
             logger.log(Level.SEVERE, "SRUDB.dat file not found"); //NON-NLS
@@ -208,10 +202,6 @@ final class ExtractSru extends Extract {
 
         for (AbstractFile softwareFile : softwareHiveFiles) {
 
-            if (context.dataSourceIngestIsCancelled()) {
-                return null;
-            }
-    
             if (softwareFile.getParentPath().endsWith("/config/")) {
                 softwareHiveFileName = tempDirPath + File.separator + softwareFile.getId() + "_" + softwareFile.getName();
 
