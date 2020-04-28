@@ -164,8 +164,9 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
             Matcher m = md5Pattern.matcher(hashEntry);
             if (m.find()) {               
                 // Is there any text left on this line? If so, treat it as a comment.
-                final String comment = hashEntry.substring(m.end()).trim();
+                String comment = hashEntry.substring(m.end()).trim();
                 if (comment.length() > 0) {
+                    comment = (comment.charAt(0) == ',') ? comment.substring(1) : comment;
                     hashes.add(new HashEntry(null, m.group(0), null, null, comment));
                 } else {
                     // more information can be added to the HashEntry - sha-1, sha-512, comment
