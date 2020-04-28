@@ -32,7 +32,6 @@ import org.apache.commons.io.FileUtils;
 
 import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Exceptions;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.PersonaHelper.addAccountToPersona;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.TskData;
 
@@ -296,7 +295,7 @@ public class CentralRepoPersonasTest  extends TestCase {
            
             String comment = "The best dog ever";
             Persona.PersonaStatus status = Persona.PersonaStatus.ACTIVE;
-            PersonaAccount pa1 = PersonaHelper.createPersonaForAccount(DOG_PERSONA_NAME, comment , status, phoneAccount1, "Because I said so", Persona.Confidence.LOW );
+            PersonaAccount pa1 = Persona.createPersonaForAccount(DOG_PERSONA_NAME, comment , status, phoneAccount1, "Because I said so", Persona.Confidence.LOW );
                 
 
             Persona dogPersona = pa1.getPersona();
@@ -311,14 +310,14 @@ public class CentralRepoPersonasTest  extends TestCase {
             Assert.assertEquals(pa1.getConfidence(), Persona.Confidence.LOW);
 
             // Step 3. Add Persona Aliases
-            PersonaAlias alias1 = PersonaHelper.addPersonaAlias(dogPersona, "Good Boy", "Coz he's is the best dog ever", Persona.Confidence.MEDIUM);
-            PersonaAlias alias2 = PersonaHelper.addPersonaAlias(dogPersona, "WoofWoof", "How many dumb comments can I come up with?", Persona.Confidence.LOW);
+            PersonaAlias alias1 = dogPersona.addAlias("Good Boy", "Coz he's is the best dog ever", Persona.Confidence.MEDIUM);
+            PersonaAlias alias2 = dogPersona.addAlias("WoofWoof", "How many dumb comments can I come up with?", Persona.Confidence.LOW);
 
             Assert.assertNotNull(alias1);
             Assert.assertNotNull(alias2);
 
             // get all aliases for persona
-            Collection<PersonaAlias> aliases = PersonaHelper.getPersonaAliases(dogPersona.getId());
+            Collection<PersonaAlias> aliases = dogPersona.getAliases();
             Assert.assertEquals(2, aliases.size());
             for (PersonaAlias alias: aliases) {
                 //System.out.println("Alias: "+ alias.getAlias()) ;
@@ -327,14 +326,14 @@ public class CentralRepoPersonasTest  extends TestCase {
             
             
             //Step 4: Add Persona metadata
-            PersonaMetadata metadata1 = PersonaHelper.addPersonaMetadata(dogPersona, "Color", "Black", "He's got thick black hair.", Persona.Confidence.MEDIUM);
-            PersonaMetadata metadata2 = PersonaHelper.addPersonaMetadata(dogPersona, "Gender", "Male", "Because...", Persona.Confidence.LOW);
+            PersonaMetadata metadata1 = dogPersona.addMetadata("Color", "Black", "He's got thick black hair.", Persona.Confidence.MEDIUM);
+            PersonaMetadata metadata2 = dogPersona.addMetadata("Gender", "Male", "Because...", Persona.Confidence.LOW);
 
             Assert.assertNotNull(metadata1);
             Assert.assertNotNull(metadata2);
 
             // get all metadata for persona 
-            Collection<PersonaMetadata> metadataList = PersonaHelper.getPersonaMetadata(dogPersona.getId());
+            Collection<PersonaMetadata> metadataList = dogPersona.getMetadata();
             Assert.assertEquals(2, metadataList.size());
             for (PersonaMetadata md: metadataList) {
                 //System.out.println(String.format("Metadata: %s : %s", md.getName(), md.getValue())) ;
@@ -347,11 +346,11 @@ public class CentralRepoPersonasTest  extends TestCase {
             CentralRepoAccount catdogFBAccount = CentralRepository.getInstance()
                     .getOrCreateAccount(facebookAccountType, FACEBOOK_ID_CATDOG);
             
-            // Add account to persona
-            addAccountToPersona( dogPersona,  catdogFBAccount,  "Looks like dog, barks like a dog...",  Persona.Confidence.MEDIUM);
+            // Add an account to persona
+            dogPersona.addAccountToPersona(catdogFBAccount,  "Looks like dog, barks like a dog...",  Persona.Confidence.MEDIUM);
             
              // Get all acounts for the persona...
-            Collection<PersonaAccount> personaAccounts = PersonaHelper.getPersonaAccountsForPersona(dogPersona.getId());
+            Collection<PersonaAccount> personaAccounts = dogPersona.getPersonaAccounts();
             
             Assert.assertEquals(2, personaAccounts.size());
             
@@ -366,13 +365,13 @@ public class CentralRepoPersonasTest  extends TestCase {
             // Step 6: Create a Second Persona, that shares a common account with another persona
            
             String comment2 = "The fiercest cat alive.";
-            PersonaAccount pa2 = PersonaHelper.createPersonaForAccount(CAT_PERSONA_NAME, comment2 , Persona.PersonaStatus.ACTIVE, catdogFBAccount, "Smells like a cat.", Persona.Confidence.LOW );
+            PersonaAccount pa2 = Persona.createPersonaForAccount(CAT_PERSONA_NAME, comment2 , Persona.PersonaStatus.ACTIVE, catdogFBAccount, "Smells like a cat.", Persona.Confidence.LOW );
             Assert.assertNotNull(pa2);
             Assert.assertTrue(pa2.getPersona().getName().equalsIgnoreCase(CAT_PERSONA_NAME));
             
             
             // Get ALL personas for an account
-            Collection<PersonaAccount> personaAccounts2 = PersonaHelper.getPersonaAccountsForAccount(catdogFBAccount.getAccountId());
+            Collection<PersonaAccount> personaAccounts2 = Persona.getPersonaAccountsForAccount(catdogFBAccount.getAccountId());
             
             Assert.assertEquals(2, personaAccounts2.size());
             for (PersonaAccount pa: personaAccounts2) {
@@ -451,7 +450,7 @@ public class CentralRepoPersonasTest  extends TestCase {
         // Create Persona for the Dog, using the shared FB account
         String comment = "The best dog ever";
         Persona.PersonaStatus status = Persona.PersonaStatus.ACTIVE;
-        PersonaAccount pa1 = PersonaHelper.createPersonaForAccount(DOG_PERSONA_NAME, 
+        PersonaAccount pa1 = Persona.createPersonaForAccount(DOG_PERSONA_NAME, 
                                 comment , 
                                 status, catdogFBAccount, "Because I said so", Persona.Confidence.LOW );
         Persona dogPersona = pa1.getPersona();
@@ -460,7 +459,7 @@ public class CentralRepoPersonasTest  extends TestCase {
       
         // create a second persona for the same account - Cat has the same FB account as dog
         String comment2 = "The fiercest cat alive.";
-        PersonaAccount pa2 = PersonaHelper.createPersonaForAccount(CAT_PERSONA_NAME, 
+        PersonaAccount pa2 = Persona.createPersonaForAccount(CAT_PERSONA_NAME, 
                                  comment2 , Persona.PersonaStatus.ACTIVE, 
                                  catdogFBAccount, "Smells like a cat.", Persona.Confidence.LOW );
         
@@ -487,7 +486,7 @@ public class CentralRepoPersonasTest  extends TestCase {
         
         CentralRepository.getInstance().addArtifactInstance(dogEmailAcctInstance);
         
-        PersonaAccount pa3 = addAccountToPersona( dogPersona,  dogEmailAccount,  "Thats definitely a dog email account",  Persona.Confidence.MEDIUM);
+        PersonaAccount pa3 = dogPersona.addAccountToPersona(dogEmailAccount,  "Thats definitely a dog email account",  Persona.Confidence.MEDIUM);
         Assert.assertNotNull(pa3);
         Assert.assertTrue(pa3.getPersona().getName().equalsIgnoreCase(DOG_PERSONA_NAME));
         
@@ -520,13 +519,13 @@ public class CentralRepoPersonasTest  extends TestCase {
         CentralRepository.getInstance().addArtifactInstance(catWhatsAppAccountInstance2);
         
         
-        PersonaAccount pa4 = addAccountToPersona( catPersona,  catWhatsAppAccount,  "The cat has a WhatsApp account",  Persona.Confidence.MEDIUM);
+        PersonaAccount pa4 = catPersona.addAccountToPersona(catWhatsAppAccount,  "The cat has a WhatsApp account",  Persona.Confidence.MEDIUM);
         Assert.assertNotNull(pa4);
         Assert.assertTrue(pa4.getPersona().getName().equalsIgnoreCase(CAT_PERSONA_NAME));
         
         
         
-        Collection<CentralRepoAccount> dogAccounts =  PersonaHelper.getAccountsForPersona(dogPersona.getId());
+        Collection<CentralRepoAccount> dogAccounts =  dogPersona.getAccounts();
         Assert.assertEquals(2, dogAccounts.size()); // Dog has 2 accounts.
         for (CentralRepoAccount acct : dogAccounts) {
                 Assert.assertTrue(acct.getTypeSpecificId().equalsIgnoreCase(FACEBOOK_ID_CATDOG)
@@ -535,7 +534,7 @@ public class CentralRepoPersonasTest  extends TestCase {
             }
         
         
-        Collection<CentralRepoAccount> catAccounts =  PersonaHelper.getAccountsForPersona(catPersona.getId());
+        Collection<CentralRepoAccount> catAccounts =  catPersona.getAccounts();
         Assert.assertEquals(2, catAccounts.size()); // cat has 2 accounts.
         for (CentralRepoAccount acct:catAccounts) {
             //System.out.println("Cat Account id : " + acct.getTypeSpecificId());
@@ -562,7 +561,7 @@ public class CentralRepoPersonasTest  extends TestCase {
         
         
         // Create a person for the Skype account
-        PersonaAccount pa5 = PersonaHelper.createPersonaForAccount(HOLMES_PERSONA_NAME, 
+        PersonaAccount pa5 = Persona.createPersonaForAccount(HOLMES_PERSONA_NAME, 
                                  "Has a Pipe in his mouth." , Persona.PersonaStatus.ACTIVE, 
                                  holmesSkypeAccount, "The name says it all.", Persona.Confidence.LOW );
         
@@ -573,7 +572,7 @@ public class CentralRepoPersonasTest  extends TestCase {
         
      
         // Test that getting cases for Persona 
-        Collection<CorrelationCase> dogCases = PersonaHelper.getCasesForPersona(dogPersona.getId());
+        Collection<CorrelationCase> dogCases = dogPersona.getCases();
         Assert.assertEquals(2, dogCases.size()); // dog appears in 2 cases.
         for (CorrelationCase dc: dogCases) {
             Assert.assertTrue(dc.getCaseUUID().equalsIgnoreCase(CASE_1_UUID) 
@@ -581,7 +580,7 @@ public class CentralRepoPersonasTest  extends TestCase {
             //System.out.println("Dog Case UUID : " + dc.getCaseUUID());
         }
         
-        Collection<CorrelationCase> catCases = PersonaHelper.getCasesForPersona(catPersona.getId());
+        Collection<CorrelationCase> catCases = catPersona.getCases();
         Assert.assertEquals(2, catCases.size()); // cat appears in 2 cases.
         for (CorrelationCase cc: catCases) {
              Assert.assertTrue(cc.getCaseUUID().equalsIgnoreCase(CASE_1_UUID) 
@@ -589,7 +588,7 @@ public class CentralRepoPersonasTest  extends TestCase {
             //System.out.println("Cat Case UUID : " + cc.getCaseUUID());
         }
         
-        Collection<CorrelationCase> holmesCases = PersonaHelper.getCasesForPersona(holmesPersona.getId());
+        Collection<CorrelationCase> holmesCases = holmesPersona.getCases();
         Assert.assertEquals(1, holmesCases.size()); // Holmes appears in 1 case.
         for (CorrelationCase hc: holmesCases) {
             Assert.assertTrue(hc.getCaseUUID().equalsIgnoreCase(CASE_3_UUID));
@@ -598,7 +597,7 @@ public class CentralRepoPersonasTest  extends TestCase {
         
         
         // Test that getting data sources for the Persona - 
-        Collection<CorrelationDataSource> dogDatasources = PersonaHelper.getDataSourcesForPersona(dogPersona.getId());
+        Collection<CorrelationDataSource> dogDatasources = dogPersona.getDataSources();
         Assert.assertEquals(3, dogDatasources.size()); // dog appears in 2 cases in 3 data sources.
         for (CorrelationDataSource dds: dogDatasources) {
             Assert.assertTrue(dds.getDeviceID().equalsIgnoreCase(DS1_DEVICEID)
@@ -607,7 +606,7 @@ public class CentralRepoPersonasTest  extends TestCase {
             //System.out.println("Dog DS DeviceID : " + dds.getDeviceID());
         }
         
-         Collection<CorrelationDataSource> catDatasources = PersonaHelper.getDataSourcesForPersona(catPersona.getId());
+         Collection<CorrelationDataSource> catDatasources = catPersona.getDataSources();
         Assert.assertEquals(3, catDatasources.size()); // cat appears in 2 cases in 3 data sources.
         for (CorrelationDataSource cds: catDatasources) {
             Assert.assertTrue(cds.getDeviceID().equalsIgnoreCase(DS1_DEVICEID)
@@ -616,7 +615,7 @@ public class CentralRepoPersonasTest  extends TestCase {
             //System.out.println("Cat DS DeviceID : " + cds.getDeviceID());
         }
         
-        Collection<CorrelationDataSource> holmesDatasources = PersonaHelper.getDataSourcesForPersona(holmesPersona.getId());
+        Collection<CorrelationDataSource> holmesDatasources = holmesPersona.getDataSources();
         Assert.assertEquals(1, holmesDatasources.size()); // Holmes appears in 1 cases in 1 data source.
         for (CorrelationDataSource hds: holmesDatasources) {
              Assert.assertTrue(hds.getDeviceID().equalsIgnoreCase(DS4_DEVICEID));
@@ -626,41 +625,41 @@ public class CentralRepoPersonasTest  extends TestCase {
         // Test getting peronas by case.
          
         // Test that getting all Personas for Case 1  - Case1 has 2 persona - Cat & Dog
-        Collection<Persona> case1Persona = PersonaHelper.getPersonasForCase(case1);
+        Collection<Persona> case1Persona = Persona.getPersonasForCase(case1);
         Assert.assertEquals(2, case1Persona.size()); // 
         
         // Test that getting all Personas for Case 2  - Case2 has 2 persona - Cat & Dog
-        Collection<Persona> case2Persona = PersonaHelper.getPersonasForCase(case2);
+        Collection<Persona> case2Persona = Persona.getPersonasForCase(case2);
         Assert.assertEquals(2, case2Persona.size()); // 
         
          // Test that getting all Personas for Case 3  - Case3 has 1 persona - Holmes
-        Collection<Persona> case3Persona = PersonaHelper.getPersonasForCase(case3);
+        Collection<Persona> case3Persona = Persona.getPersonasForCase(case3);
         Assert.assertEquals(1, case3Persona.size()); // 
         
          // Test that getting all Personas for Case 4  - Case4 has no persona
-        Collection<Persona> case4Persona = PersonaHelper.getPersonasForCase(case4);
+        Collection<Persona> case4Persona = Persona.getPersonasForCase(case4);
         Assert.assertEquals(0, case4Persona.size()); // 
           
     
         // Test getting peronas by data source.
     
         // Test that getting all Personas for DS 1 
-        Collection<Persona> ds1Persona = PersonaHelper.getPersonaForDataSource(dataSource1fromCase1);
+        Collection<Persona> ds1Persona = Persona.getPersonaForDataSource(dataSource1fromCase1);
         Assert.assertEquals(2, ds1Persona.size()); // 
         
-        Collection<Persona> ds2Persona = PersonaHelper.getPersonaForDataSource(dataSource2fromCase1);
+        Collection<Persona> ds2Persona = Persona.getPersonaForDataSource(dataSource2fromCase1);
         Assert.assertEquals(2, ds2Persona.size()); // 
         
-        Collection<Persona> ds3Persona = PersonaHelper.getPersonaForDataSource(dataSource1fromCase2);
+        Collection<Persona> ds3Persona = Persona.getPersonaForDataSource(dataSource1fromCase2);
         Assert.assertEquals(2, ds3Persona.size()); // 
         
-        Collection<Persona> ds4Persona = PersonaHelper.getPersonaForDataSource(dataSource1fromCase3);
+        Collection<Persona> ds4Persona = Persona.getPersonaForDataSource(dataSource1fromCase3);
         Assert.assertEquals(1, ds4Persona.size()); // 
         
-        Collection<Persona> ds5Persona = PersonaHelper.getPersonaForDataSource(dataSource2fromCase3);
+        Collection<Persona> ds5Persona = Persona.getPersonaForDataSource(dataSource2fromCase3);
         Assert.assertEquals(0, ds5Persona.size()); // 
         
-        Collection<Persona> ds6Persona = PersonaHelper.getPersonaForDataSource(dataSource1fromCase4);
+        Collection<Persona> ds6Persona = Persona.getPersonaForDataSource(dataSource1fromCase4);
         Assert.assertEquals(0, ds6Persona.size()); // 
         
         
@@ -684,7 +683,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                         .getOrCreateAccount(emailAccountType, EMAIL_ID_1);
 
                 // Create a Persona with no name
-                PersonaAccount pa1 = PersonaHelper.createPersonaForAccount(null, "A persona with no name",
+                PersonaAccount pa1 = Persona.createPersonaForAccount(null, "A persona with no name",
                         Persona.PersonaStatus.ACTIVE, emailAccount1, "The person lost his name", Persona.Confidence.LOW);
                 
                 // Verify Persona has a default name
