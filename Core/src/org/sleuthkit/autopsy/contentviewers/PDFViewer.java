@@ -63,9 +63,11 @@ final class PDFViewer implements FileTypeViewer {
 
     private JPanel container;
     private final PropertiesManager propsManager;
+    private final ResourceBundle messagesBundle;
 
     PDFViewer() {
         container = createNewContainer();
+        messagesBundle = getMessagesBundle();
         propsManager = getCustomProperties();
     }
 
@@ -77,7 +79,7 @@ final class PDFViewer implements FileTypeViewer {
     @Override
     public void setFile(AbstractFile file) {
         // The 'C' in IcePDFs MVC set up.
-        SwingController controller = new SwingController();
+        SwingController controller = new SwingController(messagesBundle);
 
         // Builder for the 'V' in IcePDFs MVC set up
         SwingViewBuilder viewBuilder = new SwingViewBuilder(controller, propsManager);
@@ -181,9 +183,12 @@ final class PDFViewer implements FileTypeViewer {
         // This suppresses a pop-up, from IcePDF, that asks if you'd like to
         // save configuration changes to disk.
         props.setProperty("application.showLocalStorageDialogs", "false");
-
-        ResourceBundle defaultMessageBundle = ResourceBundle.getBundle(PropertiesManager.DEFAULT_MESSAGE_BUNDLE);
-        return new PropertiesManager(System.getProperties(), props, defaultMessageBundle);
+        
+        return new PropertiesManager(System.getProperties(), props, messagesBundle);
+    }
+    
+    private ResourceBundle getMessagesBundle() {
+        return NbBundle.getBundle(PDFViewer.class);
     }
 
     @NbBundle.Messages({
@@ -207,7 +212,7 @@ final class PDFViewer implements FileTypeViewer {
      */
     private SecurityCallback createPasswordDialogCallback() {
         // MyGUISecurityCallback is a reference implementation from IcePDF.
-        return new MyGUISecurityCallback(null, ResourceBundle.getBundle(PropertiesManager.DEFAULT_MESSAGE_BUNDLE)) {
+        return new MyGUISecurityCallback(null, messagesBundle) {
             private String password;
 
             @Override
