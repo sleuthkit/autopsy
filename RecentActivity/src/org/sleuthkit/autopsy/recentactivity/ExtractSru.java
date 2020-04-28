@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.Map;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle.Messages;
@@ -79,7 +80,7 @@ final class ExtractSru extends Extract {
     private static final String SRU_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
     private static final String SRU_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
     
-    private static final HashMap<String, AbstractFile> applicationFilesFound = new HashMap<>();
+    private static final Map<String, AbstractFile> applicationFilesFound = new HashMap<>();
 
     @Messages({
         "ExtractSru_module_name=System Resource Usage Extractor"
@@ -89,9 +90,7 @@ final class ExtractSru extends Extract {
     }
 
     @Messages({
-        "ExtractSru_process_errormsg_find_software_hive=Unable to find SOFTWARE HIVE file",
         "ExtractSru_process_errormsg_find_srudb_dat=Unable to find srudb.dat file",
-        "ExtractSru_process_errormsg_write_software_hive=Unable to write SOFTWARE HIVE file",
         "ExtractSru_process_errormsg_write_srudb_dat=Unable to write srudb.dat file",
         "ExtractSru_error_finding_export_srudb_program=Error finding export_srudb program",
         "ExtractSru_process_error_executing_export_srudb_program=Error running export_srudb program"
@@ -110,38 +109,14 @@ final class ExtractSru extends Extract {
             dir.mkdirs();
         }
 
-        List<AbstractFile> softwareHiveFiles;
-
-        try {
-            softwareHiveFiles = fileManager.findFiles(dataSource, "SOFTWARE"); //NON-NLS            
-        } catch (TskCoreException ex) {
-            this.addErrorMessage(Bundle.ExtractSru_process_errormsg_find_software_hive());
-            logger.log(Level.WARNING, "Unable to find SOFTWARE HIVE file.", ex); //NON-NLS
-            return;  // No need to continue
-        }
-
-        String softwareHiveFileName = null;
         String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru"); //NON-NLS
-
-        for (AbstractFile softwareFile : softwareHiveFiles) {
-
-            if (context.dataSourceIngestIsCancelled()) {
-                return;
-            }
-    
-            if (softwareFile.getParentPath().endsWith("/config/")) {
-                softwareHiveFileName = tempDirPath + File.separator + softwareFile.getId() + "_" + softwareFile.getName();
-
-                try {
-                    ContentUtils.writeToFile(softwareFile, new File(softwareHiveFileName));
-                } catch (IOException ex) {
-                    this.addErrorMessage(Bundle.ExtractSru_process_errormsg_find_software_hive());
-                    logger.log(Level.WARNING, String.format("Unable to write %s to temp directory. File name: %s", softwareFile.getName(), softwareFile), ex); //NON-NLS
-                    return;
-                }
-            }
+//        String softwareHiveFileName = null;
+        String softwareHiveFileName = getSoftwareHiveFile(dataSource, tempDirPath);
+      
+        if (softwareHiveFileName  == null) {
+            return;
         }
-
+    
         List<AbstractFile> sruFiles;
 
         try {
@@ -201,6 +176,55 @@ final class ExtractSru extends Extract {
             this.addErrorMessage(Bundle.ExtractSru_process_error_executing_export_srudb_program());
             logger.log(Level.SEVERE, "SRUDB.dat file not found"); //NON-NLS
         } 
+    }
+    
+    @Messages({
+        "ExtractSru_process_errormsg_find_software_hive=Unable to find SOFTWARE HIVE file",
+        "ExtractSru_process_errormsg_write_software_hive=Unable to write SOFTWARE HIVE file"
+    })
+    /**
+     * Extract the SOFTWARE hive file to the temp directory
+     * 
+     * @param dataSource datasource where software hiive is
+     * @param tempDirPath temp directory to write file to
+     * 
+     * @return Software hive file location 
+     */
+    String getSoftwareHiveFile(Content dataSource, String tempDirPath) {
+        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+        String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + "sru"; //NON-NLS
+
+        List<AbstractFile> softwareHiveFiles;
+
+        try {
+            softwareHiveFiles = fileManager.findFiles(dataSource, "SOFTWARE"); //NON-NLS            
+        } catch (TskCoreException ex) {
+            this.addErrorMessage(Bundle.ExtractSru_process_errormsg_find_software_hive());
+            logger.log(Level.WARNING, "Unable to find SOFTWARE HIVE file.", ex); //NON-NLS
+            return null;  // No need to continue
+        }
+
+        String softwareHiveFileName = null;
+
+        for (AbstractFile softwareFile : softwareHiveFiles) {
+
+            if (context.dataSourceIngestIsCancelled()) {
+                return null;
+            }
+    
+            if (softwareFile.getParentPath().endsWith("/config/")) {
+                softwareHiveFileName = tempDirPath + File.separator + softwareFile.getId() + "_" + softwareFile.getName();
+
+                try {
+                    ContentUtils.writeToFile(softwareFile, new File(softwareHiveFileName));
+                } catch (IOException ex) {
+                    this.addErrorMessage(Bundle.ExtractSru_process_errormsg_find_software_hive());
+                    logger.log(Level.WARNING, String.format("Unable to write %s to temp directory. File name: %s", softwareFile.getName(), softwareFile), ex); //NON-NLS
+                    return null;
+                }
+            }
+        }
+        return softwareHiveFileName;
     }
 
     /**
