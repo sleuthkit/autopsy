@@ -45,7 +45,9 @@ Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libr
 - Linux: Install the sleuthkit-java.deb file that you can download from github.com/sleuthkit/sleuthkit/releases.  This will install libewf, etc. For example:
 -- % sudo apt install ./sleuthkit-java_4.8.0-1_amd64.deb
 
-- OS X: Build The Sleuth Kit from source. See https://github.com/sleuthkit/sleuthkit/blob/develop/INSTALL.txt for details.
+- OS X: Build The Sleuth Kit from source.
+    See https://slo-sleuth.github.io/tools/InstallingAutopsyOnMacOS.html for a comprehensive write-up
+    on building The Sleuth Kit and getting Autopsy to run on Mac OS.
 
 
 * Install Autopsy *
