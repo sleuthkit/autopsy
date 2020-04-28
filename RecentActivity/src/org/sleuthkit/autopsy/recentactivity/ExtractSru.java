@@ -90,8 +90,6 @@ final class ExtractSru extends Extract {
     }
 
     @Messages({
-        "ExtractSru_process_errormsg_find_srudb_dat=Unable to find srudb.dat file",
-        "ExtractSru_process_errormsg_write_srudb_dat=Unable to write srudb.dat file",
         "ExtractSru_error_finding_export_srudb_program=Error finding export_srudb program",
         "ExtractSru_process_error_executing_export_srudb_program=Error running export_srudb program"
     })
@@ -114,35 +112,14 @@ final class ExtractSru extends Extract {
             return;
         }
     
-        List<AbstractFile> sruFiles;
+        AbstractFile sruAbstractFile = getSruFile(dataSource, tempDirPath);
 
-        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-        try {
-            sruFiles = fileManager.findFiles(dataSource, "SRUDB.DAT"); //NON-NLS            
-        } catch (TskCoreException ex) {
+        String sruFileName = tempDirPath + File.separator + sruAbstractFile.getId() + "_" + sruAbstractFile.getName();
+
+        if (sruFileName == null) {
             this.addErrorMessage(Bundle.ExtractSru_process_errormsg_find_srudb_dat());
-            logger.log(Level.WARNING, "Unable to find SRUDB.DAT file.", ex); //NON-NLS
-            return;  // No need to continue
-        }
-
-        String sruFileName = null;
-        AbstractFile sruAbstractFile = null;
-        String modOutFile = null;
-        
-        for (AbstractFile sruFile : sruFiles) {
-
-            sruFileName = tempDirPath + File.separator + sruFile.getId() + "_" + sruFile.getName();
-            modOutFile =  modOutPath + File.separator + sruFile.getId() + "_srudb.db3";
-            sruAbstractFile = sruFile;
-
-            try {
-                ContentUtils.writeToFile(sruFile, new File(sruFileName));
-            } catch (IOException ex) {
-                this.addErrorMessage(Bundle.ExtractSru_process_errormsg_write_srudb_dat());
-                logger.log(Level.WARNING, String.format("Unable to write %s to temp directory. File name: %s", sruFile.getName(), sruFile), ex); //NON-NLS
-                return;
-            }
-
+            logger.log(Level.SEVERE, "SRUDB.dat file not found"); //NON-NLS
+            return; //If we cannot find the srudb.dat file we cannot proceed
         }
 
         final String sruDumper = getPathForSruDumper();
@@ -155,15 +132,14 @@ final class ExtractSru extends Extract {
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
-        if (sruFileName == null) {
-            this.addErrorMessage(Bundle.ExtractSru_process_errormsg_find_srudb_dat());
-            logger.log(Level.SEVERE, "SRUDB.dat file not found"); //NON-NLS
-            return; //If we cannot find the srudb.dat file we cannot proceed
-        }
 
         try {
+            String modOutFile =  modOutPath + File.separator + sruAbstractFile.getId() + "_srudb.db3";
+
             extractSruFiles(sruDumper, sruFileName, modOutFile, tempDirPath, softwareHiveFileName);
+
             findSruExecutedFiles(modOutFile, dataSource);
+
             createNetUsageArtifacts(modOutFile, sruAbstractFile);
             createAppUsageArtifacts(modOutFile, sruAbstractFile);
         } catch (IOException ex) {
@@ -176,6 +152,7 @@ final class ExtractSru extends Extract {
         "ExtractSru_process_errormsg_find_software_hive=Unable to find SOFTWARE HIVE file",
         "ExtractSru_process_errormsg_write_software_hive=Unable to write SOFTWARE HIVE file"
     })
+
     /**
      * Extract the SOFTWARE hive file to the temp directory
      * 
@@ -186,7 +163,6 @@ final class ExtractSru extends Extract {
      */
     String getSoftwareHiveFile(Content dataSource, String tempDirPath) {
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-        String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + "sru"; //NON-NLS
 
         List<AbstractFile> softwareHiveFiles;
 
@@ -215,6 +191,50 @@ final class ExtractSru extends Extract {
             }
         }
         return softwareHiveFileName;
+    }
+
+    @Messages({
+        "ExtractSru_process_errormsg_find_srudb_dat=Unable to find srudb.dat file",
+        "ExtractSru_process_errormsg_write_srudb_dat=Unable to write srudb.dat file"
+    })
+    /**
+     * Extract the SOFTWARE hive file to the temp directory
+     * 
+     * @param dataSource datasource where software hiive is
+     * @param tempDirPath temp directory to write file to
+     * 
+     * @return Software hive file location 
+     */
+    AbstractFile getSruFile(Content dataSource, String tempDirPath) {
+        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+        
+        List<AbstractFile> sruFiles;
+        
+        try {
+            sruFiles = fileManager.findFiles(dataSource, "SRUDB.DAT"); //NON-NLS            
+        } catch (TskCoreException ex) {
+            this.addErrorMessage(Bundle.ExtractSru_process_errormsg_find_srudb_dat());
+            logger.log(Level.WARNING, "Unable to find SRUDB.DAT file.", ex); //NON-NLS
+            return null;  // No need to continue
+        }
+
+        AbstractFile sruAbstractFile = null;
+        
+        for (AbstractFile sruFile : sruFiles) {
+
+            String sruFileName = tempDirPath + File.separator + sruFile.getId() + "_" + sruFile.getName();
+            sruAbstractFile = sruFile;
+
+            try {
+                ContentUtils.writeToFile(sruFile, new File(sruFileName));
+            } catch (IOException ex) {
+                this.addErrorMessage(Bundle.ExtractSru_process_errormsg_write_srudb_dat());
+                logger.log(Level.WARNING, String.format("Unable to write %s to temp directory. File name: %s", sruFile.getName(), sruFile), ex); //NON-NLS
+                return null;
+            }
+
+        }
+        return sruAbstractFile;
     }
 
     /**
