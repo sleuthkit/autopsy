@@ -72,6 +72,9 @@
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding-AllPlatforms.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/stix/StixLib.jar" todir="${ext.dir}" />
+        <copy todir="${ext.dir}">
+            <fileset dir="${thirdparty.dir}/IcePDF 6.2.2/"/> 
+        </copy>
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5-contrib.jar" todir="${ext.dir}" />
 		<copy file="${thirdparty.dir}/DatCon/3.6.9/DatCon.jar" todir="${ext.dir}" />
