@@ -66,8 +66,8 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void customizeComponents(HashLookupModuleSettings settings) {
-        customizeHashSetsTable(jScrollPane1, knownHashTable, knownHashSetsTableModel);
-        customizeHashSetsTable(jScrollPane2, knownBadHashTable, knownBadHashSetsTableModel);
+        customizeHashSetsTable(knownHashDbsScrollPane, knownHashTable, knownHashSetsTableModel);
+        customizeHashSetsTable(knownBadHashDbsScrollPane, knownBadHashTable, knownBadHashSetsTableModel);
         alwaysCalcHashesCheckbox.setSelected(settings.shouldCalculateHashes());
         hashDbManager.addPropertyChangeListener(this);
         alwaysCalcHashesCheckbox.setText("<html>" + org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.text") + "</html>"); // NOI18N NON-NLS
@@ -285,36 +285,31 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
+        knownHashDbsLabel = new javax.swing.JLabel();
+        knownHashDbsScrollPane = new javax.swing.JScrollPane();
         knownHashTable = new javax.swing.JTable();
         knownBadHashDbsLabel = new javax.swing.JLabel();
-        knownHashDbsLabel = new javax.swing.JLabel();
-        alwaysCalcHashesCheckbox = new javax.swing.JCheckBox();
-        jScrollPane2 = new javax.swing.JScrollPane();
+        knownBadHashDbsScrollPane = new javax.swing.JScrollPane();
         knownBadHashTable = new javax.swing.JTable();
+        unspecifiedHashDbsLabel = new javax.swing.JLabel();
+        unspecifiedHashDbsScrollPane = new javax.swing.JScrollPane();
+        unspecifiedHashTable = new javax.swing.JTable();
+        alwaysCalcHashesCheckbox = new javax.swing.JCheckBox();
 
         setPreferredSize(new java.awt.Dimension(292, 150));
 
-        jScrollPane1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        knownHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.knownHashDbsLabel.text")); // NOI18N
+
+        knownHashDbsScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         knownHashTable.setBackground(new java.awt.Color(240, 240, 240));
         knownHashTable.setShowHorizontalLines(false);
         knownHashTable.setShowVerticalLines(false);
-        jScrollPane1.setViewportView(knownHashTable);
+        knownHashDbsScrollPane.setViewportView(knownHashTable);
 
         knownBadHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.knownBadHashDbsLabel.text")); // NOI18N
 
-        knownHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.knownHashDbsLabel.text")); // NOI18N
-
-        alwaysCalcHashesCheckbox.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.text")); // NOI18N
-        alwaysCalcHashesCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.toolTipText")); // NOI18N
-        alwaysCalcHashesCheckbox.setMaximumSize(new java.awt.Dimension(290, 35));
-        alwaysCalcHashesCheckbox.setMinimumSize(new java.awt.Dimension(290, 35));
-        alwaysCalcHashesCheckbox.setPreferredSize(new java.awt.Dimension(271, 35));
-        alwaysCalcHashesCheckbox.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        alwaysCalcHashesCheckbox.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
-
-        jScrollPane2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        knownBadHashDbsScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         knownBadHashTable.setBackground(new java.awt.Color(240, 240, 240));
         knownBadHashTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -327,7 +322,32 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         ));
         knownBadHashTable.setShowHorizontalLines(false);
         knownBadHashTable.setShowVerticalLines(false);
-        jScrollPane2.setViewportView(knownBadHashTable);
+        knownBadHashDbsScrollPane.setViewportView(knownBadHashTable);
+
+        unspecifiedHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.unspecifiedHashDbsLabel.text")); // NOI18N
+
+        unspecifiedHashDbsScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
+        unspecifiedHashTable.setBackground(new java.awt.Color(240, 240, 240));
+        unspecifiedHashTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        unspecifiedHashTable.setShowHorizontalLines(false);
+        unspecifiedHashTable.setShowVerticalLines(false);
+        unspecifiedHashDbsScrollPane.setViewportView(unspecifiedHashTable);
+
+        alwaysCalcHashesCheckbox.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.text")); // NOI18N
+        alwaysCalcHashesCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.toolTipText")); // NOI18N
+        alwaysCalcHashesCheckbox.setMaximumSize(new java.awt.Dimension(290, 35));
+        alwaysCalcHashesCheckbox.setMinimumSize(new java.awt.Dimension(290, 35));
+        alwaysCalcHashesCheckbox.setPreferredSize(new java.awt.Dimension(271, 35));
+        alwaysCalcHashesCheckbox.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        alwaysCalcHashesCheckbox.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -339,14 +359,23 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(knownHashDbsLabel)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(knownBadHashDbsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 290, Short.MAX_VALUE)
+                    .addComponent(knownBadHashDbsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(10, 10, 10)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
+                            .addComponent(knownHashDbsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                            .addComponent(knownBadHashDbsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
                     .addComponent(alwaysCalcHashesCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(unspecifiedHashDbsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE)
+                        .addGroup(layout.createSequentialGroup()
+                            .addGap(10, 10, 10)
+                            .addComponent(unspecifiedHashDbsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
+                    .addContainerGap()))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -354,24 +383,33 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
                 .addGap(2, 2, 2)
                 .addComponent(knownHashDbsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 29, Short.MAX_VALUE)
+                .addComponent(knownHashDbsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 68, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(knownBadHashDbsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 29, Short.MAX_VALUE)
+                .addComponent(knownBadHashDbsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(unspecifiedHashDbsLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(unspecifiedHashDbsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 68, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(alwaysCalcHashesCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0))
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGap(0, 330, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox alwaysCalcHashesCheckbox;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel knownBadHashDbsLabel;
+    private javax.swing.JScrollPane knownBadHashDbsScrollPane;
     private javax.swing.JTable knownBadHashTable;
     private javax.swing.JLabel knownHashDbsLabel;
+    private javax.swing.JScrollPane knownHashDbsScrollPane;
     private javax.swing.JTable knownHashTable;
+    private javax.swing.JLabel unspecifiedHashDbsLabel;
+    private javax.swing.JScrollPane unspecifiedHashDbsScrollPane;
+    private javax.swing.JTable unspecifiedHashTable;
     // End of variables declaration//GEN-END:variables
 }

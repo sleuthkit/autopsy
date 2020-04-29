@@ -198,6 +198,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         lbOrg = new javax.swing.JLabel();
         orgComboBox = new javax.swing.JComboBox<>();
         orgButton = new javax.swing.JButton();
+        unspecifiedRadioButton = new javax.swing.JRadioButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -224,7 +225,6 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         });
 
         buttonGroup1.add(knownBadRadioButton);
-        knownBadRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(knownBadRadioButton, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.knownBadRadioButton.text")); // NOI18N
         knownBadRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -292,6 +292,15 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             }
         });
 
+        buttonGroup1.add(unspecifiedRadioButton);
+        unspecifiedRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(unspecifiedRadioButton, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.unspecifiedRadioButton.text")); // NOI18N
+        unspecifiedRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                unspecifiedRadioButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -334,7 +343,8 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                         .addGap(32, 32, 32)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(knownRadioButton)
-                            .addComponent(knownBadRadioButton)))
+                            .addComponent(knownBadRadioButton)
+                            .addComponent(unspecifiedRadioButton)))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(12, 12, 12)
                         .addComponent(jLabel2))
@@ -374,16 +384,18 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                 .addComponent(knownRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(knownBadRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(sendIngestMessagesCheckbox)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(cancelButton)
-                            .addComponent(okButton))))
+                            .addComponent(okButton)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(unspecifiedRadioButton)
+                        .addGap(24, 24, 24)
+                        .addComponent(sendIngestMessagesCheckbox)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -586,6 +598,10 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         enableComponents();
     }//GEN-LAST:event_centralRepoRadioButtonActionPerformed
 
+    private void unspecifiedRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unspecifiedRadioButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_unspecifiedRadioButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelButton;
@@ -606,5 +622,6 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.JButton saveAsButton;
     private javax.swing.JCheckBox sendIngestMessagesCheckbox;
     private javax.swing.ButtonGroup storageTypeButtonGroup;
+    private javax.swing.JRadioButton unspecifiedRadioButton;
     // End of variables declaration//GEN-END:variables
 }
