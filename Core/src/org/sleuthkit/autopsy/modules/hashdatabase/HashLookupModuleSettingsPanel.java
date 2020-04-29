@@ -27,6 +27,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
@@ -42,8 +43,8 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
     private static final long serialVersionUID = 1L;
     private final HashDbManager hashDbManager = HashDbManager.getInstance();
-    private final List<HashSetModel> knownHashSetModels = new ArrayList<>();
-    private final HashSetsTableModel knownHashSetsTableModel = new HashSetsTableModel(knownHashSetModels);
+    private final List<HashSetModel> hashSetModels = new ArrayList<>();
+    private final HashSetsTableModel hashSetsTableModel = new HashSetsTableModel(hashSetModels);
 
     HashLookupModuleSettingsPanel(HashLookupModuleSettings settings) {
         initializeHashSetModels(settings);
@@ -53,14 +54,14 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
     private void initializeHashSetModels(HashLookupModuleSettings settings) {
         List<HashDb> hashDbs = validSetsOnly(hashDbManager.getAllHashSets());
-        knownHashSetModels.clear();
+        hashSetModels.clear();
         for (HashDb db : hashDbs) {
-            knownHashSetModels.add(new HashSetModel(db, settings.isHashSetEnabled(db), isHashDbValid(db)));
+            hashSetModels.add(new HashSetModel(db, settings.isHashSetEnabled(db), isHashDbValid(db)));
         }
     }
 
     private void customizeComponents(HashLookupModuleSettings settings) {
-        customizeHashSetsTable(hashDbsScrollPane, hashTable, knownHashSetsTableModel);
+        customizeHashSetsTable(hashDbsScrollPane, hashTable, hashSetsTableModel);
         alwaysCalcHashesCheckbox.setSelected(settings.shouldCalculateHashes());
         hashDbManager.addPropertyChangeListener(this);
         alwaysCalcHashesCheckbox.setText("<html>" + org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.text") + "</html>"); // NOI18N NON-NLS
@@ -96,7 +97,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     public IngestModuleIngestJobSettings getSettings() {
         List<HashDb> enabledHashSets = new ArrayList<>();
         List<HashDb> disabledHashSets = new ArrayList<>();
-        addHashSets(knownHashSetModels, enabledHashSets, disabledHashSets);
+        addHashSets(hashSetModels, enabledHashSets, disabledHashSets);
         return new HashLookupModuleSettings(alwaysCalcHashesCheckbox.isSelected(),
                 enabledHashSets, disabledHashSets);
     }
@@ -113,13 +114,9 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
     void update() {
         updateHashSetModels();
-        knownHashSetsTableModel.fireTableDataChanged();
+        hashSetsTableModel.fireTableDataChanged();
     }
 
-    private void updateHashSetModels() {
-        updateHashSetModels(validSetsOnly(hashDbManager.getAllHashSets()), knownHashSetModels);
-    }
-    
     private List<HashDb> validSetsOnly(List<HashDb> hashDbs){
         List<HashDb> validDbs = new ArrayList<>();
         for(HashDb db:hashDbs){
@@ -134,8 +131,9 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         return validDbs;
     }
 
-    void updateHashSetModels(List<HashDb> hashDbs, List<HashSetModel> hashSetModels) {
-        
+    void updateHashSetModels() {
+        List<HashDb> hashDbs = validSetsOnly(hashDbManager.getAllHashSets());
+                
         List<HashDb> hashDatabases = new ArrayList<>(hashDbs);
         
         // Update the hash sets and detect deletions.
@@ -169,7 +167,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     void reset(HashLookupModuleSettings newSettings) {
         initializeHashSetModels(newSettings);
         alwaysCalcHashesCheckbox.setSelected(newSettings.shouldCalculateHashes());
-        knownHashSetsTableModel.fireTableDataChanged();
+        hashSetsTableModel.fireTableDataChanged();
     }
 
     private boolean isHashDbValid(HashDb hashDb) {
@@ -203,7 +201,12 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         }
 
         String getFormattedName() {
-            return String.format("%s (%s)", db.getDisplayName(), db.getKnownFilesType());
+            String knownTypeName = (db != null && db.getKnownFilesType() != null) ? db.getKnownFilesType().getDisplayName() : "";
+            if (!StringUtils.isBlank(knownTypeName))
+                knownTypeName = String.format(" (%s)", knownTypeName);
+            
+            String displayName = db != null ? db.getDisplayName() : "";
+            return displayName + knownTypeName;
         }
         
         void setEnabled(boolean enabled) {
