@@ -1,18 +1,11 @@
 #-----------------------------------------------------------
-# shellbags_xp.pl
-# RR plugin to parse (Vista, Win7/Win2008R2) shell bags
+# shellitems.pl
+# Perl script to parse shell items; access via 'require' pragma
 #
 # History:
-#   20130515 - created from shellbags.pl; many differences between XP and Win7
-#   20130102 - updated to include type 0x35
-#   20120824 - updated parseFolderEntry() for XP (extver == 3)
-#   20120810 - added support for parsing Network types; added handling of 
-#              offsets for Folder types (ie, transition to long name offset),
-#              based on OS version (Vista, Win7); tested against one Win2008R2
-#              system (successfully); added parsing of URI types.
-#   20120809 - added parsing of file szie values for type 0x32 items
-#   20120808 - Updated
-#   20120720 - created
+#   20130923 - updated printData() code with (what I hope is) more stable 
+#              code
+#   20130522 - created 
 #
 # References
 #  Andrew's Python code for Registry Decoder
@@ -33,39 +26,18 @@
 # copyright 2012 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
-package shellbags_xp;
-use strict;
 use Time::Local;
 
-my %config = (hive          => "NTUSER\.DAT",
-							hivemask      => 32,
-							output        => "report",
-							category      => "User Activity",
-              osmask        => 20, #Vista, Win7/Win2008R2
-              hasShortDescr => 1,
-              hasDescr      => 0,
-              hasRefs       => 0,
-              version       => 20130102);
-
-sub getConfig{return %config}
-
-sub getShortDescr {
-	return "Shell/BagMRU traversal in XP NTUSER.DAT hives";	
-}
-sub getDescr{}
-sub getRefs {}
-sub getHive {return $config{hive};}
-sub getVersion {return $config{version};}
-
-my $VERSION = getVersion();
-
-my %cp_guids = ("{bb64f8a7-bee7-4e1a-ab8d-7d8273f7fdb6}" => "Action Center",
+my %guids = ("{bb64f8a7-bee7-4e1a-ab8d-7d8273f7fdb6}" => "Action Center",
     "{7a979262-40ce-46ff-aeee-7884ac3b6136}" => "Add Hardware",
     "{d20ea4e1-3957-11d2-a40b-0c5020524153}" => "Administrative Tools",
+    "{c57a6066-66a3-4d91-9eb9-41532179f0a5}" => "AppSuggestedLocations",
     "{9c60de1e-e5fc-40f4-a487-460851a8d915}" => "AutoPlay",
     "{b98a2bea-7d42-4558-8bd1-832f41bac6fd}" => "Backup and Restore Center",
     "{0142e4d0-fb7a-11dc-ba4a-000ffe7ab428}" => "Biometric Devices",
     "{d9ef8727-cac2-4e60-809e-86f80a666c91}" => "BitLocker Drive Encryption",
+    "{56784854-c6cb-462b-8169-88e350acb882}" => "Contacts",
+    "{26ee0668-a00a-44d7-9371-beb064c98683}" => "Control Panel (Cat. View)",
     "{b2c761c6-29bc-4f19-9251-e6195265baf1}" => "Color Management",
     "{1206f5f1-0569-412c-8fec-3204630dfb70}" => "Credential Manager",
     "{e2e7934b-dce5-43c4-9576-7fe4f75e7480}" => "Date and Time",
@@ -76,20 +48,25 @@ my %cp_guids = ("{bb64f8a7-bee7-4e1a-ab8d-7d8273f7fdb6}" => "Action Center",
     "{a8a91a66-3a7d-4424-8d24-04e180695c7a}" => "Devices and Printers",
     "{c555438b-3c23-4769-a71f-b6d3d9b6053a}" => "Display",
     "{d555645e-d4f8-4c29-a827-d93c859c4f2a}" => "Ease of Access Center",
+    "{1777f761-68ad-4d8a-87bd-30b759fa33dd}" => "Favorites",
+    "{323ca680-c24d-4099-b94d-446dd2d7249e}" => "Favorites",
     "{6dfd7c5c-2451-11d3-a299-00c04f8ef6af}" => "Folder Options",
     "{93412589-74d4-4e4e-ad0e-e0cb621440fd}" => "Fonts",
     "{259ef4b1-e6c9-4176-b574-481532c9bce8}" => "Game Controllers",
     "{15eae92e-f17a-4431-9f28-805e482dafd4}" => "Get Programs",
     "{cb1b7f8c-c50a-4176-b604-9e24dee8d4d1}" => "Getting Started",
     "{67ca7650-96e6-4fdd-bb43-a8e774f73a57}" => "HomeGroup",
+    "{b4fb3f98-c1ea-428d-a78a-d1f5659cba93}" => "HomeGroup",
     "{87d66a43-7b11-4a28-9811-c86ee395acf7}" => "Indexing Options",
     "{a0275511-0e86-4eca-97c2-ecd8f1221d08}" => "Infrared",
     "{a3dd4f92-658a-410f-84fd-6fbbbef2fffe}" => "Internet Options",
     "{a304259d-52b8-4526-8b1a-a1d6cecc8243}" => "iSCSI Initiator",
     "{725be8f7-668e-4c7b-8f90-46bdb0936430}" => "Keyboard",
+    "{bfb9d5e0-c6a9-404c-b2b2-ae6db6af4968}" => "Links",
     "{e9950154-c418-419e-a90a-20c5287ae24b}" => "Location and Other Sensors",
     "{1fa9085f-25a2-489b-85d4-86326eedcd87}" => "Manage Wireless Networks",
     "{6c8eec18-8d75-41b2-a177-8831d59d2d50}" => "Mouse",
+    "{2112ab0a-c86a-4ffe-a368-0de96e47012e}" => "Music Library",
     "{7007acc7-3202-11d1-aad2-00805fc1270e}" => "Network Connections",
     "{8e908fc9-becc-40f6-915b-f4ca0e70d03d}" => "Network and Sharing Center",
     "{05d7b0f4-2121-4eff-bf6b-ed3f69b894d9}" => "Notification Area Icons",
@@ -100,19 +77,26 @@ my %cp_guids = ("{bb64f8a7-bee7-4e1a-ab8d-7d8273f7fdb6}" => "Action Center",
     "{78f3955e-3b90-4184-bd14-5397c15f1efc}" => "Performance Information and Tools",
     "{ed834ed6-4b5a-4bfe-8f11-a626dcb6a921}" => "Personalization",
     "{40419485-c444-4567-851a-2dd7bfa1684d}" => "Phone and Modem",
+    "{f0d63f85-37ec-4097-b30d-61b4a8917118}" => "Photo Stream",
     "{025a5937-a6be-4686-a844-36fe4bec8b6d}" => "Power Options",
     "{2227a280-3aea-1069-a2de-08002b30309d}" => "Printers",
     "{fcfeecae-ee1b-4849-ae50-685dcf7717ec}" => "Problem Reports and Solutions",
     "{7b81be6a-ce2b-4676-a29e-eb907a5126c5}" => "Programs and Features",
+    "{22877a6d-37a1-461a-91b0-dbda5aaebc99}" => "Recent Places",
     "{9fe63afd-59cf-4419-9775-abcc3849f861}" => "Recovery",
     "{62d8ed13-c9d0-4ce8-a914-47dd628fb1b0}" => "Regional and Language Options",
     "{241d7c96-f8bf-4f85-b01f-e2b043341a4b}" => "RemoteApp and Desktop Connections",
+    "{4c5c32ff-bb9d-43b0-b5b4-2d72e54eaaa4}" => "Saved Games",
+    "{7d1d3a04-debb-4115-95cf-2f29da2920da}" => "Saved Searches",
     "{00f2886f-cd64-4fc9-8ec5-30ef6cdbe8c3}" => "Scanners and Cameras",
     "{e211b736-43fd-11d1-9efb-0000f8757fcd}" => "Scanners and Cameras",
     "{d6277990-4c6a-11cf-8d87-00aa0060f5bf}" => "Scheduled Tasks",
     "{f2ddfc82-8f12-4cdd-b7dc-d4fe1425aa4d}" => "Sound",
     "{58e3c745-d971-4081-9034-86e34b30836a}" => "Speech Recognition Options",
     "{9c73f5e5-7ae7-4e32-a8e8-8d23b85255bf}" => "Sync Center",
+    "{e413d040-6788-4c22-957e-175d1c513a34}" => "Sync Center Conflict Delegate Folder",
+    "{bc48b32f-5910-47f5-8570-5074a8a5636a}" => "Sync Results Delegate Folder",
+    "{f1390a9a-a3f4-4e5d-9c5f-98f3bd8d935c}" => "Sync Setup Delegate Folder",
     "{bb06c0e4-d293-4f75-8a90-cb05b6477eee}" => "System",
     "{80f3f1d5-feca-45f3-bc32-752c152e456e}" => "Tablet PC Settings",
     "{0df44eaa-ff21-4412-828e-260a8728e7f1}" => "Taskbar and Start Menu",
@@ -127,9 +111,8 @@ my %cp_guids = ("{bb64f8a7-bee7-4e1a-ab8d-7d8273f7fdb6}" => "Action Center",
     "{5ea4f148-308c-46d7-98a9-49041b1dd468}" => "Windows Mobility Center",
     "{087da31b-0dd3-4537-8e23-64a18591f88b}" => "Windows Security Center",
     "{e95a4861-d57a-4be1-ad0f-35267e261739}" => "Windows SideShow",
-    "{36eef7db-88ad-4e81-ad49-0e313f0c35f8}" => "Windows Update");
-    
-my %folder_types = ("{724ef170-a42d-4fef-9f26-b60e846fba4f}" => "Administrative Tools",
+    "{36eef7db-88ad-4e81-ad49-0e313f0c35f8}" => "Windows Update",
+    "{724ef170-a42d-4fef-9f26-b60e846fba4f}" => "Administrative Tools",
     "{d0384e7d-bac3-4797-8f14-cba229b392b5}" => "Common Administrative Tools",
     "{de974d24-d9c6-4d3e-bf91-f4455120b917}" => "Common Files",
     "{c1bae2d0-10df-4334-bedd-7aa20b227a9d}" => "Common OEM Links",
@@ -165,195 +148,18 @@ my %folder_types = ("{724ef170-a42d-4fef-9f26-b60e846fba4f}" => "Administrative 
     "{491e922f-5643-4af4-a7eb-4e7a138d8174}" => "Public",
     "{dfdf76a2-c82a-4d63-906a-5644ac457385}" => "Public",
     "{645ff040-5081-101b-9f08-00aa002f954e}" => "Recycle Bin",
+    "{e17d4fc0-5564-11d1-83f2-00a0c90dc849}" => "Search Results",
     "{d65231b0-b2f1-4857-a4ce-a8e7c6ea7d27}" => "System32 (x86)",
     "{9e52ab10-f80d-49df-acb8-4330f5687855}" => "Temporary Burn Folder",
     "{f3ce0f7c-4901-4acc-8648-d5d44b04ef8f}" => "Users Files",
     "{59031a47-3f72-44a7-89c5-5595fe6b30ee}" => "User Files",
     "{59031a47-3f72-44a7-89c5-5595fe6b30ee}" => "Users",
+    "{18989b1d-99b5-455b-841c-ab7c74e4ddfc}" => "Videos",
     "{f38bf404-1d43-42f2-9305-67de0b28fc23}" => "Windows");
-
-sub pluginmain {
-	my $class = shift;
-	my $hive = shift;
-	::logMsg("Launching shellbags_xp v.".$VERSION);
-	::rptMsg("shellbags_xp v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
-	my %item = ();
-
-	my $reg = Parse::Win32Registry->new($hive);
-	my $root_key = $reg->get_root_key;
-
-	my $key_path = "Software\\Microsoft\\Windows\\ShellNoRoam\\BagMRU";
-	my $key;
-	
-	if ($key = $root_key->get_subkey($key_path)) {
-		$item{path} = "Desktop\\";
-		$item{name} = "";
-# Print header info
-		::rptMsg(sprintf "%-20s |%-20s | %-20s | %-20s | %-20s |Resource","MRU Time","Modified","Accessed","Created","Zip_Subfolder");
-		::rptMsg(sprintf "%-20s |%-20s | %-20s | %-20s | %-20s |"."-" x 12,"-" x 12,"-" x 12,"-" x 12,"-" x 12,"-" x 12);
-		traverse($key,\%item);
-	}
-	else {
-		::rptMsg($key_path." not found.");
-	}
-}
-
-sub traverse {
-	my $key = shift;
-	my $parent = shift;
-	
-	my %item = ();
-  my @vals = $key->get_list_of_values();
-   
-  my %values;
-  foreach my $v (@vals) {
-  	my $name = $v->get_name();
-  	$values{$name} = $v->get_data();
-  }
-  
-  delete $values{NodeSlot};
-  my $mru;
-  if (exists $values{MRUListEx}) {
-  	$mru = unpack("V",substr($values{MRUListEx},0,4));
-  }
-  delete $values{MRUListEx};
- 	
- 	foreach my $v (sort {$a <=> $b} keys %values) {
- 		next unless ($v =~ m/^\d/);
-
- 		my $type = unpack("C",substr($values{$v},2,1));
-
-# Need to first check to see if the parent of the item was a zip folder
-# and if the 'zipsubfolder' value is set to 1		
-		if (exists ${$parent}{zipsubfolder} && ${$parent}{zipsubfolder} == 1) {
-# These data items are different on Win7; need to reparse for XP			
-#			my @d = printData($values{$v});
-#			::rptMsg("");
-#			foreach (0..(scalar(@d) - 1)) {
-#				::rptMsg($d[$_]);
-#			}
-#			::rptMsg("");
-# 			%item = parseZipSubFolderItem($values{$v});
-# 			$item{zipsubfolder} = 1;
- 		} 
- 		elsif ($type == 0x00) {
-# Variable/Property Sheet 			
- 			%item = parseVariableEntry($values{$v});	
- 		}
- 		elsif ($type == 0x01) {
-#  			
- 			%item = parse01ShellItem($values{$v});
- 		}
- 		elsif ($type == 0x1F) {
-# System Folder 			
- 			%item = parseSystemFolderEntry($values{$v});
- 		}
- 		elsif ($type == 0x2e) {
-# Device
-			%item = parseDeviceEntry($values{$v}); 	
-			
-			my @d = printData($values{$v});
-			::rptMsg("");
-			foreach (0..(scalar(@d) - 1)) {
-				::rptMsg($d[$_]);
-			}
-			::rptMsg("");	
- 		}
- 		elsif ($type == 0x2F) {
-# Volume (Drive Letter) 			
- 			%item = parseDriveEntry($values{$v});
- 
- 		}
- 		elsif ($type == 0xc3 || $type == 0x41 || $type == 0x42 || $type == 0x46 || $type == 0x47) {
-# Network stuff
-			my $id = unpack("C",substr($values{$v},3,1));
-			if ($type == 0xc3 && $id != 0x01) {
-				%item = parseNetworkEntry($values{$v});
-			}
-			else {
-				%item = parseNetworkEntry($values{$v}); 
-			}
- 		}
- 		elsif ($type == 0x31 || $type == 0x32 || $type == 0xb1 || $type == 0x74) {
-# Folder or Zip File			
- 			%item = parseFolderEntry($values{$v}); 
- 		}
- 		elsif ($type == 0x35) {
- 			%item = parseFolderEntry2($values{$v});
- 		}
- 		elsif ($type == 0x71) {
-# Control Panel
-			%item = parseControlPanelEntry($values{$v}); 			
- 		}
- 		elsif ($type == 0x61) {
-# URI type
-			%item = parseURIEntry($values{$v});		
- 		}
- 		elsif ($type == 0xd7 || $type == 0x9 || $type == 0xe3 || $type == 0x45) {
- 			%item = parseXPShellDeviceItem($values{$v});
- 		}
- 		else {
-# Unknown type
-			$item{name} = sprintf "Unknown Type (0x%x)",$type; 	
-			
-			my @d = printData($values{$v});
-			::rptMsg("");
-			foreach (0..(scalar(@d) - 1)) {
-				::rptMsg($d[$_]);
-			}
-			::rptMsg("");	
-		}
- 		
- 		if ($item{name} =~ m/\.zip$/ && $type == 0x32) {
- 			$item{zipsubfolder} = 1;
- 		}
-# for debug purposes
-# 		$item{name} = $item{name}."[".$v."]";
-# ::rptMsg(${$parent}{path}.$item{name}); 	
-
-		if ($mru != 4294967295 && ($v == $mru)) {
- 			$item{mrutime} = $key->get_timestamp();
- 			$item{mrutime_str} = $key->get_timestamp_as_string();
- 			$item{mrutime_str} =~ s/T/ /;
- 			$item{mrutime_str} =~ s/Z/ /;
- 		}
-	
- 		my ($m,$a,$c,$o);
- 		(exists $item{mtime_str} && $item{mtime_str} ne "0") ? ($m = $item{mtime_str}) : ($m = "");
- 		(exists $item{atime_str} && $item{atime_str} ne "0") ? ($a = $item{atime_str}) : ($a = "");
- 		(exists $item{ctime_str} && $item{ctime_str} ne "0") ? ($c = $item{ctime_str}) : ($c = "");
- 		(exists $item{datetime} && $item{datetime} ne "N/A") ? ($o = $item{datetime}) : ($o = "");
- 		
- 		my $resource = ${$parent}{path}.$item{name};
- 		if (exists $item{filesize}) {
- 			$resource .= " [".$item{filesize}."]";
- 		}
- 		
- 		if (exists $item{timestamp} && $item{timestamp} > 0) {
- 			$resource .= " [".gmtime($item{timestamp})." Z]";
- 		}
- 		
- 		my $str = sprintf "%-20s |%-20s | %-20s | %-20s | %-20s |".$resource,$item{mrutime_str},$m,$a,$c,$o;
- 		::rptMsg($str);
- 		
- 		if ($item{name} eq "" || $item{name} =~ m/\\$/) {
- 			
- 		}
- 		else {
- 			$item{name} = $item{name}."\\";
- 		}
- 		$item{path} = ${$parent}{path}.$item{name};
- 		traverse($key->get_subkey($v),\%item);
- 	}
-}
-#-------------------------------------------------------------------------------
-## Functions
-#-------------------------------------------------------------------------------
 
 #-----------------------------------------------------------
 # parseVariableEntry()
-#
+# type = 0x00
 #-----------------------------------------------------------
 sub parseVariableEntry {
 	my $data     = shift;
@@ -436,7 +242,19 @@ sub parseVariableEntry {
 #		}
 	}
 	elsif (substr($data,4,4) eq "AugM") {
-		%item = parseFolderEntry($data);
+		
+		my @beef = split(/\xef\xbe/,$data);
+		if (scalar (@beef) < 3) {
+#			%item = parseFolderEntry($data);
+      $item{name} = "Test";
+		}
+		else {
+			my $temp = substr($beef[2],22,length($beef[2]) - 22);
+			my $temp2 = substr($temp,12,length($temp) - 12);
+			$item{name} = (split(/\x00\x00/,$temp2))[0];
+			$item{name} =~ s/\x00//g;
+		}
+	
 	}
 # Following two entries are for Device Property data	
 	elsif ($tag == 0x7b || $tag == 0xbb || $tag == 0xfb) {
@@ -464,7 +282,7 @@ sub parseNetworkEntry {
 	my %item = ();	
 	$item{type} = unpack("C",substr($data,2,1));
 	
-	my @n = split(/\x00/,substr($data,4,length($data) - 4));
+	my @n = split(/\x00/,substr($data,5,length($data) - 5));
 	$item{name} = $n[0];
 	return %item;
 }
@@ -502,10 +320,10 @@ sub parseZipSubFolderItem {
 		
 	my $str1 = substr($data,0x5C,$sz *2) if ($sz > 0);
 	$str1 =~ s/\x00//g;
-	my $str2 = substr($data,0x5C + ($sz * 2),$sz2 *2) if ($sz2 > 0);
-	$str2 =~ s/\x00//g;
-		
+	
 	if ($sz2 > 0) {
+		my $str2 = substr($data,0x5C + ($sz * 2),$sz2 *2);
+		$str2 =~ s/\x00//g;
 		$item{name} = $str1."\\".$str2;
 	}
 	else {
@@ -537,14 +355,31 @@ sub parseXPShellDeviceItem {
 	my $data = shift;
 	my %item = ();
 	my ($t0,$t1) = unpack("VV",substr($data,0x04,8));
-	$item{timestamp} = ::getTime($t0,$t1);
+	if ($t0 == 0 && $t1 == 0) {
+		$item{timestamp} = 0;
+	}
+	else {
+		$item{timestamp} = ::getTime($t0,$t1);
+	}
 # starting at offset 0x18, read the null-term. string as the name value
 	my $str = substr($data,0x18,length($data) - 0x18);
 	$item{name} = (split(/\x00/,$str))[0];
-
 	return %item;
 }
 
+#-----------------------------------------------------------
+# parseType64Item()
+# Parses types 0x64, 0x65, 0x69
+#-----------------------------------------------------------
+sub parseType64Item {
+	my $data = shift;
+	my %item = ();
+	
+	$item{name} = substr($data,4,length($data) - 4);
+	$item{name} =~ s/\x00//g;
+	
+	return %item;
+}
 #-----------------------------------------------------------
 #
 #-----------------------------------------------------------
@@ -611,13 +446,10 @@ sub parseGUID {
   my $d3 = unpack("v",substr($data,6,2));
 	my $d4 = unpack("H*",substr($data,8,2));
   my $d5 = unpack("H*",substr($data,10,6));
-  my $guid = sprintf "{%08x-%x-%x-$d4-$d5}",$d1,$d2,$d3;
+  my $guid = sprintf "{%08x-%04x-%04x-$d4-$d5}",$d1,$d2,$d3;
   
-  if (exists $cp_guids{$guid}) {
-  	return $cp_guids{$guid};
-  }
-  elsif (exists $folder_types{$guid}) {
-  	return $folder_types{$guid};
+  if (exists $guids{$guid}) {
+  	return "CLSID_".$guids{$guid};
   }
   else {
   	return $guid;
@@ -630,29 +462,44 @@ sub parseGUID {
 sub parseDeviceEntry {
 	my $data = shift;
 	my %item = ();
+
+	my $ofs = unpack("v",substr($data,4,2));
+	my $tag = unpack("V",substr($data,6,4));
 	
-#	my $userlen = unpack("V",substr($data,30,4));
-#	my $devlen  = unpack("V",substr($data,34,4));
-#	
-#	my $user    = substr($data,0x28,$userlen * 2);
-#	$user =~ s/\x00//g;
-#	
-#	my $dev = substr($data,0x28 + ($userlen * 2),$devlen * 2);
-#	$dev =~ s/\x00//g;
-#	
-#	$item{name} = $user;
-	my $len = unpack("v",substr($data,0,2));
-	if ($len == 0x14) {
-		$item{name} = parseGUID(substr($data,4,16));
+	if ($tag == 0) {
+		my $guid1 = parseGUID(substr($data,$ofs + 6,16));
+		my $guid2 = parseGUID(substr($data,$ofs + 6 + 16,16));
+		$item{name} = $guid1."\\".$guid2
+	}
+	elsif ($tag == 2) {
+		$item{name} = substr($data,0x0a,($ofs + 6) - 0x0a);
+		$item{name} =~ s/\x00//g;
 	}
 	else {
-		my $len = unpack("v",substr($data,4,2));
-		my $guid1 = parseGUID(substr($data,$len + 6,16));
-		my $guid2 = parseGUID(substr($data,$len + 6 + 16,16));
-		$item{name} = $guid1."\\".$guid2
-		
-	}
+    my $ver = unpack("C",substr($data,9,1));
 
+# Version 3 = XP    
+    if ($ver == 3) {
+    	my $guid1 = parseGUID(substr($data,$ofs + 6,16));
+			my $guid2 = parseGUID(substr($data,$ofs + 6 + 16,16));
+			$item{name} = $guid1."\\".$guid2
+    
+    }
+# Version 8 = Win7    
+    elsif ($ver == 8) {
+    	my $userlen = unpack("V",substr($data,30,4));
+			my $devlen  = unpack("V",substr($data,34,4));
+			my $user    = substr($data,0x28,$userlen * 2);
+			$user =~ s/\x00//g;
+			my $dev = substr($data,0x28 + ($userlen * 2),$devlen * 2);
+			$dev =~ s/\x00//g;
+			$item{name} = $user;	
+    }
+    else {
+# Version unknown
+    	
+    }
+	}
 	return %item;
 }
 
@@ -675,8 +522,8 @@ sub parseControlPanelEntry {
 	my %item = ();
 	$item{type} = unpack("C",substr($data,2,1));
 	my $guid = parseGUID(substr($data,14,16));
-	if (exists $cp_guids{$guid}) {
-		$item{name} = $cp_guids{$guid};
+	if (exists $guids{$guid}) {
+		$item{name} = $guids{$guid};
 	}
 	else {
 		$item{name} = $guid;
@@ -736,6 +583,7 @@ sub parseFolderEntry {
 #	$str =~ s/\x00//g;
 	my $shortname = $str;
 	my $ofs = $ofs_shortname + $cnt + 1;
+
 # Read progressively, 1 byte at a time, looking for 0xbeef	
 	$tag = 1;
 	$cnt = 0;
@@ -767,6 +615,12 @@ sub parseFolderEntry {
 		$jmp = 30;
 	}
 	else {}
+	
+	if ($item{extver} >= 0x07) {
+		my @n = unpack("Vvv",substr($data,$ofs + 8, 8));
+		$item{mft_rec_num} = getNum48($n[0],$n[1]);
+		$item{mft_seq_num} = $n[2];
+	}
 	
 	$ofs += $jmp;
 	
@@ -815,7 +669,6 @@ sub convertDOSDate {
 	}
 }
 
-
 #-----------------------------------------------------------
 # parseFolderEntry2()
 #
@@ -855,14 +708,7 @@ sub parseFolderEntry2 {
 	$ofs += $jmp;
 	
 	my $str = substr($data,$ofs,length($data) - 30);
-	
-	::rptMsg(" --- parseFolderEntry2 --- ");
-	my @d = printData($str);
-	foreach (0..(scalar(@d) - 1)) {
-		::rptMsg($d[$_]);
-	}
-	::rptMsg("");
-	
+		
 	$item{name} = (split(/\x00\x00/,$str,2))[0];
 	$item{name} =~ s/\x13\x20/\x2D\x00/;
 	$item{name} =~ s/\x00//g;
@@ -872,57 +718,118 @@ sub parseFolderEntry2 {
 #-----------------------------------------------------------
 #
 #-----------------------------------------------------------
-sub parseNetworkEntry {
-	my $data     = shift;
+sub parseFolderEntry3 {
+	my $data = shift;
 	my %item = ();
-	$item{type} = unpack("C",substr($data,2,1));
-	my @names = split(/\x00/,substr($data,5,length($data) - 5));
-	$item{name} = $names[0];
+	$item{name} = substr($data,4,length($data) - 4);
+	$item{name} =~ s/\x00//g;
 	return %item;
 }
+
+#-----------------------------------------------------------
+#
+#-----------------------------------------------------------
+sub parseDatePathItem {
+	my $data = shift;
+	my %item = ();
+	$item{datestr} = substr($data,0x18,30);
+	my ($file,$dir) = split(/\x00\x00/,substr($data,0x44,length($data) - 0x44));
+	$file =~ s/\x00//g;
+	$dir =~ s/\x00//g;
+	$item{name} = $dir.$file;
+	return %item;	
+}
+
+#-----------------------------------------------------------
+# parseTypex53()
+#-----------------------------------------------------------
+sub parseTypex53 {
+	my $data = shift;
+	my %item = ();
+	
+	my $item1 = parseGUID(substr($data,0x14,16));
+	my $item2 = parseGUID(substr($data,0x24,16));
+	
+	$item{name} = $item1."\\".$item2;
+	
+	return %item;
+}
+
+#-----------------------------------------------------------
+# probe()
+#
+# Code the uses printData() to insert a 'probe' into a specific
+# location and display the data
+#
+# Input: binary data of arbitrary length
+# Output: Nothing, no return value.  Displays data to the console
+#-----------------------------------------------------------
+sub probe {
+	my $data = shift;
+	my @d = printData($data);
+	::rptMsg("");
+	foreach (0..(scalar(@d) - 1)) {
+		::rptMsg($d[$_]);
+	}
+	::rptMsg("");	
+}
+
 #-----------------------------------------------------------
 # printData()
 # subroutine used primarily for debugging; takes an arbitrary
 # length of binary data, prints it out in hex editor-style
 # format for easy debugging
+#
+# Usage: see probe()
 #-----------------------------------------------------------
 sub printData {
 	my $data = shift;
 	my $len = length($data);
-	my $tag = 1;
+	
 	my @display = ();
 	
 	my $loop = $len/16;
 	$loop++ if ($len%16);
 	
 	foreach my $cnt (0..($loop - 1)) {
-#	while ($tag) {
+# How much is left?
 		my $left = $len - ($cnt * 16);
 		
 		my $n;
 		($left < 16) ? ($n = $left) : ($n = 16);
 
 		my $seg = substr($data,$cnt * 16,$n);
-		my @str1 = split(//,unpack("H*",$seg));
-
-		my @s3;
-		my $str = "";
-
-		foreach my $i (0..($n - 1)) {
-			$s3[$i] = $str1[$i * 2].$str1[($i * 2) + 1];
-			
-			if (hex($s3[$i]) > 0x1f && hex($s3[$i]) < 0x7f) {
-				$str .= chr(hex($s3[$i]));
-			}
-			else {
-				$str .= "\.";
-			}
+		my $lhs = "";
+		my $rhs = "";
+		foreach my $i ($seg =~ m/./gs) {
+# This loop is to process each character at a time.
+			$lhs .= sprintf(" %02X",ord($i));
+			if ($i =~ m/[ -~]/) {
+				$rhs .= $i;
+    	}
+    	else {
+				$rhs .= ".";
+     	}
 		}
-		my $h = join(' ',@s3);
-#		::rptMsg(sprintf "0x%08x: %-47s  ".$str,($cnt * 16),$h);
-		$display[$cnt] = sprintf "0x%08x: %-47s  ".$str,($cnt * 16),$h;
+		$display[$cnt] = sprintf("0x%08X  %-50s %s",$cnt,$lhs,$rhs);
 	}
 	return @display;
+}
+
+#-----------------------------------------------------------
+# getNum48()
+# borrowed from David Cowen's code
+#-----------------------------------------------------------
+sub getNum48 {
+	my $n1 = shift;
+	my $n2 = shift;
+	if ($n2 == 0) {
+		return $n1;
+	}
+	else {
+		$n2 = ($n2 *16777216);
+		return $n1 + $n2;
+	}
 }
 
 1;

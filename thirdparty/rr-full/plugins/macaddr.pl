@@ -3,19 +3,23 @@
 # Attempt to locate MAC address in either Software or System hive files;
 # The plugin will determine which one its in and use the appropriate
 # code
+# 
+# History:
+#  20190506 - updated
+#  20090118 - created
 #
-#
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# copyright 2019, QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package macaddr;
 use strict;
 
-my %config = (hive          => "Software",
+my %config = (hive          => "System,Software",
               osmask        => 22,
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20090118);
+              version       => 20190506);
 
 sub getConfig{return %config}
 
@@ -61,6 +65,7 @@ sub pluginmain {
 						eval {
 							$na = $key->get_subkey($name)->get_value("NetworkAddress")->get_data();
 							::rptMsg("  ".$name.": NetworkAddress = ".$na);
+							::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
 							$found = 1;
 						};	
 					}

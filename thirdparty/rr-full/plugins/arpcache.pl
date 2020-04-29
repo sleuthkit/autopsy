@@ -122,7 +122,6 @@ sub parsePath {
 		while($tag) {
 			$ofs += 2;
 			my $i = substr($data,$ofs,2);
-                        last unless (defined $i); 
 			if (unpack("v",$i) == 0) {
 				$tag = 0;
 			}
