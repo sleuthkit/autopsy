@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -83,9 +84,13 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 final public class MapPanel extends javax.swing.JPanel {
 
     static final String CURRENT_MOUSE_GEOPOSITION = "CURRENT_MOUSE_GEOPOSITION";
+
     private static final Logger logger = Logger.getLogger(MapPanel.class.getName());
 
     private static final long serialVersionUID = 1L;
+    private static final Set<Integer> DOT_WAYPOINT_TYPES = new HashSet<>();
+    private static final int DOT_SIZE = 12;
+
     private boolean zoomChanging;
     private KdTree<MapWaypoint> waypointTree;
     private Set<MapWaypoint> waypointSet;
@@ -103,6 +108,12 @@ final public class MapPanel extends javax.swing.JPanel {
 
     private MapWaypoint currentlySelectedWaypoint;
     private Set<MapWaypoint> currentlySelectedTrack;
+
+    static {
+        DOT_WAYPOINT_TYPES.add(ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID());
+        DOT_WAYPOINT_TYPES.add(ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID());
+        DOT_WAYPOINT_TYPES.add(ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID());
+    }
 
     /**
      * Creates new form MapPanel
@@ -486,14 +497,30 @@ final public class MapPanel extends javax.swing.JPanel {
 
         Iterator<MapWaypoint> iterator = waypoints.iterator();
 
-        // These maybe the points closest to lat/log was clicked but 
-        // that doesn't mean they are close in terms of pixles.
+        // These may be the points closest to the lat/lon location that was
+        // clicked, but that doesn't mean they are close in terms of pixles.
         List<MapWaypoint> closestPoints = new ArrayList<>();
         while (iterator.hasNext()) {
             MapWaypoint nextWaypoint = iterator.next();
-
             Point2D point = mapViewer.convertGeoPositionToPoint(nextWaypoint.getPosition());
-            Rectangle rect = new Rectangle((int) point.getX() - (whiteWaypointImage.getWidth() / 2), (int) point.getY() - whiteWaypointImage.getHeight(), whiteWaypointImage.getWidth(), whiteWaypointImage.getHeight());
+            int pointX = (int) point.getX();
+            int pointY = (int) point.getY();
+            Rectangle rect;
+            if (DOT_WAYPOINT_TYPES.contains(nextWaypoint.getArtifactTypeID())) {
+                rect = new Rectangle(
+                        pointX - (DOT_SIZE / 2),
+                        pointY - (DOT_SIZE / 2),
+                        DOT_SIZE,
+                        DOT_SIZE
+                );
+            } else {
+                rect = new Rectangle(
+                        pointX - (whiteWaypointImage.getWidth() / 2),
+                        pointY - whiteWaypointImage.getHeight(),
+                        whiteWaypointImage.getWidth(),
+                        whiteWaypointImage.getHeight()
+                );
+            }
 
             if (rect.contains(clickPoint)) {
                 closestPoints.add(nextWaypoint);
@@ -689,6 +716,7 @@ final public class MapPanel extends javax.swing.JPanel {
             if (waypoints.size() > 0) {
                 MapWaypoint selection = waypoints.get(0);
                 currentlySelectedWaypoint = selection;
+                currentlySelectedTrack = null;
                 for (Set<MapWaypoint> track : tracks) {
                     if (track.contains(selection)) {
                         currentlySelectedTrack = track;
@@ -751,17 +779,16 @@ final public class MapPanel extends javax.swing.JPanel {
          * @return the new dot image
          */
         private BufferedImage createTrackDotImage(Color color) {
-            int w = 10;
-            int h = 10;
+            int s = DOT_SIZE;
 
-            BufferedImage ret = new BufferedImage(w + 2, h + 2, BufferedImage.TYPE_INT_ARGB);
+            BufferedImage ret = new BufferedImage(s, s, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = ret.createGraphics();
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g.setColor(color);
-            g.fillOval(1, 1, w, h);
+            g.fillOval(1, 1, s - 2, s - 2);
             g.setColor(Color.BLACK);
             g.setStroke(new BasicStroke(1));
-            g.drawOval(1, 1, w, h);
+            g.drawOval(1, 1, s - 2, s - 2);
             g.dispose();
             return ret;
         }
@@ -794,14 +821,11 @@ final public class MapPanel extends javax.swing.JPanel {
         public void paintWaypoint(Graphics2D g, JXMapViewer map, MapWaypoint waypoint) {
             Color color = getColor(waypoint);
             BufferedImage image;
-            int artifactType = waypoint.getArtifactTypeID();
             Point2D point = map.getTileFactory().geoToPixel(waypoint.getPosition(), map.getZoom());
             int x = (int) point.getX();
             int y = (int) point.getY();
 
-            if (artifactType == ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID()
-                    || artifactType == ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID()
-                    || artifactType == ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID()) {
+            if (DOT_WAYPOINT_TYPES.contains(waypoint.getArtifactTypeID())) {
                 image = dotImageCache.computeIfAbsent(color, k -> {
                     return createTrackDotImage(color);
                 });
