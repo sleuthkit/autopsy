@@ -38,6 +38,8 @@ public final class FileTypeUtils {
                     .addAll(removeAll(
                             asList(
                                 // remove any empty mime types provided by ImageIO.getReaderMIMETypes()
+                                // This prevents mime types added by SPI implementations from causing errors 
+                                // (i.e. 'jai-imageio' utilized with IcePDF)
                                 Arrays.stream(ImageIO.getReaderMIMETypes())
                                     .filter((mimeType) -> StringUtils.isNotBlank(mimeType))
                                     .toArray(String[]::new)),

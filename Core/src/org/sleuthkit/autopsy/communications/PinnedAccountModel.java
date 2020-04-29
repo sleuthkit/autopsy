@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
 import java.util.HashSet;
 import java.util.Set;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
 
 /**
  * Model of what accounts are pinned to a visualization.
@@ -34,7 +35,7 @@ class PinnedAccountModel {
      * to pinned accounts and pass the filters are show. Pinning accounts is the
      * primary way to populate the graph.
      */
-    private final Set<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
+    private final Set<AccountDeviceInstance> pinnedAccountDevices = new HashSet<>();
 
     private final EventBus eventBus = new EventBus();
 
@@ -46,7 +47,7 @@ class PinnedAccountModel {
         eventBus.unregister(handler);
     }
 
-    boolean isAccountPinned(AccountDeviceInstanceKey account) {
+    boolean isAccountPinned(AccountDeviceInstance account) {
         return pinnedAccountDevices.contains(account);
     }
 
@@ -57,7 +58,7 @@ class PinnedAccountModel {
      *
      * @param accountDeviceInstances The accounts to unpin.
      */
-    void unpinAccount(Set<AccountDeviceInstanceKey> accountDeviceInstances) {
+    void unpinAccount(Set<AccountDeviceInstance> accountDeviceInstances) {
         pinnedAccountDevices.removeAll(accountDeviceInstances);
     }
 
@@ -68,7 +69,7 @@ class PinnedAccountModel {
      *
      * @param accountDeviceInstances The accounts to pin.
      */
-    void pinAccount(Set<AccountDeviceInstanceKey> accountDeviceInstances) {
+    void pinAccount(Set<AccountDeviceInstance> accountDeviceInstances) {
         pinnedAccountDevices.addAll(accountDeviceInstances);
     }
 
@@ -86,7 +87,7 @@ class PinnedAccountModel {
         pinnedAccountDevices.clear();
     }
 
-    ImmutableSet<AccountDeviceInstanceKey> getPinnedAccounts() {
+    ImmutableSet<AccountDeviceInstance> getPinnedAccounts() {
         return ImmutableSet.copyOf(pinnedAccountDevices);
     }
 

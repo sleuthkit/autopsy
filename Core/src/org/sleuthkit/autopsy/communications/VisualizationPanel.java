@@ -1100,7 +1100,7 @@ final public class VisualizationPanel extends JPanel {
                     } else {
                         jPopupMenu.add(new JMenuItem(new LockAction(selectedVertices)));
                     }
-                    if (pinnedAccountModel.isAccountPinned(adiKey)) {
+                    if (pinnedAccountModel.isAccountPinned(adiKey.getAccountDeviceInstance())) {
                         jPopupMenu.add(UnpinAccountsAction.getInstance().getPopupPresenter());
                     } else {
                         jPopupMenu.add(PinAccountsAction.getInstance().getPopupPresenter());
