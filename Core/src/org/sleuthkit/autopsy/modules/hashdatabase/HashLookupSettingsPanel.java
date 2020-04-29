@@ -282,7 +282,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         // Update ingest option components.        
         sendIngestMessagesCheckBox.setSelected(db.getSendIngestMessages());
-        sendIngestMessagesCheckBox.setEnabled(!ingestIsRunning && db.getKnownFilesType().equals(KnownFilesType.KNOWN_BAD));
+        sendIngestMessagesCheckBox.setEnabled(!ingestIsRunning && db.getKnownFilesType().isInboxMessagesAllowed());
 
         // Update database action buttons.
         createDatabaseButton.setEnabled(true);

@@ -97,7 +97,7 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="knownRadioButton" min="-2" max="-2" attributes="0"/>
                                   <Component id="knownBadRadioButton" min="-2" max="-2" attributes="0"/>
-                                  <Component id="unspecifiedRadioButton" min="-2" max="-2" attributes="0"/>
+                                  <Component id="noChangeRadioButton" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                           <Component id="saveInUserConfigFolderCheckbox" min="-2" max="-2" attributes="0"/>
@@ -147,7 +147,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="knownBadRadioButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="unspecifiedRadioButton" min="-2" max="-2" attributes="0"/>
+              <Component id="noChangeRadioButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
@@ -374,20 +374,20 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JRadioButton" name="unspecifiedRadioButton">
+    <Component class="javax.swing.JRadioButton" name="noChangeRadioButton">
       <Properties>
         <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
           <ComponentRef name="buttonGroup1"/>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashDbImportDatabaseDialog.unspecifiedRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashDbImportDatabaseDialog.noChangeRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashDbImportDatabaseDialog.unspecifiedRadioButton.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashDbImportDatabaseDialog.noChangeRadioButton.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="unspecifiedRadioButtonActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="noChangeRadioButtonActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

@@ -182,7 +182,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         centralRepoRadioButton = new javax.swing.JRadioButton();
         jLabel4 = new javax.swing.JLabel();
         saveInUserConfigFolderCheckbox = new javax.swing.JCheckBox();
-        unspecifiedRadioButton = new javax.swing.JRadioButton();
+        noChangeRadioButton = new javax.swing.JRadioButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -291,12 +291,12 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         org.openide.awt.Mnemonics.setLocalizedText(saveInUserConfigFolderCheckbox, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.saveInUserConfigFolderCheckbox.text")); // NOI18N
         saveInUserConfigFolderCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.saveInUserConfigFolderCheckbox.toolTipText")); // NOI18N
 
-        buttonGroup1.add(unspecifiedRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(unspecifiedRadioButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.unspecifiedRadioButton.text")); // NOI18N
-        unspecifiedRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.unspecifiedRadioButton.toolTipText")); // NOI18N
-        unspecifiedRadioButton.addActionListener(new java.awt.event.ActionListener() {
+        buttonGroup1.add(noChangeRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(noChangeRadioButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.noChangeRadioButton.text")); // NOI18N
+        noChangeRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.noChangeRadioButton.toolTipText")); // NOI18N
+        noChangeRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                unspecifiedRadioButtonActionPerformed(evt);
+                noChangeRadioButtonActionPerformed(evt);
             }
         });
 
@@ -357,7 +357,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(knownRadioButton)
                                     .addComponent(knownBadRadioButton)
-                                    .addComponent(unspecifiedRadioButton)))
+                                    .addComponent(noChangeRadioButton)))
                             .addComponent(saveInUserConfigFolderCheckbox)
                             .addComponent(readOnlyCheckbox))
                         .addGap(0, 0, Short.MAX_VALUE)))
@@ -398,7 +398,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(knownBadRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(unspecifiedRadioButton)
+                .addComponent(noChangeRadioButton)
                 .addGap(5, 5, 5)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -451,13 +451,13 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_openButtonActionPerformed
 
     private void knownRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownRadioButtonActionPerformed
-        sendIngestMessagesCheckbox.setSelected(false);
-        sendIngestMessagesCheckbox.setEnabled(false);
+        sendIngestMessagesCheckbox.setSelected(KnownFilesType.KNOWN.isDefaultInboxMessages());
+        sendIngestMessagesCheckbox.setEnabled(KnownFilesType.KNOWN.isInboxMessagesAllowed());
     }//GEN-LAST:event_knownRadioButtonActionPerformed
 
     private void knownBadRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownBadRadioButtonActionPerformed
-        sendIngestMessagesCheckbox.setSelected(true);
-        sendIngestMessagesCheckbox.setEnabled(true);
+        sendIngestMessagesCheckbox.setSelected(KnownFilesType.KNOWN_BAD.isDefaultInboxMessages());
+        sendIngestMessagesCheckbox.setEnabled(KnownFilesType.KNOWN_BAD.isInboxMessagesAllowed());
     }//GEN-LAST:event_knownBadRadioButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
@@ -546,7 +546,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         KnownFilesType type;
         if (knownRadioButton.isSelected()) {
             type = KnownFilesType.KNOWN;
-        } else {
+        }
+        else if (noChangeRadioButton.isSelected()) {
+            type = KnownFilesType.NO_CHANGE;
+        }
+        else {
             type = KnownFilesType.KNOWN_BAD;
         }
 
@@ -644,9 +648,10 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         enableComponents();
     }//GEN-LAST:event_readOnlyCheckboxActionPerformed
 
-    private void unspecifiedRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unspecifiedRadioButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_unspecifiedRadioButtonActionPerformed
+    private void noChangeRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_noChangeRadioButtonActionPerformed
+        sendIngestMessagesCheckbox.setSelected(KnownFilesType.NO_CHANGE.isDefaultInboxMessages());
+        sendIngestMessagesCheckbox.setEnabled(KnownFilesType.NO_CHANGE.isInboxMessagesAllowed());
+    }//GEN-LAST:event_noChangeRadioButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
@@ -663,6 +668,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.JRadioButton knownRadioButton;
     private javax.swing.JLabel lbOrg;
     private javax.swing.JLabel lbVersion;
+    private javax.swing.JRadioButton noChangeRadioButton;
     private javax.swing.JButton okButton;
     private javax.swing.JButton openButton;
     private javax.swing.JButton orgButton;
@@ -671,7 +677,6 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox saveInUserConfigFolderCheckbox;
     private javax.swing.JCheckBox sendIngestMessagesCheckbox;
     private javax.swing.ButtonGroup storageTypeButtonGroup;
-    private javax.swing.JRadioButton unspecifiedRadioButton;
     private javax.swing.JTextField versionTextField;
     // End of variables declaration//GEN-END:variables
 }

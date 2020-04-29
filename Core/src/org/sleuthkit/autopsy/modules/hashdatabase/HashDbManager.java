@@ -28,9 +28,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
@@ -58,6 +60,7 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 
 /**
  * This class implements a singleton that manages the set of hash databases used
@@ -499,22 +502,15 @@ public class HashDbManager implements PropertyChangeListener {
                     // Defaults for fields not stored in the central repository:
                     //   searchDuringIngest: false
                     //   sendIngestMessages: true if the hash set is notable
-                    boolean sendIngestMessages = convertFileKnown(globalSet.getFileKnownStatus()).equals(HashDb.KnownFilesType.KNOWN_BAD);
+                    boolean sendIngestMessages = KnownFilesType.fromFileKnown(globalSet.getFileKnownStatus()).equals(HashDb.KnownFilesType.KNOWN_BAD);
                     crHashSets.add(new HashDbInfo(globalSet.getSetName(), globalSet.getVersion(),
-                        globalSet.getGlobalSetID(), convertFileKnown(globalSet.getFileKnownStatus()), globalSet.isReadOnly(), false, sendIngestMessages));
+                        globalSet.getGlobalSetID(), KnownFilesType.fromFileKnown(globalSet.getFileKnownStatus()), globalSet.isReadOnly(), false, sendIngestMessages));
                }
             } catch (CentralRepoException ex){
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
             }
         }
         return crHashSets;
-    }
-    
-    private static HashDb.KnownFilesType convertFileKnown(TskData.FileKnown fileKnown){
-        if(fileKnown.equals(TskData.FileKnown.BAD)){
-            return HashDb.KnownFilesType.KNOWN_BAD;
-        }
-        return HashDb.KnownFilesType.KNOWN;
     }
 
     /**
@@ -701,16 +697,64 @@ public class HashDbManager implements PropertyChangeListener {
          */
         public enum KnownFilesType {
 
-            KNOWN(NbBundle.getMessage(HashDbManager.class, "HashDbManager.known.text")),
-            KNOWN_BAD(NbBundle.getMessage(HashDbManager.class, "HashDbManager.knownBad.text"));
+            KNOWN(NbBundle.getMessage(HashDbManager.class, "HashDbManager.known.text"), TskData.FileKnown.KNOWN, false, false),
+            KNOWN_BAD(NbBundle.getMessage(HashDbManager.class, "HashDbManager.knownBad.text"), TskData.FileKnown.BAD, true, true),
+            NO_CHANGE(NbBundle.getMessage(HashDbManager.class, "HashDbManager.noChange.text"), TskData.FileKnown.UNKNOWN, true , false);
+            
             private final String displayName;
+            private final TskData.FileKnown fileKnown;
+            private final boolean allowSendInboxMessages;
+            private final boolean defaultSendInboxMessages;
 
-            private KnownFilesType(String displayName) {
+            private KnownFilesType(String displayName, TskData.FileKnown fileKnown, boolean allowSendInboxMessages, boolean defaultSendInboxMessages) {
                 this.displayName = displayName;
+                this.fileKnown = fileKnown;
+                this.allowSendInboxMessages = allowSendInboxMessages;
+                this.defaultSendInboxMessages = defaultSendInboxMessages;
             }
 
+            /**
+             * Returns whether or not it is allowable to send inbox messages with this known files type.
+             * @return  Whether or not it is allowable to send inbox messages with this known files type.
+             */
+            boolean isInboxMessagesAllowed() {
+                return allowSendInboxMessages;
+            }
+
+            /**
+             * Returns whether or not by default for this type is to send inbox messages.
+             * @return  Whether or not by default for this type is to send inbox messages.
+             */
+            boolean isDefaultInboxMessages() {
+                return defaultSendInboxMessages;
+            }
+            
+            
             public String getDisplayName() {
                 return this.displayName;
+            }
+            
+            /**
+             * Retrieves the corresponding TskData.FileKnown enum type that relates to this.
+             * @return  The corresponding TskData.FileKnown.
+             */
+            TskData.FileKnown getFileKnown() {
+                return this.fileKnown;
+            }
+            
+            /**
+             * Converts a TskData.FileKnown to the corresponding KnownFilesType.
+             * @param fileKnown     The TskData.FileKnown type.
+             * @return              The corresponding KnownFilesType.
+             */
+            static KnownFilesType fromFileKnown(TskData.FileKnown fileKnown) {
+                if (fileKnown == null)
+                    return null;
+                
+                return Stream.of(KnownFilesType.values())
+                    .filter((type) -> type.getFileKnown() == fileKnown)
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Unknown TskData.FileKnown type: " + fileKnown));
             }
         }
 
@@ -1229,12 +1273,7 @@ public class HashDbManager implements PropertyChangeListener {
             if (content instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile) content;
                 if (null != file.getMd5Hash()) {
-                    TskData.FileKnown type;
-                    if(knownFilesType.equals(HashDb.KnownFilesType.KNOWN_BAD)){
-                        type = TskData.FileKnown.BAD;
-                    } else {
-                        type = TskData.FileKnown.KNOWN;
-                    }
+                    TskData.FileKnown type = knownFilesType.getFileKnown();
                     
                     try{
                         CentralRepoFileInstance fileInstance = new CentralRepoFileInstance(referenceSetID, file.getMd5Hash(),
@@ -1258,12 +1297,8 @@ public class HashDbManager implements PropertyChangeListener {
         public void addHashes(List<HashEntry> hashes) throws TskCoreException {
             Set<CentralRepoFileInstance> globalFileInstances = new HashSet<>();
             for(HashEntry hashEntry:hashes){
-                TskData.FileKnown type;
-                if(knownFilesType.equals(HashDb.KnownFilesType.KNOWN_BAD)){
-                    type = TskData.FileKnown.BAD;
-                } else {
-                    type = TskData.FileKnown.KNOWN;
-                }       
+                TskData.FileKnown type = knownFilesType.getFileKnown();
+                
                 try {
                     globalFileInstances.add(new CentralRepoFileInstance(referenceSetID, hashEntry.getMd5Hash(), type, hashEntry.getComment()));
                 } catch (CentralRepoException | CorrelationAttributeNormalizationException ex){

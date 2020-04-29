@@ -231,12 +231,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
 
             try {
                 // Conver to the FileKnown enum used by EamGlobalSet
-                TskData.FileKnown knownStatus;
-                if (knownFilesType.equals(HashDbManager.HashDb.KnownFilesType.KNOWN)) {
-                    knownStatus = TskData.FileKnown.KNOWN;
-                } else {
-                    knownStatus = TskData.FileKnown.BAD;
-                }
+                TskData.FileKnown knownStatus = knownFilesType.getFileKnown();
 
                 // Create an empty hashset in the central repository
                 CentralRepository dbManager = CentralRepository.getInstance();

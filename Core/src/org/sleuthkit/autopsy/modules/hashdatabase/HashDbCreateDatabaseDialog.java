@@ -198,7 +198,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         lbOrg = new javax.swing.JLabel();
         orgComboBox = new javax.swing.JComboBox<>();
         orgButton = new javax.swing.JButton();
-        unspecifiedRadioButton = new javax.swing.JRadioButton();
+        noChangeRadioButton = new javax.swing.JRadioButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -292,12 +292,12 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             }
         });
 
-        buttonGroup1.add(unspecifiedRadioButton);
-        unspecifiedRadioButton.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(unspecifiedRadioButton, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.unspecifiedRadioButton.text")); // NOI18N
-        unspecifiedRadioButton.addActionListener(new java.awt.event.ActionListener() {
+        buttonGroup1.add(noChangeRadioButton);
+        noChangeRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(noChangeRadioButton, org.openide.util.NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.noChangeRadioButton.text")); // NOI18N
+        noChangeRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                unspecifiedRadioButtonActionPerformed(evt);
+                noChangeRadioButtonActionPerformed(evt);
             }
         });
 
@@ -344,7 +344,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(knownRadioButton)
                             .addComponent(knownBadRadioButton)
-                            .addComponent(unspecifiedRadioButton)))
+                            .addComponent(noChangeRadioButton)))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(12, 12, 12)
                         .addComponent(jLabel2))
@@ -392,7 +392,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                             .addComponent(cancelButton)
                             .addComponent(okButton)))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(unspecifiedRadioButton)
+                        .addComponent(noChangeRadioButton)
                         .addGap(24, 24, 24)
                         .addComponent(sendIngestMessagesCheckbox)
                         .addGap(0, 0, Short.MAX_VALUE)))
@@ -403,13 +403,13 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void knownRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownRadioButtonActionPerformed
-        sendIngestMessagesCheckbox.setSelected(false);
-        sendIngestMessagesCheckbox.setEnabled(false);
+        sendIngestMessagesCheckbox.setSelected(KnownFilesType.KNOWN.isDefaultInboxMessages());
+        sendIngestMessagesCheckbox.setEnabled(KnownFilesType.KNOWN.isInboxMessagesAllowed());
     }//GEN-LAST:event_knownRadioButtonActionPerformed
 
     private void knownBadRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownBadRadioButtonActionPerformed
-        sendIngestMessagesCheckbox.setSelected(true);
-        sendIngestMessagesCheckbox.setEnabled(true);
+        sendIngestMessagesCheckbox.setSelected(KnownFilesType.KNOWN_BAD.isDefaultInboxMessages());
+        sendIngestMessagesCheckbox.setEnabled(KnownFilesType.KNOWN_BAD.isInboxMessagesAllowed());
     }//GEN-LAST:event_knownBadRadioButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
@@ -488,14 +488,18 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         }
 
         KnownFilesType type;
-        TskData.FileKnown fileKnown;
+        
         if (knownRadioButton.isSelected()) {
-            type = KnownFilesType.KNOWN;
-            fileKnown = TskData.FileKnown.KNOWN;
-        } else {
-            type = KnownFilesType.KNOWN_BAD;
-            fileKnown = TskData.FileKnown.BAD;
+            type = KnownFilesType.KNOWN;   
+        } 
+        else if (noChangeRadioButton.isSelected()) {
+            type = KnownFilesType.NO_CHANGE;
         }
+        else {
+            type = KnownFilesType.KNOWN_BAD;
+        }
+        
+        TskData.FileKnown fileKnown = type.getFileKnown();
 
         String errorMessage = NbBundle
                 .getMessage(this.getClass(), "HashDbCreateDatabaseDialog.errMsg.hashDbCreationErr");
@@ -598,9 +602,10 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         enableComponents();
     }//GEN-LAST:event_centralRepoRadioButtonActionPerformed
 
-    private void unspecifiedRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unspecifiedRadioButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_unspecifiedRadioButtonActionPerformed
+    private void noChangeRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_noChangeRadioButtonActionPerformed
+        sendIngestMessagesCheckbox.setSelected(KnownFilesType.NO_CHANGE.isDefaultInboxMessages());
+        sendIngestMessagesCheckbox.setEnabled(KnownFilesType.NO_CHANGE.isInboxMessagesAllowed());
+    }//GEN-LAST:event_noChangeRadioButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
@@ -616,12 +621,12 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.JRadioButton knownBadRadioButton;
     private javax.swing.JRadioButton knownRadioButton;
     private javax.swing.JLabel lbOrg;
+    private javax.swing.JRadioButton noChangeRadioButton;
     private javax.swing.JButton okButton;
     private javax.swing.JButton orgButton;
     private javax.swing.JComboBox<String> orgComboBox;
     private javax.swing.JButton saveAsButton;
     private javax.swing.JCheckBox sendIngestMessagesCheckbox;
     private javax.swing.ButtonGroup storageTypeButtonGroup;
-    private javax.swing.JRadioButton unspecifiedRadioButton;
     // End of variables declaration//GEN-END:variables
 }

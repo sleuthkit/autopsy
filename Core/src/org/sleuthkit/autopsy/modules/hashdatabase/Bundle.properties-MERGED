@@ -190,6 +190,7 @@ HashDbManager.hashDbAlreadyAddedExceptionMsg=The hash set at\n{0}\nhas already b
 HashDbManager.illegalHashDbFileNameExtensionMsg=The hash set file name must have a .{0} extension.
 HashDbManager.moduleErr=Module Error
 HashDbManager.knownBad.text=Notable
+HashDbManager.noChange.text=No Change
 HashDbManager.known.text=Known
 HashDbManager.fileNameExtensionFilter.title=Hash Set File
 HashDbSearchAction.dlgMsg.title=File Search by MD5 Hash
