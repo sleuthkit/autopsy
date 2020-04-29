@@ -267,13 +267,14 @@ final class CaseEventListener implements PropertyChangeListener {
                 // tag that was just added is in the list of central repo tags.
                 final BlackBoardArtifactTagAddedEvent tagAddedEvent = (BlackBoardArtifactTagAddedEvent) event;
                 final BlackboardArtifactTag tagAdded = tagAddedEvent.getAddedTag();
+                
+                comment = tagAdded.getComment();
                 isTagDeleted = false;
                 
                 if (TagsManager.getNotableTagDisplayNames().contains(tagAdded.getName().getDisplayName())) {
                     content = tagAdded.getContent();
                     bbArtifact = tagAdded.getArtifact();
-                    knownStatus = TskData.FileKnown.BAD;
-                    comment = tagAdded.getComment();
+                    knownStatus = TskData.FileKnown.BAD;    
                 } else {
                     // The added tag isn't flagged as bad in central repo, so do nothing
                     return;
@@ -292,6 +293,8 @@ final class CaseEventListener implements PropertyChangeListener {
                 final BlackBoardArtifactTagDeletedEvent tagDeletedEvent = (BlackBoardArtifactTagDeletedEvent) event;
                 long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
                 long artifactID = tagDeletedEvent.getDeletedTagInfo().getArtifactID();
+                
+                comment = tagDeletedEvent.getDeletedTagInfo().getComment();
                 isTagDeleted = true;
                 
                 String tagName = tagDeletedEvent.getDeletedTagInfo().getName().getDisplayName();
@@ -315,7 +318,6 @@ final class CaseEventListener implements PropertyChangeListener {
 
                         // There are no more bad tags on the object
                         knownStatus = TskData.FileKnown.UNKNOWN;
-                        comment = "";
 
                     } else {
                         // There's still at least one bad tag, so leave the known status as is

@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
  * Dialog to allow Central Repository file instance comments to be added and
  * modified.
  */
-@Messages({"CentralRepoCommentDialog.title.addEditCentralRepoComment=Add/Edit Central Repository Comment"})
+@Messages({"CentralRepoCommentDialog.title.addEditCentralRepoComment=Add/Edit Central Repository File Comment"})
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class CentralRepoCommentDialog extends javax.swing.JDialog {
 

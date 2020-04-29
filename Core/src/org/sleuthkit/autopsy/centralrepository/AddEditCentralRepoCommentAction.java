@@ -39,9 +39,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
  * An AbstractAction to manage adding and modifying a Central Repository file
  * instance comment.
  */
-@Messages({"AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoCommentEmptyFile=Add/Edit Central Repository Comment (Empty File)",
-    "AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoCommentNoMD5=Add/Edit Central Repository Comment (No MD5 Hash)",
-    "AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoComment=Add/Edit Central Repository Comment"})
+@Messages({"AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoCommentEmptyFile=Add/Edit Central Repository File Comment (Empty File)",
+    "AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoCommentNoMD5=Add/Edit Central Repository File Comment (No MD5 Hash)",
+    "AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoComment=Add/Edit Central Repository File Comment"})
 public final class AddEditCentralRepoCommentAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(AddEditCentralRepoCommentAction.class.getName());

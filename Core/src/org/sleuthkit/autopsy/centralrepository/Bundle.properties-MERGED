@@ -1,7 +1,7 @@
-AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoComment=Add/Edit Central Repository Comment
-AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoCommentEmptyFile=Add/Edit Central Repository Comment (Empty File)
-AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoCommentNoMD5=Add/Edit Central Repository Comment (No MD5 Hash)
-CentralRepoCommentDialog.title.addEditCentralRepoComment=Add/Edit Central Repository Comment
+AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoComment=Add/Edit Central Repository File Comment
+AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoCommentEmptyFile=Add/Edit Central Repository File Comment (Empty File)
+AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoCommentNoMD5=Add/Edit Central Repository File Comment (No MD5 Hash)
+CentralRepoCommentDialog.title.addEditCentralRepoComment=Add/Edit Central Repository File Comment
 OpenIDE-Module-Name=Central Repository
 OpenIDE-Module-Display-Category=Ingest Module
 OpenIDE-Module-Short-Description=Correlation Engine Ingest Module
