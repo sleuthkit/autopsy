@@ -44,8 +44,6 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     private final HashDbManager hashDbManager = HashDbManager.getInstance();
     private final List<HashSetModel> knownHashSetModels = new ArrayList<>();
     private final HashSetsTableModel knownHashSetsTableModel = new HashSetsTableModel(knownHashSetModels);
-    private final List<HashSetModel> knownBadHashSetModels = new ArrayList<>();
-    private final HashSetsTableModel knownBadHashSetsTableModel = new HashSetsTableModel(knownBadHashSetModels);
 
     HashLookupModuleSettingsPanel(HashLookupModuleSettings settings) {
         initializeHashSetModels(settings);
@@ -54,20 +52,15 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void initializeHashSetModels(HashLookupModuleSettings settings) {
-        initializeHashSetModels(settings, validSetsOnly(hashDbManager.getKnownFileHashSets()), knownHashSetModels);
-        initializeHashSetModels(settings, validSetsOnly(hashDbManager.getKnownBadFileHashSets()), knownBadHashSetModels);
-    }
-
-    private void initializeHashSetModels(HashLookupModuleSettings settings, List<HashDb> hashDbs, List<HashSetModel> hashSetModels) {
-        hashSetModels.clear();
+        List<HashDb> hashDbs = validSetsOnly(hashDbManager.getAllHashSets());
+        knownHashSetModels.clear();
         for (HashDb db : hashDbs) {
-            hashSetModels.add(new HashSetModel(db, settings.isHashSetEnabled(db), isHashDbValid(db)));
+            knownHashSetModels.add(new HashSetModel(db, settings.isHashSetEnabled(db), isHashDbValid(db)));
         }
     }
 
     private void customizeComponents(HashLookupModuleSettings settings) {
-        customizeHashSetsTable(knownHashDbsScrollPane, knownHashTable, knownHashSetsTableModel);
-        customizeHashSetsTable(knownBadHashDbsScrollPane, knownBadHashTable, knownBadHashSetsTableModel);
+        customizeHashSetsTable(hashDbsScrollPane, hashTable, knownHashSetsTableModel);
         alwaysCalcHashesCheckbox.setSelected(settings.shouldCalculateHashes());
         hashDbManager.addPropertyChangeListener(this);
         alwaysCalcHashesCheckbox.setText("<html>" + org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.text") + "</html>"); // NOI18N NON-NLS
@@ -78,7 +71,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         table.setTableHeader(null);
         table.setRowSelectionAllowed(false);
         final int width1 = scrollPane.getPreferredSize().width;
-        knownHashTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
+        hashTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
         TableColumn column;
         for (int i = 0; i < table.getColumnCount(); i++) {
             column = table.getColumnModel().getColumn(i);
@@ -104,7 +97,6 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         List<HashDb> enabledHashSets = new ArrayList<>();
         List<HashDb> disabledHashSets = new ArrayList<>();
         addHashSets(knownHashSetModels, enabledHashSets, disabledHashSets);
-        addHashSets(knownBadHashSetModels, enabledHashSets, disabledHashSets);
         return new HashLookupModuleSettings(alwaysCalcHashesCheckbox.isSelected(),
                 enabledHashSets, disabledHashSets);
     }
@@ -122,12 +114,10 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     void update() {
         updateHashSetModels();
         knownHashSetsTableModel.fireTableDataChanged();
-        knownBadHashSetsTableModel.fireTableDataChanged();
     }
 
     private void updateHashSetModels() {
-        updateHashSetModels(validSetsOnly(hashDbManager.getKnownFileHashSets()), knownHashSetModels);
-        updateHashSetModels(validSetsOnly(hashDbManager.getKnownBadFileHashSets()), knownBadHashSetModels);
+        updateHashSetModels(validSetsOnly(hashDbManager.getAllHashSets()), knownHashSetModels);
     }
     
     private List<HashDb> validSetsOnly(List<HashDb> hashDbs){
@@ -180,7 +170,6 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         initializeHashSetModels(newSettings);
         alwaysCalcHashesCheckbox.setSelected(newSettings.shouldCalculateHashes());
         knownHashSetsTableModel.fireTableDataChanged();
-        knownBadHashSetsTableModel.fireTableDataChanged();
     }
 
     private boolean isHashDbValid(HashDb hashDb) {
@@ -213,6 +202,10 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
             return db.getDisplayName();
         }
 
+        String getFormattedName() {
+            return String.format("%s (%s)", db.getDisplayName(), db.getKnownFilesType());
+        }
+        
         void setEnabled(boolean enabled) {
             this.enabled = enabled;
         }
@@ -254,7 +247,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
             if (columnIndex == 0) {
                 return hashSets.get(rowIndex).isEnabled();
             } else {
-                return hashSets.get(rowIndex).getName();
+                return hashSets.get(rowIndex).getFormattedName();
             }
         }
 
@@ -285,61 +278,21 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        knownHashDbsLabel = new javax.swing.JLabel();
-        knownHashDbsScrollPane = new javax.swing.JScrollPane();
-        knownHashTable = new javax.swing.JTable();
-        knownBadHashDbsLabel = new javax.swing.JLabel();
-        knownBadHashDbsScrollPane = new javax.swing.JScrollPane();
-        knownBadHashTable = new javax.swing.JTable();
-        unspecifiedHashDbsLabel = new javax.swing.JLabel();
-        unspecifiedHashDbsScrollPane = new javax.swing.JScrollPane();
-        unspecifiedHashTable = new javax.swing.JTable();
+        hashDbsLabel = new javax.swing.JLabel();
+        hashDbsScrollPane = new javax.swing.JScrollPane();
+        hashTable = new javax.swing.JTable();
         alwaysCalcHashesCheckbox = new javax.swing.JCheckBox();
 
         setPreferredSize(new java.awt.Dimension(292, 150));
 
-        knownHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.knownHashDbsLabel.text")); // NOI18N
+        hashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.hashDbsLabel.text")); // NOI18N
 
-        knownHashDbsScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        hashDbsScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        knownHashTable.setBackground(new java.awt.Color(240, 240, 240));
-        knownHashTable.setShowHorizontalLines(false);
-        knownHashTable.setShowVerticalLines(false);
-        knownHashDbsScrollPane.setViewportView(knownHashTable);
-
-        knownBadHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.knownBadHashDbsLabel.text")); // NOI18N
-
-        knownBadHashDbsScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        knownBadHashTable.setBackground(new java.awt.Color(240, 240, 240));
-        knownBadHashTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-
-            }
-        ));
-        knownBadHashTable.setShowHorizontalLines(false);
-        knownBadHashTable.setShowVerticalLines(false);
-        knownBadHashDbsScrollPane.setViewportView(knownBadHashTable);
-
-        unspecifiedHashDbsLabel.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.unspecifiedHashDbsLabel.text")); // NOI18N
-
-        unspecifiedHashDbsScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        unspecifiedHashTable.setBackground(new java.awt.Color(240, 240, 240));
-        unspecifiedHashTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-
-            }
-        ));
-        unspecifiedHashTable.setShowHorizontalLines(false);
-        unspecifiedHashTable.setShowVerticalLines(false);
-        unspecifiedHashDbsScrollPane.setViewportView(unspecifiedHashTable);
+        hashTable.setBackground(new java.awt.Color(240, 240, 240));
+        hashTable.setShowHorizontalLines(false);
+        hashTable.setShowVerticalLines(false);
+        hashDbsScrollPane.setViewportView(hashTable);
 
         alwaysCalcHashesCheckbox.setText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.text")); // NOI18N
         alwaysCalcHashesCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(HashLookupModuleSettingsPanel.class, "HashLookupModuleSettingsPanel.alwaysCalcHashesCheckbox.toolTipText")); // NOI18N
@@ -357,59 +310,31 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(knownHashDbsLabel)
+                        .addComponent(hashDbsLabel)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(knownBadHashDbsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(10, 10, 10)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(knownHashDbsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                            .addComponent(knownBadHashDbsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
+                        .addComponent(hashDbsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 494, Short.MAX_VALUE))
                     .addComponent(alwaysCalcHashesCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(unspecifiedHashDbsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE)
-                        .addGroup(layout.createSequentialGroup()
-                            .addGap(10, 10, 10)
-                            .addComponent(unspecifiedHashDbsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
-                    .addContainerGap()))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(2, 2, 2)
-                .addComponent(knownHashDbsLabel)
+                .addComponent(hashDbsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(knownHashDbsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 68, Short.MAX_VALUE)
+                .addComponent(hashDbsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 207, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(knownBadHashDbsLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(knownBadHashDbsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(unspecifiedHashDbsLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(unspecifiedHashDbsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 68, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(alwaysCalcHashesCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0))
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGap(0, 330, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox alwaysCalcHashesCheckbox;
-    private javax.swing.JLabel knownBadHashDbsLabel;
-    private javax.swing.JScrollPane knownBadHashDbsScrollPane;
-    private javax.swing.JTable knownBadHashTable;
-    private javax.swing.JLabel knownHashDbsLabel;
-    private javax.swing.JScrollPane knownHashDbsScrollPane;
-    private javax.swing.JTable knownHashTable;
-    private javax.swing.JLabel unspecifiedHashDbsLabel;
-    private javax.swing.JScrollPane unspecifiedHashDbsScrollPane;
-    private javax.swing.JTable unspecifiedHashTable;
+    private javax.swing.JLabel hashDbsLabel;
+    private javax.swing.JScrollPane hashDbsScrollPane;
+    private javax.swing.JTable hashTable;
     // End of variables declaration//GEN-END:variables
 }

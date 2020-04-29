@@ -21,12 +21,12 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane5" alignment="0" pref="907" max="32767" attributes="0"/>
+          <Component id="jScrollPane5" alignment="0" pref="696" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane5" alignment="1" pref="435" max="32767" attributes="0"/>
+          <Component id="jScrollPane5" alignment="1" pref="494" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
