@@ -42,7 +42,6 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
