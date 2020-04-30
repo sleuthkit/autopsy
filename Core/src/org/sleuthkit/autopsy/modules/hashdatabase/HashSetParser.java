@@ -55,7 +55,7 @@ interface HashSetParser {
     /**
      * Get the next hash to import as a HashEntry object.
      * 
-     * @return A new hash entry for the next item parsed or null if no more items.
+     * @return A new hash entry for the next item parsed.
      * @throws TskCoreException 
      */
     default HashEntry getNextHashEntry() throws TskCoreException {

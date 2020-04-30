@@ -20,9 +20,12 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.HashEntry;
@@ -80,10 +83,28 @@ public class KdbHashSetParser implements HashSetParser {
     
     private static class HashRow {
         private final String md5Hash;
-        private 
+        private final long hashId;
+
+        HashRow(String md5Hash, long hashId) {
+            this.md5Hash = md5Hash;
+            this.hashId = hashId;
+        }
+
+        String getMd5Hash() {
+            return md5Hash;
+        }
+
+        long getHashId() {
+            return hashId;
+        }
     }
     
-    private Stuff getNextHashEntry() throws TskCoreException {
+    /**
+     * Retrieves the row id and md5 hash for the next item in the hashes table.
+     * @return A hash row object containing the hash and id.
+     * @throws TskCoreException 
+     */
+    private HashRow getNextHashRow() throws TskCoreException {
         try {
             if (resultSet.next()) {
                 long hashId = resultSet.getLong("id");
@@ -98,10 +119,8 @@ public class KdbHashSetParser implements HashSetParser {
                 }
                 
                 String md5Hash = sb.toString();
-                return new 
-
                 totalHashesRead++;
-                
+                return new HashRow(md5Hash, hashId);             
             } else {
                 throw new TskCoreException("Could not read expected number of hashes from hash set " + filename);
             }
@@ -118,13 +137,26 @@ public class KdbHashSetParser implements HashSetParser {
      */
     @Override
     public String getNextHash() throws TskCoreException {
-
-
+        return getNextHashRow().getMd5Hash();
     }
 
     @Override
     public HashEntry getNextHashEntry() throws TskCoreException {
-        return HashSetParser.super.getNextHashEntry(); //To change body of generated methods, choose Tools | Templates.
+        HashRow row = getNextHashRow();
+        try {
+            PreparedStatement getComment = conn.prepareStatement("SELECT comment FROM comments WHERE hash_id = ?");
+            getComment.setLong(0, row.getHashId());
+            ResultSet commentResults = getComment.executeQuery();
+            List<String> comments = new ArrayList<>();
+            while (commentResults.next())
+                comments.add(commentResults.getString("comment"));
+
+            String comment = comments.size() > 0 ? String.join(" ", comments) : null;
+            return new HashEntry(null, row.getMd5Hash(), null, null, comment);
+        }
+        catch (SQLException ex) {
+            throw new TskCoreException("Error opening/reading hash set " + filename, ex);
+        }
     }
     
     

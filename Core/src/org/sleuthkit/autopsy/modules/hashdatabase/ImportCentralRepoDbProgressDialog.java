@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.datamodel.HashEntry;
 
 /**
  * Imports a hash set into the central repository and updates a progress dialog
@@ -250,14 +251,14 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                         return null;
                     }
 
-                    String newHash = hashSetParser.getNextHash();
+                    HashEntry newHash = hashSetParser.getNextHashEntry();
 
                     if (newHash != null) {
                         CentralRepoFileInstance eamGlobalFileInstance = new CentralRepoFileInstance(
                                 referenceSetID.get(),
-                                newHash,
+                                newHash.getMd5Hash(),
                                 knownStatus,
-                                "");
+                                newHash.getComment() != null ? newHash.getComment() : "");
 
                         globalInstances.add(eamGlobalFileInstance);
 
