@@ -53,7 +53,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient; // for Single User mode
-import org.apache.solr.client.solrj.impl.CloudSolrClient; // for Solr Cloud mode
+import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrClient; // for Solr Cloud mode
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
@@ -246,8 +246,8 @@ public class Server {
     // A reference to the Solr server we are currently connected to for the Case.
     // This could be a local or remote server.
 // ELTODO    private HttpSolrClient currentSolrServer;
-    private final Map<List<String>, CloudSolrClient> solrClients = new HashMap<>();
-    private CloudSolrClient currentSolrServer;
+    private final Map<String, ConcurrentUpdateSolrClient> solrClients = new HashMap<>();
+    private ConcurrentUpdateSolrClient currentSolrServer;
 
     private Collection currentCollection;
     private final ReentrantReadWriteLock currentCoreLock;
@@ -320,18 +320,21 @@ public class Server {
         }
     }
 
-    synchronized CloudSolrClient getCloudSolrClient(List<String> solrUrls) {
-        CloudSolrClient client;
+    synchronized ConcurrentUpdateSolrClient getSolrClient(String solrUrls) {
+        ConcurrentUpdateSolrClient client;
         if (solrClients.containsKey(solrUrls)) {
-            logger.log(Level.INFO, "Re-using exiting CloudSolrClient"); //NON-NLS
+            logger.log(Level.INFO, "Re-using exiting ConcurrentUpdateSolrClient"); //NON-NLS
             client = solrClients.get(solrUrls);
         } else {
             //client = new CloudSolrClient.Builder()
             //        .withZkHost(zkHost)
             //        .build();
-            logger.log(Level.INFO, "Creating new CloudSolrClient"); //NON-NLS
-            client = new CloudSolrClient.Builder(solrUrls).build();
-            client.connect();
+            logger.log(Level.INFO, "Creating new ConcurrentUpdateSolrClient"); //NON-NLS
+            client = new ConcurrentUpdateSolrClient.Builder(solrUrls)
+                    .withQueueSize(1000)
+                    .withThreadCount(5)
+                    .build();
+            // ELTODO client.connect(); // looks like ConcurrentUpdateSolrClient doesn't have connect()
             solrClients.put(solrUrls, client);
         }
 
@@ -823,8 +826,9 @@ public class Server {
             for (String server : solrServerList) {
                 solrUrls.add("http://" + server + "/solr");
             }
-            //solrUrls.add("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
-            CloudSolrClient solrServer = new CloudSolrClient.Builder(solrUrls).build();
+            String solrUrl = "http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr";
+            ConcurrentUpdateSolrClient solrServer = getSolrClient(solrUrl);
+            //ConcurrentUpdateSolrClient solrServer = new ConcurrentUpdateSolrClient.Builder(solrUrl).build();
             
             //HttpSolrClient solrServer;
             if (metadata.getCaseType() == CaseType.SINGLE_USER_CASE) {
@@ -877,7 +881,6 @@ public class Server {
     })
     private Collection openCore(Case theCase, Index index) throws KeywordSearchModuleException {
 
-        List<String> solrUrls = new ArrayList<>();
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 // ELTODO make embedded Solr work with localSolrServer
@@ -897,12 +900,12 @@ public class Server {
                     logger.log(Level.INFO, "Using Solr server: {0}", server);
                 }*/
                 // connect to the Solr server that was specified in MU options
-                solrUrls.add("http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr");
-                currentSolrServer = getCloudSolrClient(solrUrls);
+                String solrUrl = "http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr";
+                currentSolrServer = getSolrClient(solrUrl);
                 
                 // get list of all live Solr servers in the cluster
                 List<String> solrServerList = getSolrServerList();
-                if (solrServerList.size() > 1) {
+                /*if (solrServerList.size() > 1) {
                     // there are multiple Solr servers in the Solr Cloud
                     solrUrls.clear();
                     for (String server : solrServerList) {
@@ -911,11 +914,10 @@ public class Server {
                         logger.log(Level.INFO, "Using Solr server: {0}", server);
                     }
                     // connect to all live Solr servers
-                    currentSolrServer = getCloudSolrClient(solrUrls);
-                }
-                UserPreferences.setMaxNumShards(solrUrls.size());
-                UserPreferences.setMaxNumShards(1); // ELTODO REMOVE THIS!
-                currentSolrServer.setDefaultCollection(null);
+                    currentSolrServer = getSolrClient(solrUrls);
+                }*/
+                UserPreferences.setMaxNumShards(solrServerList.size());
+                // ELTODO currentSolrServer.setDefaultCollection(null);
                 
                 // ELTODO currentSolrServer = new CloudSolrClient.Builder(solrUrls).build(); // (new CloudSolrClient.Builder(solrUrls));
                 // ELTODO currentSolrServer.connect(10, TimeUnit.SECONDS);
@@ -1012,7 +1014,7 @@ public class Server {
                 }
             }
 
-            return new Collection(collectionName, theCase, index, solrUrls);
+            return new Collection(collectionName, theCase, index);
 
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Exception during Solr collection creation.", ex); //NON-NLS
@@ -1701,7 +1703,7 @@ public class Server {
      * @throws IOException
      */
     // ELTODO void connectToSolrServer(HttpSolrClient solrServer) throws SolrServerException, IOException {
-    void connectToSolrServer(CloudSolrClient solrServer) throws SolrServerException, IOException {
+    void connectToSolrServer(ConcurrentUpdateSolrClient solrServer) throws SolrServerException, IOException {
         TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
         CollectionAdminRequest.ClusterStatus statusRequest = CollectionAdminRequest.getClusterStatus();
         CollectionAdminResponse statusResponse = statusRequest.process(solrServer);
@@ -1857,11 +1859,11 @@ public class Server {
 
         // the server to access a collection needs to be built from a URL with the
         // collection in it, and is only good for collection-specific operations
-        private final CloudSolrClient solrClient;
+        private final ConcurrentUpdateSolrClient solrClient;
 
         private final int QUERY_TIMEOUT_MILLISECONDS = 86400000; // 24 Hours = 86,400,000 Milliseconds
 
-        private Collection(String name, Case theCase, Index index, List<String> solrUrls) throws TimeoutException, InterruptedException {
+        private Collection(String name, Case theCase, Index index) throws TimeoutException, InterruptedException {
             this.name = name;
             this.caseType = theCase.getCaseType();
             this.textIndex = index;
@@ -1876,8 +1878,13 @@ public class Server {
                 solrUrls.add("http://" + server + "/solr"); // ELTODO optimize this
                 logger.log(Level.INFO, "Using Solr server: {0}", server);
             }*/
-            solrClient = getCloudSolrClient(solrUrls);
-            solrClient.setDefaultCollection(name); // ELTODO do we care that this solrClient instance gets reused?
+            String solrUrl = "http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr/" + name;
+            // solrClient = getSolrClient(solrUrl);
+            solrClient = new ConcurrentUpdateSolrClient.Builder(solrUrl)
+                    .withQueueSize(1000)
+                    .withThreadCount(10)
+                    .build();
+            // ELTODO solrClient.setDefaultCollection(name); // ELTODO looks like ConcurrentUpdateSolrClient doesn't have setDefaultCollection()
             // ELTODO solrClient.connect(10, TimeUnit.SECONDS);
             // ELTODO solrClient.withSocketTimeout(QUERY_TIMEOUT_MILLISECONDS);
             // ELTODO solrClient.allowCompression(true);
@@ -2011,7 +2018,8 @@ public class Server {
         synchronized void close() throws KeywordSearchModuleException {
             // We only unload cores for "single-user" cases.
             if (this.caseType == CaseType.MULTI_USER_CASE) {
-                solrClient.setDefaultCollection(null);
+                // ELTODO solrClient.setDefaultCollection(null);
+                solrClient.close();
                 return;
             }
 
