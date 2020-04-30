@@ -55,7 +55,7 @@ else
     exit 1
 fi
 
-ext_jar_filepath="$PWD/autopsy/modules/ext/sleuthkit-postgresql-$TSK_VERSION.jar";
+ext_jar_filepath=$PWD/autopsy/modules/ext/sleuthkit-$TSK_VERSION.jar;
 echo -n "Copying sleuthkit-$TSK_VERSION.jar into the Autopsy directory..."
 rm -f "$ext_jar_filepath";
 if [ "$?" -gt 0 ]; then  #checking if remove operation failed
