@@ -258,7 +258,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                                 referenceSetID.get(),
                                 newHash.getMd5Hash(),
                                 knownStatus,
-                                newHash.getComment() != null ? newHash.getComment() : "");
+                                newHash.getComment());
 
                         globalInstances.add(eamGlobalFileInstance);
 
