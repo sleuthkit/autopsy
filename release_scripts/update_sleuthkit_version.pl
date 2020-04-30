@@ -131,8 +131,8 @@ sub update_core_project_properties {
 
     my $found = 0;
     while (<CONF_IN>) {
-        if (/^file\.reference\.sleuthkit\-postgresql-/) {
-            print CONF_OUT "file.reference.sleuthkit-postgresql-${VER}.jar=release/modules/ext/sleuthkit-postgresql-${VER}.jar\n";
+        if (/^file\.reference\.sleuthkit\-/) {
+            print CONF_OUT "file.reference.sleuthkit-${VER}.jar=release/modules/ext/sleuthkit-${VER}.jar\n";
             $found++;
         }
             
@@ -167,12 +167,12 @@ sub update_core_project_xml {
 
     my $found = 0;
     while (<CONF_IN>) {
-        if (/<runtime-relative-path>ext\/sleuthkit-postgresql/) {
-            print CONF_OUT "                <runtime-relative-path>ext/sleuthkit-postgresql-${VER}.jar</runtime-relative-path>\n";
+        if (/<runtime-relative-path>ext\/sleuthkit-/) {
+            print CONF_OUT "                <runtime-relative-path>ext/sleuthkit-${VER}.jar</runtime-relative-path>\n";
             $found++;
         }
-        elsif (/<binary-origin>release\/modules\/ext\/sleuthkit-postgresql/) {
-            print CONF_OUT "                <binary-origin>release/modules/ext/sleuthkit-postgresql-${VER}.jar</binary-origin>\n";
+        elsif (/<binary-origin>release\/modules\/ext\/sleuthkit-/) {
+            print CONF_OUT "                <binary-origin>release/modules/ext/sleuthkit-${VER}.jar</binary-origin>\n";
             $found++;
         }    
         else {

@@ -94,6 +94,10 @@ public enum FileTypeUtils {
         ImageIO.scanForPlugins();
         //add all extension ImageIO claims to support
         imageExtensions.addAll(Stream.of(ImageIO.getReaderFileSuffixes())
+                // remove any empty extension types provided by ImageIO.getReaderFileSuffixes()
+                // This prevents extensions added by SPI implementations from causing errors 
+                // (i.e. 'jai-imageio' utilized with IcePDF)
+                .filter((extension) -> StringUtils.isNotBlank(extension))        
                 .map(String::toLowerCase)
                 .collect(Collectors.toList()));
         //add list of known image extensions
@@ -144,8 +148,12 @@ public enum FileTypeUtils {
          * are not images) to show up in Image Gallery.
          * supportedMimeTypes.addAll(Arrays.asList("application/x-emf"));
          */
-        //add list of mimetypes ImageIO claims to support
+         //add list of mimetypes ImageIO claims to support
         supportedMimeTypes.addAll(Stream.of(ImageIO.getReaderMIMETypes())
+                // remove any empty mime types provided by ImageIO.getReaderMIMETypes()
+                // This prevents mime types added by SPI implementations from causing errors 
+                // (i.e. 'jai-imageio' utilized with IcePDF)
+                .filter((mimeType) -> StringUtils.isNotBlank(mimeType))
                 .map(String::toLowerCase)
                 .collect(Collectors.toList()));
 
