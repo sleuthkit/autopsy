@@ -193,19 +193,20 @@
                                         </ImageView>
                                     </graphic>
                                 </Label>
-                                <SegmentedButton fx:id="catSegmentedButton">
+                                 <SegmentedButton fx:id="catSegmentedButton">
                                     <buttons>
-                                        <RadioButton fx:id="cat0Toggle" mnemonicParsing="false" text="0" HBox.hgrow="ALWAYS">
+                                    <!--    <RadioButton fx:id="cat0Toggle" mnemonicParsing="false" text="0" HBox.hgrow="ALWAYS">
                                  <toggleGroup>
                                                 <ToggleGroup fx:id="cat" />
-                                 </toggleGroup></RadioButton>
+                                 </toggleGroup></RadioButton> 
                                         <RadioButton fx:id="cat1Toggle" mnemonicParsing="false" style="" styleClass="button" text="1" toggleGroup="$cat" HBox.hgrow="ALWAYS" />
                                         <RadioButton id="Cat2Toggle" fx:id="cat2Toggle" mnemonicParsing="false" styleClass="button" text="2" toggleGroup="$cat" HBox.hgrow="ALWAYS" />
                                         <RadioButton fx:id="cat3Toggle" mnemonicParsing="false" styleClass="button" text="3" toggleGroup="$cat" HBox.hgrow="ALWAYS" />
                                         <RadioButton fx:id="cat4Toggle" mnemonicParsing="false" styleClass="button" text="4" toggleGroup="$cat" HBox.hgrow="ALWAYS" />
                                         <RadioButton fx:id="cat5Toggle" mnemonicParsing="false" text="5" toggleGroup="$cat" HBox.hgrow="ALWAYS" />
+                                        -->
                                     </buttons>
-                                </SegmentedButton>
+                                </SegmentedButton> 
                             </children>
                             <padding>
                                 <Insets left="5.0" />

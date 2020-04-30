@@ -20,26 +20,24 @@ package org.sleuthkit.autopsy.imagegallery.actions;
 
 import com.google.common.collect.ImmutableMap;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javafx.collections.ObservableSet;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.Node;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
-import javax.swing.Icon;
 import javax.swing.JOptionPane;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
@@ -47,9 +45,7 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.DrawableDbTask;
-import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
@@ -57,7 +53,6 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
 /**
@@ -85,7 +80,7 @@ public class CategorizeAction extends Action {
         this.selectedFileIDs = selectedFileIDs;
         this.createUndo = createUndo;
         this.tagName = tagName;
-        setGraphic(null);
+        setGraphic(getGraphic(tagName));
         setEventHandler(actionEvent -> addCatToFiles(selectedFileIDs));
         setAccelerator(new KeyCodeCombination(KeyCode.getKeyCode(getCategoryNumberFromTagName(tagName))));
     }
@@ -98,12 +93,15 @@ public class CategorizeAction extends Action {
         Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{ids.toString(), tagName.getDisplayName()}); //NON-NLS
         controller.queueDBTask(new CategorizeDrawableFileTask(ids, tagName, createUndo));
     }
-    
-    private String getCategoryNumberFromTagName(TagName tagName) {
-        Pattern p = Pattern.compile("\\d(?:)");
-        Matcher m = p.matcher(tagName.getDisplayName());
 
-        return m.group();
+    private String getCategoryNumberFromTagName(TagName tagName) {
+        String displayName = tagName.getDisplayName();
+        if (displayName.contains("CAT")) {
+            String[] split = displayName.split(":");
+            split = split[0].split("-");
+            return split[1];
+        }
+        return "";
     }
 
     /**
@@ -119,8 +117,7 @@ public class CategorizeAction extends Action {
 
             // Each category get an item in the sub-menu. Selecting one of these menu items adds
             // a tag with the associated category.
-            
-            for(TagName tagName: controller.getCategoryManager().getCategories()){
+            for (TagName tagName : controller.getCategoryManager().getCategories()) {
                 MenuItem categoryItem = ActionUtils.createMenuItem(new CategorizeAction(controller, tagName, selected));
                 getItems().add(categoryItem);
             }
@@ -153,7 +150,6 @@ public class CategorizeAction extends Action {
         @Override
         public void run() {
             final DrawableTagsManager tagsManager = controller.getTagsManager();
-            final CategoryManager categoryManager = controller.getCategoryManager();
             Map<Long, TagName> oldCats = new HashMap<>();
             for (long fileID : fileIDs) {
                 try {
@@ -166,14 +162,14 @@ public class CategorizeAction extends Action {
                     }
 
                     final List<ContentTag> fileTags = tagsManager.getContentTags(file);
-                   
+
                     if (fileTags.stream()
                             .map(Tag::getName)
                             .filter(tagName::equals)
                             .collect(Collectors.toList()).isEmpty()) {
                         tagsManager.addContentTag(file, tagName, "");
                     }
-                    
+
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error categorizing result", ex); //NON-NLS
                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
@@ -229,34 +225,36 @@ public class CategorizeAction extends Action {
             }
         }
     }
-    
-//    private class TagNameIcon implements Icon {
-//        private final int WIDTH = 32;
-//        private final int HEIGHT = 32;
-//        
-//        private final TagName.HTML_COLOR color;
-//
-//        private TagNameIcon(TagName.HTML_COLOR color) {
-//            this.color = color;
-//        }
-//        
-//        @Override
-//        public void paintIcon(Component c, Graphics g, int x, int y) {
-//            Graphics2D g2d = (Graphics2D) g.create();
-//            g2d.setColor(Color.decode(color.getHexString()));
-//            g2d.fillRect(x + 1, y + 1, WIDTH - 2, HEIGHT - 2);
-//        }
-//
-//        @Override
-//        public int getIconWidth() {
-//            return WIDTH;
-//        }
-//
-//        @Override
-//        public int getIconHeight() {
-//            return HEIGHT;
-//        }
-//        
-//        
-//    }
+
+    /**
+     * Create an BufferedImage to use as the icon for the given TagName.
+     *
+     * @param tagName The category TagName.
+     *
+     * @return TagName Icon BufferedImage.
+     */
+    private BufferedImage getImageForTagName(TagName tagName) {
+        BufferedImage off_image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = off_image.createGraphics();
+
+        g2.setColor(java.awt.Color.decode(tagName.getColor().getHexColorCode()));
+        g2.fillRect(0, 0, 16, 16);
+
+        g2.setColor(Color.BLACK);
+        g2.drawRect(0, 0, 16, 16);
+        return off_image;
+    }
+
+    /**
+     * Returns a Node which is a ImageView of the icon for the given TagName.
+     *
+     * @param tagname
+     *
+     * @return Node for use as the TagName menu item graphic.
+     */
+    private Node getGraphic(TagName tagname) {
+        BufferedImage buff_image = getImageForTagName(tagname);
+        return new ImageView(SwingFXUtils.toFXImage(buff_image, null));
+    }
+
 }

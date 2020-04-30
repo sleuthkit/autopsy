@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -97,7 +96,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
 
         @Override
         public Node getGraphicForValue(TagName val) {
-            
+
             return null;
             //return val.getGraphic();
         }
@@ -237,9 +236,13 @@ public class DrawableAttribute<T extends Comparable<T>> {
                     .filter(value -> (value != null && value.toString().isEmpty() == false))
                     .collect(Collectors.toSet());
         } catch (Exception ex) {
-            /* There is a catch-all here because the code in the try block executes third-party
-             library calls that throw unchecked exceptions. See JIRA-5144, where an IllegalStateException
-             was thrown because a file's MIME type was incorrectly identified as a picture type. */
+            /*
+             * There is a catch-all here because the code in the try block
+             * executes third-party library calls that throw unchecked
+             * exceptions. See JIRA-5144, where an IllegalStateException was
+             * thrown because a file's MIME type was incorrectly identified as a
+             * picture type.
+             */
             logger.log(Level.WARNING, "Exception while getting image attributes", ex); //NON-NLS
             return Collections.emptySet();
         }

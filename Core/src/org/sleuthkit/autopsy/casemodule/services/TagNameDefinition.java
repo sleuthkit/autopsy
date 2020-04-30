@@ -80,7 +80,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_TWO_NAME, new TagNameDefinition(CATEGORY_TWO_NAME, "", TagName.HTML_COLOR.LIME, TskData.FileKnown.BAD));
         PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_THREE_NAME, new TagNameDefinition(CATEGORY_THREE_NAME, "", TagName.HTML_COLOR.YELLOW, TskData.FileKnown.BAD));
         PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_FOUR_NAME, new TagNameDefinition(CATEGORY_FOUR_NAME, "", TagName.HTML_COLOR.PURPLE, TskData.FileKnown.UNKNOWN));
-        PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_FIVE_NAME, new TagNameDefinition(CATEGORY_FIVE_NAME, "", TagName.HTML_COLOR.SILVER, TskData.FileKnown.UNKNOWN));
+        PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_FIVE_NAME, new TagNameDefinition(CATEGORY_FIVE_NAME, "", TagName.HTML_COLOR.BLUE, TskData.FileKnown.UNKNOWN));
     }
 
     /**

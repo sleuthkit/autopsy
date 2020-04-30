@@ -40,8 +40,8 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -100,9 +100,13 @@ public abstract class DrawableFile {
 
     private String model;
 
+    private final CategoryManager categoryManager;
+
     protected DrawableFile(AbstractFile file, Boolean analyzed) {
         this.analyzed = new SimpleBooleanProperty(analyzed);
         this.file = file;
+
+        categoryManager = ImageGalleryController.getController(Case.getCurrentCase()).getCategoryManager();
     }
 
     public abstract boolean isVideo();
@@ -229,12 +233,8 @@ public abstract class DrawableFile {
         return "";
     }
 
-    public void setCategory(TagName category) {
-        categoryProperty().set(category);
-
-    }
-
     public TagName getCategory() {
+        updateCategory();
         return categoryTagName.get();
     }
 
@@ -242,7 +242,28 @@ public abstract class DrawableFile {
         return categoryTagName;
     }
 
-    
+    /**
+     * Update the category property.
+     */
+    private void updateCategory() {
+        try {
+            List<ContentTag> contentTags = getContentTags();
+            TagName tag = null;
+            for (ContentTag ct : contentTags) {
+                TagName tagName = ct.getName();
+                if (categoryManager.isCategoryTagName(tagName)) {
+                    tag = tagName;
+                    break;
+                }
+            }
+            categoryTagName.set(tag);
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "problem looking up category for " + this.getContentPathSafe(), ex); //NON-NLS
+        } catch (IllegalStateException ex) {
+            // We get here many times if the case is closed during ingest, so don't print out a ton of warnings.
+        }
+    }
+
     private List<ContentTag> getContentTags() throws TskCoreException {
         return getSleuthkitCase().getContentTagsByContent(file);
     }

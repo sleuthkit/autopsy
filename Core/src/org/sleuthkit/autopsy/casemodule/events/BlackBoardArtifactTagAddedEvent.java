@@ -19,10 +19,13 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent.DeletedBlackboardArtifactTagInfo;
+import org.sleuthkit.autopsy.casemodule.events.TagDeletedEvent.DeletedTagInfo;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -38,8 +41,8 @@ public class BlackBoardArtifactTagAddedEvent extends TagAddedEvent<BlackboardArt
         super(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString(), newTag);
     }
 
-    public BlackBoardArtifactTagAddedEvent(BlackboardArtifactTag newTag, BlackboardArtifactTag removedTag) {
-        super(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString(), newTag, (removedTag != null ? new DeletedBlackboardArtifactTagInfo(removedTag) : null));
+    public BlackBoardArtifactTagAddedEvent(BlackboardArtifactTag newTag, List<BlackboardArtifactTag> removedTagList) {
+        super(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString(), newTag, (removedTagList != null ? getDeletedInfo(removedTagList) : null));
     }
 
     /**
@@ -53,5 +56,37 @@ public class BlackBoardArtifactTagAddedEvent extends TagAddedEvent<BlackboardArt
     @Override
     BlackboardArtifactTag getTagByID() throws NoCurrentCaseException, TskCoreException {
         return Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagByTagID(getTagID());
+    }
+    
+    /**
+     * Returns a list of tags removed as a result of the addition of the tag.
+     * 
+     * @return A List of DeletedBlackboardArtifactTagInfo or null if no tags were removed.
+     */
+    public List<DeletedBlackboardArtifactTagInfo> getRemovedTags() {
+        Object oldValue = this.getOldValue();
+        if (oldValue != null) {
+            return (List<DeletedBlackboardArtifactTagInfo>)oldValue;
+        } else {
+            return null;
+        }
+    }
+    
+    /**
+     * Create a list of DeletedContentTagInfo objects from a list of ContentTags.
+     * 
+     * @param deletedTagList List of deleted ContentTags.
+     * 
+     * @return List of DeletedContentTagInfo objects or empty list if deletedTagList was empty or null.
+     */
+    private static List<DeletedTagInfo<BlackboardArtifactTag>> getDeletedInfo(List<BlackboardArtifactTag> deletedTagList) {
+        List<DeletedTagInfo<BlackboardArtifactTag>> deletedInfoList = new ArrayList<>();
+        if (deletedTagList != null) {
+            for (BlackboardArtifactTag tag : deletedTagList) {
+                deletedInfoList.add(new DeletedBlackboardArtifactTagInfo(tag));
+            }
+        }
+
+        return deletedInfoList;
     }
 }

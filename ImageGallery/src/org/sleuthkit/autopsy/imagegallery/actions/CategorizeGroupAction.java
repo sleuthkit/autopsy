@@ -33,13 +33,11 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import static org.apache.commons.lang.ObjectUtils.notEqual;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryPreferences;
 import org.sleuthkit.datamodel.TagName;
@@ -68,7 +66,7 @@ public class CategorizeGroupAction extends CategorizeAction {
                     for (Long fileID : fileIDs) {
                         try {
                             TagName category = controller.getFileFromID(fileID).getCategory();
-                            if ( newCat.equals(category) == false) {
+                            if (category != null && newCat.equals(category) == false) {
                                 catCountMap.merge(category, 1L, Long::sum);
                             }
                         } catch (TskCoreException ex) {
@@ -101,8 +99,9 @@ public class CategorizeGroupAction extends CategorizeAction {
         VBox textFlow = new VBox();
 
         for (Map.Entry<TagName, Long> entry : catCountMap.entrySet()) {
-            if (entry.getValue() > 0
-                && notEqual(entry.getKey(), newCat)) {
+
+            if (entry != null && entry.getValue() > 0
+                    && notEqual(entry.getKey(), newCat)) {
                 Label label = new Label(Bundle.CategorizeGroupAction_fileCountMessage(entry.getValue(), entry.getKey().getDisplayName()),
                         getGraphic(entry.getKey()));
                 label.setContentDisplay(ContentDisplay.RIGHT);
@@ -130,7 +129,7 @@ public class CategorizeGroupAction extends CategorizeAction {
                     }
                 });
     }
-    
+
     public Node getGraphic(TagName tagName) {
         return null;
     }

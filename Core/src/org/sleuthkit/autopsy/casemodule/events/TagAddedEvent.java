@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.TagDeletedEvent.DeletedTagInfo;
@@ -50,8 +52,8 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent implements Seri
         this(propertyName, addedTag, null);
     }
 
-    TagAddedEvent(String propertyName, T addedTag, DeletedTagInfo<T> deletedTagInfo) {
-        super(propertyName, deletedTagInfo, null);
+    TagAddedEvent(String propertyName, T addedTag, List<DeletedTagInfo<T>> deletedTagInfoList) {
+        super(propertyName, deletedTagInfoList, null);
         tag = addedTag;
         tagID = addedTag.getId();
     }
@@ -73,7 +75,7 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent implements Seri
     public T getAddedTag() {
         return getNewValue();
     }
-
+    
     @Override
     public T getNewValue() {
         /**

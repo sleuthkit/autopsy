@@ -34,7 +34,6 @@ import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager.CategoryChangeEvent;
@@ -99,7 +98,7 @@ public class SummaryTablePane extends AnchorPane {
     @Subscribe
     public void handleCategoryChanged(CategoryChangeEvent evt) {
         final ObservableList<Pair<TagName, Long>> data = FXCollections.observableArrayList();
-        if (Case.isCaseOpen()) {            
+        if (Case.isCaseOpen()) {
             for (TagName cat : controller.getCategoryManager().getCategories()) {
                 data.add(new Pair<>(cat, controller.getCategoryManager().getCategoryCount(cat)));
             }

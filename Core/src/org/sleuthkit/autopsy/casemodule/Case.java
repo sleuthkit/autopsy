@@ -1566,8 +1566,8 @@ public class Case {
      * @param newTag     new ContentTag added
      * @param deletedTag Removed ContentTag
      */
-    public void notifyContentTagAdded(ContentTag newTag, ContentTag deletedTag) {
-        eventPublisher.publish(new ContentTagAddedEvent(newTag, deletedTag));
+    public void notifyContentTagAdded(ContentTag newTag, List<ContentTag> deletedTagList) {
+        eventPublisher.publish(new ContentTagAddedEvent(newTag, deletedTagList));
     }
 
     /**
@@ -1628,10 +1628,10 @@ public class Case {
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param newTag     new BlackboardArtifactTag added
-     * @param removedTag The BlackboardArtifactTag that was removed.
+     * @param removedTagList The BlackboardArtifactTag that was removed.
      */
-    public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag, BlackboardArtifactTag removedTag) {
-        eventPublisher.publish(new BlackBoardArtifactTagAddedEvent(newTag, removedTag));
+    public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag, List<BlackboardArtifactTag> removedTagList) {
+        eventPublisher.publish(new BlackBoardArtifactTagAddedEvent(newTag, removedTagList));
     }
 
     /**
