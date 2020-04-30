@@ -22,6 +22,7 @@ import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -35,6 +36,10 @@ public class ContentTagAddedEvent extends TagAddedEvent<ContentTag> implements S
 
     public ContentTagAddedEvent(ContentTag newTag) {
         super(Case.Events.CONTENT_TAG_ADDED.toString(), newTag);
+    }
+    
+    public ContentTagAddedEvent(ContentTag newTag, ContentTag deletedTag) {
+        super(Case.Events.CONTENT_TAG_ADDED.toString(), newTag, (deletedTag != null ? new DeletedContentTagInfo(deletedTag) : null));
     }
 
     /**

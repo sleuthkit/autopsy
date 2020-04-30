@@ -22,6 +22,7 @@ import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent.DeletedBlackboardArtifactTagInfo;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -35,6 +36,10 @@ public class BlackBoardArtifactTagAddedEvent extends TagAddedEvent<BlackboardArt
 
     public BlackBoardArtifactTagAddedEvent(BlackboardArtifactTag newTag) {
         super(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString(), newTag);
+    }
+
+    public BlackBoardArtifactTagAddedEvent(BlackboardArtifactTag newTag, BlackboardArtifactTag removedTag) {
+        super(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString(), newTag, (removedTag != null ? new DeletedBlackboardArtifactTagInfo(removedTag) : null));
     }
 
     /**

@@ -19,11 +19,13 @@
 package org.sleuthkit.autopsy.coreutils;
 
 import com.google.common.collect.ImmutableSet;
+import java.util.Arrays;
 import static java.util.Arrays.asList;
 import java.util.Collection;
 import java.util.Collections;
 import javax.imageio.ImageIO;
 import static org.apache.commons.collections4.ListUtils.removeAll;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 
 /**
@@ -33,7 +35,14 @@ public final class FileTypeUtils {
 
     private static final ImmutableSet<String> IMAGE_MIME_TYPES
             = new ImmutableSet.Builder<String>()
-                    .addAll(removeAll(asList(ImageIO.getReaderMIMETypes()),
+                    .addAll(removeAll(
+                            asList(
+                                // remove any empty mime types provided by ImageIO.getReaderMIMETypes()
+                                // This prevents mime types added by SPI implementations from causing errors 
+                                // (i.e. 'jai-imageio' utilized with IcePDF)
+                                Arrays.stream(ImageIO.getReaderMIMETypes())
+                                    .filter((mimeType) -> StringUtils.isNotBlank(mimeType))
+                                    .toArray(String[]::new)),
                             asList("application/octet-stream"))) //this claims to be supported, but is not really an image.
                     .add("image/bmp", //NON-NLS
                             "image/gif", //NON-NLS
