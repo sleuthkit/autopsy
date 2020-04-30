@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.sleuthkit.autopsy.communications.FiltersPanel.DateControlState;
 import org.sleuthkit.autopsy.coreutils.History;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 
 /**
@@ -51,11 +52,11 @@ final class StateManager {
     @Subscribe
     void pinAccount(CVTEvents.PinAccountsEvent pinEvent) {
         if(pinEvent.isReplace()){
-            HashSet<AccountDeviceInstanceKey> pinnedList = new HashSet<>();
+            HashSet<AccountDeviceInstance> pinnedList = new HashSet<>();
             pinnedList.addAll(pinEvent.getAccountDeviceInstances());
             historyManager.advance(new CommunicationsState(comFilter, pinnedList, -1, currentStartState, currentEndState));
         } else {
-            HashSet<AccountDeviceInstanceKey> pinnedList = new HashSet<>();
+            HashSet<AccountDeviceInstance> pinnedList = new HashSet<>();
             pinnedList.addAll(pinEvent.getAccountDeviceInstances());
             pinnedList.addAll(pinModel.getPinnedAccounts());
             
@@ -74,7 +75,7 @@ final class StateManager {
     @Subscribe
     void unpinAccounts(CVTEvents.UnpinAccountsEvent pinEvent) {
 
-        HashSet<AccountDeviceInstanceKey> pinnedList = new HashSet<>();
+        HashSet<AccountDeviceInstance> pinnedList = new HashSet<>();
         pinnedList.addAll(pinModel.getPinnedAccounts());
         pinnedList.removeAll(pinEvent.getAccountDeviceInstances());
         
@@ -135,7 +136,7 @@ final class StateManager {
      */
     final class CommunicationsState{
         private final CommunicationsFilter communcationFilter;
-        private final Set<AccountDeviceInstanceKey> pinnedList;
+        private final Set<AccountDeviceInstance> pinnedList;
         private final double zoomValue;
         private final DateControlState startDateState;
         private final DateControlState endDateState;
@@ -149,7 +150,7 @@ final class StateManager {
          * @param zoomValue Double value of the current graph scale
          */
         protected CommunicationsState(CommunicationsFilter communcationFilter, 
-                Set<AccountDeviceInstanceKey> pinnedList, double zoomValue, 
+                Set<AccountDeviceInstance> pinnedList, double zoomValue, 
                 DateControlState startDateState, DateControlState endDateState){
             this.pinnedList = pinnedList;
             this.communcationFilter = communcationFilter;
@@ -172,7 +173,7 @@ final class StateManager {
          * 
          * @return Set of AccountDeviceInstanceKey
          */
-        public Set<AccountDeviceInstanceKey> getPinnedList(){
+        public Set<AccountDeviceInstance> getPinnedList(){
             return pinnedList;
         }
 

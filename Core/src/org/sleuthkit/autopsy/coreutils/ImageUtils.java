@@ -46,6 +46,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javax.annotation.Nonnull;
@@ -137,11 +139,25 @@ public class ImageUtils {
         }
         FFMPEG_LOADED = tempFfmpegLoaded;
 
-        SUPPORTED_IMAGE_EXTENSIONS.addAll(Arrays.asList(ImageIO.getReaderFileSuffixes()));
+        // remove any empty extension types provided by ImageIO.getReaderFileSuffixes()
+        // This prevents extensions added by SPI implementations from causing errors 
+        // (i.e. 'jai-imageio' utilized with IcePDF)
+        List<String> imageSuffixList = Arrays.stream(ImageIO.getReaderFileSuffixes())
+            .filter((extension) -> StringUtils.isNotBlank(extension))
+            .collect(Collectors.toList());
+        
+        SUPPORTED_IMAGE_EXTENSIONS.addAll(imageSuffixList);
         SUPPORTED_IMAGE_EXTENSIONS.add("tec"); // Add JFIF .tec files
         SUPPORTED_IMAGE_EXTENSIONS.removeIf("db"::equals); // remove db files
 
-        SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
+        List<String> mimeTypeList = Stream.of(ImageIO.getReaderMIMETypes())
+                // remove any empty mime types provided by ImageIO.getReaderMIMETypes()
+                // This prevents mime types added by SPI implementations from causing errors 
+                // (i.e. 'jai-imageio' utilized with IcePDF)
+                .filter((mimeType) -> StringUtils.isNotBlank(mimeType))
+                .collect(Collectors.toList());
+        
+        SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(mimeTypeList);
         /*
          * special cases and variants that we support, but don't get registered
          * with ImageIO automatically

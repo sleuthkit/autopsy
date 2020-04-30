@@ -58,7 +58,7 @@ public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<Blackboar
 
         private final long artifactID;
 
-        private DeletedBlackboardArtifactTagInfo(BlackboardArtifactTag deletedTag) {
+        DeletedBlackboardArtifactTagInfo(BlackboardArtifactTag deletedTag) {
             super(deletedTag);
             artifactID = deletedTag.getArtifact().getArtifactID();
             contentID = deletedTag.getContent().getId();

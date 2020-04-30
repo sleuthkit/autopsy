@@ -1555,7 +1555,19 @@ public class Case {
      * @param newTag new ContentTag added
      */
     public void notifyContentTagAdded(ContentTag newTag) {
-        eventPublisher.publish(new ContentTagAddedEvent(newTag));
+        notifyContentTagAdded(newTag, null);
+    }
+
+    /**
+     * Notifies case event subscribers that a content tag has been added.
+     *
+     * This should not be called from the event dispatch thread (EDT)
+     *
+     * @param newTag     new ContentTag added
+     * @param deletedTag Removed ContentTag
+     */
+    public void notifyContentTagAdded(ContentTag newTag, ContentTag deletedTag) {
+        eventPublisher.publish(new ContentTagAddedEvent(newTag, deletedTag));
     }
 
     /**
@@ -1607,7 +1619,19 @@ public class Case {
      * @param newTag new BlackboardArtifactTag added
      */
     public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag) {
-        eventPublisher.publish(new BlackBoardArtifactTagAddedEvent(newTag));
+        notifyBlackBoardArtifactTagAdded(newTag, null);
+    }
+
+    /**
+     * Notifies case event subscribers that an artifact tag has been added.
+     *
+     * This should not be called from the event dispatch thread (EDT)
+     *
+     * @param newTag     new BlackboardArtifactTag added
+     * @param removedTag The BlackboardArtifactTag that was removed.
+     */
+    public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag, BlackboardArtifactTag removedTag) {
+        eventPublisher.publish(new BlackBoardArtifactTagAddedEvent(newTag, removedTag));
     }
 
     /**
@@ -2006,7 +2030,7 @@ public class Case {
 
     /**
      * Starts a background task that reads a sector from each file system of
-     * each image of a case to do an eager open of the filesystems in the case. 
+     * each image of a case to do an eager open of the filesystems in the case.
      * If this method is called before another background file system read has
      * finished the earlier one will be cancelled.
      *
