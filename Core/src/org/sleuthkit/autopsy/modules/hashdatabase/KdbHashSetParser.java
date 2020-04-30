@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.HashEntry;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -68,13 +69,45 @@ public class KdbHashSetParser implements HashSetParser {
             }
 
             // Get the hashes
-            resultSet = statement.executeQuery("SELECT md5 FROM hashes");
+            resultSet = statement.executeQuery("SELECT id, md5 FROM hashes");
 
             // At this point, getNextHash can read each hash from the result set
         } catch (ClassNotFoundException | SQLException ex) {
             throw new TskCoreException("Error opening/reading hash set " + filename, ex);
         }
 
+    }
+    
+    private static class HashRow {
+        private final String md5Hash;
+        private 
+    }
+    
+    private Stuff getNextHashEntry() throws TskCoreException {
+        try {
+            if (resultSet.next()) {
+                long hashId = resultSet.getLong("id");
+                byte[] hashBytes = resultSet.getBytes("md5");
+                StringBuilder sb = new StringBuilder();
+                for (byte b : hashBytes) {
+                    sb.append(String.format("%02x", b));
+                }
+
+                if (sb.toString().length() != 32) {
+                    throw new TskCoreException("Hash has incorrect length: " + sb.toString());
+                }
+                
+                String md5Hash = sb.toString();
+                return new 
+
+                totalHashesRead++;
+                
+            } else {
+                throw new TskCoreException("Could not read expected number of hashes from hash set " + filename);
+            }
+        } catch (SQLException ex) {
+            throw new TskCoreException("Error reading hash from result set for hash set " + filename, ex);
+        }
     }
 
     /**
@@ -86,27 +119,15 @@ public class KdbHashSetParser implements HashSetParser {
     @Override
     public String getNextHash() throws TskCoreException {
 
-        try {
-            if (resultSet.next()) {
-                byte[] hashBytes = resultSet.getBytes("md5");
-                StringBuilder sb = new StringBuilder();
-                for (byte b : hashBytes) {
-                    sb.append(String.format("%02x", b));
-                }
 
-                if (sb.toString().length() != 32) {
-                    throw new TskCoreException("Hash has incorrect length: " + sb.toString());
-                }
-
-                totalHashesRead++;
-                return sb.toString();
-            } else {
-                throw new TskCoreException("Could not read expected number of hashes from hash set " + filename);
-            }
-        } catch (SQLException ex) {
-            throw new TskCoreException("Error reading hash from result set for hash set " + filename, ex);
-        }
     }
+
+    @Override
+    public HashEntry getNextHashEntry() throws TskCoreException {
+        return HashSetParser.super.getNextHashEntry(); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    
 
     /**
      * Check if there are more hashes to read
