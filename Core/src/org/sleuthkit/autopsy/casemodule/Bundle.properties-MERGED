@@ -55,6 +55,10 @@ Case.exceptionMessage.unsupportedSchemaVersionMessage=Unsupported case database 
 Case.lockingException.couldNotAcquireExclusiveLock=Failed to get a exclusive lock on the case.
 Case.lockingException.couldNotAcquireSharedLock=Failed to get an shared lock on the case.
 Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. See Tools, Options, Multi-User.
+# {0} - image
+Case.openFileSystems.openingImage=Opening all filesystems for image: {0}...
+# {0} - case
+Case.openFileSystems.retrievingImages=Retrieving images for case: {0}...
 Case.progressIndicatorCancelButton.label=Cancel
 Case.progressIndicatorTitle.closingCase=Closing Case
 Case.progressIndicatorTitle.creatingCase=Creating Case
@@ -186,7 +190,6 @@ NewCaseVisualPanel1.caseNameLabel.text_1=Case Name:
 NewCaseVisualPanel1.caseDirLabel.text=Base Directory:
 NewCaseVisualPanel1.caseDirBrowseButton.text=Browse
 NewCaseVisualPanel1.caseNameTextField.text_1=
-NewCaseVisualPanel1.jLabel2.text_1=Case data will be stored in the following directory:
 NewCaseVisualPanel1.caseParentDirTextField.text=
 NewCaseVisualPanel1.caseDirTextField.text_1=
 CueBannerPanel.autopsyLogo.text=
@@ -467,3 +470,4 @@ UnpackagePortableCaseProgressDialog.okButton.text=OK
 UnpackagePortableCaseProgressDialog.resultLabel.text=resultLabel
 UnpackagePortableCaseDialog.extractLabel.text=Folder to extract to:
 UnpackagePortableCaseDialog.caseLabel.text=Portable Case:
+NewCaseVisualPanel1.caseDataStoredLabel.text_1=Case data will be stored in the following directory:
