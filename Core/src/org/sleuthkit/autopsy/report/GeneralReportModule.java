@@ -27,20 +27,14 @@ public interface GeneralReportModule extends ReportModule {
      * @param baseReportDir Base directory that reports are being stored in.
      * Report should go into baseReportDir + getRelativeFilePath().
      * @param progressPanel panel to update the report's progress with
-     */
-    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel);
-
-    /**
-     * Determines if the module supports report generation on a subset of data
-     * sources in a case. Defaults to false. Modules that override this to true
-     * should implement all generateReport overloads. The data source selections
-     * are stored in the GeneralReportSettings instance.
      *
-     * @return True if the module can be configured to run on a subset of data
-     * sources.
+     * @deprecated Use generateReport(GeneralReportSettings settings,
+     * ReportProgressPanel progressPanel) instead. The baseReportDir
+     * is stored in the settings instance.
      */
-    default boolean supportsDataSourceSelection() {
-        return false;
+    @Deprecated
+    default void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
+
     }
 
     /**
@@ -54,7 +48,20 @@ public interface GeneralReportModule extends ReportModule {
      * generation process
      * @param progressPanel panel to update the report's progress with
      */
+    @SuppressWarnings("deprecation")
     default void generateReport(GeneralReportSettings settings, ReportProgressPanel progressPanel) {
         generateReport(settings.getReportDirectoryPath(), progressPanel);
+    }
+
+    /**
+     * Determines if the module supports report generation on a subset of data
+     * sources in a case. Defaults to false. The data source selections are
+     * stored in the GeneralReportSettings instance.
+     *
+     * @return True if the module can be configured to run on a subset of data
+     * sources.
+     */
+    default boolean supportsDataSourceSelection() {
+        return false;
     }
 }

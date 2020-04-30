@@ -29,7 +29,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
-import org.sleuthkit.autopsy.report.modules.html.HTMLReport;
 
 class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
 
@@ -119,6 +118,7 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
         Preferences prefs = NbPreferences.forModule(ReportWizardPanel1.class);
         TableReportModule tableModuleSelection = getComponent().getTableModule();
         GeneralReportModule generalModuleSelection = getComponent().getGeneralModule();
+        FileReportModule fileModuleSelection = getComponent().getFileModule();
         
         prefs.putBoolean("tableModule", tableModuleSelection != null); //NON-NLS
         prefs.putBoolean("generalModule", generalModuleSelection != null); //NON-NLS
@@ -129,8 +129,11 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
             prefs.putBoolean("showDataSourceSelectionPanel", true);
         }
         
-        // HTML reports in initial PR
-        if(tableModuleSelection instanceof HTMLReport) {
+        if(tableModuleSelection != null) {
+            prefs.putBoolean("showDataSourceSelectionPanel", true);
+        }
+        
+        if(fileModuleSelection != null) {
             prefs.putBoolean("showDataSourceSelectionPanel", true);
         }
     }

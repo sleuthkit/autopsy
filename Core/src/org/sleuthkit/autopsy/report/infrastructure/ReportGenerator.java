@@ -42,6 +42,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -361,6 +362,10 @@ public class ReportGenerator {
             int i = 0;
             // Add files to report.
             for (AbstractFile file : files) {
+                if(shouldFilterFromReport(file, fileReportSettings)) {
+                    continue;
+                }
+                
                 // Check to see if any reports have been cancelled.
                 if (progressIndicator.getStatus() == ReportStatus.CANCELED) {
                     return;
@@ -381,6 +386,14 @@ public class ReportGenerator {
             fileReportModule.endReport();
             progressIndicator.complete(ReportStatus.COMPLETE);
         }
+    }
+    
+    private boolean shouldFilterFromReport(AbstractFile file, FileReportSettings fileReportSettings) {
+        if(fileReportSettings.getSelectedDataSources() == null) {
+            return false;
+        }
+        // Filter if the data source id is not in the list to process
+        return !fileReportSettings.getSelectedDataSources().contains(file.getDataSourceObjectId());
     }
 
     /**

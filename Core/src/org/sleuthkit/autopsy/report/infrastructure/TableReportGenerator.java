@@ -1827,9 +1827,12 @@ class TableReportGenerator {
      * Indicates if the content should be filtered from the report.
      */
     private boolean shouldFilterFromReport(Content content) throws TskCoreException {
+        if(this.settings.getSelectedDataSources() == null) {
+            return false;
+        }
+        
         long dataSourceId = content.getDataSource().getId();
-        return this.settings.getDataSourcesToProcess() != null && 
-                !this.settings.getDataSourcesToProcess().contains(dataSourceId);
+        return !this.settings.getSelectedDataSources().contains(dataSourceId);
     }
 
     /**

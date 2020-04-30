@@ -156,7 +156,9 @@ public final class KMLReport implements GeneralReportModule {
 
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel, List<Waypoint> waypointList) {
         this.waypointList = waypointList;
-        generateReport(baseReportDir, progressPanel);
+        GeneralReportSettings reportSettings = new GeneralReportSettings();
+        reportSettings.setReportDirectoryPath(baseReportDir);
+        generateReport(reportSettings, progressPanel);
     }
     
     @Override
@@ -172,6 +174,21 @@ public final class KMLReport implements GeneralReportModule {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
+        
+        if(settings.getSelectedDataSources() == null) {
+            // Process all data sources if the list is null.
+            try {
+                List<Long> selectedDataSources = currentCase.getDataSources()
+                        .stream()
+                        .map(Content::getId)
+                        .collect(Collectors.toList());
+                settings.setSelectedDataSources(selectedDataSources);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Could not get the datasources from the case", ex);
+                return;
+            }
+        }
+        
         String baseReportDir = settings.getReportDirectoryPath();
         this.settings = settings;
         // Start the progress bar and setup the report
@@ -235,24 +252,6 @@ public final class KMLReport implements GeneralReportModule {
         }
 
         progressPanel.complete(result, errorMessage);
-    }
-
-    @Override
-    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {       
-        try {        
-            GeneralReportSettings reportSettings = new GeneralReportSettings();
-            currentCase = Case.getCurrentCaseThrows();
-            // Process all data sources if none are provided.
-            List<Long> selections = currentCase.getDataSources()
-                    .stream()
-                    .map(Content::getId)
-                    .collect(Collectors.toList());
-            reportSettings.setDataSourcesToProcess(selections);
-            reportSettings.setReportDirectoryPath(baseReportDir);
-            generateReport(reportSettings, progressPanel);
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Exception while accessing case resources.", ex); //NON-NLS
-        }
     }
 
     /**
@@ -925,8 +924,10 @@ public final class KMLReport implements GeneralReportModule {
      * Indicates if the content should be filtered from the report.
      */
     private boolean shouldFilterFromReport(Content content) throws TskCoreException {
+        if(this.settings.getSelectedDataSources() == null) {
+            return false;
+        }
         long dataSourceId = content.getDataSource().getId();
-        return this.settings.getDataSourcesToProcess() != null && 
-                !this.settings.getDataSourcesToProcess().contains(dataSourceId);
+        return !this.settings.getSelectedDataSources().contains(dataSourceId);
     }
 }

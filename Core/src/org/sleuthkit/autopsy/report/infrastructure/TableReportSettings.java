@@ -45,7 +45,7 @@ final class TableReportSettings implements Serializable {
     private final List<String> tagNames = new ArrayList<>();
     private final boolean useStoredTagsAndArtifactsLists;
     private final TableReportOption reportOption;
-    private List<Long> dataSourcesToProcess;
+    private List<Long> selectedDataSources;
 
     /**
      * Creates TableReportSettings object. This constructor is used when user
@@ -102,16 +102,16 @@ final class TableReportSettings implements Serializable {
     }
     
     /**
-     * Returns the data sources to process
+     * Returns the selected data sources
      */
-    List<Long> getDataSourcesToProcess() {
-        return dataSourcesToProcess;
+    List<Long> getSelectedDataSources() {
+        return selectedDataSources;
     }
     
     /**
-     * Sets the data sources to process
+     * Sets the selected data sources
      */
-    void setDataSourcesToProcess(List<Long> dataSourcesToProcess) {
-        this.dataSourcesToProcess = new ArrayList<>(dataSourcesToProcess);
+    void setSelectedDataSources(List<Long> selectedDataSources) {
+        this.selectedDataSources = new ArrayList<>(selectedDataSources);
     }
 }

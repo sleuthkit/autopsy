@@ -28,21 +28,37 @@ import java.util.List;
 public class GeneralReportSettings implements Serializable {
     private static final long serialVersionUID = 1L;
     
-    private List<Long> dataSourcesToProcess;
+    private List<Long> selectedDataSources;
     private String reportDirectoryPath;
     
-    public List<Long> getDataSourcesToProcess() {
-        return dataSourcesToProcess;
+    /**
+     * Returns the selected data sources
+     * @return List of data source ids
+     */
+    public List<Long> getSelectedDataSources() {
+        return selectedDataSources;
     }
     
-    public void setDataSourcesToProcess(List<Long> dataSourcesToProcess) {
-        this.dataSourcesToProcess = new ArrayList<>(dataSourcesToProcess);
+    /**
+     * Sets the selected data sources
+     * @param selectedDataSources List of data source ids
+     */
+    public void setSelectedDataSources(List<Long> selectedDataSources) {
+        this.selectedDataSources = new ArrayList<>(selectedDataSources);
     }
     
+    /**
+     * Returns the directory that the report file should be saved in.
+     * @return Path to report directory
+     */
     public String getReportDirectoryPath() {
         return this.reportDirectoryPath;
     } 
     
+     /**
+     * Sets the directory that the report file should be saved in.
+     * @param reportDirectoryPath Path to report directory
+     */
     public void setReportDirectoryPath(String reportDirectoryPath) {
         this.reportDirectoryPath = reportDirectoryPath;
     }

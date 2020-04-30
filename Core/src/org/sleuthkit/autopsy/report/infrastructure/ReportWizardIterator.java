@@ -138,6 +138,10 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
             // File Module selected, need File Report Configuration Panel
             // (ReportWizardFileOptionsPanel)
             panels = Arrays.asList(fileConfigPanels);
+            if(showDataSourceSelectionPanel) {
+                panels = new ArrayList<>(panels);
+                panels.add(1, dataSourceSelectionPanel);
+            }
         }
     }
 

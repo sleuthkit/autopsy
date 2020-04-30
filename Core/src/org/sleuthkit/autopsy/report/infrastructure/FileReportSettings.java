@@ -32,7 +32,7 @@ final class FileReportSettings implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private Map<FileReportDataTypes, Boolean> filePropertiesInfo = new HashMap<>();
-    private List<Long> dataSourcesToProcess;
+    private List<Long> selectedDataSources;
 
     /**
      * Creates FileReportSettings object.
@@ -54,16 +54,16 @@ final class FileReportSettings implements Serializable {
     }
     
     /**
-     * Returns the data sources to process
+     * Returns the selected data sources
      */
-    List<Long> getDataSourcesToProcess() {
-        return dataSourcesToProcess;
+    List<Long> getSelectedDataSources() {
+        return selectedDataSources;
     }
     
     /**
-     * Sets the data sources to process
+     * Sets the selected data sources
      */
-    void setDataSourcesToProcess(List<Long> dataSourcesToProcess) {
-        this.dataSourcesToProcess = new ArrayList<>(dataSourcesToProcess);
+    void setSelectedDataSources(List<Long> selectedDataSources) {
+        this.selectedDataSources = new ArrayList<>(selectedDataSources);
     }
 }
