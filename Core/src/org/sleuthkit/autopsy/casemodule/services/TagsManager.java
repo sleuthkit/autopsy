@@ -55,7 +55,8 @@ public class TagsManager implements Closeable {
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
     private final SleuthkitCase caseDb;
 
-    static String DEFAULT_TAG_SET_NAME = "Project VIC (United States)";
+    private final static String DEFAULT_TAG_SET_NAME = "Project VIC (United States)";
+    private final static String PROJECT_VIC_TAG_SET_HEADER = "Project VIC";
 
     static {
 
@@ -146,13 +147,41 @@ public class TagsManager implements Closeable {
         return tagDisplayNames;
     }
 
-    public static List<String> getNotableTagDisplayNames() {
+    /**
+     * Returns a list of the names of all Notable Tags.
+     * 
+     * @return Returns a list of notable tag definition names.
+     */
+    public static List<String> getNotableTagDisplayNames()  {
+        List<TagNameDefinition> tagNameDefinitionList = new ArrayList<>();
+        
+        tagNameDefinitionList.addAll(TagNameDefinition.getStandardTagNameDefinitions());
+        tagNameDefinitionList.addAll(TagNameDefinition.getTagNameDefinitions());
+        
         List<String> tagDisplayNames = new ArrayList<>();
-        for (TagNameDefinition tagDef : TagNameDefinition.getTagNameDefinitions()) {
+        for (TagNameDefinition tagDef : tagNameDefinitionList) {
             if (tagDef.getKnownStatus() == TskData.FileKnown.BAD) {
                 tagDisplayNames.add(tagDef.getDisplayName());
             }
         }
+        try {
+            TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
+            TagSet categoryTagSet = tagsManager.getCategoryTagSet();
+            if(categoryTagSet != null) {
+                for(TagName tagName: categoryTagSet.getTagNames()) {
+                    if(tagName.getKnownStatus() == TskData.FileKnown.BAD) {
+                        tagDisplayNames.add(tagName.getDisplayName());
+                    }
+                }
+            }
+        } catch(TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Failed to retrieve category TagSet from DB");
+        } catch (NoCurrentCaseException ignored) {
+            /*
+             * No current case, nothing more to add to the set.
+             */
+        }
+
         return tagDisplayNames;
     }
 
@@ -893,6 +922,25 @@ public class TagsManager implements Closeable {
     public static class TagNameAlreadyExistsException extends Exception {
 
         private static final long serialVersionUID = 1L;
+    }
+    
+    /**
+     * Returns the list of Category TagSet.
+     * 
+     * @return The Category TagSet or null if none was found.
+     * 
+     * @throws TskCoreException 
+     */
+    public TagSet getCategoryTagSet() throws TskCoreException {
+        List<TagSet> tagSets = caseDb.getTaggingManager().getTagSets();
+        
+        for(TagSet set: tagSets) {
+            if(set.getName().startsWith(PROJECT_VIC_TAG_SET_HEADER)) {
+                return set;
+            }
+        }
+        
+        return null;
     }
 
     /**
