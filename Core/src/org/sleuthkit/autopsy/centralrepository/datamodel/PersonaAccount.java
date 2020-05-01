@@ -184,6 +184,27 @@ public class PersonaAccount {
 
         return queryCallback.getPersonaAccountsList();
     }
+   
+    /**
+     * Gets all the Persona associated with all the accounts matching the given
+     * account identifier substring.
+     *
+     * @param accountIdentifierSubstring Account identifier substring to search
+     * for.
+     * @return Collection of PersonaAccounts. may be empty.
+     *
+     * @throws CentralRepoException If there is an error in getting the
+     * persona_account.
+     */
+    static Collection<PersonaAccount> getPersonaAccountsForAccountIdentifier(String accountIdentifierSubstring) throws CentralRepoException {
+        String queryClause = PERSONA_ACCOUNTS_QUERY_CALUSE
+                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + accountIdentifierSubstring + "%')";
+
+        PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
+        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+
+        return queryCallback.getPersonaAccountsList();
+    }
     
     /**
      * Callback to process a query that gets all accounts belonging to a

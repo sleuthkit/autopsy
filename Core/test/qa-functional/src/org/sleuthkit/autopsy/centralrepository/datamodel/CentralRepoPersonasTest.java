@@ -696,4 +696,187 @@ public class CentralRepoPersonasTest  extends TestCase {
         
         
      }
+    
+    /**
+     * Tests searching of Persona by persona name.
+     */
+     public void testPersonaSearchByName() {
+         
+        // Test1: create Personas with similar names.
+        {
+            try {
+                // Create an email account
+                CentralRepoAccount emailAccount1 = CentralRepository.getInstance()
+                        .getOrCreateAccount(emailAccountType, EMAIL_ID_1);
+
+                // Create all personas with same comment.
+                final String personaComment = "Creator of Jungle Book.";
+                
+                // Create a Persona with name "Rudyard Kipling"
+                PersonaAccount pa1 = Persona.createPersonaForAccount("Rudyard Kipling", personaComment,
+                        Persona.PersonaStatus.ACTIVE, emailAccount1, "", Persona.Confidence.LOW);
+                
+                // Create a Persona with name "Rudy"
+                PersonaAccount pa2 = Persona.createPersonaForAccount("Rudy", personaComment,
+                        Persona.PersonaStatus.ACTIVE, emailAccount1, "", Persona.Confidence.LOW);
+                
+                 
+                // Create a Persona with name "Kipling Senior"
+                PersonaAccount pa3 = Persona.createPersonaForAccount("Kipling Senior", personaComment,
+                        Persona.PersonaStatus.ACTIVE, emailAccount1, "", Persona.Confidence.LOW);
+                
+                // Create a Persona with name "Senor Kipling"
+                PersonaAccount pa4 = Persona.createPersonaForAccount("Senor Kipling", personaComment,
+                        Persona.PersonaStatus.ACTIVE, emailAccount1, "", Persona.Confidence.LOW);
+                
+                
+                // Test 1 Search "kipling" - expect 3 matches
+                Collection<Persona> personaSearchResult = Persona.getPersonaByName("kipling");
+                Assert.assertEquals(3, personaSearchResult.size());
+                for (Persona p: personaSearchResult) {
+                    Assert.assertTrue(p.getComment().equalsIgnoreCase(personaComment));
+                }
+                
+                // Search 'Rudy' -  expect 2 matches
+                personaSearchResult = Persona.getPersonaByName("Rudy");
+                Assert.assertEquals(2, personaSearchResult.size());
+               
+                
+                // Search 'Sen' - expect 2 matches
+                personaSearchResult = Persona.getPersonaByName("Sen");
+                Assert.assertEquals(2, personaSearchResult.size());
+                
+                
+                // Search 'IPL' - expect 3 matches
+                personaSearchResult = Persona.getPersonaByName("IPL");
+                Assert.assertEquals(3, personaSearchResult.size());
+                
+              
+                // Serach "Rudyard Kipling" - expect 1 match
+                personaSearchResult = Persona.getPersonaByName("Rudyard Kipling");
+                Assert.assertEquals(1, personaSearchResult.size());
+                Assert.assertTrue(personaSearchResult.iterator().next().getName().equalsIgnoreCase("Rudyard Kipling"));
+                
+                // Search '' - expect ALL (4) to match
+                personaSearchResult = Persona.getPersonaByName("");
+                Assert.assertEquals(4, personaSearchResult.size());
+                
+                
+            } catch (CentralRepoException ex) {
+                Assert.fail("No name persona test failed. Exception: " + ex);
+            }
+        }
+        
+        
+     }
+     
+     
+    /**
+     * Tests searching of Persona by account identifier substrings.
+     */
+     public void testPersonaSearchByAccountIdentifier() {
+         
+        // Test1: create Personas with similar names.
+        {
+            try {
+                // Create an email account1
+                CentralRepoAccount emailAccount1 = CentralRepository.getInstance()
+                        .getOrCreateAccount(emailAccountType, "joeexotic555@yahoo.com");
+
+                // Create all personas with same comment.
+                final String personaComment = "Comment used to create a persona";
+                
+                // Create a Persona with name "Joe Exotic" associated with the email address
+                PersonaAccount pa1 = Persona.createPersonaForAccount("Joe Exotic", personaComment,
+                        Persona.PersonaStatus.ACTIVE, emailAccount1, "", Persona.Confidence.LOW);
+                
+                // Create a Persona with name "Tiger King" associated with the email address
+                PersonaAccount pa2 = Persona.createPersonaForAccount("Tiger King", personaComment,
+                        Persona.PersonaStatus.ACTIVE, emailAccount1, "", Persona.Confidence.LOW);
+                
+
+                
+                // Create an phone account with number "+1 999 555 3366"
+                CentralRepoAccount phoneAccount1 = CentralRepository.getInstance()
+                        .getOrCreateAccount(phoneAccountType, "+1 999 555 3366");
+
+               
+                // Create a Persona with name "Carol Baskin" associated 
+                Persona.createPersonaForAccount("Carol Baskin", personaComment,
+                        Persona.PersonaStatus.ACTIVE, phoneAccount1, "", Persona.Confidence.LOW);
+                
+                // Create a Persona with no name  assoctaed with 
+                Persona.createPersonaForAccount(null, personaComment,
+                        Persona.PersonaStatus.ACTIVE, phoneAccount1, "", Persona.Confidence.LOW);
+                
+                
+                
+                 // Create another email account1
+                CentralRepoAccount emailAccount2 = CentralRepository.getInstance()
+                        .getOrCreateAccount(emailAccountType, "jodoe@mail.com");
+
+             
+              
+                // Create a Persona with name "John Doe" associated with the email address
+                Persona.createPersonaForAccount("John Doe", personaComment,
+                        Persona.PersonaStatus.ACTIVE, emailAccount2, "", Persona.Confidence.LOW);
+                
+                Persona.createPersonaForAccount("Joanne Doe", personaComment,
+                        Persona.PersonaStatus.ACTIVE, emailAccount2, "", Persona.Confidence.LOW);
+                
+                
+                
+                // Test1 Search on 'joe' - should get 2 
+                Collection<PersonaAccount> personaSearchResult = Persona.getPersonaAccountsForAccountIdentifier("joe");
+                Assert.assertEquals(2, personaSearchResult.size());
+                for (PersonaAccount pa: personaSearchResult) {
+                    Assert.assertTrue(pa.getAccount().getTypeSpecificId().contains("joe"));
+                }
+                
+                //  Search on 'exotic' - should get 2 
+                personaSearchResult = Persona.getPersonaAccountsForAccountIdentifier("exotic");
+                Assert.assertEquals(2, personaSearchResult.size());
+                for (PersonaAccount pa: personaSearchResult) {
+                    Assert.assertTrue(pa.getAccount().getTypeSpecificId().contains("exotic"));
+                }
+                
+                // Test1 Search on '999' - should get 2 
+                personaSearchResult = Persona.getPersonaAccountsForAccountIdentifier("999");
+                Assert.assertEquals(2, personaSearchResult.size());
+                for (PersonaAccount pa: personaSearchResult) {
+                    Assert.assertTrue(pa.getAccount().getTypeSpecificId().contains("999"));
+                }
+                
+                // Test1 Search on '555' - should get 4
+                personaSearchResult = Persona.getPersonaAccountsForAccountIdentifier("555");
+                Assert.assertEquals(4, personaSearchResult.size());
+                for (PersonaAccount pa: personaSearchResult) {
+                    Assert.assertTrue(pa.getAccount().getTypeSpecificId().contains("555"));
+                }
+                
+                // Test1 Search on 'doe' - should get 2
+                personaSearchResult = Persona.getPersonaAccountsForAccountIdentifier("doe");
+                Assert.assertEquals(2, personaSearchResult.size());
+                for (PersonaAccount pa: personaSearchResult) {
+                    Assert.assertTrue(pa.getAccount().getTypeSpecificId().contains("doe"));
+                }
+                 
+                // Test1 Search on '@' - should get 4
+                personaSearchResult = Persona.getPersonaAccountsForAccountIdentifier("@");
+                Assert.assertEquals(4, personaSearchResult.size());
+                for (PersonaAccount pa: personaSearchResult) {
+                    Assert.assertTrue(pa.getAccount().getTypeSpecificId().contains("@"));
+                }
+                
+                // Test1 Search on '' - should get ALL (6)
+                personaSearchResult = Persona.getPersonaAccountsForAccountIdentifier("");
+                Assert.assertEquals(6, personaSearchResult.size());
+                
+                
+            } catch (CentralRepoException ex) {
+                Assert.fail("No name persona test failed. Exception: " + ex);
+            }
+        }
+        
+     }
 }

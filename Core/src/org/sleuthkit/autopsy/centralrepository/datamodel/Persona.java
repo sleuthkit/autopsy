@@ -263,7 +263,7 @@ public class Persona {
      */
     private static class PersonaQueryCallback implements CentralRepositoryDbQueryCallback {
 
-        private Persona persona = null;
+        private final Collection<Persona> personaList =  new ArrayList<>();
 
         @Override
         public void process(ResultSet rs) throws SQLException {
@@ -275,7 +275,7 @@ public class Persona {
                         rs.getString("display_name"));
 
                 PersonaStatus status = PersonaStatus.fromId(rs.getInt("status_id"));
-                persona = new Persona(
+                Persona persona = new Persona(
                         rs.getInt("id"),
                         rs.getString("uuid"),
                         rs.getString("name"),
@@ -285,14 +285,24 @@ public class Persona {
                         status,
                         examiner
                 );
+                
+                personaList.add(persona);
             }
         }
 
-        Persona getPersona() {
-            return persona;
+        Collection<Persona> getPersonas() {
+            return Collections.unmodifiableCollection(personaList);
         }
     };
 
+    // Partial query string to select from personas table, 
+    // just supply the where clause.
+    private static final String PERSONA_QUERY = 
+                  "SELECT p.id, p.uuid, p.name, p.comment, p.created_date, p.modified_date, p.status_id, p.examiner_id, e.login_name, e.display_name "
+                + "FROM personas as p "
+                + "INNER JOIN examiners as e ON e.id = p.examiner_id ";
+              
+     
     /**
      * Gets the row from the Personas table with the given UUID, creates and
      * returns the Persona from that data.
@@ -306,15 +316,17 @@ public class Persona {
      */
     private static Persona getPersonaByUUID(String uuid) throws CentralRepoException {
 
-        String queryClause = "SELECT p.id, p.uuid, p.name, p.comment, p.created_date, p.modified_date, p.status_id, p.examiner_id, e.login_name, e.display_name "
-                + "FROM personas as p "
-                + "INNER JOIN examiners as e ON e.id = p.examiner_id "
+        String queryClause = 
+                PERSONA_QUERY
                 + "WHERE p.uuid = '" + uuid + "'";
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
 
-        return queryCallback.getPersona();
+        Collection<Persona> personas = queryCallback.getPersonas();
+        
+        Persona persona = personas.isEmpty() ? null : personas.iterator().next();
+        return persona;
     }
 
     /**
@@ -330,17 +342,39 @@ public class Persona {
      */
     public static Persona getPersonaById(long id) throws CentralRepoException {
 
-        String queryClause = "SELECT p.id, p.uuid, p.name, p.comment, p.created_date, p.modified_date, p.status_id, p.examiner_id, e.login_name, e.display_name "
-                + "FROM personas as p "
-                + "INNER JOIN examiners as e ON e.id = p.examiner_id "
+        String queryClause = PERSONA_QUERY
                 + "WHERE p.id = " + id;
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
 
-        return queryCallback.getPersona();
+        Collection<Persona> personas = queryCallback.getPersonas();
+        
+        Persona persona = personas.isEmpty() ? null : personas.iterator().next();
+        return persona;
     }
 
+    /**
+     * Gets the rows from the Personas table with matching name.
+     *
+     * @param partialName Name substring to match.
+     * @return Collection of personas matching the given name substring, may be
+     * empty if no match is found.
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public static Collection<Persona> getPersonaByName(String partialName) throws CentralRepoException {
+
+        String queryClause = PERSONA_QUERY
+                + "WHERE LOWER(p.name) LIKE " + "LOWER('%" + partialName + "%')" ;
+
+        PersonaQueryCallback queryCallback = new PersonaQueryCallback();
+        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+
+        return queryCallback.getPersonas();
+    }
+    
     /**
      * Creates an alias for the Persona.
      *
@@ -417,6 +451,21 @@ public class Persona {
         return PersonaAccount.getPersonaAccountsForAccount(accountId);
     }
 
+    /**
+     * Gets all the Persona associated with all the accounts matching the given
+     * account identifier substring.
+     *
+     * @param accountIdentifierSubstring Account identifier substring to search
+     * for.
+     * @return Collection of PersonaAccounts. may be empty.
+     *
+     * @throws CentralRepoException If there is an error in getting the
+     * persona_account.
+     */
+    public static Collection<PersonaAccount> getPersonaAccountsForAccountIdentifier(String accountIdentifierSubstring) throws CentralRepoException {
+        return PersonaAccount.getPersonaAccountsForAccountIdentifier(accountIdentifierSubstring);
+    }
+    
     /**
      * Get all accounts associated with the persona.
      *
