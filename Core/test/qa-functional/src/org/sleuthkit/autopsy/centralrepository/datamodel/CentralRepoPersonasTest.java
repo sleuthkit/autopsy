@@ -713,20 +713,20 @@ public class CentralRepoPersonasTest  extends TestCase {
                 final String personaComment = "Creator of Jungle Book.";
                 
                 // Create a Persona with name "Rudyard Kipling"
-                PersonaAccount pa1 = Persona.createPersonaForAccount("Rudyard Kipling", personaComment,
+                Persona.createPersonaForAccount("Rudyard Kipling", personaComment,
                         Persona.PersonaStatus.ACTIVE, emailAccount1, "", Persona.Confidence.LOW);
                 
                 // Create a Persona with name "Rudy"
-                PersonaAccount pa2 = Persona.createPersonaForAccount("Rudy", personaComment,
+                Persona.createPersonaForAccount("Rudy", personaComment,
                         Persona.PersonaStatus.ACTIVE, emailAccount1, "", Persona.Confidence.LOW);
                 
                  
                 // Create a Persona with name "Kipling Senior"
-                PersonaAccount pa3 = Persona.createPersonaForAccount("Kipling Senior", personaComment,
+                Persona.createPersonaForAccount("Kipling Senior", personaComment,
                         Persona.PersonaStatus.ACTIVE, emailAccount1, "", Persona.Confidence.LOW);
                 
                 // Create a Persona with name "Senor Kipling"
-                PersonaAccount pa4 = Persona.createPersonaForAccount("Senor Kipling", personaComment,
+                Persona.createPersonaForAccount("Senor Kipling", personaComment,
                         Persona.PersonaStatus.ACTIVE, emailAccount1, "", Persona.Confidence.LOW);
                 
                 
@@ -787,11 +787,11 @@ public class CentralRepoPersonasTest  extends TestCase {
                 final String personaComment = "Comment used to create a persona";
                 
                 // Create a Persona with name "Joe Exotic" associated with the email address
-                PersonaAccount pa1 = Persona.createPersonaForAccount("Joe Exotic", personaComment,
+                Persona.createPersonaForAccount("Joe Exotic", personaComment,
                         Persona.PersonaStatus.ACTIVE, emailAccount1, "", Persona.Confidence.LOW);
                 
                 // Create a Persona with name "Tiger King" associated with the email address
-                PersonaAccount pa2 = Persona.createPersonaForAccount("Tiger King", personaComment,
+                Persona.createPersonaForAccount("Tiger King", personaComment,
                         Persona.PersonaStatus.ACTIVE, emailAccount1, "", Persona.Confidence.LOW);
                 
 

@@ -349,8 +349,7 @@ public class Persona {
 
         Collection<Persona> personas = queryCallback.getPersonas();
         
-        Persona persona = personas.isEmpty() ? null : personas.iterator().next();
-        return persona;
+        return personas.isEmpty() ? null : personas.iterator().next();
     }
 
     /**

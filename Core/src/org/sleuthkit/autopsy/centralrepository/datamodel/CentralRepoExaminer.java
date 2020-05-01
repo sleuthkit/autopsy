@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 /**
- * Encapsulates the concept of an examiner associated with a case.
+ * Encapsulates the concept of an examiner.
  */
 final public class CentralRepoExaminer {
 

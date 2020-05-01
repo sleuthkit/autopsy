@@ -26,7 +26,6 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
-import org.sleuthkit.datamodel.Examiner;
 
 /**
  * Main interface for interacting with the database
