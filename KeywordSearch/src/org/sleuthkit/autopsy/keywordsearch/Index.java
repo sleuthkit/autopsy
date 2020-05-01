@@ -48,8 +48,8 @@ final class Index {
      */
     Index(String indexPath, String solrVersion, String schemaVersion, String coreName, String caseName) {
         this.indexPath = uncPathUtilities.convertPathToUNC(indexPath);
-        this.solrVersion = solrVersion;
-        this.schemaVersion = schemaVersion;
+        this.solrVersion = "8"; // ELTODO solrVersion;
+        this.schemaVersion = "2.2"; // ELTODO schemaVersion; 
         if (coreName == null || coreName.isEmpty()) {
             // come up with a new core name
             coreName = createCoreName(caseName);

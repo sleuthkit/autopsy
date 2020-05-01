@@ -394,7 +394,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     currentVersionIndex = indexToUse;
                 } else {
                     // index needs to be upgraded to latest supported version of Solr
-                    throw new AutopsyServiceException("Unable to find index to use for Case open");
+                    // ELTODO REMOVE 
+                    currentVersionIndex = indexToUse;
+                    // ELTODO REMOVE throw new AutopsyServiceException("Unable to find index to use for Case open");
                 }
             }
         }
