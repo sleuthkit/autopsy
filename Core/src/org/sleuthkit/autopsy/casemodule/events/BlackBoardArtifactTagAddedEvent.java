@@ -63,6 +63,7 @@ public class BlackBoardArtifactTagAddedEvent extends TagAddedEvent<BlackboardArt
      * 
      * @return A List of DeletedBlackboardArtifactTagInfo or null if no tags were removed.
      */
+    @SuppressWarnings("unchecked")
     public List<DeletedBlackboardArtifactTagInfo> getRemovedTags() {
         Object oldValue = this.getOldValue();
         if (oldValue != null) {

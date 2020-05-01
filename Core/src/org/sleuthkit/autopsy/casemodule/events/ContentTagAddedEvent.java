@@ -64,6 +64,7 @@ public class ContentTagAddedEvent extends TagAddedEvent<ContentTag> implements S
      * 
      * @return A list of removed tags or null if no tags were removed.
      */
+    @SuppressWarnings("unchecked")
     public List<DeletedContentTagInfo> getRemovedTags() {
         Object oldValue = this.getOldValue();
         if (oldValue != null) {
