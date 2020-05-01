@@ -61,8 +61,6 @@ public class CategoryManager {
 
     private static final Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
 
-    private final ImageGalleryController controller;
-
     /**
      * the DrawableDB that backs the category counts cache. The counts are
      * initialized from this, and the counting of CAT-0 is always delegated to
@@ -70,7 +68,7 @@ public class CategoryManager {
      */
     private final DrawableDB drawableDb;
 
-    private TagSet categoryTagSet = null;
+    private final TagSet categoryTagSet;
 
     /**
      * Used to distribute CategoryChangeEvents
@@ -90,7 +88,6 @@ public class CategoryManager {
             = CacheBuilder.newBuilder().build(CacheLoader.from(this::getCategoryCountHelper));
 
     public CategoryManager(ImageGalleryController controller, TagSet categoryTagSet) throws TskCoreException {
-        this.controller = controller;
         this.drawableDb = controller.getDrawablesDatabase();
         this.categoryTagSet = categoryTagSet;
     }

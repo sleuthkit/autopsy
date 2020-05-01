@@ -57,9 +57,9 @@ public interface DrawableView {
 
     static final CornerRadii CAT_CORNER_RADII = new CornerRadii(3);
 
-    static final Border HASH_BORDER = new Border(new BorderStroke(Color.CYAN, BorderStrokeStyle.DASHED, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
+    Border HASH_BORDER = new Border(new BorderStroke(Color.CYAN, BorderStrokeStyle.DASHED, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
 
-    static final Map<String, Border> BORDER_MAP = new HashMap<>();
+    Map<String, Border> BORDER_MAP = new HashMap<>();
 
     Region getCategoryBorderRegion();
 

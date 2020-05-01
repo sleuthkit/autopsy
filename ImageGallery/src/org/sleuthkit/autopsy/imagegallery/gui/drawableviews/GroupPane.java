@@ -396,7 +396,6 @@ public class GroupPane extends BorderPane {
         assert seenByOtherExaminersCheckBox != null : "fx:id=\"seenByOtherExaminersCheckBox\" was not injected: check your FXML file 'GroupPane.fxml'.";
         assert catSegmentedButton != null : "fx:id=\"catSegmentedButton\" was not injected: check your FXML file 'GroupPane.fxml'.";
 
-        List<ToggleButton> buttons = new ArrayList<>();
         for (TagName tagName : controller.getCategoryManager().getCategories()) {
             ToggleButton toggleForCategory = getToggleForCategory(tagName);
             toggleForCategory.setBorder(new Border(new BorderStroke(Color.web(tagName.getColor().getHexColorCode()), BorderStrokeStyle.SOLID, CORNER_RADII_2, BORDER_WIDTHS_2)));

@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
