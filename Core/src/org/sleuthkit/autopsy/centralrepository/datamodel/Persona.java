@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.datamodel.Examiner;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -126,7 +125,7 @@ public class Persona {
     private final long createdDate;
     private final long modifiedDate;
     private final PersonaStatus status;
-    private final Examiner examiner;
+    private final CentralRepoExaminer examiner;
 
     public long getId() {
         return id;
@@ -156,11 +155,11 @@ public class Persona {
         return status;
     }
 
-    public Examiner getExaminer() {
+    public CentralRepoExaminer getExaminer() {
         return examiner;
     }
 
-    Persona(long id, String uuidStr, String name, String comment, long created_date, long modified_date, PersonaStatus status, Examiner examiner) {
+    Persona(long id, String uuidStr, String name, String comment, long created_date, long modified_date, PersonaStatus status, CentralRepoExaminer examiner) {
         this.id = id;
         this.uuidStr = uuidStr;
         this.name = name;
@@ -207,7 +206,7 @@ public class Persona {
     private static Persona createPersona(String name, String comment, PersonaStatus status) throws CentralRepoException {
         // generate a UUID for the persona
         String uuidStr = UUID.randomUUID().toString();
-        Examiner examiner = CentralRepository.getInstance().getCurrentCentralRepoExaminer();
+        CentralRepoExaminer examiner = CentralRepository.getInstance().getCurrentCentralRepoExaminer();
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();
@@ -240,7 +239,7 @@ public class Persona {
      */
     public PersonaAccount addAccountToPersona(CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
 
-        Examiner currentExaminer = CentralRepository.getInstance().getCurrentCentralRepoExaminer();
+        CentralRepoExaminer currentExaminer = CentralRepository.getInstance().getCurrentCentralRepoExaminer();
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();
@@ -269,7 +268,7 @@ public class Persona {
         public void process(ResultSet rs) throws SQLException {
 
             while (rs.next()) {
-                Examiner examiner = new Examiner(
+                CentralRepoExaminer examiner = new CentralRepoExaminer(
                         rs.getInt("examiner_id"),
                         rs.getString("login_name"),
                         rs.getString("display_name"));
@@ -612,7 +611,7 @@ public class Persona {
             while (resultSet.next()) {
 
                 // examiner that created the persona
-                Examiner personaExaminer = new Examiner(
+                CentralRepoExaminer personaExaminer = new CentralRepoExaminer(
                         resultSet.getInt("persona_examiner_id"),
                         resultSet.getString("persona_examiner_login_name"),
                         resultSet.getString("persona_examiner_display_name"));

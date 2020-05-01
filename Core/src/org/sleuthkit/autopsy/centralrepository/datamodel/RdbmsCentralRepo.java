@@ -102,7 +102,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     // Update Test code if this changes.  It's hard coded there.
     static final int DEFAULT_BULK_THRESHHOLD = 1000;
 
-    private Examiner cachedCurrentExaminer = null;
+    private CentralRepoExaminer cachedCurrentExaminer = null;
     
     private static final int QUERY_STR_MAX_LEN = 1000;
     
@@ -2557,7 +2557,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
 
     @Override
-    public Examiner getCurrentCentralRepoExaminer() throws CentralRepoException {
+    public CentralRepoExaminer getCurrentCentralRepoExaminer() throws CentralRepoException {
 
         // return cached value if there's one
         if (cachedCurrentExaminer != null) {
@@ -2575,7 +2575,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                 ResultSet resultSet = statement.executeQuery(querySQL);) {
 
             if (resultSet.next()) {
-                cachedCurrentExaminer = new Examiner(resultSet.getLong("id"), resultSet.getString("login_name"), resultSet.getString("display_name"));
+                cachedCurrentExaminer = new CentralRepoExaminer(resultSet.getLong("id"), resultSet.getString("login_name"), resultSet.getString("display_name"));
                 return cachedCurrentExaminer;
             } else {
                 throw new CentralRepoException("Error getting examiner for name = " + loginName);

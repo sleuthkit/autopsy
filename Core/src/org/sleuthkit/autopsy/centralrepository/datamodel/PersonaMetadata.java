@@ -43,7 +43,7 @@ public class PersonaMetadata {
     private final String justification;
     private final Persona.Confidence confidence;
     private final long dateAdded;
-    private final Examiner examiner;
+    private final CentralRepoExaminer examiner;
 
     public long getPersonaId() {
         return personaId;
@@ -69,11 +69,11 @@ public class PersonaMetadata {
         return dateAdded;
     }
 
-    public Examiner getExaminer() {
+    public CentralRepoExaminer getExaminer() {
         return examiner;
     }
     
-    public PersonaMetadata(long personaId, String name, String value, String justification, Persona.Confidence confidence, long dateAdded, Examiner examiner) {
+    public PersonaMetadata(long personaId, String name, String value, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
         this.personaId = personaId;
         this.name = name;
         this.value = value;
@@ -97,7 +97,7 @@ public class PersonaMetadata {
      */
     static PersonaMetadata addPersonaMetadata(long personaId, String name, String value, String justification, Persona.Confidence confidence) throws CentralRepoException {
 
-        Examiner examiner = CentralRepository.getInstance().getCurrentCentralRepoExaminer();
+        CentralRepoExaminer examiner = CentralRepository.getInstance().getCurrentCentralRepoExaminer();
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();
@@ -128,7 +128,7 @@ public class PersonaMetadata {
         public void process(ResultSet rs) throws SQLException {
 
             while (rs.next()) {
-                Examiner examiner = new Examiner(
+                CentralRepoExaminer examiner = new CentralRepoExaminer(
                         rs.getInt("examiner_id"),
                         rs.getString("login_name"),
                         rs.getString("display_name"));

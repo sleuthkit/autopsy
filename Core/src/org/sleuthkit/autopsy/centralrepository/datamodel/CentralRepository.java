@@ -177,7 +177,7 @@ public interface CentralRepository {
      * @return Examiner Current examiner.
      * @throws CentralRepoException
      */
-    Examiner getCurrentCentralRepoExaminer() throws CentralRepoException;
+    CentralRepoExaminer getCurrentCentralRepoExaminer() throws CentralRepoException;
 
     /**
      * Retrieves Central Repo case based on an Autopsy Case

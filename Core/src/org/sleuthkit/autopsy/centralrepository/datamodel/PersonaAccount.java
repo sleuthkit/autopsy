@@ -23,7 +23,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import org.sleuthkit.datamodel.Examiner;
 
 /**
  * This class represents an association between a Persona and an Account.
@@ -39,9 +38,9 @@ public class PersonaAccount {
     private final String justification;
     private final Persona.Confidence confidence;
     private final long dateAdded;
-    private final Examiner examiner;
+    private final CentralRepoExaminer examiner;
 
-    public PersonaAccount(Persona persona, CentralRepoAccount account, String justification, Persona.Confidence confidence, long dateAdded, Examiner examiner) {
+    public PersonaAccount(Persona persona, CentralRepoAccount account, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
         this.persona = persona;
         this.account = account;
         this.justification = justification;
@@ -70,7 +69,7 @@ public class PersonaAccount {
         return dateAdded;
     }
 
-    public Examiner getExaminer() {
+    public CentralRepoExaminer getExaminer() {
         return examiner;
     }
 
@@ -86,13 +85,13 @@ public class PersonaAccount {
 
             while (rs.next()) {
                 // examiner that created the persona/account association
-                Examiner paExaminer = new Examiner(
+                CentralRepoExaminer paExaminer = new CentralRepoExaminer(
                         rs.getInt("pa_examiner_id"),
                         rs.getString("pa_examiner_login_name"),
                         rs.getString("pa_examiner_display_name"));
 
                 // examiner that created the persona
-                Examiner personaExaminer = new Examiner(
+                CentralRepoExaminer personaExaminer = new CentralRepoExaminer(
                         rs.getInt("persona_examiner_id"),
                         rs.getString("persona_examiner_login_name"),
                         rs.getString("persona_examiner_display_name"));
