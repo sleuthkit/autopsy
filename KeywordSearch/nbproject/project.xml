@@ -230,12 +230,12 @@
                 <binary-origin>release/modules/ext/icu4j-3.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-19.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-19.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/language-detector-0.6.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\language-detector-0.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/guava-18.0.jar</runtime-relative-path>
+                <binary-origin>C:\cygwin64\home\elivis\autopsy\KeywordSearch\release\modules\ext\guava-18.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/joda-time-2.2.jar</runtime-relative-path>

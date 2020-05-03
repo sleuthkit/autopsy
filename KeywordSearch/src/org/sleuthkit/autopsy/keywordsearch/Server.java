@@ -241,7 +241,7 @@ public class Server {
     };
 
     // A reference to the locally running Solr instance.
-    private final HttpSolrClient localSolrServer;
+    private final ConcurrentUpdateSolrClient localSolrServer;
 
     // A reference to the Solr server we are currently connected to for the Case.
     // This could be a local or remote server.
@@ -252,12 +252,14 @@ public class Server {
     private Collection currentCollection;
     private final ReentrantReadWriteLock currentCoreLock;
 
-    private final File solrFolder;
-    private Path solrCmdPath;
-    private Path solrHome;
+    private final File solr8Folder;
+    private Path solr8CmdPath;
+    private Path solr8Home;
     private final ServerAction serverAction;
     private InputStreamPrinterThread errorRedirectThread;
 
+    private final File solr4Folder;
+    private Path solr4Home;    
     /**
      * New instance for the server at the given URL
      *
@@ -265,9 +267,11 @@ public class Server {
     Server() {
         initSettings();
 
-        this.localSolrServer = new HttpSolrClient.Builder("http://localhost:" + currentSolrServerPort + "/solr").build(); //NON-NLS
+        this.localSolrServer = new ConcurrentUpdateSolrClient.Builder("http://localhost:" + currentSolrServerPort + "/solr").build(); //NON-NLS
         serverAction = new ServerAction();
-        solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
+        solr8Folder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
+        //solr4Folder = InstalledFileLocator.getDefault().locate("solr4", Server.class.getPackage().getName(), false); //NON-NLS
+        solr4Folder = new File("C:\\cygwin64\\home\\elivis\\autopsy\\build\\cluster\\solr4");
         
         // Figure out where Java is located. The Java home location 
         // will be passed as the SOLR_JAVA_HOME environment
@@ -275,15 +279,28 @@ public class Server {
         // either autopsy-solr.cmd or autopsy-solr-in.cmd.
         javaPath = PlatformUtil.getJavaPath();
         // This is our customized version of the Solr batch script to start/stop Solr.
-        solrCmdPath = Paths.get(solrFolder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
+        solr8CmdPath = Paths.get(solr8Folder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
 
-        solrHome = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
-        if (!solrHome.toFile().exists()) {
+        solr8Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
+        if (!solr8Home.toFile().exists()) {
             try {
-                Files.createDirectory(solrHome);
-                Files.copy(Paths.get(solrFolder.getAbsolutePath(), "solr", "solr.xml"), solrHome.resolve("solr.xml")); //NON-NLS
-                Files.copy(Paths.get(solrFolder.getAbsolutePath(), "solr", "zoo.cfg"), solrHome.resolve("zoo.cfg")); //NON-NLS
-                FileUtils.copyDirectory(Paths.get(solrFolder.getAbsolutePath(), "solr", "configsets").toFile(), solrHome.resolve("configsets").toFile()); //NON-NLS
+                Files.createDirectory(solr8Home);
+                Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "solr", "solr.xml"), solr8Home.resolve("solr.xml")); //NON-NLS
+                Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "solr", "zoo.cfg"), solr8Home.resolve("zoo.cfg")); //NON-NLS
+                FileUtils.copyDirectory(Paths.get(solr8Folder.getAbsolutePath(), "solr", "configsets").toFile(), solr8Home.resolve("configsets").toFile()); //NON-NLS
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
+            }
+        }
+        
+        solr4Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr4"); //NON-NLS
+        solr4Home = solr4Home;
+        if (!solr4Home.toFile().exists()) { 
+            try {
+                Files.createDirectory(solr4Home);
+                Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "solr.xml"), solr4Home.resolve("solr.xml")); //NON-NLS
+                Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "zoo.cfg"), solr4Home.resolve("zoo.cfg")); //NON-NLS
+                // ELTODO FileUtils.copyDirectory(Paths.get(solr4Folder.getAbsolutePath(), "solr", "configsets").toFile(), solr4Home.resolve("configsets").toFile()); //NON-NLS
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
             }
@@ -343,7 +360,8 @@ public class Server {
 
     @Override
     public void finalize() throws java.lang.Throwable {
-        stop();
+        // ELTODO stop();
+        stopSolr4();
         super.finalize();
     }
 
@@ -436,11 +454,11 @@ public class Server {
         final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + UserPreferences.getMaxSolrVMSize() + "m"; //NON-NLS
 
         List<String> commandLine = new ArrayList<>();
-	commandLine.add(solrCmdPath.toString());
+	commandLine.add(solr8CmdPath.toString());
         commandLine.addAll(solrArguments);
 
         ProcessBuilder solrProcessBuilder = new ProcessBuilder(commandLine);
-        solrProcessBuilder.directory(solrFolder);
+        solrProcessBuilder.directory(solr8Folder);
 
         // Redirect stdout and stderr to files to prevent blocking.
         Path solrStdoutPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stdout"); //NON-NLS
@@ -450,7 +468,7 @@ public class Server {
         solrProcessBuilder.redirectError(solrStderrPath.toFile());
         
         solrProcessBuilder.environment().put("SOLR_JAVA_HOME", javaPath); // NON-NLS
-        solrProcessBuilder.environment().put("SOLR_HOME", solrHome.toString()); // NON-NLS
+        solrProcessBuilder.environment().put("SOLR_HOME", solr8Home.toString()); // NON-NLS
         solrProcessBuilder.environment().put("STOP_KEY", KEY); // NON-NLS 
         solrProcessBuilder.environment().put("SOLR_JAVA_MEM", MAX_SOLR_MEM_MB_PAR); // NON-NLS 
         logger.log(Level.INFO, "Running Solr command: {0}", solrProcessBuilder.command()); //NON-NLS
@@ -458,6 +476,45 @@ public class Server {
         logger.log(Level.INFO, "Finished running Solr command"); //NON-NLS
         return process;
     }
+    
+    /**
+     * Run a Solr command with the given arguments.
+     *
+     * @param solrArguments Command line arguments to pass to the Solr command.
+     *
+     * @return
+     *
+     * @throws IOException
+     */
+    private Process runSolr4Command(List<String> solrArguments) throws IOException {
+        final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + UserPreferences.getMaxSolrVMSize() + "m"; //NON-NLS
+
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add(javaPath);
+        commandLine.add(MAX_SOLR_MEM_MB_PAR);
+        commandLine.add("-DSTOP.PORT=" + currentSolrStopPort); //NON-NLS
+        commandLine.add("-Djetty.port=" + currentSolrServerPort); //NON-NLS
+        commandLine.add("-DSTOP.KEY=" + KEY); //NON-NLS
+        commandLine.add("-jar"); //NON-NLS
+        commandLine.add("start.jar"); //NON-NLS
+
+        commandLine.addAll(solrArguments);
+
+        ProcessBuilder solrProcessBuilder = new ProcessBuilder(commandLine);
+        solrProcessBuilder.directory(solr4Folder);
+
+        // Redirect stdout and stderr to files to prevent blocking.
+        Path solrStdoutPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stdout"); //NON-NLS
+        solrProcessBuilder.redirectOutput(solrStdoutPath.toFile());
+
+        Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr"); //NON-NLS
+        solrProcessBuilder.redirectError(solrStderrPath.toFile());
+
+        logger.log(Level.INFO, "Running Solr command: {0}", solrProcessBuilder.command()); //NON-NLS
+        Process process = solrProcessBuilder.start();
+        logger.log(Level.INFO, "Finished running Solr command"); //NON-NLS
+        return process;
+    }    
 
     /**
      * Get list of PIDs of currently running Solr processes
@@ -491,6 +548,10 @@ public class Server {
             PlatformUtil.killProcess(pid);
         }
     }
+    
+    void start() throws KeywordSearchModuleException, SolrServerNoPortException {
+        startSolr4();
+    }
 
     /**
      * Tries to start a local Solr instance in a separate process. Returns
@@ -499,7 +560,7 @@ public class Server {
      */
     @NbBundle.Messages({
         "Server.status.failed.msg=Local Solr server did not respond to status request. This may be because the server failed to start or is taking too long to initialize.",})
-    void start() throws KeywordSearchModuleException, SolrServerNoPortException {
+    void startSolr8() throws KeywordSearchModuleException, SolrServerNoPortException {
         if (isEmbeddedSolrRunning()) {
             // If a Solr server is running we stop it.
             stop();
@@ -531,7 +592,7 @@ public class Server {
             }
         }
 
-        logger.log(Level.INFO, "Starting Solr server from: {0}", solrFolder.getAbsolutePath()); //NON-NLS
+        logger.log(Level.INFO, "Starting Solr server from: {0}", solr8Folder.getAbsolutePath()); //NON-NLS
 
         if (isPortAvailable(currentSolrServerPort)) {
             logger.log(Level.INFO, "Port [{0}] available, starting Solr", currentSolrServerPort); //NON-NLS
@@ -580,6 +641,93 @@ public class Server {
             }
         }
     }
+    
+    
+    /**
+     * Tries to start a local Solr instance in a separate process. Returns
+     * immediately (probably before the server is ready) and doesn't check
+     * whether it was successful.
+     */
+    void startSolr4() throws KeywordSearchModuleException, SolrServerNoPortException {
+        if (isEmbeddedSolrRunning()) {
+            // If a Solr server is running we stop it.
+            stopSolr4();
+        }
+
+        if (!isPortAvailable(currentSolrServerPort)) {
+            // There is something already listening on our port. Let's see if
+            // this is from an earlier run that didn't successfully shut down
+            // and if so kill it.
+            final List<Long> pids = this.getSolrPIDs();
+
+            // If the culprit listening on the port is not a Solr process
+            // we refuse to start.
+            if (pids.isEmpty()) {
+                throw new SolrServerNoPortException(currentSolrServerPort);
+            }
+
+            // Ok, we've tried to stop it above but there still appears to be
+            // a Solr process listening on our port so we forcefully kill it.
+            killSolr();
+
+            // If either of the ports are still in use after our attempt to kill 
+            // previously running processes we give up and throw an exception.
+            if (!isPortAvailable(currentSolrServerPort)) {
+                throw new SolrServerNoPortException(currentSolrServerPort);
+            }
+            if (!isPortAvailable(currentSolrStopPort)) {
+                throw new SolrServerNoPortException(currentSolrStopPort);
+            }
+        }
+
+        logger.log(Level.INFO, "Starting Solr server from: {0}", solr4Folder.getAbsolutePath()); //NON-NLS
+
+        if (isPortAvailable(currentSolrServerPort)) {
+            logger.log(Level.INFO, "Port [{0}] available, starting Solr", currentSolrServerPort); //NON-NLS
+            try {
+                curSolrProcess = runSolr4Command(new ArrayList<>(
+                        Arrays.asList("-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
+                                "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
+
+                // Wait for the Solr server to start and respond to a status request.
+                for (int numRetries = 0; numRetries < 6; numRetries++) {
+                    if (isEmbeddedSolrRunning()) {
+                        final List<Long> pids = this.getSolrPIDs();
+                        logger.log(Level.INFO, "New Solr process PID: {0}", pids); //NON-NLS
+                        return;
+                    }
+
+                    // Local Solr server did not respond so we sleep for
+                    // 5 seconds before trying again.
+                    try {
+                        TimeUnit.SECONDS.sleep(5);
+                    } catch (InterruptedException ex) {
+                        logger.log(Level.WARNING, "Timer interrupted"); //NON-NLS
+                    }
+                }
+
+                // If we get here the Solr server has not responded to connection
+                // attempts in a timely fashion.
+                logger.log(Level.WARNING, "Local Solr server failed to respond to status requests.");
+                WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
+                    @Override
+                    public void run() {
+                        MessageNotifyUtil.Notify.error(
+                                NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"),
+                                Bundle.Server_status_failed_msg());
+                    }
+                });
+            } catch (SecurityException ex) {
+                logger.log(Level.SEVERE, "Could not start Solr process!", ex); //NON-NLS
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.start.exception.cantStartSolr.msg"), ex);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Could not start Solr server process!", ex); //NON-NLS
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.start.exception.cantStartSolr.msg2"), ex);
+            }
+        }
+    }    
 
     /**
      * Checks to see if a specific port is available.
@@ -647,7 +795,7 @@ public class Server {
         }
 
         try {
-            logger.log(Level.INFO, "Stopping Solr server from: {0}", solrFolder.getAbsolutePath()); //NON-NLS
+            logger.log(Level.INFO, "Stopping Solr server from: {0}", solr8Folder.getAbsolutePath()); //NON-NLS
 
             //try graceful shutdown
             Process process = runSolrCommand(new ArrayList<>(Arrays.asList("stop", "-k", KEY, "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
@@ -678,6 +826,54 @@ public class Server {
             logger.log(Level.INFO, "Finished stopping Solr server"); //NON-NLS
         }
     }
+    
+    
+    /**
+     * Tries to stop the local Solr instance.
+     *
+     * Waits for the stop command to finish before returning.
+     */
+    synchronized void stopSolr4() {
+
+        try {
+            // Close any open core before stopping server
+            closeCore();
+        } catch (KeywordSearchModuleException e) {
+            logger.log(Level.WARNING, "Failed to close core: ", e); //NON-NLS
+        }
+
+        try {
+            logger.log(Level.INFO, "Stopping Solr server from: {0}", solr4Folder.getAbsolutePath()); //NON-NLS
+
+            //try graceful shutdown
+            Process process = runSolrCommand(new ArrayList<>(Arrays.asList("--stop"))); //NON-NLS
+
+            logger.log(Level.INFO, "Waiting for Solr server to stop"); //NON-NLS
+            process.waitFor();
+
+            //if still running, forcefully stop it
+            if (curSolrProcess != null) {
+                curSolrProcess.destroy();
+                curSolrProcess = null;
+            }
+
+        } catch (IOException | InterruptedException ex) {
+            logger.log(Level.WARNING, "Error while attempting to stop Solr server", ex);
+        } finally {
+            //stop Solr stream -> log redirect threads
+            try {
+                if (errorRedirectThread != null) {
+                    errorRedirectThread.stopRun();
+                    errorRedirectThread = null;
+                }
+            } finally {
+                //if still running, kill it
+                killSolr();
+            }
+
+            logger.log(Level.INFO, "Finished stopping Solr server"); //NON-NLS
+        }
+    }    
 
     /**
      * Tests if there's a local Solr server running by sending it a core-statusRequest
@@ -884,7 +1080,8 @@ public class Server {
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 // ELTODO make embedded Solr work with localSolrServer
-                // currentSolrServer = this.localSolrServer;
+                currentSolrServer = this.localSolrServer;
+                UserPreferences.setMaxNumShards(1);
 
                 // check if the embedded Solr server is running
                 if (!this.isEmbeddedSolrRunning()) {
@@ -990,7 +1187,7 @@ public class Server {
                 // In single user mode, if there is a core.properties file already,
                 // we've hit a solr bug. Compensate by deleting it.
                 if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
-                    Path corePropertiesFile = Paths.get(solrFolder.toString(), SOLR, collectionName, CORE_PROPERTIES);
+                    Path corePropertiesFile = Paths.get(solr8Folder.toString(), SOLR, collectionName, CORE_PROPERTIES);
                     if (corePropertiesFile.toFile().exists()) {
                         try {
                             corePropertiesFile.toFile().delete();
@@ -1687,7 +1884,7 @@ public class Server {
      * @throws SolrServerException
      * @throws IOException
      */
-    void connectToEbmeddedSolrServer(HttpSolrClient solrServer) throws SolrServerException, IOException {
+    void connectToEbmeddedSolrServer(ConcurrentUpdateSolrClient solrServer) throws SolrServerException, IOException {
         TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
         CoreAdminRequest.getStatus(null, solrServer);
         HealthMonitor.submitTimingMetric(metric);
