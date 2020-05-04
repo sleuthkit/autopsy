@@ -119,8 +119,7 @@ public class PersonaAlias {
             while (rs.next()) {
                 CentralRepoExaminer examiner = new CentralRepoExaminer(
                         rs.getInt("examiner_id"),
-                        rs.getString("login_name"),
-                        rs.getString("display_name"));
+                        rs.getString("login_name"));
 
                 PersonaAlias alias = new PersonaAlias(
                         rs.getLong("persona_id"),

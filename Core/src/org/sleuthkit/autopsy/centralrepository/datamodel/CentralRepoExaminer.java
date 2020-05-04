@@ -25,16 +25,14 @@ final public class CentralRepoExaminer {
 
     private final long id;  // Row id in the examiners table in central repo database.
     private final String loginName;
-    private final String displayName;
 
-    public CentralRepoExaminer(long id, String loginName, String displayName) {
+    public CentralRepoExaminer(long id, String loginName) {
         this.id = id;
         this.loginName = loginName;
-        this.displayName = displayName;
     }
 
     /**
-     * Returns the id
+     * Returns the id.
      *
      * @return id
      */
@@ -43,25 +41,12 @@ final public class CentralRepoExaminer {
     }
 
     /**
-     * Returns the login name of examiner
+     * Returns the login name of examiner.
      *
      * @return login name
      */
     public String getLoginName() {
         return this.loginName;
-    }
-
-    /**
-     * Returns the display name of examiner
-     *
-     * @return display name, may be a blank string
-     */
-    public String getDisplayName() {
-        if (displayName == null) {
-            return "";
-        }
-
-        return this.displayName;
     }
 
 }

@@ -219,7 +219,6 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     /**
      * Reset the contents of the caches associated with EamDb results.
      */
-    @Override
     public final void clearCaches() {
         synchronized(typeCache) {
             typeCache.invalidateAll();
@@ -2751,7 +2750,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                 ResultSet resultSet = statement.executeQuery(querySQL);) {
 
             if (resultSet.next()) {
-                return new CentralRepoExaminer(resultSet.getLong("id"), resultSet.getString("login_name"), resultSet.getString("display_name"));
+                return new CentralRepoExaminer(resultSet.getLong("id"), resultSet.getString("login_name"));
             } else {
                 // Could not find this user in the Examiner table, add a row for it.
                 try {
@@ -2771,7 +2770,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                     // Query the table again to get the row for the user
                     try (ResultSet resultSet2 = statement.executeQuery(querySQL)) {
                         if (resultSet2.next()) {
-                            return new CentralRepoExaminer(resultSet2.getLong("id"), resultSet2.getString("login_name"), resultSet2.getString("display_name"));
+                            return new CentralRepoExaminer(resultSet2.getLong("id"), resultSet2.getString("login_name"));
                         } else {
                             throw new CentralRepoException("Error getting examiner for name = " + examinerLoginName);
                         }

@@ -874,10 +874,5 @@ public interface CentralRepository {
      * @throws CentralRepoException 
      */
     CentralRepoAccount getOrCreateAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException;
-    
-             
-    /**
-     * Clears all caches.
-     */
-    void clearCaches();
+   
 }

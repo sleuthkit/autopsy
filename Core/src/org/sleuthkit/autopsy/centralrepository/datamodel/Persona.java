@@ -115,7 +115,7 @@ public class Persona {
     }
 
     // Persona name to use if no name is specified.
-    private static final String DEFAULT_PERSONA_NAME = "NoName";
+    private static final String DEFAULT_PERSONA_NAME = "Unknown";
 
     // primary key in the Personas table in CR database
     private final long id;
@@ -270,8 +270,7 @@ public class Persona {
             while (rs.next()) {
                 CentralRepoExaminer examiner = new CentralRepoExaminer(
                         rs.getInt("examiner_id"),
-                        rs.getString("login_name"),
-                        rs.getString("display_name"));
+                        rs.getString("login_name"));
 
                 PersonaStatus status = PersonaStatus.fromId(rs.getInt("status_id"));
                 Persona persona = new Persona(
@@ -326,30 +325,6 @@ public class Persona {
         
         Persona persona = personas.isEmpty() ? null : personas.iterator().next();
         return persona;
-    }
-
-    /**
-     * Gets the row from the Personas table with the given id, creates and
-     * returns the Persona from that data.
-     *
-     * @param id Persona id to match.
-     * @return Persona matching the given UUID, may be null if no match is
-     * found.
-     *
-     * @throws CentralRepoException If there is an error in querying the
-     * Personas table.
-     */
-    public static Persona getPersonaById(long id) throws CentralRepoException {
-
-        String queryClause = PERSONA_QUERY
-                + "WHERE p.id = " + id;
-
-        PersonaQueryCallback queryCallback = new PersonaQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
-
-        Collection<Persona> personas = queryCallback.getPersonas();
-        
-        return personas.isEmpty() ? null : personas.iterator().next();
     }
 
     /**
@@ -435,47 +410,7 @@ public class Persona {
     public Collection<PersonaAccount> getPersonaAccounts() throws CentralRepoException {
         return PersonaAccount.getPersonaAccountsForPersona(this.getId());
     }
-
-    /**
-     * Gets all the Persona for the specified Account.
-     *
-     * @param accountId Id of account for which to get the Personas for.
-     * @return Collection of PersonaAccounts. may be empty.
-     *
-     * @throws CentralRepoException If there is an error in getting the
-     * persona_account.
-     */
-    public static Collection<PersonaAccount> getPersonaAccountsForAccount(long accountId) throws CentralRepoException {
-        return PersonaAccount.getPersonaAccountsForAccount(accountId);
-    }
-
-    /**
-     * Gets all the Persona associated with all the accounts matching the given
-     * account identifier substring.
-     *
-     * @param accountIdentifierSubstring Account identifier substring to search
-     * for.
-     * @return Collection of PersonaAccounts. may be empty.
-     *
-     * @throws CentralRepoException If there is an error in getting the
-     * persona_account.
-     */
-    public static Collection<PersonaAccount> getPersonaAccountsForAccountIdentifier(String accountIdentifierSubstring) throws CentralRepoException {
-        return PersonaAccount.getPersonaAccountsForAccountIdentifier(accountIdentifierSubstring);
-    }
-    
-    /**
-     * Get all accounts associated with the persona.
-     *
-     * @return Collection of all accounts associated with the given persona, may
-     * be empty.
-     * @throws CentralRepoException If there is an error in getting the
-     * accounts.
-     */
-    public Collection<CentralRepoAccount> getAccounts() throws CentralRepoException {
-        return PersonaAccount.getAccountsForPersona(this.getId());
-    }
-
+ 
     /**
      * Callback to process a query that gets cases for account instances of an
      * account
@@ -511,7 +446,7 @@ public class Persona {
         Collection<CorrelationCase> casesForPersona = new ArrayList<>();
 
         // get all accounts for this persona
-        Collection<CentralRepoAccount> accounts = this.getAccounts();
+        Collection<CentralRepoAccount> accounts = PersonaAccount.getAccountsForPersona(this.getId());
         for (CentralRepoAccount account : accounts) {
             int corrTypeId = account.getAccountType().getCorrelationTypeId();
             CorrelationAttributeInstance.Type correlationType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
@@ -574,7 +509,7 @@ public class Persona {
     public Collection<CorrelationDataSource> getDataSources() throws CentralRepoException {
         Collection<CorrelationDataSource> correlationDataSources = new ArrayList<>();
 
-        Collection<CentralRepoAccount> accounts = this.getAccounts();
+        Collection<CentralRepoAccount> accounts = PersonaAccount.getAccountsForPersona(this.getId());
         for (CentralRepoAccount account : accounts) {
             int corrTypeId = account.getAccountType().getCorrelationTypeId();
             CorrelationAttributeInstance.Type correlationType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
@@ -612,8 +547,7 @@ public class Persona {
                 // examiner that created the persona
                 CentralRepoExaminer personaExaminer = new CentralRepoExaminer(
                         resultSet.getInt("persona_examiner_id"),
-                        resultSet.getString("persona_examiner_login_name"),
-                        resultSet.getString("persona_examiner_display_name"));
+                        resultSet.getString("persona_examiner_login_name"));
 
                 // create persona
                 PersonaStatus status = PersonaStatus.fromId(resultSet.getInt("status_id"));
@@ -700,7 +634,7 @@ public class Persona {
      * @return Collection of personas, may be empty.
      * @throws CentralRepoException
      */
-    public static Collection<Persona> getPersonaForDataSource(CorrelationDataSource dataSource) throws CentralRepoException {
+    public static Collection<Persona> getPersonasForDataSource(CorrelationDataSource dataSource) throws CentralRepoException {
         Collection<Persona> personaList = new ArrayList<>();
 
         Collection<CentralRepoAccount.CentralRepoAccountType> accountTypes = CentralRepository.getInstance().getAllAccountTypes();

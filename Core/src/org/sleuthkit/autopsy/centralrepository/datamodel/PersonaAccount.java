@@ -87,14 +87,12 @@ public class PersonaAccount {
                 // examiner that created the persona/account association
                 CentralRepoExaminer paExaminer = new CentralRepoExaminer(
                         rs.getInt("pa_examiner_id"),
-                        rs.getString("pa_examiner_login_name"),
-                        rs.getString("pa_examiner_display_name"));
+                        rs.getString("pa_examiner_login_name"));
 
                 // examiner that created the persona
                 CentralRepoExaminer personaExaminer = new CentralRepoExaminer(
                         rs.getInt("persona_examiner_id"),
-                        rs.getString("persona_examiner_login_name"),
-                        rs.getString("persona_examiner_display_name"));
+                        rs.getString("persona_examiner_login_name"));
 
                 // create persona
                 Persona.PersonaStatus status = Persona.PersonaStatus.fromId(rs.getInt("status_id"));
@@ -174,7 +172,7 @@ public class PersonaAccount {
      * @throws CentralRepoException If there is an error in getting the
      * persona_account.
      */
-    static Collection<PersonaAccount> getPersonaAccountsForAccount(long accountId) throws CentralRepoException {
+    public static Collection<PersonaAccount> getPersonaAccountsForAccount(long accountId) throws CentralRepoException {
         String queryClause = PERSONA_ACCOUNTS_QUERY_CALUSE
                 + " WHERE persona_accounts.account_id = " + accountId;
 
@@ -195,7 +193,7 @@ public class PersonaAccount {
      * @throws CentralRepoException If there is an error in getting the
      * persona_account.
      */
-    static Collection<PersonaAccount> getPersonaAccountsForAccountIdentifier(String accountIdentifierSubstring) throws CentralRepoException {
+    public static Collection<PersonaAccount> getPersonaAccountsForAccountIdentifier(String accountIdentifierSubstring) throws CentralRepoException {
         String queryClause = PERSONA_ACCOUNTS_QUERY_CALUSE
                 + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + accountIdentifierSubstring + "%')";
 
