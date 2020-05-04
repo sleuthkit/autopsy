@@ -278,6 +278,8 @@ public class Server {
         // variable to the Solr script but it can be overridden by the user in
         // either autopsy-solr.cmd or autopsy-solr-in.cmd.
         javaPath = PlatformUtil.getJavaPath();
+        javaPath = "java"; // ELTODO
+        
         // This is our customized version of the Solr batch script to start/stop Solr.
         solr8CmdPath = Paths.get(solr8Folder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
 
@@ -294,7 +296,6 @@ public class Server {
         }
         
         solr4Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr4"); //NON-NLS
-        solr4Home = solr4Home;
         if (!solr4Home.toFile().exists()) { 
             try {
                 Files.createDirectory(solr4Home);
@@ -2075,7 +2076,12 @@ public class Server {
                 solrUrls.add("http://" + server + "/solr"); // ELTODO optimize this
                 logger.log(Level.INFO, "Using Solr server: {0}", server);
             }*/
-            String solrUrl = "http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr/" + name;
+            String solrUrl;
+            if (caseType == CaseType.SINGLE_USER_CASE) {
+                solrUrl = "http://localhost:" + currentSolrServerPort + "/solr/" + name;
+            } else {
+                solrUrl = "http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr/" + name;
+            }
             // solrClient = getSolrClient(solrUrl);
             solrClient = new ConcurrentUpdateSolrClient.Builder(solrUrl)
                     .withQueueSize(1000)
