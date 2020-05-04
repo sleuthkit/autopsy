@@ -171,12 +171,15 @@ public interface CentralRepository {
     void updateExaminers() throws CentralRepoException;
 
     /**
-     * Get the Examiner object for the current logged in user.
+     * Queries the examiner table for the given user name. 
+     * Adds a row if the user is not found in the examiner table.
      *
-     * @return Examiner Current examiner.
-     * @throws CentralRepoException
+     * @param examinerLoginName user name to look for.
+     * @return CentralRepoExaminer for the given user name.
+     * @throws CentralRepoException If there is an error in looking up or
+     * inserting the user in the examiners table.
      */
-    CentralRepoExaminer getCurrentCentralRepoExaminer() throws CentralRepoException;
+    CentralRepoExaminer getOrInsertExaminer(String examinerLoginName) throws CentralRepoException;
 
     /**
      * Retrieves Central Repo case based on an Autopsy Case

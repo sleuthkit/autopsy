@@ -206,7 +206,7 @@ public class Persona {
     private static Persona createPersona(String name, String comment, PersonaStatus status) throws CentralRepoException {
         // generate a UUID for the persona
         String uuidStr = UUID.randomUUID().toString();
-        CentralRepoExaminer examiner = CentralRepository.getInstance().getCurrentCentralRepoExaminer();
+        CentralRepoExaminer examiner = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();
@@ -239,7 +239,7 @@ public class Persona {
      */
     public PersonaAccount addAccountToPersona(CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
 
-        CentralRepoExaminer currentExaminer = CentralRepository.getInstance().getCurrentCentralRepoExaminer();
+        CentralRepoExaminer currentExaminer = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();

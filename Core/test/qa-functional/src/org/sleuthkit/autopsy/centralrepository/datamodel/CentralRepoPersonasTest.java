@@ -168,10 +168,7 @@ public class CentralRepoPersonasTest  extends TestCase {
         // clear caches to match the clean slate database.
         CentralRepository.getInstance().clearCaches();
          
-        // Add current logged in user to examiners table - since we delete the DB after every test.
-        CentralRepository.getInstance().updateExaminers();
-        
-         // Set up some default objects to be used by the tests
+        // Set up some default objects to be used by the tests
         try {
             case1 = new CorrelationCase(CASE_1_UUID, "case1");
             case1 = CentralRepository.getInstance().newCase(case1);
@@ -304,6 +301,9 @@ public class CentralRepoPersonasTest  extends TestCase {
             Assert.assertEquals(DOG_PERSONA_NAME, pa1.getPersona().getName());
             Assert.assertEquals(status.name(), dogPersona.getStatus().name());
             Assert.assertTrue(dogPersona.getExaminer().getLoginName().equalsIgnoreCase(pa1.getExaminer().getLoginName()));
+            
+            // Assert that the persona was created by the currently logged in user
+            Assert.assertTrue(dogPersona.getExaminer().getLoginName().equalsIgnoreCase(System.getProperty("user.name")));
 
             // Assert that Persona was created within the last 10 mins 
             Assert.assertTrue(Instant.now().toEpochMilli() - pa1.getDateAdded() < 600 * 1000);

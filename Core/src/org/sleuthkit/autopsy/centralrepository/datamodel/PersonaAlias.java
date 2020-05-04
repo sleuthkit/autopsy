@@ -87,7 +87,7 @@ public class PersonaAlias {
      */
     static PersonaAlias addPersonaAlias(Persona persona, String alias, String justification, Persona.Confidence confidence) throws CentralRepoException {
 
-        CentralRepoExaminer examiner = CentralRepository.getInstance().getCurrentCentralRepoExaminer();
+        CentralRepoExaminer examiner = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();

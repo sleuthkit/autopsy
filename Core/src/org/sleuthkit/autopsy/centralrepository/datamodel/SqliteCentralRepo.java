@@ -78,8 +78,6 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
     private SqliteCentralRepo() throws CentralRepoException {
         dbSettings = new SqliteCentralRepoSettings();
         bulkArtifactsThreshold = dbSettings.getBulkThreshold();
-        
-        this.updateExaminers();
     }
 
     @Override
@@ -855,15 +853,6 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
         }
     }
     
-    @Override
-    public void updateExaminers() throws CentralRepoException {
-        try {
-            acquireSharedLock();
-            super.updateExaminers();
-        } finally {
-            releaseSharedLock();
-        }
-    }
     
     /**
      * Check whether a reference set with the given name/version is in the

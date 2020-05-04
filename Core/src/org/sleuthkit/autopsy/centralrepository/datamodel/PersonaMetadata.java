@@ -96,7 +96,7 @@ public class PersonaMetadata {
      */
     static PersonaMetadata addPersonaMetadata(long personaId, String name, String value, String justification, Persona.Confidence confidence) throws CentralRepoException {
 
-        CentralRepoExaminer examiner = CentralRepository.getInstance().getCurrentCentralRepoExaminer();
+        CentralRepoExaminer examiner = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();
