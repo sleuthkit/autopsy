@@ -334,7 +334,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     @NbBundle.Messages({
         "ContextViewer.attachmentSource=Attached to: ",
         "ContextViewer.downloadSource=Downloaded from: ",
-        "ContextViewer.recentDocs=Recent Documents: "
+        "ContextViewer.recentDocs=Recent Documents: ",
+        "ContextViewer.programExecution=Program Execution: "
     })
     private void setSourceFields(BlackboardArtifact associatedArtifact) throws TskCoreException {
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == associatedArtifact.getArtifactTypeID()
@@ -357,6 +358,11 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact);        
             contextUsagePanels.add(usagePanel);
             
+        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() == associatedArtifact.getArtifactTypeID()) {
+            String sourceName = Bundle.ContextViewer_programExecution();
+            String sourceText = programExecArtifactToString(associatedArtifact);
+            javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact);        
+            contextUsagePanels.add(usagePanel);
         }
     }
 
@@ -411,6 +417,36 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                 appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, attributesMap, Bundle.ContextViewer_on());
             } else {
                 sb.append(Bundle.ContextViewer_unknown());
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Returns a display string with Program Execution
+     * artifact.
+     *
+     * @param artifact artifact to get doc from.
+     *
+     * @return Display string with download URL and date/time.
+     *
+     * @throws TskCoreException
+     */
+    @NbBundle.Messages({
+        "ContextViewer.runOn=Program Run On",
+        "ContextViewer.runUnknown= Program Run at unknown time"
+    })
+    private String programExecArtifactToString(BlackboardArtifact artifact) throws TskCoreException {
+        StringBuilder sb = new StringBuilder(ARTIFACT_STR_MAX_LEN);
+        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
+        
+        BlackboardAttribute attribute = attributesMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
+        
+        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() == artifact.getArtifactTypeID()) {
+            if (attribute != null && attribute.getValueLong() > 0) {
+                appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, attributesMap, Bundle.ContextViewer_runOn());
+            } else {
+                sb.append(Bundle.ContextViewer_runUnknown());
             }
         }
         return sb.toString();
