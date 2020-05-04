@@ -132,7 +132,6 @@ class AddImageTask implements Runnable {
         List<String> errorMessages = new ArrayList<>();
         List<Content> newDataSources = new ArrayList<>();
         try {
-            //currentCase.getSleuthkitCase().acquireSingleUserCaseWriteLock();
             synchronized (tskAddImageProcessLock) {
                 if (!tskAddImageProcessStopped) {
                     tskAddImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, true, ignoreFatOrphanFiles, imageWriterPath);
@@ -147,7 +146,6 @@ class AddImageTask implements Runnable {
             commitOrRevertAddImageProcess(currentCase, errorMessages, newDataSources);
             progressMonitor.setProgress(100);
         } finally {
-            //currentCase.getSleuthkitCase().releaseSingleUserCaseWriteLock();
             DataSourceProcessorCallback.DataSourceProcessorResult result;
             if (criticalErrorOccurred) {
                 result = DataSourceProcessorResult.CRITICAL_ERRORS;
