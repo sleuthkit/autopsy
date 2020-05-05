@@ -811,14 +811,14 @@ public class RdbmsCentralRepoFactory {
         try (Statement stmt = conn.createStatement()) {
             // populate the confidence table
             for (Confidence confidence : Persona.Confidence.values()) {
-                String sqlString = "INSERT INTO confidence (confidence_id, description) VALUES ( " + confidence.getLevel() + ", '" + confidence.toString() + "')" //NON-NLS
+                String sqlString = "INSERT INTO confidence (confidence_id, description) VALUES ( " + confidence.getLevelId() + ", '" + confidence.toString() + "')" //NON-NLS
                         + getOnConflictDoNothingClause(selectedPlatform);
                 stmt.execute(sqlString);
             }
             
             // populate the persona_status table
             for (PersonaStatus status : Persona.PersonaStatus.values()) {
-                String sqlString = "INSERT INTO persona_status (status_id, status) VALUES ( " + status.getStatus() + ", '" + status.toString() + "')" //NON-NLS
+                String sqlString = "INSERT INTO persona_status (status_id, status) VALUES ( " + status.getStatusId() + ", '" + status.toString() + "')" //NON-NLS
                         + getOnConflictDoNothingClause(selectedPlatform);
                 stmt.execute(sqlString);
             }
