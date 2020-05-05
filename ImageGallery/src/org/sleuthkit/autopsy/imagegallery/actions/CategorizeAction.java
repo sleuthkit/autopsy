@@ -237,7 +237,7 @@ public class CategorizeAction extends Action {
         BufferedImage off_image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = off_image.createGraphics();
 
-        g2.setColor(java.awt.Color.decode(tagName.getColor().getHexColorCode()));
+        g2.setColor(java.awt.Color.decode(tagName.getColor().getRgbValue()));
         g2.fillRect(0, 0, 16, 16);
 
         g2.setColor(Color.BLACK);

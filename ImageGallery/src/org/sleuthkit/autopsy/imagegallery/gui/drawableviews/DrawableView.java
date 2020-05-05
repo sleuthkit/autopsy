@@ -124,7 +124,7 @@ public interface DrawableView {
             border = BORDER_MAP.get(category.getDisplayName());
 
             if (border == null) {
-                border = new Border(new BorderStroke(Color.web(category.getColor().getHexColorCode()), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
+                border = new Border(new BorderStroke(Color.web(category.getColor().getRgbValue()), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
                 BORDER_MAP.put(category.getDisplayName(), border);
             }
         }
