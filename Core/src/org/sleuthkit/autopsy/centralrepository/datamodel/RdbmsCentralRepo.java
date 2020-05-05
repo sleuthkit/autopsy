@@ -51,7 +51,7 @@ import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
-import org.sleuthkit.datamodel.Examiner;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -102,8 +102,6 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     // Update Test code if this changes.  It's hard coded there.
     static final int DEFAULT_BULK_THRESHHOLD = 1000;
 
-    private Examiner cachedCurrentExaminer = null;
-    
     private static final int QUERY_STR_MAX_LEN = 1000;
     
     
@@ -222,7 +220,6 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     /**
      * Reset the contents of the caches associated with EamDb results.
      */
-    @Override
     public final void clearCaches() {
         synchronized(typeCache) {
             typeCache.invalidateAll();
@@ -233,7 +230,6 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         dataSourceCacheByDsObjectId.invalidateAll();
         dataSourceCacheById.invalidateAll();
         accountsCache.invalidateAll();
-        cachedCurrentExaminer = null;
     }
 
     /**
@@ -2520,72 +2516,6 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         }
     }        
 
-    /**
-     * Updates the examiners table, by adding current logged in user to
-     * examiners table, if not already in there.
-     * 
-     * @throws CentralRepoException If there is an error.
-     *
-     */
-    @Override
-    public void updateExaminers() throws CentralRepoException {
-
-        String loginName = System.getProperty("user.name");
-        if (loginName.isEmpty()) {
-            logger.log(Level.SEVERE, "Cannot determine logged in user name");
-            return;
-        }
-
-        try (Connection connection = connect();
-                Statement statement = connection.createStatement();) {
-
-            String insertSQL;
-            switch (CentralRepoDbManager.getSavedDbChoice().getDbPlatform()) {
-                case POSTGRESQL:
-                    insertSQL = "INSERT INTO examiners (login_name) VALUES ('" + loginName + "')" + getConflictClause();  //NON-NLS
-                    break;
-                case SQLITE:
-                    insertSQL = "INSERT OR IGNORE INTO examiners (login_name) VALUES ('" + loginName + "')";
-                    break;
-                default:
-                    throw new CentralRepoException(String.format("Cannot add examiner to currently selected CR database platform %s", CentralRepoDbManager.getSavedDbChoice().getDbPlatform()));
-            }
-            statement.execute(insertSQL); //NON-NLS
-        } catch (SQLException ex) {
-            throw new CentralRepoException("Error inserting row in examiners", ex);
-        }
-    }
-
-    @Override
-    public Examiner getCurrentCentralRepoExaminer() throws CentralRepoException {
-
-        // return cached value if there's one
-        if (cachedCurrentExaminer != null) {
-            return cachedCurrentExaminer;
-        }
-        String loginName = System.getProperty("user.name");
-        if (loginName == null || loginName.isEmpty()) {
-            throw new CentralRepoException("Failed to determine logged in user name.");
-        }
-
-        String querySQL = "SELECT * FROM examiners WHERE login_name = '" + loginName + "'";
-
-        try (Connection connection = connect();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(querySQL);) {
-
-            if (resultSet.next()) {
-                cachedCurrentExaminer = new Examiner(resultSet.getLong("id"), resultSet.getString("login_name"), resultSet.getString("display_name"));
-                return cachedCurrentExaminer;
-            } else {
-                throw new CentralRepoException("Error getting examiner for name = " + loginName);
-            }
-
-        } catch (SQLException ex) {
-            throw new CentralRepoException("Error getting examiner for name = " + loginName, ex);
-        }
-    }
-
     @Override
     public void executeInsertSQL(String insertClause) throws CentralRepoException {
 
@@ -2766,6 +2696,61 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         }
     }
 
+    /**
+     * Queries the examiner table for the given user name. 
+     * Adds a row if the user is not found in the examiner table.
+     *
+     * @param examinerLoginName user name to look for.
+     * @return CentralRepoExaminer for the given user name.
+     * @throws CentralRepoException If there is an error in looking up or
+     * inserting the user in the examiners table.
+     */
+    
+    @Override
+    public CentralRepoExaminer getOrInsertExaminer(String examinerLoginName) throws CentralRepoException {
+
+        String querySQL = "SELECT * FROM examiners WHERE login_name = '" + SleuthkitCase.escapeSingleQuotes(examinerLoginName) + "'";
+        try (Connection connection = connect();
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(querySQL);) {
+
+            if (resultSet.next()) {
+                return new CentralRepoExaminer(resultSet.getLong("id"), resultSet.getString("login_name"));
+            } else {
+                // Could not find this user in the Examiner table, add a row for it.
+                try {
+                    String insertSQL;
+                    switch (CentralRepoDbManager.getSavedDbChoice().getDbPlatform()) {
+                        case POSTGRESQL:
+                            insertSQL = "INSERT INTO examiners (login_name) VALUES ('" + SleuthkitCase.escapeSingleQuotes(examinerLoginName) + "')" + getConflictClause();  //NON-NLS
+                            break;
+                        case SQLITE:
+                            insertSQL = "INSERT OR IGNORE INTO examiners (login_name) VALUES ('" + SleuthkitCase.escapeSingleQuotes(examinerLoginName) + "')"; //NON-NLS
+                            break;
+                        default:
+                            throw new CentralRepoException(String.format("Cannot add examiner to currently selected CR database platform %s", CentralRepoDbManager.getSavedDbChoice().getDbPlatform())); //NON-NLS
+                    }
+                    statement.execute(insertSQL); 
+
+                    // Query the table again to get the row for the user
+                    try (ResultSet resultSet2 = statement.executeQuery(querySQL)) {
+                        if (resultSet2.next()) {
+                            return new CentralRepoExaminer(resultSet2.getLong("id"), resultSet2.getString("login_name"));
+                        } else {
+                            throw new CentralRepoException("Error getting examiner for name = " + examinerLoginName);
+                        }
+                    }
+
+                } catch (SQLException ex) {
+                    throw new CentralRepoException("Error inserting row in examiners", ex);
+                }
+            }
+
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error getting examiner for name = " + examinerLoginName, ex);
+        }
+    }
+            
     /**
      * Update an existing organization.
      *

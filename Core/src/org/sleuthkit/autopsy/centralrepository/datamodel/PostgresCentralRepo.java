@@ -71,8 +71,6 @@ final class PostgresCentralRepo extends RdbmsCentralRepo {
     private PostgresCentralRepo() throws CentralRepoException {
         dbSettings = new PostgresCentralRepoSettings();
         bulkArtifactsThreshold = dbSettings.getBulkThreshold();
-        
-        this.updateExaminers();
     }
 
     @Override

@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.datamodel.Examiner;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -40,7 +39,7 @@ public class PersonaAlias {
     private final String justification;
     private final Persona.Confidence confidence;
     private final long dateAdded;
-    private final Examiner examiner;
+    private final CentralRepoExaminer examiner;
 
     public long getPersonaId() {
         return personaId;
@@ -62,11 +61,11 @@ public class PersonaAlias {
         return dateAdded;
     }
 
-    public Examiner getExaminer() {
+    public CentralRepoExaminer getExaminer() {
         return examiner;
     }
     
-    public PersonaAlias(long personaId, String alias, String justification, Persona.Confidence confidence, long dateAdded, Examiner examiner) {
+    public PersonaAlias(long personaId, String alias, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
         this.personaId = personaId;
         this.alias = alias;
         this.justification = justification;
@@ -88,7 +87,7 @@ public class PersonaAlias {
      */
     static PersonaAlias addPersonaAlias(Persona persona, String alias, String justification, Persona.Confidence confidence) throws CentralRepoException {
 
-        Examiner examiner = CentralRepository.getInstance().getCurrentCentralRepoExaminer();
+        CentralRepoExaminer examiner = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();
@@ -118,10 +117,9 @@ public class PersonaAlias {
         public void process(ResultSet rs) throws SQLException {
 
             while (rs.next()) {
-                Examiner examiner = new Examiner(
+                CentralRepoExaminer examiner = new CentralRepoExaminer(
                         rs.getInt("examiner_id"),
-                        rs.getString("login_name"),
-                        rs.getString("display_name"));
+                        rs.getString("login_name"));
 
                 PersonaAlias alias = new PersonaAlias(
                         rs.getLong("persona_id"),

@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.datamodel.Examiner;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -116,7 +115,7 @@ public class Persona {
     }
 
     // Persona name to use if no name is specified.
-    private static final String DEFAULT_PERSONA_NAME = "NoName";
+    private static final String DEFAULT_PERSONA_NAME = "Unknown";
 
     // primary key in the Personas table in CR database
     private final long id;
@@ -126,7 +125,7 @@ public class Persona {
     private final long createdDate;
     private final long modifiedDate;
     private final PersonaStatus status;
-    private final Examiner examiner;
+    private final CentralRepoExaminer examiner;
 
     public long getId() {
         return id;
@@ -156,11 +155,11 @@ public class Persona {
         return status;
     }
 
-    public Examiner getExaminer() {
+    public CentralRepoExaminer getExaminer() {
         return examiner;
     }
 
-    Persona(long id, String uuidStr, String name, String comment, long created_date, long modified_date, PersonaStatus status, Examiner examiner) {
+    Persona(long id, String uuidStr, String name, String comment, long created_date, long modified_date, PersonaStatus status, CentralRepoExaminer examiner) {
         this.id = id;
         this.uuidStr = uuidStr;
         this.name = name;
@@ -207,7 +206,7 @@ public class Persona {
     private static Persona createPersona(String name, String comment, PersonaStatus status) throws CentralRepoException {
         // generate a UUID for the persona
         String uuidStr = UUID.randomUUID().toString();
-        Examiner examiner = CentralRepository.getInstance().getCurrentCentralRepoExaminer();
+        CentralRepoExaminer examiner = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();
@@ -240,7 +239,7 @@ public class Persona {
      */
     public PersonaAccount addAccountToPersona(CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
 
-        Examiner currentExaminer = CentralRepository.getInstance().getCurrentCentralRepoExaminer();
+        CentralRepoExaminer currentExaminer = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();
@@ -263,19 +262,18 @@ public class Persona {
      */
     private static class PersonaQueryCallback implements CentralRepositoryDbQueryCallback {
 
-        private Persona persona = null;
+        private final Collection<Persona> personaList =  new ArrayList<>();
 
         @Override
         public void process(ResultSet rs) throws SQLException {
 
             while (rs.next()) {
-                Examiner examiner = new Examiner(
+                CentralRepoExaminer examiner = new CentralRepoExaminer(
                         rs.getInt("examiner_id"),
-                        rs.getString("login_name"),
-                        rs.getString("display_name"));
+                        rs.getString("login_name"));
 
                 PersonaStatus status = PersonaStatus.fromId(rs.getInt("status_id"));
-                persona = new Persona(
+                Persona persona = new Persona(
                         rs.getInt("id"),
                         rs.getString("uuid"),
                         rs.getString("name"),
@@ -285,14 +283,24 @@ public class Persona {
                         status,
                         examiner
                 );
+                
+                personaList.add(persona);
             }
         }
 
-        Persona getPersona() {
-            return persona;
+        Collection<Persona> getPersonas() {
+            return Collections.unmodifiableCollection(personaList);
         }
     };
 
+    // Partial query string to select from personas table, 
+    // just supply the where clause.
+    private static final String PERSONA_QUERY = 
+                  "SELECT p.id, p.uuid, p.name, p.comment, p.created_date, p.modified_date, p.status_id, p.examiner_id, e.login_name, e.display_name "
+                + "FROM personas as p "
+                + "INNER JOIN examiners as e ON e.id = p.examiner_id ";
+              
+     
     /**
      * Gets the row from the Personas table with the given UUID, creates and
      * returns the Persona from that data.
@@ -306,41 +314,39 @@ public class Persona {
      */
     private static Persona getPersonaByUUID(String uuid) throws CentralRepoException {
 
-        String queryClause = "SELECT p.id, p.uuid, p.name, p.comment, p.created_date, p.modified_date, p.status_id, p.examiner_id, e.login_name, e.display_name "
-                + "FROM personas as p "
-                + "INNER JOIN examiners as e ON e.id = p.examiner_id "
+        String queryClause = 
+                PERSONA_QUERY
                 + "WHERE p.uuid = '" + uuid + "'";
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
 
-        return queryCallback.getPersona();
+        Collection<Persona> personas = queryCallback.getPersonas();
+        
+        return personas.isEmpty() ? null : personas.iterator().next();
     }
 
     /**
-     * Gets the row from the Personas table with the given id, creates and
-     * returns the Persona from that data.
+     * Gets the rows from the Personas table with matching name.
      *
-     * @param id Persona id to match.
-     * @return Persona matching the given UUID, may be null if no match is
-     * found.
+     * @param partialName Name substring to match.
+     * @return Collection of personas matching the given name substring, may be
+     * empty if no match is found.
      *
      * @throws CentralRepoException If there is an error in querying the
      * Personas table.
      */
-    public static Persona getPersonaById(long id) throws CentralRepoException {
+    public static Collection<Persona> getPersonaByName(String partialName) throws CentralRepoException {
 
-        String queryClause = "SELECT p.id, p.uuid, p.name, p.comment, p.created_date, p.modified_date, p.status_id, p.examiner_id, e.login_name, e.display_name "
-                + "FROM personas as p "
-                + "INNER JOIN examiners as e ON e.id = p.examiner_id "
-                + "WHERE p.id = " + id;
+        String queryClause = PERSONA_QUERY
+                + "WHERE LOWER(p.name) LIKE " + "LOWER('%" + partialName + "%')" ;
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
 
-        return queryCallback.getPersona();
+        return queryCallback.getPersonas();
     }
-
+    
     /**
      * Creates an alias for the Persona.
      *
@@ -403,32 +409,7 @@ public class Persona {
     public Collection<PersonaAccount> getPersonaAccounts() throws CentralRepoException {
         return PersonaAccount.getPersonaAccountsForPersona(this.getId());
     }
-
-    /**
-     * Gets all the Persona for the specified Account.
-     *
-     * @param accountId Id of account for which to get the Personas for.
-     * @return Collection of PersonaAccounts. may be empty.
-     *
-     * @throws CentralRepoException If there is an error in getting the
-     * persona_account.
-     */
-    public static Collection<PersonaAccount> getPersonaAccountsForAccount(long accountId) throws CentralRepoException {
-        return PersonaAccount.getPersonaAccountsForAccount(accountId);
-    }
-
-    /**
-     * Get all accounts associated with the persona.
-     *
-     * @return Collection of all accounts associated with the given persona, may
-     * be empty.
-     * @throws CentralRepoException If there is an error in getting the
-     * accounts.
-     */
-    public Collection<CentralRepoAccount> getAccounts() throws CentralRepoException {
-        return PersonaAccount.getAccountsForPersona(this.getId());
-    }
-
+ 
     /**
      * Callback to process a query that gets cases for account instances of an
      * account
@@ -464,7 +445,7 @@ public class Persona {
         Collection<CorrelationCase> casesForPersona = new ArrayList<>();
 
         // get all accounts for this persona
-        Collection<CentralRepoAccount> accounts = this.getAccounts();
+        Collection<CentralRepoAccount> accounts = PersonaAccount.getAccountsForPersona(this.getId());
         for (CentralRepoAccount account : accounts) {
             int corrTypeId = account.getAccountType().getCorrelationTypeId();
             CorrelationAttributeInstance.Type correlationType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
@@ -527,7 +508,7 @@ public class Persona {
     public Collection<CorrelationDataSource> getDataSources() throws CentralRepoException {
         Collection<CorrelationDataSource> correlationDataSources = new ArrayList<>();
 
-        Collection<CentralRepoAccount> accounts = this.getAccounts();
+        Collection<CentralRepoAccount> accounts = PersonaAccount.getAccountsForPersona(this.getId());
         for (CentralRepoAccount account : accounts) {
             int corrTypeId = account.getAccountType().getCorrelationTypeId();
             CorrelationAttributeInstance.Type correlationType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
@@ -563,10 +544,9 @@ public class Persona {
             while (resultSet.next()) {
 
                 // examiner that created the persona
-                Examiner personaExaminer = new Examiner(
+                CentralRepoExaminer personaExaminer = new CentralRepoExaminer(
                         resultSet.getInt("persona_examiner_id"),
-                        resultSet.getString("persona_examiner_login_name"),
-                        resultSet.getString("persona_examiner_display_name"));
+                        resultSet.getString("persona_examiner_login_name"));
 
                 // create persona
                 PersonaStatus status = PersonaStatus.fromId(resultSet.getInt("status_id"));
@@ -653,7 +633,7 @@ public class Persona {
      * @return Collection of personas, may be empty.
      * @throws CentralRepoException
      */
-    public static Collection<Persona> getPersonaForDataSource(CorrelationDataSource dataSource) throws CentralRepoException {
+    public static Collection<Persona> getPersonasForDataSource(CorrelationDataSource dataSource) throws CentralRepoException {
         Collection<Persona> personaList = new ArrayList<>();
 
         Collection<CentralRepoAccount.CentralRepoAccountType> accountTypes = CentralRepository.getInstance().getAllAccountTypes();

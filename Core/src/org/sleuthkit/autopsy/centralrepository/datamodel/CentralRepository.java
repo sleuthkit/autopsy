@@ -26,7 +26,6 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
-import org.sleuthkit.datamodel.Examiner;
 
 /**
  * Main interface for interacting with the database
@@ -163,21 +162,15 @@ public interface CentralRepository {
     void updateCase(CorrelationCase eamCase) throws CentralRepoException;
     
     /**
-     * Updates the examiners table, by adding current logged in user to
-     * examiners table, if not already in there.
-     * 
-     * @throws CentralRepoException If there is an error.
+     * Queries the examiner table for the given user name. 
+     * Adds a row if the user is not found in the examiner table.
      *
+     * @param examinerLoginName user name to look for.
+     * @return CentralRepoExaminer for the given user name.
+     * @throws CentralRepoException If there is an error in looking up or
+     * inserting the user in the examiners table.
      */
-    void updateExaminers() throws CentralRepoException;
-
-    /**
-     * Get the Examiner object for the current logged in user.
-     *
-     * @return Examiner Current examiner.
-     * @throws CentralRepoException
-     */
-    Examiner getCurrentCentralRepoExaminer() throws CentralRepoException;
+    CentralRepoExaminer getOrInsertExaminer(String examinerLoginName) throws CentralRepoException;
 
     /**
      * Retrieves Central Repo case based on an Autopsy Case
@@ -872,10 +865,5 @@ public interface CentralRepository {
      * @throws CentralRepoException 
      */
     CentralRepoAccount getOrCreateAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException;
-    
-             
-    /**
-     * Clears all caches.
-     */
-    void clearCaches();
+   
 }
