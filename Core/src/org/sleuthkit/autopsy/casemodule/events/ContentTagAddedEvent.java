@@ -25,7 +25,6 @@ import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
-import org.sleuthkit.autopsy.casemodule.events.TagDeletedEvent.DeletedTagInfo;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -33,7 +32,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * An event that is fired when a ContentTag is added.
  */
 @Immutable
-public class ContentTagAddedEvent extends TagAddedEvent<ContentTag> implements Serializable {
+public class ContentTagAddedEvent extends TagAddedEvent<ContentTag, DeletedContentTagInfo> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -59,31 +58,14 @@ public class ContentTagAddedEvent extends TagAddedEvent<ContentTag> implements S
     }
     
     /**
-     * Returns the list of tags that were removed as a result of the addition 
-     * of the ContentTag.
-     * 
-     * @return A list of removed tags or null if no tags were removed.
-     */
-    @SuppressWarnings("unchecked")
-    public List<DeletedContentTagInfo> getRemovedTags() {
-        Object oldValue = this.getOldValue();
-        if (oldValue != null) {
-            return (List<DeletedContentTagInfo>)oldValue;
-        } else {
-            return null;
-        }
-    }
-
-    
-    /**
      * Create a list of DeletedContentTagInfo objects from a list of ContentTags.
      * 
      * @param deletedTagList List of deleted ContentTags.
      * 
      * @return List of DeletedContentTagInfo objects or empty list if deletedTagList was empty or null.
      */
-    private static List<DeletedTagInfo<ContentTag>> getDeletedInfo(List<ContentTag> deletedTagList) {
-        List<DeletedTagInfo<ContentTag>> deletedInfoList = new ArrayList<>();
+    private static List<DeletedContentTagInfo> getDeletedInfo(List<ContentTag> deletedTagList) {
+        List<DeletedContentTagInfo> deletedInfoList = new ArrayList<>();
         if (deletedTagList != null) {
             for (ContentTag tag : deletedTagList) {
                 deletedInfoList.add(new DeletedContentTagInfo(tag));

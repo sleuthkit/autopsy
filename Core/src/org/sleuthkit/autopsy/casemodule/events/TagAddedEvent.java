@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -31,7 +32,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Base Class for events that are fired when a Tag is added
  */
-abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent implements Serializable {
+abstract class TagAddedEvent<T extends Tag, V extends DeletedTagInfo<T>> extends AutopsyEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -40,6 +41,8 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent implements Seri
      * re-loaded from the database in getNewValue()
      */
     private transient T tag;
+    
+    private List<V> deletedTagInfoList;
 
     /**
      * The id of the tag that was added. This will be used to re-load the
@@ -51,10 +54,19 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent implements Seri
         this(propertyName, addedTag, null);
     }
 
-    TagAddedEvent(String propertyName, T addedTag, List<DeletedTagInfo<T>> deletedTagInfoList) {
+    /**
+     * Construct a TagAddedEvent.
+     *
+     * @param propertyName       Name of property changing
+     * @param addedTag           Instance of added tag.
+     * @param deletedTagInfoList List of tags deleted as a result of the
+     *                           addition of addedTag.
+     */
+    TagAddedEvent(String propertyName, T addedTag, List<V> deletedTagInfoList) {
         super(propertyName, deletedTagInfoList, null);
         tag = addedTag;
         tagID = addedTag.getId();
+        this.deletedTagInfoList = deletedTagInfoList;
     }
 
     /**
@@ -95,6 +107,21 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent implements Seri
             Logger.getLogger(TagAddedEvent.class.getName()).log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
             return null;
         }
+    }
+    
+    /**
+     * Returns the list of tags that were removed as a result of the addition 
+     * of the T.
+     * 
+     * @return A list of removed tags or null if no tags were removed.
+     */
+    public List<V> getDeletedTags() {
+        return deletedTagInfoList != null ? Collections.unmodifiableList(deletedTagInfoList) : null;
+    }
+    
+    @Override
+    public Object getOldValue() {
+        return getDeletedTags();
     }
 
     /**

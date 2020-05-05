@@ -234,7 +234,7 @@ public class CategoryManager {
     public void handleTagAdded(ContentTagAddedEvent event) {
         final ContentTag addedTag = event.getAddedTag();
 
-        List<DeletedContentTagInfo> removedTags = event.getRemovedTags();
+        List<DeletedContentTagInfo> removedTags = event.getDeletedTags();
         if (removedTags != null) {
             for (DeletedContentTagInfo tagInfo : removedTags) {
                 handleDeletedInfo(tagInfo);
