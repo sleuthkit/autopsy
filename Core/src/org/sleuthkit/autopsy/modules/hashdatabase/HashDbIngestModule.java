@@ -61,20 +61,23 @@ import org.sleuthkit.datamodel.TskException;
     "HashDbIngestModule.noKnownBadHashDbSetMsg=No notable hash set.",
     "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn=Notable file search will not be executed.",
     "HashDbIngestModule.noKnownHashDbSetMsg=No known hash set.",
-    "HashDbIngestModule.knownFileSearchWillNotExecuteWarn=Known file search will not be executed."
+    "HashDbIngestModule.knownFileSearchWillNotExecuteWarn=Known file search will not be executed.",
+    "# {0} - fileName", "HashDbIngestModule.lookingUpKnownBadHashValueErr=Error encountered while looking up notable hash value for {0}.",
+    "# {0} - fileName", "HashDbIngestModule.lookingUpNoChangeHashValueErr=Error encountered while looking up no change hash value for {0}.",
+    "# {0} - fileName", "HashDbIngestModule.lookingUpKnownHashValueErr=Error encountered while looking up known hash value for {0}.",
 })
 public class HashDbIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     
     private final Function<AbstractFile, String> knownBadLookupError = 
-        (file) -> NbBundle.getMessage(this.getClass(), "HashDbIngestModule.lookingUpKnownBadHashValueErr", file.getName());
+        (file) -> Bundle.HashDbIngestModule_lookingUpKnownBadHashValueErr(file.getName());
     
     private final Function<AbstractFile, String> noChangeLookupError = 
-        (file) -> NbBundle.getMessage(this.getClass(), "HashDbIngestModule.lookingUpNoChangeHashValueErr", file.getName());
+        (file) -> Bundle.HashDbIngestModule_lookingUpNoChangeHashValueErr(file.getName());
     
     private final Function<AbstractFile, String> knownLookupError =
-        (file) -> NbBundle.getMessage(this.getClass(), "HashDbIngestModule.lookingUpKnownHashValueErr", file.getName());
+        (file) -> Bundle.HashDbIngestModule_lookingUpKnownHashValueErr(file.getName());
     
     private static final int MAX_COMMENT_SIZE = 500;
     private final IngestServices services = IngestServices.getInstance();
@@ -223,14 +226,13 @@ public class HashDbIngestModule implements FileIngestModule {
         FindInHashsetsResult noChangeResult = findInHashsets(file, totals.totalNoChangeCount, 
             totals.totalLookuptime, noChangeHashSets, TskData.FileKnown.BAD, noChangeLookupError);
         
-        boolean foundNoChange = noChangeResult.isFound();
         if (noChangeResult.isError())
             ret = ProcessResult.ERROR;        
 
         // If the file is not in the notable sets, search for it in the known sets. 
         // Any hit is sufficient to classify it as known, and there is no need to create 
         // a hit artifact or send a message to the application inbox.
-        if (!foundBad && !foundNoChange) {
+        if (!foundBad) {
             for (HashDb db : knownHashSets) {
                 try {
                     long lookupstart = System.currentTimeMillis();

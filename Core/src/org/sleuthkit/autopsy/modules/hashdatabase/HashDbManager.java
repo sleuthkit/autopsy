@@ -695,11 +695,16 @@ public class HashDbManager implements PropertyChangeListener {
          * Indicates how files with hashes stored in a particular hash database
          * object should be classified.
          */
+        @Messages({
+                "HashDbManager.noChange.text=No Change", 
+                "HashDbManager.known.text=Known", 
+                "HashDbManager.knownBad.text=Notable" 
+        })
         public enum KnownFilesType {
 
-            KNOWN(NbBundle.getMessage(HashDbManager.class, "HashDbManager.known.text"), TskData.FileKnown.KNOWN, false, false),
-            KNOWN_BAD(NbBundle.getMessage(HashDbManager.class, "HashDbManager.knownBad.text"), TskData.FileKnown.BAD, true, true),
-            NO_CHANGE(NbBundle.getMessage(HashDbManager.class, "HashDbManager.noChange.text"), TskData.FileKnown.UNKNOWN, true , false);
+            KNOWN(Bundle.HashDbManager_known_text(), TskData.FileKnown.KNOWN, false, false),
+            KNOWN_BAD(Bundle.HashDbManager_knownBad_text(), TskData.FileKnown.BAD, true, true),
+            NO_CHANGE(Bundle.HashDbManager_noChange_text(), TskData.FileKnown.UNKNOWN, true , false);
             
             private final String displayName;
             private final TskData.FileKnown fileKnown;
