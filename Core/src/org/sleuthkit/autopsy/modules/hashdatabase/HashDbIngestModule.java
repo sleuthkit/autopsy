@@ -352,7 +352,7 @@ public class HashDbIngestModule implements FileIngestModule {
                     file.setKnown(statusIfFound);
                     String hashSetName = db.getDisplayName();
                     String comment = generateComment(hashInfo);
-                    if (!createArtifactIfNoneExists(hashSetName, file, comment, db))
+                    if (!createArtifactIfNotExists(hashSetName, file, comment, db))
                         wasError = true;
                 }
                 long delta = (System.currentTimeMillis() - lookupstart);
@@ -390,14 +390,14 @@ public class HashDbIngestModule implements FileIngestModule {
     }
 
     /**
-     * Creates a BlackboardArtifact if no TSK_HASHSET_HIT artifact exists for this file.
+     * Creates a BlackboardArtifact if artifact does not already exist.
      * @param hashSetName The name of the hashset found.
      * @param file The file that had a hash hit.
      * @param comment The comment to associate with this artifact.
      * @param db the database in which this file was found.
      * @return True if the operation occurred successfully and without error.
      */
-    private boolean createArtifactIfNoneExists(String hashSetName, AbstractFile file, String comment, HashDb db) {
+    private boolean createArtifactIfNotExists(String hashSetName, AbstractFile file, String comment, HashDb db) {
         /*
          * We have a match. Now create an artifact if it is
          * determined that one hasn't been created yet.
