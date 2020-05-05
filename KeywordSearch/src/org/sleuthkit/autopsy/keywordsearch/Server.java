@@ -278,7 +278,7 @@ public class Server {
         // variable to the Solr script but it can be overridden by the user in
         // either autopsy-solr.cmd or autopsy-solr-in.cmd.
         javaPath = PlatformUtil.getJavaPath();
-        javaPath = "java"; // ELTODO
+        //javaPath = "java"; // ELTODO
         
         // This is our customized version of the Solr batch script to start/stop Solr.
         solr8CmdPath = Paths.get(solr8Folder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
@@ -490,6 +490,7 @@ public class Server {
     private Process runSolr4Command(List<String> solrArguments) throws IOException {
         final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + UserPreferences.getMaxSolrVMSize() + "m"; //NON-NLS
 
+        String javaPath = "java"; // ELTODO
         List<String> commandLine = new ArrayList<>();
         commandLine.add(javaPath);
         commandLine.add(MAX_SOLR_MEM_MB_PAR);
@@ -551,7 +552,13 @@ public class Server {
     }
     
     void start() throws KeywordSearchModuleException, SolrServerNoPortException {
-        startSolr4();
+        startSolr8();
+        
+        //startSolr4();
+        
+        //startSolr8();
+        
+        //startSolr4();
     }
 
     /**
@@ -564,7 +571,7 @@ public class Server {
     void startSolr8() throws KeywordSearchModuleException, SolrServerNoPortException {
         if (isEmbeddedSolrRunning()) {
             // If a Solr server is running we stop it.
-            stop();
+            stop(); // ELTODO - make sure to stop the correct server it may be solr4 running
         }
 
         if (!isPortAvailable(currentSolrServerPort)) {
@@ -652,7 +659,7 @@ public class Server {
     void startSolr4() throws KeywordSearchModuleException, SolrServerNoPortException {
         if (isEmbeddedSolrRunning()) {
             // If a Solr server is running we stop it.
-            stopSolr4();
+            stopSolr4(); // ELTODO - make sure to stop the correct server, it may be solr8 running
         }
 
         if (!isPortAvailable(currentSolrServerPort)) {
