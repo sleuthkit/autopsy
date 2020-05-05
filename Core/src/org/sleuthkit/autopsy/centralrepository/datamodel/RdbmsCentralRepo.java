@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -2515,42 +2516,6 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         }
     }        
 
-    /**
-     * Updates the examiners table, by adding current logged in user to
-     * examiners table, if not already in there.
-     * 
-     * @throws CentralRepoException If there is an error.
-     *
-     */
-    @Override
-    public void updateExaminers() throws CentralRepoException {
-
-        String loginName = System.getProperty("user.name");
-        if (loginName.isEmpty()) {
-            logger.log(Level.SEVERE, "Cannot determine logged in user name");
-            return;
-        }
-
-        try (Connection connection = connect();
-                Statement statement = connection.createStatement();) {
-
-            String insertSQL;
-            switch (CentralRepoDbManager.getSavedDbChoice().getDbPlatform()) {
-                case POSTGRESQL:
-                    insertSQL = "INSERT INTO examiners (login_name) VALUES ('" + loginName + "')" + getConflictClause();  //NON-NLS
-                    break;
-                case SQLITE:
-                    insertSQL = "INSERT OR IGNORE INTO examiners (login_name) VALUES ('" + loginName + "')";
-                    break;
-                default:
-                    throw new CentralRepoException(String.format("Cannot add examiner to currently selected CR database platform %s", CentralRepoDbManager.getSavedDbChoice().getDbPlatform()));
-            }
-            statement.execute(insertSQL); //NON-NLS
-        } catch (SQLException ex) {
-            throw new CentralRepoException("Error inserting row in examiners", ex);
-        }
-    }
-
     @Override
     public void executeInsertSQL(String insertClause) throws CentralRepoException {
 
@@ -2744,7 +2709,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     @Override
     public CentralRepoExaminer getOrInsertExaminer(String examinerLoginName) throws CentralRepoException {
 
-        String querySQL = "SELECT * FROM examiners WHERE login_name = '" + examinerLoginName + "'";
+        String querySQL = "SELECT * FROM examiners WHERE login_name = '" + SleuthkitCase.escapeSingleQuotes(examinerLoginName) + "'";
         try (Connection connection = connect();
                 Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(querySQL);) {
@@ -2757,10 +2722,10 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                     String insertSQL;
                     switch (CentralRepoDbManager.getSavedDbChoice().getDbPlatform()) {
                         case POSTGRESQL:
-                            insertSQL = "INSERT INTO examiners (login_name) VALUES ('" + examinerLoginName + "')" + getConflictClause();  //NON-NLS
+                            insertSQL = "INSERT INTO examiners (login_name) VALUES ('" + SleuthkitCase.escapeSingleQuotes(examinerLoginName) + "')" + getConflictClause();  //NON-NLS
                             break;
                         case SQLITE:
-                            insertSQL = "INSERT OR IGNORE INTO examiners (login_name) VALUES ('" + examinerLoginName + "')"; //NON-NLS
+                            insertSQL = "INSERT OR IGNORE INTO examiners (login_name) VALUES ('" + SleuthkitCase.escapeSingleQuotes(examinerLoginName) + "')"; //NON-NLS
                             break;
                         default:
                             throw new CentralRepoException(String.format("Cannot add examiner to currently selected CR database platform %s", CentralRepoDbManager.getSavedDbChoice().getDbPlatform())); //NON-NLS

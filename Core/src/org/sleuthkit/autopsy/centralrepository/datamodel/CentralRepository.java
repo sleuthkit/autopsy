@@ -162,15 +162,6 @@ public interface CentralRepository {
     void updateCase(CorrelationCase eamCase) throws CentralRepoException;
     
     /**
-     * Updates the examiners table, by adding current logged in user to
-     * examiners table, if not already in there.
-     * 
-     * @throws CentralRepoException If there is an error.
-     *
-     */
-    void updateExaminers() throws CentralRepoException;
-
-    /**
      * Queries the examiner table for the given user name. 
      * Adds a row if the user is not found in the examiner table.
      *

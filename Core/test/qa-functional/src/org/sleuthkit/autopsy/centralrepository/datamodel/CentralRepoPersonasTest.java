@@ -877,4 +877,28 @@ public class CentralRepoPersonasTest  extends TestCase {
         }
         
      }
+     
+     /**
+     * Tests the getOrInsertExaminer() api.
+     */
+     public void testExaminers() {
+         
+         try {
+             String examinerName = "abcdefg";
+             CentralRepoExaminer examiner = CentralRepository.getInstance().getOrInsertExaminer(examinerName);
+             Assert.assertTrue(examiner.getLoginName().equalsIgnoreCase(examinerName));
+             
+             examinerName = "";
+             examiner = CentralRepository.getInstance().getOrInsertExaminer(examinerName);
+             Assert.assertTrue(examiner.getLoginName().equalsIgnoreCase(examinerName));
+             
+             examinerName = "D'Aboville";
+             examiner = CentralRepository.getInstance().getOrInsertExaminer(examinerName);
+             Assert.assertTrue(examiner.getLoginName().equalsIgnoreCase(examinerName));
+             
+         } catch (CentralRepoException ex) {
+             Assert.fail("Examiner tests failed. Exception: " + ex);
+         }
+         
+     }
 }
