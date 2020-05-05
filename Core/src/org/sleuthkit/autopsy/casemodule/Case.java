@@ -1956,7 +1956,7 @@ public class Case {
             checkForCancellation();
             openCaseLevelServices(progressIndicator);
             checkForCancellation();
-            openAppServiceCaseResources(progressIndicator);
+            openAppServiceCaseResources(progressIndicator, true);
             checkForCancellation();
             openCommunicationChannels(progressIndicator);
             return null;
@@ -2005,7 +2005,7 @@ public class Case {
             checkForCancellation();
             openCaseLevelServices(progressIndicator);
             checkForCancellation();
-            openAppServiceCaseResources(progressIndicator);
+            openAppServiceCaseResources(progressIndicator, false);
             checkForCancellation();
             openCommunicationChannels(progressIndicator);
             checkForCancellation();
@@ -2514,7 +2514,7 @@ public class Case {
         "# {0} - service name", "Case.serviceOpenCaseResourcesProgressIndicator.cancellingMessage=Cancelling opening case resources by {0}...",
         "# {0} - service name", "Case.servicesException.notificationTitle={0} Error"
     })
-    private void openAppServiceCaseResources(ProgressIndicator progressIndicator) throws CaseActionException {
+    private void openAppServiceCaseResources(ProgressIndicator progressIndicator, boolean isNewCase) throws CaseActionException {
         /*
          * Each service gets its own independently cancellable/interruptible
          * task, running in a named thread managed by an executor service, with
@@ -2546,7 +2546,7 @@ public class Case {
                 appServiceProgressIndicator = new LoggingProgressIndicator();
             }
             appServiceProgressIndicator.start(Bundle.Case_progressMessage_preparing());
-            AutopsyService.CaseContext context = new AutopsyService.CaseContext(this, appServiceProgressIndicator);
+            AutopsyService.CaseContext context = new AutopsyService.CaseContext(this, appServiceProgressIndicator, isNewCase);
             String threadNameSuffix = service.getServiceName().replaceAll("[ ]", "-"); //NON-NLS
             threadNameSuffix = threadNameSuffix.toLowerCase();
             TaskThreadFactory threadFactory = new TaskThreadFactory(String.format(CASE_RESOURCES_THREAD_NAME, threadNameSuffix));

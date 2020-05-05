@@ -90,6 +90,7 @@ public interface AutopsyService {
         private final Case theCase;
         private final ProgressIndicator progressIndicator;
         private volatile boolean cancelRequested;
+        private final boolean isNewCase;
 
         /**
          * Constructs the context for the creation/opening/upgrading of
@@ -100,9 +101,23 @@ public interface AutopsyService {
          *                          case-level resources
          */
         public CaseContext(Case theCase, ProgressIndicator progressIndicator) {
+            this(theCase, progressIndicator, false);
+        }
+        
+        /**
+         * Constructs the context for the creation/opening/upgrading of
+         * case-level resources by a service.
+         *
+         * @param theCase           The case.
+         * @param progressIndicator A progress indicator for the opening of the
+         *                          case-level resources.
+         * @param  isNewCase        True if theCase is a new case.
+         */
+        public CaseContext(Case theCase, ProgressIndicator progressIndicator, boolean isNewCase) {
             this.theCase = theCase;
             this.progressIndicator = progressIndicator;
             this.cancelRequested = false;
+            this.isNewCase = isNewCase;
         }
 
         /**
