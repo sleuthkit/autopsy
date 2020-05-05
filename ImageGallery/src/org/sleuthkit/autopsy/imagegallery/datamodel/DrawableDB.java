@@ -484,16 +484,7 @@ public final class DrawableDB {
             throw new TskCoreException("Failed to create/open the drawables database", ex); //NON-NLS
         }
     }
-
-    /**
-     * Return the DrawableDBs handle to the ImageGalleryController.
-     *
-     * @return Controller instance.
-     */
-    public ImageGalleryController getImageGalleryController() {
-        return controller;
-    }
-
+    
     /**
      * Checks if the specified table exists in Drawable DB
      *

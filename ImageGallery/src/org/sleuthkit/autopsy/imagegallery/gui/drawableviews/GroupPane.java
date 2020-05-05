@@ -205,13 +205,6 @@ public class GroupPane extends BorderPane {
     @FXML
     private Label catContainerLabel;
     @FXML
-    private Label catHeadingLabel;
-    @FXML
-    private SegmentedButton catSegmentedButton;
-
-    @FXML
-    private HBox catSegmentedContainer;
-    @FXML
     private HBox catSplitMenuContainer;
 
     private final ListeningExecutorService exec = TaskUtils.getExecutorForClass(GroupPane.class);
@@ -394,23 +387,6 @@ public class GroupPane extends BorderPane {
         assert slideShowToggle != null : "fx:id=\"segButton\" was not injected: check your FXML file 'GroupPane.fxml'.";
         assert tileToggle != null : "fx:id=\"tileToggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
         assert seenByOtherExaminersCheckBox != null : "fx:id=\"seenByOtherExaminersCheckBox\" was not injected: check your FXML file 'GroupPane.fxml'.";
-        assert catSegmentedButton != null : "fx:id=\"catSegmentedButton\" was not injected: check your FXML file 'GroupPane.fxml'.";
-
-        for (TagName tagName : controller.getCategoryManager().getCategories()) {
-            ToggleButton toggleForCategory = getToggleForCategory(tagName);
-            toggleForCategory.setBorder(new Border(new BorderStroke(Color.web(tagName.getColor().getHexColorCode()), BorderStrokeStyle.SOLID, CORNER_RADII_2, BORDER_WIDTHS_2)));
-            toggleForCategory.selectedProperty().addListener((ov, wasSelected, toggleSelected) -> {
-                // Handles the action of the user clicking on the displayed 
-                // togglebutton.
-                if (toggleSelected && slideShowPane != null) {
-                    slideShowPane.getFileID().ifPresent(fileID -> {
-                        selectionModel.clearAndSelect(fileID);
-                        new CategorizeAction(controller, tagName, ImmutableSet.of(fileID)).handle(null);
-                    });
-                }
-            });
-            catSegmentedButton.getButtons().add(toggleForCategory);
-        }
 
         //configure flashing glow animation on next unseen group button
         flashAnimation.setCycleCount(Timeline.INDEFINITE);
@@ -464,16 +440,21 @@ public class GroupPane extends BorderPane {
         bottomLabel.setText(Bundle.GroupPane_bottomLabel_displayText());
         headerLabel.setText(Bundle.GroupPane_hederLabel_displayText());
         catContainerLabel.setText(Bundle.GroupPane_catContainerLabel_displayText());
-        catHeadingLabel.setText(Bundle.GroupPane_catHeadingLabel_displayText());
-        //show categorization controls depending on group view mode
-        headerToolBar.getItems().remove(catSegmentedContainer);
+        
+        // This seems to be the only way to make sure the when the user switches
+        // to SLIDE_SHOW the first time that the undo\redo buttons are removed.
+        headerToolBar.getItems().remove(undoButton);
+        headerToolBar.getItems().remove(redoButton);
+        headerToolBar.getItems().add(undoButton);
+        headerToolBar.getItems().add(redoButton);
+
         groupViewMode.addListener((ObservableValue<? extends GroupViewMode> observable, GroupViewMode oldValue, GroupViewMode newValue) -> {
             if (newValue == GroupViewMode.SLIDE_SHOW) {
-                headerToolBar.getItems().remove(catSplitMenuContainer);
-                headerToolBar.getItems().add(catSegmentedContainer);
+                headerToolBar.getItems().remove(undoButton);
+                headerToolBar.getItems().remove(redoButton);
             } else {
-                headerToolBar.getItems().remove(catSegmentedContainer);
-                headerToolBar.getItems().add(catSplitMenuContainer);
+                headerToolBar.getItems().add(undoButton);
+                headerToolBar.getItems().add(redoButton);
             }
         });
 
