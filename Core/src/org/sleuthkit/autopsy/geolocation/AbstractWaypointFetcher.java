@@ -120,15 +120,13 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
                 // Figure out what the most recent time is given the filtered
                 // waypoints and the tracks.
                 timeRangeEnd = getMostRecent(waypoints, tracks);
-                if (timeRangeEnd != null) {
-                    timeRangeStart = timeRangeEnd - (86400 * filters.getMostRecentNumDays());
+                timeRangeStart = timeRangeEnd - (86400 * filters.getMostRecentNumDays());
 
-                    completeList.addAll(getWaypointsInRange(timeRangeStart, timeRangeEnd, waypoints));
-
-                    filteredTracks = getTracksInRange(timeRangeStart, timeRangeEnd, tracks);
-                    for (List<Waypoint> filteredTrack : filteredTracks) {
-                        completeList.addAll(filteredTrack);
-                    }
+                completeList.addAll(getWaypointsInRange(timeRangeStart, timeRangeEnd, waypoints));
+                
+                filteredTracks = getTracksInRange(timeRangeStart, timeRangeEnd, tracks);
+                for (List<Waypoint> filteredTrack : filteredTracks) {
+                    completeList.addAll(filteredTrack);
                 }
             } else {
                 completeList.addAll(waypoints);
@@ -259,6 +257,6 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
             return waypointMostRecent;
         }
 
-        return null;
+        return -1L;
     }
 }
