@@ -219,6 +219,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         });
 
         buttonGroup1.add(knownBadRadioButton);
+        knownBadRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(knownBadRadioButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.knownBadRadioButton.text")); // NOI18N
         knownBadRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
