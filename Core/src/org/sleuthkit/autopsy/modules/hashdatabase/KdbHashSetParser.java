@@ -145,7 +145,7 @@ public class KdbHashSetParser implements HashSetParser {
         HashRow row = getNextHashRow();
         try {
             PreparedStatement getComment = conn.prepareStatement("SELECT comment FROM comments WHERE hash_id = ?");
-            getComment.setLong(0, row.getHashId());
+            getComment.setLong(1, row.getHashId());
             ResultSet commentResults = getComment.executeQuery();
             List<String> comments = new ArrayList<>();
             while (commentResults.next())

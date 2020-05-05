@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -551,13 +552,14 @@ public class HashDbIngestModule implements FileIngestModule {
      * @param knownBadHashSets The list of hash sets for "known bad" files.
      * @param knownHashSets    The list of hash sets for "known" files.
      */
+    @Messages("HashDbIngestModule.complete.noChangesFound=No Change items found:")
     private static synchronized void postSummary(long jobId, List<HashDb> knownBadHashSets, 
             List<HashDb> noChangeHashSets, List<HashDb> knownHashSets) {
         
         IngestJobTotals jobTotals = getTotalsForIngestJobs(jobId);
         totalsForIngestJobs.remove(jobId);
 
-        if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty())) {
+        if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty()) || (!noChangeHashSets.isEmpty())) {
             StringBuilder detailsSb = new StringBuilder();
             //details
             detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
@@ -567,6 +569,11 @@ public class HashDbIngestModule implements FileIngestModule {
                     .append("</td>"); //NON-NLS
             detailsSb.append("<td>").append(jobTotals.totalKnownBadCount.get()).append("</td></tr>"); //NON-NLS
 
+            detailsSb.append("<tr><td>") //NON-NLS
+                    .append(Bundle.HashDbIngestModule_complete_noChangesFound())
+                    .append("</td>"); //NON-NLS
+            detailsSb.append("<td>").append(jobTotals.totalNoChangeCount.get()).append("</td></tr>"); //NON-NLS
+            
             detailsSb.append("<tr><td>") //NON-NLS
                     .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.totalCalcTime"))
                     .append("</td><td>").append(jobTotals.totalCalctime.get()).append("</td></tr>\n"); //NON-NLS
@@ -578,9 +585,9 @@ public class HashDbIngestModule implements FileIngestModule {
             detailsSb.append("<p>") //NON-NLS
                     .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.databasesUsed"))
                     .append("</p>\n<ul>"); //NON-NLS
-            for (HashDb db : knownBadHashSets) {
-                detailsSb.append("<li>").append(db.getHashSetName()).append("</li>\n"); //NON-NLS
-            }
+            Stream.concat(knownBadHashSets.stream(), noChangeHashSets.stream()).forEach((db) -> { 
+                detailsSb.append("<li>").append(db.getHashSetName()).append("</li>\n"); //NON-NLS    
+            });
 
             detailsSb.append("</ul>"); //NON-NLS
 
