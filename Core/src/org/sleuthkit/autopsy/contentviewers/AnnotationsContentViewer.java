@@ -28,7 +28,6 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -49,7 +48,6 @@ import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 
 /**
  * Annotations view of file contents.
@@ -113,17 +111,25 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
         if (sourceFile instanceof AbstractFile) {
             populateCentralRepositoryData(html, artifact, (AbstractFile) sourceFile);
-            populateHashHitData(html, sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
-            populateHashHitData(html, sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+            populateFileSetData(html, sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
+            populateFileSetData(html, sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
         }
 
         setText(html.toString());
         jTextPane1.setCaretPosition(0);
     }
 
-    private void populateHashHitData(StringBuilder html, Content content, BlackboardArtifact.ARTIFACT_TYPE artifactType) {
+    /**
+     * Populates the html provided with data concerning the source file and
+     * whether it appears in a file set.
+     *
+     * @param html         The html to append information.
+     * @param content      The source content to check for blackboard artifacts.
+     * @param artifactType The artifact type to check for.
+     */
+    private void populateFileSetData(StringBuilder html, Content content, BlackboardArtifact.ARTIFACT_TYPE artifactType) {
         String artifactTypeName = artifactType.getDisplayName();
-        
+
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
 
@@ -132,9 +138,9 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             if (fileHitInfo.isEmpty()) {
                 addMessage(html, String.format("There are no %s for the selected content.", artifactTypeName));
             } else {
-                for (BlackboardArtifact fileHit : fileHitInfo) {
+                fileHitInfo.forEach((fileHit) -> {
                     addFileHitEntry(html, fileHit);
-                }
+                });
             }
             endSection(html);
         } catch (NoCurrentCaseException ex) {
@@ -144,7 +150,15 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         }
     }
 
-
+    /**
+     * Attempts to retrieve the attribute of a particular type from a blackboard
+     * artifact.
+     *
+     * @param artifact      The artifact from which to retrieve the information.
+     * @param attributeType The attribute type to retrieve from the artifact.
+     *
+     * @return The string value of the attribute or null if not found.
+     */
     private String tryGetAttribute(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) {
         if (artifact == null) {
             return null;
@@ -165,8 +179,8 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     }
 
     /**
-     * Add a data table containing information about an file hit artifact (i.e.
-     * hash hit).
+     * Add a data table containing information about an file set hit artifact
+     * (i.e. hash hit).
      *
      * @param html The HTML text to add the table to.
      * @param tag  The blackboard artifact with hash hit information whose
