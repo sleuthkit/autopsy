@@ -481,7 +481,7 @@ public class TagsManager implements Closeable {
         try {
             Case currentCase = Case.getCurrentCaseThrows();
 
-            currentCase.notifyContentTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags().get(0));
+            currentCase.notifyContentTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags());
 
         } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Added a tag to a closed case", ex);
@@ -701,7 +701,7 @@ public class TagsManager implements Closeable {
         TaggingManager.BlackboardArtifactTagChange tagChange = caseDb.getTaggingManager().addArtifactTag(artifact, tagName, comment);
         try {
             Case currentCase = Case.getCurrentCaseThrows();
-            currentCase.notifyBlackBoardArtifactTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags().get(0));
+            currentCase.notifyBlackBoardArtifactTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags());
         } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Added a tag to a closed case", ex);
         }

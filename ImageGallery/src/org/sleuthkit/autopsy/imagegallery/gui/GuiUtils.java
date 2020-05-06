@@ -56,7 +56,7 @@ public final class GuiUtils {
 
     /**
      * Create a MenuItem that performs the given action and also set the Action
-     * as the action for the given Button. Usefull to have a SplitMenuButton
+     * as the action for the given Button. Useful to have a SplitMenuButton
      * remember the last chosen menu item as its action.
      *
      * @param button
