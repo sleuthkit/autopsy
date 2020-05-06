@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,6 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
-
 
 /**
  * Ingest job settings panel for hash lookup file ingest modules.
@@ -117,14 +116,14 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         hashSetsTableModel.fireTableDataChanged();
     }
 
-    private List<HashDb> validSetsOnly(List<HashDb> hashDbs){
+    private List<HashDb> validSetsOnly(List<HashDb> hashDbs) {
         List<HashDb> validDbs = new ArrayList<>();
-        for(HashDb db:hashDbs){
-            try{
-                if(db.isValid()){
+        for (HashDb db : hashDbs) {
+            try {
+                if (db.isValid()) {
                     validDbs.add(db);
                 }
-            } catch (TskCoreException ex){
+            } catch (TskCoreException ex) {
                 Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error checking validity for hash set (name = " + db.getHashSetName() + ")", ex); //NON-NLS
             }
         }
@@ -133,22 +132,22 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
     void updateHashSetModels() {
         List<HashDb> hashDbs = validSetsOnly(hashDbManager.getAllHashSets());
-                
+
         List<HashDb> hashDatabases = new ArrayList<>(hashDbs);
-        
+
         // Update the hash sets and detect deletions.
         List<HashSetModel> deletedHashSetModels = new ArrayList<>();
         for (HashSetModel model : hashSetModels) {
             boolean foundDatabase = false;
-            for(HashDb db : hashDatabases){
-                if(model.getDatabase().equals(db)){
+            for (HashDb db : hashDatabases) {
+                if (model.getDatabase().equals(db)) {
                     model.setValid(isHashDbValid(db));
                     hashDatabases.remove(db);
                     foundDatabase = true;
                     break;
                 }
             }
-            if(! foundDatabase){
+            if (!foundDatabase) {
                 deletedHashSetModels.add(model);
             }
         }
@@ -191,8 +190,8 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
             this.enabled = enabled;
             this.valid = valid;
         }
-        
-        HashDb getDatabase(){
+
+        HashDb getDatabase() {
             return db;
         }
 
@@ -202,13 +201,14 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
         String getFormattedName() {
             String knownTypeName = (db != null && db.getKnownFilesType() != null) ? db.getKnownFilesType().getDisplayName() : "";
-            if (!StringUtils.isBlank(knownTypeName))
+            if (!StringUtils.isBlank(knownTypeName)) {
                 knownTypeName = String.format(" (%s)", knownTypeName);
-            
+            }
+
             String displayName = db != null ? db.getDisplayName() : "";
             return displayName + knownTypeName;
         }
-        
+
         void setEnabled(boolean enabled) {
             this.enabled = enabled;
         }

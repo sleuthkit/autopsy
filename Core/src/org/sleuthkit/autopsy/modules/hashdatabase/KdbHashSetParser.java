@@ -80,8 +80,9 @@ public class KdbHashSetParser implements HashSetParser {
         }
 
     }
-    
+
     private static class HashRow {
+
         private final String md5Hash;
         private final long hashId;
 
@@ -98,11 +99,13 @@ public class KdbHashSetParser implements HashSetParser {
             return hashId;
         }
     }
-    
+
     /**
      * Retrieves the row id and md5 hash for the next item in the hashes table.
+     *
      * @return A hash row object containing the hash and id.
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     private HashRow getNextHashRow() throws TskCoreException {
         try {
@@ -117,10 +120,10 @@ public class KdbHashSetParser implements HashSetParser {
                 if (sb.toString().length() != 32) {
                     throw new TskCoreException("Hash has incorrect length: " + sb.toString());
                 }
-                
+
                 String md5Hash = sb.toString();
                 totalHashesRead++;
-                return new HashRow(md5Hash, hashId);             
+                return new HashRow(md5Hash, hashId);
             } else {
                 throw new TskCoreException("Could not read expected number of hashes from hash set " + filename);
             }
@@ -133,6 +136,7 @@ public class KdbHashSetParser implements HashSetParser {
      * Get the next hash to import
      *
      * @return The hash as a string
+     *
      * @throws TskCoreException
      */
     @Override
@@ -148,18 +152,16 @@ public class KdbHashSetParser implements HashSetParser {
             getComment.setLong(1, row.getHashId());
             ResultSet commentResults = getComment.executeQuery();
             List<String> comments = new ArrayList<>();
-            while (commentResults.next())
+            while (commentResults.next()) {
                 comments.add(commentResults.getString("comment"));
+            }
 
             String comment = comments.size() > 0 ? String.join(" ", comments) : null;
             return new HashEntry(null, row.getMd5Hash(), null, null, comment);
-        }
-        catch (SQLException ex) {
+        } catch (SQLException ex) {
             throw new TskCoreException("Error opening/reading hash set " + filename, ex);
         }
     }
-    
-    
 
     /**
      * Check if there are more hashes to read

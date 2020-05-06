@@ -547,11 +547,9 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         KnownFilesType type;
         if (knownRadioButton.isSelected()) {
             type = KnownFilesType.KNOWN;
-        }
-        else if (noChangeRadioButton.isSelected()) {
+        } else if (noChangeRadioButton.isSelected()) {
             type = KnownFilesType.NO_CHANGE;
-        }
-        else {
+        } else {
             type = KnownFilesType.KNOWN_BAD;
         }
 

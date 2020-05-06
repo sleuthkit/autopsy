@@ -49,7 +49,6 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.SleuthkitHashSet;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.CentralRepoHashSet;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.SetEvt;
@@ -95,16 +94,16 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 }
             }
         });
-        
+
         HashDbManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String propName = evt.getPropertyName();
-                if(propName.equals(SetEvt.DB_ADDED.toString()) ||
-                        propName.equals(SetEvt.DB_DELETED.toString())) {
+                if (propName.equals(SetEvt.DB_ADDED.toString())
+                        || propName.equals(SetEvt.DB_DELETED.toString())) {
                     hashSetTableModel.refreshModel();
                 }
-            } 
+            }
         });
     }
 

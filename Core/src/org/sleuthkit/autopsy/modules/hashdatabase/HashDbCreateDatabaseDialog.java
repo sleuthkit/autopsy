@@ -488,17 +488,15 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         }
 
         KnownFilesType type;
-        
+
         if (knownRadioButton.isSelected()) {
-            type = KnownFilesType.KNOWN;   
-        } 
-        else if (noChangeRadioButton.isSelected()) {
+            type = KnownFilesType.KNOWN;
+        } else if (noChangeRadioButton.isSelected()) {
             type = KnownFilesType.NO_CHANGE;
-        }
-        else {
+        } else {
             type = KnownFilesType.KNOWN_BAD;
         }
-        
+
         TskData.FileKnown fileKnown = type.getFileKnown();
 
         String errorMessage = NbBundle

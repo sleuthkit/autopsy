@@ -187,7 +187,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
          * Get the newly created database
          *
          * @return the imported database. May be null if an error occurred or
-         * the user canceled
+         *         the user canceled
          */
         synchronized HashDbManager.CentralRepoHashSet getDatabase() {
             return newHashDb;
@@ -206,7 +206,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
          * Check if the import was successful or if there was an error.
          *
          * @return true if the import process completed without error, false
-         * otherwise
+         *         otherwise
          */
         boolean getImportSuccess() {
             return importSuccess.get();
@@ -236,7 +236,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
 
                 // Create an empty hashset in the central repository
                 CentralRepository dbManager = CentralRepository.getInstance();
-                referenceSetID.set(dbManager.newReferenceSet(new CentralRepoFileSet(orgId, hashSetName, version, knownStatus, 
+                referenceSetID.set(dbManager.newReferenceSet(new CentralRepoFileSet(orgId, hashSetName, version, knownStatus,
                         readOnly, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID))));
 
                 // Get the "FILES" content type. This is a database lookup so we
