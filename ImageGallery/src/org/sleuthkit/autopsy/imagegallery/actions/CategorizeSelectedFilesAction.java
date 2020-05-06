@@ -19,14 +19,14 @@
 package org.sleuthkit.autopsy.imagegallery.actions;
 
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  *
  */
 public class CategorizeSelectedFilesAction extends CategorizeAction {
 
-    public CategorizeSelectedFilesAction(DhsImageCategory cat, ImageGalleryController controller) {
+    public CategorizeSelectedFilesAction(TagName cat, ImageGalleryController controller) {
         super(controller, cat, null);
         setEventHandler(actionEvent ->
                 addCatToFiles(controller.getSelectionModel().getSelected())

@@ -40,8 +40,8 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -94,15 +94,19 @@ public abstract class DrawableFile {
 
     private final SimpleBooleanProperty analyzed;
 
-    private final SimpleObjectProperty<DhsImageCategory> category = new SimpleObjectProperty<>(null);
+    private final SimpleObjectProperty<TagName> categoryTagName = new SimpleObjectProperty<>(null);
 
     private String make;
 
     private String model;
 
+    private final CategoryManager categoryManager;
+
     protected DrawableFile(AbstractFile file, Boolean analyzed) {
         this.analyzed = new SimpleBooleanProperty(analyzed);
         this.file = file;
+
+        categoryManager = ImageGalleryController.getController(Case.getCurrentCase()).getCategoryManager();
     }
 
     public abstract boolean isVideo();
@@ -229,32 +233,30 @@ public abstract class DrawableFile {
         return "";
     }
 
-    public void setCategory(DhsImageCategory category) {
-        categoryProperty().set(category);
-
-    }
-
-    public DhsImageCategory getCategory() {
+    public TagName getCategory() {
         updateCategory();
-        return category.get();
+        return categoryTagName.get();
     }
 
-    public SimpleObjectProperty<DhsImageCategory> categoryProperty() {
-        return category;
+    public SimpleObjectProperty<TagName> categoryProperty() {
+        return categoryTagName;
     }
 
     /**
-     * set the category property to the most severe one found
+     * Update the category property.
      */
     private void updateCategory() {
         try {
-            category.set(getContentTags().stream()
-                    .map(Tag::getName).filter(CategoryManager::isCategoryTagName)
-                    .map(TagName::getDisplayName)
-                    .map(DhsImageCategory::fromDisplayName)
-                    .sorted().findFirst() //sort by severity and take the first
-                    .orElse(DhsImageCategory.ZERO)
-            );
+            List<ContentTag> contentTags = getContentTags();
+            TagName tag = null;
+            for (ContentTag ct : contentTags) {
+                TagName tagName = ct.getName();
+                if (categoryManager.isCategoryTagName(tagName)) {
+                    tag = tagName;
+                    break;
+                }
+            }
+            categoryTagName.set(tag);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "problem looking up category for " + this.getContentPathSafe(), ex); //NON-NLS
         } catch (IllegalStateException ex) {

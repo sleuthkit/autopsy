@@ -19,12 +19,10 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import static com.google.common.collect.Lists.transform;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
 import java.util.Arrays;
-import static java.util.Arrays.asList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,7 +48,6 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableSet;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -86,10 +83,7 @@ import static javafx.scene.input.KeyCode.UP;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
@@ -111,7 +105,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
@@ -134,6 +127,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import static org.sleuthkit.autopsy.imagegallery.gui.GuiUtils.createAutoAssigningMenuItem;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import static org.sleuthkit.autopsy.imagegallery.utils.TaskUtils.addFXCallback;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -177,19 +171,6 @@ public class GroupPane extends BorderPane {
     @FXML
     private ToolBar headerToolBar;
     @FXML
-    private ToggleButton cat0Toggle;
-    @FXML
-    private ToggleButton cat1Toggle;
-    @FXML
-    private ToggleButton cat2Toggle;
-    @FXML
-    private ToggleButton cat3Toggle;
-    @FXML
-    private ToggleButton cat4Toggle;
-    @FXML
-    private ToggleButton cat5Toggle;
-
-    @FXML
     private SegmentedButton segButton;
 
     @FXML
@@ -220,11 +201,6 @@ public class GroupPane extends BorderPane {
     @FXML
     private Label catContainerLabel;
     @FXML
-    private Label catHeadingLabel;
-
-    @FXML
-    private HBox catSegmentedContainer;
-    @FXML
     private HBox catSplitMenuContainer;
 
     private final ListeningExecutorService exec = TaskUtils.getExecutorForClass(GroupPane.class);
@@ -244,11 +220,17 @@ public class GroupPane extends BorderPane {
 
     private ContextMenu contextMenu;
 
-    /** the current GroupViewMode of this GroupPane */
+    /**
+     * the current GroupViewMode of this GroupPane
+     */
     private final SimpleObjectProperty<GroupViewMode> groupViewMode = new SimpleObjectProperty<>(GroupViewMode.TILE);
 
-    /** the grouping this pane is currently the view for */
+    /**
+     * the grouping this pane is currently the view for
+     */
     private final ReadOnlyObjectWrapper<DrawableGroup> grouping = new ReadOnlyObjectWrapper<>();
+
+    private final Map<String, ToggleButton> toggleButtonMap = new HashMap<>();
 
     /**
      * Map from fileIDs to their assigned cells in the tile view. This is used
@@ -278,7 +260,7 @@ public class GroupPane extends BorderPane {
         undoAction = new UndoAction(controller);
         redoAction = new RedoAction(controller);
 
-        FXMLConstructor.construct(this, "GroupPane.fxml"); //NON-NLS
+        FXMLConstructor.construct(this, "GroupPane.fxml"); //NON-NLS        
     }
 
     GroupViewMode getGroupViewMode() {
@@ -307,7 +289,35 @@ public class GroupPane extends BorderPane {
     }
 
     void syncCatToggle(DrawableFile file) {
-        getToggleForCategory(file.getCategory()).setSelected(true);
+        TagName tagName = file.getCategory();
+        if (tagName != null) {
+            getToggleForCategory(tagName).setSelected(true);
+        }
+    }
+
+    /**
+     * Returns a toggle button for the given TagName.
+     *
+     * @param tagName TagName to create a button for.
+     *
+     * @return A new instance of a ToggleButton.
+     */
+    private ToggleButton getToggleForCategory(TagName tagName) {
+
+        ToggleButton button = toggleButtonMap.get(tagName.getDisplayName());
+
+        if (button == null) {
+            String[] split = tagName.getDisplayName().split(":");
+            split = split[0].split("-");
+
+            int category = Integer.parseInt(split[1]);
+
+            button = new ToggleButton();
+            button.setText(Integer.toString(category));
+
+            toggleButtonMap.put(tagName.getDisplayName(), button);
+        }
+        return button;
     }
 
     public void activateTileViewer() {
@@ -353,25 +363,6 @@ public class GroupPane extends BorderPane {
         return grouping.getReadOnlyProperty();
     }
 
-    private ToggleButton getToggleForCategory(DhsImageCategory category) {
-        switch (category) {
-            case ZERO:
-                return cat0Toggle;
-            case ONE:
-                return cat1Toggle;
-            case TWO:
-                return cat2Toggle;
-            case THREE:
-                return cat3Toggle;
-            case FOUR:
-                return cat4Toggle;
-            case FIVE:
-                return cat5Toggle;
-            default:
-                throw new UnsupportedOperationException("Unknown category: " + category.name());
-        }
-    }
-
     /**
      * called automatically during constructor by FXMLConstructor.
      *
@@ -384,12 +375,6 @@ public class GroupPane extends BorderPane {
         "GroupPane.catContainerLabel.displayText=Categorize Selected File:",
         "GroupPane.catHeadingLabel.displayText=Category:"})
     void initialize() {
-        assert cat0Toggle != null : "fx:id=\"cat0Toggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
-        assert cat1Toggle != null : "fx:id=\"cat1Toggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
-        assert cat2Toggle != null : "fx:id=\"cat2Toggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
-        assert cat3Toggle != null : "fx:id=\"cat3Toggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
-        assert cat4Toggle != null : "fx:id=\"cat4Toggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
-        assert cat5Toggle != null : "fx:id=\"cat5Toggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
         assert gridView != null : "fx:id=\"tilePane\" was not injected: check your FXML file 'GroupPane.fxml'.";
         assert catSelectedSplitMenu != null : "fx:id=\"grpCatSplitMenu\" was not injected: check your FXML file 'GroupPane.fxml'.";
         assert tagSelectedSplitMenu != null : "fx:id=\"grpTagSplitMenu\" was not injected: check your FXML file 'GroupPane.fxml'.";
@@ -398,21 +383,6 @@ public class GroupPane extends BorderPane {
         assert slideShowToggle != null : "fx:id=\"segButton\" was not injected: check your FXML file 'GroupPane.fxml'.";
         assert tileToggle != null : "fx:id=\"tileToggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
         assert seenByOtherExaminersCheckBox != null : "fx:id=\"seenByOtherExaminersCheckBox\" was not injected: check your FXML file 'GroupPane.fxml'.";
-
-        for (DhsImageCategory cat : DhsImageCategory.values()) {
-            ToggleButton toggleForCategory = getToggleForCategory(cat);
-            toggleForCategory.setBorder(new Border(new BorderStroke(cat.getColor(), BorderStrokeStyle.SOLID, CORNER_RADII_2, BORDER_WIDTHS_2)));
-            toggleForCategory.getStyleClass().remove("radio-button");
-            toggleForCategory.getStyleClass().add("toggle-button");
-            toggleForCategory.selectedProperty().addListener((ov, wasSelected, toggleSelected) -> {
-                if (toggleSelected && slideShowPane != null) {
-                    slideShowPane.getFileID().ifPresent(fileID -> {
-                        selectionModel.clearAndSelect(fileID);
-                        new CategorizeAction(controller, cat, ImmutableSet.of(fileID)).handle(null);
-                    });
-                }
-            });
-        }
 
         //configure flashing glow animation on next unseen group button
         flashAnimation.setCycleCount(Timeline.INDEFINITE);
@@ -447,14 +417,14 @@ public class GroupPane extends BorderPane {
                 },
                 throwable -> logger.log(Level.SEVERE, "Error getting tag names.", throwable)//NON-NLS
         );
-        CategorizeSelectedFilesAction cat5SelectedAction = new CategorizeSelectedFilesAction(DhsImageCategory.FIVE, controller);
+        CategorizeSelectedFilesAction cat5SelectedAction = new CategorizeSelectedFilesAction(controller.getCategoryManager().getCategories().get(0), controller);
 
         catSelectedSplitMenu.setOnAction(cat5SelectedAction);
 
         catSelectedSplitMenu.setText(cat5SelectedAction.getText());
         catSelectedSplitMenu.setGraphic(cat5SelectedAction.getGraphic());
 
-        List<MenuItem> categoryMenues = transform(asList(DhsImageCategory.values()),
+        List<MenuItem> categoryMenues = transform(controller.getCategoryManager().getCategories(),
                 cat -> createAutoAssigningMenuItem(catSelectedSplitMenu, new CategorizeSelectedFilesAction(cat, controller)));
         catSelectedSplitMenu.getItems().setAll(categoryMenues);
 
@@ -466,16 +436,21 @@ public class GroupPane extends BorderPane {
         bottomLabel.setText(Bundle.GroupPane_bottomLabel_displayText());
         headerLabel.setText(Bundle.GroupPane_hederLabel_displayText());
         catContainerLabel.setText(Bundle.GroupPane_catContainerLabel_displayText());
-        catHeadingLabel.setText(Bundle.GroupPane_catHeadingLabel_displayText());
-        //show categorization controls depending on group view mode
-        headerToolBar.getItems().remove(catSegmentedContainer);
+        
+        // This seems to be the only way to make sure the when the user switches
+        // to SLIDE_SHOW the first time that the undo\redo buttons are removed.
+        headerToolBar.getItems().remove(undoButton);
+        headerToolBar.getItems().remove(redoButton);
+        headerToolBar.getItems().add(undoButton);
+        headerToolBar.getItems().add(redoButton);
+
         groupViewMode.addListener((ObservableValue<? extends GroupViewMode> observable, GroupViewMode oldValue, GroupViewMode newValue) -> {
             if (newValue == GroupViewMode.SLIDE_SHOW) {
-                headerToolBar.getItems().remove(catSplitMenuContainer);
-                headerToolBar.getItems().add(catSegmentedContainer);
+                headerToolBar.getItems().remove(undoButton);
+                headerToolBar.getItems().remove(redoButton);
             } else {
-                headerToolBar.getItems().remove(catSegmentedContainer);
-                headerToolBar.getItems().add(catSplitMenuContainer);
+                headerToolBar.getItems().add(undoButton);
+                headerToolBar.getItems().add(redoButton);
             }
         });
 
@@ -527,7 +502,7 @@ public class GroupPane extends BorderPane {
         //listen to tile selection and make sure it is visible in scroll area
         selectionModel.lastSelectedProperty().addListener((observable, oldFileID, newFileId) -> {
             if (groupViewMode.get() == GroupViewMode.SLIDE_SHOW
-                && slideShowPane != null) {
+                    && slideShowPane != null) {
                 slideShowPane.setFile(newFileId);
             } else {
                 scrollToFileID(newFileId);
@@ -775,40 +750,7 @@ public class GroupPane extends BorderPane {
                     selectAllFiles();
                     t.consume();
                 }
-                ObservableSet<Long> selected = selectionModel.getSelected();
-                if (selected.isEmpty() == false) {
-                    DhsImageCategory cat = keyCodeToCat(t.getCode());
-                    if (cat != null) {
-                        new CategorizeAction(controller, cat, selected).handle(null);
-                    }
-                }
             }
-        }
-
-        private DhsImageCategory keyCodeToCat(KeyCode t) {
-            if (t != null) {
-                switch (t) {
-                    case NUMPAD0:
-                    case DIGIT0:
-                        return DhsImageCategory.ZERO;
-                    case NUMPAD1:
-                    case DIGIT1:
-                        return DhsImageCategory.ONE;
-                    case NUMPAD2:
-                    case DIGIT2:
-                        return DhsImageCategory.TWO;
-                    case NUMPAD3:
-                    case DIGIT3:
-                        return DhsImageCategory.THREE;
-                    case NUMPAD4:
-                    case DIGIT4:
-                        return DhsImageCategory.FOUR;
-                    case NUMPAD5:
-                    case DIGIT5:
-                        return DhsImageCategory.FIVE;
-                }
-            }
-            return null;
         }
 
         private void handleArrows(KeyEvent t) {
