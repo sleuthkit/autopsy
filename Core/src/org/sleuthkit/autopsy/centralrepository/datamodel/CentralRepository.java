@@ -25,6 +25,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.datamodel.HashHitInfo;
 
 /**
  * Main interface for interacting with the database
@@ -541,6 +542,22 @@ public interface CentralRepository {
      */
     public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
+    
+    /**
+     * Retrieves the given file HashHitInfo if the given file hash is in this 
+     * reference set. Only searches the reference_files table.
+     *
+     * @param hash The hash to find in a search.
+     * @param referenceSetID The referenceSetID within which the file should exist.
+     *
+     * @return The HashHitInfo if found or null if not found.
+     *
+     * @throws CentralRepoException
+     * @throws CorrelationAttributeNormalizationException
+     */
+    public HashHitInfo getFileHashInReferenceSet(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException;
+
+    
     /**
      * Check if the given value is in a specific reference set
      *
