@@ -190,7 +190,7 @@ public final class DrawableTagsManager {
             returnTagName = autopsyTagsManager.getDisplayNamesToTagNamesMap().get(displayName);
             if (returnTagName != null) {
                 return returnTagName;
-            }
+            } 
             throw new TskCoreException("Tag name exists but an error occured in retrieving it", ex);
         }
     }
