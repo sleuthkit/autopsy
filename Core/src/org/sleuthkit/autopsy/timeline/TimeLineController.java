@@ -783,7 +783,7 @@ public class TimeLineController {
                 break;
             case DATA_SOURCE_ADDED:
                 future = executor.submit(() -> {
-                    filteredEvents.invalidateCaches(null);
+                    filteredEvents.handleDataSourceAdded();
                     return null;
                 });
                 break;
