@@ -1,11 +1,11 @@
-CTL_OpenFileDiscoveryAction=File Discovery
+CTL_OpenDiscoveryAction=Discovery
 # {0} - dataSourceName
 DataSourceModuleWrapper.exifModule.text=Exif Parser module was not run on data source: {0}\n
 # {0} - dataSourceName
 DataSourceModuleWrapper.fileTypeModule.text=File Type Identification module was not run on data source: {0}\n
 # {0} - dataSourceName
 DataSourceModuleWrapper.hashModule.text=Hash Lookup module was not run on data source: {0}\n
-DiscoveryTopComponent.name=\ File Discovery
+DiscoveryTopComponent.name=\ Discovery
 DiscoveryUiUtility.bytes.text=bytes
 DiscoveryUiUtility.gigaBytes.text=GB
 DiscoveryUiUtility.kiloBytes.text=KB
@@ -184,7 +184,7 @@ GroupsListPanel.noResults.title.text=No results found
 ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
 # {0} - otherInstanceCount
 ImageThumbnailPanel.nameLabel.more.text=\ and {0} more
-OpenFileDiscoveryAction.resultsIncomplete.text=Results may be incomplete
+OpenDiscoveryAction.resultsIncomplete.text=Results may be incomplete
 ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
 ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
 ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
