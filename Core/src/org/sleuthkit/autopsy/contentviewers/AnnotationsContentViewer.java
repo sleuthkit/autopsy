@@ -22,11 +22,13 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -46,6 +48,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 
 /**
  * Annotations view of file contents.
@@ -109,10 +113,84 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
         if (sourceFile instanceof AbstractFile) {
             populateCentralRepositoryData(html, artifact, (AbstractFile) sourceFile);
+            populateHashHitData(html, sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
+            populateHashHitData(html, sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
         }
 
         setText(html.toString());
         jTextPane1.setCaretPosition(0);
+    }
+
+    private void populateHashHitData(StringBuilder html, Content content, BlackboardArtifact.ARTIFACT_TYPE artifactType) {
+        String artifactTypeName = artifactType.getDisplayName();
+        
+        try {
+            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+
+            startSection(html, artifactTypeName);
+            List<BlackboardArtifact> fileHitInfo = tskCase.getBlackboardArtifacts(artifactType, content.getId());
+            if (fileHitInfo.isEmpty()) {
+                addMessage(html, String.format("There are no %s for the selected content.", artifactTypeName));
+            } else {
+                for (BlackboardArtifact fileHit : fileHitInfo) {
+                    addFileHitEntry(html, fileHit);
+                }
+            }
+            endSection(html);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Exception while getting tags from the case database.", ex); //NON-NLS
+        }
+    }
+
+
+    private String tryGetAttribute(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) {
+        if (artifact == null) {
+            return null;
+        }
+
+        BlackboardAttribute attr = null;
+        try {
+            attr = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, String.format("Unable to fetch attribute of type %s for artifact %s", attributeType, artifact), ex);
+        }
+
+        if (attr == null) {
+            return null;
+        }
+
+        return attr.getValueString();
+    }
+
+    /**
+     * Add a data table containing information about an file hit artifact (i.e.
+     * hash hit).
+     *
+     * @param html The HTML text to add the table to.
+     * @param tag  The blackboard artifact with hash hit information whose
+     *             information will be used to populate the table.
+     */
+    @NbBundle.Messages({
+        "AnnotationsContentViewer.addHashHitEntry.hashSet=Hash Set:",
+        "AnnotationsContentViewer.addHashHitEntry.comment=Comment:"
+    })
+    private void addFileHitEntry(StringBuilder html, BlackboardArtifact artifact) {
+        startTable(html);
+
+        String hashset = tryGetAttribute(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
+        String comment = tryGetAttribute(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT);
+
+        if (StringUtils.isNotBlank(hashset)) {
+            addRow(html, Bundle.AnnotationsContentViewer_addHashHitEntry_hashSet(), hashset);
+        }
+
+        if (StringUtils.isNotBlank(comment)) {
+            addRow(html, Bundle.AnnotationsContentViewer_tagEntryDataLabel_comment(), comment);
+        }
+
+        endTable(html);
     }
 
     /**
