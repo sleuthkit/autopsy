@@ -55,7 +55,7 @@ public class TagsManager implements Closeable {
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
     private final SleuthkitCase caseDb;
 
-    static String DEFAULT_TAG_SET_NAME = "Project VIC (United States)";
+    static String DEFAULT_TAG_SET_NAME = "Project VIC";
 
     static {
 
