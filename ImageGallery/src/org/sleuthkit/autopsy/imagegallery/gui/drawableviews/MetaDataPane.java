@@ -19,9 +19,9 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.eventbus.Subscribe;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import static java.util.Collections.singletonMap;
 import java.util.List;
 import java.util.Objects;
@@ -56,7 +56,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
@@ -165,18 +164,48 @@ public class MetaDataPane extends DrawableUIBase {
         titledPane.setText(Bundle.MetaDataPane_titledPane_displayName());
     }
 
+    /**
+     * Returns the display string for the given pair.
+     *
+     * @param p A DrawableAttribute and its collection.
+     *
+     * @return The string to display.
+     */
     @SuppressWarnings("unchecked")
-    static private String getValueDisplayString(Pair<DrawableAttribute<?>, Collection<?>> p) {
-        if (p.getKey() == DrawableAttribute.TAGS) {
-            return ((Collection<TagName>) p.getValue()).stream()
-                    .map(TagName::getDisplayName)
-                    .filter(DhsImageCategory::isNotCategoryName)
-                    .collect(Collectors.joining(" ; "));
+    private String getValueDisplayString(Pair<DrawableAttribute<?>, Collection<?>> p) {
+        if (p.getKey() == DrawableAttribute.TAGS || p.getKey() == DrawableAttribute.CATEGORY) {
+            return getTagDisplayNames((Collection<TagName>) p.getValue(), p.getKey());
         } else {
             return p.getValue().stream()
                     .map(value -> Objects.toString(value, ""))
                     .collect(Collectors.joining(" ; "));
+
         }
+    }
+
+    /**
+     * Create the list of TagName displayNames for either Tags or Categories.
+     *
+     * @param tagNameList List of TagName values
+     * @param attribute   A DrawableAttribute value either CATEGORY or TAGS
+     *
+     * @return A list of TagNames separated by ; or an empty string.
+     */
+    private String getTagDisplayNames(Collection<TagName> tagNameList, DrawableAttribute<?> attribute) {
+        String displayStr = "";
+        CategoryManager controller = getController().getCategoryManager();
+        List<String> nameList = new ArrayList<>();
+        if (tagNameList != null && !tagNameList.isEmpty()) {
+            for (TagName tagName : tagNameList) {
+                if ((attribute == DrawableAttribute.CATEGORY && controller.isCategoryTagName(tagName))
+                        || (attribute == DrawableAttribute.TAGS && !controller.isCategoryTagName(tagName))) {
+                    nameList.add(tagName.getDisplayName());
+                }
+            }
+            displayStr = String.join(";", nameList);
+        }
+
+        return displayStr;
     }
 
     @Override

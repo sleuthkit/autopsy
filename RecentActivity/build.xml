@@ -22,6 +22,9 @@
         <copy todir="${basedir}/release/ESEDatabaseView" >
             <fileset dir="${thirdparty.dir}/ESEDatabaseView/" />
         </copy>
+        <copy todir="${basedir}/release/markmckinnon/" >
+            <fileset dir="${thirdparty.dir}/markmckinnon/" />
+        </copy>
     </target>
     
     
