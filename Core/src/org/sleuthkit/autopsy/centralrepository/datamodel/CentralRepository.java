@@ -555,7 +555,7 @@ public interface CentralRepository {
      * @throws CentralRepoException
      * @throws CorrelationAttributeNormalizationException
      */
-    public HashHitInfo getFileHashInReferenceSet(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException;
+    public HashHitInfo lookupHash(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     
     /**

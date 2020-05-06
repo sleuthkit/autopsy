@@ -1378,7 +1378,7 @@ public class HashDbManager implements PropertyChangeListener {
                 AbstractFile file = (AbstractFile) content;
                 if (null != file.getMd5Hash()) {
                     try {
-                        return CentralRepository.getInstance().getFileHashInReferenceSet(file.getMd5Hash(), referenceSetID);
+                        return CentralRepository.getInstance().lookupHash(file.getMd5Hash(), referenceSetID);
                     } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
                         Logger.getLogger(SleuthkitHashSet.class.getName()).log(Level.SEVERE, "Error performing central reposiotry hash lookup for hash "
                                 + file.getMd5Hash() + " in reference set " + referenceSetID, ex); //NON-NLS

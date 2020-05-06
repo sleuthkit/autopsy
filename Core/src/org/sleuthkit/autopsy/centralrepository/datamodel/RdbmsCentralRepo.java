@@ -2279,7 +2279,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
 
     @Override
-    public HashHitInfo getFileHashInReferenceSet(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException {
+    public HashHitInfo lookupHash(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException {
         int correlationTypeID = CorrelationAttributeInstance.FILES_TYPE_ID;
         String normalizeValued = CorrelationAttributeNormalizer.normalize(this.getCorrelationTypeById(correlationTypeID), hash);
 
