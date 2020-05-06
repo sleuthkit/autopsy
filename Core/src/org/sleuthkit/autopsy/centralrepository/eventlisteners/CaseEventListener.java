@@ -30,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -56,6 +57,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.datamodel.Tag;
 
 /**
@@ -167,7 +169,7 @@ final class CaseEventListener implements PropertyChangeListener {
      * @return      Whether or not it is a notable tag.
      */
     private static boolean isNotableTag(Tag t) {
-        return (t == null) ? false : isNotableTagName(t.getName());
+        return (t != null && isNotableTagName(t.getName()));
     }
     
     /**
@@ -176,7 +178,7 @@ final class CaseEventListener implements PropertyChangeListener {
      * @return      Whether or not it is a notable tag name.
      */
     private static boolean isNotableTagName(TagName t) {
-        return (t == null) ? false : TagsManager.getNotableTagDisplayNames().contains(t.getDisplayName());
+        return (t != null && TagsManager.getNotableTagDisplayNames().contains(t.getDisplayName()));
     }
     
     /**
@@ -206,9 +208,10 @@ final class CaseEventListener implements PropertyChangeListener {
 
         @Override
         public void run() {
-            if (!CentralRepository.isEnabled())
+            if (!CentralRepository.isEnabled()) {
                 return;
-
+            }
+                
             if (Case.Events.valueOf(event.getPropertyName()) == Case.Events.CONTENT_TAG_ADDED) {
                 handleTagAdded((ContentTagAddedEvent) event);
             } 
@@ -217,29 +220,58 @@ final class CaseEventListener implements PropertyChangeListener {
             }
         }
         
+        /*
+        if (isTagDelete && StringUtils.equals(prevComment, curComment)) {
+            // if deleting the same tag comment as previous, wipe out previous comment
+            newComment = null;
+            updateComment = true;
+        } 
+        else if (!isTagDelete && !StringUtils.isEmpty(curComment)) {
+            // if adding the comment and there is an actual value for the comment
+            newComment = curComment;
+            updateComment = true;
+        }
+        else {
+            newComment = null;
+            updateComment = false;
+        }
+        * 
+         */
+        
+        /**
+         * For deleted tags, set the central repository correlation attribute instance file status to 
+         * unknown if the tag that was deleted was the only tag on the file that confers notability.
+         * If the comment for the tag to be deleted matches the comment in the correlation attribute instance,
+         * the comment for the correlation attribute instance will be replaced with the next most recent 
+         * notable tag comment or null if no other notable tag comment exists.
+         * 
+         * @param tagDeletedEvent The tag deleted event containing information about the tag that is begin deleted.
+         */
         private void handleTagDeleted(ContentTagDeletedEvent tagDeletedEvent) {
-            // CONTENT_TAG_DELETED
-            // For deleted tags, we want to set the file status to UNKNOWN if:
-            //   - The tag that was just removed is notable in central repo
-            //   - There are no remaining tags that are notable 
-            //   - If there are other notable tags, the comment should be updated to most recent tag
-
             if (!isNotableTagName(tagDeletedEvent.getDeletedTagInfo().getName())) {
-                // If the tag that got removed isn't on the list of central repo tags, do nothing
+                // If the tag to be removed is not notable, no central repository update is needed since central repository
+                // only contains notable correlation attribute instances.
                 return;
             }
 
+            Long contentID = null;
             try {
                 // Get the remaining tags on the content object
-                long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
+                contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
                 Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(contentID);
                 TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
                 List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
-
-                AbstractFile af = getAbstractFile(content);
+                AbstractFile af = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(contentID);
                 if (af == null)
                     return;
+                
+                CorrelationAttributeInstance eamArtifact = CorrelationAttributeUtil.makeCorrAttrFromFile(af);
+                CorrelationAttributeInstance curInstance = dbManager.getCorrelationAttributeInstance(eamArtifact.getCorrelationType(), 
+                    eamArtifact.getCorrelationCase(), eamArtifact.getCorrelationDataSource(), eamArtifact.getCorrelationValue(), 
+                    eamArtifact.getFilePath());
 
+                if (curInstance != null)
+                
                 if (hasNotableTag(tags)) {
                     // There's still at least one bad tag, so leave the known status but update the comment to most recent
                     String comment = getMostRecentNotableComment(tags);
@@ -252,10 +284,15 @@ final class CaseEventListener implements PropertyChangeListener {
                 }
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to find content", ex);
-                return;
+            } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to query database for current correlation attribute instance for content with ID: " + contentID, ex);
             }
         }
         
+        /**
+         * 
+         * @param tagAddedEvent 
+         */
         private void handleTagAdded(ContentTagAddedEvent tagAddedEvent) {
             // For added tags, we want to change the known status to BAD if the 
             // tag that was just added is in the list of central repo tags.

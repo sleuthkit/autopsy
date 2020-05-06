@@ -692,13 +692,12 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
      * @param knownStatus The status to change the artifact to. Should never be
      *                    KNOWN
-     * @param isTagDelete If the action is to delete a previously added tag.
      */
     @Override
-    public void setAttributeInstanceKnownStatus(CorrelationAttributeInstance eamArtifact, TskData.FileKnown knownStatus, boolean isTagDelete) throws CentralRepoException {
+    public void setAttributeInstanceKnownStatus(CorrelationAttributeInstance eamArtifact, TskData.FileKnown knownStatus) throws CentralRepoException {
         try {
             acquireExclusiveLock();
-            super.setAttributeInstanceKnownStatus(eamArtifact, knownStatus, isTagDelete);
+            super.setAttributeInstanceKnownStatus(eamArtifact, knownStatus);
         } finally {
             releaseExclusiveLock();
         }

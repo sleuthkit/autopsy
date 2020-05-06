@@ -461,10 +461,9 @@ public interface CentralRepository {
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
      * @param knownStatus The status to change the artifact to
-     * @param isTagDelete If the action is to delete a previously added tag.
      */
-    void setAttributeInstanceKnownStatus(CorrelationAttributeInstance eamArtifact, TskData.FileKnown knownStatus, boolean isTagDelete) throws CentralRepoException;
-    
+    void setAttributeInstanceKnownStatus(CorrelationAttributeInstance eamArtifact, TskData.FileKnown knownStatus) throws CentralRepoException;
+
     /**
      * Count matching eamArtifacts instances that have knownStatus = "Bad".
      *
