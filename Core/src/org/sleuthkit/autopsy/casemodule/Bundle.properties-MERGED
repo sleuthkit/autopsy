@@ -55,10 +55,9 @@ Case.exceptionMessage.unsupportedSchemaVersionMessage=Unsupported case database 
 Case.lockingException.couldNotAcquireExclusiveLock=Failed to get a exclusive lock on the case.
 Case.lockingException.couldNotAcquireSharedLock=Failed to get an shared lock on the case.
 Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. See Tools, Options, Multi-User.
-# {0} - image
-Case.openFileSystems.openingImage=Opening all filesystems for image: {0}...
-# {0} - case
-Case.openFileSystems.retrievingImages=Retrieving images for case: {0}...
+Case.openFileSystems.done=Finished preloading file systems
+# {0} - total file systems
+Case.openFileSystems.processingFs=Preloading {0} file systems for case
 Case.progressIndicatorCancelButton.label=Cancel
 Case.progressIndicatorTitle.closingCase=Closing Case
 Case.progressIndicatorTitle.creatingCase=Creating Case

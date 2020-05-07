@@ -2040,8 +2040,10 @@ public class Case {
      *                                      cancelled.
      */
     @Messages({
-        "# {0} - case", "Case.openFileSystems.retrievingImages=Retrieving images for case: {0}...",
-        "# {0} - image", "Case.openFileSystems.openingImage=Opening all filesystems for image: {0}..."
+        "# {0} - total file systems",
+        "Case.openFileSystems.processingFs=Preloading {0} file systems for case",
+        "Case.openFileSystems.done=Finished preloading file systems"
+            
     })
     private void openFileSystemsInBackground() {
         if (backgroundOpenFileSystemsFuture != null && !backgroundOpenFileSystemsFuture.isDone()) {
@@ -2061,6 +2063,7 @@ public class Case {
         private final SleuthkitCase tskCase;
         private final String caseName;
         private final ProgressIndicator progressIndicator;
+        private final int MAX_FS_THRESHOLD = 100; // Don't preload file systems if there are more than this threshold
 
         /**
          * Main constructor for the BackgroundOpenFileSystemsTask.
@@ -2090,76 +2093,42 @@ public class Case {
         }
 
         /**
-         * Retrieves all images present in the sleuthkit case.
-         *
-         * @return All images present in the sleuthkit case.
-         */
-        private List<Image> getImages() {
-            progressIndicator.progress(Bundle.Case_openFileSystems_retrievingImages(caseName));
-            try {
-                return this.tskCase.getImages();
-            } catch (TskCoreException ex) {
-                logger.log(
-                        Level.SEVERE,
-                        String.format("Could not obtain images while opening case: %s.", caseName),
-                        ex);
-
-                return null;
-            }
-        }
-
-        /**
          * Opens all file systems in the list of images provided.
-         *
-         * @param images The images whose file systems will be opened.
          *
          * @throws CaseActionCancelledException The exception thrown in the
          *                                      event that the operation is
          *                                      cancelled prior to completion.
          */
-        private void openFileSystems(List<Image> images) throws InterruptedException {
+        private void openFileSystems() throws TskCoreException, InterruptedException {
             byte[] tempBuff = new byte[512];
+            Collection<FileSystem> fileSystems = this.tskCase.getFileSystems();
 
-            for (Image image : images) {
-                String imageStr = image.getName();
-
-                progressIndicator.progress(Bundle.Case_openFileSystems_openingImage(imageStr));
-
-                Collection<FileSystem> fileSystems = this.tskCase.getFileSystems(image);
-                checkIfCancelled();
-                for (FileSystem fileSystem : fileSystems) {
-                    try {
-                        fileSystem.read(tempBuff, 0, 512);
-                    } catch (TskCoreException ex) {
-                        String fileSysStr = fileSystem.getName();
-
-                        logger.log(
-                                Level.WARNING,
-                                String.format("Could not open filesystem: %s in image: %s for case: %s.", fileSysStr, imageStr, caseName),
-                                ex);
-                    }
-
-                    checkIfCancelled();
-                }
-
+            if (fileSystems.size() > MAX_FS_THRESHOLD) {
+                logger.log(Level.INFO, "Skipping background file system loading due to large number of file systems ({0})", fileSystems.size());
+                return;
             }
+            progressIndicator.progress(Bundle.Case_openFileSystems_processingFs(fileSystems.size()));
+            
+            checkIfCancelled();
+            for (FileSystem fileSystem : fileSystems) {
+                fileSystem.read(tempBuff, 0, 512);
+                checkIfCancelled();
+            }
+            progressIndicator.progress(Bundle.Case_openFileSystems_done());
         }
 
         @Override
         public void run() {
             try {
                 checkIfCancelled();
-                List<Image> images = getImages();
-                if (images == null) {
-                    return;
-                }
-
-                checkIfCancelled();
-                openFileSystems(images);
+                openFileSystems();
             } catch (InterruptedException ex) {
                 logger.log(
                         Level.INFO,
                         String.format("Background operation opening all file systems in %s has been cancelled.", caseName));
+            } catch (Exception ex) {
+                // Exception firewall
+                logger.log(Level.WARNING, "Error while opening file systems in the background.", ex);
             }
         }
 
