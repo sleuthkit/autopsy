@@ -602,29 +602,22 @@ public class HashDbIngestModule implements FileIngestModule {
         if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty()) || (!noChangeHashSets.isEmpty())) {
             StringBuilder detailsSb = new StringBuilder();
             //details
-            detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
+            detailsSb.append(
+                "<table border='0' cellpadding='4' width='280'>" +
+                    "<tr><td>" + NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.knownBadsFound") + "</td>" +
+                    "<td>" + jobTotals.totalKnownBadCount.get() + "</td></tr>" +
+                            
+                    "<tr><td>" + Bundle.HashDbIngestModule_complete_noChangesFound() + "</td>" +
+                    "<td>" + jobTotals.totalNoChangeCount.get() + "</td></tr>" +
+                            
+                    "<tr><td>" + NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.totalCalcTime") + 
+                    "</td><td>" + jobTotals.totalCalctime.get() + "</td></tr>\n" +
+                            
+                    "<tr><td>" + NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.totalLookupTime") + 
+                    "</td><td>" + jobTotals.totalLookuptime.get() + "</td></tr>\n</table>" +
 
-            detailsSb.append("<tr><td>") //NON-NLS
-                    .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.knownBadsFound"))
-                    .append("</td>"); //NON-NLS
-            detailsSb.append("<td>").append(jobTotals.totalKnownBadCount.get()).append("</td></tr>"); //NON-NLS
-
-            detailsSb.append("<tr><td>") //NON-NLS
-                    .append(Bundle.HashDbIngestModule_complete_noChangesFound())
-                    .append("</td>"); //NON-NLS
-            detailsSb.append("<td>" + jobTotals.totalNoChangeCount.get() + "</td></tr>"); //NON-NLS
-
-            detailsSb.append("<tr><td>") //NON-NLS
-                    .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.totalCalcTime"))
-                    .append("</td><td>").append(jobTotals.totalCalctime.get()).append("</td></tr>\n"); //NON-NLS
-            detailsSb.append("<tr><td>") //NON-NLS
-                    .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.totalLookupTime"))
-                    .append("</td><td>").append(jobTotals.totalLookuptime.get()).append("</td></tr>\n"); //NON-NLS
-            detailsSb.append("</table>"); //NON-NLS
-
-            detailsSb.append("<p>") //NON-NLS
-                    .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.databasesUsed"))
-                    .append("</p>\n<ul>"); //NON-NLS
+                    "<p>" + NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.databasesUsed") + "</p>\n<ul>"); //NON-NLS
+            
             Stream.concat(knownBadHashSets.stream(), noChangeHashSets.stream()).forEach((db) -> {
                 detailsSb.append("<li>" + db.getHashSetName() + "</li>\n"); //NON-NLS    
             });
