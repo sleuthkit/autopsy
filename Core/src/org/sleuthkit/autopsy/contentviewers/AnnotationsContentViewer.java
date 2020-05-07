@@ -20,8 +20,14 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import javax.swing.JLabel;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 
@@ -48,6 +54,10 @@ import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+
 
 /**
  * Annotations view of file contents.
@@ -77,7 +87,8 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             return;
         }
 
-        StringBuilder html = new StringBuilder();
+        Document html = Jsoup.parse(EMPTY_HTML);
+        Element body = html.getElementsByTag("body").first();
 
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
         Content sourceFile = null;
@@ -104,20 +115,22 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         }
 
         if (artifact != null) {
-            populateTagData(html, artifact, sourceFile);
+            populateTagData(body, artifact, sourceFile);
         } else {
-            populateTagData(html, sourceFile);
+            populateTagData(body, sourceFile);
         }
 
         if (sourceFile instanceof AbstractFile) {
-            populateCentralRepositoryData(html, artifact, (AbstractFile) sourceFile);
-            populateFileSetData(html, sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
-            populateFileSetData(html, sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+            populateCentralRepositoryData(body, artifact, (AbstractFile) sourceFile);
+            populateFileSetData(body, sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
+            populateFileSetData(body, sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
         }
 
-        setText(html.toString());
+        jTextPane1.setText(html.html());
         jTextPane1.setCaretPosition(0);
     }
+    
+    
 
     /**
      * Populates the html provided with data concerning the source file and
@@ -285,9 +298,15 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @param sourceFile A selected file, or a source file of the selected
      *                   artifact.
      */
-    private void populateCentralRepositoryData(StringBuilder html, BlackboardArtifact artifact, AbstractFile sourceFile) {
+    @NbBundle.Messages({
+        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.case=Case:",
+        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.type=Type:",
+        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.comment=Comment:",
+        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.path=Path:"
+    })
+    private List<CorrelationAttributeInstance> populateCentralRepositoryData(StringBuilder html, BlackboardArtifact artifact, AbstractFile sourceFile) {
         if (CentralRepository.isEnabled()) {
-            startSection(html, "Central Repository Comments");
+            //startSection(html, "Central Repository Comments");
             List<CorrelationAttributeInstance> instancesList = new ArrayList<>();
             if (artifact != null) {
                 instancesList.addAll(CorrelationAttributeUtil.makeCorrAttrsForCorrelation(artifact));
@@ -338,38 +357,6 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         }
     }
 
-    /**
-     * Set the text of the text panel.
-     *
-     * @param text The text to set to the text panel.
-     */
-    private void setText(String text) {
-        jTextPane1.setText("<html><body>" + text + "</body></html>"); //NON-NLS
-    }
-
-    /**
-     * Start a new data section.
-     *
-     * @param html        The HTML text to add the section to.
-     * @param sectionName The name of the section.
-     */
-    private void startSection(StringBuilder html, String sectionName) {
-        html.append("<p style=\"font-size:14px;font-weight:bold;\">")
-                .append(sectionName)
-                .append("</p><br>"); //NON-NLS
-    }
-
-    /**
-     * Add a message.
-     *
-     * @param html    The HTML text to add the message to.
-     * @param message The message text.
-     */
-    private void addMessage(StringBuilder html, String message) {
-        html.append("<p style=\"font-size:11px;font-style:italic;\">")
-                .append(message)
-                .append("</p><br>"); //NON-NLS
-    }
 
     /**
      * Add a data table containing information about a tag.
@@ -390,83 +377,137 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         endTable(html);
     }
 
-    /**
-     * Add a data table containing information about a correlation attribute
-     * instance in the Central Repository.
-     *
-     * @param html              The HTML text to add the table to.
-     * @param attributeInstance The attribute instance whose information will be
-     *                          used to populate the table.
-     */
-    @NbBundle.Messages({
-        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.case=Case:",
-        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.type=Type:",
-        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.comment=Comment:",
-        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.path=Path:"
-    })
-    private void addCentralRepositoryEntry(StringBuilder html, CorrelationAttributeInstance attributeInstance) {
-        startTable(html);
-        addRow(html, Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_case(), attributeInstance.getCorrelationCase().getDisplayName());
-        addRow(html, Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_type(), attributeInstance.getCorrelationType().getDisplayName());
-        addRow(html, Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_comment(), formatHtmlString(attributeInstance.getComment()));
-        addRow(html, Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_path(), attributeInstance.getFilePath());
-        endTable(html);
+
+    private static final String EMPTY_HTML = "<html><head></head><body></body></html>";
+    
+    private static final int DEFAULT_FONT_SIZE = new JLabel().getFont().getSize();
+    private static final int SUBHEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 12 / 11;
+    private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 14 / 11;
+    
+    private static final String HEADER_STYLE = "font-size:" + HEADER_FONT_SIZE + "px;font-weight:bold;";
+    private static final String SUBHEADER_STYLE = "font-size:" + SUBHEADER_FONT_SIZE + "px;font-weight:bold;";
+    private static final String MESSAGE_STYLE = "font-size:" + DEFAULT_FONT_SIZE + "px;font-style:italic;";
+    private static final String CONTENT_STYLE = "font-size:" + DEFAULT_FONT_SIZE + "px;";
+    
+    private static final int DEFAULT_TABLE_SPACING = DEFAULT_FONT_SIZE * 2;
+    private static final int DEFAULT_SECTION_SPACING = DEFAULT_FONT_SIZE;
+    private static final int DEFAULT_SUBSECTION_SPACING = DEFAULT_FONT_SIZE;
+    
+    
+    private static final List<ColumnEntry<CorrelationAttributeInstance>> CENTRAL_REPO_COMMENTS = Arrays.asList(
+        new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_case(), cai -> cai.getCorrelationCase().getDisplayName()),
+        new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_type(), cai -> cai.getCorrelationType().getDisplayName()),
+        new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_comment(), cai -> cai.getComment()),
+        new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_path(), cai -> cai.getFilePath())
+    );
+    
+    private static class ColumnEntry<T> {
+        private final String columnName;
+        private final Function<T,String> valueRetriever;
+
+        ColumnEntry(String columnName, Function<T, String> valueRetriever) {
+            this.columnName = columnName;
+            this.valueRetriever = valueRetriever;
+        }
+
+        String getColumnName() {
+            return columnName;
+        }
+
+        Function<T, String> getValueRetriever() {
+            return valueRetriever;
+        }
+        
+        String retrieveValue(T object) {
+            return valueRetriever.apply(object);
+        }
+    }
+    
+    private <T> Element appendVerticalEntryTables(Element parent, List<T> items, List<ColumnEntry<T>> rowHeaders) {
+        items.stream()
+            .filter(item -> item != null)
+            .forEach((item) -> {
+                List<List<String>> tableData = rowHeaders.stream()
+                    .map(row -> Arrays.asList(row.getColumnName(), row.retrieveValue(item)))
+                    .collect(Collectors.toList());
+                
+                Element childTable = appendTable(parent, 2, tableData, null);
+                childTable.attr("style", String.format("margin-bottom: %dpx", DEFAULT_TABLE_SPACING));
+            });
+        
+        return parent;
+    }
+    
+    private <T> Element appendEntryTable(Element parent, List<T> items, List<ColumnEntry<T>> columns) {
+        int columnNumber = columns.size();
+        List<String> columnHeaders = columns.stream().map(c -> c.getColumnName()).collect(Collectors.toList());
+        List<List<String>> rows = items.stream()
+            .filter(r -> r != null)
+            .map(r -> {
+                return columns.stream()
+                    .map(c -> c.retrieveValue(r))
+                    .collect(Collectors.toList());
+            })
+            .collect(Collectors.toList());
+        
+        Element table = appendTable(parent, columnNumber, rows, columnHeaders);
+        table.attr("style", String.format("margin-bottom: %dpx", DEFAULT_TABLE_SPACING));
+        return table;
+    }
+    
+    
+    private Element appendTable(Element parent, int columnNumber, List<List<String>> content, List<String> columnHeaders) {
+        Element table = parent.appendElement("table");
+        if (columnHeaders != null && !columnHeaders.isEmpty()) {
+            Element header = parent.appendElement("thead");
+            appendRow(header, columnHeaders, columnNumber, true);    
+        }
+        Element tableBody = table.appendElement("tbody");
+        
+        content.forEach((rowData) -> appendRow(tableBody, rowData, columnNumber, false));
+        return table;
+    }
+    
+    // TODO test sanitizing string
+    private Element appendRow(Element rowParent, List<String> data, int columnNumber, boolean isHeader) {
+        String cellType = isHeader ? "th" : "td";
+        Element row = rowParent.appendElement("tr");
+        for (int i = 0; i < columnNumber; i++) {
+            Element cell = row.appendElement(cellType);
+            if (data != null && i < data.size()) {
+                cell.attr("valign", "top");
+                cell.attr("style", CONTENT_STYLE);
+                cell.text(StringUtils.isEmpty(data.get(i)) ? "" : data.get(i));
+            }
+        }
+        return row;
+    }
+    
+    private Element appendSection(Element parent, String headerText) {
+        Element parentDiv = parent.appendElement("div");
+        parentDiv.attr("style", String.format("margin-bottom: %dpx;", DEFAULT_SECTION_SPACING));
+        Element header = parentDiv.appendElement("h1");
+        header.text(headerText);
+        header.attr("style", HEADER_STYLE);
+        return parentDiv;
+    }
+    
+    private Element appendSubsection(Element parent, String headerText) {
+        Element parentDiv = parent.appendElement("div");
+        parentDiv.attr("style", String.format("margin-bottom: %dpx;", DEFAULT_SUBSECTION_SPACING));
+        Element header = parentDiv.appendElement("h2");
+        header.text(headerText);
+        header.attr("style", SUBHEADER_STYLE);
+        return parentDiv;
+    }
+    
+    private Element appendMessage(Element parent, String message) {
+        Element messageEl = parent.appendElement("p");
+        messageEl.text(message);
+        messageEl.attr("style", MESSAGE_STYLE);
+        return messageEl;
     }
 
-    /**
-     * Start a data table.
-     *
-     * @param html The HTML text to add the table to.
-     */
-    private void startTable(StringBuilder html) {
-        html.append("<table>"); //NON-NLS
-    }
-
-    /**
-     * Add a data row to a table.
-     *
-     * @param html  The HTML text to add the row to.
-     * @param key   The key for the left column of the data row.
-     * @param value The value for the right column of the data row.
-     */
-    private void addRow(StringBuilder html, String key, String value) {
-        html.append("<tr><td valign=\"top\">"); //NON-NLS
-        html.append(key);
-        html.append("</td><td>"); //NON-NLS
-        html.append(value);
-        html.append("</td></tr>"); //NON-NLS
-    }
-
-    /**
-     * End a data table.
-     *
-     * @param html The HTML text on which to end a table.
-     */
-    private void endTable(StringBuilder html) {
-        html.append("</table><br><br>"); //NON-NLS
-    }
-
-    /**
-     * End a data section.
-     *
-     * @param html The HTML text on which to end a section.
-     */
-    private void endSection(StringBuilder html) {
-        html.append("<br>"); //NON-NLS
-    }
-
-    /**
-     * Apply escape sequence to special characters. Line feed and carriage
-     * return character combinations will be converted to HTML line breaks.
-     *
-     * @param text The text to format.
-     *
-     * @return The formatted text.
-     */
-    private String formatHtmlString(String text) {
-        String formattedString = StringEscapeUtils.escapeHtml4(text);
-        return formattedString.replaceAll("(\r\n|\r|\n|\n\r)", "<br>");
-    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -554,6 +595,6 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     @Override
     public void resetComponent() {
-        setText("");
+        jTextPane1.setText(EMPTY_HTML);
     }
 }
