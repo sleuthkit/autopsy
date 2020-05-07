@@ -1497,11 +1497,11 @@ class ExtractRegistry extends Extract {
         line = line.trim();
         // Reading to the SECTION DIVIDER to get next section of records to process.  Dates appear to have
         // multiple spaces in them that makes it harder to parse so next section will be easier to parse 
-        while (!line.contains(SECTION_DIVIDER)) {
+        while (!line.contains(SECTION_DIVIDER) && !line.contains("MSOffice version not found.")) {
             line = reader.readLine();
         }
         line = reader.readLine();
-        while (!line.contains(SECTION_DIVIDER)) {
+        while (!line.contains(SECTION_DIVIDER) && !line.contains("MSOffice version not found.")) {
             // record has the following format
             // 1294283922|REG|||OfficeDocs2010 - F:\Windows_time_Rules_xp.doc
             String tokens[] = line.split("\\|");
