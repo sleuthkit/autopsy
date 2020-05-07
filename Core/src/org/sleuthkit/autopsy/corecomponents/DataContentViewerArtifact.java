@@ -40,7 +40,6 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private static final long serialVersionUID = 1L;
 
     private Node currentNode; // @@@ Remove this when the redundant setNode() calls problem is fixed. 
-    private ArtifactContentViewer lastViewer;
 
     private final static Logger logger = Logger.getLogger(DataContentViewerArtifact.class.getName());
 
@@ -81,15 +80,13 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             return;
         }
 
+        // Pass down the node to the appropriate ArtifactContentViewer
         ArtifactContentViewer viewer = getSupportingViewer(selectedNode);
-
-        lastViewer = viewer;
         viewer.setNode(selectedNode);
 
-        // Get and overlay the panel from the ArtifactContentViewer engaged
+        // Get and overlay the panel from the viewer.
         this.removeAll();
         this.add(viewer.getComponent());
-
         this.revalidate();
     }
 
@@ -157,7 +154,6 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     private void resetComponents() {
         currentNode = null;
-        lastViewer = null;
     }
 
     /**
