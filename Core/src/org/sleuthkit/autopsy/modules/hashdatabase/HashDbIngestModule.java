@@ -612,7 +612,7 @@ public class HashDbIngestModule implements FileIngestModule {
             detailsSb.append("<tr><td>") //NON-NLS
                     .append(Bundle.HashDbIngestModule_complete_noChangesFound())
                     .append("</td>"); //NON-NLS
-            detailsSb.append("<td>").append(jobTotals.totalNoChangeCount.get()).append("</td></tr>"); //NON-NLS
+            detailsSb.append("<td>" + jobTotals.totalNoChangeCount.get() + "</td></tr>"); //NON-NLS
 
             detailsSb.append("<tr><td>") //NON-NLS
                     .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.totalCalcTime"))
@@ -626,7 +626,7 @@ public class HashDbIngestModule implements FileIngestModule {
                     .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.databasesUsed"))
                     .append("</p>\n<ul>"); //NON-NLS
             Stream.concat(knownBadHashSets.stream(), noChangeHashSets.stream()).forEach((db) -> {
-                detailsSb.append("<li>").append(db.getHashSetName()).append("</li>\n"); //NON-NLS    
+                detailsSb.append("<li>" + db.getHashSetName() + "</li>\n"); //NON-NLS    
             });
 
             detailsSb.append("</ul>"); //NON-NLS

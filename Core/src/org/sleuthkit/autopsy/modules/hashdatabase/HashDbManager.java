@@ -711,7 +711,7 @@ public class HashDbManager implements PropertyChangeListener {
             private final boolean allowSendInboxMessages;
             private final boolean defaultSendInboxMessages;
 
-            private KnownFilesType(String displayName, TskData.FileKnown fileKnown, boolean allowSendInboxMessages, boolean defaultSendInboxMessages) {
+            KnownFilesType(String displayName, TskData.FileKnown fileKnown, boolean allowSendInboxMessages, boolean defaultSendInboxMessages) {
                 this.displayName = displayName;
                 this.fileKnown = fileKnown;
                 this.allowSendInboxMessages = allowSendInboxMessages;

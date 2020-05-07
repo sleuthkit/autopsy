@@ -72,7 +72,9 @@ public class KdbHashSetParser implements HashSetParser {
             }
 
             // Get the hashes
-            resultSet = statement.executeQuery("SELECT id, md5 FROM hashes");
+            resultSet = statement.executeQuery("SELECT h.md5 as md5, " + 
+                " (SELECT group_concat(c.comment, ' ') FROM comments c WHERE h.id = c.hash_id) as comment " + 
+                " from hashes h");
 
             // At this point, getNextHash can read each hash from the result set
         } catch (ClassNotFoundException | SQLException ex) {
@@ -81,36 +83,23 @@ public class KdbHashSetParser implements HashSetParser {
 
     }
 
-    private static class HashRow {
-
-        private final String md5Hash;
-        private final long hashId;
-
-        HashRow(String md5Hash, long hashId) {
-            this.md5Hash = md5Hash;
-            this.hashId = hashId;
-        }
-
-        String getMd5Hash() {
-            return md5Hash;
-        }
-
-        long getHashId() {
-            return hashId;
-        }
-    }
 
     /**
-     * Retrieves the row id and md5 hash for the next item in the hashes table.
+     * Get the next hash to import
      *
-     * @return A hash row object containing the hash and id.
+     * @return The hash as a string
      *
      * @throws TskCoreException
      */
-    private HashRow getNextHashRow() throws TskCoreException {
+    @Override
+    public String getNextHash() throws TskCoreException {
+        return getNextHashEntry().getMd5Hash();
+    }
+
+    @Override
+    public HashEntry getNextHashEntry() throws TskCoreException {
         try {
             if (resultSet.next()) {
-                long hashId = resultSet.getLong("id");
                 byte[] hashBytes = resultSet.getBytes("md5");
                 StringBuilder sb = new StringBuilder();
                 for (byte b : hashBytes) {
@@ -122,42 +111,12 @@ public class KdbHashSetParser implements HashSetParser {
                 }
 
                 String md5Hash = sb.toString();
+                String comment = resultSet.getString("comment");
                 totalHashesRead++;
-                return new HashRow(md5Hash, hashId);
+                return new HashEntry(null, md5Hash, null, null, comment);
             } else {
                 throw new TskCoreException("Could not read expected number of hashes from hash set " + filename);
             }
-        } catch (SQLException ex) {
-            throw new TskCoreException("Error reading hash from result set for hash set " + filename, ex);
-        }
-    }
-
-    /**
-     * Get the next hash to import
-     *
-     * @return The hash as a string
-     *
-     * @throws TskCoreException
-     */
-    @Override
-    public String getNextHash() throws TskCoreException {
-        return getNextHashRow().getMd5Hash();
-    }
-
-    @Override
-    public HashEntry getNextHashEntry() throws TskCoreException {
-        HashRow row = getNextHashRow();
-        try {
-            PreparedStatement getComment = conn.prepareStatement("SELECT comment FROM comments WHERE hash_id = ?");
-            getComment.setLong(1, row.getHashId());
-            ResultSet commentResults = getComment.executeQuery();
-            List<String> comments = new ArrayList<>();
-            while (commentResults.next()) {
-                comments.add(commentResults.getString("comment"));
-            }
-
-            String comment = comments.size() > 0 ? String.join(" ", comments) : null;
-            return new HashEntry(null, row.getMd5Hash(), null, null, comment);
         } catch (SQLException ex) {
             throw new TskCoreException("Error opening/reading hash set " + filename, ex);
         }
