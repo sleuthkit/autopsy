@@ -237,7 +237,7 @@ public class HashDbIngestModule implements FileIngestModule {
 
         // look up no change items next
         FindInHashsetsResult noChangeResult = findInHashsets(file, totals.totalNoChangeCount,
-                totals.totalLookuptime, noChangeHashSets, TskData.FileKnown.BAD, noChangeLookupError);
+                totals.totalLookuptime, noChangeHashSets, TskData.FileKnown.UNKNOWN, noChangeLookupError);
 
         if (noChangeResult.isError()) {
             ret = ProcessResult.ERROR;
