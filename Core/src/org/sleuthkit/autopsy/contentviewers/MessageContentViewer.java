@@ -39,11 +39,9 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.contentviewers.TranslatablePanel.TranslatablePanelException;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -84,9 +82,8 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.URL
 /**
  * Shows SMS/MMS/EMail messages
  */
-@ServiceProvider(service = DataContentViewer.class, position = 5)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class MessageContentViewer extends javax.swing.JPanel implements DataContentViewer {
+public class MessageContentViewer extends javax.swing.JPanel implements ArtifactContentViewer {
 
     /**
      * This is a text component viewer to be a child component to be placed in a {@link TranslatablePanel TranslatablePanel}.  
@@ -454,29 +451,15 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     }
 
     @Override
-    @NbBundle.Messages("MessageContentViewer.title=Message")
-    public String getTitle() {
-        return Bundle.MessageContentViewer_title();
-    }
-
-    @Override
-    @NbBundle.Messages("MessageContentViewer.toolTip=Displays messages.")
-    public String getToolTip() {
-        return Bundle.MessageContentViewer_toolTip();
-    }
-
-    @Override
-    public DataContentViewer createInstance() {
-        return new MessageContentViewer();
-    }
-
-    @Override
     public Component getComponent() {
         return this;
     }
 
-    @Override
-    final public void resetComponent() {
+
+    /**
+     * Resets all components.
+     */
+    private void resetComponent() {
         // reset all fields
         fromText.setText("");
         fromLabel.setEnabled(false);
@@ -573,20 +556,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         return nodeArtifact;
     }
 
-    @Override
-    public int isPreferred(Node node) {
-        // For message artifacts this is a high priority viewer, 
-        // but for attachment files, this a lower priority vewer.
-        if (isSupported(node)) {
-            BlackboardArtifact nodeArtifact = node.getLookup().lookup(BlackboardArtifact.class);
-            if (nodeArtifact != null) {
-                return 7;
-            } else {
-                return 1;
-            }
-        }
-        return 0;
-    }
 
     /**
      * Configure the text area at the given index to show the content of the

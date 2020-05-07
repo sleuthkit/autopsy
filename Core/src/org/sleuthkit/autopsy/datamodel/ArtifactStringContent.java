@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * example, GUI components such as content viewers might use HTMLEditorKit to
  * add styling.
  * 
- * @deprecated - No longer used by DataContentViewerArtifact because the table is no longer HTML
+ * @deprecated - No longer used by DefaultArtifactContentViewer because the table is no longer HTML
  */
 @Deprecated
 public class ArtifactStringContent implements StringContent {
