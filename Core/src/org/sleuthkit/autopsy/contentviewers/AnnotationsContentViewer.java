@@ -31,7 +31,7 @@ import javax.swing.JLabel;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 
-import org.openide.util.NbBundle;
+import static org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
@@ -58,19 +58,100 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-
 /**
  * Annotations view of file contents.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 @ServiceProvider(service = DataContentViewer.class, position = 8)
-@NbBundle.Messages({
+@Messages({
     "AnnotationsContentViewer.title=Annotations",
-    "AnnotationsContentViewer.toolTip=Displays tags and comments associated with the selected content."
+    "AnnotationsContentViewer.toolTip=Displays tags and comments associated with the selected content.",
+    "AnnotationsContentViewer.centralRepositoryEntry.title=Central Repository Comments",
+    "AnnotationsContentViewer.centralRepositoryEntry.onEmpty=There is no comment data for the selected content in the Central Repository.",
+    "AnnotationsContentViewer.centralRepositoryEntryDataLabel.case=Case:",
+    "AnnotationsContentViewer.centralRepositoryEntryDataLabel.type=Type:",
+    "AnnotationsContentViewer.centralRepositoryEntryDataLabel.comment=Comment:",
+    "AnnotationsContentViewer.centralRepositoryEntryDataLabel.path=Path:",
+    "AnnotationsContentViewer.tagEntry.title=Tag Comments",
+    "AnnotationsContentViewer.tagEntry.onContentEmpty=There are no tags for the selected content.",
+    "AnnotationsContentViewer.tagEntry.onArtifactEmpty=There are no tags for the selected artifact.",
+    "AnnotationsContentViewer.tagEntryDataLabel.tag=Tag:",
+    "AnnotationsContentViewer.tagEntryDataLabel.tagUser=Examiner:",
+    "AnnotationsContentViewer.tagEntryDataLabel.comment=Comment:",
+    "AnnotationsContentViewer.fileHitEntry.hashSetHitTitle=Hash Set Hit Comments",
+    "AnnotationsContentViewer.fileHitEntry.onHashSetHitEmpty=There are no hash set hits for the selected content.",
+    "AnnotationsContentViewer.fileHitEntry.interestingFileHitTitle=Interesting File Hit Comments",
+    "AnnotationsContentViewer.fileHitEntry.onInterestingFileHitEmpty=There are no interesting file hits for the selected content.",
+    "AnnotationsContentViewer.fileHitEntry.setName=Set Name",
+    "AnnotationsContentViewer.fileHitEntry.comment=Comment",
+    "AnnotationsContentViewer.sourceFile.title=Source File"
 })
 public class AnnotationsContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static final Logger logger = Logger.getLogger(AnnotationsContentViewer.class.getName());
+
+    private static final String EMPTY_HTML = "<html><head></head><body></body></html>";
+
+    private static final int DEFAULT_FONT_SIZE = new JLabel().getFont().getSize();
+    private static final int SUBHEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 12 / 11;
+    private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 14 / 11;
+    
+    private static final int DEFAULT_SUBSECTION_LEFT_PAD = DEFAULT_FONT_SIZE;
+
+    private static final String HEADER_STYLE = "font-size:" + HEADER_FONT_SIZE + "px;font-weight:bold;";
+    private static final String SUBHEADER_STYLE = "font-size:" + SUBHEADER_FONT_SIZE + "px;font-weight:bold;";
+    private static final String MESSAGE_STYLE = "font-size:" + DEFAULT_FONT_SIZE + "px;font-style:italic;";
+    private static final String CONTENT_STYLE = "font-size:" + DEFAULT_FONT_SIZE + "px;";
+
+    private static final int DEFAULT_TABLE_SPACING = DEFAULT_FONT_SIZE * 2;
+    private static final int DEFAULT_SECTION_SPACING = DEFAULT_FONT_SIZE;
+    private static final int DEFAULT_SUBSECTION_SPACING = DEFAULT_FONT_SIZE;
+
+    private static final List<ColumnEntry<Tag>> TAG_COLUMNS = Arrays.asList(
+            new ColumnEntry<>(Bundle.AnnotationsContentViewer_tagEntryDataLabel_tag(),
+                    (tag) -> (tag.getName() != null) ? tag.getName().getDisplayName() : null),
+            new ColumnEntry<>(Bundle.AnnotationsContentViewer_tagEntryDataLabel_tagUser(), (tag) -> tag.getUserName()),
+            new ColumnEntry<>(Bundle.AnnotationsContentViewer_tagEntryDataLabel_comment(), (tag) -> tag.getComment())
+    );
+
+    private static final List<ColumnEntry<BlackboardArtifact>> FILESET_HIT_COLUMNS = Arrays.asList(
+            new ColumnEntry<>(Bundle.AnnotationsContentViewer_fileHitEntry_setName(),
+                    (bba) -> tryGetAttribute(bba, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME)),
+            new ColumnEntry<>(Bundle.AnnotationsContentViewer_fileHitEntry_comment(),
+                    (bba) -> tryGetAttribute(bba, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT))
+    );
+
+    private static final List<ColumnEntry<CorrelationAttributeInstance>> CENTRAL_REPO_COMMENTS_COLUMNS = Arrays.asList(
+            new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_case(),
+                    cai -> (cai.getCorrelationCase() != null) ? cai.getCorrelationCase().getDisplayName() : null),
+            new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_type(),
+                    cai -> (cai.getCorrelationType() != null) ? cai.getCorrelationType().getDisplayName() : null),
+            new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_comment(), cai -> cai.getComment()),
+            new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_path(), cai -> cai.getFilePath())
+    );
+
+    private static class ColumnEntry<T> {
+
+        private final String columnName;
+        private final Function<T, String> valueRetriever;
+
+        ColumnEntry(String columnName, Function<T, String> valueRetriever) {
+            this.columnName = columnName;
+            this.valueRetriever = valueRetriever;
+        }
+
+        String getColumnName() {
+            return columnName;
+        }
+
+        Function<T, String> getValueRetriever() {
+            return valueRetriever;
+        }
+
+        String retrieveValue(T object) {
+            return valueRetriever.apply(object);
+        }
+    }
 
     /**
      * Creates an instance of AnnotationsContentViewer.
@@ -115,53 +196,120 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         }
 
         if (artifact != null) {
-            populateTagData(body, artifact, sourceFile);
+            renderArtifact(body, artifact, sourceFile);
         } else {
-            populateTagData(body, sourceFile);
-        }
-
-        if (sourceFile instanceof AbstractFile) {
-            populateCentralRepositoryData(body, artifact, (AbstractFile) sourceFile);
-            populateFileSetData(body, sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
-            populateFileSetData(body, sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+            renderAbstractFile(body, sourceFile, false);
         }
 
         jTextPane1.setText(html.html());
         jTextPane1.setCaretPosition(0);
     }
-    
-    
 
-    /**
-     * Populates the html provided with data concerning the source file and
-     * whether it appears in a file set.
-     *
-     * @param html         The html to append information.
-     * @param content      The source content to check for blackboard artifacts.
-     * @param artifactType The artifact type to check for.
-     */
-    private void populateFileSetData(StringBuilder html, Content content, BlackboardArtifact.ARTIFACT_TYPE artifactType) {
-        String artifactTypeName = artifactType.getDisplayName();
+    private static void renderArtifact(Element parent, BlackboardArtifact bba, Content sourceContent) {
+        appendEntries(parent,
+            Bundle.AnnotationsContentViewer_tagEntry_title(),
+            Bundle.AnnotationsContentViewer_tagEntry_onArtifactEmpty(),
+            getTags(bba), TAG_COLUMNS, false, true);
 
+        if (sourceContent instanceof AbstractFile) {
+            AbstractFile sourceFile = (AbstractFile) sourceContent;
+
+            if (CentralRepository.isEnabled()) {
+                List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(bba, sourceFile);
+                appendEntries(parent,
+                    Bundle.AnnotationsContentViewer_centralRepositoryEntry_title(),
+                    Bundle.AnnotationsContentViewer_centralRepositoryEntry_onEmpty(),
+                    centralRepoComments, CENTRAL_REPO_COMMENTS_COLUMNS, false, true);
+            }
+        }
+
+        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() == bba.getArtifactTypeID()) {
+            appendEntries(parent,
+                Bundle.AnnotationsContentViewer_fileHitEntry_hashSetHitTitle(),
+                Bundle.AnnotationsContentViewer_fileHitEntry_onHashSetHitEmpty(),
+                Arrays.asList(bba), FILESET_HIT_COLUMNS, false, false);
+        }
+
+        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == bba.getArtifactTypeID()) {
+            appendEntries(parent,
+                Bundle.AnnotationsContentViewer_fileHitEntry_interestingFileHitTitle(),
+                Bundle.AnnotationsContentViewer_fileHitEntry_onInterestingFileHitEmpty(),
+                Arrays.asList(bba), FILESET_HIT_COLUMNS, false, false);
+        }
+
+        Element sourceFileSection = appendSection(parent, Bundle.AnnotationsContentViewer_sourceFile_title());
+        renderAbstractFile(sourceFileSection, sourceContent, true);
+    }
+
+    private static void renderAbstractFile(Element parent, Content sourceContent, boolean isSubheader) {
+        appendEntries(parent,
+            Bundle.AnnotationsContentViewer_tagEntry_title(),
+            Bundle.AnnotationsContentViewer_tagEntry_onContentEmpty(),
+            getTags(sourceContent), TAG_COLUMNS, isSubheader, true);
+
+        if (sourceContent instanceof AbstractFile) {
+            AbstractFile sourceFile = (AbstractFile) sourceContent;
+
+            if (CentralRepository.isEnabled()) {
+                List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(null, sourceFile);
+                appendEntries(parent,
+                    Bundle.AnnotationsContentViewer_centralRepositoryEntry_title(),
+                    Bundle.AnnotationsContentViewer_centralRepositoryEntry_onEmpty(),
+                    centralRepoComments, CENTRAL_REPO_COMMENTS_COLUMNS, isSubheader, true);
+            }
+
+            appendEntries(parent,
+                Bundle.AnnotationsContentViewer_fileHitEntry_hashSetHitTitle(),
+                Bundle.AnnotationsContentViewer_fileHitEntry_onHashSetHitEmpty(),
+                getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT),
+                FILESET_HIT_COLUMNS, isSubheader, false);
+
+            appendEntries(parent,
+                Bundle.AnnotationsContentViewer_fileHitEntry_interestingFileHitTitle(),
+                Bundle.AnnotationsContentViewer_fileHitEntry_onInterestingFileHitEmpty(),
+                getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT),
+                FILESET_HIT_COLUMNS, isSubheader, false);
+        }
+
+    }
+
+    private static List<ContentTag> getTags(Content sourceContent) {
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-
-            startSection(html, artifactTypeName);
-            List<BlackboardArtifact> fileHitInfo = tskCase.getBlackboardArtifacts(artifactType, content.getId());
-            if (fileHitInfo.isEmpty()) {
-                addMessage(html, String.format("There are no %s for the selected content.", artifactTypeName));
-            } else {
-                fileHitInfo.forEach((fileHit) -> {
-                    addFileHitEntry(html, fileHit);
-                });
-            }
-            endSection(html);
+            return tskCase.getContentTagsByContent(sourceContent);
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Exception while getting tags from the case database.", ex); //NON-NLS
         }
+        return new ArrayList<>();
     }
+
+    private static List<BlackboardArtifactTag> getTags(BlackboardArtifact bba) {
+        try {
+            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            return tskCase.getBlackboardArtifactTagsByArtifact(bba);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Exception while getting tags from the case database.", ex); //NON-NLS
+        }
+        return new ArrayList<>();
+    }
+
+    private static List<BlackboardArtifact> getFileSetHits(AbstractFile sourceFile, BlackboardArtifact.ARTIFACT_TYPE type) {
+        try {
+            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            return tskCase.getBlackboardArtifacts(type, sourceFile.getId());
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Exception while getting file set hits from the case database.", ex); //NON-NLS
+        }
+        return new ArrayList<>();
+    }
+
+
 
     /**
      * Attempts to retrieve the attribute of a particular type from a blackboard
@@ -172,7 +320,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      *
      * @return The string value of the attribute or null if not found.
      */
-    private String tryGetAttribute(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) {
+    private static String tryGetAttribute(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) {
         if (artifact == null) {
             return null;
         }
@@ -192,284 +340,121 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     }
 
     /**
-     * Add a data table containing information about an file set hit artifact
-     * (i.e. hash hit).
-     *
-     * @param html The HTML text to add the table to.
-     * @param tag  The blackboard artifact with hash hit information whose
-     *             information will be used to populate the table.
-     */
-    @NbBundle.Messages({
-        "AnnotationsContentViewer.addHashHitEntry.hashSet=Hash Set:",
-        "AnnotationsContentViewer.addHashHitEntry.comment=Comment:"
-    })
-    private void addFileHitEntry(StringBuilder html, BlackboardArtifact artifact) {
-        startTable(html);
-
-        String hashset = tryGetAttribute(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
-        String comment = tryGetAttribute(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT);
-
-        if (StringUtils.isNotBlank(hashset)) {
-            addRow(html, Bundle.AnnotationsContentViewer_addHashHitEntry_hashSet(), hashset);
-        }
-
-        if (StringUtils.isNotBlank(comment)) {
-            addRow(html, Bundle.AnnotationsContentViewer_tagEntryDataLabel_comment(), comment);
-        }
-
-        endTable(html);
-    }
-
-    /**
-     * Populate the "Selected Item" sections with tag data for the supplied
-     * content.
-     *
-     * @param html    The HTML text to update.
-     * @param content Selected content.
-     */
-    private void populateTagData(StringBuilder html, Content content) {
-        try {
-            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-
-            startSection(html, "Selected Item");
-            List<ContentTag> fileTagsList = tskCase.getContentTagsByContent(content);
-            if (fileTagsList.isEmpty()) {
-                addMessage(html, "There are no tags for the selected content.");
-            } else {
-                for (ContentTag tag : fileTagsList) {
-                    addTagEntry(html, tag);
-                }
-            }
-            endSection(html);
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Exception while getting tags from the case database.", ex); //NON-NLS
-        }
-    }
-
-    /**
-     * Populate the "Selected Item" and "Source File" sections with tag data for
-     * a supplied artifact.
-     *
-     * @param html       The HTML text to update.
-     * @param artifact   A selected artifact.
-     * @param sourceFile The source content of the selected artifact.
-     */
-    private void populateTagData(StringBuilder html, BlackboardArtifact artifact, Content sourceFile) {
-        try {
-            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-
-            startSection(html, "Selected Item");
-            List<BlackboardArtifactTag> artifactTagsList = tskCase.getBlackboardArtifactTagsByArtifact(artifact);
-            if (artifactTagsList.isEmpty()) {
-                addMessage(html, "There are no tags for the selected artifact.");
-            } else {
-                for (BlackboardArtifactTag tag : artifactTagsList) {
-                    addTagEntry(html, tag);
-                }
-            }
-            endSection(html);
-
-            if (sourceFile != null) {
-                startSection(html, "Source File");
-                List<ContentTag> fileTagsList = tskCase.getContentTagsByContent(sourceFile);
-                if (fileTagsList.isEmpty()) {
-                    addMessage(html, "There are no tags for the source content.");
-                } else {
-                    for (ContentTag tag : fileTagsList) {
-                        addTagEntry(html, tag);
-                    }
-                }
-                endSection(html);
-            }
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Exception while getting tags from the case database.", ex); //NON-NLS
-        }
-    }
-
-    /**
      * Populate the "Central Repository Comments" section with data.
      *
-     * @param html       The HTML text to update.
      * @param artifact   A selected artifact (can be null).
      * @param sourceFile A selected file, or a source file of the selected
      *                   artifact.
      */
-    @NbBundle.Messages({
-        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.case=Case:",
-        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.type=Type:",
-        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.comment=Comment:",
-        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.path=Path:"
-    })
-    private List<CorrelationAttributeInstance> populateCentralRepositoryData(StringBuilder html, BlackboardArtifact artifact, AbstractFile sourceFile) {
-        if (CentralRepository.isEnabled()) {
-            //startSection(html, "Central Repository Comments");
-            List<CorrelationAttributeInstance> instancesList = new ArrayList<>();
-            if (artifact != null) {
-                instancesList.addAll(CorrelationAttributeUtil.makeCorrAttrsForCorrelation(artifact));
-            }
-            try {
-                List<CorrelationAttributeInstance.Type> artifactTypes = CentralRepository.getInstance().getDefinedCorrelationTypes();
-                String md5 = sourceFile.getMd5Hash();
-                if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
-                    for (CorrelationAttributeInstance.Type attributeType : artifactTypes) {
-                        if (attributeType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
-                            CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCase());
-                            instancesList.add(new CorrelationAttributeInstance(
-                                    attributeType,
-                                    md5,
-                                    correlationCase,
-                                    CorrelationDataSource.fromTSKDataSource(correlationCase, sourceFile.getDataSource()),
-                                    sourceFile.getParentPath() + sourceFile.getName(),
-                                    "",
-                                    sourceFile.getKnown(),
-                                    sourceFile.getId()));
-                            break;
-                        }
+    private static List<CorrelationAttributeInstance> getCentralRepositoryData(BlackboardArtifact artifact, AbstractFile sourceFile) {
+        List<CorrelationAttributeInstance> toReturn = new ArrayList<>();
+
+        List<CorrelationAttributeInstance> instancesList = new ArrayList<>();
+        if (artifact != null) {
+            instancesList.addAll(CorrelationAttributeUtil.makeCorrAttrsForCorrelation(artifact));
+        }
+
+        try {
+            List<CorrelationAttributeInstance.Type> artifactTypes = CentralRepository.getInstance().getDefinedCorrelationTypes();
+            String md5 = sourceFile.getMd5Hash();
+            if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
+                for (CorrelationAttributeInstance.Type attributeType : artifactTypes) {
+                    if (attributeType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
+                        CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCase());
+                        instancesList.add(new CorrelationAttributeInstance(
+                                attributeType,
+                                md5,
+                                correlationCase,
+                                CorrelationDataSource.fromTSKDataSource(correlationCase, sourceFile.getDataSource()),
+                                sourceFile.getParentPath() + sourceFile.getName(),
+                                "",
+                                sourceFile.getKnown(),
+                                sourceFile.getId()));
+                        break;
                     }
                 }
+            }
 
-                boolean commentDataFound = false;
-
-                for (CorrelationAttributeInstance instance : instancesList) {
-                    List<CorrelationAttributeInstance> correlatedInstancesList
-                            = CentralRepository.getInstance().getArtifactInstancesByTypeValue(instance.getCorrelationType(), instance.getCorrelationValue());
-                    for (CorrelationAttributeInstance correlatedInstance : correlatedInstancesList) {
-                        if (correlatedInstance.getComment() != null && correlatedInstance.getComment().isEmpty() == false) {
-                            commentDataFound = true;
-                            addCentralRepositoryEntry(html, correlatedInstance);
-                        }
+            for (CorrelationAttributeInstance instance : instancesList) {
+                List<CorrelationAttributeInstance> correlatedInstancesList
+                        = CentralRepository.getInstance().getArtifactInstancesByTypeValue(instance.getCorrelationType(), instance.getCorrelationValue());
+                for (CorrelationAttributeInstance correlatedInstance : correlatedInstancesList) {
+                    if (StringUtils.isNotEmpty(correlatedInstance.getComment())) {
+                        toReturn.add(correlatedInstance);
                     }
                 }
-
-                if (commentDataFound == false) {
-                    addMessage(html, "There is no comment data for the selected content in the Central Repository.");
-                }
-            } catch (CentralRepoException | TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error connecting to the Central Repository database.", ex); // NON-NLS
-            } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.SEVERE, "Error normalizing instance from Central Repository database.", ex); // NON-NLS
             }
-            endSection(html);
+
+        } catch (CentralRepoException | TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error connecting to the Central Repository database.", ex); // NON-NLS
+        } catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.SEVERE, "Error normalizing instance from Central Repository database.", ex); // NON-NLS
+        }
+
+        return toReturn;
+    }
+    
+    
+    private static <T> void appendEntries(Element parent, String title, String errorMessage, List<? extends T> items,
+            List<ColumnEntry<T>> fields, boolean isSubsection, boolean isVerticalTable) {
+
+        Element sectionDiv = (isSubsection) ? appendSubsection(parent, title) : appendSection(parent, title);
+
+        if (items == null || items.isEmpty()) {
+            appendMessage(sectionDiv, errorMessage);
+        } else if (isVerticalTable) {
+            appendVerticalEntryTables(sectionDiv, items, fields);
+        } else {
+            appendEntryTable(sectionDiv, items, fields);
         }
     }
 
-
-    /**
-     * Add a data table containing information about a tag.
-     *
-     * @param html The HTML text to add the table to.
-     * @param tag  The tag whose information will be used to populate the table.
-     */
-    @NbBundle.Messages({
-        "AnnotationsContentViewer.tagEntryDataLabel.tag=Tag:",
-        "AnnotationsContentViewer.tagEntryDataLabel.tagUser=Tag User:",
-        "AnnotationsContentViewer.tagEntryDataLabel.comment=Comment:"
-    })
-    private void addTagEntry(StringBuilder html, Tag tag) {
-        startTable(html);
-        addRow(html, Bundle.AnnotationsContentViewer_tagEntryDataLabel_tag(), tag.getName().getDisplayName());
-        addRow(html, Bundle.AnnotationsContentViewer_tagEntryDataLabel_tagUser(), tag.getUserName());
-        addRow(html, Bundle.AnnotationsContentViewer_tagEntryDataLabel_comment(), formatHtmlString(tag.getComment()));
-        endTable(html);
-    }
-
-
-    private static final String EMPTY_HTML = "<html><head></head><body></body></html>";
-    
-    private static final int DEFAULT_FONT_SIZE = new JLabel().getFont().getSize();
-    private static final int SUBHEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 12 / 11;
-    private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 14 / 11;
-    
-    private static final String HEADER_STYLE = "font-size:" + HEADER_FONT_SIZE + "px;font-weight:bold;";
-    private static final String SUBHEADER_STYLE = "font-size:" + SUBHEADER_FONT_SIZE + "px;font-weight:bold;";
-    private static final String MESSAGE_STYLE = "font-size:" + DEFAULT_FONT_SIZE + "px;font-style:italic;";
-    private static final String CONTENT_STYLE = "font-size:" + DEFAULT_FONT_SIZE + "px;";
-    
-    private static final int DEFAULT_TABLE_SPACING = DEFAULT_FONT_SIZE * 2;
-    private static final int DEFAULT_SECTION_SPACING = DEFAULT_FONT_SIZE;
-    private static final int DEFAULT_SUBSECTION_SPACING = DEFAULT_FONT_SIZE;
-    
-    
-    private static final List<ColumnEntry<CorrelationAttributeInstance>> CENTRAL_REPO_COMMENTS = Arrays.asList(
-        new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_case(), cai -> cai.getCorrelationCase().getDisplayName()),
-        new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_type(), cai -> cai.getCorrelationType().getDisplayName()),
-        new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_comment(), cai -> cai.getComment()),
-        new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_path(), cai -> cai.getFilePath())
-    );
-    
-    private static class ColumnEntry<T> {
-        private final String columnName;
-        private final Function<T,String> valueRetriever;
-
-        ColumnEntry(String columnName, Function<T, String> valueRetriever) {
-            this.columnName = columnName;
-            this.valueRetriever = valueRetriever;
-        }
-
-        String getColumnName() {
-            return columnName;
-        }
-
-        Function<T, String> getValueRetriever() {
-            return valueRetriever;
-        }
-        
-        String retrieveValue(T object) {
-            return valueRetriever.apply(object);
-        }
-    }
-    
-    private <T> Element appendVerticalEntryTables(Element parent, List<T> items, List<ColumnEntry<T>> rowHeaders) {
+    private static <T> Element appendVerticalEntryTables(Element parent, List<? extends T> items, List<ColumnEntry<T>> rowHeaders) {
         items.stream()
-            .filter(item -> item != null)
-            .forEach((item) -> {
-                List<List<String>> tableData = rowHeaders.stream()
-                    .map(row -> Arrays.asList(row.getColumnName(), row.retrieveValue(item)))
-                    .collect(Collectors.toList());
-                
-                Element childTable = appendTable(parent, 2, tableData, null);
-                childTable.attr("style", String.format("margin-bottom: %dpx", DEFAULT_TABLE_SPACING));
-            });
-        
+                .filter(item -> item != null)
+                .forEach((item) -> {
+                    List<List<String>> tableData = rowHeaders.stream()
+                            .map(row -> Arrays.asList(row.getColumnName(), row.retrieveValue(item)))
+                            .collect(Collectors.toList());
+
+                    Element childTable = appendTable(parent, 2, tableData, null);
+                    childTable.attr("style", String.format("margin-bottom: %dpx", DEFAULT_TABLE_SPACING));
+                });
+
         return parent;
     }
-    
-    private <T> Element appendEntryTable(Element parent, List<T> items, List<ColumnEntry<T>> columns) {
+
+    private static <T> Element appendEntryTable(Element parent, List<? extends T> items, List<ColumnEntry<T>> columns) {
         int columnNumber = columns.size();
         List<String> columnHeaders = columns.stream().map(c -> c.getColumnName()).collect(Collectors.toList());
         List<List<String>> rows = items.stream()
-            .filter(r -> r != null)
-            .map(r -> {
-                return columns.stream()
-                    .map(c -> c.retrieveValue(r))
-                    .collect(Collectors.toList());
-            })
-            .collect(Collectors.toList());
-        
+                .filter(r -> r != null)
+                .map(r -> {
+                    return columns.stream()
+                            .map(c -> c.retrieveValue(r))
+                            .collect(Collectors.toList());
+                })
+                .collect(Collectors.toList());
+
         Element table = appendTable(parent, columnNumber, rows, columnHeaders);
         table.attr("style", String.format("margin-bottom: %dpx", DEFAULT_TABLE_SPACING));
         return table;
     }
-    
-    
-    private Element appendTable(Element parent, int columnNumber, List<List<String>> content, List<String> columnHeaders) {
+
+    private static Element appendTable(Element parent, int columnNumber, List<List<String>> content, List<String> columnHeaders) {
         Element table = parent.appendElement("table");
         if (columnHeaders != null && !columnHeaders.isEmpty()) {
             Element header = parent.appendElement("thead");
-            appendRow(header, columnHeaders, columnNumber, true);    
+            appendRow(header, columnHeaders, columnNumber, true);
         }
         Element tableBody = table.appendElement("tbody");
-        
+
         content.forEach((rowData) -> appendRow(tableBody, rowData, columnNumber, false));
         return table;
     }
-    
+
     // TODO test sanitizing string
-    private Element appendRow(Element rowParent, List<String> data, int columnNumber, boolean isHeader) {
+    private static Element appendRow(Element rowParent, List<String> data, int columnNumber, boolean isHeader) {
         String cellType = isHeader ? "th" : "td";
         Element row = rowParent.appendElement("tr");
         for (int i = 0; i < columnNumber; i++) {
@@ -482,32 +467,31 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         }
         return row;
     }
-    
-    private Element appendSection(Element parent, String headerText) {
-        Element parentDiv = parent.appendElement("div");
-        parentDiv.attr("style", String.format("margin-bottom: %dpx;", DEFAULT_SECTION_SPACING));
-        Element header = parentDiv.appendElement("h1");
+
+    private static Element appendSection(Element parent, String headerText) {
+        Element sectionDiv = parent.appendElement("div");
+        sectionDiv.attr("style", String.format("margin-bottom: %dpx;", DEFAULT_SECTION_SPACING));
+        Element header = sectionDiv.appendElement("h1");
         header.text(headerText);
         header.attr("style", HEADER_STYLE);
-        return parentDiv;
+        return sectionDiv;
     }
-    
-    private Element appendSubsection(Element parent, String headerText) {
-        Element parentDiv = parent.appendElement("div");
-        parentDiv.attr("style", String.format("margin-bottom: %dpx;", DEFAULT_SUBSECTION_SPACING));
-        Element header = parentDiv.appendElement("h2");
+
+    private static Element appendSubsection(Element parent, String headerText) {
+        Element subsectionDiv = parent.appendElement("div");
+        subsectionDiv.attr("style", String.format("margin-bottom: %dpx; padding-left: %dpx;", DEFAULT_SUBSECTION_SPACING, DEFAULT_SUBSECTION_LEFT_PAD));
+        Element header = subsectionDiv.appendElement("h2");
         header.text(headerText);
         header.attr("style", SUBHEADER_STYLE);
-        return parentDiv;
+        return subsectionDiv;
     }
-    
-    private Element appendMessage(Element parent, String message) {
+
+    private static Element appendMessage(Element parent, String message) {
         Element messageEl = parent.appendElement("p");
         messageEl.text(message);
         messageEl.attr("style", MESSAGE_STYLE);
         return messageEl;
     }
-
 
     /**
      * This method is called from within the constructor to initialize the form.
