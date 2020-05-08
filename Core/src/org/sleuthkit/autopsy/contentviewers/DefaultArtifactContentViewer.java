@@ -45,12 +45,9 @@ import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -63,13 +60,12 @@ import com.google.gson.JsonArray;
 import java.util.Map;
 
 /**
- * Instances of this class display the BlackboardArtifacts associated with the
- * Content represented by a Node. Each BlackboardArtifact is rendered displayed
- * in a JTable representation of its BlackboardAttributes.
+ * This class displays a Blackboard artifact as a table listing all the 
+ * attribute names and values.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 11)
+
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class DefaultArtifactContentViewer extends javax.swing.JPanel implements DataContentViewer {
+public class DefaultArtifactContentViewer extends javax.swing.JPanel implements ArtifactContentViewer {
 
     @NbBundle.Messages({
         "DataContentViewerArtifact.attrsTableHeader.type=Type",
@@ -81,11 +77,16 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
     private final static Logger logger = Logger.getLogger(DefaultArtifactContentViewer.class.getName());
     private final static String WAIT_TEXT = NbBundle.getMessage(DefaultArtifactContentViewer.class, "DataContentViewerArtifact.waitText");
     private final static String ERROR_TEXT = NbBundle.getMessage(DefaultArtifactContentViewer.class, "DataContentViewerArtifact.errorText");
+    
+    private static final long serialVersionUID = 1L;
+    
     private Node currentNode; // @@@ Remove this when the redundant setNode() calls problem is fixed. 
     private int currentPage = 1;
     private final Object lock = new Object();
+    
     private List<ResultsTableArtifact> artifactTableContents; // Accessed by multiple threads, use getArtifactContents() and setArtifactContents()
     SwingWorker<ViewUpdate, Void> currentTask; // Accessed by multiple threads, use startNewTask()
+    
     private static final String[] COLUMN_HEADERS = {
         Bundle.DataContentViewerArtifact_attrsTableHeader_type(),
         Bundle.DataContentViewerArtifact_attrsTableHeader_value(),
@@ -438,87 +439,19 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
     }
 
     @Override
-    public void setNode(Node selectedNode) {
-        if (currentNode == selectedNode) {
-            return;
-        }
-        currentNode = selectedNode;
-
-        // Make sure there is a node. Null might be passed to reset the viewer.
-        if (selectedNode == null) {
-            return;
-        }
-
-        // Make sure the node is of the correct type.
-        Lookup lookup = selectedNode.getLookup();
-        Content content = lookup.lookup(Content.class);
-        if (content == null) {
-            return;
-        }
-
-        startNewTask(new SelectedNodeChangedTask(selectedNode));
-    }
-
-    @Override
-    public String getTitle() {
-        return NbBundle.getMessage(this.getClass(), "DataContentViewerArtifact.title");
-    }
-
-    @Override
-    public String getToolTip() {
-        return NbBundle.getMessage(this.getClass(), "DataContentViewerArtifact.toolTip");
-    }
-
-    @Override
-    public DataContentViewer createInstance() {
-        return new DefaultArtifactContentViewer();
-    }
-
-    @Override
     public Component getComponent() {
         return this;
     }
 
     @Override
-    public void resetComponent() {
-        resetComponents();
+    public void setArtifact(BlackboardArtifact artifact) {
+       // RAMAN TBD: ******************  IMPLMENT THIS. **********************
+       
     }
 
     @Override
-    public boolean isSupported(Node node) {
-        if (node == null) {
-            return false;
-        }
-
-        for (Content content : node.getLookup().lookupAll(Content.class)) {
-            if ( (content != null)  && (!(content instanceof BlackboardArtifact)) ){
-                try {
-                    return content.getAllArtifactsCount() > 0;
-                } catch (TskException ex) {
-                    logger.log(Level.SEVERE, "Couldn't get count of BlackboardArtifacts for content", ex); //NON-NLS
-                }
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public int isPreferred(Node node) {
-        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        // low priority if node doesn't have an artifact (meaning it was found from normal directory
-        // browsing, or if the artifact is something that means the user really wants to see the original
-        // file and not more details about the artifact
-        if ((artifact == null)
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID())) {
-            return 3;
-        } else {
-            return 6;
-        }
+    public boolean isSupported(BlackboardArtifact artifact) {
+        return true;
     }
 
     /**
