@@ -62,9 +62,7 @@ public class CategoryManager {
     private static final Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
 
     /**
-     * the DrawableDB that backs the category counts cache. The counts are
-     * initialized from this, and the counting of CAT-0 is always delegated to
-     * this db.
+     * the DrawableDB that backs the category counts cache.
      */
     private final DrawableDB drawableDb;
 

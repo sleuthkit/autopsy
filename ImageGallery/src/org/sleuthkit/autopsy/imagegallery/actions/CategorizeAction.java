@@ -82,7 +82,6 @@ public class CategorizeAction extends Action {
         this.tagName = tagName;
         setGraphic(getGraphic(tagName));
         setEventHandler(actionEvent -> addCatToFiles(selectedFileIDs));
-        setAccelerator(new KeyCodeCombination(KeyCode.getKeyCode(getCategoryNumberFromTagName(tagName))));
     }
 
     static public Menu getCategoriesMenu(ImageGalleryController controller) {
@@ -92,16 +91,6 @@ public class CategorizeAction extends Action {
     final void addCatToFiles(Set<Long> ids) {
         Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{ids.toString(), tagName.getDisplayName()}); //NON-NLS
         controller.queueDBTask(new CategorizeDrawableFileTask(ids, tagName, createUndo));
-    }
-
-    private String getCategoryNumberFromTagName(TagName tagName) {
-        String displayName = tagName.getDisplayName();
-        if (displayName.contains("CAT")) {
-            String[] split = displayName.split(":");
-            split = split[0].split("-");
-            return split[1];
-        }
-        return "";
     }
 
     /**
