@@ -2060,6 +2060,7 @@ public class Case {
 
         private final SleuthkitCase tskCase;
         private final String caseName;
+        private final long MAX_IMAGE_THRESHOLD = 100;
         private final ProgressIndicator progressIndicator;
 
         /**
@@ -2153,6 +2154,13 @@ public class Case {
                 if (images == null) {
                     return;
                 }
+                
+                if (images.size() > MAX_IMAGE_THRESHOLD) {
+                    // If we have a large number of images, don't try to preload anything
+                    logger.log(
+                        Level.INFO,
+                        String.format("Skipping background load of file systems due to large number of images in case (%d)", images.size()));
+                }
 
                 checkIfCancelled();
                 openFileSystems(images);
@@ -2160,6 +2168,9 @@ public class Case {
                 logger.log(
                         Level.INFO,
                         String.format("Background operation opening all file systems in %s has been cancelled.", caseName));
+            } catch (Exception ex) {
+                // Exception firewall
+                logger.log(Level.WARNING, "Error while opening file systems in background", ex);
             }
         }
 
