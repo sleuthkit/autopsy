@@ -22,7 +22,10 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 
-
+/**
+ * Top component for the Personas tool
+ *
+ */
 @TopComponent.Description(preferredID = "PersonasTopComponent", persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "personas", openAtStartup = false)
 @RetainLocation("personas")

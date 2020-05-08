@@ -52,11 +52,9 @@ import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
-import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
@@ -80,6 +78,7 @@ import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.VersionNumber;
 import org.sqlite.SQLiteJDBCLoader;
 import java.util.stream.Collectors;
+import org.sleuthkit.datamodel.TagSet;
 
 /**
  * Provides access to the image gallery database and selected tables in the case
@@ -250,7 +249,7 @@ public final class DrawableDB {
      *                          could not be correctly initialized for Image
      *                          Gallery use.
      */
-    private DrawableDB(Path dbPath, ImageGalleryController controller) throws IOException, SQLException, TskCoreException {
+    private DrawableDB(Path dbPath, ImageGalleryController controller, TagSet standardCategories) throws IOException, SQLException, TskCoreException {
         this.dbPath = dbPath;
         this.controller = controller;
         caseDb = this.controller.getCaseDatabase();
@@ -259,7 +258,7 @@ public final class DrawableDB {
         dbWriteLock();
         try {
             con = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toString()); //NON-NLS
-            if (!initializeDBSchema() || !upgradeDBSchema() || !prepareStatements() || !initializeStandardGroups() || !removeDeletedDataSources() || !initializeImageList()) {
+            if (!initializeDBSchema() || !upgradeDBSchema() || !prepareStatements() || !initializeStandardGroups(standardCategories) || !removeDeletedDataSources() || !initializeImageList()) {
                 close();
                 throw new TskCoreException("Failed to initialize drawables database for Image Gallery use"); //NON-NLS
             }
@@ -297,12 +296,13 @@ public final class DrawableDB {
         }
     }
 
-    private boolean initializeStandardGroups() {
+    private boolean initializeStandardGroups(TagSet standardCategories) {
         CaseDbTransaction caseDbTransaction = null;
         try {
             caseDbTransaction = caseDb.beginTransaction();
-            for (DhsImageCategory cat : DhsImageCategory.values()) {
-                insertGroup(cat.getDisplayName(), DrawableAttribute.CATEGORY, caseDbTransaction);
+
+            for(TagName tagName: standardCategories.getTagNames()) {
+                insertGroup(tagName.getDisplayName(), DrawableAttribute.CATEGORY, caseDbTransaction);
             }
             caseDbTransaction.commit();
             return true;
@@ -466,7 +466,7 @@ public final class DrawableDB {
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public static DrawableDB getDrawableDB(ImageGalleryController controller) throws TskCoreException {
+    public static DrawableDB getDrawableDB(ImageGalleryController controller, TagSet standardCategories) throws TskCoreException {
         Path dbPath = ImageGalleryModule.getModuleOutputDir(controller.getCase()).resolve("drawable.db");
         try {
             deleteDatabaseIfOlderVersion(dbPath);
@@ -477,14 +477,14 @@ public final class DrawableDB {
         }
 
         try {
-            return new DrawableDB(dbPath, controller);
+            return new DrawableDB(dbPath, controller, standardCategories);
         } catch (IOException ex) {
             throw new TskCoreException("Failed to create drawables database directory", ex); //NON-NLS
         } catch (SQLException ex) {
             throw new TskCoreException("Failed to create/open the drawables database", ex); //NON-NLS
         }
     }
-
+    
     /**
      * Checks if the specified table exists in Drawable DB
      *
@@ -2068,7 +2068,7 @@ public final class DrawableDB {
                 case MIME_TYPE:
                     return groupManager.getFileIDsWithMimeType((String) groupKey.getValue());
                 case CATEGORY:
-                    return groupManager.getFileIDsWithCategory((DhsImageCategory) groupKey.getValue());
+                    return groupManager.getFileIDsWithCategory((TagName) groupKey.getValue());
                 case TAGS:
                     return groupManager.getFileIDsWithTag((TagName) groupKey.getValue());
             }
@@ -2269,9 +2269,8 @@ public final class DrawableDB {
      *
      * @return the number of the with the given category
      */
-    public long getCategoryCount(DhsImageCategory cat) {
+    public long getCategoryCount(TagName tagName) {
         try {
-            TagName tagName = controller.getTagsManager().getTagName(cat);
             if (nonNull(tagName)) {
                 return caseDb.getContentTagsByTagName(tagName).stream()
                         .map(ContentTag::getContent)
@@ -2280,7 +2279,7 @@ public final class DrawableDB {
                         .count();
             }
         } catch (IllegalStateException ex) {
-            logger.log(Level.WARNING, "Case closed while getting files"); //NON-NLS
+            logger.log(Level.WARNING, "Case closed while getting files", ex); //NON-NLS
         } catch (TskCoreException ex1) {
             logger.log(Level.SEVERE, "Failed to get content tags by tag name.", ex1); //NON-NLS
         }
@@ -2314,7 +2313,6 @@ public final class DrawableDB {
         DrawableTagsManager tagsManager = controller.getTagsManager();
 
         String catTagNameIDs = tagsManager.getCategoryTagNames().stream()
-                .filter(tagName -> notEqual(tagName.getDisplayName(), DhsImageCategory.ZERO.getDisplayName()))
                 .map(TagName::getId)
                 .map(Object::toString)
                 .collect(Collectors.joining(",", "(", ")"));

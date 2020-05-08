@@ -55,7 +55,7 @@ public class VideoFile extends DrawableFile {
     }
 
     /**
-     * Get the genereric video thumbnail.
+     * Get the generic video thumbnail.
      *
      * @return The thumbnail.
      */
