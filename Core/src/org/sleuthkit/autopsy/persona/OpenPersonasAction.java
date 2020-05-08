@@ -28,7 +28,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
@@ -43,7 +42,6 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 public final class OpenPersonasAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(OpenPersonasAction.class.getName());
 
     private final JMenuItem menuItem;
 
