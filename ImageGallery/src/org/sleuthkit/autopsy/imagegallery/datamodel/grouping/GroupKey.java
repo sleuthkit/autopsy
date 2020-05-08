@@ -59,6 +59,7 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
 
     public String getValueDisplayName() {
         return Objects.equals(attr, DrawableAttribute.TAGS)
+                || Objects.equals(attr, DrawableAttribute.CATEGORY)
                 ? ((TagName) getValue()).getDisplayName()
                 : Objects.toString(getValue(), "unknown");
     }
@@ -74,8 +75,9 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
 
         hash = 79 * hash + Objects.hashCode(this.val);
         hash = 79 * hash + Objects.hashCode(this.attr);
-        if (this.dataSource != null) 
-            hash = 79 * hash + (int)this.dataSource.getId(); 
+        if (this.dataSource != null) {
+            hash = 79 * hash + (int) this.dataSource.getId();
+        }
 
         return hash;
     }
@@ -99,20 +101,20 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
         if (!Objects.equals(this.attr, other.attr)) {
             return false;
         }
-        
+
         // Data source is significant only for PATH based groups.
         if (this.attr == DrawableAttribute.PATH) {
             if (this.dataSource != null && other.dataSource != null) {
-                 return this.dataSource.getId() == other.dataSource.getId();
+                return this.dataSource.getId() == other.dataSource.getId();
             } else if (this.dataSource == null && other.dataSource == null) {
                 // neither group has a datasource
                 return true;
             } else {
-                 // one group has a datasource, other doesn't
+                // one group has a datasource, other doesn't
                 return false;
             }
         }
-        
+
         return true;
     }
 

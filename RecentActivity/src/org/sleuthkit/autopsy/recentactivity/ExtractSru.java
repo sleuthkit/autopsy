@@ -114,12 +114,8 @@ final class ExtractSru extends Extract {
     
         AbstractFile sruAbstractFile = getSruFile(dataSource, tempDirPath);
 
-        String sruFileName = tempDirPath + File.separator + sruAbstractFile.getId() + "_" + sruAbstractFile.getName();
-
-        if (sruFileName == null) {
-            this.addErrorMessage(Bundle.ExtractSru_process_errormsg_find_srudb_dat());
-            logger.log(Level.SEVERE, "SRUDB.dat file not found"); //NON-NLS
-            return; //If we cannot find the srudb.dat file we cannot proceed
+        if (sruAbstractFile == null) {
+            return; //If we cannot find the srudb.dat file we cannot proceed which is ok 
         }
 
         final String sruDumper = getPathForSruDumper();
@@ -135,6 +131,7 @@ final class ExtractSru extends Extract {
 
         try {
             String modOutFile =  modOutPath + File.separator + sruAbstractFile.getId() + "_srudb.db3";
+            String sruFileName = tempDirPath + File.separator + sruAbstractFile.getId() + "_" + sruAbstractFile.getName();
 
             extractSruFiles(sruDumper, sruFileName, modOutFile, tempDirPath, softwareHiveFileName);
 
