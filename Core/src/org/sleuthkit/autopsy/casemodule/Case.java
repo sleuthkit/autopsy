@@ -2118,28 +2118,18 @@ public class Case {
          *                                      event that the operation is
          *                                      cancelled prior to completion.
          */
-        private void openFileSystems(List<Image> images) throws InterruptedException {
+        private void openFileSystems(List<Image> images) throws TskCoreException, InterruptedException {
             byte[] tempBuff = new byte[512];
-
+            
             for (Image image : images) {
                 String imageStr = image.getName();
 
                 progressIndicator.progress(Bundle.Case_openFileSystems_openingImage(imageStr));
 
-                Collection<FileSystem> fileSystems = this.tskCase.getFileSystems(image);
+                Collection<FileSystem> fileSystems = this.tskCase.getImageFileSystems(image);
                 checkIfCancelled();
                 for (FileSystem fileSystem : fileSystems) {
-                    try {
-                        fileSystem.read(tempBuff, 0, 512);
-                    } catch (TskCoreException ex) {
-                        String fileSysStr = fileSystem.getName();
-
-                        logger.log(
-                                Level.WARNING,
-                                String.format("Could not open filesystem: %s in image: %s for case: %s.", fileSysStr, imageStr, caseName),
-                                ex);
-                    }
-
+                    fileSystem.read(tempBuff, 0, 512);
                     checkIfCancelled();
                 }
 
