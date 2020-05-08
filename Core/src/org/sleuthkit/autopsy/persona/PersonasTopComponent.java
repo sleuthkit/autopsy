@@ -34,26 +34,15 @@ import org.openide.windows.WindowManager;
 @RetainLocation("personas")
 @SuppressWarnings("PMD.SingularField")
 public final class PersonasTopComponent extends TopComponent {
-    
+
     @Messages({
         "PTopComponent_Name=Personas"
     })
     public PersonasTopComponent() {
         initComponents();
         setName(Bundle.PTopComponent_Name());
-        
-        jButton1.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                executeSearch();
-            }
-        });
     }
-    
-    void executeSearch() {
-        System.out.println("Search!");
-    }
-    
+
     @Override
     public void componentOpened() {
         super.componentOpened();
