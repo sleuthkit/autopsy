@@ -81,12 +81,17 @@ import org.jsoup.nodes.Element;
     "AnnotationsContentViewer.fileHitEntry.onHashSetHitEmpty=There are no hash set hits for the selected content.",
     "AnnotationsContentViewer.fileHitEntry.interestingFileHitTitle=Interesting File Hit Comments",
     "AnnotationsContentViewer.fileHitEntry.onInterestingFileHitEmpty=There are no interesting file hits for the selected content.",
-    "AnnotationsContentViewer.fileHitEntry.setName=Set Name",
-    "AnnotationsContentViewer.fileHitEntry.comment=Comment",
+    "AnnotationsContentViewer.fileHitEntry.setName=Set Name:",
+    "AnnotationsContentViewer.fileHitEntry.comment=Comment:",
     "AnnotationsContentViewer.sourceFile.title=Source File"
 })
 public class AnnotationsContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
+    /**
+     * Describes a key value pair for an item of type T where the key is the field name to display and
+     * the value is retrieved from item of type T using a provided Function<T, string>.
+     * @param <T> The item type.
+     */
     private static class ItemEntry<T> {
 
         private final String itemName;
@@ -110,6 +115,10 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         }
     }
 
+    /**
+     * Describes a section that will be appended to the annotations view panel.
+     * @param <T> The item type for items to display.
+     */
     private static class SectionConfig<T> {
 
         private final String title;
@@ -124,18 +133,32 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             this.isVerticalTable = isVerticalTable;
         }
 
+        /**
+         * @return The title for the section.
+         */
         String getTitle() {
             return title;
         }
 
+        /**
+         * @return The message to display if no items provided.
+         */
         String getOnEmpty() {
             return onEmpty;
         }
 
+        /**
+         * @return Describes key-value pairs on the object to display to the user.
+         */
         List<ItemEntry<T>> getAttributes() {
             return attributes;
         }
 
+        /**
+         * @return If the table should be shown as a series of key-value pairs as rows.  Otherwise, 
+         * data is shown in a table where the column headers are the keys and each row represents one 
+         * item to display.
+         */
         boolean isIsVerticalTable() {
             return isVerticalTable;
         }
@@ -210,19 +233,17 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     private static final SectionConfig<BlackboardArtifact> INTERESTING_FILE_CONFIG = new SectionConfig<>(
             Bundle.AnnotationsContentViewer_fileHitEntry_interestingFileHitTitle(),
             Bundle.AnnotationsContentViewer_fileHitEntry_onInterestingFileHitEmpty(),
-            FILESET_HIT_ENTRIES, false);
+            FILESET_HIT_ENTRIES, true);
 
     private static final SectionConfig<BlackboardArtifact> HASHSET_CONFIG = new SectionConfig<>(
             Bundle.AnnotationsContentViewer_fileHitEntry_hashSetHitTitle(),
             Bundle.AnnotationsContentViewer_fileHitEntry_onHashSetHitEmpty(),
-            FILESET_HIT_ENTRIES, false);
+            FILESET_HIT_ENTRIES, true);
 
     // central repository attributes and table configuration
     private static final List<ItemEntry<CorrelationAttributeInstance>> CR_COMMENTS_ENTRIES = Arrays.asList(
             new ItemEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_case(),
                     cai -> (cai.getCorrelationCase() != null) ? cai.getCorrelationCase().getDisplayName() : null),
-            new ItemEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_type(),
-                    cai -> (cai.getCorrelationType() != null) ? cai.getCorrelationType().getDisplayName() : null),
             new ItemEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_comment(), cai -> cai.getComment()),
             new ItemEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_path(), cai -> cai.getFilePath())
     );
@@ -369,8 +390,9 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     }
 
     /**
-     *Retrieves tags for blackboard artifact tags.
-     * @param bba   The blackboard artifact for which to retrieve tags.
+     * Retrieves tags for blackboard artifact tags.
+     *
+     * @param bba The blackboard artifact for which to retrieve tags.
      *
      * @return The found tags.
      */
@@ -387,9 +409,12 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     }
 
     /**
-     * Retrieves the blackboard artifacts for a source file matching a certain type.
+     * Retrieves the blackboard artifacts for a source file matching a certain
+     * type.
+     *
      * @param sourceFile The source file for which to fetch artifacts.
-     * @param type The type of blackboard artifact to fetch.
+     * @param type       The type of blackboard artifact to fetch.
+     *
      * @return The artifacts found matching this type.
      */
     private static List<BlackboardArtifact> getFileSetHits(AbstractFile sourceFile, BlackboardArtifact.ARTIFACT_TYPE type) {
@@ -438,7 +463,9 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @param artifact   A selected artifact (can be null).
      * @param sourceFile A selected file, or a source file of the selected
      *                   artifact.
-     * @return The Correlation Attribute Instances associated with the artifact and/or sourcefile.
+     *
+     * @return The Correlation Attribute Instances associated with the artifact
+     *         and/or sourcefile.
      */
     private static List<CorrelationAttributeInstance> getCentralRepositoryData(BlackboardArtifact artifact, AbstractFile sourceFile) {
         List<CorrelationAttributeInstance> toReturn = new ArrayList<>();
@@ -489,13 +516,18 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     }
 
     /**
-     * Append entries to the parent element in the annotations viewer.  Entries will be formatted as a table 
-     * in the format specified in the SectionConfig.
-     * @param <T> The item type.
-     * @param parent The parent element for which the entries will be attached.
-     * @param config The display configuration for this entry type (i.e. table type, name, if data is not present).
-     * @param items The items to display.
-     * @param isSubsection Whether or not this should be displayed as a subsection.  If not displayed as a top-level section.
+     * Append entries to the parent element in the annotations viewer. Entries
+     * will be formatted as a table in the format specified in the
+     * SectionConfig.
+     *
+     * @param <T>          The item type.
+     * @param parent       The parent element for which the entries will be
+     *                     attached.
+     * @param config       The display configuration for this entry type (i.e.
+     *                     table type, name, if data is not present).
+     * @param items        The items to display.
+     * @param isSubsection Whether or not this should be displayed as a
+     *                     subsection. If not displayed as a top-level section.
      */
     private static <T> void appendEntries(Element parent, SectionConfig<T> config, List<? extends T> items,
             boolean isSubsection) {
@@ -513,10 +545,13 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     /**
      * Appends a table where items are displayed in rows of key-value pairs.
+     *
      * @param <T>
-     * @param parent The parent to append the table.
-     * @param items The items to process into a series of tables.
-     * @param rowHeaders The keys and the means to process items in order to get key-value pairs.
+     * @param parent     The parent to append the table.
+     * @param items      The items to process into a series of tables.
+     * @param rowHeaders The keys and the means to process items in order to get
+     *                   key-value pairs.
+     *
      * @return The parent element provided as parameter.
      */
     private static <T> Element appendVerticalEntryTables(Element parent, List<? extends T> items, List<ItemEntry<T>> rowHeaders) {
@@ -545,10 +580,13 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     /**
      * Appends a table with column headers to the parent element.
-     * @param <T> The item type.
-     * @param parent The element that will have this table appended to it.
-     * @param items The items to place as a row in this table.
-     * @param columns The columns for this table and the means to process each data item to retrieve a cell.
+     *
+     * @param <T>     The item type.
+     * @param parent  The element that will have this table appended to it.
+     * @param items   The items to place as a row in this table.
+     * @param columns The columns for this table and the means to process each
+     *                data item to retrieve a cell.
+     *
      * @return The generated table element.
      */
     private static <T> Element appendEntryTable(Element parent, List<? extends T> items, List<ItemEntry<T>> columns) {
@@ -570,11 +608,15 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     /**
      * Appends a generic table to the parent element.
-     * @param parent The parent element that will have a table appended to it.
-     * @param columnNumber The number of columns to append.
-     * @param content The content in content.get(row).get(column) format.
-     * @param columnHeaders The column headers or null if no column headers should be created.
-     * @return 
+     *
+     * @param parent        The parent element that will have a table appended
+     *                      to it.
+     * @param columnNumber  The number of columns to append.
+     * @param content       The content in content.get(row).get(column) format.
+     * @param columnHeaders The column headers or null if no column headers
+     *                      should be created.
+     *
+     * @return The created table.
      */
     private static Element appendTable(Element parent, int columnNumber, List<List<String>> content, List<String> columnHeaders) {
         Element table = parent.appendElement("table");
@@ -588,7 +630,17 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         return table;
     }
 
-    // TODO test sanitizing string
+    /**
+     * Appends a row to the parent element (should be thead or tbody).
+     *
+     * @param rowParent    The parent table element.
+     * @param data         The data to place in columns within the table.
+     * @param columnNumber The number of columns to append.
+     * @param isHeader     Whether or not this should have header cells ('th')
+     *                     instead of regular cells ('td').
+     *
+     * @return The row created.
+     */
     private static Element appendRow(Element rowParent, List<String> data, int columnNumber, boolean isHeader) {
         String cellType = isHeader ? "th" : "td";
         Element row = rowParent.appendElement("tr");
@@ -601,6 +653,14 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         return row;
     }
 
+    /**
+     * Appends a new section with a section header to the parent element.
+     *
+     * @param parent     The element to append this section to.
+     * @param headerText The text for the section.
+     *
+     * @return The div for the new section.
+     */
     private static Element appendSection(Element parent, String headerText) {
         Element sectionDiv = parent.appendElement("div");
         sectionDiv.attr("class", SECTION_CLASSNAME);
@@ -610,6 +670,14 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         return sectionDiv;
     }
 
+    /**
+     * Appends a new subsection with a subsection header to the parent element.
+     *
+     * @param parent     The element to append this subsection to.
+     * @param headerText The text for the subsection.
+     *
+     * @return The div for the new subsection.
+     */
     private static Element appendSubsection(Element parent, String headerText) {
         Element subsectionDiv = parent.appendElement("div");
         subsectionDiv.attr("class", SUBSECTION_CLASSNAME);
@@ -619,6 +687,16 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         return subsectionDiv;
     }
 
+    /**
+     * Appends a message to the parent element. This is typically used in the
+     * event that no data exists for a certain type.
+     *
+     * @param parent  The parent element that will have this message appended to
+     *                it.
+     * @param message The message to append.
+     *
+     * @return The paragraph element for the new message.
+     */
     private static Element appendMessage(Element parent, String message) {
         Element messageEl = parent.appendElement("p");
         messageEl.text(message);

@@ -15,13 +15,25 @@
 # governing permissions and limitations under the License.
 #
 
+AnnotationsContentViewer.centralRepositoryEntry.onEmpty=There is no comment data for the selected content in the Central Repository.
+AnnotationsContentViewer.centralRepositoryEntry.title=Central Repository Comments
 AnnotationsContentViewer.centralRepositoryEntryDataLabel.case=Case:
 AnnotationsContentViewer.centralRepositoryEntryDataLabel.comment=Comment:
 AnnotationsContentViewer.centralRepositoryEntryDataLabel.path=Path:
 AnnotationsContentViewer.centralRepositoryEntryDataLabel.type=Type:
+AnnotationsContentViewer.fileHitEntry.comment=Comment:
+AnnotationsContentViewer.fileHitEntry.hashSetHitTitle=Hash Set Hit Comments
+AnnotationsContentViewer.fileHitEntry.interestingFileHitTitle=Interesting File Hit Comments
+AnnotationsContentViewer.fileHitEntry.onHashSetHitEmpty=There are no hash set hits for the selected content.
+AnnotationsContentViewer.fileHitEntry.onInterestingFileHitEmpty=There are no interesting file hits for the selected content.
+AnnotationsContentViewer.fileHitEntry.setName=Set Name:
+AnnotationsContentViewer.sourceFile.title=Source File
+AnnotationsContentViewer.tagEntry.onArtifactEmpty=There are no tags for the selected artifact.
+AnnotationsContentViewer.tagEntry.onContentEmpty=There are no tags for the selected content.
+AnnotationsContentViewer.tagEntry.title=Tags
 AnnotationsContentViewer.tagEntryDataLabel.comment=Comment:
 AnnotationsContentViewer.tagEntryDataLabel.tag=Tag:
-AnnotationsContentViewer.tagEntryDataLabel.tagUser=Tag User:
+AnnotationsContentViewer.tagEntryDataLabel.tagUser=Examiner:
 AnnotationsContentViewer.title=Annotations
 AnnotationsContentViewer.toolTip=Displays tags and comments associated with the selected content.
 ApplicationContentViewer.title=Application
