@@ -57,46 +57,45 @@ public final class PersonasTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        buttonGroup1 = new javax.swing.ButtonGroup();
-        jDesktopPane1 = new javax.swing.JDesktopPane();
-        jSplitPane2 = new javax.swing.JSplitPane();
-        jPanel1 = new javax.swing.JPanel();
-        jTextField1 = new javax.swing.JTextField();
-        jRadioButton1 = new javax.swing.JRadioButton();
-        jRadioButton2 = new javax.swing.JRadioButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTable2 = new javax.swing.JTable();
-        jButton1 = new javax.swing.JButton();
-        jPanel2 = new javax.swing.JPanel();
-        jLabel2 = new javax.swing.JLabel();
-        jTextField2 = new javax.swing.JTextField();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jScrollPane4 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
-        jLabel5 = new javax.swing.JLabel();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        jList2 = new javax.swing.JList<>();
-        jScrollPane5 = new javax.swing.JScrollPane();
-        jList3 = new javax.swing.JList<>();
+        searchButtonGroup = new javax.swing.ButtonGroup();
+        splitPane = new javax.swing.JSplitPane();
+        searchPanel = new javax.swing.JPanel();
+        searchField = new javax.swing.JTextField();
+        searchNameRadio = new javax.swing.JRadioButton();
+        searchAccountRadio = new javax.swing.JRadioButton();
+        filterResultsPane = new javax.swing.JScrollPane();
+        filterResultsTable = new javax.swing.JTable();
+        searchBtn = new javax.swing.JButton();
+        detailsPanel = new javax.swing.JPanel();
+        resultNameLbl = new javax.swing.JLabel();
+        resultNameField = new javax.swing.JTextField();
+        resultAliasesLbl = new javax.swing.JLabel();
+        resultAccountsLbl = new javax.swing.JLabel();
+        accountsTablePane = new javax.swing.JScrollPane();
+        accountsTable = new javax.swing.JTable();
+        resultCasesLbl = new javax.swing.JLabel();
+        casesListPane = new javax.swing.JScrollPane();
+        casesList = new javax.swing.JList<>();
+        aliasesListPane = new javax.swing.JScrollPane();
+        aliasesList = new javax.swing.JList<>();
 
         setMinimumSize(new java.awt.Dimension(400, 400));
 
-        jTextField1.setText(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.jTextField1.text")); // NOI18N
+        searchField.setText(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchField.text")); // NOI18N
 
-        buttonGroup1.add(jRadioButton1);
-        jRadioButton1.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(jRadioButton1, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.jRadioButton1.text")); // NOI18N
-        jRadioButton1.addActionListener(new java.awt.event.ActionListener() {
+        searchButtonGroup.add(searchNameRadio);
+        searchNameRadio.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(searchNameRadio, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchNameRadio.text")); // NOI18N
+        searchNameRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jRadioButton1ActionPerformed(evt);
+                searchNameRadioActionPerformed(evt);
             }
         });
 
-        buttonGroup1.add(jRadioButton2);
-        org.openide.awt.Mnemonics.setLocalizedText(jRadioButton2, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.jRadioButton2.text")); // NOI18N
+        searchButtonGroup.add(searchAccountRadio);
+        org.openide.awt.Mnemonics.setLocalizedText(searchAccountRadio, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchAccountRadio.text")); // NOI18N
 
-        jTable2.setModel(new javax.swing.table.DefaultTableModel(
+        filterResultsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {"0", "Johnathn Dough"},
                 {"3", "Joe Schmoe"},
@@ -115,69 +114,69 @@ public final class PersonasTopComponent extends TopComponent {
                 return types [columnIndex];
             }
         });
-        jScrollPane1.setViewportView(jTable2);
-        if (jTable2.getColumnModel().getColumnCount() > 0) {
-            jTable2.getColumnModel().getColumn(0).setMaxWidth(25);
-            jTable2.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.jTable2.columnModel.title0")); // NOI18N
-            jTable2.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.jTable2.columnModel.title1")); // NOI18N
+        filterResultsPane.setViewportView(filterResultsTable);
+        if (filterResultsTable.getColumnModel().getColumnCount() > 0) {
+            filterResultsTable.getColumnModel().getColumn(0).setMaxWidth(25);
+            filterResultsTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.filterResultsTable.columnModel.title0")); // NOI18N
+            filterResultsTable.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.filterResultsTable.columnModel.title1")); // NOI18N
         }
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.jButton1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(searchBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchBtn.text")); // NOI18N
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        javax.swing.GroupLayout searchPanelLayout = new javax.swing.GroupLayout(searchPanel);
+        searchPanel.setLayout(searchPanelLayout);
+        searchPanelLayout.setHorizontalGroup(
+            searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(searchPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jTextField1)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(jRadioButton1)
+                .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(filterResultsPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addGroup(searchPanelLayout.createSequentialGroup()
+                        .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(searchField)
+                            .addGroup(searchPanelLayout.createSequentialGroup()
+                                .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(searchPanelLayout.createSequentialGroup()
+                                        .addComponent(searchNameRadio)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(jRadioButton2))
-                                    .addComponent(jButton1))
+                                        .addComponent(searchAccountRadio))
+                                    .addComponent(searchBtn))
                                 .addGap(0, 25, Short.MAX_VALUE)))
                         .addContainerGap())))
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        searchPanelLayout.setVerticalGroup(
+            searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(searchPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(searchField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jRadioButton1)
-                    .addComponent(jRadioButton2))
+                .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(searchNameRadio)
+                    .addComponent(searchAccountRadio))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton1)
+                .addComponent(searchBtn)
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                .addComponent(filterResultsPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
-        jSplitPane2.setLeftComponent(jPanel1);
+        splitPane.setLeftComponent(searchPanel);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.jLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(resultNameLbl, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultNameLbl.text")); // NOI18N
 
-        jTextField2.setEditable(false);
-        jTextField2.setText(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.jTextField2.text")); // NOI18N
-        jTextField2.addActionListener(new java.awt.event.ActionListener() {
+        resultNameField.setEditable(false);
+        resultNameField.setText(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultNameField.text")); // NOI18N
+        resultNameField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField2ActionPerformed(evt);
+                resultNameFieldActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.jLabel3.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(resultAliasesLbl, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultAliasesLbl.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.jLabel4.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(resultAccountsLbl, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultAccountsLbl.text")); // NOI18N
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        accountsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {"Email", "jdb@yahoo.com"},
                 {"Phone", "865-555-5555"},
@@ -203,110 +202,109 @@ public final class PersonasTopComponent extends TopComponent {
                 return canEdit [columnIndex];
             }
         });
-        jScrollPane4.setViewportView(jTable1);
+        accountsTablePane.setViewportView(accountsTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.jLabel5.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(resultCasesLbl, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultCasesLbl.text")); // NOI18N
 
-        jList2.setModel(new javax.swing.AbstractListModel<String>() {
+        casesList.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Investigation 13", "Scene 5" };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane3.setViewportView(jList2);
+        casesListPane.setViewportView(casesList);
 
-        jList3.setModel(new javax.swing.AbstractListModel<String>() {
+        aliasesList.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "J.D.", "Fred Smidge", "Ethan Roseman" };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane5.setViewportView(jList3);
+        aliasesListPane.setViewportView(aliasesList);
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+        javax.swing.GroupLayout detailsPanelLayout = new javax.swing.GroupLayout(detailsPanel);
+        detailsPanel.setLayout(detailsPanelLayout);
+        detailsPanelLayout.setHorizontalGroup(
+            detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, detailsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(jScrollPane5)
-                    .addComponent(jScrollPane3)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel2)
+                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(accountsTablePane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(aliasesListPane)
+                    .addComponent(casesListPane)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, detailsPanelLayout.createSequentialGroup()
+                        .addComponent(resultNameLbl)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextField2, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE))
-                    .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(resultNameField, javax.swing.GroupLayout.DEFAULT_SIZE, 447, Short.MAX_VALUE))
+                    .addComponent(resultAliasesLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(resultAccountsLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(resultCasesLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
+        detailsPanelLayout.setVerticalGroup(
+            detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(detailsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(resultNameLbl)
+                    .addComponent(resultNameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(jLabel3)
+                .addComponent(resultAliasesLbl)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(aliasesListPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel4)
+                .addComponent(resultAccountsLbl)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 153, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(accountsTablePane, javax.swing.GroupLayout.PREFERRED_SIZE, 153, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel5)
+                .addComponent(resultCasesLbl)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 68, Short.MAX_VALUE)
+                .addComponent(casesListPane, javax.swing.GroupLayout.DEFAULT_SIZE, 118, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
-        jSplitPane2.setRightComponent(jPanel2);
+        splitPane.setRightComponent(detailsPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane2)
+            .addComponent(splitPane)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane2)
+            .addComponent(splitPane)
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton1ActionPerformed
+    private void searchNameRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchNameRadioActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jRadioButton1ActionPerformed
+    }//GEN-LAST:event_searchNameRadioActionPerformed
 
-    private void jTextField2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField2ActionPerformed
+    private void resultNameFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resultNameFieldActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField2ActionPerformed
+    }//GEN-LAST:event_resultNameFieldActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup buttonGroup1;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JDesktopPane jDesktopPane1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JList<String> jList2;
-    private javax.swing.JList<String> jList3;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JRadioButton jRadioButton1;
-    private javax.swing.JRadioButton jRadioButton2;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JScrollPane jScrollPane5;
-    private javax.swing.JSplitPane jSplitPane2;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTable jTable2;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
+    private javax.swing.JTable accountsTable;
+    private javax.swing.JScrollPane accountsTablePane;
+    private javax.swing.JList<String> aliasesList;
+    private javax.swing.JScrollPane aliasesListPane;
+    private javax.swing.JList<String> casesList;
+    private javax.swing.JScrollPane casesListPane;
+    private javax.swing.JPanel detailsPanel;
+    private javax.swing.JScrollPane filterResultsPane;
+    private javax.swing.JTable filterResultsTable;
+    private javax.swing.JLabel resultAccountsLbl;
+    private javax.swing.JLabel resultAliasesLbl;
+    private javax.swing.JLabel resultCasesLbl;
+    private javax.swing.JTextField resultNameField;
+    private javax.swing.JLabel resultNameLbl;
+    private javax.swing.JRadioButton searchAccountRadio;
+    private javax.swing.JButton searchBtn;
+    private javax.swing.ButtonGroup searchButtonGroup;
+    private javax.swing.JTextField searchField;
+    private javax.swing.JRadioButton searchNameRadio;
+    private javax.swing.JPanel searchPanel;
+    private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
 }
