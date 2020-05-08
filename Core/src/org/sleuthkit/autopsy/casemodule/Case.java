@@ -2150,6 +2150,7 @@ public class Case {
                     logger.log(
                         Level.INFO,
                         String.format("Skipping background load of file systems due to large number of images in case (%d)", images.size()));
+                    return;
                 }
 
                 checkIfCancelled();
