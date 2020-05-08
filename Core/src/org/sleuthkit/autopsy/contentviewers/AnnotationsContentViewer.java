@@ -21,15 +21,14 @@ package org.sleuthkit.autopsy.contentviewers;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JLabel;
+import javax.swing.text.EditorKit;
+import javax.swing.text.html.HTMLEditorKit;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
 
 import static org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -72,7 +71,7 @@ import org.jsoup.nodes.Element;
     "AnnotationsContentViewer.centralRepositoryEntryDataLabel.type=Type:",
     "AnnotationsContentViewer.centralRepositoryEntryDataLabel.comment=Comment:",
     "AnnotationsContentViewer.centralRepositoryEntryDataLabel.path=Path:",
-    "AnnotationsContentViewer.tagEntry.title=Tag Comments",
+    "AnnotationsContentViewer.tagEntry.title=Tags",
     "AnnotationsContentViewer.tagEntry.onContentEmpty=There are no tags for the selected content.",
     "AnnotationsContentViewer.tagEntry.onArtifactEmpty=There are no tags for the selected artifact.",
     "AnnotationsContentViewer.tagEntryDataLabel.tag=Tag:",
@@ -88,60 +87,18 @@ import org.jsoup.nodes.Element;
 })
 public class AnnotationsContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
-    private static final Logger logger = Logger.getLogger(AnnotationsContentViewer.class.getName());
+    private static class ItemEntry<T> {
 
-    private static final String EMPTY_HTML = "<html><head></head><body></body></html>";
-
-    private static final int DEFAULT_FONT_SIZE = new JLabel().getFont().getSize();
-    private static final int SUBHEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 12 / 11;
-    private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 14 / 11;
-    
-    private static final int DEFAULT_SUBSECTION_LEFT_PAD = DEFAULT_FONT_SIZE;
-
-    private static final String HEADER_STYLE = "font-size:" + HEADER_FONT_SIZE + "px;font-weight:bold;";
-    private static final String SUBHEADER_STYLE = "font-size:" + SUBHEADER_FONT_SIZE + "px;font-weight:bold;";
-    private static final String MESSAGE_STYLE = "font-size:" + DEFAULT_FONT_SIZE + "px;font-style:italic;";
-    private static final String CONTENT_STYLE = "font-size:" + DEFAULT_FONT_SIZE + "px;";
-
-    private static final int DEFAULT_TABLE_SPACING = DEFAULT_FONT_SIZE * 2;
-    private static final int DEFAULT_SECTION_SPACING = DEFAULT_FONT_SIZE;
-    private static final int DEFAULT_SUBSECTION_SPACING = DEFAULT_FONT_SIZE;
-
-    private static final List<ColumnEntry<Tag>> TAG_COLUMNS = Arrays.asList(
-            new ColumnEntry<>(Bundle.AnnotationsContentViewer_tagEntryDataLabel_tag(),
-                    (tag) -> (tag.getName() != null) ? tag.getName().getDisplayName() : null),
-            new ColumnEntry<>(Bundle.AnnotationsContentViewer_tagEntryDataLabel_tagUser(), (tag) -> tag.getUserName()),
-            new ColumnEntry<>(Bundle.AnnotationsContentViewer_tagEntryDataLabel_comment(), (tag) -> tag.getComment())
-    );
-
-    private static final List<ColumnEntry<BlackboardArtifact>> FILESET_HIT_COLUMNS = Arrays.asList(
-            new ColumnEntry<>(Bundle.AnnotationsContentViewer_fileHitEntry_setName(),
-                    (bba) -> tryGetAttribute(bba, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME)),
-            new ColumnEntry<>(Bundle.AnnotationsContentViewer_fileHitEntry_comment(),
-                    (bba) -> tryGetAttribute(bba, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT))
-    );
-
-    private static final List<ColumnEntry<CorrelationAttributeInstance>> CENTRAL_REPO_COMMENTS_COLUMNS = Arrays.asList(
-            new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_case(),
-                    cai -> (cai.getCorrelationCase() != null) ? cai.getCorrelationCase().getDisplayName() : null),
-            new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_type(),
-                    cai -> (cai.getCorrelationType() != null) ? cai.getCorrelationType().getDisplayName() : null),
-            new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_comment(), cai -> cai.getComment()),
-            new ColumnEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_path(), cai -> cai.getFilePath())
-    );
-
-    private static class ColumnEntry<T> {
-
-        private final String columnName;
+        private final String itemName;
         private final Function<T, String> valueRetriever;
 
-        ColumnEntry(String columnName, Function<T, String> valueRetriever) {
-            this.columnName = columnName;
+        ItemEntry(String itemName, Function<T, String> valueRetriever) {
+            this.itemName = itemName;
             this.valueRetriever = valueRetriever;
         }
 
-        String getColumnName() {
-            return columnName;
+        String getItemName() {
+            return itemName;
         }
 
         Function<T, String> getValueRetriever() {
@@ -153,12 +110,140 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         }
     }
 
+    private static class SectionConfig<T> {
+
+        private final String title;
+        private final String onEmpty;
+        private final List<ItemEntry<T>> attributes;
+        private final boolean isVerticalTable;
+
+        SectionConfig(String title, String onEmpty, List<ItemEntry<T>> attributes, boolean isVerticalTable) {
+            this.title = title;
+            this.onEmpty = onEmpty;
+            this.attributes = attributes;
+            this.isVerticalTable = isVerticalTable;
+        }
+
+        String getTitle() {
+            return title;
+        }
+
+        String getOnEmpty() {
+            return onEmpty;
+        }
+
+        List<ItemEntry<T>> getAttributes() {
+            return attributes;
+        }
+
+        boolean isIsVerticalTable() {
+            return isVerticalTable;
+        }
+    }
+
+    private static final Logger logger = Logger.getLogger(AnnotationsContentViewer.class.getName());
+
+    private static final String EMPTY_HTML = "<html><head></head><body></body></html>";
+
+    private static final int DEFAULT_FONT_SIZE = new JLabel().getFont().getSize();
+
+    // how big the subheader should be
+    private static final int SUBHEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 12 / 11;
+
+    // how big the header should be
+    private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 14 / 11;
+
+    // the subsection indent
+    private static final int DEFAULT_SUBSECTION_LEFT_PAD = DEFAULT_FONT_SIZE;
+
+    // spacing occurring after an item
+    private static final int DEFAULT_TABLE_SPACING = DEFAULT_FONT_SIZE;
+    private static final int DEFAULT_SECTION_SPACING = DEFAULT_FONT_SIZE * 2;
+    private static final int DEFAULT_SUBSECTION_SPACING = DEFAULT_FONT_SIZE / 2;
+    private static final int CELL_SPACING = DEFAULT_FONT_SIZE / 2;
+
+    // html stylesheet classnames for components
+    private static final String MESSAGE_CLASSNAME = "message";
+    private static final String SUBSECTION_CLASSNAME = "subsection";
+    private static final String SUBHEADER_CLASSNAME = "subheader";
+    private static final String SECTION_CLASSNAME = "section";
+    private static final String HEADER_CLASSNAME = "header";
+    private static final String ENTRY_TABLE_CLASSNAME = "entry-table";
+    private static final String VERTICAL_TABLE_CLASSNAME = "vertical-table";
+
+    // additional styling for components
+    private static final String STYLE_SHEET_RULE
+            = String.format(" .%s { font-size: %dpx;font-style:italic; margin: 0px; padding: 0px; } ", MESSAGE_CLASSNAME, DEFAULT_FONT_SIZE)
+            + String.format(" .%s {font-size:%dpx;font-weight:bold; margin: 0px; margin-top: %dpx; padding: 0px; } ", SUBHEADER_CLASSNAME, SUBHEADER_FONT_SIZE, DEFAULT_SUBSECTION_SPACING)
+            + String.format(" .%s { font-size:%dpx;font-weight:bold; margin: 0px; padding: 0px; } ", HEADER_CLASSNAME, HEADER_FONT_SIZE)
+            + String.format(" td { vertical-align: top; font-size:%dpx; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px;} ", DEFAULT_FONT_SIZE, CELL_SPACING)
+            + String.format(" th { vertical-align: top; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px} ", DEFAULT_FONT_SIZE, CELL_SPACING)
+            + String.format(" .%s { margin: %dpx 0px; padding-left: %dpx; } ", SUBSECTION_CLASSNAME, DEFAULT_SUBSECTION_SPACING, DEFAULT_SUBSECTION_LEFT_PAD)
+            + String.format(" .%s { margin-bottom: %dpx; } ", SECTION_CLASSNAME, DEFAULT_SECTION_SPACING);
+
+    // describing table values for a tag
+    private static final List<ItemEntry<Tag>> TAG_ENTRIES = Arrays.asList(
+            new ItemEntry<>(Bundle.AnnotationsContentViewer_tagEntryDataLabel_tag(),
+                    (tag) -> (tag.getName() != null) ? tag.getName().getDisplayName() : null),
+            new ItemEntry<>(Bundle.AnnotationsContentViewer_tagEntryDataLabel_tagUser(), (tag) -> tag.getUserName()),
+            new ItemEntry<>(Bundle.AnnotationsContentViewer_tagEntryDataLabel_comment(), (tag) -> tag.getComment())
+    );
+
+    private static final SectionConfig<Tag> ARTIFACT_TAG_CONFIG = new SectionConfig<>(
+            Bundle.AnnotationsContentViewer_tagEntry_title(),
+            Bundle.AnnotationsContentViewer_tagEntry_onArtifactEmpty(),
+            TAG_ENTRIES, true);
+
+    private static final SectionConfig<Tag> CONTENT_TAG_CONFIG = new SectionConfig<>(
+            Bundle.AnnotationsContentViewer_tagEntry_title(),
+            Bundle.AnnotationsContentViewer_tagEntry_onContentEmpty(),
+            TAG_ENTRIES, true);
+
+    // file set attributes and table configurations
+    private static final List<ItemEntry<BlackboardArtifact>> FILESET_HIT_ENTRIES = Arrays.asList(
+            new ItemEntry<>(Bundle.AnnotationsContentViewer_fileHitEntry_setName(),
+                    (bba) -> tryGetAttribute(bba, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME)),
+            new ItemEntry<>(Bundle.AnnotationsContentViewer_fileHitEntry_comment(),
+                    (bba) -> tryGetAttribute(bba, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT))
+    );
+
+    private static final SectionConfig<BlackboardArtifact> INTERESTING_FILE_CONFIG = new SectionConfig<>(
+            Bundle.AnnotationsContentViewer_fileHitEntry_interestingFileHitTitle(),
+            Bundle.AnnotationsContentViewer_fileHitEntry_onInterestingFileHitEmpty(),
+            FILESET_HIT_ENTRIES, false);
+
+    private static final SectionConfig<BlackboardArtifact> HASHSET_CONFIG = new SectionConfig<>(
+            Bundle.AnnotationsContentViewer_fileHitEntry_hashSetHitTitle(),
+            Bundle.AnnotationsContentViewer_fileHitEntry_onHashSetHitEmpty(),
+            FILESET_HIT_ENTRIES, false);
+
+    // central repository attributes and table configuration
+    private static final List<ItemEntry<CorrelationAttributeInstance>> CR_COMMENTS_ENTRIES = Arrays.asList(
+            new ItemEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_case(),
+                    cai -> (cai.getCorrelationCase() != null) ? cai.getCorrelationCase().getDisplayName() : null),
+            new ItemEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_type(),
+                    cai -> (cai.getCorrelationType() != null) ? cai.getCorrelationType().getDisplayName() : null),
+            new ItemEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_comment(), cai -> cai.getComment()),
+            new ItemEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_path(), cai -> cai.getFilePath())
+    );
+
+    private static final SectionConfig<CorrelationAttributeInstance> CR_COMMENTS_CONFIG = new SectionConfig<>(
+            Bundle.AnnotationsContentViewer_centralRepositoryEntry_title(),
+            Bundle.AnnotationsContentViewer_centralRepositoryEntry_onEmpty(),
+            CR_COMMENTS_ENTRIES, true);
+
     /**
      * Creates an instance of AnnotationsContentViewer.
      */
     public AnnotationsContentViewer() {
         initComponents();
         Utilities.configureTextPaneAsHtml(jTextPane1);
+        // get html editor kit and apply additional style rules
+        EditorKit editorKit = jTextPane1.getEditorKit();
+        if (editorKit instanceof HTMLEditorKit) {
+            HTMLEditorKit htmlKit = (HTMLEditorKit) editorKit;
+            htmlKit.getStyleSheet().addRule(STYLE_SHEET_RULE);
+        }
     }
 
     @Override
@@ -198,81 +283,79 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         if (artifact != null) {
             renderArtifact(body, artifact, sourceFile);
         } else {
-            renderAbstractFile(body, sourceFile, false);
+            renderContent(body, sourceFile, false);
         }
 
         jTextPane1.setText(html.html());
         jTextPane1.setCaretPosition(0);
     }
 
+    /**
+     * Renders annotations for an artifact.
+     *
+     * @param parent        The html element to render content int.
+     * @param bba           The blackboard artifact to render.
+     * @param sourceContent The content from which the blackboard artifact
+     *                      comes.
+     */
     private static void renderArtifact(Element parent, BlackboardArtifact bba, Content sourceContent) {
-        appendEntries(parent,
-            Bundle.AnnotationsContentViewer_tagEntry_title(),
-            Bundle.AnnotationsContentViewer_tagEntry_onArtifactEmpty(),
-            getTags(bba), TAG_COLUMNS, false, true);
+        appendEntries(parent, ARTIFACT_TAG_CONFIG, getTags(bba), false);
 
-        if (sourceContent instanceof AbstractFile) {
+        if (sourceContent instanceof AbstractFile && CentralRepository.isEnabled()) {
             AbstractFile sourceFile = (AbstractFile) sourceContent;
-
-            if (CentralRepository.isEnabled()) {
-                List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(bba, sourceFile);
-                appendEntries(parent,
-                    Bundle.AnnotationsContentViewer_centralRepositoryEntry_title(),
-                    Bundle.AnnotationsContentViewer_centralRepositoryEntry_onEmpty(),
-                    centralRepoComments, CENTRAL_REPO_COMMENTS_COLUMNS, false, true);
-            }
+            List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(bba, sourceFile);
+            appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, false);
         }
 
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() == bba.getArtifactTypeID()) {
-            appendEntries(parent,
-                Bundle.AnnotationsContentViewer_fileHitEntry_hashSetHitTitle(),
-                Bundle.AnnotationsContentViewer_fileHitEntry_onHashSetHitEmpty(),
-                Arrays.asList(bba), FILESET_HIT_COLUMNS, false, false);
+            appendEntries(parent, HASHSET_CONFIG, Arrays.asList(bba), false);
         }
 
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == bba.getArtifactTypeID()) {
-            appendEntries(parent,
-                Bundle.AnnotationsContentViewer_fileHitEntry_interestingFileHitTitle(),
-                Bundle.AnnotationsContentViewer_fileHitEntry_onInterestingFileHitEmpty(),
-                Arrays.asList(bba), FILESET_HIT_COLUMNS, false, false);
+            appendEntries(parent, INTERESTING_FILE_CONFIG, Arrays.asList(bba), false);
         }
 
         Element sourceFileSection = appendSection(parent, Bundle.AnnotationsContentViewer_sourceFile_title());
-        renderAbstractFile(sourceFileSection, sourceContent, true);
+        renderContent(sourceFileSection, sourceContent, true);
     }
 
-    private static void renderAbstractFile(Element parent, Content sourceContent, boolean isSubheader) {
-        appendEntries(parent,
-            Bundle.AnnotationsContentViewer_tagEntry_title(),
-            Bundle.AnnotationsContentViewer_tagEntry_onContentEmpty(),
-            getTags(sourceContent), TAG_COLUMNS, isSubheader, true);
+    /**
+     * Renders annotations for a content item.
+     *
+     * @param parent        The parent within which to render.
+     * @param sourceContent The content for which annotations will be gathered.
+     * @param isSubheader   True if this section should be rendered as a
+     *                      subheader as opposed to a top-level header.
+     */
+    private static void renderContent(Element parent, Content sourceContent, boolean isSubheader) {
+        appendEntries(parent, CONTENT_TAG_CONFIG, getTags(sourceContent), isSubheader);
 
         if (sourceContent instanceof AbstractFile) {
             AbstractFile sourceFile = (AbstractFile) sourceContent;
 
             if (CentralRepository.isEnabled()) {
                 List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(null, sourceFile);
-                appendEntries(parent,
-                    Bundle.AnnotationsContentViewer_centralRepositoryEntry_title(),
-                    Bundle.AnnotationsContentViewer_centralRepositoryEntry_onEmpty(),
-                    centralRepoComments, CENTRAL_REPO_COMMENTS_COLUMNS, isSubheader, true);
+                appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, isSubheader);
             }
 
-            appendEntries(parent,
-                Bundle.AnnotationsContentViewer_fileHitEntry_hashSetHitTitle(),
-                Bundle.AnnotationsContentViewer_fileHitEntry_onHashSetHitEmpty(),
-                getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT),
-                FILESET_HIT_COLUMNS, isSubheader, false);
+            appendEntries(parent, HASHSET_CONFIG,
+                    getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT),
+                    isSubheader);
 
-            appendEntries(parent,
-                Bundle.AnnotationsContentViewer_fileHitEntry_interestingFileHitTitle(),
-                Bundle.AnnotationsContentViewer_fileHitEntry_onInterestingFileHitEmpty(),
-                getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT),
-                FILESET_HIT_COLUMNS, isSubheader, false);
+            appendEntries(parent, INTERESTING_FILE_CONFIG,
+                    getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT),
+                    isSubheader);
         }
 
     }
 
+    /**
+     * Retrieves tags associated with a content item.
+     *
+     * @param sourceContent The content for which to gather content.
+     *
+     * @return The Tags associated with this item.
+     */
     private static List<ContentTag> getTags(Content sourceContent) {
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -285,6 +368,12 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         return new ArrayList<>();
     }
 
+    /**
+     *Retrieves tags for blackboard artifact tags.
+     * @param bba   The blackboard artifact for which to retrieve tags.
+     *
+     * @return The found tags.
+     */
     private static List<BlackboardArtifactTag> getTags(BlackboardArtifact bba) {
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -297,6 +386,12 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         return new ArrayList<>();
     }
 
+    /**
+     * Retrieves the blackboard artifacts for a source file matching a certain type.
+     * @param sourceFile The source file for which to fetch artifacts.
+     * @param type The type of blackboard artifact to fetch.
+     * @return The artifacts found matching this type.
+     */
     private static List<BlackboardArtifact> getFileSetHits(AbstractFile sourceFile, BlackboardArtifact.ARTIFACT_TYPE type) {
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -308,8 +403,6 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         }
         return new ArrayList<>();
     }
-
-
 
     /**
      * Attempts to retrieve the attribute of a particular type from a blackboard
@@ -340,11 +433,12 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     }
 
     /**
-     * Populate the "Central Repository Comments" section with data.
+     * Gets the "Central Repository Comments" section with data.
      *
      * @param artifact   A selected artifact (can be null).
      * @param sourceFile A selected file, or a source file of the selected
      *                   artifact.
+     * @return The Correlation Attribute Instances associated with the artifact and/or sourcefile.
      */
     private static List<CorrelationAttributeInstance> getCentralRepositoryData(BlackboardArtifact artifact, AbstractFile sourceFile) {
         List<CorrelationAttributeInstance> toReturn = new ArrayList<>();
@@ -393,40 +487,73 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
         return toReturn;
     }
-    
-    
-    private static <T> void appendEntries(Element parent, String title, String errorMessage, List<? extends T> items,
-            List<ColumnEntry<T>> fields, boolean isSubsection, boolean isVerticalTable) {
 
-        Element sectionDiv = (isSubsection) ? appendSubsection(parent, title) : appendSection(parent, title);
+    /**
+     * Append entries to the parent element in the annotations viewer.  Entries will be formatted as a table 
+     * in the format specified in the SectionConfig.
+     * @param <T> The item type.
+     * @param parent The parent element for which the entries will be attached.
+     * @param config The display configuration for this entry type (i.e. table type, name, if data is not present).
+     * @param items The items to display.
+     * @param isSubsection Whether or not this should be displayed as a subsection.  If not displayed as a top-level section.
+     */
+    private static <T> void appendEntries(Element parent, SectionConfig<T> config, List<? extends T> items,
+            boolean isSubsection) {
+
+        Element sectionDiv = (isSubsection) ? appendSubsection(parent, config.getTitle()) : appendSection(parent, config.getTitle());
 
         if (items == null || items.isEmpty()) {
-            appendMessage(sectionDiv, errorMessage);
-        } else if (isVerticalTable) {
-            appendVerticalEntryTables(sectionDiv, items, fields);
+            appendMessage(sectionDiv, config.getOnEmpty());
+        } else if (config.isIsVerticalTable()) {
+            appendVerticalEntryTables(sectionDiv, items, config.getAttributes());
         } else {
-            appendEntryTable(sectionDiv, items, fields);
+            appendEntryTable(sectionDiv, items, config.getAttributes());
         }
     }
 
-    private static <T> Element appendVerticalEntryTables(Element parent, List<? extends T> items, List<ColumnEntry<T>> rowHeaders) {
-        items.stream()
-                .filter(item -> item != null)
-                .forEach((item) -> {
-                    List<List<String>> tableData = rowHeaders.stream()
-                            .map(row -> Arrays.asList(row.getColumnName(), row.retrieveValue(item)))
-                            .collect(Collectors.toList());
+    /**
+     * Appends a table where items are displayed in rows of key-value pairs.
+     * @param <T>
+     * @param parent The parent to append the table.
+     * @param items The items to process into a series of tables.
+     * @param rowHeaders The keys and the means to process items in order to get key-value pairs.
+     * @return The parent element provided as parameter.
+     */
+    private static <T> Element appendVerticalEntryTables(Element parent, List<? extends T> items, List<ItemEntry<T>> rowHeaders) {
+        boolean isFirst = true;
+        for (T item : items) {
+            if (item == null) {
+                continue;
+            }
 
-                    Element childTable = appendTable(parent, 2, tableData, null);
-                    childTable.attr("style", String.format("margin-bottom: %dpx", DEFAULT_TABLE_SPACING));
-                });
+            List<List<String>> tableData = rowHeaders.stream()
+                    .map(row -> Arrays.asList(row.getItemName(), row.retrieveValue(item)))
+                    .collect(Collectors.toList());
+
+            Element childTable = appendTable(parent, 2, tableData, null);
+            childTable.attr("class", VERTICAL_TABLE_CLASSNAME);
+
+            if (isFirst) {
+                isFirst = false;
+            } else {
+                childTable.attr("style", String.format("margin-top: %dpx;", DEFAULT_TABLE_SPACING));
+            }
+        }
 
         return parent;
     }
 
-    private static <T> Element appendEntryTable(Element parent, List<? extends T> items, List<ColumnEntry<T>> columns) {
+    /**
+     * Appends a table with column headers to the parent element.
+     * @param <T> The item type.
+     * @param parent The element that will have this table appended to it.
+     * @param items The items to place as a row in this table.
+     * @param columns The columns for this table and the means to process each data item to retrieve a cell.
+     * @return The generated table element.
+     */
+    private static <T> Element appendEntryTable(Element parent, List<? extends T> items, List<ItemEntry<T>> columns) {
         int columnNumber = columns.size();
-        List<String> columnHeaders = columns.stream().map(c -> c.getColumnName()).collect(Collectors.toList());
+        List<String> columnHeaders = columns.stream().map(c -> c.getItemName()).collect(Collectors.toList());
         List<List<String>> rows = items.stream()
                 .filter(r -> r != null)
                 .map(r -> {
@@ -437,14 +564,22 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                 .collect(Collectors.toList());
 
         Element table = appendTable(parent, columnNumber, rows, columnHeaders);
-        table.attr("style", String.format("margin-bottom: %dpx", DEFAULT_TABLE_SPACING));
+        table.attr("class", ENTRY_TABLE_CLASSNAME);
         return table;
     }
 
+    /**
+     * Appends a generic table to the parent element.
+     * @param parent The parent element that will have a table appended to it.
+     * @param columnNumber The number of columns to append.
+     * @param content The content in content.get(row).get(column) format.
+     * @param columnHeaders The column headers or null if no column headers should be created.
+     * @return 
+     */
     private static Element appendTable(Element parent, int columnNumber, List<List<String>> content, List<String> columnHeaders) {
         Element table = parent.appendElement("table");
         if (columnHeaders != null && !columnHeaders.isEmpty()) {
-            Element header = parent.appendElement("thead");
+            Element header = table.appendElement("thead");
             appendRow(header, columnHeaders, columnNumber, true);
         }
         Element tableBody = table.appendElement("tbody");
@@ -460,8 +595,6 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         for (int i = 0; i < columnNumber; i++) {
             Element cell = row.appendElement(cellType);
             if (data != null && i < data.size()) {
-                cell.attr("valign", "top");
-                cell.attr("style", CONTENT_STYLE);
                 cell.text(StringUtils.isEmpty(data.get(i)) ? "" : data.get(i));
             }
         }
@@ -470,26 +603,26 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     private static Element appendSection(Element parent, String headerText) {
         Element sectionDiv = parent.appendElement("div");
-        sectionDiv.attr("style", String.format("margin-bottom: %dpx;", DEFAULT_SECTION_SPACING));
+        sectionDiv.attr("class", SECTION_CLASSNAME);
         Element header = sectionDiv.appendElement("h1");
         header.text(headerText);
-        header.attr("style", HEADER_STYLE);
+        header.attr("class", HEADER_CLASSNAME);
         return sectionDiv;
     }
 
     private static Element appendSubsection(Element parent, String headerText) {
         Element subsectionDiv = parent.appendElement("div");
-        subsectionDiv.attr("style", String.format("margin-bottom: %dpx; padding-left: %dpx;", DEFAULT_SUBSECTION_SPACING, DEFAULT_SUBSECTION_LEFT_PAD));
+        subsectionDiv.attr("class", SUBSECTION_CLASSNAME);
         Element header = subsectionDiv.appendElement("h2");
         header.text(headerText);
-        header.attr("style", SUBHEADER_STYLE);
+        header.attr("class", SUBHEADER_CLASSNAME);
         return subsectionDiv;
     }
 
     private static Element appendMessage(Element parent, String message) {
         Element messageEl = parent.appendElement("p");
         messageEl.text(message);
-        messageEl.attr("style", MESSAGE_STYLE);
+        messageEl.attr("class", MESSAGE_CLASSNAME);
         return messageEl;
     }
 
