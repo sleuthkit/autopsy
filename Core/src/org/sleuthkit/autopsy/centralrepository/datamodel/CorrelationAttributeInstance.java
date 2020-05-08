@@ -77,7 +77,7 @@ public class CorrelationAttributeInstance implements Serializable {
     ) throws CentralRepoException, CorrelationAttributeNormalizationException {
          this(type, value, -1, eamCase, eamDataSource, filePath, comment, knownStatus, fileObjectId, (long)-1);
     }
-    CorrelationAttributeInstance(
+    public CorrelationAttributeInstance(
             Type type,
             String value,
             int instanceId,

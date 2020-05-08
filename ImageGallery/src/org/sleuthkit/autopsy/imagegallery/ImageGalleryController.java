@@ -79,6 +79,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TagSet;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -107,6 +108,8 @@ public final class ImageGalleryController {
             Case.Events.CONTENT_TAG_DELETED,
             Case.Events.DATA_SOURCE_DELETED
     );
+    
+    private static final String CATEGORY_TAG_SET_PREFIX = "Project VIC";
 
     /*
      * There is an image gallery controller per case. It is created during the
@@ -228,14 +231,16 @@ public final class ImageGalleryController {
     void startUp() throws TskCoreException {
         selectionModel = new FileIDSelectionModel(this);
         thumbnailCache = new ThumbnailCache(this);
+
+        TagSet categoryTagSet = getCategoryTagSet();
         /*
          * TODO (JIRA-5212): The next two lines need to be executed in this
          * order. Why? This suggests there is some inappropriate coupling
          * between the DrawableDB and GroupManager classes.
          */
         groupManager = new GroupManager(this);
-        drawableDB = DrawableDB.getDrawableDB(this);
-        categoryManager = new CategoryManager(this);
+        drawableDB = DrawableDB.getDrawableDB(this, categoryTagSet);
+        categoryManager = new CategoryManager(this, categoryTagSet);
         tagsManager = new DrawableTagsManager(this);
         tagsManager.registerListener(groupManager);
         tagsManager.registerListener(categoryManager);
@@ -719,6 +724,28 @@ public final class ImageGalleryController {
      */
     private static boolean isDrawableAndNotKnown(AbstractFile abstractFile) throws FileTypeDetector.FileTypeDetectorInitException {
         return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && FileTypeUtils.isDrawable(abstractFile);
+    }
+    
+    /**
+     * Returns the TagSet with the image gallery categories.
+     * 
+     * @return Category TagSet.
+     * 
+     * @throws TskCoreException 
+     */
+    private TagSet getCategoryTagSet() throws TskCoreException {
+        List<TagSet> tagSetList = getCaseDatabase().getTaggingManager().getTagSets();
+        if (tagSetList != null && !tagSetList.isEmpty()) {
+            for (TagSet set : tagSetList) {
+                if (set.getName().startsWith(CATEGORY_TAG_SET_PREFIX)) {
+                    return set;
+                }
+            }
+            // If we get to here the Project VIC Test set wasn't found;
+            throw new TskCoreException("Error loading Project VIC tag set: Tag set not found.");
+        } else {
+            throw new TskCoreException("Error loading Project VIC tag set: Tag set not found.");
+        }
     }
 
     /**

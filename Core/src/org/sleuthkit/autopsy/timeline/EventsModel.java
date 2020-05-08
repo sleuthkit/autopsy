@@ -657,6 +657,17 @@ public final class EventsModel {
         }
         return postTagsDeleted(updatedEventIDs);
     }
+    
+    /**
+     * Updates the events model for a data source added event.
+     *
+     * @throws TskCoreException If there is an error reading model data from the
+     *                          case database.
+     */
+    synchronized void handleDataSourceAdded() throws TskCoreException {
+        populateDataSourcesCache();
+        invalidateCaches(null);
+    }
 
     /**
      * Updates the events model for an artifact tag deleted event and publishes
@@ -782,7 +793,6 @@ public final class EventsModel {
      * @throws TskCoreException
      */
     public synchronized void invalidateCaches(Collection<Long> updatedEventIDs) throws TskCoreException {
-        populateDataSourcesCache();
         minEventTimeCache.invalidateAll();
         maxEventTimeCache.invalidateAll();
         idsToEventsCache.invalidateAll(emptyIfNull(updatedEventIDs));
