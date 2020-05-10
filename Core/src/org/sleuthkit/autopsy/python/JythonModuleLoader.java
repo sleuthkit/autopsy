@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
  * Finds and loads Autopsy modules written using the Jython variant of the
@@ -68,6 +69,16 @@ public final class JythonModuleLoader {
      */
     public static synchronized List<GeneralReportModule> getGeneralReportModules() {
         return getInterfaceImplementations(new GeneralReportModuleDefFilter(), GeneralReportModule.class);
+    }
+    
+    /**
+     * Get data source processors modules implemented using Jython.
+     *
+     * @return A list of objects that implement the DataSourceProcessor
+     *         interface.
+     */
+    public static synchronized List<DataSourceProcessor> getDataSourceProcessorModules() {
+        return getInterfaceImplementations(new DataSourceProcessorDefFilter(), DataSourceProcessor.class);
     }
     @Messages({"JythonModuleLoader.pythonInterpreterError.title=Python Modules",
                 "JythonModuleLoader.pythonInterpreterError.msg=Failed to load python modules, See log for more details"})
@@ -179,4 +190,14 @@ public final class JythonModuleLoader {
             return (line.contains("GeneralReportModuleAdapter") || line.contains("GeneralReportModule")); //NON-NLS
         }
     }
+    
+    private static class DataSourceProcessorDefFilter implements LineFilter {
+
+        @Override
+        public boolean accept(String line) {
+            return (line.contains("DataSourceProcessor")); //NON-NLS
+        }
+    }
+    
+    
 }

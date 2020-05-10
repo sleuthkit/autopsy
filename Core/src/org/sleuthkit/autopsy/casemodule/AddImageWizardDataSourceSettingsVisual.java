@@ -33,6 +33,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
 /**
  * visual component for the first panel of add image wizard. Allows the user to
@@ -70,6 +71,14 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
      */
     private void discoverDataSourceProcessors() {
         for (DataSourceProcessor dsProcessor : Lookup.getDefault().lookupAll(DataSourceProcessor.class)) {
+            if (!datasourceProcessorsMap.containsKey(dsProcessor.getDataSourceType())) {
+                datasourceProcessorsMap.put(dsProcessor.getDataSourceType(), dsProcessor);
+            } else {
+                logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = {0}", dsProcessor.getDataSourceType()); //NON-NLS
+            }
+        }
+        
+        for (DataSourceProcessor dsProcessor : JythonModuleLoader.getDataSourceProcessorModules()) {
             if (!datasourceProcessorsMap.containsKey(dsProcessor.getDataSourceType())) {
                 datasourceProcessorsMap.put(dsProcessor.getDataSourceType(), dsProcessor);
             } else {
