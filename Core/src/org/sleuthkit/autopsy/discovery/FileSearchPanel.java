@@ -583,9 +583,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * Reset the panel to its initial configuration.
      */
     void resetPanel() {
-
-        searchButton.setEnabled(false);
-
         // Set up the filters
         setUpDataSourceFilter();
         setUpFrequencyFilter();
@@ -1099,8 +1096,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * The settings are valid so enable the Search button
      */
     private void setValid() {
-        errorLabel.setText("");
-        searchButton.setEnabled(true);
+        firePropertyChange("FilterError", null, null);
     }
 
     /**
@@ -1110,8 +1106,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * @param error
      */
     private void setInvalid(String error) {
-        errorLabel.setText(error);
-        searchButton.setEnabled(false);
+        firePropertyChange("FilterError", error, error);
     }
 
     /**
@@ -1173,7 +1168,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         includeRadioButton = new javax.swing.JRadioButton();
         javax.swing.JPanel parentTextPanel = new javax.swing.JPanel();
         parentTextField = new javax.swing.JTextField();
-        searchButton = new javax.swing.JButton();
         javax.swing.JPanel sortingPanel = new javax.swing.JPanel();
         groupByCombobox = new javax.swing.JComboBox<>();
         orderByCombobox = new javax.swing.JComboBox<>();
@@ -1181,8 +1175,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         javax.swing.JLabel orderByLabel = new javax.swing.JLabel();
         javax.swing.JLabel groupByLabel = new javax.swing.JLabel();
         groupSortingComboBox = new javax.swing.JComboBox<>();
-        errorLabel = new javax.swing.JLabel();
-        cancelButton = new javax.swing.JButton();
         stepTwoLabel = new javax.swing.JLabel();
         javax.swing.JLabel stepThreeLabel = new javax.swing.JLabel();
 
@@ -1664,13 +1656,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         filtersScrollPane.setViewportView(filtersPanel);
 
-        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.searchButton.text")); // NOI18N
-        searchButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                searchButtonActionPerformed(evt);
-            }
-        });
-
         sortingPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.sortingPanel.border.title"))); // NOI18N
         sortingPanel.setPreferredSize(new java.awt.Dimension(345, 112));
 
@@ -1717,16 +1702,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                 .addContainerGap())
         );
 
-        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
-
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.cancelButton.text")); // NOI18N
-        cancelButton.setEnabled(false);
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelButtonActionPerformed(evt);
-            }
-        });
-
         org.openide.awt.Mnemonics.setLocalizedText(stepThreeLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.stepThreeLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -1741,65 +1716,25 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                         .addContainerGap())
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cancelButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(searchButton))
                             .addComponent(stepThreeLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(filtersScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(sortingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 309, Short.MAX_VALUE))
                         .addGap(6, 6, 6))))
         );
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {cancelButton, searchButton});
-
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(6, 6, 6)
                 .addComponent(stepTwoLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 207, Short.MAX_VALUE)
+                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 181, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(stepThreeLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sortingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(cancelButton)
-                        .addComponent(searchButton)))
-                .addGap(6, 6, 6))
+                .addGap(64, 64, 64))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        // Get the selected filters
-        List<FileSearchFiltering.FileFilter> filters = getFilters();
-        enableSearch(false);
-        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.SearchStartedEvent(fileType));
-
-        // Get the grouping attribute and group sorting method
-        FileSearch.AttributeType groupingAttr = getGroupingAttribute();
-        FileGroup.GroupSortingAlgorithm groupSortAlgorithm = getGroupSortingMethod();
-
-        // Get the file sorting method
-        FileSorter.SortingMethod fileSort = getFileSortingMethod();
-        CentralRepository centralRepoDb = null;
-        if (CentralRepository.isEnabled()) {
-            try {
-                centralRepoDb = CentralRepository.getInstance();
-            } catch (CentralRepoException ex) {
-                centralRepoDb = null;
-                logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for File Discovery", ex);
-            }
-        }
-        searchWorker = new SearchWorker(centralRepoDb, filters, groupingAttr, groupSortAlgorithm, fileSort);
-        searchWorker.execute();
-    }//GEN-LAST:event_searchButtonActionPerformed
 
     /**
      * Set the enabled status of the search controls.
@@ -1829,8 +1764,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                     break;
             }
         }
-        searchButton.setEnabled(enabled);
-        cancelButton.setEnabled(!enabled);
         orderByCombobox.setEnabled(enabled);
         groupByCombobox.setEnabled(enabled);
         groupSortingComboBox.setEnabled(enabled);
@@ -1915,10 +1848,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         dataSourceList.setEnabled(dataSourceCheckbox.isSelected());
     }//GEN-LAST:event_dataSourceCheckboxActionPerformed
 
-    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        cancelSearch();
-    }//GEN-LAST:event_cancelButtonActionPerformed
-
     private void hashSetCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hashSetCheckboxActionPerformed
         hashSetList.setEnabled(hashSetCheckbox.isSelected());
     }//GEN-LAST:event_hashSetCheckboxActionPerformed
@@ -1942,7 +1871,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
-    private javax.swing.JButton cancelButton;
     private javax.swing.JCheckBox crFrequencyCheckbox;
     private javax.swing.JList<Frequency> crFrequencyList;
     private javax.swing.JScrollPane crFrequencyScrollPane;
@@ -1950,7 +1878,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JList<DataSourceItem> dataSourceList;
     private javax.swing.JScrollPane dataSourceScrollPane;
     private javax.swing.JButton deleteButton;
-    private javax.swing.JLabel errorLabel;
     private javax.swing.JRadioButton excludeRadioButton;
     private javax.swing.JRadioButton fullRadioButton;
     private javax.swing.JComboBox<GroupingAttributeType> groupByCombobox;
@@ -1978,7 +1905,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JCheckBox scoreCheckbox;
     private javax.swing.JList<Score> scoreList;
     private javax.swing.JScrollPane scoreScrollPane;
-    private javax.swing.JButton searchButton;
     private javax.swing.JCheckBox sizeCheckbox;
     private javax.swing.JList<FileSize> sizeList;
     private javax.swing.JScrollPane sizeScrollPane;

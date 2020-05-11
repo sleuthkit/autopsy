@@ -42,8 +42,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Class to open the Discovery top component. Allows the user to run
- * searches and see results.
+ * Class to open the Discovery top component. Allows the user to run searches
+ * and see results.
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.newpackage.OpenDiscoveryAction")
 @ActionReferences(value = {
@@ -75,17 +75,19 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
     @Override
     @SuppressWarnings("fallthrough")
     public void performAction() {
-        final DiscoveryTopComponent tc = DiscoveryTopComponent.getTopComponent();
-        if (tc != null) {
-            if (tc.isOpened() == false) {
-                tc.open();
-                tc.updateSearchSettings();
-                displayErrorMessage(tc);
-            }
-            tc.toFront();
-            tc.requestActive();
-
-        }
+        final DiscoveryDialog discDialog = new DiscoveryDialog();
+        discDialog.setVisible(true);
+//        final DiscoveryTopComponent tc = DiscoveryTopComponent.getTopComponent();
+//        if (tc != null) {
+//            if (tc.isOpened() == false) {
+//                tc.open();
+//                tc.updateSearchSettings();
+//                displayErrorMessage(tc);
+//            }
+//            tc.toFront();
+//            tc.requestActive();
+//
+//        }
     }
 
     /**

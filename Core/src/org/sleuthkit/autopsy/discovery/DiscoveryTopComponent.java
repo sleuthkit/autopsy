@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
-import com.google.common.eventbus.Subscribe;
-import java.awt.Color;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.SwingUtilities;
@@ -47,8 +45,6 @@ public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
     private static final String PREFERRED_ID = "DiscoveryTopComponent"; // NON-NLS
-    private static final Color SELECTED_COLOR = new Color(216, 230, 242);
-    private static final Color UNSELECTED_COLOR = new Color(240, 240, 240);
     private final FileSearchPanel fileSearchPanel;
     private final GroupListPanel groupListPanel;
     private final DataContentPanel dataContentPanel;
@@ -65,8 +61,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         dataContentPanel = DataContentPanel.createInstance();
         resultsPanel = new ResultsPanel();
         groupListPanel = new GroupListPanel();
-        leftSplitPane.setLeftComponent(fileSearchPanel);
-        leftSplitPane.setRightComponent(groupListPanel);
+        mainSplitPane.setLeftComponent(groupListPanel);
         rightSplitPane.setTopComponent(resultsPanel);
         rightSplitPane.setBottomComponent(dataContentPanel);
         //add list selection listener so the content viewer will be updated with the selected file
@@ -106,25 +101,6 @@ public final class DiscoveryTopComponent extends TopComponent {
         groupListPanel.resetGroupList();
     }
 
-    /**
-     * Update the search settings to a default state.
-     */
-    void updateSearchSettings() {
-        resetTopComponent();
-        fileSearchPanel.resetPanel();
-        imagesButton.setSelected(true);
-        imagesButton.setEnabled(false);
-        imagesButton.setBackground(SELECTED_COLOR);
-        imagesButton.setForeground(Color.BLACK);
-        videosButton.setSelected(false);
-        videosButton.setEnabled(true);
-        videosButton.setBackground(UNSELECTED_COLOR);
-        documentsButton.setSelected(false);
-        documentsButton.setEnabled(true);
-        documentsButton.setBackground(UNSELECTED_COLOR);
-        fileSearchPanel.setSelectedType(FileSearchData.FileType.IMAGE);
-    }
-
     @Override
     public void componentOpened() {
         super.componentOpened();
@@ -154,26 +130,14 @@ public final class DiscoveryTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        javax.swing.JSplitPane mainSplitPane = new javax.swing.JSplitPane();
-        leftSplitPane = new javax.swing.JSplitPane();
+        mainSplitPane = new javax.swing.JSplitPane();
         rightSplitPane = new javax.swing.JSplitPane();
-        javax.swing.JPanel toolBarPanel = new javax.swing.JPanel();
-        imagesButton = new javax.swing.JButton();
-        javax.swing.JLabel stepOneLabel = new javax.swing.JLabel();
-        videosButton = new javax.swing.JButton();
-        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(119, 0), new java.awt.Dimension(119, 0), new java.awt.Dimension(119, 32767));
-        documentsButton = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(1400, 900));
         setLayout(new java.awt.BorderLayout());
 
         mainSplitPane.setDividerLocation(450);
         mainSplitPane.setPreferredSize(new java.awt.Dimension(1400, 828));
-
-        leftSplitPane.setDividerLocation(325);
-        leftSplitPane.setToolTipText("");
-        leftSplitPane.setPreferredSize(new java.awt.Dimension(400, 828));
-        mainSplitPane.setLeftComponent(leftSplitPane);
 
         rightSplitPane.setDividerLocation(475);
         rightSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
@@ -182,195 +146,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         mainSplitPane.setRightComponent(rightSplitPane);
 
         add(mainSplitPane, java.awt.BorderLayout.CENTER);
-
-        imagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/pictures-icon.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(imagesButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.imagesButton.text")); // NOI18N
-        imagesButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/pictures-icon.png"))); // NOI18N
-        imagesButton.setFocusable(false);
-        imagesButton.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        imagesButton.setMaximumSize(new java.awt.Dimension(90, 43));
-        imagesButton.setMinimumSize(new java.awt.Dimension(90, 43));
-        imagesButton.setPreferredSize(new java.awt.Dimension(90, 43));
-        imagesButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                imagesButtonActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(stepOneLabel, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.stepOneLabel.text")); // NOI18N
-
-        videosButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/video-icon.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(videosButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.videosButton.text")); // NOI18N
-        videosButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/video-icon.png"))); // NOI18N
-        videosButton.setDisabledSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/video-icon.png"))); // NOI18N
-        videosButton.setFocusable(false);
-        videosButton.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        videosButton.setMaximumSize(new java.awt.Dimension(90, 43));
-        videosButton.setMinimumSize(new java.awt.Dimension(90, 43));
-        videosButton.setPreferredSize(new java.awt.Dimension(90, 43));
-        videosButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                videosButtonActionPerformed(evt);
-            }
-        });
-
-        documentsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/documents-icon.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(documentsButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.documentsButton.text")); // NOI18N
-        documentsButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/documents-icon.png"))); // NOI18N
-        documentsButton.setDisabledSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/documents-icon.png"))); // NOI18N
-        documentsButton.setFocusable(false);
-        documentsButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                documentsButtonActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout toolBarPanelLayout = new javax.swing.GroupLayout(toolBarPanel);
-        toolBarPanel.setLayout(toolBarPanelLayout);
-        toolBarPanelLayout.setHorizontalGroup(
-            toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(toolBarPanelLayout.createSequentialGroup()
-                .addContainerGap(414, Short.MAX_VALUE)
-                .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(toolBarPanelLayout.createSequentialGroup()
-                        .addComponent(imagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(videosButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(documentsButton))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, toolBarPanelLayout.createSequentialGroup()
-                        .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0)
-                        .addComponent(stepOneLabel)
-                        .addGap(119, 119, 119)))
-                .addContainerGap(413, Short.MAX_VALUE))
-        );
-
-        toolBarPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {documentsButton, imagesButton, videosButton});
-
-        toolBarPanelLayout.setVerticalGroup(
-            toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(toolBarPanelLayout.createSequentialGroup()
-                .addGap(4, 4, 4)
-                .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(stepOneLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(filler1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(videosButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(imagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(documentsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(5, 5, 5))
-        );
-
-        toolBarPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {documentsButton, imagesButton, videosButton});
-
-        add(toolBarPanel, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
-
-    private void imagesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imagesButtonActionPerformed
-        resetTopComponent();
-        imagesButton.setSelected(true);
-        imagesButton.setEnabled(false);
-        imagesButton.setBackground(SELECTED_COLOR);
-        imagesButton.setForeground(Color.BLACK);
-        videosButton.setSelected(false);
-        videosButton.setEnabled(true);
-        videosButton.setBackground(UNSELECTED_COLOR);
-        documentsButton.setSelected(false);
-        documentsButton.setEnabled(true);
-        documentsButton.setBackground(UNSELECTED_COLOR);
-        fileSearchPanel.setSelectedType(FileSearchData.FileType.IMAGE);
-    }//GEN-LAST:event_imagesButtonActionPerformed
-
-    private void videosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_videosButtonActionPerformed
-        resetTopComponent();
-        imagesButton.setSelected(false);
-        imagesButton.setEnabled(true);
-        imagesButton.setBackground(UNSELECTED_COLOR);
-        videosButton.setSelected(true);
-        videosButton.setEnabled(false);
-        videosButton.setBackground(SELECTED_COLOR);
-        videosButton.setForeground(Color.BLACK);
-        documentsButton.setSelected(false);
-        documentsButton.setEnabled(true);
-        documentsButton.setBackground(UNSELECTED_COLOR);
-        fileSearchPanel.setSelectedType(FileSearchData.FileType.VIDEO);
-    }//GEN-LAST:event_videosButtonActionPerformed
-
-    private void documentsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsButtonActionPerformed
-        resetTopComponent();
-        documentsButton.setSelected(true);
-        documentsButton.setEnabled(false);
-        documentsButton.setBackground(SELECTED_COLOR);
-        documentsButton.setForeground(Color.BLACK);
-        videosButton.setSelected(false);
-        videosButton.setEnabled(true);
-        videosButton.setBackground(UNSELECTED_COLOR);
-        imagesButton.setSelected(false);
-        imagesButton.setEnabled(true);
-        imagesButton.setBackground(UNSELECTED_COLOR);
-        fileSearchPanel.setSelectedType(FileSearchData.FileType.DOCUMENTS);
-    }//GEN-LAST:event_documentsButtonActionPerformed
-
-    /**
-     * Update the user interface in response to a search being cancelled.
-     *
-     * @param searchCancelledEvent The SearchCancelledEvent received.
-     */
-    @Subscribe
-    void handleSearchCancelledEvent(DiscoveryEventUtils.SearchCancelledEvent searchCancelledEvent) {
-        SwingUtilities.invokeLater(() -> {
-            if (null != fileSearchPanel.getSelectedType()) {
-                switch (fileSearchPanel.getSelectedType()) {
-                    case VIDEO:
-                        imagesButton.setEnabled(true);
-                        documentsButton.setEnabled(true);
-                        break;
-                    case IMAGE:
-                        videosButton.setEnabled(true);
-                        documentsButton.setEnabled(true);
-                        break;
-                    case DOCUMENTS:
-                        videosButton.setEnabled(true);
-                        imagesButton.setEnabled(true);
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-        });
-    }
-
-    /**
-     * Update the user interface in response to a search being completed.
-     *
-     * @param searchCompletedEvent The SearchCompletedEvent received.
-     */
-    @Subscribe
-    void handleSearchCompletedEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompletedEvent) {
-        SwingUtilities.invokeLater(() -> {
-            if (null != fileSearchPanel.getSelectedType()) {
-                switch (fileSearchPanel.getSelectedType()) {
-                    case VIDEO:
-                        imagesButton.setEnabled(true);
-                        documentsButton.setEnabled(true);
-                        break;
-                    case IMAGE:
-                        videosButton.setEnabled(true);
-                        documentsButton.setEnabled(true);
-                        break;
-                    case DOCUMENTS:
-                        videosButton.setEnabled(true);
-                        imagesButton.setEnabled(true);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        });
-    }
 
     @Override
     public List<Mode> availableModes(List<Mode> modes) {
@@ -383,26 +159,10 @@ public final class DiscoveryTopComponent extends TopComponent {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Update the user interface in response to a search being started.
-     *
-     * @param searchStartedEvent The SearchStartedEvent received.
-     */
-    @Subscribe
-    void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
-        SwingUtilities.invokeLater(() -> {
-            imagesButton.setEnabled(false);
-            videosButton.setEnabled(false);
-            documentsButton.setEnabled(false);
-        });
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton documentsButton;
-    private javax.swing.JButton imagesButton;
-    private javax.swing.JSplitPane leftSplitPane;
+    private javax.swing.JSplitPane mainSplitPane;
     private javax.swing.JSplitPane rightSplitPane;
-    private javax.swing.JButton videosButton;
     // End of variables declaration//GEN-END:variables
 
 }
