@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -1999,11 +2000,11 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                 + "AND file_path=?";
 
         String sqlUpdate
-                = "UPDATE "
-                + tableName
-                + " SET known_status=?, comment=? "
-                + "WHERE id=?";
-
+            = "UPDATE "
+            + tableName
+            + " SET known_status=? WHERE id=?";
+            
+            
         try {
             preparedQuery = conn.prepareStatement(sqlQuery);
             preparedQuery.setInt(1, eamArtifact.getCorrelationCase().getID());
@@ -2016,15 +2017,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                 preparedUpdate = conn.prepareStatement(sqlUpdate);
 
                 preparedUpdate.setByte(1, knownStatus.getFileKnownValue());
-                // NOTE: if the user tags the same instance as BAD multiple times,
-                // the comment from the most recent tagging is the one that will
-                // prevail in the DB.
-                if ("".equals(eamArtifact.getComment())) {
-                    preparedUpdate.setNull(2, Types.INTEGER);
-                } else {
-                    preparedUpdate.setString(2, eamArtifact.getComment());
-                }
-                preparedUpdate.setInt(3, instance_id);
+                preparedUpdate.setInt(2, instance_id);
 
                 preparedUpdate.executeUpdate();
             } else {
