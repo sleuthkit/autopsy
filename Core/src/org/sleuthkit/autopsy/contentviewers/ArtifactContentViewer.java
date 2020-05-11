@@ -33,8 +33,7 @@ public interface ArtifactContentViewer {
     /**
      * Called to display the contents of the given artifact. 
      *
-     * @param artifact the node which is used to obtain and display the
-     * artifacts.
+     * @param artifact the artifact to display.
      */
     void setArtifact(BlackboardArtifact artifact);
     
@@ -50,7 +49,7 @@ public interface ArtifactContentViewer {
      *
      * @param artifact Artifact to check.
      *
-     * @return True if the node can be displayed / processed, else false
+     * @return True if the artifact can be displayed by the viewer, false otherwise.
      */
     boolean isSupported(BlackboardArtifact artifact);
    
