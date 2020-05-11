@@ -26,14 +26,11 @@ import java.awt.event.ActionListener;
 import java.awt.datatransfer.StringSelection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
 import javax.swing.JTextArea;
-import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
@@ -42,8 +39,6 @@ import javax.swing.table.TableColumn;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.text.View;
 import org.apache.commons.lang.StringUtils;
-import org.openide.nodes.Node;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -51,46 +46,38 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskException;
 import org.netbeans.swing.etable.ETable;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonArray;
 import java.util.Map;
+import javax.swing.SwingUtilities;
 
 /**
- * This class displays a Blackboard artifact as a table listing all the 
- * attribute names and values.
+ * This class displays a Blackboard artifact as a table listing all it's 
+ * attributes names and values.
  */
 
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DefaultArtifactContentViewer extends javax.swing.JPanel implements ArtifactContentViewer {
 
     @NbBundle.Messages({
-        "DataContentViewerArtifact.attrsTableHeader.type=Type",
-        "DataContentViewerArtifact.attrsTableHeader.value=Value",
-        "DataContentViewerArtifact.attrsTableHeader.sources=Source(s)",
+        "DefaultArtifactContentViewer.attrsTableHeader.type=Type",
+        "DefaultArtifactContentViewer.attrsTableHeader.value=Value",
+        "DefaultArtifactContentViewer.attrsTableHeader.sources=Source(s)",
         "DataContentViewerArtifact.failedToGetSourcePath.message=Failed to get source file path from case database",
         "DataContentViewerArtifact.failedToGetAttributes.message=Failed to get some or all attributes from case database"
     })
-    private final static Logger logger = Logger.getLogger(DefaultArtifactContentViewer.class.getName());
-    private final static String WAIT_TEXT = NbBundle.getMessage(DefaultArtifactContentViewer.class, "DataContentViewerArtifact.waitText");
-    private final static String ERROR_TEXT = NbBundle.getMessage(DefaultArtifactContentViewer.class, "DataContentViewerArtifact.errorText");
     
+    private final static Logger logger = Logger.getLogger(DefaultArtifactContentViewer.class.getName());
+   
     private static final long serialVersionUID = 1L;
     
-    private Node currentNode; // @@@ Remove this when the redundant setNode() calls problem is fixed. 
-    private int currentPage = 1;
-    private final Object lock = new Object();
-    
-    private List<ResultsTableArtifact> artifactTableContents; // Accessed by multiple threads, use getArtifactContents() and setArtifactContents()
-    SwingWorker<ViewUpdate, Void> currentTask; // Accessed by multiple threads, use startNewTask()
-    
     private static final String[] COLUMN_HEADERS = {
-        Bundle.DataContentViewerArtifact_attrsTableHeader_type(),
-        Bundle.DataContentViewerArtifact_attrsTableHeader_value(),
-        Bundle.DataContentViewerArtifact_attrsTableHeader_sources()};
+        Bundle.DefaultArtifactContentViewer_attrsTableHeader_type(),
+        Bundle.DefaultArtifactContentViewer_attrsTableHeader_value(),
+        Bundle.DefaultArtifactContentViewer_attrsTableHeader_sources()};
     private static final int[] COLUMN_WIDTHS = {100, 800, 100};
     private static final int CELL_BOTTOM_MARGIN = 5;
     private static final int CELL_RIGHT_MARGIN = 1;
@@ -109,6 +96,7 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
         resultsTable.setModel(new javax.swing.table.DefaultTableModel() {
             private static final long serialVersionUID = 1L;
 
+            @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return false;
             }
@@ -203,22 +191,12 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
 
         rightClickMenu = new javax.swing.JPopupMenu();
         copyMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
         jScrollPane1 = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
-        totalPageLabel = new javax.swing.JLabel();
-        ofLabel = new javax.swing.JLabel();
-        currentPageLabel = new javax.swing.JLabel();
-        pageLabel = new javax.swing.JLabel();
-        nextPageButton = new javax.swing.JButton();
-        pageLabel2 = new javax.swing.JLabel();
-        prevPageButton = new javax.swing.JButton();
-        artifactLabel = new javax.swing.JLabel();
-        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
         resultsTableScrollPane = new javax.swing.JScrollPane();
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DefaultArtifactContentViewer.class, "DefaultArtifactContentViewer.copyMenuItem.text")); // NOI18N
@@ -234,112 +212,6 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
 
         jPanel1.setPreferredSize(new java.awt.Dimension(620, 58));
         jPanel1.setLayout(new java.awt.GridBagLayout());
-
-        totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DefaultArtifactContentViewer.class, "DefaultArtifactContentViewer.totalPageLabel.text")); // NOI18N
-        totalPageLabel.setMaximumSize(new java.awt.Dimension(40, 16));
-        totalPageLabel.setPreferredSize(new java.awt.Dimension(25, 16));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 3;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(3, 12, 0, 0);
-        jPanel1.add(totalPageLabel, gridBagConstraints);
-
-        ofLabel.setText(org.openide.util.NbBundle.getMessage(DefaultArtifactContentViewer.class, "DefaultArtifactContentViewer.ofLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(3, 12, 0, 0);
-        jPanel1.add(ofLabel, gridBagConstraints);
-
-        currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DefaultArtifactContentViewer.class, "DefaultArtifactContentViewer.currentPageLabel.text")); // NOI18N
-        currentPageLabel.setMaximumSize(new java.awt.Dimension(38, 14));
-        currentPageLabel.setMinimumSize(new java.awt.Dimension(18, 14));
-        currentPageLabel.setPreferredSize(new java.awt.Dimension(20, 14));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(4, 7, 0, 0);
-        jPanel1.add(currentPageLabel, gridBagConstraints);
-
-        pageLabel.setText(org.openide.util.NbBundle.getMessage(DefaultArtifactContentViewer.class, "DefaultArtifactContentViewer.pageLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(3, 12, 0, 0);
-        jPanel1.add(pageLabel, gridBagConstraints);
-
-        nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
-        nextPageButton.setText(org.openide.util.NbBundle.getMessage(DefaultArtifactContentViewer.class, "DefaultArtifactContentViewer.nextPageButton.text")); // NOI18N
-        nextPageButton.setBorderPainted(false);
-        nextPageButton.setContentAreaFilled(false);
-        nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
-        nextPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-        nextPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
-        nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
-        nextPageButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                nextPageButtonActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 6;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 35, 0);
-        jPanel1.add(nextPageButton, gridBagConstraints);
-
-        pageLabel2.setText(org.openide.util.NbBundle.getMessage(DefaultArtifactContentViewer.class, "DefaultArtifactContentViewer.pageLabel2.text")); // NOI18N
-        pageLabel2.setMaximumSize(new java.awt.Dimension(29, 14));
-        pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(3, 41, 0, 0);
-        jPanel1.add(pageLabel2, gridBagConstraints);
-
-        prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
-        prevPageButton.setText(org.openide.util.NbBundle.getMessage(DefaultArtifactContentViewer.class, "DefaultArtifactContentViewer.prevPageButton.text")); // NOI18N
-        prevPageButton.setBorderPainted(false);
-        prevPageButton.setContentAreaFilled(false);
-        prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
-        prevPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-        prevPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
-        prevPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
-        prevPageButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                prevPageButtonActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 5;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 35, 0);
-        jPanel1.add(prevPageButton, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 8;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
-        gridBagConstraints.insets = new java.awt.Insets(3, 0, 0, 8);
-        jPanel1.add(artifactLabel, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 7;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.weightx = 0.1;
-        jPanel1.add(filler1, gridBagConstraints);
-
         jScrollPane1.setViewportView(jPanel1);
 
         resultsTableScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -362,36 +234,13 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
-        currentPage = currentPage + 1;
-        currentPageLabel.setText(Integer.toString(currentPage));
-        artifactLabel.setText(artifactTableContents.get(currentPage - 1).getArtifactDisplayName());
-        startNewTask(new SelectedArtifactChangedTask(currentPage));
-    }//GEN-LAST:event_nextPageButtonActionPerformed
-
-    private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
-        currentPage = currentPage - 1;
-        currentPageLabel.setText(Integer.toString(currentPage));
-        artifactLabel.setText(artifactTableContents.get(currentPage - 1).getArtifactDisplayName());
-        startNewTask(new SelectedArtifactChangedTask(currentPage));
-    }//GEN-LAST:event_prevPageButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel artifactLabel;
     private javax.swing.JMenuItem copyMenuItem;
-    private javax.swing.JLabel currentPageLabel;
-    private javax.swing.Box.Filler filler1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JButton nextPageButton;
-    private javax.swing.JLabel ofLabel;
-    private javax.swing.JLabel pageLabel;
-    private javax.swing.JLabel pageLabel2;
-    private javax.swing.JButton prevPageButton;
     private javax.swing.JScrollPane resultsTableScrollPane;
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JMenuItem selectAllMenuItem;
-    private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
     private ETable resultsTable;
 
@@ -428,14 +277,8 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
      * Resets the components to an empty view state.
      */
     private void resetComponents() {
-        currentPage = 1;
-        currentPageLabel.setText("");
-        artifactLabel.setText("");
-        totalPageLabel.setText("");
+       
         ((DefaultTableModel) resultsTable.getModel()).setRowCount(0);
-        prevPageButton.setEnabled(false);
-        nextPageButton.setEnabled(false);
-        currentNode = null;
     }
 
     @Override
@@ -445,18 +288,31 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
 
     @Override
     public void setArtifact(BlackboardArtifact artifact) {
-       // RAMAN TBD: ******************  IMPLMENT THIS. **********************
-       
+        try {
+            ResultsTableArtifact resultsTableArtifact = new ResultsTableArtifact(artifact, artifact.getParent());
+
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    updateView(resultsTableArtifact);
+                }
+            });
+
+        } catch (TskCoreException ex) {
+             logger.log(Level.SEVERE, String.format("Error getting parent content for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
+        }
+
     }
 
     @Override
     public boolean isSupported(BlackboardArtifact artifact) {
+        // This viewer supports all artifacts.
         return true;
     }
 
     /**
-     * This class is a container to hold the data necessary for each of the
-     * result pages associated with file or artifact beivng viewed.
+     * This class is a container to hold the data necessary for the artifact 
+     * being viewed.
      */
     private class ResultsTableArtifact {
 
@@ -492,7 +348,7 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
                     /*
                      * Attribute value column.
                      */
-                    String value = "";
+                    String value;
                     switch (attr.getAttributeType().getValueType()) {
                         case STRING:
                         case INTEGER:
@@ -634,261 +490,22 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
     }
 
     /**
-     * Instances of this class are simple containers for view update information
-     * generated by a background thread.
-     */
-    private class ViewUpdate {
-
-        int numberOfPages;
-        int currentPage;
-        ResultsTableArtifact tableContents;
-
-        ViewUpdate(int numberOfPages, int currentPage, ResultsTableArtifact contents) {
-            this.currentPage = currentPage;
-            this.numberOfPages = numberOfPages;
-            this.tableContents = contents;
-        }
-
-        ViewUpdate(int numberOfPages, int currentPage, String errorMsg) {
-            this.currentPage = currentPage;
-            this.numberOfPages = numberOfPages;
-            this.tableContents = new ResultsTableArtifact(errorMsg);
-        }
-    }
-
-    /**
-     * Called from queued SwingWorker done() methods on the EDT thread, so
-     * doesn't need to be synchronized.
+     * Updates the table view with the given artifact data. 
+     * 
+     * It should be called on EDT.
      *
-     * @param viewUpdate A simple container for display update information from
-     *                   a background thread.
+     * @param resultsTableArtifact Artifact data to display in the view.
      */
-    private void updateView(ViewUpdate viewUpdate) {
+    private void updateView(ResultsTableArtifact resultsTableArtifact) {
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        nextPageButton.setEnabled(viewUpdate.currentPage < viewUpdate.numberOfPages);
-        prevPageButton.setEnabled(viewUpdate.currentPage > 1);
-        currentPage = viewUpdate.currentPage;
-        totalPageLabel.setText(Integer.toString(viewUpdate.numberOfPages));
-        currentPageLabel.setText(Integer.toString(currentPage));
-        artifactLabel.setText(viewUpdate.tableContents.getArtifactDisplayName());
         DefaultTableModel tModel = ((DefaultTableModel) resultsTable.getModel());
-        tModel.setDataVector(viewUpdate.tableContents.getRows(), COLUMN_HEADERS);
+        tModel.setDataVector(resultsTableArtifact.getRows(), COLUMN_HEADERS);
         updateColumnSizes();
         updateRowHeights();
         resultsTable.clearSelection();
 
         this.setCursor(null);
-    }
-
-    /**
-     * Start a new task on its own background thread, canceling the previous
-     * task.
-     *
-     * @param task A new SwingWorker object to execute as a background thread.
-     */
-    private synchronized void startNewTask(SwingWorker<ViewUpdate, Void> task) {
-        String[][] waitRow = new String[1][3];
-        waitRow[0] = new String[]{"", WAIT_TEXT, ""};
-        DefaultTableModel tModel = ((DefaultTableModel) resultsTable.getModel());
-        tModel.setDataVector(waitRow, COLUMN_HEADERS);
-        updateColumnSizes();
-        updateRowHeights();
-        resultsTable.clearSelection();
-        // The output of the previous task is no longer relevant.
-        if (currentTask != null) {
-            // This call sets a cancellation flag. It does not terminate the background thread running the task. 
-            // The task must check the cancellation flag and react appropriately.
-            currentTask.cancel(false);
-        }
-
-        // Start the new task.
-        currentTask = task;
-        currentTask.execute();
-    }
-
-    /**
-     * Populate the cache of artifact represented as ResultsTableArtifacts.
-     *
-     * @param artifactList A list of ResultsTableArtifact representations of
-     *                     artifacts.
-     */
-    private void setArtifactContents(List<ResultsTableArtifact> artifactList) {
-        synchronized (lock) {
-            this.artifactTableContents = artifactList;
-        }
-    }
-
-    /**
-     * Retrieve the cache of artifact represented as ResultsTableArtifacts.
-     *
-     * @return A list of ResultsTableArtifact representations of artifacts.
-     */
-    private List<ResultsTableArtifact> getArtifactContents() {
-        synchronized (lock) {
-            return artifactTableContents;
-        }
-    }
-
-    /**
-     * Instances of this class use a background thread to generate a ViewUpdate
-     * when a node is selected, changing the set of blackboard artifacts
-     * ("results") to be displayed.
-     */
-    private class SelectedNodeChangedTask extends SwingWorker<ViewUpdate, Void> {
-
-        private final Node selectedNode;
-
-        SelectedNodeChangedTask(Node selectedNode) {
-            this.selectedNode = selectedNode;
-        }
-
-        @Override
-        protected ViewUpdate doInBackground() {
-            // Get the lookup for the node for access to its underlying content and
-            // blackboard artifact, if any.
-            Lookup lookup = selectedNode.getLookup();
-
-            // Get the content. We may get BlackboardArtifacts, ignore those here.
-            ArrayList<BlackboardArtifact> artifacts = new ArrayList<>();
-            Collection<? extends Content> contents = lookup.lookupAll(Content.class);
-            if (contents.isEmpty()) {
-                return new ViewUpdate(getArtifactContents().size(), currentPage, ERROR_TEXT);
-            }
-            Content underlyingContent = null;
-            for (Content content : contents) {
-                if ( (content != null)  && (!(content instanceof BlackboardArtifact)) ) {
-                    // Get all of the blackboard artifacts associated with the content. These are what this
-                    // viewer displays.
-                    try {
-                        artifacts = content.getAllArtifacts();
-                        underlyingContent = content;
-                        break;
-                    } catch (TskException ex) {
-                        logger.log(Level.SEVERE, "Couldn't get artifacts", ex); //NON-NLS
-                        return new ViewUpdate(getArtifactContents().size(), currentPage, ERROR_TEXT);
-                    }
-                }
-            }
- 
-            if (isCancelled()) {
-                return null;
-            }
-
-            // Build the new artifact contents cache.
-            ArrayList<ResultsTableArtifact> artifactContents = new ArrayList<>();
-            for (BlackboardArtifact artifact : artifacts) {
-                artifactContents.add(new ResultsTableArtifact(artifact, underlyingContent));
-            }
-
-            // If the node has an underlying blackboard artifact, show it. If not,
-            // show the first artifact.
-            int index = 0;
-            BlackboardArtifact artifact = lookup.lookup(BlackboardArtifact.class);
-            if (artifact != null) {
-                index = artifacts.indexOf(artifact);
-                if (index == -1) {
-                    index = 0;
-                } else {
-                    // if the artifact has an ASSOCIATED ARTIFACT, then we display the associated artifact instead
-                    try {
-                        for (BlackboardAttribute attr : artifact.getAttributes()) {
-                            if (attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
-                                long assocArtifactId = attr.getValueLong();
-                                int assocArtifactIndex = -1;
-                                for (BlackboardArtifact art : artifacts) {
-                                    if (assocArtifactId == art.getArtifactID()) {
-                                        assocArtifactIndex = artifacts.indexOf(art);
-                                        break;
-                                    }
-                                }
-                                if (assocArtifactIndex >= 0) {
-                                    index = assocArtifactIndex;
-                                }
-                                break;
-                            }
-                        }
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.WARNING, "Couldn't get associated artifact to display in Content Viewer.", ex); //NON-NLS
-                    }
-                }
-
-            }
-
-            if (isCancelled()) {
-                return null;
-            }
-
-            // Add one to the index of the artifact content for the corresponding page index.
-            ViewUpdate viewUpdate = new ViewUpdate(artifactContents.size(), index + 1, artifactContents.get(index));
-
-            // It may take a considerable amount of time to fetch the attributes of the selected artifact 
-            if (isCancelled()) {
-                return null;
-            }
-
-            // Update the artifact contents cache.
-            setArtifactContents(artifactContents);
-
-            return viewUpdate;
-        }
-
-        @Override
-        protected void done() {
-            if (!isCancelled()) {
-                try {
-                    ViewUpdate viewUpdate = get();
-                    if (viewUpdate != null) {
-                        updateView(viewUpdate);
-                    }
-                } catch (InterruptedException | ExecutionException ex) {
-                    logger.log(Level.WARNING, "Artifact display task unexpectedly interrupted or failed", ex);                 //NON-NLS
-                }
-            }
-        }
-    }
-
-    /**
-     * Instances of this class use a background thread to generate a ViewUpdate
-     * when the user pages the view to look at another blackboard artifact
-     * ("result").
-     */
-    private class SelectedArtifactChangedTask extends SwingWorker<ViewUpdate, Void> {
-
-        private final int pageIndex;
-
-        SelectedArtifactChangedTask(final int pageIndex) {
-            this.pageIndex = pageIndex;
-        }
-
-        @Override
-        protected ViewUpdate doInBackground() {
-            // Get the artifact content to display from the cache. Note that one must be subtracted from the
-            // page index to get the corresponding artifact content index.
-            List<ResultsTableArtifact> artifactContents = getArtifactContents();
-            ResultsTableArtifact artifactContent = artifactContents.get(pageIndex - 1);
-
-            // It may take a considerable amount of time to fetch the attributes of the selected artifact so check for cancellation.
-            if (isCancelled()) {
-                return null;
-            }
-
-            return new ViewUpdate(artifactContents.size(), pageIndex, artifactContent);
-        }
-
-        @Override
-        protected void done() {
-            if (!isCancelled()) {
-                try {
-                    ViewUpdate viewUpdate = get();
-                    if (viewUpdate != null) {
-                        updateView(viewUpdate);
-                    }
-                } catch (InterruptedException | ExecutionException ex) {
-                    logger.log(Level.WARNING, "Artifact display task unexpectedly interrupted or failed", ex);                 //NON-NLS
-                }
-            }
-        }
     }
 
     /**
