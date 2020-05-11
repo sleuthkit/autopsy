@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.persona;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
