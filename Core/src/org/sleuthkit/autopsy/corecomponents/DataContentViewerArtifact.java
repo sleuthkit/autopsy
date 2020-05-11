@@ -60,9 +60,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonArray;
+import java.util.Arrays;
 import java.util.Map;
 import org.sleuthkit.autopsy.contentviewers.ArtifactContentViewer;
 import org.sleuthkit.autopsy.contentviewers.DummyArtifactContentViewer;
+import org.sleuthkit.autopsy.contentviewers.MessageContentViewer;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the
@@ -96,6 +98,11 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private static final int CELL_BOTTOM_MARGIN = 5;
     private static final int CELL_RIGHT_MARGIN = 1;
 
+    private final Collection<ArtifactContentViewer> KNOWN_ARTIFACT_VIEWERS = 
+            Arrays.asList(
+                    // RAMAN TBD: new MessageContentViewer()
+            );
+    
     public DataContentViewerArtifact() {
         initResultsTable();
         initComponents();
@@ -540,14 +547,17 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         }
     }
 
-    private ArtifactContentViewer getArtifactViewer(BlackboardArtifact artifact) {
+    private ArtifactContentViewer getSupportingViewer(BlackboardArtifact artifact) {
         
-        return new DummyArtifactContentViewer();
-        
+        return this.KNOWN_ARTIFACT_VIEWERS.stream()
+                .filter(knownViewer -> knownViewer.isSupported(artifact))
+                .findAny()
+                .orElse(new DummyArtifactContentViewer());  // RAMAN TBD: return the default viewer here
+                
     }
     /**
      * This class is a container to hold the data necessary for each of the
-     * result pages associated with file or artifact beivng viewed.
+     * result pages associated with file or artifact being viewed.
      */
     private class ResultsTableArtifact {
 
@@ -778,7 +788,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         resultsTable.clearSelection();
 
         BlackboardArtifact artifact = viewUpdate.tableContents.getArtifact();
-        ArtifactContentViewer viewer = this.getArtifactViewer(artifact);
+        ArtifactContentViewer viewer = this.getSupportingViewer(artifact);
         viewer.setArtifact(artifact);
         
         artifactContentPanel.removeAll();
