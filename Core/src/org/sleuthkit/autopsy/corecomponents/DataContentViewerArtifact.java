@@ -620,13 +620,13 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             // Get the artifact content to display from the cache. Note that one must be subtracted from the
             // page index to get the corresponding artifact content index.
             List<BlackboardArtifact> artifactContents = getArtifactContents();
-            BlackboardArtifact artifactContent = artifactContents.get(pageIndex - 1);
-
+          
             // It may take a considerable amount of time to fetch the attributes of the selected artifact so check for cancellation.
             if (isCancelled()) {
                 return null;
             }
 
+            BlackboardArtifact artifactContent = artifactContents.get(pageIndex - 1);
             return new ViewUpdate(artifactContents.size(), pageIndex, artifactContent);
         }
 

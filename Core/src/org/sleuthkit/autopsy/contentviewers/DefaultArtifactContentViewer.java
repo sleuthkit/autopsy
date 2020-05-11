@@ -51,6 +51,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonArray;
+import java.util.Locale;
 import java.util.Map;
 import javax.swing.SwingUtilities;
 
@@ -109,15 +110,17 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
 
             @Override
             public void columnAdded(TableColumnModelEvent e) {
+                // do nothing
             }
 
             @Override
             public void columnRemoved(TableColumnModelEvent e) {
+                // do nothing
             }
 
             @Override
             public void columnMoved(TableColumnModelEvent e) {
-
+                // do nothing
             }
 
             @Override  
@@ -127,6 +130,7 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
 
             @Override
             public void columnSelectionChanged(ListSelectionEvent e) {
+                // do nothing
             }
         });
         resultsTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_NEXT_COLUMN);
@@ -255,7 +259,7 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
                     for (int row : resultsTable.getSelectedRows()) {
                         for (int col : resultsTable.getSelectedColumns()) {
                             selectedText.append((String) resultsTable.getValueAt(row, col));
-                            selectedText.append("\t");
+                            selectedText.append('\t');
                         }
                         //if its the last row selected don't add a new line
                         if (row != resultsTable.getSelectedRows()[resultsTable.getSelectedRows().length - 1]) {
@@ -316,7 +320,7 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
      */
     private class ResultsTableArtifact {
 
-        private final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        private final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
         private String[][] rowData = null;
         private final String artifactDisplayName;
         private final Content content;
@@ -350,14 +354,7 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
                      */
                     String value;
                     switch (attr.getAttributeType().getValueType()) {
-                        case STRING:
-                        case INTEGER:
-                        case LONG:
-                        case DOUBLE:
-                        case BYTE:
-                        default:
-                            value = attr.getDisplayString();
-                            break;
+         
                         // Use Autopsy date formatting settings, not TSK defaults
                         case DATETIME:
                             value = epochTimeToString(attr.getValueLong());
@@ -369,6 +366,15 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
                             JsonObject json = parser.parse(jsonVal).getAsJsonObject();
                            
                             value = toJsonDisplayString(json, "");
+                            break;
+                            
+                        case STRING:
+                        case INTEGER:
+                        case LONG:
+                        case DOUBLE:
+                        case BYTE:
+                        default:
+                            value = attr.getDisplayString();
                             break;
                     }
                     /*
