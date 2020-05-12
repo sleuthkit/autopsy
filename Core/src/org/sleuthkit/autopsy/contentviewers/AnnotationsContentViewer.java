@@ -77,6 +77,7 @@ import org.jsoup.nodes.Element;
     "AnnotationsContentViewer.tagEntryDataLabel.tag=Tag:",
     "AnnotationsContentViewer.tagEntryDataLabel.tagUser=Examiner:",
     "AnnotationsContentViewer.tagEntryDataLabel.comment=Comment:",
+    "AnnotationsContentViewer.fileHitEntry.artifactCommentTitle=Artifact Comment",
     "AnnotationsContentViewer.fileHitEntry.hashSetHitTitle=Hash Set Hit Comments",
     "AnnotationsContentViewer.fileHitEntry.onHashSetHitEmpty=There are no hash set hits for the selected content.",
     "AnnotationsContentViewer.fileHitEntry.interestingFileHitTitle=Interesting File Hit Comments",
@@ -88,8 +89,10 @@ import org.jsoup.nodes.Element;
 public class AnnotationsContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
     /**
-     * Describes a key value pair for an item of type T where the key is the field name to display and
-     * the value is retrieved from item of type T using a provided Function<T, string>.
+     * Describes a key value pair for an item of type T where the key is the
+     * field name to display and the value is retrieved from item of type T
+     * using a provided Function<T, string>.
+     *
      * @param <T> The item type.
      */
     private static class ItemEntry<T> {
@@ -117,6 +120,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     /**
      * Describes a section that will be appended to the annotations view panel.
+     *
      * @param <T> The item type for items to display.
      */
     private static class SectionConfig<T> {
@@ -148,16 +152,18 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         }
 
         /**
-         * @return Describes key-value pairs on the object to display to the user.
+         * @return Describes key-value pairs on the object to display to the
+         *         user.
          */
         List<ItemEntry<T>> getAttributes() {
             return attributes;
         }
 
         /**
-         * @return If the table should be shown as a series of key-value pairs as rows.  Otherwise, 
-         * data is shown in a table where the column headers are the keys and each row represents one 
-         * item to display.
+         * @return If the table should be shown as a series of key-value pairs
+         *         as rows. Otherwise, data is shown in a table where the column
+         *         headers are the keys and each row represents one item to
+         *         display.
          */
         boolean isIsVerticalTable() {
             return isVerticalTable;
@@ -238,6 +244,11 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     private static final SectionConfig<BlackboardArtifact> HASHSET_CONFIG = new SectionConfig<>(
             Bundle.AnnotationsContentViewer_fileHitEntry_hashSetHitTitle(),
             Bundle.AnnotationsContentViewer_fileHitEntry_onHashSetHitEmpty(),
+            FILESET_HIT_ENTRIES, true);
+
+    private static final SectionConfig<BlackboardArtifact> ARTIFACT_COMMENT_CONFIG = new SectionConfig<>(
+            Bundle.AnnotationsContentViewer_fileHitEntry_artifactCommentTitle(),
+            "",
             FILESET_HIT_ENTRIES, true);
 
     // central repository attributes and table configuration
@@ -328,12 +339,9 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, false);
         }
 
-        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() == bba.getArtifactTypeID()) {
-            appendEntries(parent, HASHSET_CONFIG, Arrays.asList(bba), false);
-        }
-
-        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == bba.getArtifactTypeID()) {
-            appendEntries(parent, INTERESTING_FILE_CONFIG, Arrays.asList(bba), false);
+        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() == bba.getArtifactTypeID()
+                || BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == bba.getArtifactTypeID()) {
+            appendEntries(parent, ARTIFACT_COMMENT_CONFIG, Arrays.asList(bba), false);
         }
 
         Element sourceFileSection = appendSection(parent, Bundle.AnnotationsContentViewer_sourceFile_title());
