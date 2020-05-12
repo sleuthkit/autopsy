@@ -173,7 +173,7 @@ public class TagsManager implements Closeable {
              * No current case, nothing more to add to the set.
              */
         } catch(TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get list of TagNams from tagsManager.", ex);
+            LOGGER.log(Level.SEVERE, "Failed to get list of TagNames from TagsManager.", ex);
         }
         return tagDisplayNames;
     }
