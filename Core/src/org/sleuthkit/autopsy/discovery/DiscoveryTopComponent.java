@@ -44,10 +44,10 @@ public final class DiscoveryTopComponent extends TopComponent {
     private final GroupListPanel groupListPanel;
     private final DetailsPanel detailsPanel;
     private final ResultsPanel resultsPanel;
-    private int dividerLocation;
+    private int dividerLocation = -1;
 
     private static final int ANIMATION_INCREMENT = 10;
-    private static final int RESULTS_AREA_SMALL_SIZE = 200;
+    private static final int RESULTS_AREA_SMALL_SIZE = 250;
 
     private SwingAnimator animator = null;
 
@@ -64,8 +64,6 @@ public final class DiscoveryTopComponent extends TopComponent {
         mainSplitPane.setLeftComponent(groupListPanel);
         rightSplitPane.setTopComponent(resultsPanel);
         rightSplitPane.setBottomComponent(detailsPanel);
-        rightSplitPane.setDividerLocation(1.0);
-        dividerLocation = rightSplitPane.getDividerLocation();
     }
 
     /**
@@ -174,7 +172,7 @@ public final class DiscoveryTopComponent extends TopComponent {
      *
      *
      */
-    private class ShowDetailsAreaCallback implements SwingAnimatorCallback {
+    private final class ShowDetailsAreaCallback implements SwingAnimatorCallback {
 
         @Override
         public void callback(Object caller) {
@@ -184,7 +182,7 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         @Override
         public boolean hasTerminated() {
-            if (dividerLocation <= RESULTS_AREA_SMALL_SIZE) {
+            if (dividerLocation != JSplitPane.UNDEFINED_CONDITION && dividerLocation < RESULTS_AREA_SMALL_SIZE) {
                 dividerLocation = RESULTS_AREA_SMALL_SIZE;
                 return true;
             }
@@ -202,7 +200,7 @@ public final class DiscoveryTopComponent extends TopComponent {
      *
      *
      */
-    private class HideDetailsAreaCallback implements SwingAnimatorCallback {
+    private final class HideDetailsAreaCallback implements SwingAnimatorCallback {
 
         @Override
         public void callback(Object caller) {
@@ -212,8 +210,8 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         @Override
         public boolean hasTerminated() {
-            if (dividerLocation >= rightSplitPane.getHeight()) {
-                dividerLocation = rightSplitPane.getHeight();
+            if (dividerLocation > rightSplitPane.getHeight() || dividerLocation == JSplitPane.UNDEFINED_CONDITION) {
+                dividerLocation = JSplitPane.UNDEFINED_CONDITION;
                 return true;
             }
             return false;
@@ -225,13 +223,13 @@ public final class DiscoveryTopComponent extends TopComponent {
     private javax.swing.JSplitPane rightSplitPane;
     // End of variables declaration//GEN-END:variables
 
-    private class AnimatedSplitPane extends JSplitPane {
+    private final class AnimatedSplitPane extends JSplitPane {
 
         private static final long serialVersionUID = 1L;
 
         @Override
         public void paintComponent(Graphics g) {
-            if (dividerLocation <= rightSplitPane.getHeight() && dividerLocation >= RESULTS_AREA_SMALL_SIZE) {
+            if ((dividerLocation == JSplitPane.UNDEFINED_CONDITION) || (dividerLocation <= rightSplitPane.getHeight() && dividerLocation >= RESULTS_AREA_SMALL_SIZE)) {
                 rightSplitPane.setDividerLocation(dividerLocation);
             }
             super.paintComponent(g);
