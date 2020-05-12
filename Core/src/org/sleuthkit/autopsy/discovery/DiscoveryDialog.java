@@ -37,9 +37,17 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private static final Color SELECTED_COLOR = new Color(216, 230, 242);
     private static final Color UNSELECTED_COLOR = new Color(240, 240, 240);
     private SearchWorker searchWorker = null;
+    private static DiscoveryDialog discoveryDialog;
 
-    DiscoveryDialog() {
+    private DiscoveryDialog() {
         this(null, true);
+    }
+
+    public static synchronized DiscoveryDialog getDiscoveryDialogInstance() {
+        if (discoveryDialog == null) {
+            discoveryDialog = new DiscoveryDialog();
+        }
+        return discoveryDialog;
     }
 
     /**
@@ -100,7 +108,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         jPanel1 = new javax.swing.JPanel();
         searchButton = new javax.swing.JButton();
         errorLabel = new javax.swing.JLabel();
-        cancelButton = new javax.swing.JButton();
+        javax.swing.JButton cancelButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -180,7 +188,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
 
         org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(DiscoveryDialog.class, "DiscoveryDialog.cancelButton.text")); // NOI18N
-        cancelButton.setEnabled(false);
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
@@ -270,12 +277,9 @@ final class DiscoveryDialog extends javax.swing.JDialog {
 
         if (tc.isOpened() == false) {
             tc.open();
-//                tc.updateSearchSettings();
-//                displayErrorMessage(tc);
         }
         tc.resetTopComponent();
         List<FileSearchFiltering.FileFilter> filters = filterPanel.getFilters();
-//        enableSearch(false);
         DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.SearchStartedEvent(filterPanel.getSelectedType()));
 
         // Get the grouping attribute and group sorting method
@@ -300,9 +304,14 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         tc.requestActive();
     }//GEN-LAST:event_searchButtonActionPerformed
 
+
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-//        cancelSearch();
+        this.setVisible(false);
     }//GEN-LAST:event_cancelButtonActionPerformed
+
+    void cancelSearch() {
+        filterPanel.cancelSearch();
+    }
 
     /**
      * The settings are valid so enable the Search button
@@ -324,7 +333,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cancelButton;
     private javax.swing.JButton documentsButton;
     private javax.swing.JLabel errorLabel;
     private javax.swing.JButton imagesButton;

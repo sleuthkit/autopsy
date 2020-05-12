@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.discovery.FileSearchData.FileType;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Class to handle event bus and events for file discovery tool.
@@ -67,6 +68,36 @@ final class DiscoveryEventUtils {
          */
         FileType getType() {
             return fileType;
+        }
+    }
+
+    static final class ClearInstanceSelectionEvent {
+
+        /**
+         * Construct a new ClearInstanceSelectionEvent.
+         */
+        ClearInstanceSelectionEvent() {
+            //no arg constructor
+        }
+    }
+
+    static final class PopulateInstancesListEvent {
+
+        private final List<AbstractFile> instances;
+
+        /**
+         * Construct a new PopulateInstancesListEvent.
+         */
+        PopulateInstancesListEvent(List<AbstractFile> files) {
+            instances = files;
+            //no arg constructor
+        }
+
+        /**
+         * @return the instances
+         */
+        List<AbstractFile> getInstances() {
+            return Collections.unmodifiableList(instances);
         }
     }
 
@@ -332,4 +363,22 @@ final class DiscoveryEventUtils {
         }
 
     }
+
+    static class DetailsVisibleEvent {
+
+        private final boolean showDetailsArea;
+
+        DetailsVisibleEvent(boolean isVisible) {
+            showDetailsArea = isVisible;
+            //no arg constructor
+        }
+
+        /**
+         * @return the showDetailsArea
+         */
+        boolean isShowDetailsArea() {
+            return showDetailsArea;
+        }
+    }
+
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,19 +75,10 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
     @Override
     @SuppressWarnings("fallthrough")
     public void performAction() {
-        final DiscoveryDialog discDialog = new DiscoveryDialog();
+        final DiscoveryDialog discDialog = DiscoveryDialog.getDiscoveryDialogInstance();
+        discDialog.cancelSearch();
         discDialog.setVisible(true);
-//        final DiscoveryTopComponent tc = DiscoveryTopComponent.getTopComponent();
-//        if (tc != null) {
-//            if (tc.isOpened() == false) {
-//                tc.open();
-//                tc.updateSearchSettings();
-//                displayErrorMessage(tc);
-//            }
-//            tc.toFront();
-//            tc.requestActive();
-//
-//        }
+        displayErrorMessage(discDialog);
     }
 
     /**
@@ -96,7 +87,7 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
      *
      * @param tc The Discovery Top component.
      */
-    private void displayErrorMessage(DiscoveryTopComponent tc) {
+    private void displayErrorMessage(DiscoveryDialog discDialog) {
         //check if modules run and assemble message
         try {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -113,7 +104,7 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
                 message += dsmodulesWrapper.getMessage();
             }
             if (!message.isEmpty()) {
-                JOptionPane.showMessageDialog(tc, message, Bundle.OpenDiscoveryAction_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(discDialog, message, Bundle.OpenDiscoveryAction_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
             }
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "Exception while determining which modules have been run for Discovery", ex);

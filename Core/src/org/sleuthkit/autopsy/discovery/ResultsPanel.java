@@ -19,44 +19,25 @@
 package org.sleuthkit.autopsy.discovery;
 
 import com.google.common.eventbus.Subscribe;
-import java.awt.Component;
 import java.awt.Image;
 import java.awt.event.ItemEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.DefaultListModel;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.actions.AddContentTagAction;
-import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
-import org.sleuthkit.autopsy.directorytree.ViewContextAction;
-import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
-import org.sleuthkit.autopsy.modules.hashdatabase.AddContentToHashDbAction;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.textsummarizer.TextSummary;
-import java.awt.Graphics;
 
 /**
  * Panel for displaying of Discovery results and handling the paging of those
@@ -80,16 +61,6 @@ public class ResultsPanel extends javax.swing.JPanel {
     private int groupSize = 0;
     private PageWorker pageWorker;
     private final List<SwingWorker<Void, Void>> resultContentWorkers = new ArrayList<>();
-    private final DefaultListModel<AbstractFile> instancesListModel = new DefaultListModel<>();
-    private ListSelectionListener listener = null;
-
-    private int dividerLocation = 1;
-
-    private static final int ANIMATION_INCREMENT = 10;
-
-    private SwingAnimator fadeInAnimator = null;
-
-    private SwingAnimator fadeOutAnimator = null;
 
     /**
      * Creates new form ResultsPanel.
@@ -104,106 +75,40 @@ public class ResultsPanel extends javax.swing.JPanel {
         videoThumbnailViewer.addListSelectionListener((e) -> {
             if (resultType == FileSearchData.FileType.VIDEO) {
                 if (!e.getValueIsAdjusting()) {
-                    populateInstancesList();
+                    //send populateMesage
+                    DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
                 } else {
-                    instancesList.clearSelection();
+                    //send clearSelection message
+                    DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ClearInstanceSelectionEvent());
                 }
             }
         });
         imageThumbnailViewer.addListSelectionListener((e) -> {
             if (resultType == FileSearchData.FileType.IMAGE) {
                 if (!e.getValueIsAdjusting()) {
-                    populateInstancesList();
+                    List<AbstractFile> files = getInstancesForSelected();
+                    //send populateMesage
+                    DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
                 } else {
-                    instancesList.clearSelection();
+                    //send clearSelection message
+                    DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ClearInstanceSelectionEvent());
                 }
+
             }
         });
         documentPreviewViewer.addListSelectionListener((e) -> {
             if (resultType == FileSearchData.FileType.DOCUMENTS) {
                 if (!e.getValueIsAdjusting()) {
-                    populateInstancesList();
+                    List<AbstractFile> files = getInstancesForSelected();
+                    //send populateMesage
+                    DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
                 } else {
-                    instancesList.clearSelection();
-                }
-            }
-        });
-        //Add the context menu when right clicking
-        instancesList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    SwingUtilities.invokeLater(() -> {
-                        instancesList.setSelectedIndex(instancesList.locationToIndex(e.getPoint()));
-                        Set<AbstractFile> files = new HashSet<>();
-                        files.add(instancesList.getSelectedValue());
-                        JPopupMenu menu = new JPopupMenu();
-                        menu.add(new ViewContextAction(Bundle.ResultsPanel_viewFileInDir_name(), instancesList.getSelectedValue()));
-                        menu.add(new ExternalViewerAction(Bundle.ResultsPanel_openInExternalViewer_name(), new FileNode(instancesList.getSelectedValue())));
-                        menu.add(ViewFileInTimelineAction.createViewFileAction(instancesList.getSelectedValue()));
-                        menu.add(new DiscoveryExtractAction(files));
-                        menu.add(AddContentTagAction.getInstance().getMenuForContent(files));
-                        menu.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(files));
-                        menu.add(AddContentToHashDbAction.getInstance().getMenuForFiles(files));
-                        menu.show(instancesList, e.getPoint().x, e.getPoint().y);
-                    });
+                    //send clearSelection message
+                    DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ClearInstanceSelectionEvent());
                 }
             }
         });
 
-    }
-
-    /**
-     * Add a list selection listener to the instances list.
-     *
-     * @param listener The ListSelectionListener to add to the instances list.
-     */
-    void addListSelectionListener(ListSelectionListener newListener) {
-        instancesList.removeListSelectionListener(listener);
-        listener = newListener;
-        instancesList.addListSelectionListener(listener);
-    }
-
-    /**
-     * Populate the instances list.
-     */
-    synchronized void populateInstancesList() {
-        SwingUtilities.invokeLater(() -> {
-            List<AbstractFile> files = getInstancesForSelected();
-            if (files.isEmpty()) {
-                //if there are no files currently remove the current items without removing listener to cause content viewer to reset
-                instancesListModel.removeAllElements();
-                fadeOut();
-            } else {
-                //remove listener so content viewer node is not set multiple times
-                instancesList.removeListSelectionListener(listener);
-                instancesListModel.removeAllElements();
-                for (AbstractFile file : files) {
-                    instancesListModel.addElement(file);
-                }
-                //add listener back to allow selection of first index to cause content viewer node to be set
-                instancesList.addListSelectionListener(listener);
-                if (!instancesListModel.isEmpty()) {
-                    instancesList.setSelectedIndex(0);
-                }
-                fadeIn();
-            }
-        });
-    }
-
-
-    /**
-     * Get the AbstractFile for the item currently selected in the instances
-     * list.
-     *
-     * @return The AbstractFile which is currently selected.
-     */
-    synchronized AbstractFile getSelectedFile() {
-        if (instancesList.getSelectedIndex() == -1) {
-            return null;
-        } else {
-            return instancesListModel.getElementAt(instancesList.getSelectedIndex());
-        }
     }
 
     /**
@@ -237,7 +142,9 @@ public class ResultsPanel extends javax.swing.JPanel {
     @Subscribe
     void handlePageRetrievedEvent(DiscoveryEventUtils.PageRetrievedEvent pageRetrievedEvent) {
         SwingUtilities.invokeLater(() -> {
-            populateInstancesList();
+            //send populateMesage
+            DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
+
             currentPage = pageRetrievedEvent.getPageNumber();
             updateControls();
             resetResultViewer();
@@ -437,15 +344,15 @@ public class ResultsPanel extends javax.swing.JPanel {
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
         javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
         javax.swing.Box.Filler filler4 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
-        resultsSplitPane = new javax.swing.JSplitPane();
-        javax.swing.JPanel instancesPanel = new javax.swing.JPanel();
-        javax.swing.JScrollPane instancesScrollPane = new javax.swing.JScrollPane();
-        instancesList = new javax.swing.JList<>();
         resultsViewerPanel = new javax.swing.JPanel();
 
-        setPreferredSize(new java.awt.Dimension(777, 475));
+        setMinimumSize(new java.awt.Dimension(700, 200));
+        setPreferredSize(new java.awt.Dimension(700, 700));
+        setLayout(new java.awt.BorderLayout());
 
         pagingPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        pagingPanel.setMinimumSize(new java.awt.Dimension(400, 39));
+        pagingPanel.setPreferredSize(new java.awt.Dimension(700, 39));
         pagingPanel.setLayout(new java.awt.GridBagLayout());
 
         previousPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
@@ -592,61 +499,12 @@ public class ResultsPanel extends javax.swing.JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         pagingPanel.add(filler4, gridBagConstraints);
 
-        resultsSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        resultsSplitPane.setResizeWeight(1.0);
-        resultsSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.resultsSplitPane.toolTipText")); // NOI18N
-        resultsSplitPane.setOpaque(false);
-        resultsSplitPane.setPreferredSize(new java.awt.Dimension(777, 440));
+        add(pagingPanel, java.awt.BorderLayout.PAGE_START);
 
-        instancesPanel.setPreferredSize(new java.awt.Dimension(775, 68));
-
-        instancesScrollPane.setPreferredSize(new java.awt.Dimension(775, 60));
-
-        instancesList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.instancesList.border.title"))); // NOI18N
-        instancesList.setModel(instancesListModel);
-        instancesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        instancesList.setCellRenderer(new InstancesCellRenderer());
-        instancesList.setVisibleRowCount(2);
-        instancesScrollPane.setViewportView(instancesList);
-
-        javax.swing.GroupLayout instancesPanelLayout = new javax.swing.GroupLayout(instancesPanel);
-        instancesPanel.setLayout(instancesPanelLayout);
-        instancesPanelLayout.setHorizontalGroup(
-            instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 779, Short.MAX_VALUE)
-            .addGroup(instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        instancesPanelLayout.setVerticalGroup(
-            instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 433, Short.MAX_VALUE)
-            .addGroup(instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, instancesPanelLayout.createSequentialGroup()
-                    .addGap(0, 0, 0)
-                    .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 433, Short.MAX_VALUE)))
-        );
-
-        resultsSplitPane.setRightComponent(instancesPanel);
-
-        resultsViewerPanel.setPreferredSize(new java.awt.Dimension(0, 380));
+        resultsViewerPanel.setMinimumSize(new java.awt.Dimension(0, 160));
+        resultsViewerPanel.setPreferredSize(new java.awt.Dimension(700, 700));
         resultsViewerPanel.setLayout(new java.awt.BorderLayout());
-        resultsSplitPane.setLeftComponent(resultsViewerPanel);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(pagingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(resultsSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 29, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(pagingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(resultsSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
-        );
+        add(resultsViewerPanel, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     /**
@@ -729,11 +587,9 @@ public class ResultsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.JTextField gotoPageField;
-    private javax.swing.JList<AbstractFile> instancesList;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JComboBox<Integer> pageSizeComboBox;
     private javax.swing.JButton previousPageButton;
-    private javax.swing.JSplitPane resultsSplitPane;
     private javax.swing.JPanel resultsViewerPanel;
     // End of variables declaration//GEN-END:variables
 
@@ -860,181 +716,6 @@ public class ResultsPanel extends javax.swing.JPanel {
                 //we want to do nothing in response to this since we allow it to be cancelled
             }
             documentPreviewViewer.repaint();
-        }
-
-    }
-
-    /**
-     * Cell renderer for the instances list.
-     */
-    private class InstancesCellRenderer extends DefaultListCellRenderer {
-
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            String name = "";
-            if (value instanceof AbstractFile) {
-                AbstractFile file = (AbstractFile) value;
-                try {
-                    name = file.getUniquePath();
-                } catch (TskCoreException ingored) {
-                    name = file.getParentPath() + "/" + file.getName();
-                }
-
-            }
-            setText(name);
-            return this;
-        }
-
-    }
-
-    /**
-     *
-     * Sets the alpha value
-     *
-     * @param a
-     *
-     */
-    public void setDividerLocation(int a) {
-
-        this.dividerLocation = a;
-
-    }
-
-    /**
-     *
-     * Fades this JPanel in. *
-     */
-    public void fadeIn() {
-
-        stop();
-
-        fadeInAnimator = new SwingAnimator(new FadeInCallback());
-
-        fadeInAnimator.start();
-
-    }
-
-    /**
-     *
-     * Fades this JPanel out
-     *
-     */
-    public void fadeOut() {
-
-        stop();
-
-        fadeOutAnimator = new SwingAnimator(new FadeOutCallback());
-
-        fadeOutAnimator.start();
-
-    }
-
-    /**
-     *
-     * Stops all animators. *
-     */
-    private void stop() {
-
-        if (fadeOutAnimator != null && fadeOutAnimator.isRunning()) {
-
-            fadeOutAnimator.stop();
-
-        }
-
-        if (fadeInAnimator != null && fadeInAnimator.isRunning()) {
-
-            fadeInAnimator.stop();
-
-        }
-
-    }
-
-    @Override
-    public void paintComponent(Graphics g) {
-
-        if (dividerLocation <= resultsSplitPane.getHeight() && dividerLocation >= (resultsSplitPane.getHeight() - 100)) {
-            resultsSplitPane.setDividerLocation(dividerLocation);
-        }
-
-        super.paintComponent(g);
-
-    }
-
-    /**
-     *
-     * Callback implementation for fading in
-     *
-     * @author Greg Cope
-     *
-     *
-     *
-     */
-    private class FadeInCallback implements SwingAnimatorCallback {
-
-        @Override
-
-        public void callback(Object caller) {
-
-            dividerLocation -= ANIMATION_INCREMENT;
-
-            repaint();
-
-        }
-
-        @Override
-
-        public boolean hasTerminated() {
-
-            if (dividerLocation <= (resultsSplitPane.getHeight() - 100)) {
-
-                dividerLocation = resultsSplitPane.getHeight() - 100;
-                System.out.println("FADE IN COMPLETE");
-                return true;
-
-            }
-
-            return false;
-
-        }
-
-    }
-
-    /**
-     *
-     * Callback implementation to fade out
-     *
-     * @author Greg Cope
-     *
-     *
-     *
-     */
-    private class FadeOutCallback implements SwingAnimatorCallback {
-
-        @Override
-
-        public void callback(Object caller) {
-
-            dividerLocation += ANIMATION_INCREMENT;
-
-            repaint();
-
-        }
-
-        @Override
-
-        public boolean hasTerminated() {
-
-            if (dividerLocation >= resultsSplitPane.getHeight()) {
-
-                dividerLocation = resultsSplitPane.getHeight();
-                System.out.println("FADE OUT COMPLETE");
-                return true;
-            }
-
-            return false;
         }
 
     }

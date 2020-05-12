@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,21 +18,17 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
+import com.google.common.eventbus.Subscribe;
+import java.awt.Graphics;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.JSplitPane;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
-import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Create a dialog for displaying the file discovery tool
@@ -45,10 +41,15 @@ public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
     private static final String PREFERRED_ID = "DiscoveryTopComponent"; // NON-NLS
-    private final FileSearchPanel fileSearchPanel;
     private final GroupListPanel groupListPanel;
-    private final DataContentPanel dataContentPanel;
+    private final DetailsPanel detailsPanel;
     private final ResultsPanel resultsPanel;
+    private int dividerLocation;
+
+    private static final int ANIMATION_INCREMENT = 10;
+    private static final int RESULTS_AREA_SMALL_SIZE = 200;
+
+    private SwingAnimator animator = null;
 
     /**
      * Creates new form FileDiscoveryDialog
@@ -57,31 +58,14 @@ public final class DiscoveryTopComponent extends TopComponent {
     public DiscoveryTopComponent() {
         initComponents();
         setName(Bundle.DiscoveryTopComponent_name());
-        fileSearchPanel = new FileSearchPanel();
-        dataContentPanel = DataContentPanel.createInstance();
-        resultsPanel = new ResultsPanel();
         groupListPanel = new GroupListPanel();
+        resultsPanel = new ResultsPanel();
+        detailsPanel = new DetailsPanel();
         mainSplitPane.setLeftComponent(groupListPanel);
         rightSplitPane.setTopComponent(resultsPanel);
-        rightSplitPane.setBottomComponent(dataContentPanel);
-        //add list selection listener so the content viewer will be updated with the selected file
-        //when a file is selected in the results panel
-        resultsPanel.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    SwingUtilities.invokeLater(() -> {
-                        AbstractFile file = resultsPanel.getSelectedFile();
-                        if (file != null) {
-                            dataContentPanel.setNode(new TableFilterNode(new FileNode(file), false));
-                        } else {
-                            dataContentPanel.setNode(null);
-                        }
-                    });
-                }
-            }
-        });
-
+        rightSplitPane.setBottomComponent(detailsPanel);
+        rightSplitPane.setDividerLocation(1.0);
+        dividerLocation = rightSplitPane.getDividerLocation();
     }
 
     /**
@@ -108,17 +92,22 @@ public final class DiscoveryTopComponent extends TopComponent {
         DiscoveryEventUtils.getDiscoveryEventBus().register(this);
         DiscoveryEventUtils.getDiscoveryEventBus().register(resultsPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().register(groupListPanel);
-        DiscoveryEventUtils.getDiscoveryEventBus().register(fileSearchPanel);
+        DiscoveryEventUtils.getDiscoveryEventBus().register(detailsPanel);
     }
 
     @Override
     protected void componentClosed() {
-        fileSearchPanel.cancelSearch();
+        cancelCurrentSearch();
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
-        DiscoveryEventUtils.getDiscoveryEventBus().unregister(fileSearchPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(resultsPanel);
+        DiscoveryEventUtils.getDiscoveryEventBus().unregister(detailsPanel);
         super.componentClosed();
+    }
+
+    private void cancelCurrentSearch() {
+        final DiscoveryDialog discDialog = DiscoveryDialog.getDiscoveryDialogInstance();
+        discDialog.cancelSearch();
     }
 
     /**
@@ -131,18 +120,18 @@ public final class DiscoveryTopComponent extends TopComponent {
     private void initComponents() {
 
         mainSplitPane = new javax.swing.JSplitPane();
-        rightSplitPane = new javax.swing.JSplitPane();
+        rightSplitPane = new AnimatedSplitPane();
 
-        setPreferredSize(new java.awt.Dimension(1400, 900));
+        setMinimumSize(new java.awt.Dimension(199, 200));
+        setPreferredSize(new java.awt.Dimension(1100, 700));
         setLayout(new java.awt.BorderLayout());
 
-        mainSplitPane.setDividerLocation(450);
-        mainSplitPane.setPreferredSize(new java.awt.Dimension(1400, 828));
+        mainSplitPane.setDividerLocation(250);
+        mainSplitPane.setPreferredSize(new java.awt.Dimension(1100, 700));
 
-        rightSplitPane.setDividerLocation(475);
         rightSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        rightSplitPane.setResizeWeight(0.5);
-        rightSplitPane.setPreferredSize(new java.awt.Dimension(1000, 828));
+        rightSplitPane.setResizeWeight(1.0);
+        rightSplitPane.setPreferredSize(new java.awt.Dimension(800, 700));
         mainSplitPane.setRightComponent(rightSplitPane);
 
         add(mainSplitPane, java.awt.BorderLayout.CENTER);
@@ -159,10 +148,95 @@ public final class DiscoveryTopComponent extends TopComponent {
                 .collect(Collectors.toList());
     }
 
+    /**
+     *
+     * Fades this JPanel in. *
+     */
+    @Subscribe
+    void handleDetailsVisibleEvent(DiscoveryEventUtils.DetailsVisibleEvent detailsVisibleEvent) {
+        if (animator != null && animator.isRunning()) {
+            animator.stop();
+        }
+        if (detailsVisibleEvent.isShowDetailsArea()) {
+            animator = new SwingAnimator(new ShowDetailsAreaCallback());
+        } else {
+            animator = new SwingAnimator(new HideDetailsAreaCallback());
+        }
+        animator.start();
+    }
 
+    /**
+     *
+     * Callback implementation for fading in
+     *
+     * @author Greg Cope
+     *
+     *
+     *
+     */
+    private class ShowDetailsAreaCallback implements SwingAnimatorCallback {
+
+        @Override
+        public void callback(Object caller) {
+            dividerLocation -= ANIMATION_INCREMENT;
+            repaint();
+        }
+
+        @Override
+        public boolean hasTerminated() {
+            if (dividerLocation <= RESULTS_AREA_SMALL_SIZE) {
+                dividerLocation = RESULTS_AREA_SMALL_SIZE;
+                return true;
+            }
+            return false;
+        }
+
+    }
+
+    /**
+     *
+     * Callback implementation to fade out
+     *
+     * @author Greg Cope
+     *
+     *
+     *
+     */
+    private class HideDetailsAreaCallback implements SwingAnimatorCallback {
+
+        @Override
+        public void callback(Object caller) {
+            dividerLocation += ANIMATION_INCREMENT;
+            repaint();
+        }
+
+        @Override
+        public boolean hasTerminated() {
+            if (dividerLocation >= rightSplitPane.getHeight()) {
+                dividerLocation = rightSplitPane.getHeight();
+                return true;
+            }
+            return false;
+        }
+
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSplitPane mainSplitPane;
     private javax.swing.JSplitPane rightSplitPane;
     // End of variables declaration//GEN-END:variables
+
+    private class AnimatedSplitPane extends JSplitPane {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public void paintComponent(Graphics g) {
+            if (dividerLocation <= rightSplitPane.getHeight() && dividerLocation >= RESULTS_AREA_SMALL_SIZE) {
+                rightSplitPane.setDividerLocation(dividerLocation);
+            }
+            super.paintComponent(g);
+        }
+
+    }
 
 }
