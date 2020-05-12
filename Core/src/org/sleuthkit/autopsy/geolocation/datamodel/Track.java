@@ -130,14 +130,15 @@ public final class Track extends GeoPath {
      */
     private GeoTrackPoints getPointsList(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_TRACKPOINTS);
-        if (attribute != null) {
-            try {
-                return BlackboardJsonAttrUtil.fromAttribute(attribute, GeoTrackPoints.class);
-            } catch (InvalidJsonException ex) {
-                throw new GeoLocationDataException("Unable to parse track points in TSK_GEO_TRACKPOINTS attribute", ex);
-            }
+        if (attribute == null) {
+            throw new GeoLocationDataException("No TSK_GEO_TRACKPOINTS attribute present in attribute map to parse.");
         }
-        return null;
+
+        try {
+            return BlackboardJsonAttrUtil.fromAttribute(attribute, GeoTrackPoints.class);
+        } catch (InvalidJsonException ex) {
+            throw new GeoLocationDataException("Unable to parse track points in TSK_GEO_TRACKPOINTS attribute", ex);
+        }
     }
 
     /**
