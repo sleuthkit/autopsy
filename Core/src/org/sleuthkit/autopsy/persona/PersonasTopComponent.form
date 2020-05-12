@@ -156,20 +156,7 @@
                 <Component class="javax.swing.JTable" name="filterResultsTable">
                   <Properties>
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-                      <Table columnCount="2" rowCount="4">
-                        <Column editable="true" title="ID" type="java.lang.String">
-                          <Data value="0"/>
-                          <Data value="3"/>
-                          <Data value="2"/>
-                          <Data value="1"/>
-                        </Column>
-                        <Column editable="true" title="Name" type="java.lang.String">
-                          <Data value="Johnathn Dough"/>
-                          <Data value="Joe Schmoe"/>
-                          <Data value="Michael Schmoe"/>
-                          <Data value="Ethan Schmoe"/>
-                        </Column>
-                      </Table>
+                      <Table columnCount="0" rowCount="4"/>
                     </Property>
                     <Property name="columnModel" type="javax.swing.table.TableColumnModel" editor="org.netbeans.modules.form.editors2.TableColumnModelEditor">
                       <TableColumnModel selectionModel="0">

@@ -18,10 +18,20 @@
  */
 package org.sleuthkit.autopsy.persona;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Collection;
+import java.util.Collections;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 
 /**
  * Top component for the Personas tool
@@ -39,6 +49,50 @@ public final class PersonasTopComponent extends TopComponent {
     public PersonasTopComponent() {
         initComponents();
         setName(Bundle.PTopComponent_Name());
+        executeSearch();
+
+        searchBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                executeSearch();
+            }
+        });
+    }
+
+    public class PersonaFilterTableModel extends DefaultTableModel {
+        PersonaFilterTableModel(Object[][] rows, String[] colNames) {
+            super(rows, colNames);
+        }
+
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    }
+
+    void updateResultsTable(Collection<Persona> results) {
+        Object[][] rows = new Object[results.size()][2];
+        int i = 0;
+        for (Persona result : results) {
+            rows[i] = new String[]{String.valueOf(result.getId()), result.getName()};
+            i++;
+        }
+        DefaultTableModel updatedTableModel = new PersonaFilterTableModel(
+                rows,
+                new String[]{"ID", "Name"}
+        );
+
+        filterResultsTable.setModel(updatedTableModel);
+    }
+
+    void executeSearch() {
+        System.out.println("Search!");
+        Collection<Persona> results = Collections.EMPTY_LIST;
+        try {
+            results = Persona.getPersonaByName(searchField.getText());
+        } catch (CentralRepoException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        updateResultsTable(results);
     }
 
     @Override
@@ -95,23 +149,15 @@ public final class PersonasTopComponent extends TopComponent {
 
         filterResultsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {"0", "Johnathn Dough"},
-                {"3", "Joe Schmoe"},
-                {"2", "Michael Schmoe"},
-                {"1", "Ethan Schmoe"}
+                {},
+                {},
+                {},
+                {}
             },
             new String [] {
-                "ID", "Name"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class
-            };
 
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
             }
-        });
+        ));
         filterResultsPane.setViewportView(filterResultsTable);
         if (filterResultsTable.getColumnModel().getColumnCount() > 0) {
             filterResultsTable.getColumnModel().getColumn(0).setMaxWidth(25);
