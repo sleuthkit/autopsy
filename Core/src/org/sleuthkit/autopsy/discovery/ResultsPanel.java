@@ -56,10 +56,11 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.textsummarizer.TextSummary;
+import java.awt.Graphics;
 
 /**
- * Panel for displaying of Discovery results and handling the paging of
- * those results.
+ * Panel for displaying of Discovery results and handling the paging of those
+ * results.
  */
 public class ResultsPanel extends javax.swing.JPanel {
 
@@ -81,6 +82,14 @@ public class ResultsPanel extends javax.swing.JPanel {
     private final List<SwingWorker<Void, Void>> resultContentWorkers = new ArrayList<>();
     private final DefaultListModel<AbstractFile> instancesListModel = new DefaultListModel<>();
     private ListSelectionListener listener = null;
+
+    private int dividerLocation = 1;
+
+    private static final int ANIMATION_INCREMENT = 10;
+
+    private SwingAnimator fadeInAnimator = null;
+
+    private SwingAnimator fadeOutAnimator = null;
 
     /**
      * Creates new form ResultsPanel.
@@ -164,6 +173,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             if (files.isEmpty()) {
                 //if there are no files currently remove the current items without removing listener to cause content viewer to reset
                 instancesListModel.removeAllElements();
+                fadeOut();
             } else {
                 //remove listener so content viewer node is not set multiple times
                 instancesList.removeListSelectionListener(listener);
@@ -176,9 +186,11 @@ public class ResultsPanel extends javax.swing.JPanel {
                 if (!instancesListModel.isEmpty()) {
                     instancesList.setSelectedIndex(0);
                 }
+                fadeIn();
             }
         });
     }
+
 
     /**
      * Get the AbstractFile for the item currently selected in the instances
@@ -425,7 +437,7 @@ public class ResultsPanel extends javax.swing.JPanel {
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
         javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
         javax.swing.Box.Filler filler4 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
-        javax.swing.JSplitPane resultsSplitPane = new javax.swing.JSplitPane();
+        resultsSplitPane = new javax.swing.JSplitPane();
         javax.swing.JPanel instancesPanel = new javax.swing.JPanel();
         javax.swing.JScrollPane instancesScrollPane = new javax.swing.JScrollPane();
         instancesList = new javax.swing.JList<>();
@@ -580,11 +592,9 @@ public class ResultsPanel extends javax.swing.JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         pagingPanel.add(filler4, gridBagConstraints);
 
-        resultsSplitPane.setDividerLocation(380);
         resultsSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         resultsSplitPane.setResizeWeight(1.0);
         resultsSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.resultsSplitPane.toolTipText")); // NOI18N
-        resultsSplitPane.setLastDividerLocation(180);
         resultsSplitPane.setOpaque(false);
         resultsSplitPane.setPreferredSize(new java.awt.Dimension(777, 440));
 
@@ -609,11 +619,11 @@ public class ResultsPanel extends javax.swing.JPanel {
         );
         instancesPanelLayout.setVerticalGroup(
             instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 68, Short.MAX_VALUE)
+            .addGap(0, 433, Short.MAX_VALUE)
             .addGroup(instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, instancesPanelLayout.createSequentialGroup()
                     .addGap(0, 0, 0)
-                    .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 433, Short.MAX_VALUE)))
         );
 
         resultsSplitPane.setRightComponent(instancesPanel);
@@ -627,14 +637,14 @@ public class ResultsPanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(pagingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(resultsSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(resultsSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 29, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(pagingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(resultsSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 436, Short.MAX_VALUE)
+                .addComponent(resultsSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -723,6 +733,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private javax.swing.JButton nextPageButton;
     private javax.swing.JComboBox<Integer> pageSizeComboBox;
     private javax.swing.JButton previousPageButton;
+    private javax.swing.JSplitPane resultsSplitPane;
     private javax.swing.JPanel resultsViewerPanel;
     // End of variables declaration//GEN-END:variables
 
@@ -878,4 +889,154 @@ public class ResultsPanel extends javax.swing.JPanel {
         }
 
     }
+
+    /**
+     *
+     * Sets the alpha value
+     *
+     * @param a
+     *
+     */
+    public void setDividerLocation(int a) {
+
+        this.dividerLocation = a;
+
+    }
+
+    /**
+     *
+     * Fades this JPanel in. *
+     */
+    public void fadeIn() {
+
+        stop();
+
+        fadeInAnimator = new SwingAnimator(new FadeInCallback());
+
+        fadeInAnimator.start();
+
+    }
+
+    /**
+     *
+     * Fades this JPanel out
+     *
+     */
+    public void fadeOut() {
+
+        stop();
+
+        fadeOutAnimator = new SwingAnimator(new FadeOutCallback());
+
+        fadeOutAnimator.start();
+
+    }
+
+    /**
+     *
+     * Stops all animators. *
+     */
+    private void stop() {
+
+        if (fadeOutAnimator != null && fadeOutAnimator.isRunning()) {
+
+            fadeOutAnimator.stop();
+
+        }
+
+        if (fadeInAnimator != null && fadeInAnimator.isRunning()) {
+
+            fadeInAnimator.stop();
+
+        }
+
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+
+        if (dividerLocation <= resultsSplitPane.getHeight() && dividerLocation >= (resultsSplitPane.getHeight() - 100)) {
+            resultsSplitPane.setDividerLocation(dividerLocation);
+        }
+
+        super.paintComponent(g);
+
+    }
+
+    /**
+     *
+     * Callback implementation for fading in
+     *
+     * @author Greg Cope
+     *
+     *
+     *
+     */
+    private class FadeInCallback implements SwingAnimatorCallback {
+
+        @Override
+
+        public void callback(Object caller) {
+
+            dividerLocation -= ANIMATION_INCREMENT;
+
+            repaint();
+
+        }
+
+        @Override
+
+        public boolean hasTerminated() {
+
+            if (dividerLocation <= (resultsSplitPane.getHeight() - 100)) {
+
+                dividerLocation = resultsSplitPane.getHeight() - 100;
+                System.out.println("FADE IN COMPLETE");
+                return true;
+
+            }
+
+            return false;
+
+        }
+
+    }
+
+    /**
+     *
+     * Callback implementation to fade out
+     *
+     * @author Greg Cope
+     *
+     *
+     *
+     */
+    private class FadeOutCallback implements SwingAnimatorCallback {
+
+        @Override
+
+        public void callback(Object caller) {
+
+            dividerLocation += ANIMATION_INCREMENT;
+
+            repaint();
+
+        }
+
+        @Override
+
+        public boolean hasTerminated() {
+
+            if (dividerLocation >= resultsSplitPane.getHeight()) {
+
+                dividerLocation = resultsSplitPane.getHeight();
+                System.out.println("FADE OUT COMPLETE");
+                return true;
+            }
+
+            return false;
+        }
+
+    }
+
 }
