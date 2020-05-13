@@ -62,6 +62,8 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         phoneNumbersPanel = new javax.swing.JPanel();
         emailsLabel = new javax.swing.JLabel();
         emailsPanel = new javax.swing.JPanel();
+        othersLabel = new javax.swing.JLabel();
+        otherAttrsPanel = new javax.swing.JPanel();
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -88,8 +90,9 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.gridwidth = 4;
         gridBagConstraints.ipadx = 227;
+        gridBagConstraints.ipady = -7;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         add(namePanel, gridBagConstraints);
 
@@ -98,16 +101,16 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.gridwidth = 3;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(12, 19, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(18, 19, 0, 0);
         add(phonesLabel, gridBagConstraints);
 
         phoneNumbersPanel.setLayout(new java.awt.GridBagLayout());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.gridwidth = 4;
         gridBagConstraints.ipadx = 400;
         gridBagConstraints.ipady = 101;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -119,6 +122,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(6, 19, 0, 0);
         add(emailsLabel, gridBagConstraints);
@@ -127,12 +131,32 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 4;
-        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.gridwidth = 4;
         gridBagConstraints.ipadx = 400;
         gridBagConstraints.ipady = 106;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
         add(emailsPanel, gridBagConstraints);
+
+        othersLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(othersLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.othersLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(18, 19, 0, 0);
+        add(othersLabel, gridBagConstraints);
+
+        otherAttrsPanel.setLayout(new java.awt.GridBagLayout());
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.ipadx = 400;
+        gridBagConstraints.ipady = 100;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 0, 29, 0);
+        add(otherAttrsPanel, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     @Override
@@ -148,11 +172,8 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         List<BlackboardAttribute> otherList = new ArrayList<>();
 
         
-        
-        
-        //BlackboardAttribute bba = new BlackboardAttribute();
         try {
-            // RAMAN TBD: populate the display components from the artifact
+            // Get all the attributes and group them by the panels they go in
             for (BlackboardAttribute bba : artifact.getAttributes()) {
                 if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
                     phoneNumList.add(bba);
@@ -184,7 +205,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
         updateEmailAddressesPanel(emailList);
 
-        // TBD: update the other attributes panel
+        updateOtherAttributesPanel(otherList);
         // repaint
         this.revalidate();
     }
@@ -339,13 +360,66 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         emailsPanel.revalidate();
     }
      
-
-    private String getAttributeLabel(BlackboardAttribute bba) {
-        // TBD if not found, should probably strip TSK_ and convert to camel case,
-        //return ATTR_LABELS_MAP.getOrDefault(bba.getAttributeType(), c);
+     private void updateOtherAttributesPanel(List<BlackboardAttribute> otherAttributesList) {
         
-        return bba.getAttributeType().getDisplayName();
+        if (otherAttributesList.isEmpty()) {
+            this.othersLabel.setVisible(false);
+            this.otherAttrsPanel.setVisible(false);
+            return;
+        }
+        
+        GridBagLayout gridBagLayout = new GridBagLayout();
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.gridx = 0;
+        constraints.gridy = -1;
+        constraints.weighty = .0;
+        constraints.anchor = GridBagConstraints.LINE_START;
+
+        Dimension horizSpacerBlockDimension = new Dimension(12, 4); 
+         
+        for (BlackboardAttribute bba : otherAttributesList) {
+            constraints.weightx = 0;
+            constraints.gridy++;
+            constraints.gridx = 0; 
+            
+            // Add a label for attribute type
+            javax.swing.JLabel attrTypeLabel = new javax.swing.JLabel();
+            String attrLabel = bba.getAttributeType().getDisplayName();
+            attrTypeLabel.setText(attrLabel);
+           
+            // RAMAN TBD: set the size/font/style for label
+            
+            gridBagLayout.setConstraints(attrTypeLabel, constraints);
+            otherAttrsPanel.add(attrTypeLabel);
+            
+            // Add horizontal space
+            constraints.gridx++; 
+            Box.Filler spacer = new Box.Filler(horizSpacerBlockDimension, horizSpacerBlockDimension, horizSpacerBlockDimension);
+            gridBagLayout.setConstraints(spacer, constraints);
+            otherAttrsPanel.add(spacer);
+            
+            // Add the attribute value
+            constraints.gridx++; 
+            javax.swing.JLabel attrValueLabel = new javax.swing.JLabel();
+            attrValueLabel.setText(bba.getValueString());
+            gridBagLayout.setConstraints(attrValueLabel, constraints);
+            otherAttrsPanel.add(attrValueLabel);
+        }
+        
+        
+        //constraints.gridy++;
+        //constraints.gridx = 0;
+        //constraints.weighty = 1;
+        //Component vertGlue = createVerticalGlue();
+        //emailsPanel.add(vertGlue);
+        //gridBagLayout.setConstraints(vertGlue, constraints);
+        
+        
+        otherAttrsPanel.setLayout(gridBagLayout);
+        otherAttrsPanel.revalidate();
     }
+          
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -353,6 +427,8 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     private javax.swing.JLabel emailsLabel;
     private javax.swing.JPanel emailsPanel;
     private javax.swing.JPanel namePanel;
+    private javax.swing.JPanel otherAttrsPanel;
+    private javax.swing.JLabel othersLabel;
     private javax.swing.JPanel phoneNumbersPanel;
     private javax.swing.JLabel phonesLabel;
     // End of variables declaration//GEN-END:variables
