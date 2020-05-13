@@ -316,7 +316,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         boolean sourceFileRendered = renderContent(sourceFileSection, sourceContent, true);
         
         if (!sourceFileRendered) {
-            parent.children().remove(sourceFileSection);
+            sourceFileSection.remove();
         }
         
         return contentRendered || sourceFileRendered;
