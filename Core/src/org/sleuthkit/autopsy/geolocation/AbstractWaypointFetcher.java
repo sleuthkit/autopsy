@@ -26,6 +26,7 @@ import javafx.util.Pair;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationParseResult;
 import org.sleuthkit.autopsy.geolocation.datamodel.Track;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder;
@@ -80,7 +81,7 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
 
     @Override
     public void process(List<Waypoint> waypoints) {
-        List<Track> tracks = new ArrayList<>();
+        List<GeoLocationParseResult<Track>> tracks = new ArrayList<>();
         if (filters.getArtifactTypes().contains(ARTIFACT_TYPE.TSK_GPS_TRACK)) {
             try {
                 tracks = Track.getTracks(Case.getCurrentCase().getSleuthkitCase(), filters.getDataSources());

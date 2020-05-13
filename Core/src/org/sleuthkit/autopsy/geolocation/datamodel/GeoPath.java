@@ -74,15 +74,19 @@ public class GeoPath {
      *
      * @throws GeoLocationDataException
      */
-    static public List<Track> getTracks(SleuthkitCase skCase, List<? extends Content> sourceList) throws GeoLocationDataException {
+    public static List<GeoLocationParseResult<Track>> getTracks(SleuthkitCase skCase, List<? extends Content> sourceList) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
-        List<Track> tracks = new ArrayList<>();
+        List<GeoLocationParseResult<Track>> tracks = new ArrayList<>();
         try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK);
             for (BlackboardArtifact artifact : artifacts) {
                 if (sourceList == null || sourceList.contains(artifact.getDataSource())) {
-                    Track route = new Track(artifact);
-                    tracks.add(route);
+                    try {
+                        Track route = new Track(artifact);
+                        tracks.add(GeoLocationParseResult.create(route));
+                    } catch (GeoLocationDataException e) {
+                        tracks.add(GeoLocationParseResult.error(e));
+                    }
                 }
             }
         } catch (TskCoreException ex) {
