@@ -126,7 +126,6 @@ final class AddRawImageTask implements Runnable {
                "AddRawImageTask.noOpenCase.errMsg=No open case available."})
     private void addImageToCase(List<Content> dataSources, List<String> errorMessages) {
         SleuthkitCase caseDatabase;
-        System.out.println("\n### AddRawImageTask: Adding image to case!");
         try {
             caseDatabase = Case.getCurrentCaseThrows().getSleuthkitCase();
         } catch (NoCurrentCaseException ex) {
@@ -148,6 +147,7 @@ final class AddRawImageTask implements Runnable {
         }        
         imageFilePaths.add(imageFilePath); 
         try { 
+            caseDatabase.acquireSingleUserCaseWriteLock();
             /*
              * Get Image that will be added to case
              */
@@ -187,6 +187,8 @@ final class AddRawImageTask implements Runnable {
             errorMessages.add(errorMessage);
             logger.log(Level.SEVERE, errorMessage, ex);
             criticalErrorOccurred = true;
+        } finally {
+            caseDatabase.releaseSingleUserCaseWriteLock();
         }
 
     }    
