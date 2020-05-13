@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.HashEntry;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -68,7 +69,9 @@ public class KdbHashSetParser implements HashSetParser {
             }
 
             // Get the hashes
-            resultSet = statement.executeQuery("SELECT md5 FROM hashes");
+            resultSet = statement.executeQuery("SELECT h.md5 as md5, " + 
+                " (SELECT group_concat(c.comment, ' ') FROM comments c WHERE h.id = c.hash_id) as comment " + 
+                " from hashes h");
 
             // At this point, getNextHash can read each hash from the result set
         } catch (ClassNotFoundException | SQLException ex) {
@@ -77,15 +80,21 @@ public class KdbHashSetParser implements HashSetParser {
 
     }
 
+
     /**
      * Get the next hash to import
      *
      * @return The hash as a string
+     *
      * @throws TskCoreException
      */
     @Override
     public String getNextHash() throws TskCoreException {
+        return getNextHashEntry().getMd5Hash();
+    }
 
+    @Override
+    public HashEntry getNextHashEntry() throws TskCoreException {
         try {
             if (resultSet.next()) {
                 byte[] hashBytes = resultSet.getBytes("md5");
@@ -98,13 +107,15 @@ public class KdbHashSetParser implements HashSetParser {
                     throw new TskCoreException("Hash has incorrect length: " + sb.toString());
                 }
 
+                String md5Hash = sb.toString();
+                String comment = resultSet.getString("comment");
                 totalHashesRead++;
-                return sb.toString();
+                return new HashEntry(null, md5Hash, null, null, comment);
             } else {
                 throw new TskCoreException("Could not read expected number of hashes from hash set " + filename);
             }
         } catch (SQLException ex) {
-            throw new TskCoreException("Error reading hash from result set for hash set " + filename, ex);
+            throw new TskCoreException("Error opening/reading hash set " + filename, ex);
         }
     }
 
