@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
+import org.sleuthkit.datamodel.HashHitInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
@@ -2306,6 +2307,45 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException {
         return isValueInReferenceSet(hash, referenceSetID, CorrelationAttributeInstance.FILES_TYPE_ID);
     }
+
+    @Override
+    public HashHitInfo lookupHash(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException {
+        int correlationTypeID = CorrelationAttributeInstance.FILES_TYPE_ID;
+        String normalizeValued = CorrelationAttributeNormalizer.normalize(this.getCorrelationTypeById(correlationTypeID), hash);
+
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String sql = "SELECT value,comment FROM %s WHERE value=? AND reference_set_id=?";
+
+        String fileTableName = CentralRepoDbUtil.correlationTypeToReferenceTableName(getCorrelationTypeById(correlationTypeID));
+
+        try {
+            preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
+            preparedStatement.setString(1, normalizeValued);
+            preparedStatement.setInt(2, referenceSetID);
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                String comment = resultSet.getString("comment");
+                String hashFound = resultSet.getString("value");
+                HashHitInfo found = new HashHitInfo(hashFound, "", "");
+                found.addComment(comment);
+                return found;
+            }
+            else {
+                return null;
+            }
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error determining if value (" + normalizeValued + ") is in reference set " + referenceSetID, ex); // NON-NLS
+        } finally {
+            CentralRepoDbUtil.closeStatement(preparedStatement);
+            CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeConnection(conn);
+        }
+    }
+    
+    
 
     /**
      * Check if the given value is in a specific reference set
