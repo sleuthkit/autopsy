@@ -155,6 +155,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         if (animator != null && animator.isRunning()) {
             animator.stop();
         }
+        dividerLocation = rightSplitPane.getDividerLocation();
         if (detailsVisibleEvent.isShowDetailsArea()) {
             animator = new SwingAnimator(new ShowDetailsAreaCallback());
         } else {
@@ -211,7 +212,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         @Override
         public boolean hasTerminated() {
             if (dividerLocation > rightSplitPane.getHeight() || dividerLocation == JSplitPane.UNDEFINED_CONDITION) {
-                dividerLocation = JSplitPane.UNDEFINED_CONDITION;
+                dividerLocation = rightSplitPane.getHeight();
                 return true;
             }
             return false;
