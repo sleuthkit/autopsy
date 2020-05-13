@@ -55,6 +55,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.datamodel.Tag;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 
 /**
  * Listen for case events and update entries in the Central Repository database
@@ -86,6 +87,10 @@ final class CaseEventListener implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
+        if (!(evt instanceof AutopsyEvent) || (((AutopsyEvent) evt).getSourceType() != AutopsyEvent.SourceType.LOCAL)) {
+            return;
+        }
+        
         CentralRepository dbManager;
         try {
             dbManager = CentralRepository.getInstance();
