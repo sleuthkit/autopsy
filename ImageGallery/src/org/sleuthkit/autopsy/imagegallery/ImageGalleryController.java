@@ -57,6 +57,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -74,6 +75,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -108,8 +110,6 @@ public final class ImageGalleryController {
             Case.Events.CONTENT_TAG_DELETED,
             Case.Events.DATA_SOURCE_DELETED
     );
-    
-    private static final String CATEGORY_TAG_SET_PREFIX = "Project VIC";
 
     /*
      * There is an image gallery controller per case. It is created during the
@@ -725,19 +725,19 @@ public final class ImageGalleryController {
     private static boolean isDrawableAndNotKnown(AbstractFile abstractFile) throws FileTypeDetector.FileTypeDetectorInitException {
         return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && FileTypeUtils.isDrawable(abstractFile);
     }
-    
+
     /**
      * Returns the TagSet with the image gallery categories.
-     * 
+     *
      * @return Category TagSet.
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     private TagSet getCategoryTagSet() throws TskCoreException {
         List<TagSet> tagSetList = getCaseDatabase().getTaggingManager().getTagSets();
         if (tagSetList != null && !tagSetList.isEmpty()) {
             for (TagSet set : tagSetList) {
-                if (set.getName().startsWith(CATEGORY_TAG_SET_PREFIX)) {
+                if (set.getName().equals(TagsManager.getCategoryTagSetName())) {
                     return set;
                 }
             }
