@@ -1,47 +1,43 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.persona;
 
-import org.netbeans.api.settings.ConvertAsProperties;
-import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.RetainLocation;
+import org.openide.windows.WindowManager;
 
 /**
- * Top component which displays something.
+ * Top component for persona details
  */
-@ConvertAsProperties(
-        dtd = "-//org.sleuthkit.autopsy.persona//PersonaDetails//EN",
-        autostore = false
-)
-@TopComponent.Description(
-        preferredID = "PersonaDetailsTopComponent",
-        //iconBase="SET/PATH/TO/ICON/HERE",
-        persistenceType = TopComponent.PERSISTENCE_ALWAYS
-)
-@TopComponent.Registration(mode = "geolocation", openAtStartup = false)
-@ActionID(category = "Window", id = "org.sleuthkit.autopsy.persona.PersonaDetailsTopComponent")
-@ActionReference(path = "Menu/Window" /*, position = 333 */)
-@TopComponent.OpenActionRegistration(
-        displayName = "#CTL_PersonaDetailsAction",
-        preferredID = "PersonaDetailsTopComponent"
-)
-@Messages({
-    "CTL_PersonaDetailsAction=PersonaDetails",
-    "CTL_PersonaDetailsTopComponent=PersonaDetails Window",
-    "HINT_PersonaDetailsTopComponent=This is a PersonaDetails window"
-})
+@TopComponent.Description(preferredID = "PersonasTopComponent", persistenceType = TopComponent.PERSISTENCE_NEVER)
+@TopComponent.Registration(mode = "personadetails", openAtStartup = false)
+@RetainLocation("personadetails")
+@SuppressWarnings("PMD.SingularField")
 public final class PersonaDetailsTopComponent extends TopComponent {
 
+    @Messages({
+        "PTopComponent_Name=Persona Details"
+    })
     public PersonaDetailsTopComponent() {
         initComponents();
-        setName(Bundle.CTL_PersonaDetailsTopComponent());
-        setToolTipText(Bundle.HINT_PersonaDetailsTopComponent());
-
+        setName(Bundle.PTopComponent_Name());
     }
 
     /**
@@ -187,7 +183,7 @@ public final class PersonaDetailsTopComponent extends TopComponent {
     }// </editor-fold>//GEN-END:initComponents
 
     private void resultNameFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resultNameFieldActionPerformed
-        // TODO add your handling code here:
+
     }//GEN-LAST:event_resultNameFieldActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -204,25 +200,10 @@ public final class PersonaDetailsTopComponent extends TopComponent {
     private javax.swing.JTextField resultNameField;
     private javax.swing.JLabel resultNameLbl;
     // End of variables declaration//GEN-END:variables
+    
     @Override
     public void componentOpened() {
-        // TODO add custom code on component opening
-    }
-
-    @Override
-    public void componentClosed() {
-        // TODO add custom code on component closing
-    }
-
-    void writeProperties(java.util.Properties p) {
-        // better to version settings since initial version as advocated at
-        // http://wiki.apidesign.org/wiki/PropertyFiles
-        p.setProperty("version", "1.0");
-        // TODO store your settings
-    }
-
-    void readProperties(java.util.Properties p) {
-        String version = p.getProperty("version");
-        // TODO read your settings according to their version
+        super.componentOpened();
+        WindowManager.getDefault().setTopComponentFloating(this, true);
     }
 }

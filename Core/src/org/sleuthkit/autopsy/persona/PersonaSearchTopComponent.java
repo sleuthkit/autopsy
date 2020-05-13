@@ -22,14 +22,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
-import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -213,14 +210,4 @@ public final class PersonaSearchTopComponent extends TopComponent {
     private javax.swing.JPanel searchPanel;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    public List<Mode> availableModes(List<Mode> modes) {
-        /*
-         * This looks like the right thing to do, but online discussions seems
-         * to indicate this method is effectively deprecated. A break point
-         * placed here was never hit.
-         */
-        return modes.stream().filter(mode -> mode.getName().equals("personasearch"))
-                .collect(Collectors.toList());
-    }
 }
