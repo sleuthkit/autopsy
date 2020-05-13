@@ -47,6 +47,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationParseResult;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationParseResult.SeparationResult;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.autopsy.geolocation.datamodel.Track;
@@ -485,16 +486,9 @@ public final class KMLReport implements GeneralReportModule {
         List<Track> tracks = null;
 
         if (waypointList == null) {
-            List<GeoLocationParseResult<Track>> result = Track.getTracks(skCase, null);
-            tracks = new ArrayList<>();
-            for (GeoLocationParseResult<Track> parseResult : result) {
-                if (parseResult.isSuccessfullyParsed()) {
-                    tracks.add(parseResult.getGeoLocationObject());
-                } else {
-                    logError();
-                }
-            }
-
+            SeparationResult<Track> result = GeoLocationParseResult.separate(Track.getTracks(skCase, null));
+            tracks = result.getParsedItems();
+            handleErrors(result.getFailedItems());
         } else {
             tracks = WaypointBuilder.getTracks(waypointList);
         }

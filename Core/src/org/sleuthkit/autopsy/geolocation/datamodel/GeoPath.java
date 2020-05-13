@@ -83,9 +83,9 @@ public class GeoPath {
                 if (sourceList == null || sourceList.contains(artifact.getDataSource())) {
                     try {
                         Track route = new Track(artifact);
-                        tracks.add(GeoLocationParseResult.create(route));
+                        tracks.add(GeoLocationParseResult.create(artifact,route));
                     } catch (GeoLocationDataException e) {
-                        tracks.add(GeoLocationParseResult.error(e));
+                        tracks.add(GeoLocationParseResult.error(artifact, e));
                     }
                 }
             }

@@ -102,7 +102,7 @@ public final class WaypointBuilder {
          *
          * @param waypoints The list of waypoints determined.
          */
-        void process(List<Waypoint> waypoints);
+        void process(List<GeoLocationParseResult<Waypoint>> waypoints);
     }
 
     /**
@@ -494,20 +494,8 @@ public final class WaypointBuilder {
                             }
 
                         }
-                        
-                        List<Waypoint> waypoints = new ArrayList<>();
-                        List<GeoLocationParseResult<Waypoint>> errors = new ArrayList<>();
-                        for (GeoLocationParseResult<Waypoint> result : waypointResults) {
-                            if (result.isSuccessfullyParsed()) {
-                                waypoints.add(result.getGeoLocationObject());
-                            } else {
-                                errors.add(result);
-                            }
-                        }
-                        
-                        handleErrors(errors);
-                        
-                        queryCallBack.process(waypoints);
+
+                        queryCallBack.process(waypointResults);
                     } catch (SQLException | TskCoreException ex) {
                         logger.log(Level.WARNING, "Failed to filter waypoint.", ex); //NON-NLS
                     }
@@ -644,22 +632,23 @@ public final class WaypointBuilder {
      */
     private interface ParserWithError<T> {
 
-        T parse() throws GeoLocationDataException;
+        T parse(BlackboardArtifact artifact) throws GeoLocationDataException;
     }
 
     /**
      * Parses one waypoint.
      *
      * @param parser The parser to use.
+     * @param artifact The artifact to be parsed.
      *
      * @return Returns a parse result that is either successful with a parsed
      *         waypoint or unsuccessful with an exception.
      */
-    private static GeoLocationParseResult<Waypoint> parseWaypoint(ParserWithError<Waypoint> parser) {
+    private static GeoLocationParseResult<Waypoint> parseWaypoint(ParserWithError<Waypoint> parser, BlackboardArtifact artifact) {
         try {
-            return GeoLocationParseResult.create(parser.parse());
+            return GeoLocationParseResult.create(artifact, parser.parse(artifact));
         } catch (GeoLocationDataException ex) {
-            return GeoLocationParseResult.error(ex);
+            return GeoLocationParseResult.error(artifact, ex);
         }
     }
 
@@ -667,18 +656,19 @@ public final class WaypointBuilder {
      * Parses a list of waypoints.
      *
      * @param parser The parser to use.
+     * @param artifact The artifact to be parsed.
      *
      * @return Returns a list of parse results with the successfully parsed
      *         items or a list with one item indicating the failure.
      */
-    private static List<GeoLocationParseResult<Waypoint>> parseWaypoints(ParserWithError<List<Waypoint>> parser) {
+    private static List<GeoLocationParseResult<Waypoint>> parseWaypoints(ParserWithError<List<Waypoint>> parser, BlackboardArtifact artifact) {
         try {
-            return parser.parse().stream()
-                    .map(GeoLocationParseResult::create)
+            return parser.parse(artifact).stream()
+                    .map((result) -> GeoLocationParseResult.create(artifact, result))
                     .collect(Collectors.toList());
 
         } catch (GeoLocationDataException ex) {
-            return Arrays.asList(GeoLocationParseResult.error(ex));
+            return Arrays.asList(GeoLocationParseResult.error(artifact, ex));
         }
     }
 
@@ -694,28 +684,28 @@ public final class WaypointBuilder {
         List<GeoLocationParseResult<Waypoint>> waypoints = new ArrayList<>();
         switch (type) {
             case TSK_METADATA_EXIF:
-                waypoints.add(parseWaypoint(() -> new EXIFWaypoint(artifact)));
+                waypoints.add(parseWaypoint((a) -> new EXIFWaypoint(a), artifact));
                 break;
             case TSK_GPS_BOOKMARK:
-                waypoints.add(parseWaypoint(() -> new BookmarkWaypoint(artifact)));
+                waypoints.add(parseWaypoint((a) -> new BookmarkWaypoint(a), artifact));
                 break;
             case TSK_GPS_TRACKPOINT:
-                waypoints.add(parseWaypoint(() -> new TrackpointWaypoint(artifact)));
+                waypoints.add(parseWaypoint((a) -> new TrackpointWaypoint(a), artifact));
                 break;
             case TSK_GPS_SEARCH:
-                waypoints.add(parseWaypoint(() -> new SearchWaypoint(artifact)));
+                waypoints.add(parseWaypoint((a) -> new SearchWaypoint(a), artifact));
                 break;
             case TSK_GPS_ROUTE:
-                waypoints.addAll(parseWaypoints(() -> new Route(artifact).getRoute()));
+                waypoints.addAll(parseWaypoints((a) -> new Route(a).getRoute(), artifact));
                 break;
             case TSK_GPS_LAST_KNOWN_LOCATION:
-                waypoints.add(parseWaypoint(() -> new LastKnownWaypoint(artifact)));
+                waypoints.add(parseWaypoint((a) -> new LastKnownWaypoint(a), artifact));
                 break;
             case TSK_GPS_TRACK:
-                waypoints.addAll(parseWaypoints(() -> new Track(artifact).getPath()));
+                waypoints.addAll(parseWaypoints((a) -> new Track(a).getPath(), artifact));
                 break;
             default:
-                waypoints.add(parseWaypoint(() -> new CustomArtifactWaypoint(artifact)));
+                waypoints.add(parseWaypoint((a) -> new CustomArtifactWaypoint(a), artifact));
         }
 
         return waypoints;
