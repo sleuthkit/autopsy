@@ -19,9 +19,13 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.Box;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -61,7 +65,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
         setLayout(new java.awt.GridBagLayout());
 
-        contactNameLabel.setFont(new java.awt.Font("Dialog", 2, 18)); // NOI18N
+        contactNameLabel.setFont(new java.awt.Font("Dialog", 3, 18)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(contactNameLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.contactNameLabel.text")); // NOI18N
 
         javax.swing.GroupLayout namePanelLayout = new javax.swing.GroupLayout(namePanel);
@@ -89,6 +93,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         add(namePanel, gridBagConstraints);
 
+        phonesLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(phonesLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.phonesLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -109,6 +114,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         gridBagConstraints.insets = new java.awt.Insets(6, 0, 0, 0);
         add(phoneNumbersPanel, gridBagConstraints);
 
+        emailsLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(emailsLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.emailsLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -131,21 +137,23 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
     @Override
     public void setArtifact(BlackboardArtifact artifact) {
-            
+
         // wipe the panel clean
         this.removeAll();
         initComponents();
-        
+
         List<BlackboardAttribute> phoneNumList = new ArrayList<>();
         List<BlackboardAttribute> emailList = new ArrayList<>();
         List<BlackboardAttribute> nameList = new ArrayList<>();
         List<BlackboardAttribute> otherList = new ArrayList<>();
-            
-            
+
         
+        
+        
+        //BlackboardAttribute bba = new BlackboardAttribute();
         try {
             // RAMAN TBD: populate the display components from the artifact
-           for (BlackboardAttribute bba : artifact.getAttributes()) {
+            for (BlackboardAttribute bba : artifact.getAttributes()) {
                 if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
                     phoneNumList.add(bba);
                 } else if (bba.getAttributeType().getTypeName().startsWith("TSK_EMAIL")) {
@@ -157,20 +165,28 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
                 }
             }
         } catch (TskCoreException ex) {
-           logger.log(Level.SEVERE, String.format("Error getting attributes for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
+            logger.log(Level.SEVERE, String.format("Error getting attributes for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
         }
+
+        // RAMAN TBD: test with multiple phones and emails
+        phoneNumList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE, "RAMAN", "+1 222 333 4444"));
+        phoneNumList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE, "RAMAN", "123456789012"));
+         
+        emailList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_HOME, "RAMAN", "home@gmail.com"));
+        emailList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_OFFICE, "RAMAN", "workemail@provider.com"));
         
-       setContactName(nameList);
-       
-       // TBD: set the phones
-       //this.phonesLabel.setVisible(true);
-       
-       // TBD: set the emails
-       
-       
-       // repaint
-      
-       this.revalidate();
+        otherList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID, "RAMAN", "8:live:atpsy.sbarney"));
+        
+        
+        updateNamePanel(nameList);
+
+        updatePhoneNumbersPanel(phoneNumList);
+
+        updateEmailAddressesPanel(emailList);
+
+        // TBD: update the other attributes panel
+        // repaint
+        this.revalidate();
     }
 
     @Override
@@ -183,18 +199,155 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         return artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID();
     }
 
-    private void setContactName(List<BlackboardAttribute> attributesList) {
+    private void updateNamePanel(List<BlackboardAttribute> attributesList) {
         for (BlackboardAttribute bba : attributesList) {
             if (bba.getAttributeType().getTypeName().startsWith("TSK_NAME")) {
                 contactNameLabel.setText(bba.getDisplayString());
-                System.out.println("Setting contact name to: " + bba.getDisplayString());
                 break;
             }
         }
         
         contactNameLabel.revalidate();
     }
+    
+    private void updatePhoneNumbersPanel(List<BlackboardAttribute> phoneAttributesList) {
+        
+        if (phoneAttributesList.isEmpty()) {
+            this.phonesLabel.setVisible(false);
+            phoneNumbersPanel.setVisible(false);
+            return;
+        }
+        
+        GridBagLayout gridBagLayout = new GridBagLayout();
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.gridx = 0;
+        constraints.gridy = -1;
+        constraints.weighty = .0;
+        constraints.anchor = GridBagConstraints.LINE_START;
 
+        Dimension horizSpacerBlockDimension = new Dimension(12, 4); 
+        
+        for (BlackboardAttribute bba : phoneAttributesList) {
+            constraints.weightx = 0;
+            constraints.gridy++;
+            constraints.gridx = 0; 
+            
+            // Add a label for phone number type
+            javax.swing.JLabel phoneTypeLabel = new javax.swing.JLabel();
+            
+            
+ 
+            String attributeLabel = bba.getAttributeType().getDisplayName();
+            phoneTypeLabel.setText(attributeLabel);
+           
+            // RAMAN TBD: set the size/font/style for label
+            //Font newLabelFont=new Font(phoneTypeLabel.getFont().getName(),Font.ITALIC+Font.BOLD,phoneTypeLabel.getFont().getSize());
+            //phoneTypeLabel.setFont(newLabelFont);
+            
+            gridBagLayout.setConstraints(phoneTypeLabel, constraints);
+            phoneNumbersPanel.add(phoneTypeLabel);
+            
+            // Add horizontal space
+            constraints.gridx++; 
+            Box.Filler spacer = new Box.Filler(horizSpacerBlockDimension, horizSpacerBlockDimension, horizSpacerBlockDimension);
+            gridBagLayout.setConstraints(spacer, constraints);
+            phoneNumbersPanel.add(spacer);
+            
+            // Add a label for the phone number
+            constraints.gridx++; 
+            javax.swing.JLabel phoneNumberLabel = new javax.swing.JLabel();
+            phoneNumberLabel.setText(bba.getValueString());
+            
+            gridBagLayout.setConstraints(phoneNumberLabel, constraints);
+            phoneNumbersPanel.add(phoneNumberLabel);
+        }
+        
+        
+        //constraints.gridy++;
+        //constraints.gridx = 0;
+        //constraints.weighty = 1;
+        //Component vertGlue = createVerticalGlue();
+        //this.phoneNumbersPanel.add(vertGlue);
+        //gridBagLayout.setConstraints(vertGlue, constraints);
+        
+        phoneNumbersPanel.setLayout(gridBagLayout);
+        
+        
+        phoneNumbersPanel.revalidate();
+    }
+    
+     private void updateEmailAddressesPanel(List<BlackboardAttribute> emailAddressAttributesList) {
+        
+        if (emailAddressAttributesList.isEmpty()) {
+            emailsLabel.setVisible(false);
+            this.emailsPanel.setVisible(false);
+            return;
+        }
+        
+        GridBagLayout gridBagLayout = new GridBagLayout();
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.gridx = 0;
+        constraints.gridy = -1;
+        constraints.weighty = .0;
+        constraints.anchor = GridBagConstraints.LINE_START;
+
+        Dimension horizSpacerBlockDimension = new Dimension(12, 4); 
+         
+        for (BlackboardAttribute bba : emailAddressAttributesList) {
+            constraints.weightx = 0;
+            constraints.gridy++;
+            constraints.gridx = 0; 
+            
+            // Add a label for email address type
+            javax.swing.JLabel emailAddressTypeLabel = new javax.swing.JLabel();
+            String attrLabel = bba.getAttributeType().getDisplayName();
+            emailAddressTypeLabel.setText(attrLabel);
+           
+            // RAMAN TBD: set the size/font/style for label
+            
+            gridBagLayout.setConstraints(emailAddressTypeLabel, constraints);
+            emailsPanel.add(emailAddressTypeLabel);
+            
+          
+            
+            // Add horizontal space
+            constraints.gridx++; 
+            Box.Filler spacer = new Box.Filler(horizSpacerBlockDimension, horizSpacerBlockDimension, horizSpacerBlockDimension);
+            gridBagLayout.setConstraints(spacer, constraints);
+            emailsPanel.add(spacer);
+            
+            // Add the phone number
+            constraints.gridx++; 
+            javax.swing.JLabel emailAddressLabel = new javax.swing.JLabel();
+            emailAddressLabel.setText(bba.getValueString());
+            gridBagLayout.setConstraints(emailAddressLabel, constraints);
+            emailsPanel.add(emailAddressLabel);
+        }
+        
+        
+        //constraints.gridy++;
+        //constraints.gridx = 0;
+        //constraints.weighty = 1;
+        //Component vertGlue = createVerticalGlue();
+        //emailsPanel.add(vertGlue);
+        //gridBagLayout.setConstraints(vertGlue, constraints);
+        
+        
+        emailsPanel.setLayout(gridBagLayout);
+        emailsPanel.revalidate();
+    }
+     
+
+    private String getAttributeLabel(BlackboardAttribute bba) {
+        // TBD if not found, should probably strip TSK_ and convert to camel case,
+        //return ATTR_LABELS_MAP.getOrDefault(bba.getAttributeType(), c);
+        
+        return bba.getAttributeType().getDisplayName();
+    }
+    
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel contactNameLabel;
     private javax.swing.JLabel emailsLabel;
