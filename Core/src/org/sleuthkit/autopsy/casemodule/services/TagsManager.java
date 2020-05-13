@@ -166,6 +166,33 @@ public class TagsManager implements Closeable {
     }
 
     /**
+     * Returns the bookmark tag display string.
+     *
+     * @return
+     */
+    public static String getBookmarkDisplayString() {
+        return TagNameDefinition.getBookmarkDisplayString();
+    }
+
+    /**
+     * Returns the Follow Up tag display string.
+     *
+     * @return
+     */
+    public static String getFollowUpDisplayString() {
+        return TagNameDefinition.getFollowUpDisplayString();
+    }
+
+    /**
+     * Returns the Notable tag display string.
+     *
+     * @return
+     */
+    public static String getNotableDisplayString() {
+        return TagNameDefinition.getNotableDisplayString();
+    }
+
+    /**
      * Constructs a per case Autopsy service that manages the addition of
      * content and artifact tags to the case database.
      *
