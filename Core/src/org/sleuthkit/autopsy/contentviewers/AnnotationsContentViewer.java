@@ -66,25 +66,21 @@ import org.jsoup.nodes.Element;
     "AnnotationsContentViewer.title=Annotations",
     "AnnotationsContentViewer.toolTip=Displays tags and comments associated with the selected content.",
     "AnnotationsContentViewer.centralRepositoryEntry.title=Central Repository Comments",
-    "AnnotationsContentViewer.centralRepositoryEntry.onEmpty=There is no comment data for the selected content in the Central Repository.",
     "AnnotationsContentViewer.centralRepositoryEntryDataLabel.case=Case:",
     "AnnotationsContentViewer.centralRepositoryEntryDataLabel.type=Type:",
     "AnnotationsContentViewer.centralRepositoryEntryDataLabel.comment=Comment:",
     "AnnotationsContentViewer.centralRepositoryEntryDataLabel.path=Path:",
     "AnnotationsContentViewer.tagEntry.title=Tags",
-    "AnnotationsContentViewer.tagEntry.onContentEmpty=There are no tags for the selected content.",
-    "AnnotationsContentViewer.tagEntry.onArtifactEmpty=There are no tags for the selected artifact.",
     "AnnotationsContentViewer.tagEntryDataLabel.tag=Tag:",
     "AnnotationsContentViewer.tagEntryDataLabel.tagUser=Examiner:",
     "AnnotationsContentViewer.tagEntryDataLabel.comment=Comment:",
     "AnnotationsContentViewer.fileHitEntry.artifactCommentTitle=Artifact Comment",
     "AnnotationsContentViewer.fileHitEntry.hashSetHitTitle=Hash Set Hit Comments",
-    "AnnotationsContentViewer.fileHitEntry.onHashSetHitEmpty=There are no hash set hits for the selected content.",
     "AnnotationsContentViewer.fileHitEntry.interestingFileHitTitle=Interesting File Hit Comments",
-    "AnnotationsContentViewer.fileHitEntry.onInterestingFileHitEmpty=There are no interesting file hits for the selected content.",
     "AnnotationsContentViewer.fileHitEntry.setName=Set Name:",
     "AnnotationsContentViewer.fileHitEntry.comment=Comment:",
-    "AnnotationsContentViewer.sourceFile.title=Source File"
+    "AnnotationsContentViewer.sourceFile.title=Source File",
+    "AnnotationsContentViewer.onEmpty=No annotations were found for this particular item."
 })
 public class AnnotationsContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
@@ -126,15 +122,11 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     private static class SectionConfig<T> {
 
         private final String title;
-        private final String onEmpty;
         private final List<ItemEntry<T>> attributes;
-        private final boolean isVerticalTable;
 
-        SectionConfig(String title, String onEmpty, List<ItemEntry<T>> attributes, boolean isVerticalTable) {
+        SectionConfig(String title, List<ItemEntry<T>> attributes) {
             this.title = title;
-            this.onEmpty = onEmpty;
             this.attributes = attributes;
-            this.isVerticalTable = isVerticalTable;
         }
 
         /**
@@ -145,28 +137,11 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         }
 
         /**
-         * @return The message to display if no items provided.
-         */
-        String getOnEmpty() {
-            return onEmpty;
-        }
-
-        /**
          * @return Describes key-value pairs on the object to display to the
          *         user.
          */
         List<ItemEntry<T>> getAttributes() {
             return attributes;
-        }
-
-        /**
-         * @return If the table should be shown as a series of key-value pairs
-         *         as rows. Otherwise, data is shown in a table where the column
-         *         headers are the keys and each row represents one item to
-         *         display.
-         */
-        boolean isIsVerticalTable() {
-            return isVerticalTable;
         }
     }
 
@@ -197,13 +172,13 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     private static final String SUBHEADER_CLASSNAME = "subheader";
     private static final String SECTION_CLASSNAME = "section";
     private static final String HEADER_CLASSNAME = "header";
-    private static final String ENTRY_TABLE_CLASSNAME = "entry-table";
     private static final String VERTICAL_TABLE_CLASSNAME = "vertical-table";
 
     // additional styling for components
     private static final String STYLE_SHEET_RULE
             = String.format(" .%s { font-size: %dpx;font-style:italic; margin: 0px; padding: 0px; } ", MESSAGE_CLASSNAME, DEFAULT_FONT_SIZE)
-            + String.format(" .%s {font-size:%dpx;font-weight:bold; margin: 0px; margin-top: %dpx; padding: 0px; } ", SUBHEADER_CLASSNAME, SUBHEADER_FONT_SIZE, DEFAULT_SUBSECTION_SPACING)
+            + String.format(" .%s {font-size:%dpx;font-weight:bold; margin: 0px; margin-top: %dpx; padding: 0px; } ",
+                    SUBHEADER_CLASSNAME, SUBHEADER_FONT_SIZE, DEFAULT_SUBSECTION_SPACING)
             + String.format(" .%s { font-size:%dpx;font-weight:bold; margin: 0px; padding: 0px; } ", HEADER_CLASSNAME, HEADER_FONT_SIZE)
             + String.format(" td { vertical-align: top; font-size:%dpx; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px;} ", DEFAULT_FONT_SIZE, CELL_SPACING)
             + String.format(" th { vertical-align: top; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px} ", DEFAULT_FONT_SIZE, CELL_SPACING)
@@ -218,15 +193,8 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             new ItemEntry<>(Bundle.AnnotationsContentViewer_tagEntryDataLabel_comment(), (tag) -> tag.getComment())
     );
 
-    private static final SectionConfig<Tag> ARTIFACT_TAG_CONFIG = new SectionConfig<>(
-            Bundle.AnnotationsContentViewer_tagEntry_title(),
-            Bundle.AnnotationsContentViewer_tagEntry_onArtifactEmpty(),
-            TAG_ENTRIES, true);
-
-    private static final SectionConfig<Tag> CONTENT_TAG_CONFIG = new SectionConfig<>(
-            Bundle.AnnotationsContentViewer_tagEntry_title(),
-            Bundle.AnnotationsContentViewer_tagEntry_onContentEmpty(),
-            TAG_ENTRIES, true);
+    private static final SectionConfig<Tag> TAG_CONFIG
+            = new SectionConfig<>(Bundle.AnnotationsContentViewer_tagEntry_title(), TAG_ENTRIES);
 
     // file set attributes and table configurations
     private static final List<ItemEntry<BlackboardArtifact>> FILESET_HIT_ENTRIES = Arrays.asList(
@@ -236,20 +204,14 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                     (bba) -> tryGetAttribute(bba, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT))
     );
 
-    private static final SectionConfig<BlackboardArtifact> INTERESTING_FILE_CONFIG = new SectionConfig<>(
-            Bundle.AnnotationsContentViewer_fileHitEntry_interestingFileHitTitle(),
-            Bundle.AnnotationsContentViewer_fileHitEntry_onInterestingFileHitEmpty(),
-            FILESET_HIT_ENTRIES, true);
+    private static final SectionConfig<BlackboardArtifact> INTERESTING_FILE_CONFIG
+            = new SectionConfig<>(Bundle.AnnotationsContentViewer_fileHitEntry_interestingFileHitTitle(), FILESET_HIT_ENTRIES);
 
-    private static final SectionConfig<BlackboardArtifact> HASHSET_CONFIG = new SectionConfig<>(
-            Bundle.AnnotationsContentViewer_fileHitEntry_hashSetHitTitle(),
-            Bundle.AnnotationsContentViewer_fileHitEntry_onHashSetHitEmpty(),
-            FILESET_HIT_ENTRIES, true);
+    private static final SectionConfig<BlackboardArtifact> HASHSET_CONFIG
+            = new SectionConfig<>(Bundle.AnnotationsContentViewer_fileHitEntry_hashSetHitTitle(), FILESET_HIT_ENTRIES);
 
-    private static final SectionConfig<BlackboardArtifact> ARTIFACT_COMMENT_CONFIG = new SectionConfig<>(
-            Bundle.AnnotationsContentViewer_fileHitEntry_artifactCommentTitle(),
-            "",
-            FILESET_HIT_ENTRIES, true);
+    private static final SectionConfig<BlackboardArtifact> ARTIFACT_COMMENT_CONFIG
+            = new SectionConfig<>(Bundle.AnnotationsContentViewer_fileHitEntry_artifactCommentTitle(), FILESET_HIT_ENTRIES);
 
     // central repository attributes and table configuration
     private static final List<ItemEntry<CorrelationAttributeInstance>> CR_COMMENTS_ENTRIES = Arrays.asList(
@@ -259,10 +221,8 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             new ItemEntry<>(Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_path(), cai -> cai.getFilePath())
     );
 
-    private static final SectionConfig<CorrelationAttributeInstance> CR_COMMENTS_CONFIG = new SectionConfig<>(
-            Bundle.AnnotationsContentViewer_centralRepositoryEntry_title(),
-            Bundle.AnnotationsContentViewer_centralRepositoryEntry_onEmpty(),
-            CR_COMMENTS_ENTRIES, true);
+    private static final SectionConfig<CorrelationAttributeInstance> CR_COMMENTS_CONFIG
+            = new SectionConfig<>(Bundle.AnnotationsContentViewer_centralRepositoryEntry_title(), CR_COMMENTS_ENTRIES);
 
     /**
      * Creates an instance of AnnotationsContentViewer.
@@ -312,10 +272,15 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                     artifact.getDisplayName(), artifact.getArtifactID()), ex);
         }
 
+        boolean somethingWasRendered = false;
         if (artifact != null) {
-            renderArtifact(body, artifact, sourceFile);
+            somethingWasRendered = renderArtifact(body, artifact, sourceFile);
         } else {
-            renderContent(body, sourceFile, false);
+            somethingWasRendered = renderContent(body, sourceFile, false);
+        }
+        
+        if (!somethingWasRendered) {
+            appendMessage(body, Bundle.AnnotationsContentViewer_onEmpty());
         }
 
         jTextPane1.setText(html.html());
@@ -329,23 +294,32 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @param bba           The blackboard artifact to render.
      * @param sourceContent The content from which the blackboard artifact
      *                      comes.
+     * @return              If any content was actually rendered.
      */
-    private static void renderArtifact(Element parent, BlackboardArtifact bba, Content sourceContent) {
-        appendEntries(parent, ARTIFACT_TAG_CONFIG, getTags(bba), false);
-
+    private static boolean renderArtifact(Element parent, BlackboardArtifact bba, Content sourceContent) {
+        boolean contentRendered = appendEntries(parent, TAG_CONFIG, getTags(bba), false);
+        
         if (sourceContent instanceof AbstractFile && CentralRepository.isEnabled()) {
             AbstractFile sourceFile = (AbstractFile) sourceContent;
             List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(bba, sourceFile);
-            appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, false);
+            boolean crRendered = appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, false);
+            contentRendered = contentRendered || crRendered;
         }
 
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() == bba.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == bba.getArtifactTypeID()) {
-            appendEntries(parent, ARTIFACT_COMMENT_CONFIG, Arrays.asList(bba), false);
+            boolean filesetRendered = appendEntries(parent, ARTIFACT_COMMENT_CONFIG, Arrays.asList(bba), false);
+            contentRendered = contentRendered || filesetRendered;
         }
 
         Element sourceFileSection = appendSection(parent, Bundle.AnnotationsContentViewer_sourceFile_title());
-        renderContent(sourceFileSection, sourceContent, true);
+        boolean sourceFileRendered = renderContent(sourceFileSection, sourceContent, true);
+        
+        if (!sourceFileRendered) {
+            parent.children().remove(sourceFileSection);
+        }
+        
+        return contentRendered || sourceFileRendered;
     }
 
     /**
@@ -355,27 +329,32 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @param sourceContent The content for which annotations will be gathered.
      * @param isSubheader   True if this section should be rendered as a
      *                      subheader as opposed to a top-level header.
+     * @return              If any content was actually rendered.
      */
-    private static void renderContent(Element parent, Content sourceContent, boolean isSubheader) {
-        appendEntries(parent, CONTENT_TAG_CONFIG, getTags(sourceContent), isSubheader);
+    private static boolean renderContent(Element parent, Content sourceContent, boolean isSubheader) {
+        boolean contentRendered = appendEntries(parent, TAG_CONFIG, getTags(sourceContent), isSubheader);
 
         if (sourceContent instanceof AbstractFile) {
             AbstractFile sourceFile = (AbstractFile) sourceContent;
 
             if (CentralRepository.isEnabled()) {
                 List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(null, sourceFile);
-                appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, isSubheader);
+                boolean crRendered = appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, isSubheader);
+                contentRendered = contentRendered || crRendered;
             }
 
-            appendEntries(parent, HASHSET_CONFIG,
+            boolean hashsetRendered = appendEntries(parent, HASHSET_CONFIG,
                     getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT),
                     isSubheader);
+            contentRendered = contentRendered || hashsetRendered;
 
-            appendEntries(parent, INTERESTING_FILE_CONFIG,
+            boolean interestingFileRendered =appendEntries(parent, INTERESTING_FILE_CONFIG,
                     getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT),
                     isSubheader);
+            
+            contentRendered = contentRendered || interestingFileRendered;
         }
-
+        return contentRendered;
     }
 
     /**
@@ -536,19 +515,17 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @param items        The items to display.
      * @param isSubsection Whether or not this should be displayed as a
      *                     subsection. If not displayed as a top-level section.
+     * @return If there was actual content rendered for this set of entries.
      */
-    private static <T> void appendEntries(Element parent, SectionConfig<T> config, List<? extends T> items,
+    private static <T> boolean appendEntries(Element parent, SectionConfig<T> config, List<? extends T> items,
             boolean isSubsection) {
-
-        Element sectionDiv = (isSubsection) ? appendSubsection(parent, config.getTitle()) : appendSection(parent, config.getTitle());
-
         if (items == null || items.isEmpty()) {
-            appendMessage(sectionDiv, config.getOnEmpty());
-        } else if (config.isIsVerticalTable()) {
-            appendVerticalEntryTables(sectionDiv, items, config.getAttributes());
-        } else {
-            appendEntryTable(sectionDiv, items, config.getAttributes());
+            return false;
         }
+        
+        Element sectionDiv = (isSubsection) ? appendSubsection(parent, config.getTitle()) : appendSection(parent, config.getTitle());
+        appendVerticalEntryTables(sectionDiv, items, config.getAttributes());
+        return true;
     }
 
     /**
@@ -584,34 +561,6 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         }
 
         return parent;
-    }
-
-    /**
-     * Appends a table with column headers to the parent element.
-     *
-     * @param <T>     The item type.
-     * @param parent  The element that will have this table appended to it.
-     * @param items   The items to place as a row in this table.
-     * @param columns The columns for this table and the means to process each
-     *                data item to retrieve a cell.
-     *
-     * @return The generated table element.
-     */
-    private static <T> Element appendEntryTable(Element parent, List<? extends T> items, List<ItemEntry<T>> columns) {
-        int columnNumber = columns.size();
-        List<String> columnHeaders = columns.stream().map(c -> c.getItemName()).collect(Collectors.toList());
-        List<List<String>> rows = items.stream()
-                .filter(r -> r != null)
-                .map(r -> {
-                    return columns.stream()
-                            .map(c -> c.retrieveValue(r))
-                            .collect(Collectors.toList());
-                })
-                .collect(Collectors.toList());
-
-        Element table = appendTable(parent, columnNumber, rows, columnHeaders);
-        table.attr("class", ENTRY_TABLE_CLASSNAME);
-        return table;
     }
 
     /**
