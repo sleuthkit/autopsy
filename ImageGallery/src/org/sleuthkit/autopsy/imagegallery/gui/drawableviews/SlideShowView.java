@@ -50,12 +50,12 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
 import org.sleuthkit.autopsy.imagegallery.gui.VideoPlayer;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableUIBase.exec;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableView.CAT_BORDER_WIDTH;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  * Displays the files of a group one at a time. Designed to be embedded in a
@@ -297,14 +297,14 @@ public class SlideShowView extends DrawableTileBase {
 
     @Override
     @ThreadConfined(type = ThreadType.ANY)
-    public DhsImageCategory updateCategory() {
+    public TagName updateCategory() {
         Optional<DrawableFile> file = getFile();
         if (file.isPresent()) {
-            DhsImageCategory updateCategory = super.updateCategory();
+            TagName updateCategory = super.updateCategory();
             Platform.runLater(() -> getGroupPane().syncCatToggle(file.get()));
             return updateCategory;
         } else {
-            return DhsImageCategory.ZERO;
+            return null;
         }
     }
 

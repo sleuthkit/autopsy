@@ -146,12 +146,34 @@ public class TagsManager implements Closeable {
         return tagDisplayNames;
     }
 
+    /**
+     * Gets the set of display names of notable (TskData.FileKnown.BAD) tag types.
+     * If a case is not open the list will only include only the user defined 
+     * custom tags.  Otherwise the list will include all notable tags.
+     * @return 
+     */
     public static List<String> getNotableTagDisplayNames() {
         List<String> tagDisplayNames = new ArrayList<>();
         for (TagNameDefinition tagDef : TagNameDefinition.getTagNameDefinitions()) {
             if (tagDef.getKnownStatus() == TskData.FileKnown.BAD) {
                 tagDisplayNames.add(tagDef.getDisplayName());
             }
+        }
+        
+         try {
+            TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
+            for (TagName tagName : tagsManager.getAllTagNames()) {
+                if(tagName.getKnownStatus() == TskData.FileKnown.BAD &&
+                        !tagDisplayNames.contains(tagName.getDisplayName())) {
+                    tagDisplayNames.add(tagName.getDisplayName());
+                }
+            }
+        } catch (NoCurrentCaseException ignored) {
+            /*
+             * No current case, nothing more to add to the set.
+             */
+        } catch(TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get list of TagNames from TagsManager.", ex);
         }
         return tagDisplayNames;
     }
@@ -481,7 +503,7 @@ public class TagsManager implements Closeable {
         try {
             Case currentCase = Case.getCurrentCaseThrows();
 
-            currentCase.notifyContentTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags().get(0));
+            currentCase.notifyContentTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags());
 
         } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Added a tag to a closed case", ex);
@@ -701,7 +723,7 @@ public class TagsManager implements Closeable {
         TaggingManager.BlackboardArtifactTagChange tagChange = caseDb.getTaggingManager().addArtifactTag(artifact, tagName, comment);
         try {
             Case currentCase = Case.getCurrentCaseThrows();
-            currentCase.notifyBlackBoardArtifactTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags().get(0));
+            currentCase.notifyBlackBoardArtifactTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags());
         } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Added a tag to a closed case", ex);
         }

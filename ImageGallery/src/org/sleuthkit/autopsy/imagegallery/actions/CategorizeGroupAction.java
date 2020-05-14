@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.geometry.VPos;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
@@ -37,9 +38,9 @@ import javafx.scene.layout.VBox;
 import static org.apache.commons.lang.ObjectUtils.notEqual;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryPreferences;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -50,7 +51,7 @@ public class CategorizeGroupAction extends CategorizeAction {
 
     private final static Logger LOGGER = Logger.getLogger(CategorizeGroupAction.class.getName());
 
-    public CategorizeGroupAction(DhsImageCategory newCat, ImageGalleryController controller) {
+    public CategorizeGroupAction(TagName newCat, ImageGalleryController controller) {
         super(controller, newCat, null);
         setEventHandler(actionEvent -> {
             controller.getViewState().getGroup().ifPresent(group -> {
@@ -60,12 +61,12 @@ public class CategorizeGroupAction extends CategorizeAction {
                     //if they have preveiously disabled the warning, just go ahead and apply categories.
                     addCatToFiles(ImmutableSet.copyOf(fileIDs));
                 } else {
-                    final Map<DhsImageCategory, Long> catCountMap = new HashMap<>();
+                    final Map<TagName, Long> catCountMap = new HashMap<>();
 
                     for (Long fileID : fileIDs) {
                         try {
-                            DhsImageCategory category = controller.getFileFromID(fileID).getCategory();
-                            if (false == DhsImageCategory.ZERO.equals(category) && newCat.equals(category) == false) {
+                            TagName category = controller.getFileFromID(fileID).getCategory();
+                            if (category != null && newCat.equals(category) == false) {
                                 catCountMap.merge(category, 1L, Long::sum);
                             }
                         } catch (TskCoreException ex) {
@@ -90,18 +91,19 @@ public class CategorizeGroupAction extends CategorizeAction {
         "CategorizeGroupAction.fileCountMessage={0} with {1}",
         "CategorizeGroupAction.dontShowAgain=Don't show this message again",
         "CategorizeGroupAction.fileCountHeader=Files in the following categories will have their categories overwritten: "})
-    private void showConfirmationDialog(final Map<DhsImageCategory, Long> catCountMap, DhsImageCategory newCat, ObservableList<Long> fileIDs) {
+    private void showConfirmationDialog(final Map<TagName, Long> catCountMap, TagName newCat, ObservableList<Long> fileIDs) {
 
         ButtonType categorizeButtonType
                 = new ButtonType(Bundle.CategorizeGroupAction_OverwriteButton_text(), ButtonBar.ButtonData.APPLY);
 
         VBox textFlow = new VBox();
 
-        for (Map.Entry<DhsImageCategory, Long> entry : catCountMap.entrySet()) {
-            if (entry.getValue() > 0
-                && notEqual(entry.getKey(), newCat)) {
+        for (Map.Entry<TagName, Long> entry : catCountMap.entrySet()) {
+
+            if (entry != null && entry.getValue() > 0
+                    && notEqual(entry.getKey(), newCat)) {
                 Label label = new Label(Bundle.CategorizeGroupAction_fileCountMessage(entry.getValue(), entry.getKey().getDisplayName()),
-                        entry.getKey().getGraphic());
+                        getGraphic(entry.getKey()));
                 label.setContentDisplay(ContentDisplay.RIGHT);
                 textFlow.getChildren().add(label);
             }
@@ -126,5 +128,9 @@ public class CategorizeGroupAction extends CategorizeAction {
                         ImageGalleryPreferences.setGroupCategorizationWarningDisabled(true);
                     }
                 });
+    }
+
+    public Node getGraphic(TagName tagName) {
+        return null;
     }
 }

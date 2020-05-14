@@ -51,6 +51,8 @@ import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
+import org.sleuthkit.datamodel.HashHitInfo;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -101,6 +103,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     // Update Test code if this changes.  It's hard coded there.
     static final int DEFAULT_BULK_THRESHHOLD = 1000;
 
+    private static final int QUERY_STR_MAX_LEN = 1000;
+    
+    
     /**
      * Connect to the DB and initialize it.
      *
@@ -216,7 +221,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     /**
      * Reset the contents of the caches associated with EamDb results.
      */
-    protected final void clearCaches() {
+    public final void clearCaches() {
         synchronized(typeCache) {
             typeCache.invalidateAll();
             isCRTypeCacheInitialized = false;
@@ -225,6 +230,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         caseCacheById.invalidateAll();
         dataSourceCacheByDsObjectId.invalidateAll();
         dataSourceCacheById.invalidateAll();
+        accountsCache.invalidateAll();
     }
 
     /**
@@ -1111,6 +1117,31 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
         
 
+    
+    @Override
+    public Collection<CentralRepoAccountType> getAllAccountTypes() throws CentralRepoException {
+        
+        Collection<CentralRepoAccountType> accountTypes = new ArrayList<>();
+        
+        String sql = "SELECT * FROM account_types";
+        try ( Connection conn = connect();
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);) {
+
+           
+            try (ResultSet resultSet = preparedStatement.executeQuery();) {
+                while (resultSet.next()) {
+                    Account.Type acctType = new Account.Type(resultSet.getString("type_name"), resultSet.getString("display_name"));
+                    CentralRepoAccountType crAccountType = new CentralRepoAccountType(resultSet.getInt("id"), acctType, resultSet.getInt("correlation_type_id"));
+                    
+                    accountTypes.add(crAccountType);
+                } 
+            }
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error getting account types from central repository.", ex); // NON-NLS
+        } 
+        return accountTypes;
+    }
+    
     /**
      * Gets the CR account type for the specified type name.
      * 
@@ -2277,6 +2308,45 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         return isValueInReferenceSet(hash, referenceSetID, CorrelationAttributeInstance.FILES_TYPE_ID);
     }
 
+    @Override
+    public HashHitInfo lookupHash(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException {
+        int correlationTypeID = CorrelationAttributeInstance.FILES_TYPE_ID;
+        String normalizeValued = CorrelationAttributeNormalizer.normalize(this.getCorrelationTypeById(correlationTypeID), hash);
+
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String sql = "SELECT value,comment FROM %s WHERE value=? AND reference_set_id=?";
+
+        String fileTableName = CentralRepoDbUtil.correlationTypeToReferenceTableName(getCorrelationTypeById(correlationTypeID));
+
+        try {
+            preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
+            preparedStatement.setString(1, normalizeValued);
+            preparedStatement.setInt(2, referenceSetID);
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                String comment = resultSet.getString("comment");
+                String hashFound = resultSet.getString("value");
+                HashHitInfo found = new HashHitInfo(hashFound, "", "");
+                found.addComment(comment);
+                return found;
+            }
+            else {
+                return null;
+            }
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error determining if value (" + normalizeValued + ") is in reference set " + referenceSetID, ex); // NON-NLS
+        } finally {
+            CentralRepoDbUtil.closeStatement(preparedStatement);
+            CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeConnection(conn);
+        }
+    }
+    
+    
+
     /**
      * Check if the given value is in a specific reference set
      *
@@ -2487,6 +2557,48 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }        
 
     @Override
+    public void executeInsertSQL(String insertClause) throws CentralRepoException {
+
+        if (insertClause == null) {
+            throw new CentralRepoException("Insert SQL is null");
+        }
+
+        String sql = getPlatformSpecificInsertSQL(insertClause);
+        try (Connection conn = connect();
+                PreparedStatement preparedStatement = conn.prepareStatement(sql);) {
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new CentralRepoException(String.format("Error running SQL %s, exception = %s", sql, ex.getMessage()), ex);
+        }
+    }
+
+    @Override
+    public void executeSelectSQL(String selectSQL, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException {
+        if (queryCallback == null) {
+            throw new CentralRepoException("Query callback is null");
+        }
+
+        if (selectSQL == null) {
+            throw new CentralRepoException("Select SQL is null");
+        }
+
+        StringBuilder sqlSb = new StringBuilder(QUERY_STR_MAX_LEN);
+        if (selectSQL.trim().toUpperCase().startsWith("SELECT") == false) {
+            sqlSb.append("SELECT ");
+        }
+
+        sqlSb.append(selectSQL);
+
+        try (Connection conn = connect();
+                PreparedStatement preparedStatement = conn.prepareStatement(sqlSb.toString());
+                ResultSet resultSet = preparedStatement.executeQuery();) {
+            queryCallback.process(resultSet);
+        } catch (SQLException ex) {
+            throw new CentralRepoException(String.format("Error running SQL %s, exception = %s", selectSQL, ex.getMessage()), ex);
+        }
+    }
+    
+    @Override
     public CentralRepoOrganization newOrganization(CentralRepoOrganization eamOrg) throws CentralRepoException {
         if (eamOrg == null) {
             throw new CentralRepoException("EamOrganization is null");
@@ -2624,6 +2736,61 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         }
     }
 
+    /**
+     * Queries the examiner table for the given user name. 
+     * Adds a row if the user is not found in the examiner table.
+     *
+     * @param examinerLoginName user name to look for.
+     * @return CentralRepoExaminer for the given user name.
+     * @throws CentralRepoException If there is an error in looking up or
+     * inserting the user in the examiners table.
+     */
+    
+    @Override
+    public CentralRepoExaminer getOrInsertExaminer(String examinerLoginName) throws CentralRepoException {
+
+        String querySQL = "SELECT * FROM examiners WHERE login_name = '" + SleuthkitCase.escapeSingleQuotes(examinerLoginName) + "'";
+        try (Connection connection = connect();
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(querySQL);) {
+
+            if (resultSet.next()) {
+                return new CentralRepoExaminer(resultSet.getLong("id"), resultSet.getString("login_name"));
+            } else {
+                // Could not find this user in the Examiner table, add a row for it.
+                try {
+                    String insertSQL;
+                    switch (CentralRepoDbManager.getSavedDbChoice().getDbPlatform()) {
+                        case POSTGRESQL:
+                            insertSQL = "INSERT INTO examiners (login_name) VALUES ('" + SleuthkitCase.escapeSingleQuotes(examinerLoginName) + "')" + getConflictClause();  //NON-NLS
+                            break;
+                        case SQLITE:
+                            insertSQL = "INSERT OR IGNORE INTO examiners (login_name) VALUES ('" + SleuthkitCase.escapeSingleQuotes(examinerLoginName) + "')"; //NON-NLS
+                            break;
+                        default:
+                            throw new CentralRepoException(String.format("Cannot add examiner to currently selected CR database platform %s", CentralRepoDbManager.getSavedDbChoice().getDbPlatform())); //NON-NLS
+                    }
+                    statement.execute(insertSQL); 
+
+                    // Query the table again to get the row for the user
+                    try (ResultSet resultSet2 = statement.executeQuery(querySQL)) {
+                        if (resultSet2.next()) {
+                            return new CentralRepoExaminer(resultSet2.getLong("id"), resultSet2.getString("login_name"));
+                        } else {
+                            throw new CentralRepoException("Error getting examiner for name = " + examinerLoginName);
+                        }
+                    }
+
+                } catch (SQLException ex) {
+                    throw new CentralRepoException("Error inserting row in examiners", ex);
+                }
+            }
+
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error getting examiner for name = " + examinerLoginName, ex);
+        }
+    }
+            
     /**
      * Update an existing organization.
      *
@@ -3489,6 +3656,19 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         );
     }
 
+    private String getPlatformSpecificInsertSQL(String sql) throws CentralRepoException {
+
+        switch (CentralRepoDbManager.getSavedDbChoice().getDbPlatform()) {
+            case POSTGRESQL:
+                return "INSERT " + sql + " ON CONFLICT DO NOTHING"; //NON-NLS
+            case SQLITE:
+               return "INSERT OR IGNORE " + sql;
+                
+            default:
+                throw new CentralRepoException("Unknown Central Repo DB platform" + CentralRepoDbManager.getSavedDbChoice().getDbPlatform());
+        }
+    }
+    
     /**
      * Determine if a specific column already exists in a specific table
      *
