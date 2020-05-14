@@ -209,80 +209,83 @@ final class CaseEventListener implements PropertyChangeListener {
             } else if (curEventType == Case.Events.CONTENT_TAG_DELETED && event instanceof ContentTagDeletedEvent) {
                 handleTagDeleted((ContentTagDeletedEvent) event);
             } else {
-                LOGGER.log(Level.WARNING,
+                LOGGER.log(Level.SEVERE,
                         String.format("Received an event %s of type %s and was expecting either CONTENT_TAG_ADDED or CONTENT_TAG_DELETED.",
                                 event, curEventType));
             }
         }
 
-        /**
-         * When a tag is added, handle whether or not to add/update the central
-         * repository correlation attribute instance for the file. A correlation
-         * attribute instance will be created / updated if the tag is notable.
-         *
-         * @param tagAddedEvent The event where a tag was added.
-         */
-        private void handleTagAdded(ContentTagAddedEvent tagAddedEvent) {
-            final ContentTag tagAdded = tagAddedEvent.getAddedTag();
-
-            if (!isNotableTag(tagAdded)) {
+        private void handleTagDeleted(ContentTagDeletedEvent evt) {
+            // ensure tag deleted event has a valid content id
+            if (evt.getDeletedTagInfo() == null) {
+                LOGGER.log(Level.SEVERE,
+                        String.format("ContentTagDeletedEvent %s did not have valid content to provide a content id.", evt));
                 return;
             }
+            
+            try {
+                // obtain content
+                Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(evt.getDeletedTagInfo().getContentID());
+                if (content == null) {
+                    LOGGER.log(Level.WARNING,
+                        String.format("Unable to get content for item with content id: %d.", evt.getDeletedTagInfo().getContentID()));
+                    return;
+                }
+                
+                // then handle the event 
+                handleTagChange(content);
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                LOGGER.log(Level.WARNING, "Error updating non-file object.");
+            }
+        }
 
+        private void handleTagAdded(ContentTagAddedEvent evt) {
+            // ensure tag added event has a valid content id
+            if (evt.getAddedTag() == null || evt.getAddedTag().getContent() == null) {
+                LOGGER.log(Level.SEVERE,
+                        String.format("ContentTagAddedEvent %s did not have valid content to provide a content id.", evt));
+                return;
+            }
+            
+            // then handle the event
+            handleTagChange(evt.getAddedTag().getContent());
+        }
+
+        /**
+         * When a tag is added or deleted, check if there are other notable tags for the item.  
+         * If there are, set known status as notable.  If not set status as unknown.
+         *
+         * @param content The content for the tag that was added or deleted.
+         */
+        private void handleTagChange(Content content) {
             AbstractFile af = null;
             try {
-                af = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(tagAdded.getContent().getId());
+                af = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(content.getId());
             } catch (NoCurrentCaseException | TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "Error updating non-file object");
+                LOGGER.log(Level.WARNING, "Error updating non-file object.");
             }
 
             if (af == null) {
                 return;
             }
-
-            setContentKnownStatus(af, TskData.FileKnown.BAD);
-        }
-
-        /**
-         * For deleted tags, set the central repository correlation attribute
-         * instance file status to unknown if the tag that was deleted was the
-         * only tag on the file that confers notability.
-         *
-         * @param tagDeletedEvent The tag deleted event containing information
-         *                        about the tag that is being deleted.
-         */
-        private void handleTagDeleted(ContentTagDeletedEvent tagDeletedEvent) {
-            if (!isNotableTagName(tagDeletedEvent.getDeletedTagInfo().getName())) {
-                // If the tag that got removed isn't on the list of central repo tags, do nothing
-                return;
-            }
-                        
-            long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
-
+            
             try {
-                // Get the remaining tags on the content object
-                Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(contentID);
+                // Get the tags on the content object
                 TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
 
                 if (hasNotableTag(tagsManager.getContentTagsByContent(content))) {
-                    // There's still at least one bad tag, so leave the known status as is
-                    return;
+                    // if there is a notable tag on the object, set content known status to bad
+                    setContentKnownStatus(af, TskData.FileKnown.BAD);
                 }
-
-                // There are no more bad tags on the object
-                AbstractFile af = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(contentID);
-                if (af == null) {
-                    LOGGER.log(Level.WARNING, "Error updating non-file object");
-                    return;
+                else {
+                    // otherwise, set to unknown
+                    setContentKnownStatus(af, TskData.FileKnown.UNKNOWN);
                 }
-
-                setContentKnownStatus(af, TskData.FileKnown.UNKNOWN);
-
             } catch (TskCoreException | NoCurrentCaseException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to find content", ex);
-                return;
+                LOGGER.log(Level.SEVERE, "Failed to obtain tags manager for case.", ex);
             }
         }
+
 
         /**
          * Sets the known status for the correlation attribute instance for the
@@ -295,7 +298,6 @@ final class CaseEventListener implements PropertyChangeListener {
          */
         private void setContentKnownStatus(AbstractFile af, TskData.FileKnown knownStatus) {
             final CorrelationAttributeInstance eamArtifact = CorrelationAttributeUtil.makeCorrAttrFromFile(af);
-            eamArtifact.setComment("");
 
             if (eamArtifact != null) {
                 // send update to Central Repository db
@@ -336,43 +338,60 @@ final class CaseEventListener implements PropertyChangeListener {
             }
         }
 
-        /**
-         * When a tag is added, handle whether or not to add/update the central
-         * repository correlation attribute instance for the artifact. A
-         * correlation attribute instance will be created / updated if the tag
-         * is notable and the file is not known.
-         *
-         * @param tagAddedEvent The event where a tag was added.
-         */
-        private void handleTagAdded(BlackBoardArtifactTagAddedEvent tagAddedEvent) {
-            final BlackboardArtifactTag tagAdded = tagAddedEvent.getAddedTag();
-
-            // The added tag isn't flagged as bad in central repo, so do nothing
-            if (!isNotableTag(tagAdded)) {
+        private void handleTagDeleted(BlackBoardArtifactTagDeletedEvent evt) {
+            // ensure tag deleted event has a valid content id
+            if (evt.getDeletedTagInfo() == null) {
+                LOGGER.log(Level.SEVERE,
+                        String.format("ContentTagDeletedEvent %s did not have valid content to provide a content id.", evt));
                 return;
             }
+            
+            try {
+                Case openCase = Case.getCurrentCaseThrows();
+                
+                // obtain content
+                Content content = openCase.getSleuthkitCase().getContentById(evt.getDeletedTagInfo().getContentID());
+                if (content == null) {
+                    LOGGER.log(Level.WARNING,
+                        String.format("Unable to get content for item with content id: %d.", evt.getDeletedTagInfo().getContentID()));
+                    return;
+                }
+                
+                // obtain blackboard artifact
+                BlackboardArtifact bbArtifact = openCase.getSleuthkitCase().getBlackboardArtifact(evt.getDeletedTagInfo().getArtifactID());
+                if (bbArtifact == null) {
+                    LOGGER.log(Level.WARNING,
+                        String.format("Unable to get blackboard artifact for item with artifact id: %d.", evt.getDeletedTagInfo().getArtifactID()));
+                    return;
+                }
+                
+                // then handle the event 
+                handleTagChange(content, bbArtifact);
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                LOGGER.log(Level.WARNING, "Error updating non-file object.");
+            }
+        }
 
-            if (isKnownFile(tagAdded.getContent())) {
+        private void handleTagAdded(BlackBoardArtifactTagAddedEvent evt) {
+            // ensure tag added event has a valid content id
+            if (evt.getAddedTag() == null || evt.getAddedTag().getContent() == null) {
+                LOGGER.log(Level.SEVERE,
+                        String.format("ContentTagAddedEvent %s did not have valid content to provide a content id.", evt));
                 return;
             }
-
-            setArtifactKnownStatus(tagAdded.getArtifact(), TskData.FileKnown.BAD);
+            
+            // then handle the event
+            handleTagChange(evt.getAddedTag().getContent(), evt.getAddedTag().getArtifact());
         }
 
         /**
-         * For deleted tags, set the central repository correlation attribute
-         * instance file status to unknown if the tag that was deleted was the
-         * only tag on the file that confers notability.
+         * When a tag is added or deleted, check if there are other notable tags for the item.  
+         * If there are, set known status as notable.  If not set status as unknown.
          *
-         * @param tagDeletedEvent The tag deleted event containing information
-         *                        about the tag that is begin deleted.
+         * @param content The content for the tag that was added or deleted.
+         * @param bbArtifact The artifact for the tag that was added or deleted.
          */
-        private void handleTagDeleted(BlackBoardArtifactTagDeletedEvent tagDeletedEvent) {
-            if (!isNotableTagName(tagDeletedEvent.getDeletedTagInfo().getName())) {
-                // If the tag that got removed isn't on the list of central repo tags, do nothing
-                return;
-            }
-                        
+        private void handleTagChange(Content content, BlackboardArtifact bbArtifact) {
             Case openCase;
             try {
                 openCase = Case.getCurrentCaseThrows();
@@ -381,26 +400,21 @@ final class CaseEventListener implements PropertyChangeListener {
                 return;
             }
 
-            long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
-            long artifactID = tagDeletedEvent.getDeletedTagInfo().getArtifactID();
-
             try {
-                // Get the remaining tags on the artifact
-                Content content = openCase.getSleuthkitCase().getContentById(contentID);
                 if (isKnownFile(content)) {
                     return;
                 }
 
-                BlackboardArtifact bbArtifact = openCase.getSleuthkitCase().getBlackboardArtifact(artifactID);
                 TagsManager tagsManager = openCase.getServices().getTagsManager();
                 List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbArtifact);
                 if (hasNotableTag(tags)) {
-                    return;
+                    setArtifactKnownStatus(bbArtifact, TskData.FileKnown.BAD);
                 }
-
-                setArtifactKnownStatus(bbArtifact, TskData.FileKnown.UNKNOWN);
+                else {
+                    setArtifactKnownStatus(bbArtifact, TskData.FileKnown.UNKNOWN);
+                }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to find content", ex);
+                LOGGER.log(Level.SEVERE, "Failed to obtain tags manager for case.", ex);
                 return;
             }
         }
