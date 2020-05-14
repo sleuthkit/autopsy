@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -175,6 +175,9 @@ public final class JythonModuleLoader {
         boolean accept(String line);
     }
 
+    /**
+     * Filter IngestModule interface implementations
+     */
     private static class IngestModuleFactoryDefFilter implements LineFilter {
 
         @Override
@@ -183,6 +186,9 @@ public final class JythonModuleLoader {
         }
     }
 
+    /**
+     * Filter GeneralReportModule interface implementations
+     */
     private static class GeneralReportModuleDefFilter implements LineFilter {
 
         @Override
@@ -191,6 +197,9 @@ public final class JythonModuleLoader {
         }
     }
     
+    /**
+     * Filter DataSourceProcessor interface implementations
+     */
     private static class DataSourceProcessorDefFilter implements LineFilter {
 
         @Override
