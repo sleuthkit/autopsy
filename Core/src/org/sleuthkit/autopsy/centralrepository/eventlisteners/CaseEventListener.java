@@ -374,7 +374,7 @@ final class CaseEventListener implements PropertyChangeListener {
 
         private void handleTagAdded(BlackBoardArtifactTagAddedEvent evt) {
             // ensure tag added event has a valid content id
-            if (evt.getAddedTag() == null || evt.getAddedTag().getContent() == null) {
+            if (evt.getAddedTag() == null || evt.getAddedTag().getContent() == null || evt.getAddedTag().getArtifact() == null) {
                 LOGGER.log(Level.SEVERE,
                         String.format("ContentTagAddedEvent %s did not have valid content to provide a content id.", evt));
                 return;
@@ -440,7 +440,6 @@ final class CaseEventListener implements PropertyChangeListener {
         private void setArtifactKnownStatus(BlackboardArtifact bbArtifact, TskData.FileKnown knownStatus) {
             List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsForCorrelation(bbArtifact);
             for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
-                eamArtifact.setComment("");
                 try {
                     dbManager.setAttributeInstanceKnownStatus(eamArtifact, knownStatus);
                 } catch (CentralRepoException ex) {
