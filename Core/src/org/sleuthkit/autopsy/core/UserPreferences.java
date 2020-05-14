@@ -62,6 +62,8 @@ public final class UserPreferences {
     public static final String INDEXING_SERVER_PORT = "IndexingServerPort"; //NON-NLS
     public static final String INDEXING_SERVER_LIST = "IndexingServerList"; //NON-NLS
     public static final String INDEXING_MAX_SHARDS = "IndexingMaxShards"; //NON-NLS
+    public static final String INDEXING_DOC_QUEUE_SIZE = "IndexingDocumentQueueSize"; //NON-NLS
+    public static final String INDEXING_NUM_THREADS = "IndexingNumThreads"; //NON-NLS
     public static final String ZK_SERVER_HOST = "ZookeeperServerHost"; //NON-NLS
     public static final String ZK_SERVER_PORT = "ZookeeperServerPort"; //NON-NLS
     private static final String MESSAGE_SERVICE_PASSWORD = "MessageServicePassword"; //NON-NLS
@@ -355,18 +357,6 @@ public final class UserPreferences {
         preferences.put(ZK_SERVER_HOST, hostName);
     }
 
-    // ELTODO remove this, using clusterstate instead
-    public static List<String> getAllIndexingServers() {
-        List<String> servers = new ArrayList<>();
-        String listOfServers = preferences.get(INDEXING_SERVER_LIST, "localhost:8983"); // ELTODO change default
-        if (listOfServers.isEmpty()) {
-            return servers;
-        }
-        // servers are comma-separated
-        servers = Arrays.asList(listOfServers.split("\\s*,\\s*"));
-        return servers;
-    }
-
     public static String getZkServerPort() {
         return preferences.get(ZK_SERVER_PORT, "9983");
     }
@@ -383,6 +373,22 @@ public final class UserPreferences {
         return preferences.getInt(INDEXING_MAX_SHARDS, 1);
     }
 
+    public static int getNumThreads() {
+        return preferences.getInt(INDEXING_NUM_THREADS, 10);
+    }
+
+    public static void setNumThreads(int maxShards) {
+        preferences.putInt(INDEXING_NUM_THREADS, maxShards);
+    }
+    
+    public static void setDocumentsQueueSize(int maxShards) {
+        preferences.putInt(INDEXING_DOC_QUEUE_SIZE, maxShards);
+    }
+
+    public static int getDocumentsQueueSize() {
+        return preferences.getInt(INDEXING_DOC_QUEUE_SIZE, 1000);
+    }
+    
     public static void setTextTranslatorName(String textTranslatorName) {
         preferences.put(TEXT_TRANSLATOR_NAME, textTranslatorName);
     }
