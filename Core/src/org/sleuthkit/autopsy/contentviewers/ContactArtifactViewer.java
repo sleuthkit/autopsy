@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Box;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -201,11 +203,14 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         
         updateNamePanel(nameList);
 
-        updatePhoneNumbersPanel(phoneNumList);
+        updateSection(phoneNumList, this.phonesLabel, this.phoneNumbersPanel);
 
-        updateEmailAddressesPanel(emailList);
+        updateSection(emailList, this.emailsLabel, this.emailsPanel);
 
-        updateOtherAttributesPanel(otherList);
+        //updateOtherAttributesPanel(otherList);
+        
+        updateSection(otherList, this.othersLabel, this.otherAttrsPanel);
+        
         // repaint
         this.revalidate();
     }
@@ -231,140 +236,200 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         contactNameLabel.revalidate();
     }
     
-    private void updatePhoneNumbersPanel(List<BlackboardAttribute> phoneAttributesList) {
-        
-        if (phoneAttributesList.isEmpty()) {
-            this.phonesLabel.setVisible(false);
-            phoneNumbersPanel.setVisible(false);
-            return;
-        }
-        
-        GridBagLayout gridBagLayout = new GridBagLayout();
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        constraints.gridx = 0;
-        constraints.gridy = -1;
-        constraints.weighty = .0;
-        constraints.anchor = GridBagConstraints.LINE_START;
-
-        Dimension horizSpacerBlockDimension = new Dimension(12, 4); 
-        
-        for (BlackboardAttribute bba : phoneAttributesList) {
-            constraints.weightx = 0;
-            constraints.gridy++;
-            constraints.gridx = 0; 
-            
-            // Add a label for phone number type
-            javax.swing.JLabel phoneTypeLabel = new javax.swing.JLabel();
-            
-            
- 
-            String attributeLabel = bba.getAttributeType().getDisplayName();
-            phoneTypeLabel.setText(attributeLabel);
-           
-            // RAMAN TBD: set the size/font/style for label
-            //Font newLabelFont=new Font(phoneTypeLabel.getFont().getName(),Font.ITALIC+Font.BOLD,phoneTypeLabel.getFont().getSize());
-            //phoneTypeLabel.setFont(newLabelFont);
-            
-            gridBagLayout.setConstraints(phoneTypeLabel, constraints);
-            phoneNumbersPanel.add(phoneTypeLabel);
-            
-            // Add horizontal space
-            constraints.gridx++; 
-            Box.Filler spacer = new Box.Filler(horizSpacerBlockDimension, horizSpacerBlockDimension, horizSpacerBlockDimension);
-            gridBagLayout.setConstraints(spacer, constraints);
-            phoneNumbersPanel.add(spacer);
-            
-            // Add a label for the phone number
-            constraints.gridx++; 
-            javax.swing.JLabel phoneNumberLabel = new javax.swing.JLabel();
-            phoneNumberLabel.setText(bba.getValueString());
-            
-            gridBagLayout.setConstraints(phoneNumberLabel, constraints);
-            phoneNumbersPanel.add(phoneNumberLabel);
-        }
-        
-        
-        //constraints.gridy++;
-        //constraints.gridx = 0;
-        //constraints.weighty = 1;
-        //Component vertGlue = createVerticalGlue();
-        //this.phoneNumbersPanel.add(vertGlue);
-        //gridBagLayout.setConstraints(vertGlue, constraints);
-        
-        phoneNumbersPanel.setLayout(gridBagLayout);
-        
-        
-        phoneNumbersPanel.revalidate();
-    }
+//    private void updatePhoneNumbersPanel(List<BlackboardAttribute> phoneAttributesList) {
+//        
+//        if (phoneAttributesList.isEmpty()) {
+//            this.phonesLabel.setVisible(false);
+//            phoneNumbersPanel.setVisible(false);
+//            return;
+//        }
+//        
+//        GridBagLayout gridBagLayout = new GridBagLayout();
+//        GridBagConstraints constraints = new GridBagConstraints();
+//        constraints.fill = GridBagConstraints.HORIZONTAL;
+//        constraints.gridx = 0;
+//        constraints.gridy = -1;
+//        constraints.weighty = .0;
+//        constraints.anchor = GridBagConstraints.LINE_START;
+//
+//        Dimension horizSpacerBlockDimension = new Dimension(12, 4); 
+//        
+//        for (BlackboardAttribute bba : phoneAttributesList) {
+//            constraints.weightx = 0;
+//            constraints.gridy++;
+//            constraints.gridx = 0; 
+//            
+//            // Add a label for phone number type
+//            javax.swing.JLabel phoneTypeLabel = new javax.swing.JLabel();
+//            
+//            
+// 
+//            String attributeLabel = bba.getAttributeType().getDisplayName();
+//            phoneTypeLabel.setText(attributeLabel);
+//           
+//            // RAMAN TBD: set the size/font/style for label
+//            //Font newLabelFont=new Font(phoneTypeLabel.getFont().getName(),Font.ITALIC+Font.BOLD,phoneTypeLabel.getFont().getSize());
+//            //phoneTypeLabel.setFont(newLabelFont);
+//            
+//            gridBagLayout.setConstraints(phoneTypeLabel, constraints);
+//            phoneNumbersPanel.add(phoneTypeLabel);
+//            
+//            // Add horizontal space
+//            constraints.gridx++; 
+//            Box.Filler spacer = new Box.Filler(horizSpacerBlockDimension, horizSpacerBlockDimension, horizSpacerBlockDimension);
+//            gridBagLayout.setConstraints(spacer, constraints);
+//            phoneNumbersPanel.add(spacer);
+//            
+//            // Add a label for the phone number
+//            constraints.gridx++; 
+//            javax.swing.JLabel phoneNumberLabel = new javax.swing.JLabel();
+//            phoneNumberLabel.setText(bba.getValueString());
+//            
+//            gridBagLayout.setConstraints(phoneNumberLabel, constraints);
+//            phoneNumbersPanel.add(phoneNumberLabel);
+//        }
+//        
+//        
+//        //constraints.gridy++;
+//        //constraints.gridx = 0;
+//        //constraints.weighty = 1;
+//        //Component vertGlue = createVerticalGlue();
+//        //this.phoneNumbersPanel.add(vertGlue);
+//        //gridBagLayout.setConstraints(vertGlue, constraints);
+//        
+//        phoneNumbersPanel.setLayout(gridBagLayout);
+//        
+//        
+//        phoneNumbersPanel.revalidate();
+//    }
     
-     private void updateEmailAddressesPanel(List<BlackboardAttribute> emailAddressAttributesList) {
-        
-        if (emailAddressAttributesList.isEmpty()) {
-            emailsLabel.setVisible(false);
-            this.emailsPanel.setVisible(false);
-            return;
-        }
-        
-        GridBagLayout gridBagLayout = new GridBagLayout();
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        constraints.gridx = 0;
-        constraints.gridy = -1;
-        constraints.weighty = .0;
-        constraints.anchor = GridBagConstraints.LINE_START;
-
-        Dimension horizSpacerBlockDimension = new Dimension(12, 4); 
-         
-        for (BlackboardAttribute bba : emailAddressAttributesList) {
-            constraints.weightx = 0;
-            constraints.gridy++;
-            constraints.gridx = 0; 
-            
-            // Add a label for email address type
-            javax.swing.JLabel emailAddressTypeLabel = new javax.swing.JLabel();
-            String attrLabel = bba.getAttributeType().getDisplayName();
-            emailAddressTypeLabel.setText(attrLabel);
-           
-            // RAMAN TBD: set the size/font/style for label
-            
-            gridBagLayout.setConstraints(emailAddressTypeLabel, constraints);
-            emailsPanel.add(emailAddressTypeLabel);
-            
-          
-            
-            // Add horizontal space
-            constraints.gridx++; 
-            Box.Filler spacer = new Box.Filler(horizSpacerBlockDimension, horizSpacerBlockDimension, horizSpacerBlockDimension);
-            gridBagLayout.setConstraints(spacer, constraints);
-            emailsPanel.add(spacer);
-            
-            // Add the phone number
-            constraints.gridx++; 
-            javax.swing.JLabel emailAddressLabel = new javax.swing.JLabel();
-            emailAddressLabel.setText(bba.getValueString());
-            gridBagLayout.setConstraints(emailAddressLabel, constraints);
-            emailsPanel.add(emailAddressLabel);
-        }
-        
-        
-        //constraints.gridy++;
-        //constraints.gridx = 0;
-        //constraints.weighty = 1;
-        //Component vertGlue = createVerticalGlue();
-        //emailsPanel.add(vertGlue);
-        //gridBagLayout.setConstraints(vertGlue, constraints);
-        
-        
-        emailsPanel.setLayout(gridBagLayout);
-        emailsPanel.revalidate();
-    }
+//     private void updateEmailAddressesPanel(List<BlackboardAttribute> emailAddressAttributesList) {
+//        
+//        if (emailAddressAttributesList.isEmpty()) {
+//            emailsLabel.setVisible(false);
+//            this.emailsPanel.setVisible(false);
+//            return;
+//        }
+//        
+//        GridBagLayout gridBagLayout = new GridBagLayout();
+//        GridBagConstraints constraints = new GridBagConstraints();
+//        constraints.fill = GridBagConstraints.HORIZONTAL;
+//        constraints.gridx = 0;
+//        constraints.gridy = -1;
+//        constraints.weighty = .0;
+//        constraints.anchor = GridBagConstraints.LINE_START;
+//
+//        Dimension horizSpacerBlockDimension = new Dimension(12, 4); 
+//         
+//        for (BlackboardAttribute bba : emailAddressAttributesList) {
+//            constraints.weightx = 0;
+//            constraints.gridy++;
+//            constraints.gridx = 0; 
+//            
+//            // Add a label for email address type
+//            javax.swing.JLabel emailAddressTypeLabel = new javax.swing.JLabel();
+//            String attrLabel = bba.getAttributeType().getDisplayName();
+//            emailAddressTypeLabel.setText(attrLabel);
+//           
+//            // RAMAN TBD: set the size/font/style for label
+//            
+//            gridBagLayout.setConstraints(emailAddressTypeLabel, constraints);
+//            emailsPanel.add(emailAddressTypeLabel);
+//            
+//          
+//            
+//            // Add horizontal space
+//            constraints.gridx++; 
+//            Box.Filler spacer = new Box.Filler(horizSpacerBlockDimension, horizSpacerBlockDimension, horizSpacerBlockDimension);
+//            gridBagLayout.setConstraints(spacer, constraints);
+//            emailsPanel.add(spacer);
+//            
+//            // Add the phone number
+//            constraints.gridx++; 
+//            javax.swing.JLabel emailAddressLabel = new javax.swing.JLabel();
+//            emailAddressLabel.setText(bba.getValueString());
+//            gridBagLayout.setConstraints(emailAddressLabel, constraints);
+//            emailsPanel.add(emailAddressLabel);
+//        }
+//        
+//        
+//        //constraints.gridy++;
+//        //constraints.gridx = 0;
+//        //constraints.weighty = 1;
+//        //Component vertGlue = createVerticalGlue();
+//        //emailsPanel.add(vertGlue);
+//        //gridBagLayout.setConstraints(vertGlue, constraints);
+//        
+//        
+//        emailsPanel.setLayout(gridBagLayout);
+//        emailsPanel.revalidate();
+//    }
      
-     private void updateOtherAttributesPanel(List<BlackboardAttribute> otherAttributesList) {
+//     private void updateOtherAttributesPanel(List<BlackboardAttribute> otherAttributesList) {
+//        
+//        if (otherAttributesList.isEmpty()) {
+//            this.othersLabel.setVisible(false);
+//            this.otherAttrsPanel.setVisible(false);
+//            return;
+//        }
+//        
+//        GridBagLayout gridBagLayout = new GridBagLayout();
+//        GridBagConstraints constraints = new GridBagConstraints();
+//        constraints.fill = GridBagConstraints.HORIZONTAL;
+//        constraints.gridx = 0;
+//        constraints.gridy = -1;
+//        constraints.weighty = .0;
+//        constraints.anchor = GridBagConstraints.LINE_START;
+//
+//        Dimension horizSpacerBlockDimension = new Dimension(12, 4); 
+//         
+//        for (BlackboardAttribute bba : otherAttributesList) {
+//            constraints.weightx = 0;
+//            constraints.gridy++;
+//            constraints.gridx = 0; 
+//            
+//            // Add a label for attribute type
+//            javax.swing.JLabel attrTypeLabel = new javax.swing.JLabel();
+//            String attrLabel = bba.getAttributeType().getDisplayName();
+//            attrTypeLabel.setText(attrLabel);
+//           
+//            // RAMAN TBD: set the size/font/style for label
+//            
+//            gridBagLayout.setConstraints(attrTypeLabel, constraints);
+//            otherAttrsPanel.add(attrTypeLabel);
+//            
+//            // Add horizontal space
+//            constraints.gridx++; 
+//            Box.Filler spacer = new Box.Filler(horizSpacerBlockDimension, horizSpacerBlockDimension, horizSpacerBlockDimension);
+//            gridBagLayout.setConstraints(spacer, constraints);
+//            otherAttrsPanel.add(spacer);
+//            
+//            // Add the attribute value
+//            constraints.gridx++; 
+//            javax.swing.JLabel attrValueLabel = new javax.swing.JLabel();
+//            attrValueLabel.setText(bba.getValueString());
+//            gridBagLayout.setConstraints(attrValueLabel, constraints);
+//            otherAttrsPanel.add(attrValueLabel);
+//        }
+//        
+//        
+//        //constraints.gridy++;
+//        //constraints.gridx = 0;
+//        //constraints.weighty = 1;
+//        //Component vertGlue = createVerticalGlue();
+//        //emailsPanel.add(vertGlue);
+//        //gridBagLayout.setConstraints(vertGlue, constraints);
+//        
+//        
+//        otherAttrsPanel.setLayout(gridBagLayout);
+//        otherAttrsPanel.revalidate();
+//    }
+     
+     private void updateSection(List<BlackboardAttribute> sectionAttributesList, JLabel sectionLabel, JPanel sectionPanel) {
         
-        if (otherAttributesList.isEmpty()) {
-            this.othersLabel.setVisible(false);
-            this.otherAttrsPanel.setVisible(false);
+        if (sectionAttributesList.isEmpty()) {
+            sectionLabel.setVisible(false);
+            sectionPanel.setVisible(false);
             return;
         }
         
@@ -378,7 +443,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
         Dimension horizSpacerBlockDimension = new Dimension(12, 4); 
          
-        for (BlackboardAttribute bba : otherAttributesList) {
+        for (BlackboardAttribute bba : sectionAttributesList) {
             constraints.weightx = 0;
             constraints.gridy++;
             constraints.gridx = 0; 
@@ -391,20 +456,20 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             // RAMAN TBD: set the size/font/style for label
             
             gridBagLayout.setConstraints(attrTypeLabel, constraints);
-            otherAttrsPanel.add(attrTypeLabel);
+            sectionPanel.add(attrTypeLabel);
             
             // Add horizontal space
             constraints.gridx++; 
             Box.Filler spacer = new Box.Filler(horizSpacerBlockDimension, horizSpacerBlockDimension, horizSpacerBlockDimension);
             gridBagLayout.setConstraints(spacer, constraints);
-            otherAttrsPanel.add(spacer);
+            sectionPanel.add(spacer);
             
             // Add the attribute value
             constraints.gridx++; 
             javax.swing.JLabel attrValueLabel = new javax.swing.JLabel();
             attrValueLabel.setText(bba.getValueString());
             gridBagLayout.setConstraints(attrValueLabel, constraints);
-            otherAttrsPanel.add(attrValueLabel);
+            sectionPanel.add(attrValueLabel);
         }
         
         
@@ -416,8 +481,8 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         //gridBagLayout.setConstraints(vertGlue, constraints);
         
         
-        otherAttrsPanel.setLayout(gridBagLayout);
-        otherAttrsPanel.revalidate();
+        sectionPanel.setLayout(gridBagLayout);
+        sectionPanel.revalidate();
     }
           
     
