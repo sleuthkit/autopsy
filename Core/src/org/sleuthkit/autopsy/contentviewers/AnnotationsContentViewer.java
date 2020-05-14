@@ -479,8 +479,6 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             return new ArrayList<>();
         }
 
-        String md5 = sourceFile.getMd5Hash();
-
         List<CorrelationAttributeInstance.Type> artifactTypes = null;
         try {
             artifactTypes = CentralRepository.getInstance().getDefinedCorrelationTypes();
@@ -491,6 +489,8 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         if (artifactTypes == null || artifactTypes.isEmpty()) {
             return new ArrayList<>();
         }
+        
+        String md5 = sourceFile.getMd5Hash();
 
         // get key lookups for a file attribute types and the md5 hash
         List<Pair<CorrelationAttributeInstance.Type, String>> lookupKeys = artifactTypes.stream()
