@@ -61,7 +61,11 @@ sub pluginmain {
 # Get Zones and various security settings			
 			foreach my $n (0..4) {
 				$zone = $key->get_subkey('Zones\\'.$n);
-				::rptMsg("Zone ".$n.":  ".$zone->get_value("PMDisplayName")->get_data()." - ".$zone->get_value("Description")->get_data());
+                if (defined($zone->get_value("PMDisplayName"))) {
+                    ::rptMsg("Zone ".$n.":  ".$zone->get_value("PMDisplayName")->get_data()." - ".$zone->get_value("Description")->get_data());
+                } else {
+                    ::rptMsg("Zone ".$n.":  ".$zone->get_value("DisplayName")->get_data()." - ".$zone->get_value("Description")->get_data());
+                }
 				::rptMsg("LastWrite: ".gmtime($zone->get_timestamp()." UTC"));
 				
 				my @vals = $zone->get_list_of_values();
