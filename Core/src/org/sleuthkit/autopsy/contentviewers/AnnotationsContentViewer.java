@@ -29,6 +29,7 @@ import javax.swing.JLabel;
 import javax.swing.text.EditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import static org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -38,8 +39,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
@@ -278,7 +277,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         } else {
             somethingWasRendered = renderContent(body, sourceFile, false);
         }
-        
+
         if (!somethingWasRendered) {
             appendMessage(body, Bundle.AnnotationsContentViewer_onEmpty());
         }
@@ -294,14 +293,14 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @param bba           The blackboard artifact to render.
      * @param sourceContent The content from which the blackboard artifact
      *                      comes.
-     * @return              If any content was actually rendered.
+     *
+     * @return If any content was actually rendered.
      */
     private static boolean renderArtifact(Element parent, BlackboardArtifact bba, Content sourceContent) {
         boolean contentRendered = appendEntries(parent, TAG_CONFIG, getTags(bba), false);
-        
-        if (sourceContent instanceof AbstractFile && CentralRepository.isEnabled()) {
-            AbstractFile sourceFile = (AbstractFile) sourceContent;
-            List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(bba, sourceFile);
+
+        if (CentralRepository.isEnabled()) {
+            List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(bba);
             boolean crRendered = appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, false);
             contentRendered = contentRendered || crRendered;
         }
@@ -314,11 +313,11 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
         Element sourceFileSection = appendSection(parent, Bundle.AnnotationsContentViewer_sourceFile_title());
         boolean sourceFileRendered = renderContent(sourceFileSection, sourceContent, true);
-        
+
         if (!sourceFileRendered) {
             sourceFileSection.remove();
         }
-        
+
         return contentRendered || sourceFileRendered;
     }
 
@@ -329,7 +328,8 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @param sourceContent The content for which annotations will be gathered.
      * @param isSubheader   True if this section should be rendered as a
      *                      subheader as opposed to a top-level header.
-     * @return              If any content was actually rendered.
+     *
+     * @return If any content was actually rendered.
      */
     private static boolean renderContent(Element parent, Content sourceContent, boolean isSubheader) {
         boolean contentRendered = appendEntries(parent, TAG_CONFIG, getTags(sourceContent), isSubheader);
@@ -338,7 +338,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             AbstractFile sourceFile = (AbstractFile) sourceContent;
 
             if (CentralRepository.isEnabled()) {
-                List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(null, sourceFile);
+                List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(sourceFile);
                 boolean crRendered = appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, isSubheader);
                 contentRendered = contentRendered || crRendered;
             }
@@ -346,13 +346,12 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             boolean hashsetRendered = appendEntries(parent, HASHSET_CONFIG,
                     getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT),
                     isSubheader);
-            contentRendered = contentRendered || hashsetRendered;
 
-            boolean interestingFileRendered =appendEntries(parent, INTERESTING_FILE_CONFIG,
+            boolean interestingFileRendered = appendEntries(parent, INTERESTING_FILE_CONFIG,
                     getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT),
                     isSubheader);
-            
-            contentRendered = contentRendered || interestingFileRendered;
+
+            contentRendered = contentRendered || hashsetRendered || interestingFileRendered;
         }
         return contentRendered;
     }
@@ -445,61 +444,92 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     }
 
     /**
+     * Gets the "Central Repository Comments" section with data for the
+     * blackboard artifact.
+     *
+     * @param artifact The selected artifact.
+     *
+     * @return The Correlation Attribute Instances associated with the artifact
+     *         that have comments.
+     */
+    private static List<CorrelationAttributeInstance> getCentralRepositoryData(BlackboardArtifact artifact) {
+        if (artifact == null) {
+            return new ArrayList<>();
+        }
+
+        List<Pair<CorrelationAttributeInstance.Type, String>> lookupKeys = CorrelationAttributeUtil.makeCorrAttrsForCorrelation(artifact)
+                .stream()
+                .map(cai -> Pair.of(cai.getCorrelationType(), cai.getCorrelationValue()))
+                .collect(Collectors.toList());
+
+        return getCorrelationAttributeComments(lookupKeys);
+    }
+
+    /**
      * Gets the "Central Repository Comments" section with data.
      *
-     * @param artifact   A selected artifact (can be null).
      * @param sourceFile A selected file, or a source file of the selected
      *                   artifact.
      *
-     * @return The Correlation Attribute Instances associated with the artifact
-     *         and/or sourcefile.
+     * @return The Correlation Attribute Instances associated with the
+     *         sourcefile that have comments.
      */
-    private static List<CorrelationAttributeInstance> getCentralRepositoryData(BlackboardArtifact artifact, AbstractFile sourceFile) {
-        List<CorrelationAttributeInstance> toReturn = new ArrayList<>();
-
-        List<CorrelationAttributeInstance> instancesList = new ArrayList<>();
-        if (artifact != null) {
-            instancesList.addAll(CorrelationAttributeUtil.makeCorrAttrsForCorrelation(artifact));
+    private static List<CorrelationAttributeInstance> getCentralRepositoryData(AbstractFile sourceFile) {
+        if (sourceFile == null || StringUtils.isEmpty(sourceFile.getMd5Hash())) {
+            return new ArrayList<>();
         }
 
+        String md5 = sourceFile.getMd5Hash();
+
+        List<CorrelationAttributeInstance.Type> artifactTypes = null;
         try {
-            List<CorrelationAttributeInstance.Type> artifactTypes = CentralRepository.getInstance().getDefinedCorrelationTypes();
-            String md5 = sourceFile.getMd5Hash();
-            if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
-                for (CorrelationAttributeInstance.Type attributeType : artifactTypes) {
-                    if (attributeType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
-                        CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCase());
-                        instancesList.add(new CorrelationAttributeInstance(
-                                attributeType,
-                                md5,
-                                correlationCase,
-                                CorrelationDataSource.fromTSKDataSource(correlationCase, sourceFile.getDataSource()),
-                                sourceFile.getParentPath() + sourceFile.getName(),
-                                "",
-                                sourceFile.getKnown(),
-                                sourceFile.getId()));
-                        break;
-                    }
-                }
+            artifactTypes = CentralRepository.getInstance().getDefinedCorrelationTypes();
+        } catch (CentralRepoException ex) {
+            logger.log(Level.SEVERE, "Error connecting to the Central Repository database.", ex); // NON-NLS
+        }
+
+        if (artifactTypes == null || artifactTypes.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // get key lookups for a file attribute types and the md5 hash
+        List<Pair<CorrelationAttributeInstance.Type, String>> lookupKeys = artifactTypes.stream()
+                .filter((attributeType) -> attributeType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID)
+                .map((attributeType) -> Pair.of(attributeType, md5))
+                .collect(Collectors.toList());
+
+        return getCorrelationAttributeComments(lookupKeys);
+    }
+
+    /**
+     * Given a type and a value for that type, does a lookup in the Central
+     * Repository for matching values that have comments.
+     *
+     * @param lookupKeys The type and value to lookup.
+     *
+     * @return The found correlation attribute instances.
+     */
+    private static List<CorrelationAttributeInstance> getCorrelationAttributeComments(List<Pair<CorrelationAttributeInstance.Type, String>> lookupKeys) {
+        List<CorrelationAttributeInstance> instancesToRet = new ArrayList<>();
+
+        try {
+            // use lookup instances to find the actual correlation attributes for the items selected
+            for (Pair<CorrelationAttributeInstance.Type, String> typeVal : lookupKeys) {
+                instancesToRet.addAll(CentralRepository.getInstance()
+                        .getArtifactInstancesByTypeValue(typeVal.getKey(), typeVal.getValue())
+                        .stream()
+                        // for each one found, if it has a comment, return
+                        .filter((cai) -> StringUtils.isNotEmpty(cai.getComment()))
+                        .collect(Collectors.toList()));
             }
 
-            for (CorrelationAttributeInstance instance : instancesList) {
-                List<CorrelationAttributeInstance> correlatedInstancesList
-                        = CentralRepository.getInstance().getArtifactInstancesByTypeValue(instance.getCorrelationType(), instance.getCorrelationValue());
-                for (CorrelationAttributeInstance correlatedInstance : correlatedInstancesList) {
-                    if (StringUtils.isNotEmpty(correlatedInstance.getComment())) {
-                        toReturn.add(correlatedInstance);
-                    }
-                }
-            }
-
-        } catch (CentralRepoException | TskCoreException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error connecting to the Central Repository database.", ex); // NON-NLS
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.SEVERE, "Error normalizing instance from Central Repository database.", ex); // NON-NLS
         }
 
-        return toReturn;
+        return instancesToRet;
     }
 
     /**
@@ -515,6 +545,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @param items        The items to display.
      * @param isSubsection Whether or not this should be displayed as a
      *                     subsection. If not displayed as a top-level section.
+     *
      * @return If there was actual content rendered for this set of entries.
      */
     private static <T> boolean appendEntries(Element parent, SectionConfig<T> config, List<? extends T> items,
@@ -522,7 +553,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         if (items == null || items.isEmpty()) {
             return false;
         }
-        
+
         Element sectionDiv = (isSubsection) ? appendSubsection(parent, config.getTitle()) : appendSection(parent, config.getTitle());
         appendVerticalEntryTables(sectionDiv, items, config.getAttributes());
         return true;
