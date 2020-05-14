@@ -435,6 +435,8 @@ public class ResultsPanel extends javax.swing.JPanel {
         pagingPanel.add(gotoPageLabel, gridBagConstraints);
 
         gotoPageField.setEnabled(false);
+        gotoPageField.setMinimumSize(new java.awt.Dimension(30, 22));
+        gotoPageField.setName(""); // NOI18N
         gotoPageField.setPreferredSize(new java.awt.Dimension(26, 22));
         gotoPageField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
