@@ -90,7 +90,7 @@ final class CaseEventListener implements PropertyChangeListener {
         if (!(evt instanceof AutopsyEvent) || (((AutopsyEvent) evt).getSourceType() != AutopsyEvent.SourceType.LOCAL)) {
             return;
         }
-        
+
         CentralRepository dbManager;
         try {
             dbManager = CentralRepository.getInstance();
@@ -222,16 +222,16 @@ final class CaseEventListener implements PropertyChangeListener {
                         String.format("ContentTagDeletedEvent %s did not have valid content to provide a content id.", evt));
                 return;
             }
-            
+
             try {
                 // obtain content
                 Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(evt.getDeletedTagInfo().getContentID());
                 if (content == null) {
                     LOGGER.log(Level.WARNING,
-                        String.format("Unable to get content for item with content id: %d.", evt.getDeletedTagInfo().getContentID()));
+                            String.format("Unable to get content for item with content id: %d.", evt.getDeletedTagInfo().getContentID()));
                     return;
                 }
-                
+
                 // then handle the event 
                 handleTagChange(content);
             } catch (NoCurrentCaseException | TskCoreException ex) {
@@ -246,14 +246,15 @@ final class CaseEventListener implements PropertyChangeListener {
                         String.format("ContentTagAddedEvent %s did not have valid content to provide a content id.", evt));
                 return;
             }
-            
+
             // then handle the event
             handleTagChange(evt.getAddedTag().getContent());
         }
 
         /**
-         * When a tag is added or deleted, check if there are other notable tags for the item.  
-         * If there are, set known status as notable.  If not set status as unknown.
+         * When a tag is added or deleted, check if there are other notable tags
+         * for the item. If there are, set known status as notable. If not set
+         * status as unknown.
          *
          * @param content The content for the tag that was added or deleted.
          */
@@ -268,7 +269,7 @@ final class CaseEventListener implements PropertyChangeListener {
             if (af == null) {
                 return;
             }
-            
+
             try {
                 // Get the tags on the content object
                 TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
@@ -276,8 +277,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 if (hasNotableTag(tagsManager.getContentTagsByContent(content))) {
                     // if there is a notable tag on the object, set content known status to bad
                     setContentKnownStatus(af, TskData.FileKnown.BAD);
-                }
-                else {
+                } else {
                     // otherwise, set to unknown
                     setContentKnownStatus(af, TskData.FileKnown.UNKNOWN);
                 }
@@ -285,7 +285,6 @@ final class CaseEventListener implements PropertyChangeListener {
                 LOGGER.log(Level.SEVERE, "Failed to obtain tags manager for case.", ex);
             }
         }
-
 
         /**
          * Sets the known status for the correlation attribute instance for the
@@ -345,26 +344,26 @@ final class CaseEventListener implements PropertyChangeListener {
                         String.format("ContentTagDeletedEvent %s did not have valid content to provide a content id.", evt));
                 return;
             }
-            
+
             try {
                 Case openCase = Case.getCurrentCaseThrows();
-                
+
                 // obtain content
                 Content content = openCase.getSleuthkitCase().getContentById(evt.getDeletedTagInfo().getContentID());
                 if (content == null) {
                     LOGGER.log(Level.WARNING,
-                        String.format("Unable to get content for item with content id: %d.", evt.getDeletedTagInfo().getContentID()));
+                            String.format("Unable to get content for item with content id: %d.", evt.getDeletedTagInfo().getContentID()));
                     return;
                 }
-                
+
                 // obtain blackboard artifact
                 BlackboardArtifact bbArtifact = openCase.getSleuthkitCase().getBlackboardArtifact(evt.getDeletedTagInfo().getArtifactID());
                 if (bbArtifact == null) {
                     LOGGER.log(Level.WARNING,
-                        String.format("Unable to get blackboard artifact for item with artifact id: %d.", evt.getDeletedTagInfo().getArtifactID()));
+                            String.format("Unable to get blackboard artifact for item with artifact id: %d.", evt.getDeletedTagInfo().getArtifactID()));
                     return;
                 }
-                
+
                 // then handle the event 
                 handleTagChange(content, bbArtifact);
             } catch (NoCurrentCaseException | TskCoreException ex) {
@@ -379,16 +378,17 @@ final class CaseEventListener implements PropertyChangeListener {
                         String.format("ContentTagAddedEvent %s did not have valid content to provide a content id.", evt));
                 return;
             }
-            
+
             // then handle the event
             handleTagChange(evt.getAddedTag().getContent(), evt.getAddedTag().getArtifact());
         }
 
         /**
-         * When a tag is added or deleted, check if there are other notable tags for the item.  
-         * If there are, set known status as notable.  If not set status as unknown.
+         * When a tag is added or deleted, check if there are other notable tags
+         * for the item. If there are, set known status as notable. If not set
+         * status as unknown.
          *
-         * @param content The content for the tag that was added or deleted.
+         * @param content    The content for the tag that was added or deleted.
          * @param bbArtifact The artifact for the tag that was added or deleted.
          */
         private void handleTagChange(Content content, BlackboardArtifact bbArtifact) {
@@ -409,8 +409,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbArtifact);
                 if (hasNotableTag(tags)) {
                     setArtifactKnownStatus(bbArtifact, TskData.FileKnown.BAD);
-                }
-                else {
+                } else {
                     setArtifactKnownStatus(bbArtifact, TskData.FileKnown.UNKNOWN);
                 }
             } catch (TskCoreException ex) {
