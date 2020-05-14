@@ -33,11 +33,11 @@ import org.openide.windows.WindowManager;
 public final class PersonaDetailsTopComponent extends TopComponent {
 
     @Messages({
-        "PTopComponent_Name=Persona Details"
+        "PDTopComponent_Name=Persona Details"
     })
     public PersonaDetailsTopComponent() {
         initComponents();
-        setName(Bundle.PTopComponent_Name());
+        setName(Bundle.PDTopComponent_Name());
     }
 
     /**

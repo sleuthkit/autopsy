@@ -44,11 +44,11 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 public final class PersonaSearchTopComponent extends TopComponent {
 
     @Messages({
-        "PTopComponent_Name=Persona Search"
+        "PSTopComponent_Name=Persona Search"
     })
     public PersonaSearchTopComponent() {
         initComponents();
-        setName(Bundle.PTopComponent_Name());
+        setName(Bundle.PSTopComponent_Name());
         executeSearch();
 
         searchBtn.addActionListener(new ActionListener() {
@@ -58,8 +58,12 @@ public final class PersonaSearchTopComponent extends TopComponent {
             }
         });
     }
-
+   
+    /**
+     * Table model for the persona search results
+     */
     class PersonaFilterTableModel extends DefaultTableModel {
+        private static final long serialVersionUID = 1L;
 
         PersonaFilterTableModel(Object[][] rows, String[] colNames) {
             super(rows, colNames);
