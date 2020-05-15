@@ -19,7 +19,7 @@ final class ImageFilterPanel extends AbstractFilterPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private final List<SearchFilterInterface> filters = new ArrayList<>();
+    private final List<AbstractDiscoveryFiltersPanel> filters = new ArrayList<>();
 
     /**
      * Creates new form ImageFilterPanel
@@ -43,6 +43,9 @@ final class ImageFilterPanel extends AbstractFilterPanel {
             }
         });
         filters.add(dataSourceFilter);
+        addToGridBagLayout(dataSourceFilter.getCheckbox(), null);
+        addToGridBagLayout(dataSourceFilter, null);
+        updateLayout();
     }
 
     private void addSizeFilter() {
@@ -71,12 +74,13 @@ final class ImageFilterPanel extends AbstractFilterPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-    }// </editor-fold>//GEN-END:initComponents
 
+        setLayout(new java.awt.GridBagLayout());
+    }// </editor-fold>//GEN-END:initComponents
 
     private void validateFields() {
         String errorString;
-        for (SearchFilterInterface filterPanel : filters) {
+        for (AbstractDiscoveryFiltersPanel filterPanel : filters) {
             errorString = filterPanel.checkForError();
             if (errorString != null) {
                 setInvalid(errorString);

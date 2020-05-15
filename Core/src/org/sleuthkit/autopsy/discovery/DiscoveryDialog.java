@@ -33,7 +33,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(DiscoveryDialog.class.getName());
-    private final FileSearchPanel filterPanel = new FileSearchPanel();
+    private final ImageFilterPanel filterPanel = new ImageFilterPanel();
     private static final Color SELECTED_COLOR = new Color(216, 230, 242);
     private static final Color UNSELECTED_COLOR = new Color(240, 240, 240);
     private SearchWorker searchWorker = null;
@@ -78,7 +78,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * Update the search settings to a default state.
      */
     private void updateSearchSettings() {
-        filterPanel.resetPanel();
+//        filterPanel.resetPanel();
         imagesButton.setSelected(true);
         imagesButton.setEnabled(false);
         imagesButton.setBackground(SELECTED_COLOR);
@@ -89,7 +89,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setSelected(false);
         documentsButton.setEnabled(true);
         documentsButton.setBackground(UNSELECTED_COLOR);
-        filterPanel.setSelectedType(FileSearchData.FileType.IMAGE);
+//        filterPanel.setSelectedType(FileSearchData.FileType.IMAGE);
     }
 
     /**
@@ -157,13 +157,13 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         toolBarPanelLayout.setHorizontalGroup(
             toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(toolBarPanelLayout.createSequentialGroup()
-                .addContainerGap(98, Short.MAX_VALUE)
+                .addContainerGap(328, Short.MAX_VALUE)
                 .addComponent(imagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(videosButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(documentsButton)
-                .addContainerGap(87, Short.MAX_VALUE))
+                .addContainerGap(317, Short.MAX_VALUE))
         );
         toolBarPanelLayout.setVerticalGroup(
             toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -200,7 +200,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 378, Short.MAX_VALUE)
+                .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 838, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cancelButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -236,7 +236,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setSelected(false);
         documentsButton.setEnabled(true);
         documentsButton.setBackground(UNSELECTED_COLOR);
-        filterPanel.setSelectedType(FileSearchData.FileType.IMAGE);
+//        filterPanel.setSelectedType(FileSearchData.FileType.IMAGE);
     }//GEN-LAST:event_imagesButtonActionPerformed
 
     private void videosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_videosButtonActionPerformed
@@ -250,7 +250,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setSelected(false);
         documentsButton.setEnabled(true);
         documentsButton.setBackground(UNSELECTED_COLOR);
-        filterPanel.setSelectedType(FileSearchData.FileType.VIDEO);
+//        filterPanel.setSelectedType(FileSearchData.FileType.VIDEO);
     }//GEN-LAST:event_videosButtonActionPerformed
 
     private void documentsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsButtonActionPerformed
@@ -264,44 +264,44 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         imagesButton.setSelected(false);
         imagesButton.setEnabled(true);
         imagesButton.setBackground(UNSELECTED_COLOR);
-        filterPanel.setSelectedType(FileSearchData.FileType.DOCUMENTS);
+//        filterPanel.setSelectedType(FileSearchData.FileType.DOCUMENTS);
     }//GEN-LAST:event_documentsButtonActionPerformed
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         // Get the selected filters
-        final DiscoveryTopComponent tc = DiscoveryTopComponent.getTopComponent();
-        if (tc == null) {
-            setInvalid("No Top Component Found");
-            return;
-        }
-
-        if (tc.isOpened() == false) {
-            tc.open();
-        }
-        tc.resetTopComponent();
-        List<FileSearchFiltering.FileFilter> filters = filterPanel.getFilters();
-        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.SearchStartedEvent(filterPanel.getSelectedType()));
-
-        // Get the grouping attribute and group sorting method
-        FileSearch.AttributeType groupingAttr = filterPanel.getGroupingAttribute();
-        FileGroup.GroupSortingAlgorithm groupSortAlgorithm = filterPanel.getGroupSortingMethod();
-
-        // Get the file sorting method
-        FileSorter.SortingMethod fileSort = filterPanel.getFileSortingMethod();
-        CentralRepository centralRepoDb = null;
-        if (CentralRepository.isEnabled()) {
-            try {
-                centralRepoDb = CentralRepository.getInstance();
-            } catch (CentralRepoException ex) {
-                centralRepoDb = null;
-                logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for File Discovery", ex);
-            }
-        }
-        searchWorker = new SearchWorker(centralRepoDb, filters, groupingAttr, groupSortAlgorithm, fileSort);
-        searchWorker.execute();
-        dispose();
-        tc.toFront();
-        tc.requestActive();
+//        final DiscoveryTopComponent tc = DiscoveryTopComponent.getTopComponent();
+//        if (tc == null) {
+//            setInvalid("No Top Component Found");
+//            return;
+//        }
+//
+//        if (tc.isOpened() == false) {
+//            tc.open();
+//        }
+//        tc.resetTopComponent();
+//        List<FileSearchFiltering.FileFilter> filters = filterPanel.getFilters();
+//        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.SearchStartedEvent(filterPanel.getSelectedType()));
+//
+//        // Get the grouping attribute and group sorting method
+//        FileSearch.AttributeType groupingAttr = filterPanel.getGroupingAttribute();
+//        FileGroup.GroupSortingAlgorithm groupSortAlgorithm = filterPanel.getGroupSortingMethod();
+//
+//        // Get the file sorting method
+//        FileSorter.SortingMethod fileSort = filterPanel.getFileSortingMethod();
+//        CentralRepository centralRepoDb = null;
+//        if (CentralRepository.isEnabled()) {
+//            try {
+//                centralRepoDb = CentralRepository.getInstance();
+//            } catch (CentralRepoException ex) {
+//                centralRepoDb = null;
+//                logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for File Discovery", ex);
+//            }
+//        }
+//        searchWorker = new SearchWorker(centralRepoDb, filters, groupingAttr, groupSortAlgorithm, fileSort);
+//        searchWorker.execute();
+//        dispose();
+//        tc.toFront();
+//        tc.requestActive();
     }//GEN-LAST:event_searchButtonActionPerformed
 
 
@@ -310,7 +310,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     void cancelSearch() {
-        filterPanel.cancelSearch();
+//        filterPanel.cancelSearch();
     }
 
     /**

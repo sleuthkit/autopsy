@@ -18,7 +18,7 @@ import org.sleuthkit.autopsy.discovery.FileSearchData.FileSize;
  *
  * @author wschaefer
  */
-final class SizeFilterPanel extends SearchFilterInterface {
+final class SizeFilterPanel extends AbstractDiscoveryFiltersPanel {
 
     private static final long serialVersionUID = 1L;
     /**

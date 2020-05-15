@@ -14,7 +14,7 @@ import javax.swing.event.ListSelectionListener;
  *
  * @author wschaefer
  */
-abstract class SearchFilterInterface extends javax.swing.JPanel {
+abstract class AbstractDiscoveryFiltersPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -37,10 +37,10 @@ abstract class SearchFilterInterface extends javax.swing.JPanel {
 
     /**
      * Add listeners to the checkbox/list set if listeners have not already been
-     * added. Either can be null.
+     * added.
      *
-     * @param checkBox
-     * @param list
+     * @param listener
+     * @param listListener
      */
     abstract void addListeners(ActionListener listener, ListSelectionListener listListener);
 

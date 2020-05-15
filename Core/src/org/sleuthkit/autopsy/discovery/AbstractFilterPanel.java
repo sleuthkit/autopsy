@@ -20,26 +20,22 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
     private static final double PANEL_WEIGHT = 0;
     private static final int LABEL_WIDTH = 1;
     private static final int PANEL_WIDTH = 2;
-    private static final int NUMBER_OF_COLUMNS = 4;
+    private static final int NUMBER_OF_COLUMNS = 6;
     private static final long serialVersionUID = 1L;
     private final GridBagLayout layout = new GridBagLayout();
     private final GridBagConstraints constraints = new GridBagConstraints();
 
-    void initConstraints() {
+    final void initConstraints() {
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.gridheight = 2;
         constraints.gridwidth = LABEL_WIDTH;
         constraints.weightx = LABEL_WEIGHT;
-        constraints.anchor = GridBagConstraints.LINE_START;
+        constraints.anchor = GridBagConstraints.NORTHWEST;
     }
 
     final void addToGridBagLayout(Component componentToAdd, Component additionalComponentToAdd) {
-        constraints.gridx = (constraints.gridx + 1) % NUMBER_OF_COLUMNS;
-        if (constraints.gridx == 0) {
-            constraints.gridy++;
-        }
         if (constraints.gridx % 2 == 0) {
             constraints.weightx = LABEL_WEIGHT;
             constraints.gridwidth = LABEL_WIDTH;
@@ -52,10 +48,14 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
             add(componentToAdd, constraints);
             constraints.gridy++;
             add(additionalComponentToAdd, constraints);
-            constraints.gridheight = 2;
             constraints.gridy--;
+            constraints.gridheight = 2;
         } else {
             add(componentToAdd, constraints);
+        }
+        constraints.gridx = (constraints.gridx + LABEL_WIDTH) % NUMBER_OF_COLUMNS;
+        if (constraints.gridx == 0) {
+            constraints.gridy += constraints.gridheight;
         }
     }
 

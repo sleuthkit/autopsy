@@ -20,7 +20,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * @author wschaefer
  */
-final class DataSourceFilterPanel extends SearchFilterInterface {
+final class DataSourceFilterPanel extends AbstractDiscoveryFiltersPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(DataSourceFilterPanel.class.getName());
