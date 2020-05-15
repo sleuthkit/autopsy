@@ -32,6 +32,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import static org.openide.util.NbBundle.Messages;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
@@ -305,8 +306,11 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             contentRendered = contentRendered || crRendered;
         }
 
-        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() == bba.getArtifactTypeID()
-                || BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == bba.getArtifactTypeID()) {
+        // if artifact is a hashset hit or interesting file and has a non-blank comment
+        if ((ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() == bba.getArtifactTypeID()
+                || ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == bba.getArtifactTypeID())
+                && (hasTskComment(bba))) {
+
             boolean filesetRendered = appendEntries(parent, ARTIFACT_COMMENT_CONFIG, Arrays.asList(bba), false);
             contentRendered = contentRendered || filesetRendered;
         }
@@ -344,11 +348,11 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             }
 
             boolean hashsetRendered = appendEntries(parent, HASHSET_CONFIG,
-                    getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT),
+                    getFileSetHits(sourceFile, ARTIFACT_TYPE.TSK_HASHSET_HIT),
                     isSubheader);
 
             boolean interestingFileRendered = appendEntries(parent, INTERESTING_FILE_CONFIG,
-                    getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT),
+                    getFileSetHits(sourceFile, ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT),
                     isSubheader);
 
             contentRendered = contentRendered || hashsetRendered || interestingFileRendered;
@@ -396,23 +400,36 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     /**
      * Retrieves the blackboard artifacts for a source file matching a certain
-     * type.
+     * type that have a non-blank TSK_COMMENT.
      *
      * @param sourceFile The source file for which to fetch artifacts.
      * @param type       The type of blackboard artifact to fetch.
      *
      * @return The artifacts found matching this type.
      */
-    private static List<BlackboardArtifact> getFileSetHits(AbstractFile sourceFile, BlackboardArtifact.ARTIFACT_TYPE type) {
+    private static List<BlackboardArtifact> getFileSetHits(AbstractFile sourceFile, ARTIFACT_TYPE type) {
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            return tskCase.getBlackboardArtifacts(type, sourceFile.getId());
+            return tskCase.getBlackboardArtifacts(type, sourceFile.getId()).stream()
+                    .filter((bba) -> hasTskComment(bba))
+                    .collect(Collectors.toList());
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Exception while getting file set hits from the case database.", ex); //NON-NLS
         }
         return new ArrayList<>();
+    }
+
+    /**
+     * Returns true if the artifact contains a non-blank TSK_COMMENT attribute.
+     *
+     * @param artifact The artifact to check.
+     *
+     * @return True if it has a non-blank TSK_COMMENT.
+     */
+    private static boolean hasTskComment(BlackboardArtifact artifact) {
+        return StringUtils.isNotBlank(tryGetAttribute(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT));
     }
 
     /**
@@ -489,7 +506,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         if (artifactTypes == null || artifactTypes.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         String md5 = sourceFile.getMd5Hash();
 
         // get key lookups for a file attribute types and the md5 hash
@@ -519,7 +536,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                         .getArtifactInstancesByTypeValue(typeVal.getKey(), typeVal.getValue())
                         .stream()
                         // for each one found, if it has a comment, return
-                        .filter((cai) -> StringUtils.isNotEmpty(cai.getComment()))
+                        .filter((cai) -> StringUtils.isNotBlank(cai.getComment()))
                         .collect(Collectors.toList()));
             }
 
