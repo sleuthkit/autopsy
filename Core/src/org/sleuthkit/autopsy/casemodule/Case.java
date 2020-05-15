@@ -2060,6 +2060,7 @@ public class Case {
 
         private final SleuthkitCase tskCase;
         private final String caseName;
+        private final long MAX_IMAGE_THRESHOLD = 100;
         private final ProgressIndicator progressIndicator;
 
         /**
@@ -2117,28 +2118,18 @@ public class Case {
          *                                      event that the operation is
          *                                      cancelled prior to completion.
          */
-        private void openFileSystems(List<Image> images) throws InterruptedException {
+        private void openFileSystems(List<Image> images) throws TskCoreException, InterruptedException {
             byte[] tempBuff = new byte[512];
-
+            
             for (Image image : images) {
                 String imageStr = image.getName();
 
                 progressIndicator.progress(Bundle.Case_openFileSystems_openingImage(imageStr));
 
-                Collection<FileSystem> fileSystems = this.tskCase.getFileSystems(image);
+                Collection<FileSystem> fileSystems = this.tskCase.getImageFileSystems(image);
                 checkIfCancelled();
                 for (FileSystem fileSystem : fileSystems) {
-                    try {
-                        fileSystem.read(tempBuff, 0, 512);
-                    } catch (TskCoreException ex) {
-                        String fileSysStr = fileSystem.getName();
-
-                        logger.log(
-                                Level.WARNING,
-                                String.format("Could not open filesystem: %s in image: %s for case: %s.", fileSysStr, imageStr, caseName),
-                                ex);
-                    }
-
+                    fileSystem.read(tempBuff, 0, 512);
                     checkIfCancelled();
                 }
 
@@ -2153,6 +2144,14 @@ public class Case {
                 if (images == null) {
                     return;
                 }
+                
+                if (images.size() > MAX_IMAGE_THRESHOLD) {
+                    // If we have a large number of images, don't try to preload anything
+                    logger.log(
+                        Level.INFO,
+                        String.format("Skipping background load of file systems due to large number of images in case (%d)", images.size()));
+                    return;
+                }
 
                 checkIfCancelled();
                 openFileSystems(images);
@@ -2160,6 +2159,9 @@ public class Case {
                 logger.log(
                         Level.INFO,
                         String.format("Background operation opening all file systems in %s has been cancelled.", caseName));
+            } catch (Exception ex) {
+                // Exception firewall
+                logger.log(Level.WARNING, "Error while opening file systems in background", ex);
             }
         }
 
