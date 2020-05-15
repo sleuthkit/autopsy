@@ -554,7 +554,6 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * will be formatted as a table in the format specified in the
      * SectionConfig.
      *
-     * @param <T>          The item type.
      * @param parent       The parent element for which the entries will be
      *                     attached.
      * @param config       The display configuration for this entry type (i.e.
@@ -579,7 +578,6 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     /**
      * Appends a table where items are displayed in rows of key-value pairs.
      *
-     * @param <T>
      * @param parent     The parent to append the table.
      * @param items      The items to process into a series of tables.
      * @param rowHeaders The keys and the means to process items in order to get
