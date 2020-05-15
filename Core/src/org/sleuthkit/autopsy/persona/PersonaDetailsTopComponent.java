@@ -18,33 +18,26 @@
  */
 package org.sleuthkit.autopsy.persona;
 
+import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
-import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 
 /**
- * Top component for the Personas tool
- *
+ * Top component for persona details
  */
 @TopComponent.Description(preferredID = "PersonasTopComponent", persistenceType = TopComponent.PERSISTENCE_NEVER)
-@TopComponent.Registration(mode = "personas", openAtStartup = false)
-@RetainLocation("personas")
+@TopComponent.Registration(mode = "personadetails", openAtStartup = false)
+@RetainLocation("personadetails")
 @SuppressWarnings("PMD.SingularField")
-public final class PersonasTopComponent extends TopComponent {
+public final class PersonaDetailsTopComponent extends TopComponent {
 
     @Messages({
-        "PTopComponent_Name=Personas"
+        "PDTopComponent_Name=Persona Details"
     })
-    public PersonasTopComponent() {
+    public PersonaDetailsTopComponent() {
         initComponents();
-        setName(Bundle.PTopComponent_Name());
-    }
-
-    @Override
-    public void componentOpened() {
-        super.componentOpened();
-        WindowManager.getDefault().setTopComponentFloating(this, true);
+        setName(Bundle.PDTopComponent_Name());
     }
 
     /**
@@ -55,15 +48,6 @@ public final class PersonasTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        searchButtonGroup = new javax.swing.ButtonGroup();
-        splitPane = new javax.swing.JSplitPane();
-        searchPanel = new javax.swing.JPanel();
-        searchField = new javax.swing.JTextField();
-        searchNameRadio = new javax.swing.JRadioButton();
-        searchAccountRadio = new javax.swing.JRadioButton();
-        filterResultsPane = new javax.swing.JScrollPane();
-        filterResultsTable = new javax.swing.JTable();
-        searchBtn = new javax.swing.JButton();
         detailsPanel = new javax.swing.JPanel();
         resultNameLbl = new javax.swing.JLabel();
         resultNameField = new javax.swing.JTextField();
@@ -77,102 +61,19 @@ public final class PersonasTopComponent extends TopComponent {
         aliasesListPane = new javax.swing.JScrollPane();
         aliasesList = new javax.swing.JList<>();
 
-        setMinimumSize(new java.awt.Dimension(400, 400));
-
-        searchField.setText(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchField.text")); // NOI18N
-
-        searchButtonGroup.add(searchNameRadio);
-        searchNameRadio.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(searchNameRadio, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchNameRadio.text")); // NOI18N
-        searchNameRadio.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                searchNameRadioActionPerformed(evt);
-            }
-        });
-
-        searchButtonGroup.add(searchAccountRadio);
-        org.openide.awt.Mnemonics.setLocalizedText(searchAccountRadio, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchAccountRadio.text")); // NOI18N
-
-        filterResultsTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {"0", "Johnathn Dough"},
-                {"3", "Joe Schmoe"},
-                {"2", "Michael Schmoe"},
-                {"1", "Ethan Schmoe"}
-            },
-            new String [] {
-                "ID", "Name"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-        });
-        filterResultsPane.setViewportView(filterResultsTable);
-        if (filterResultsTable.getColumnModel().getColumnCount() > 0) {
-            filterResultsTable.getColumnModel().getColumn(0).setMaxWidth(25);
-            filterResultsTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.filterResultsTable.columnModel.title0")); // NOI18N
-            filterResultsTable.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.filterResultsTable.columnModel.title1")); // NOI18N
-        }
-
-        org.openide.awt.Mnemonics.setLocalizedText(searchBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchBtn.text")); // NOI18N
-
-        javax.swing.GroupLayout searchPanelLayout = new javax.swing.GroupLayout(searchPanel);
-        searchPanel.setLayout(searchPanelLayout);
-        searchPanelLayout.setHorizontalGroup(
-            searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(searchPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(filterResultsPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addGroup(searchPanelLayout.createSequentialGroup()
-                        .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(searchField)
-                            .addGroup(searchPanelLayout.createSequentialGroup()
-                                .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(searchPanelLayout.createSequentialGroup()
-                                        .addComponent(searchNameRadio)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(searchAccountRadio))
-                                    .addComponent(searchBtn))
-                                .addGap(0, 25, Short.MAX_VALUE)))
-                        .addContainerGap())))
-        );
-        searchPanelLayout.setVerticalGroup(
-            searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(searchPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(searchField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(searchNameRadio)
-                    .addComponent(searchAccountRadio))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(searchBtn)
-                .addGap(18, 18, 18)
-                .addComponent(filterResultsPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
-        splitPane.setLeftComponent(searchPanel);
-
-        org.openide.awt.Mnemonics.setLocalizedText(resultNameLbl, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultNameLbl.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(resultNameLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsTopComponent.class, "PersonaDetailsTopComponent.resultNameLbl.text")); // NOI18N
 
         resultNameField.setEditable(false);
-        resultNameField.setText(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultNameField.text")); // NOI18N
+        resultNameField.setText(org.openide.util.NbBundle.getMessage(PersonaDetailsTopComponent.class, "PersonaDetailsTopComponent.resultNameField.text")); // NOI18N
         resultNameField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 resultNameFieldActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(resultAliasesLbl, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultAliasesLbl.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(resultAliasesLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsTopComponent.class, "PersonaDetailsTopComponent.resultAliasesLbl.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(resultAccountsLbl, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultAccountsLbl.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(resultAccountsLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsTopComponent.class, "PersonaDetailsTopComponent.resultAccountsLbl.text")); // NOI18N
 
         accountsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -202,7 +103,7 @@ public final class PersonasTopComponent extends TopComponent {
         });
         accountsTablePane.setViewportView(accountsTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(resultCasesLbl, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultCasesLbl.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(resultCasesLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsTopComponent.class, "PersonaDetailsTopComponent.resultCasesLbl.text")); // NOI18N
 
         casesList.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Investigation 13", "Scene 5" };
@@ -259,26 +160,30 @@ public final class PersonasTopComponent extends TopComponent {
                 .addContainerGap())
         );
 
-        splitPane.setRightComponent(detailsPanel);
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(splitPane)
+            .addGap(0, 505, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(0, 0, Short.MAX_VALUE)
+                    .addComponent(detailsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(0, 0, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(splitPane)
+            .addGap(0, 555, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(0, 0, Short.MAX_VALUE)
+                    .addComponent(detailsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(0, 0, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void searchNameRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchNameRadioActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_searchNameRadioActionPerformed
-
     private void resultNameFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resultNameFieldActionPerformed
-        // TODO add your handling code here:
+
     }//GEN-LAST:event_resultNameFieldActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -289,20 +194,16 @@ public final class PersonasTopComponent extends TopComponent {
     private javax.swing.JList<String> casesList;
     private javax.swing.JScrollPane casesListPane;
     private javax.swing.JPanel detailsPanel;
-    private javax.swing.JScrollPane filterResultsPane;
-    private javax.swing.JTable filterResultsTable;
     private javax.swing.JLabel resultAccountsLbl;
     private javax.swing.JLabel resultAliasesLbl;
     private javax.swing.JLabel resultCasesLbl;
     private javax.swing.JTextField resultNameField;
     private javax.swing.JLabel resultNameLbl;
-    private javax.swing.JRadioButton searchAccountRadio;
-    private javax.swing.JButton searchBtn;
-    private javax.swing.ButtonGroup searchButtonGroup;
-    private javax.swing.JTextField searchField;
-    private javax.swing.JRadioButton searchNameRadio;
-    private javax.swing.JPanel searchPanel;
-    private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
-
+    
+    @Override
+    public void componentOpened() {
+        super.componentOpened();
+        WindowManager.getDefault().setTopComponentFloating(this, true);
+    }
 }
