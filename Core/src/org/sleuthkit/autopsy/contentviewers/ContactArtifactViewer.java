@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +41,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     private static final long serialVersionUID = 1L;
 
     /**
-     * Creates new form ContactArtifactViewer
+     * Creates new form for ContactArtifactViewer
      */
     public ContactArtifactViewer() {
         initComponents();
@@ -201,22 +201,12 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             logger.log(Level.SEVERE, String.format("Error getting attributes for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
         }
 
-        // RAMAN TBD: test with multiple phones and emails
-        phoneNumList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE, "RAMAN", "+1 222 333 4444"));
-        phoneNumList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE, "RAMAN", "123456789012"));
-
-        emailList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_HOME, "RAMAN", "home@gmail.com"));
-        emailList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_OFFICE, "RAMAN", "workemail@provider.com"));
-
-        otherList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID, "RAMAN", "8:live:atpsy.sbarney"));
-
+        // update name section
         updateNamePanel(nameList);
-
+        
+        // update contact attributes sections
         updateSection(phoneNumList, this.phonesLabel, this.phoneNumbersPanel);
-
         updateSection(emailList, this.emailsLabel, this.emailsPanel);
-
-        //updateOtherAttributesPanel(otherList);
         updateSection(otherList, this.othersLabel, this.otherAttrsPanel);
 
         // repaint
@@ -230,9 +220,9 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     }
 
     /**
-     * Check if the given artifact is supported by this viewer.
-     * 
+     * Checks if the given artifact is supported by this viewer.
      * This viewer supports TSK_CONTACT artifacts.
+     * 
      * @param artifact artifact to check.
      * @return True if the artifact is supported, false otherwise.
      */
