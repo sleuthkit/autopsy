@@ -62,7 +62,7 @@ public final class PersonaSearchTopComponent extends TopComponent {
     /**
      * Table model for the persona search results
      */
-    class PersonaFilterTableModel extends DefaultTableModel {
+    final class PersonaFilterTableModel extends DefaultTableModel {
         private static final long serialVersionUID = 1L;
 
         PersonaFilterTableModel(Object[][] rows, String[] colNames) {
@@ -75,7 +75,7 @@ public final class PersonaSearchTopComponent extends TopComponent {
         }
     }
 
-    void updateResultsTable(Collection<Persona> results) {
+    private void updateResultsTable(Collection<Persona> results) {
         Object[][] rows = new Object[results.size()][2];
         int i = 0;
         for (Persona result : results) {
@@ -95,7 +95,7 @@ public final class PersonaSearchTopComponent extends TopComponent {
         filterResultsTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
     }
 
-    void executeSearch() {
+    private void executeSearch() {
         Collection<Persona> results = Collections.EMPTY_LIST;
         try {
             results = Persona.getPersonaByName(searchField.getText());
