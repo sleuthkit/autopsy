@@ -218,8 +218,7 @@ final class CaseEventListener implements PropertyChangeListener {
         private void handleTagDeleted(ContentTagDeletedEvent evt) {
             // ensure tag deleted event has a valid content id
             if (evt.getDeletedTagInfo() == null) {
-                LOGGER.log(Level.SEVERE,
-                        String.format("ContentTagDeletedEvent %s did not have valid content to provide a content id.", evt));
+                LOGGER.log(Level.SEVERE, "ContentTagDeletedEvent did not have valid content to provide a content id.");
                 return;
             }
 
@@ -235,15 +234,15 @@ final class CaseEventListener implements PropertyChangeListener {
                 // then handle the event 
                 handleTagChange(content);
             } catch (NoCurrentCaseException | TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "Error updating non-file object.");
+                Long contentID = (evt != null && evt.getDeletedTagInfo() != null) ? evt.getDeletedTagInfo().getContentID() : null;
+                LOGGER.log(Level.WARNING, "Error updating non-file object: " + contentID, ex);
             }
         }
 
         private void handleTagAdded(ContentTagAddedEvent evt) {
             // ensure tag added event has a valid content id
             if (evt.getAddedTag() == null || evt.getAddedTag().getContent() == null) {
-                LOGGER.log(Level.SEVERE,
-                        String.format("ContentTagAddedEvent %s did not have valid content to provide a content id.", evt));
+                LOGGER.log(Level.SEVERE, "ContentTagAddedEvent did not have valid content to provide a content id.");
                 return;
             }
 
@@ -263,7 +262,8 @@ final class CaseEventListener implements PropertyChangeListener {
             try {
                 af = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(content.getId());
             } catch (NoCurrentCaseException | TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "Error updating non-file object.");
+                Long contentID = (content != null) ? content.getId() : null;
+                LOGGER.log(Level.WARNING, "Error updating non-file object: " + contentID, ex);
             }
 
             if (af == null) {
@@ -340,8 +340,7 @@ final class CaseEventListener implements PropertyChangeListener {
         private void handleTagDeleted(BlackBoardArtifactTagDeletedEvent evt) {
             // ensure tag deleted event has a valid content id
             if (evt.getDeletedTagInfo() == null) {
-                LOGGER.log(Level.SEVERE,
-                        String.format("ContentTagDeletedEvent %s did not have valid content to provide a content id.", evt));
+                LOGGER.log(Level.SEVERE, "BlackBoardArtifactTagDeletedEvent did not have valid content to provide a content id.");
                 return;
             }
 
@@ -367,15 +366,14 @@ final class CaseEventListener implements PropertyChangeListener {
                 // then handle the event 
                 handleTagChange(content, bbArtifact);
             } catch (NoCurrentCaseException | TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "Error updating non-file object.");
+                LOGGER.log(Level.WARNING, "Error updating non-file object.", ex);
             }
         }
 
         private void handleTagAdded(BlackBoardArtifactTagAddedEvent evt) {
             // ensure tag added event has a valid content id
             if (evt.getAddedTag() == null || evt.getAddedTag().getContent() == null || evt.getAddedTag().getArtifact() == null) {
-                LOGGER.log(Level.SEVERE,
-                        String.format("ContentTagAddedEvent %s did not have valid content to provide a content id.", evt));
+                LOGGER.log(Level.SEVERE, "BlackBoardArtifactTagAddedEvent did not have valid content to provide a content id.");
                 return;
             }
 
