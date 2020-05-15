@@ -46,8 +46,10 @@
       <SubComponents>
         <Component class="javax.swing.JLabel" name="contactNameLabel">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Dialog" size="18" style="3"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font bold="true" component="contactNameLabel" italic="true" property="font" relativeSize="true" size="6"/>
+              </FontInfo>
             </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/contentviewers/Bundle.properties" key="ContactArtifactViewer.contactNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -58,8 +60,10 @@
     </Container>
     <Component class="javax.swing.JLabel" name="phonesLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="14" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="phonesLabel" property="font" relativeSize="true" size="2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/contentviewers/Bundle.properties" key="ContactArtifactViewer.phonesLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -82,8 +86,10 @@
     </Container>
     <Component class="javax.swing.JLabel" name="emailsLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="14" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="emailsLabel" property="font" relativeSize="true" size="2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/contentviewers/Bundle.properties" key="ContactArtifactViewer.emailsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -106,8 +112,10 @@
     </Container>
     <Component class="javax.swing.JLabel" name="othersLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="14" style="1"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="othersLabel" property="font" relativeSize="true" size="2"/>
+          </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/contentviewers/Bundle.properties" key="ContactArtifactViewer.othersLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>

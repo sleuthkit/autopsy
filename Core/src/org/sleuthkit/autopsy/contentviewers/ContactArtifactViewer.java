@@ -70,7 +70,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
         setLayout(new java.awt.GridBagLayout());
 
-        contactNameLabel.setFont(new java.awt.Font("Dialog", 3, 18)); // NOI18N
+        contactNameLabel.setFont(contactNameLabel.getFont().deriveFont((contactNameLabel.getFont().getStyle() | java.awt.Font.ITALIC) | java.awt.Font.BOLD, contactNameLabel.getFont().getSize()+6));
         org.openide.awt.Mnemonics.setLocalizedText(contactNameLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.contactNameLabel.text")); // NOI18N
 
         javax.swing.GroupLayout namePanelLayout = new javax.swing.GroupLayout(namePanel);
@@ -97,7 +97,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         add(namePanel, gridBagConstraints);
 
-        phonesLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        phonesLabel.setFont(phonesLabel.getFont().deriveFont(phonesLabel.getFont().getStyle() | java.awt.Font.BOLD, phonesLabel.getFont().getSize()+2));
         org.openide.awt.Mnemonics.setLocalizedText(phonesLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.phonesLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -117,7 +117,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         gridBagConstraints.insets = new java.awt.Insets(6, 19, 0, 0);
         add(phoneNumbersPanel, gridBagConstraints);
 
-        emailsLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        emailsLabel.setFont(emailsLabel.getFont().deriveFont(emailsLabel.getFont().getStyle() | java.awt.Font.BOLD, emailsLabel.getFont().getSize()+2));
         org.openide.awt.Mnemonics.setLocalizedText(emailsLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.emailsLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -137,7 +137,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         gridBagConstraints.insets = new java.awt.Insets(6, 19, 0, 0);
         add(emailsPanel, gridBagConstraints);
 
-        othersLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        othersLabel.setFont(othersLabel.getFont().deriveFont(othersLabel.getFont().getStyle() | java.awt.Font.BOLD, othersLabel.getFont().getSize()+2));
         org.openide.awt.Mnemonics.setLocalizedText(othersLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.othersLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -290,9 +290,8 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             String attrLabel = bba.getAttributeType().getDisplayName();
             attrTypeLabel.setText(attrLabel);
 
-            // make type label bold
-            //Font newLabelFont=new Font(attrTypeLabel.getFont().getName(),Font.BOLD,attrTypeLabel.getFont().getSize());
-            //attrTypeLabel.setFont(newLabelFont);
+            // make type label bold - uncomment if needed.
+            //attrTypeLabel.setFont(attrTypeLabel.getFont().deriveFont(Font.BOLD, attrTypeLabel.getFont().getSize() ));
 
             gridBagLayout.setConstraints(attrTypeLabel, constraints);
             sectionPanel.add(attrTypeLabel);
