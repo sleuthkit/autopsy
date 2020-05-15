@@ -61,7 +61,7 @@
                   <CheckBox fx:id="seenByOtherExaminersCheckBox" mnemonicParsing="false" text="Don't show groups seen by other examiners" HBox.hgrow="NEVER" />
                   <AnchorPane fx:id="nextButtonPane" minWidth="50.0" HBox.hgrow="NEVER">
                      <children>
-                              <Button fx:id="nextButton" contentDisplay="RIGHT" layoutX="44.0" layoutY="-1.0" mnemonicParsing="false" text="All Groups Gave Been Seen" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                              <Button fx:id="nextButton" contentDisplay="RIGHT" layoutX="44.0" layoutY="-1.0" mnemonicParsing="false" text="All Groups Have Been Seen" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                   <graphic>
                                       <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                                           <image>
