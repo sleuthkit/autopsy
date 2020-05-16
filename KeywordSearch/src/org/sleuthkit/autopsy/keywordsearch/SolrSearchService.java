@@ -27,7 +27,6 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
@@ -35,8 +34,7 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.CloudSolrClient;
-import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrClient;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -44,11 +42,9 @@ import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import static org.sleuthkit.autopsy.keywordsearch.Server.getMultiUserServerProperties;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
@@ -158,26 +154,16 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      */
     @Override
     public void tryConnect(String host, int port) throws KeywordSearchServiceException {
-        // ELTODO HttpSolrClient solrServer = null;
-        CloudSolrClient solrServer = null;
+        ConcurrentUpdateSolrClient solrServer = null;
         if (host == null || host.isEmpty()) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingHostname")); //NON-NLS
         }
         try {
-            // ELTODO solrServer = new HttpSolrClient.Builder("http://" + host + ":" + Integer.toString(port) + "/solr").build(); //NON-NLS
-            List<String> solrServerList = UserPreferences.getAllIndexingServers();
-            List<String> solrUrls = new ArrayList<>();
-            for (String server : solrServerList) {
-                solrUrls.add("http://" + server + "/solr");
-            }
-            if (solrUrls.isEmpty()) {
-                solrUrls.add("http://" + host + ":" + port + "/solr");
-            }
-            // ELTODO UNCOMMENT solrServer = new CloudSolrClient.Builder(solrUrls).build();
-            // ELTODO UNCOMMENT solrServer.connect(10, TimeUnit.SECONDS);
-        /* ELTODO } catch (SolrServerException ex) {
+            solrServer = new ConcurrentUpdateSolrClient.Builder("http://" + host + ":" + Integer.toString(port) + "/solr").build(); //NON-NLS            
+            KeywordSearch.getServer().connectToSolrServer(solrServer);
+        } catch (SolrServerException ex) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort")); //NON-NLS*/
-        } catch (/*ELTODO IOException*/ Exception ex) {
+        } catch (IOException ex) {
             String result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
             String message = ex.getCause().getMessage().toLowerCase();
             if (message.startsWith(SERVER_REFUSED_CONNECTION)) {
@@ -196,17 +182,13 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Hostname"); //NON-NLS
             }
             throw new KeywordSearchServiceException(result);
-        /* ELTODO} catch (NumberFormatException ex) {
+        } catch (NumberFormatException ex) {
             throw new KeywordSearchServiceException(Bundle.SolrConnectionCheck_Port());
         } catch (IllegalArgumentException ex) {
-            throw new KeywordSearchServiceException(ex.getMessage());*/
+            throw new KeywordSearchServiceException(ex.getMessage());
         } finally {
             if (null != solrServer) {
-                try {
-                    solrServer.close();
-                } catch (IOException ex) {
-                    throw new KeywordSearchServiceException(ex.getMessage());
-                }
+                solrServer.close();
             }
         }
     }
