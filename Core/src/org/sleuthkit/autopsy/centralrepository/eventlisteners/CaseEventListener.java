@@ -234,8 +234,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 // then handle the event 
                 handleTagChange(content);
             } catch (NoCurrentCaseException | TskCoreException ex) {
-                Long contentID = (evt != null && evt.getDeletedTagInfo() != null) ? evt.getDeletedTagInfo().getContentID() : null;
-                LOGGER.log(Level.WARNING, "Error updating non-file object: " + contentID, ex);
+                LOGGER.log(Level.WARNING, "Error updating non-file object: " + evt.getDeletedTagInfo().getContentID(), ex);
             }
         }
 
