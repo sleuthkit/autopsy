@@ -12,6 +12,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /**
  *
@@ -39,15 +41,27 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
         constraints.anchor = GridBagConstraints.NORTHWEST;
     }
 
-    void addFilter(AbstractDiscoveryFiltersPanel filterPanel) {
+    void addFilter(AbstractDiscoveryFiltersPanel filterPanel, int[] indicesSelected) {
+        filterPanel.configurePanel(true, indicesSelected);
+        filterPanel.addListeners(this, new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent evt) {
+                if (!evt.getValueIsAdjusting()) {
+                    validateFields();
+                }
+            }
+        });
         filters.add(filterPanel);
+        addToGridBagLayout(filterPanel.getCheckbox(), null);
+        addToGridBagLayout(filterPanel, null);
+        updateLayout();
     }
 
     void clearFilters() {
         filters.clear();
     }
 
-    final void addToGridBagLayout(Component componentToAdd, Component additionalComponentToAdd) {
+    private void addToGridBagLayout(Component componentToAdd, Component additionalComponentToAdd) {
         if (constraints.gridx % 2 == 0) {
             constraints.weightx = LABEL_WEIGHT;
             constraints.gridwidth = LABEL_WIDTH;
@@ -71,7 +85,7 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
         }
     }
 
-    final void updateLayout() {
+    private void updateLayout() {
         setLayout(layout);
     }
 
@@ -81,18 +95,18 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
      *
      * @param error
      */
-    void setInvalid(String error) {
+    private void setInvalid(String error) {
         firePropertyChange("FilterError", error, error);
     }
 
     /**
      * The settings are valid so enable the Search button
      */
-    void setValid() {
+    private void setValid() {
         firePropertyChange("FilterError", null, null);
     }
 
-    void validateFields() {
+    private void validateFields() {
         String errorString;
         for (AbstractDiscoveryFiltersPanel filterPanel : filters) {
             errorString = filterPanel.checkForError();
@@ -130,4 +144,5 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
         }
         return filtersToUse;
     }
+
 }

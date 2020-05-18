@@ -33,11 +33,14 @@ final class DiscoveryDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(DiscoveryDialog.class.getName());
-    private final FileSearchPanel filterPanel = new FileSearchPanel();
+    private final ImageFilterPanel imageFilterPanel = new ImageFilterPanel();
+    private final VideoFilterPanel videoFilterPanel = new VideoFilterPanel();
+    private final DocumentFilterPanel documentFilterPanel = new DocumentFilterPanel();
     private static final Color SELECTED_COLOR = new Color(216, 230, 242);
     private static final Color UNSELECTED_COLOR = new Color(240, 240, 240);
     private SearchWorker searchWorker = null;
     private static DiscoveryDialog discoveryDialog;
+    private FileSearchData.FileType fileType = FileSearchData.FileType.IMAGE;
 
     private DiscoveryDialog() {
         this(null, true);
@@ -56,7 +59,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private DiscoveryDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        filterPanel.addPropertyChangeListener(new PropertyChangeListener() {
+        PropertyChangeListener listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getNewValue() instanceof String) {
@@ -69,16 +72,18 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 }
 
             }
-        });
+        };
+        imageFilterPanel.addPropertyChangeListener(listener);
+        videoFilterPanel.addPropertyChangeListener(listener);
+        documentFilterPanel.addPropertyChangeListener(listener);
         updateSearchSettings();
-        add(filterPanel, CENTER);
+
     }
 
     /**
      * Update the search settings to a default state.
      */
     private void updateSearchSettings() {
-        filterPanel.resetPanel();
         imagesButton.setSelected(true);
         imagesButton.setEnabled(false);
         imagesButton.setBackground(SELECTED_COLOR);
@@ -89,7 +94,11 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setSelected(false);
         documentsButton.setEnabled(true);
         documentsButton.setBackground(UNSELECTED_COLOR);
-        filterPanel.setSelectedType(FileSearchData.FileType.IMAGE);
+        fileType = FileSearchData.FileType.IMAGE;
+        remove(imageFilterPanel);
+        remove(videoFilterPanel);
+        remove(documentFilterPanel);
+        add(imageFilterPanel, CENTER);
     }
 
     /**
@@ -226,6 +235,9 @@ final class DiscoveryDialog extends javax.swing.JDialog {
 
     private void imagesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imagesButtonActionPerformed
 //        resetTopComponent();
+        remove(videoFilterPanel);
+        remove(documentFilterPanel);
+        add(imageFilterPanel, CENTER);
         imagesButton.setSelected(true);
         imagesButton.setEnabled(false);
         imagesButton.setBackground(SELECTED_COLOR);
@@ -236,10 +248,13 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setSelected(false);
         documentsButton.setEnabled(true);
         documentsButton.setBackground(UNSELECTED_COLOR);
-        filterPanel.setSelectedType(FileSearchData.FileType.IMAGE);
+        fileType = FileSearchData.FileType.IMAGE;
     }//GEN-LAST:event_imagesButtonActionPerformed
 
     private void videosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_videosButtonActionPerformed
+        remove(imageFilterPanel);
+        remove(documentFilterPanel);
+        add(videoFilterPanel, CENTER);
         imagesButton.setSelected(false);
         imagesButton.setEnabled(true);
         imagesButton.setBackground(UNSELECTED_COLOR);
@@ -250,10 +265,13 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setSelected(false);
         documentsButton.setEnabled(true);
         documentsButton.setBackground(UNSELECTED_COLOR);
-        filterPanel.setSelectedType(FileSearchData.FileType.VIDEO);
+        fileType = FileSearchData.FileType.VIDEO;
     }//GEN-LAST:event_videosButtonActionPerformed
 
     private void documentsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsButtonActionPerformed
+        remove(imageFilterPanel);
+        remove(documentFilterPanel);
+        add(documentFilterPanel, CENTER);
         documentsButton.setSelected(true);
         documentsButton.setEnabled(false);
         documentsButton.setBackground(SELECTED_COLOR);
@@ -264,7 +282,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         imagesButton.setSelected(false);
         imagesButton.setEnabled(true);
         imagesButton.setBackground(UNSELECTED_COLOR);
-        filterPanel.setSelectedType(FileSearchData.FileType.DOCUMENTS);
+        fileType = FileSearchData.FileType.DOCUMENTS;
     }//GEN-LAST:event_documentsButtonActionPerformed
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
@@ -279,15 +297,22 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             tc.open();
         }
         tc.resetTopComponent();
-        List<FileSearchFiltering.FileFilter> filters = filterPanel.getFilters();
-        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.SearchStartedEvent(filterPanel.getSelectedType()));
+        List<FileSearchFiltering.FileFilter> filters;
+        if (videosButton.isSelected()) {
+            filters = videoFilterPanel.getFilters();
+        } else if (documentsButton.isSelected()) {
+            filters = documentFilterPanel.getFilters();
+        } else {
+            filters = imageFilterPanel.getFilters();
+        }
+        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.SearchStartedEvent(fileType));
 
         // Get the grouping attribute and group sorting method
-        FileSearch.AttributeType groupingAttr = filterPanel.getGroupingAttribute();
-        FileGroup.GroupSortingAlgorithm groupSortAlgorithm = filterPanel.getGroupSortingMethod();
+        FileSearch.AttributeType groupingAttr = FileSearch.GroupingAttributeType.FILE_SIZE.getAttributeType();
+        FileGroup.GroupSortingAlgorithm groupSortAlgorithm = FileGroup.GroupSortingAlgorithm.BY_GROUP_NAME;
 
         // Get the file sorting method
-        FileSorter.SortingMethod fileSort = filterPanel.getFileSortingMethod();
+        FileSorter.SortingMethod fileSort = FileSorter.SortingMethod.BY_FILE_NAME;
         CentralRepository centralRepoDb = null;
         if (CentralRepository.isEnabled()) {
             try {
@@ -310,7 +335,9 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     void cancelSearch() {
-        filterPanel.cancelSearch();
+        if (searchWorker != null) {
+            searchWorker.cancel(true);
+        }
     }
 
     /**

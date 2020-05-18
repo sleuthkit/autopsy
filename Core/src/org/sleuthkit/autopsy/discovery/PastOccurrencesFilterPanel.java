@@ -76,7 +76,17 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
 
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        pastOccurrencesCheckbox.setSelected(selected);
+        if (pastOccurrencesCheckbox.isEnabled() && pastOccurrencesCheckbox.isSelected()) {
+            crFrequencyScrollPane.setEnabled(true);
+            crFrequencyList.setEnabled(true);
+            if (indicesSelected != null) {
+                crFrequencyList.setSelectedIndices(indicesSelected);
+            }
+        } else {
+            crFrequencyScrollPane.setEnabled(false);
+            crFrequencyList.setEnabled(false);
+        }
     }
 
     @Override

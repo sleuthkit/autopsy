@@ -183,7 +183,6 @@ ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
 # {0} - otherInstanceCount
 ImageThumbnailPanel.nameLabel.more.text=\ and {0} more
 OpenDiscoveryAction.resultsIncomplete.text=Results may be incomplete
-PastOccurrencesFilterPanel.crFrequencyCheckbox.text=Past Occurrences:
 ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
 ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
 ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
