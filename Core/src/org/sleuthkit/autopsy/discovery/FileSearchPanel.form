@@ -675,7 +675,7 @@
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="1" attributes="0">
-                          <EmptySpace pref="310" max="32767" attributes="0"/>
+                          <EmptySpace pref="299" max="32767" attributes="0"/>
                           <Component id="fullRadioButton" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
                       </Group>
@@ -721,7 +721,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <Component id="filler2" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="310" max="32767" attributes="0"/>
+                          <EmptySpace pref="299" max="32767" attributes="0"/>
                           <Component id="includeRadioButton" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -776,7 +776,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="1" attributes="0">
                           <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-                          <Component id="parentTextField" pref="347" max="32767" attributes="0"/>
+                          <Component id="parentTextField" pref="334" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>

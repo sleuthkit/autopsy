@@ -65,6 +65,8 @@ final class ImageFilterPanel extends AbstractFilterPanel {
         addToGridBagLayout(sizeFilter, null);
         updateLayout();
     }
+    
+    
 
     /**
      * This method is called from within the constructor to initialize the form.

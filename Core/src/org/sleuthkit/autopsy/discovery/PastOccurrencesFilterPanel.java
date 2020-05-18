@@ -5,11 +5,19 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
+import javax.swing.DefaultListModel;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import org.sleuthkit.autopsy.discovery.FileSearchData.Frequency;
+
 /**
  *
  * @author wschaefer
  */
-public class PastOccurrencesFilterPanel extends javax.swing.JPanel {
+public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Creates new form PastOccurrencesFilterPanel
@@ -27,19 +35,67 @@ public class PastOccurrencesFilterPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        crFrequencyCheckbox = new javax.swing.JCheckBox();
+        crFrequencyScrollPane = new javax.swing.JScrollPane();
+        crFrequencyList = new javax.swing.JList<>();
+
+        org.openide.awt.Mnemonics.setLocalizedText(crFrequencyCheckbox, org.openide.util.NbBundle.getMessage(PastOccurrencesFilterPanel.class, "PastOccurrencesFilterPanel.crFrequencyCheckbox.text")); // NOI18N
+        crFrequencyCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                crFrequencyCheckboxActionPerformed(evt);
+            }
+        });
+
+        crFrequencyList.setModel(new DefaultListModel<Frequency>());
+        crFrequencyList.setEnabled(false);
+        crFrequencyList.setVisibleRowCount(5);
+        crFrequencyScrollPane.setViewportView(crFrequencyList);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addComponent(crFrequencyScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 564, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addComponent(crFrequencyScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void crFrequencyCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_crFrequencyCheckboxActionPerformed
+        crFrequencyList.setEnabled(crFrequencyCheckbox.isSelected());
+    }//GEN-LAST:event_crFrequencyCheckboxActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox crFrequencyCheckbox;
+    private javax.swing.JList<Frequency> crFrequencyList;
+    private javax.swing.JScrollPane crFrequencyScrollPane;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    void configurePanel(boolean selected, int[] indicesSelected) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    JCheckBox getCheckbox() {
+        return crFrequencyCheckbox;
+    }
+
+    @Override
+    JLabel getAdditionalLabel() {
+        return null;
+    }
+
+    @Override
+    String checkForError() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    JList<?> getList() {
+        return crFrequencyList;
+    }
 }

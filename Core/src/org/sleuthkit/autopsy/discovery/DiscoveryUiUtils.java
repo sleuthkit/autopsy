@@ -20,10 +20,17 @@ package org.sleuthkit.autopsy.discovery;
 
 import java.awt.Component;
 import java.awt.Point;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Utility class for the various user interface elements used by Discovery.
@@ -95,6 +102,35 @@ final class DiscoveryUiUtils {
         return UNSUPPORTED_DOCUMENT_THUMBNAIL;
     }
 
+        /**
+     * Get the names of the sets which exist in the case database for the
+     * specified artifact and attribute types.
+     *
+     * @param artifactType     The artifact type to get the list of sets for.
+     * @param setNameAttribute The attribute type which contains the set names.
+     *
+     * @return A list of set names which exist in the case for the specified
+     *         artifact and attribute types.
+     *
+     * @throws TskCoreException
+     */
+    static List<String> getSetNames(BlackboardArtifact.ARTIFACT_TYPE artifactType, BlackboardAttribute.ATTRIBUTE_TYPE setNameAttribute) throws TskCoreException {
+        List<BlackboardArtifact> arts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifacts(artifactType);
+        List<String> setNames = new ArrayList<>();
+        for (BlackboardArtifact art : arts) {
+            for (BlackboardAttribute attr : art.getAttributes()) {
+                if (attr.getAttributeType().getTypeID() == setNameAttribute.getTypeID()) {
+                    String setName = attr.getValueString();
+                    if (!setNames.contains(setName)) {
+                        setNames.add(setName);
+                    }
+                }
+            }
+        }
+        Collections.sort(setNames);
+        return setNames;
+    }
+    
     /**
      * Helper method to see if point is on the icon.
      *

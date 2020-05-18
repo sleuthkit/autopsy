@@ -36,7 +36,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.discovery.FileGroup.GroupSortingAlgorithm;
 import org.sleuthkit.autopsy.discovery.FileSearch.GroupingAttributeType;
@@ -1583,7 +1582,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         fullRadioPanelLayout.setHorizontalGroup(
             fullRadioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, fullRadioPanelLayout.createSequentialGroup()
-                .addContainerGap(310, Short.MAX_VALUE)
+                .addContainerGap(299, Short.MAX_VALUE)
                 .addComponent(fullRadioButton)
                 .addGap(20, 20, 20))
         );
@@ -1613,7 +1612,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             includeRadioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(includeRadioPanelLayout.createSequentialGroup()
                 .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 310, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 299, Short.MAX_VALUE)
                 .addComponent(includeRadioButton))
         );
         includeRadioPanelLayout.setVerticalGroup(
@@ -1638,7 +1637,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             parentTextPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, parentTextPanelLayout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(parentTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE))
+                .addComponent(parentTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 334, Short.MAX_VALUE))
         );
         parentTextPanelLayout.setVerticalGroup(
             parentTextPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

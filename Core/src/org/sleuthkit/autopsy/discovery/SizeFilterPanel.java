@@ -5,13 +5,12 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.JList;
 import org.sleuthkit.autopsy.discovery.FileSearchData.FileSize;
 
 /**
@@ -21,6 +20,7 @@ import org.sleuthkit.autopsy.discovery.FileSearchData.FileSize;
 final class SizeFilterPanel extends AbstractDiscoveryFiltersPanel {
 
     private static final long serialVersionUID = 1L;
+
     /**
      * Creates new form SizeFilterPanel
      */
@@ -147,12 +147,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFiltersPanel {
     }
 
     @Override
-    void addListeners(ActionListener actionListener, ListSelectionListener listListener) {
-        if (sizeCheckbox != null) {
-            sizeCheckbox.addActionListener(actionListener);
-        }
-        if (sizeList != null) {
-            sizeList.addListSelectionListener(listListener);
-        }
+    JList<?> getList() {
+        return sizeList;
     }
 }

@@ -8,6 +8,7 @@ package org.sleuthkit.autopsy.discovery;
 import java.awt.event.ActionListener;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.event.ListSelectionListener;
 
 /**
@@ -31,6 +32,8 @@ abstract class AbstractDiscoveryFiltersPanel extends javax.swing.JPanel {
 
     abstract JCheckBox getCheckbox();
 
+    abstract JList<?> getList();
+
     abstract JLabel getAdditionalLabel();
 
     abstract String checkForError();
@@ -42,6 +45,13 @@ abstract class AbstractDiscoveryFiltersPanel extends javax.swing.JPanel {
      * @param listener
      * @param listListener
      */
-    abstract void addListeners(ActionListener listener, ListSelectionListener listListener);
+    void addListeners(ActionListener actionListener, ListSelectionListener listListener) {
+        if (getCheckbox() != null) {
+            getCheckbox().addActionListener(actionListener);
+        }
+        if (getList() != null) {
+            getList().addListSelectionListener(listListener);
+        }
+    }
 
 }

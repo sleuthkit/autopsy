@@ -5,12 +5,11 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
-import java.awt.event.ActionListener;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.JList;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.DataSource;
@@ -125,13 +124,8 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFiltersPanel {
     }
 
     @Override
-    void addListeners(ActionListener actionListener, ListSelectionListener listListener) {
-        if (dataSourceCheckbox != null) {
-            dataSourceCheckbox.addActionListener(actionListener);
-        }
-        if (dataSourceList != null) {
-            dataSourceList.addListSelectionListener(listListener);
-        }
+    JList<?> getList() {
+        return dataSourceList;
     }
 
     /**
