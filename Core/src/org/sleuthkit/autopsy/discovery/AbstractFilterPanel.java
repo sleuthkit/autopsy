@@ -8,7 +8,10 @@ package org.sleuthkit.autopsy.discovery;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -24,6 +27,7 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
     private static final long serialVersionUID = 1L;
     private final GridBagLayout layout = new GridBagLayout();
     private final GridBagConstraints constraints = new GridBagConstraints();
+    private final List<AbstractDiscoveryFiltersPanel> filters = new ArrayList<>();
 
     final void initConstraints() {
         constraints.fill = GridBagConstraints.HORIZONTAL;
@@ -33,6 +37,14 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
         constraints.gridwidth = LABEL_WIDTH;
         constraints.weightx = LABEL_WEIGHT;
         constraints.anchor = GridBagConstraints.NORTHWEST;
+    }
+
+    void addFilter(AbstractDiscoveryFiltersPanel filterPanel) {
+        filters.add(filterPanel);
+    }
+
+    void clearFilters() {
+        filters.clear();
     }
 
     final void addToGridBagLayout(Component componentToAdd, Component additionalComponentToAdd) {
@@ -78,5 +90,44 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
      */
     void setValid() {
         firePropertyChange("FilterError", null, null);
+    }
+
+    void validateFields() {
+        String errorString;
+        for (AbstractDiscoveryFiltersPanel filterPanel : filters) {
+            errorString = filterPanel.checkForError();
+            if (errorString != null) {
+                setInvalid(errorString);
+                return;
+            }
+        }
+        setValid();
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        validateFields();
+    }
+
+    /**
+     * Get a list of all filters selected by the user.
+     *
+     * @return the list of filters
+     */
+    /**
+     * Get a list of all filters selected by the user.
+     *
+     * @return the list of filters
+     */
+    List<FileSearchFiltering.FileFilter> getFilters() {
+        List<FileSearchFiltering.FileFilter> filtersToUse = new ArrayList<>();
+
+        for (AbstractDiscoveryFiltersPanel filterPanel : filters) {
+            FileSearchFiltering.FileFilter filter = filterPanel.getFilter();
+            if (filter != null) {
+                filtersToUse.add(filter);
+            }
+        }
+        return filtersToUse;
     }
 }

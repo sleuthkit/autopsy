@@ -54,4 +54,6 @@ abstract class AbstractDiscoveryFiltersPanel extends javax.swing.JPanel {
         }
     }
 
+    abstract FileSearchFiltering.FileFilter getFilter();
+
 }

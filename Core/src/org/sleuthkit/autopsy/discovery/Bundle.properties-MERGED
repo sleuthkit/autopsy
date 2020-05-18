@@ -183,6 +183,7 @@ ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
 # {0} - otherInstanceCount
 ImageThumbnailPanel.nameLabel.more.text=\ and {0} more
 OpenDiscoveryAction.resultsIncomplete.text=Results may be incomplete
+PastOccurrencesFilterPanel.crFrequencyCheckbox.text=Past Occurrences:
 ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
 ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
 ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
@@ -221,8 +222,32 @@ ResultsPanel.unableToCreate.text=Unable to create summary.
 ResultsPanel.viewFileInDir.name=View File in Directory
 SizeFilterPanel.sizeCheckbox.text=File Size:
 DataSourceFilterPanel.dataSourceCheckbox.text=Data Source:
-PastOccurrencesFilterPanel.crFrequencyCheckbox.text=Past Occurrences:
 UserCreatedFilterPanel.userCreatedCheckbox.text=Possibly User Created
+# To change this license header, choose License Headers in Project Properties.
+# To change this template file, choose Tools | Templates
+# and open the template in the editor.
+HashSetFilterPanel.hashSetCheckbox.text=Hash Set:
+InterestingItemFilterPanel.interestingItemsCheckbox.text=Interesting Item:
+ObjectDetectedFilterPanel.objectsCheckbox.text=Object Detected:
+ParentFolderFilterPanel.parentCheckbox.text=Parent Folder:
+ParentFolderFilterPanel.deleteButton.text=Delete
+ParentFolderFilterPanel.excludeRadioButton.text=Exclude
+ParentFolderFilterPanel.includeRadioButton.text=Include
+ParentFolderFilterPanel.substringRadioButton.text=Substring
+ParentFolderFilterPanel.fullRadioButton.text=Full
+ParentFolderFilterPanel.parentLabel.text=(All will be used)
+ParentFolderFilterPanel.addButton.text=Add
+ParentFolderFilterPanel.parentCheckbox.text_1=Parent Folder:
+ParentFolderFilterPanel.addButton.text_1=Add
+ParentFolderFilterPanel.deleteButton.text_1=Delete
+ParentFolderFilterPanel.excludeRadioButton.text_1=Exclude
+ParentFolderFilterPanel.substringRadioButton.text_1=Substring
+ParentFolderFilterPanel.includeRadioButton.text_1=Include
+ParentFolderFilterPanel.fullRadioButton.text_1=Full
+ParentFolderFilterPanel.parentLabel.text_1=(All will be used)
+InterestingItemsFilterPanel.interestingItemsCheckbox.text=Interesting Item:
+UserCreatedFilterPanel.userCreatedCheckbox.text_1=Possibly User Created
+PastOccurrencesFilterPanel.pastOccurrencesCheckbox.text=Past Occurrences:
 VideoThumbnailPanel.bytes.text=bytes
 VideoThumbnailPanel.deleted.text=All instances of file are deleted.
 VideoThumbnailPanel.gigaBytes.text=GB

@@ -30,8 +30,7 @@ public class ParentFolderFilterPanel extends AbstractDiscoveryFiltersPanel {
         setUpParentPathFilter();
     }
 
-    
-        /**
+    /**
      * Initialize the parent path filter
      */
     private void setUpParentPathFilter() {
@@ -39,6 +38,7 @@ public class ParentFolderFilterPanel extends AbstractDiscoveryFiltersPanel {
         includeRadioButton.setSelected(true);
         parentListModel = (DefaultListModel<FileSearchFiltering.ParentSearchTerm>) parentList.getModel();
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -273,4 +273,11 @@ public class ParentFolderFilterPanel extends AbstractDiscoveryFiltersPanel {
         return parentList;
     }
 
+    @Override
+    FileSearchFiltering.FileFilter getFilter() {
+        if (parentCheckbox.isSelected()) {
+            return new FileSearchFiltering.ParentFilter(getParentPaths());
+        }
+        return null;
+    }
 }

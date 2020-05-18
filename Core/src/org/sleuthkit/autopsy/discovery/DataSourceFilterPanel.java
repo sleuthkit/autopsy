@@ -5,7 +5,9 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
+import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -154,6 +156,15 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFiltersPanel {
     String checkForError() {
         if (dataSourceCheckbox.isSelected() && dataSourceList.getSelectedValuesList().isEmpty()) {
             return "At least one size must be selected";
+        }
+        return null;
+    }
+
+    @Override
+    FileSearchFiltering.FileFilter getFilter() {
+        if (dataSourceCheckbox.isSelected()) {
+            List<DataSource> dataSources = dataSourceList.getSelectedValuesList().stream().map(t -> t.getDataSource()).collect(Collectors.toList());
+            return new FileSearchFiltering.DataSourceFilter(dataSources);
         }
         return null;
     }

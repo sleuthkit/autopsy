@@ -141,4 +141,12 @@ public class HashSetFilterPanel extends AbstractDiscoveryFiltersPanel {
     JList<?> getList() {
         return hashSetList;
     }
+
+    @Override
+    FileSearchFiltering.FileFilter getFilter() {
+        if (hashSetCheckbox.isSelected()) {
+            return new FileSearchFiltering.HashSetFilter(hashSetList.getSelectedValuesList());
+        }
+        return null;
+    }
 }

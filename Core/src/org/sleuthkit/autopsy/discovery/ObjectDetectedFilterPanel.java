@@ -141,4 +141,12 @@ public class ObjectDetectedFilterPanel extends AbstractDiscoveryFiltersPanel {
         return objectsList;
     }
 
+    @Override
+    FileSearchFiltering.FileFilter getFilter() {
+        if (objectsCheckbox.isSelected()) {
+            return new FileSearchFiltering.ObjectDetectionFilter(objectsList.getSelectedValuesList());
+        }
+        return null;
+    }
+
 }

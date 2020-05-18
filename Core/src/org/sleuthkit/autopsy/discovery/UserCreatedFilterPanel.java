@@ -78,4 +78,12 @@ public class UserCreatedFilterPanel extends AbstractDiscoveryFiltersPanel {
     JList<?> getList() {
         return null;
     }
+
+    @Override
+    FileSearchFiltering.FileFilter getFilter() {
+        if (userCreatedCheckbox.isSelected()) {
+            return new FileSearchFiltering.UserCreatedFilter();
+        }
+        return null;
+    }
 }

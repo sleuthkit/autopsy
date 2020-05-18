@@ -35,14 +35,14 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        crFrequencyCheckbox = new javax.swing.JCheckBox();
+        pastOccurrencesCheckbox = new javax.swing.JCheckBox();
         crFrequencyScrollPane = new javax.swing.JScrollPane();
         crFrequencyList = new javax.swing.JList<>();
 
-        org.openide.awt.Mnemonics.setLocalizedText(crFrequencyCheckbox, org.openide.util.NbBundle.getMessage(PastOccurrencesFilterPanel.class, "PastOccurrencesFilterPanel.crFrequencyCheckbox.text")); // NOI18N
-        crFrequencyCheckbox.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(pastOccurrencesCheckbox, org.openide.util.NbBundle.getMessage(PastOccurrencesFilterPanel.class, "PastOccurrencesFilterPanel.pastOccurrencesCheckbox.text")); // NOI18N
+        pastOccurrencesCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                crFrequencyCheckboxActionPerformed(evt);
+                pastOccurrencesCheckboxActionPerformed(evt);
             }
         });
 
@@ -63,15 +63,15 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void crFrequencyCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_crFrequencyCheckboxActionPerformed
-        crFrequencyList.setEnabled(crFrequencyCheckbox.isSelected());
-    }//GEN-LAST:event_crFrequencyCheckboxActionPerformed
+    private void pastOccurrencesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pastOccurrencesCheckboxActionPerformed
+        crFrequencyList.setEnabled(pastOccurrencesCheckbox.isSelected());
+    }//GEN-LAST:event_pastOccurrencesCheckboxActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox crFrequencyCheckbox;
     private javax.swing.JList<Frequency> crFrequencyList;
     private javax.swing.JScrollPane crFrequencyScrollPane;
+    private javax.swing.JCheckBox pastOccurrencesCheckbox;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -81,7 +81,7 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
 
     @Override
     JCheckBox getCheckbox() {
-        return crFrequencyCheckbox;
+        return pastOccurrencesCheckbox;
     }
 
     @Override
@@ -97,5 +97,13 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
     @Override
     JList<?> getList() {
         return crFrequencyList;
+    }
+
+    @Override
+    FileSearchFiltering.FileFilter getFilter() {
+        if (pastOccurrencesCheckbox.isSelected()) {
+            return new FileSearchFiltering.FrequencyFilter(crFrequencyList.getSelectedValuesList());
+        }
+        return null;
     }
 }

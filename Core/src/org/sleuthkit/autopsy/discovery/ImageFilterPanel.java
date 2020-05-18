@@ -5,9 +5,6 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -18,8 +15,6 @@ import javax.swing.event.ListSelectionListener;
 final class ImageFilterPanel extends AbstractFilterPanel {
 
     private static final long serialVersionUID = 1L;
-
-    private final List<AbstractDiscoveryFiltersPanel> filters = new ArrayList<>();
 
     /**
      * Creates new form ImageFilterPanel
@@ -42,7 +37,7 @@ final class ImageFilterPanel extends AbstractFilterPanel {
                 }
             }
         });
-        filters.add(dataSourceFilter);
+        addFilter(dataSourceFilter);
         addToGridBagLayout(dataSourceFilter.getCheckbox(), null);
         addToGridBagLayout(dataSourceFilter, null);
         updateLayout();
@@ -60,13 +55,11 @@ final class ImageFilterPanel extends AbstractFilterPanel {
                 }
             }
         });
-        filters.add(sizeFilter);
+        addFilter(sizeFilter);
         addToGridBagLayout(sizeFilter.getCheckbox(), null);
         addToGridBagLayout(sizeFilter, null);
         updateLayout();
     }
-    
-    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -80,22 +73,6 @@ final class ImageFilterPanel extends AbstractFilterPanel {
         setLayout(new java.awt.GridBagLayout());
     }// </editor-fold>//GEN-END:initComponents
 
-    private void validateFields() {
-        String errorString;
-        for (AbstractDiscoveryFiltersPanel filterPanel : filters) {
-            errorString = filterPanel.checkForError();
-            if (errorString != null) {
-                setInvalid(errorString);
-                return;
-            }
-        }
-        setValid();
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        validateFields();
-    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
 }

@@ -141,4 +141,12 @@ public class InterestingItemsFilterPanel extends AbstractDiscoveryFiltersPanel {
     JList<?> getList() {
         return interestingItemsList;
     }
+
+    @Override
+    FileSearchFiltering.FileFilter getFilter() {
+        if (interestingItemsCheckbox.isSelected()) {
+            return new FileSearchFiltering.InterestingFileSetFilter(interestingItemsList.getSelectedValuesList());
+        }
+        return null;
+    }
 }
