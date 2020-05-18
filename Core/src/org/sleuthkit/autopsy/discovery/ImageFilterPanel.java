@@ -14,6 +14,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 final class ImageFilterPanel extends AbstractFilterPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final FileSearchData.FileType FILE_TYPE = FileSearchData.FileType.IMAGE;
 
     /**
      * Creates new form ImageFilterPanel
@@ -21,22 +22,22 @@ final class ImageFilterPanel extends AbstractFilterPanel {
     ImageFilterPanel() {
         initComponents();
         initConstraints();
-        SizeFilterPanel sizeFilterPanel = new SizeFilterPanel(FileSearchData.FileType.IMAGE);
+        SizeFilterPanel sizeFilterPanel = new SizeFilterPanel(FILE_TYPE);
         int[] sizeIndicesSelected = {1, 2, 3, 4, 5};
-        addFilter(sizeFilterPanel, sizeIndicesSelected);
-        addFilter(new DataSourceFilterPanel(), null);
+        addFilter(sizeFilterPanel, true, sizeIndicesSelected);
+        addFilter(new DataSourceFilterPanel(), false, null);
         int[] pastOccurrencesIndices;
         if (!CentralRepository.isEnabled()) {
             pastOccurrencesIndices = new int[]{0};
         } else {
             pastOccurrencesIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
         }
-        addFilter(new PastOccurrencesFilterPanel(), pastOccurrencesIndices);
-        addFilter(new UserCreatedFilterPanel(), null);
-        addFilter(new HashSetFilterPanel(), null);
-        addFilter(new InterestingItemsFilterPanel(), null);
-        addFilter(new ObjectDetectedFilterPanel(), null);
-        addFilter(new ParentFolderFilterPanel(), null);
+        addFilter(new PastOccurrencesFilterPanel(), true, pastOccurrencesIndices);
+        addFilter(new UserCreatedFilterPanel(), false, null);
+        addFilter(new HashSetFilterPanel(), false, null);
+        addFilter(new InterestingItemsFilterPanel(), false, null);
+        addFilter(new ObjectDetectedFilterPanel(), false, null);
+        addFilter(new ParentFolderFilterPanel(), false, null);
     }
 
     /**
@@ -50,6 +51,11 @@ final class ImageFilterPanel extends AbstractFilterPanel {
 
         setLayout(new java.awt.GridBagLayout());
     }// </editor-fold>//GEN-END:initComponents
+
+    @Override
+    FileSearchData.FileType getFileType() {
+        return FILE_TYPE;
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables

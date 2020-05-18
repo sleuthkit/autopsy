@@ -9,6 +9,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.FileSearchData.Frequency;
 
 /**
@@ -65,9 +66,27 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
 
     private void pastOccurrencesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pastOccurrencesCheckboxActionPerformed
         crFrequencyList.setEnabled(pastOccurrencesCheckbox.isSelected());
+        setUpFrequencyFilter();
     }//GEN-LAST:event_pastOccurrencesCheckboxActionPerformed
 
-
+ /**
+     * Initialize the frequency filter
+     */
+    private void setUpFrequencyFilter() {
+        int count = 0;
+        DefaultListModel<FileSearchData.Frequency> frequencyListModel = (DefaultListModel<FileSearchData.Frequency>) crFrequencyList.getModel();
+        frequencyListModel.removeAllElements();
+        if (!CentralRepository.isEnabled()) {
+            for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithoutCr()) {
+                frequencyListModel.add(count, freq);
+            }
+        } else {
+            for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithCr()) {
+                frequencyListModel.add(count, freq);
+            }
+        }
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JList<Frequency> crFrequencyList;
     private javax.swing.JScrollPane crFrequencyScrollPane;
@@ -101,7 +120,10 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
 
     @Override
     String checkForError() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (pastOccurrencesCheckbox.isSelected() && crFrequencyList.getSelectedValuesList().isEmpty()) {
+            return "At least one CR frequency must be selected";
+        }
+        return null;
     }
 
     @Override

@@ -41,8 +41,10 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
         constraints.anchor = GridBagConstraints.NORTHWEST;
     }
 
-    void addFilter(AbstractDiscoveryFiltersPanel filterPanel, int[] indicesSelected) {
-        filterPanel.configurePanel(true, indicesSelected);
+    abstract FileSearchData.FileType getFileType();
+
+    void addFilter(AbstractDiscoveryFiltersPanel filterPanel, boolean isSelected, int[] indicesSelected) {
+        filterPanel.configurePanel(isSelected, indicesSelected);
         filterPanel.addListeners(this, new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent evt) {
@@ -135,11 +137,13 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
      */
     List<FileSearchFiltering.FileFilter> getFilters() {
         List<FileSearchFiltering.FileFilter> filtersToUse = new ArrayList<>();
-
+        filtersToUse.add(new FileSearchFiltering.FileTypeFilter(getFileType()));
         for (AbstractDiscoveryFiltersPanel filterPanel : filters) {
-            FileSearchFiltering.FileFilter filter = filterPanel.getFilter();
-            if (filter != null) {
-                filtersToUse.add(filter);
+            if (filterPanel.getCheckbox().isSelected()) {
+                FileSearchFiltering.FileFilter filter = filterPanel.getFilter();
+                if (filter != null) {
+                    filtersToUse.add(filter);
+                }
             }
         }
         return filtersToUse;
