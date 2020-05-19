@@ -116,30 +116,25 @@ class AddMultipleImagesTask implements Runnable {
          * Try to add the input image files as images.
          */
         List<String> corruptedImageFilePaths = new ArrayList<>();
-        try {
-            currentCase.getSleuthkitCase().acquireSingleUserCaseWriteLock();
-            progressMonitor.setIndeterminate(true);
-            for (String imageFilePath : imageFilePaths) {
-                synchronized (tskAddImageProcessLock) {
-                    if (!tskAddImageProcessStopped) {
-                        addImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, false, false, "");
-                    } else {
-                        return;
-                    }
-                }
-                run(imageFilePath, corruptedImageFilePaths, errorMessages);
-                commitOrRevertAddImageProcess(imageFilePath, errorMessages, newDataSources);
-                synchronized (tskAddImageProcessLock) {
-                    if (tskAddImageProcessStopped) {
-                        errorMessages.add(Bundle.AddMultipleImagesTask_cancelled());
-                        result = DataSourceProcessorResult.CRITICAL_ERRORS;
-                        newDataSources = emptyDataSources;
-                        return;
-                    }
+        progressMonitor.setIndeterminate(true);
+        for (String imageFilePath : imageFilePaths) {
+            synchronized (tskAddImageProcessLock) {
+                if (!tskAddImageProcessStopped) {
+                    addImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, false, false, "");
+                } else {
+                    return;
                 }
             }
-        } finally {
-            currentCase.getSleuthkitCase().releaseSingleUserCaseWriteLock();
+            run(imageFilePath, corruptedImageFilePaths, errorMessages);
+            commitOrRevertAddImageProcess(imageFilePath, errorMessages, newDataSources);
+            synchronized (tskAddImageProcessLock) {
+                if (tskAddImageProcessStopped) {
+                    errorMessages.add(Bundle.AddMultipleImagesTask_cancelled());
+                    result = DataSourceProcessorResult.CRITICAL_ERRORS;
+                    newDataSources = emptyDataSources;
+                    return;
+                }
+            }
         }
     
         /*
@@ -152,8 +147,6 @@ class AddMultipleImagesTask implements Runnable {
             caseDatabase = currentCase.getSleuthkitCase();
             try {
                 progressMonitor.setProgressText(Bundle.AddMultipleImagesTask_addingFileAsLogicalFile(corruptedImageFilePaths.toString()));
-
-                caseDatabase.acquireSingleUserCaseWriteLock();
 
                 Image dataSource = caseDatabase.addImageInfo(0, corruptedImageFilePaths, timeZone);
                 newDataSources.add(dataSource);
@@ -177,8 +170,6 @@ class AddMultipleImagesTask implements Runnable {
             } catch (TskCoreException ex) {
                 errorMessages.add(Bundle.AddMultipleImagesTask_errorAddingImgWithoutFileSystem(deviceId, ex.getLocalizedMessage()));
                 criticalErrorOccurred = true;
-            } finally {
-                caseDatabase.releaseSingleUserCaseWriteLock();
             }
         }
 
