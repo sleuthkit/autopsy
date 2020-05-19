@@ -25,6 +25,7 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
      */
     public PastOccurrencesFilterPanel() {
         initComponents();
+        setUpFrequencyFilter();
     }
 
     /**
@@ -66,10 +67,9 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
 
     private void pastOccurrencesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pastOccurrencesCheckboxActionPerformed
         crFrequencyList.setEnabled(pastOccurrencesCheckbox.isSelected());
-        setUpFrequencyFilter();
     }//GEN-LAST:event_pastOccurrencesCheckboxActionPerformed
 
- /**
+    /**
      * Initialize the frequency filter
      */
     private void setUpFrequencyFilter() {
@@ -86,7 +86,7 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
             }
         }
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JList<Frequency> crFrequencyList;
     private javax.swing.JScrollPane crFrequencyScrollPane;
