@@ -29,7 +29,6 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -44,8 +43,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Manages Tags, Tagging, and the relationship between Categories and Tags in
  * the autopsy Db. Delegates some work to the backing autopsy TagsManager.
  */
-@NbBundle.Messages({"DrawableTagsManager.followUp=Follow Up",
-    "DrawableTagsManager.bookMark=Bookmark"})
 public final class DrawableTagsManager {
 
     private static final Logger logger = Logger.getLogger(DrawableTagsManager.class.getName());
@@ -78,8 +75,8 @@ public final class DrawableTagsManager {
 
     public DrawableTagsManager(ImageGalleryController controller) throws TskCoreException {
         this.autopsyTagsManager = controller.getCase().getServices().getTagsManager();
-        followUpTagName = getTagName(Bundle.DrawableTagsManager_followUp());
-        bookmarkTagName = getTagName(Bundle.DrawableTagsManager_bookMark());
+        followUpTagName = getTagName(TagsManager.getFollowUpDisplayString());
+        bookmarkTagName = getTagName(TagsManager.getBookmarkDisplayString());
         this.controller = controller;
 
         compareByDisplayName = new Comparator<TagName>() {
