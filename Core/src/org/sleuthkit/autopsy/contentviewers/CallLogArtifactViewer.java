@@ -68,8 +68,8 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         directionLabel = new javax.swing.JLabel();
         dateTimeLabel = new javax.swing.JLabel();
         durationLabel = new javax.swing.JLabel();
-        lowerHalfPanel = new javax.swing.JPanel();
         otherParticipantsPanel = new javax.swing.JPanel();
+        otherParticipantsListPanel = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
         jButton2 = new javax.swing.JButton();
         jLabel9 = new javax.swing.JLabel();
@@ -145,7 +145,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
         add(callDetailsPanel, java.awt.BorderLayout.PAGE_START);
 
-        lowerHalfPanel.setLayout(new java.awt.BorderLayout());
+        otherParticipantsPanel.setLayout(new java.awt.BorderLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel8, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.jLabel8.text")); // NOI18N
 
@@ -162,44 +162,44 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
         org.openide.awt.Mnemonics.setLocalizedText(otherParticipantsLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.otherParticipantsLabel.text")); // NOI18N
 
-        javax.swing.GroupLayout otherParticipantsPanelLayout = new javax.swing.GroupLayout(otherParticipantsPanel);
-        otherParticipantsPanel.setLayout(otherParticipantsPanelLayout);
-        otherParticipantsPanelLayout.setHorizontalGroup(
-            otherParticipantsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(otherParticipantsPanelLayout.createSequentialGroup()
+        javax.swing.GroupLayout otherParticipantsListPanelLayout = new javax.swing.GroupLayout(otherParticipantsListPanel);
+        otherParticipantsListPanel.setLayout(otherParticipantsListPanelLayout);
+        otherParticipantsListPanelLayout.setHorizontalGroup(
+            otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(otherParticipantsListPanelLayout.createSequentialGroup()
                 .addGap(56, 56, 56)
-                .addGroup(otherParticipantsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel8)
                     .addComponent(jLabel9))
                 .addGap(37, 37, 37)
-                .addGroup(otherParticipantsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jButton3)
                     .addComponent(jButton2))
                 .addGap(38, 174, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, otherParticipantsPanelLayout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, otherParticipantsListPanelLayout.createSequentialGroup()
                 .addContainerGap(25, Short.MAX_VALUE)
                 .addComponent(otherParticipantsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 382, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
-        otherParticipantsPanelLayout.setVerticalGroup(
-            otherParticipantsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(otherParticipantsPanelLayout.createSequentialGroup()
+        otherParticipantsListPanelLayout.setVerticalGroup(
+            otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(otherParticipantsListPanelLayout.createSequentialGroup()
                 .addGap(12, 12, 12)
                 .addComponent(otherParticipantsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(otherParticipantsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel8)
                     .addComponent(jButton2))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
-                .addGroup(otherParticipantsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel9)
                     .addComponent(jButton3))
                 .addContainerGap())
         );
 
-        lowerHalfPanel.add(otherParticipantsPanel, java.awt.BorderLayout.CENTER);
+        otherParticipantsPanel.add(otherParticipantsListPanel, java.awt.BorderLayout.CENTER);
 
-        add(lowerHalfPanel, java.awt.BorderLayout.CENTER);
+        add(otherParticipantsPanel, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -224,8 +224,8 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel lowerHalfPanel;
     private javax.swing.JLabel otherParticipantsLabel;
+    private javax.swing.JPanel otherParticipantsListPanel;
     private javax.swing.JPanel otherParticipantsPanel;
     private javax.swing.JButton personaButton1;
     private javax.swing.JLabel toOrFromNameLabel;
@@ -353,7 +353,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 // TBD: popluate lower panel
                 // TBD: updateOtherParticipantsPanel(TBD) }
             } else {
-                this.remove(this.lowerHalfPanel);
+                this.remove(this.otherParticipantsPanel);
             }
             
             
