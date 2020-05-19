@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -75,6 +76,17 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         jLabel9 = new javax.swing.JLabel();
         jButton3 = new javax.swing.JButton();
         otherParticipantsLabel = new javax.swing.JLabel();
+        bottomPanel = new javax.swing.JPanel();
+        otherAttributesPanel = new javax.swing.JPanel();
+        jLabel3 = new javax.swing.JLabel();
+        otherAttributesListPanel = new javax.swing.JPanel();
+        localAccountInfoPanel = new javax.swing.JPanel();
+        jLabel4 = new javax.swing.JLabel();
+        dataSourceNameLabel = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        deviceIdLabel = new javax.swing.JLabel();
+        localAccountLabel = new javax.swing.JLabel();
+        localAccountIdLabel = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -190,7 +202,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 .addGroup(otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel8)
                     .addComponent(jButton2))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 86, Short.MAX_VALUE)
                 .addGroup(otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel9)
                     .addComponent(jButton3))
@@ -200,6 +212,80 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         otherParticipantsPanel.add(otherParticipantsListPanel, java.awt.BorderLayout.CENTER);
 
         add(otherParticipantsPanel, java.awt.BorderLayout.CENTER);
+
+        bottomPanel.setLayout(new java.awt.BorderLayout());
+
+        otherAttributesPanel.setLayout(new java.awt.BorderLayout());
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.jLabel3.text")); // NOI18N
+        otherAttributesPanel.add(jLabel3, java.awt.BorderLayout.CENTER);
+
+        javax.swing.GroupLayout otherAttributesListPanelLayout = new javax.swing.GroupLayout(otherAttributesListPanel);
+        otherAttributesListPanel.setLayout(otherAttributesListPanelLayout);
+        otherAttributesListPanelLayout.setHorizontalGroup(
+            otherAttributesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 413, Short.MAX_VALUE)
+        );
+        otherAttributesListPanelLayout.setVerticalGroup(
+            otherAttributesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
+
+        otherAttributesPanel.add(otherAttributesListPanel, java.awt.BorderLayout.PAGE_END);
+
+        bottomPanel.add(otherAttributesPanel, java.awt.BorderLayout.PAGE_START);
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.jLabel4.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(dataSourceNameLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.dataSourceNameLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.jLabel2.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(deviceIdLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.deviceIdLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(localAccountLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.localAccountLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(localAccountIdLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.localAccountIdLabel.text")); // NOI18N
+
+        javax.swing.GroupLayout localAccountInfoPanelLayout = new javax.swing.GroupLayout(localAccountInfoPanel);
+        localAccountInfoPanel.setLayout(localAccountInfoPanelLayout);
+        localAccountInfoPanelLayout.setHorizontalGroup(
+            localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
+                .addGap(19, 19, 19)
+                .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel4)
+                    .addComponent(jLabel2)
+                    .addComponent(localAccountLabel))
+                .addGap(18, 18, 18)
+                .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(localAccountIdLabel)
+                    .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(dataSourceNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
+                        .addComponent(deviceIdLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap(140, Short.MAX_VALUE))
+        );
+        localAccountInfoPanelLayout.setVerticalGroup(
+            localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
+                .addGap(18, 18, 18)
+                .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(localAccountLabel)
+                    .addComponent(localAccountIdLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(dataSourceNameLabel)
+                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(deviceIdLabel))
+                .addContainerGap(22, Short.MAX_VALUE))
+        );
+
+        bottomPanel.add(localAccountInfoPanel, java.awt.BorderLayout.PAGE_END);
+
+        add(bottomPanel, java.awt.BorderLayout.PAGE_END);
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -216,14 +302,25 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         this.toOrFromNameLabel.setEnabled(false);
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel bottomPanel;
     private javax.swing.JPanel callDetailsPanel;
+    private javax.swing.JLabel dataSourceNameLabel;
     private javax.swing.JLabel dateTimeLabel;
+    private javax.swing.JLabel deviceIdLabel;
     private javax.swing.JLabel directionLabel;
     private javax.swing.JLabel durationLabel;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
+    private javax.swing.JLabel localAccountIdLabel;
+    private javax.swing.JPanel localAccountInfoPanel;
+    private javax.swing.JLabel localAccountLabel;
+    private javax.swing.JPanel otherAttributesListPanel;
+    private javax.swing.JPanel otherAttributesPanel;
     private javax.swing.JLabel otherParticipantsLabel;
     private javax.swing.JPanel otherParticipantsListPanel;
     private javax.swing.JPanel otherParticipantsPanel;
@@ -241,6 +338,14 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         String dateTimeStr = null;
         String duration = null;
         Collection<String> otherParticipants = null;
+        String dataSourceName = null;
+        String dataSourceDeviceId = null;
+        String localAccountId = null;
+
+        
+        
+       
+       
 
         CallLogViewData(String number) {
            this(number, null);
@@ -274,13 +379,21 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             this.direction = direction;
         }
 
-//        String getMediaType() {
-//            return mediaType;
-//        }
-//
-//        void setMediaType(String mediaType) {
-//            this.mediaType = mediaType;
-//        }
+        String getDataSourceName() {
+            return dataSourceName;
+        }
+
+        void setDataSourceName(String dataSourceName) {
+            this.dataSourceName = dataSourceName;
+        }
+
+        String getDataSourceDeviceId() {
+            return dataSourceDeviceId;
+        }
+
+        void setDataSourceDeviceId(String dataSourceDeviceId) {
+            this.dataSourceDeviceId = dataSourceDeviceId;
+        }
 
         String getDateTimeStr() {
             return dateTimeStr;
@@ -306,6 +419,14 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             otherParticipants = otherParticipants;
         }
     
+        public String getLocalAccountId() {
+            return localAccountId;
+        }
+
+        public void setLocalAccountId(String localAccountId) {
+            this.localAccountId = localAccountId;
+        }
+        
     }
     
     @Override
@@ -357,6 +478,23 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             }
             
             
+            // TBD: Populate other attributs panel
+            this.remove(this.otherAttributesPanel);
+            
+            // populate local account and data source
+            if (callLogViewData.getLocalAccountId() != null) {
+                this.localAccountIdLabel.setText(callLogViewData.getLocalAccountId());
+            } else {
+                this.localAccountLabel.setVisible(false);
+                this.localAccountIdLabel.setVisible(false);
+            }
+            if (callLogViewData.getDataSourceName() != null) {
+                this.dataSourceNameLabel.setText(callLogViewData.getDataSourceName());
+            }
+            if (callLogViewData.getDataSourceDeviceId() != null) {
+                this.deviceIdLabel.setText(callLogViewData.getDataSourceDeviceId());
+            }
+            
         }
         
       
@@ -378,6 +516,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
         BlackboardAttribute directionAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION));
         BlackboardAttribute numberAttr = null;
+        BlackboardAttribute localAccountAttr = null;
 
         CallLogViewData callLogViewData = null;
         String direction = null;
@@ -387,8 +526,10 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             
             if (direction.equalsIgnoreCase("Incoming")) {
                 numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
+                localAccountAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO));
             } else if (direction.equalsIgnoreCase("Outgoing")) {
                 numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO));
+                localAccountAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
             } 
             
         }
@@ -436,6 +577,18 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                  }
             } 
            
+            Content dataSource = artifact.getDataSource();
+     
+            callLogViewData.setDataSourceName(dataSource.getName());
+            String deviceId = ((DataSource) dataSource).getDeviceId();
+            callLogViewData.setDataSourceDeviceId(deviceId);
+                  
+            if (localAccountAttr != null) {
+                String attrValue = localAccountAttr.getValueString();
+                if (attrValue.equalsIgnoreCase(deviceId) == false && attrValue.contains(",") == false ) {
+                    callLogViewData.setLocalAccountId(attrValue);
+                }
+            }
             
         }
 
