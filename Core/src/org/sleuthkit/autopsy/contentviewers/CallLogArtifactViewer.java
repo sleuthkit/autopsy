@@ -19,11 +19,16 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Locale;
 import java.util.logging.Level;
 import javax.swing.JScrollPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -33,6 +38,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class CallLogArtifactViewer extends javax.swing.JPanel implements ArtifactContentViewer {
 
+    private final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+    
     private final static Logger logger = Logger.getLogger(CallLogArtifactViewer.class.getName());
     private static final long serialVersionUID = 1L;
 
@@ -42,6 +49,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      */
     public CallLogArtifactViewer() {
         initComponents();
+        customizeComponents();
     }
 
     /**
@@ -55,11 +63,10 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
         callDetailsPanel = new javax.swing.JPanel();
         toOrFromNumberLabel = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
+        personaButton1 = new javax.swing.JButton();
         toOrFromNameLabel = new javax.swing.JLabel();
         directionLabel = new javax.swing.JLabel();
         dateTimeLabel = new javax.swing.JLabel();
-        mediaTypeLabel = new javax.swing.JLabel();
         durationLabel = new javax.swing.JLabel();
         lowerHalfPanel = new javax.swing.JPanel();
         otherParticipantsPanel = new javax.swing.JPanel();
@@ -73,22 +80,23 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
         callDetailsPanel.setPreferredSize(new java.awt.Dimension(400, 150));
 
+        toOrFromNumberLabel.setFont(toOrFromNumberLabel.getFont().deriveFont(toOrFromNumberLabel.getFont().getSize()+2f));
         org.openide.awt.Mnemonics.setLocalizedText(toOrFromNumberLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.toOrFromNumberLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.jButton1.text")); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(personaButton1, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.personaButton1.text")); // NOI18N
+        personaButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                personaButton1ActionPerformed(evt);
             }
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(toOrFromNameLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.toOrFromNameLabel.text")); // NOI18N
+        toOrFromNameLabel.setEnabled(false);
 
+        directionLabel.setFont(directionLabel.getFont());
         org.openide.awt.Mnemonics.setLocalizedText(directionLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.directionLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(dateTimeLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.dateTimeLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(mediaTypeLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.mediaTypeLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(durationLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.durationLabel.text")); // NOI18N
 
@@ -99,46 +107,40 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             .addGroup(callDetailsPanelLayout.createSequentialGroup()
                 .addGap(25, 25, 25)
                 .addGroup(callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(directionLabel)
                     .addGroup(callDetailsPanelLayout.createSequentialGroup()
-                        .addGap(6, 6, 6)
-                        .addComponent(toOrFromNameLabel)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(callDetailsPanelLayout.createSequentialGroup()
-                        .addGroup(callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addGroup(callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(toOrFromNumberLabel)
                             .addGroup(callDetailsPanelLayout.createSequentialGroup()
-                                .addComponent(toOrFromNumberLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jButton1))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, callDetailsPanelLayout.createSequentialGroup()
-                                .addComponent(directionLabel)
-                                .addGap(18, 18, 18)
-                                .addGroup(callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(callDetailsPanelLayout.createSequentialGroup()
-                                        .addComponent(durationLabel)
-                                        .addGap(0, 0, Short.MAX_VALUE))
-                                    .addGroup(callDetailsPanelLayout.createSequentialGroup()
-                                        .addComponent(dateTimeLabel)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 109, Short.MAX_VALUE)
-                                        .addComponent(mediaTypeLabel)))))
-                        .addGap(31, 31, 31))))
+                                .addGap(6, 6, 6)
+                                .addComponent(toOrFromNameLabel)))
+                        .addGap(18, 18, 18)
+                        .addComponent(personaButton1))
+                    .addGroup(callDetailsPanelLayout.createSequentialGroup()
+                        .addComponent(dateTimeLabel)
+                        .addGap(18, 18, 18)
+                        .addComponent(durationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(187, Short.MAX_VALUE))
         );
         callDetailsPanelLayout.setVerticalGroup(
             callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(callDetailsPanelLayout.createSequentialGroup()
                 .addContainerGap()
+                .addGroup(callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(callDetailsPanelLayout.createSequentialGroup()
+                        .addGroup(callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(toOrFromNumberLabel)
+                            .addComponent(personaButton1))
+                        .addGap(28, 28, 28))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, callDetailsPanelLayout.createSequentialGroup()
+                        .addComponent(toOrFromNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)))
                 .addGroup(callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(toOrFromNumberLabel)
-                    .addComponent(jButton1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(toOrFromNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(26, 26, 26)
-                .addGroup(callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(directionLabel)
                     .addComponent(dateTimeLabel)
-                    .addComponent(mediaTypeLabel))
+                    .addComponent(durationLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(durationLabel)
-                .addContainerGap(20, Short.MAX_VALUE))
+                .addComponent(directionLabel)
+                .addContainerGap(40, Short.MAX_VALUE))
         );
 
         add(callDetailsPanel, java.awt.BorderLayout.PAGE_START);
@@ -167,15 +169,13 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             .addGroup(otherParticipantsPanelLayout.createSequentialGroup()
                 .addGap(56, 56, 56)
                 .addGroup(otherParticipantsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(otherParticipantsPanelLayout.createSequentialGroup()
-                        .addComponent(jLabel9)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 173, Short.MAX_VALUE)
-                        .addComponent(jButton3))
-                    .addGroup(otherParticipantsPanelLayout.createSequentialGroup()
-                        .addComponent(jLabel8)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton2)))
-                .addGap(38, 38, 38))
+                    .addComponent(jLabel8)
+                    .addComponent(jLabel9))
+                .addGap(37, 37, 37)
+                .addGroup(otherParticipantsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jButton3)
+                    .addComponent(jButton2))
+                .addGap(38, 174, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, otherParticipantsPanelLayout.createSequentialGroup()
                 .addContainerGap(25, Short.MAX_VALUE)
                 .addComponent(otherParticipantsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 382, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -192,8 +192,8 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                     .addComponent(jButton2))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
                 .addGroup(otherParticipantsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton3)
-                    .addComponent(jLabel9))
+                    .addComponent(jLabel9)
+                    .addComponent(jButton3))
                 .addContainerGap())
         );
 
@@ -202,66 +202,164 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         add(lowerHalfPanel, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton1ActionPerformed
-
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton2ActionPerformed
 
+    private void personaButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_personaButton1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_personaButton1ActionPerformed
 
+
+    private void customizeComponents() {
+        // disable the name label for now.
+        this.toOrFromNameLabel.setEnabled(false);
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel callDetailsPanel;
     private javax.swing.JLabel dateTimeLabel;
     private javax.swing.JLabel directionLabel;
     private javax.swing.JLabel durationLabel;
-    private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel lowerHalfPanel;
-    private javax.swing.JLabel mediaTypeLabel;
     private javax.swing.JLabel otherParticipantsLabel;
     private javax.swing.JPanel otherParticipantsPanel;
+    private javax.swing.JButton personaButton1;
     private javax.swing.JLabel toOrFromNameLabel;
     private javax.swing.JLabel toOrFromNumberLabel;
     // End of variables declaration//GEN-END:variables
 
+    private class CallLogViewData {
+
+        String number;
+        String name = null;
+        String direction;
+        //String mediaType = null;
+        String dateTimeStr = null;
+        String duration = null;
+        Collection<String> otherParticipants = null;
+
+        CallLogViewData(String number) {
+           this(number, null);
+        }
+        CallLogViewData(String number, String direction) {
+            this.number = number;
+            this.direction = direction;
+        }
+        
+        String getNumber() {
+            return number;
+        }
+
+        void setNumber(String number) {
+            this.number = number;
+        }
+
+        String getName() {
+            return name;
+        }
+
+        void setName(String name) {
+            this.name = name;
+        }
+
+        String getDirection() {
+            return direction;
+        }
+
+        void setDirection(String direction) {
+            this.direction = direction;
+        }
+
+//        String getMediaType() {
+//            return mediaType;
+//        }
+//
+//        void setMediaType(String mediaType) {
+//            this.mediaType = mediaType;
+//        }
+
+        String getDateTimeStr() {
+            return dateTimeStr;
+        }
+
+        void setDateTimeStr(String dateTimeStr) {
+            this.dateTimeStr = dateTimeStr;
+        }
+
+        String getDuration() {
+            return duration;
+        }
+
+        void setDuration(String duration) {
+            this.duration = duration;
+        }
+
+        Collection<String> getOtherParticipants() {
+            return otherParticipants;
+        }
+
+        void setOtherParticipants(Collection<String> otherParticipants) {
+            otherParticipants = otherParticipants;
+        }
+    
+    }
+    
     @Override
     public void setArtifact(BlackboardArtifact artifact) {
         
         this.removeAll();
         this.initComponents();
+        this.customizeComponents();
         
-        
-        String toOrFromNumber = null;
-        String name;
-        String direction;
-        String mediaType;
+        CallLogViewData callLogViewData = null;
         
         try {
-        toOrFromNumber= getToOrFromId(artifact);
-        
-        //direction = getDirection(artifact);
-        
-        //name = 
-        
-        
+            callLogViewData= getCallLogViewData(artifact);
+   
         }
         catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Error getting attributes for Calllog artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
         }
         
-        if (toOrFromNumber != null) {
+        if (callLogViewData != null) {
         
-            this.toOrFromNumberLabel.setText(toOrFromNumber);
+            this.toOrFromNumberLabel.setText(callLogViewData.getNumber());
+            
+            // TBD: wire up the Persona button to search/add this Persona....
+            
+            if (callLogViewData.getDirection() != null) {
+                 this.directionLabel.setText(callLogViewData.getDirection());
+            } else {
+                this.directionLabel.setVisible(false);
+            }
+            
+            if (callLogViewData.getDateTimeStr() != null) {
+                this.dateTimeLabel.setText(callLogViewData.getDateTimeStr());
+                if (callLogViewData.getDuration() != null) {
+                    this.durationLabel.setText(callLogViewData.getDuration());
+                } else {
+                    this.durationLabel.setVisible(false);
+                }
+            } else {
+                this.dateTimeLabel.setVisible(false);
+                this.durationLabel.setVisible(false);
+            }
+            
+            if (callLogViewData.getOtherParticipants() != null) {
+                // TBD: popluate lower panel
+                // TBD: updateOtherParticipantsPanel(TBD) }
+            } else {
+                this.remove(this.lowerHalfPanel);
+            }
+            
+            
         }
         
-        // TBD: updateOtherParticipantsPanel(TBD) }
-        
-        
+      
         // repaint
         this.revalidate();
     }
@@ -276,9 +374,27 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         return artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID();
     }
     
-    private String getToOrFromId(BlackboardArtifact artifact) throws TskCoreException {
+    private CallLogViewData getCallLogViewData(BlackboardArtifact artifact) throws TskCoreException {
 
-        BlackboardAttribute numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
+        BlackboardAttribute directionAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION));
+        BlackboardAttribute numberAttr = null;
+
+        CallLogViewData callLogViewData = null;
+        String direction = null;
+        
+        if (directionAttr != null) {
+            direction = directionAttr.getValueString();
+            
+            if (direction.equalsIgnoreCase("Incoming")) {
+                numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
+            } else if (direction.equalsIgnoreCase("Outgoing")) {
+                numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO));
+            } 
+            
+        }
+        if (numberAttr == null) {
+            numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
+        }
 
         if (numberAttr == null) {
             numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO));
@@ -291,14 +407,39 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         if (numberAttr == null) {
             numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID));
         }
-
+        
         if (numberAttr != null) {
 
+            callLogViewData = new CallLogViewData(numberAttr.getValueString(), direction);
+            
             // TBD: check if it's a list of numbers and and if so, return only the first one. and put the others in otherParticicpants....
-            return numberAttr.getValueString();
+            
+            // get date, duration,
+            BlackboardAttribute startTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
+            if (startTimeAttr == null) {
+                startTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
+            }
+            if (startTimeAttr != null) {
+                long startTime = startTimeAttr.getValueLong();
+                Content content = artifact.getDataSource();
+                if (null != content && 0 != startTime) {
+                    dateFormatter.setTimeZone(ContentUtils.getTimeZone(content));
+                    callLogViewData.setDateTimeStr(dateFormatter.format(new java.util.Date(startTime * 1000)));
+                }
+                
+                 BlackboardAttribute endTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END));
+                 if (endTimeAttr != null) {
+                      long endTime = endTimeAttr.getValueLong();
+                      if (endTime > 0) {
+                          callLogViewData.setDuration(String.format("%d seconds", (endTime-startTime)));
+                      }
+                 }
+            } 
+           
+            
         }
 
-        return null;
+        return callLogViewData;
     }
     
 }
