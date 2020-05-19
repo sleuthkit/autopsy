@@ -432,7 +432,6 @@ sub parseShellItem {
 	while ($tag) {
 		my %item = ();
 		my $sz = unpack("v",substr($data,$cnt,2));
-        return %str unless (defined $sz);
 		$tag = 0 if (($sz == 0) || ($cnt + $sz > $len));
 		
 		my $dat = substr($data,$cnt,$sz);
@@ -606,7 +605,6 @@ sub parseFolderEntry {
 	my $str = "";
 	while($tag) {
 		my $s = substr($data,$ofs_shortname + $cnt,1);
-        return %item unless (defined $s);
 		if ($s =~ m/\00/ && ((($cnt + 1) % 2) == 0)) {
 			$tag = 0;
 		}
@@ -622,9 +620,7 @@ sub parseFolderEntry {
 	my $tag = 1;
 	my $cnt = 0;
 	while ($tag) {
-        my $s = substr($data,$ofs + $cnt,2);
-        return %item unless (defined $s); 
-		if (unpack("v",$s) == 0xbeef) {
+		if (unpack("v",substr($data,$ofs + $cnt,2)) == 0xbeef) {
 			$tag = 0;
 		}
 		else {

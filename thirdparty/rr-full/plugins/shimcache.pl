@@ -288,7 +288,6 @@ sub appWin8 {
 	
 	while($ofs < $len) {
 		my $tag = unpack("V",substr($data,$ofs,4));
-        last unless (defined $tag); 
 # 32-bit		
 		if ($tag == 0x73746f72) {
 			$jmp = unpack("V",substr($data,$ofs + 8,4));
@@ -334,7 +333,6 @@ sub appWin81 {
 	
 	while ($ofs < $len) {
 		$tag = substr($data,$ofs,4);
-        last unless (defined $tag);
 		if ($tag eq "10ts") {
 			
 			$sz = unpack("V",substr($data,$ofs + 0x08,4));
