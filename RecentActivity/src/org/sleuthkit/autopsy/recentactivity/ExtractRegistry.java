@@ -434,7 +434,7 @@ class ExtractRegistry extends Extract {
             String line = reader.readLine();
             while (line != null) {
                 line = line.trim();
-                if (line.contains("Error")) {
+                if (line.contains("Error") || line.contains("@INC")) {
                    logger.log(Level.WARNING, "Regripper file {0} contains errors from run", errFilePath); //NON-NLS
                     
                 }
@@ -1518,11 +1518,11 @@ class ExtractRegistry extends Extract {
         line = line.trim();
         // Reading to the SECTION DIVIDER to get next section of records to process.  Dates appear to have
         // multiple spaces in them that makes it harder to parse so next section will be easier to parse 
-        while (!line.contains(SECTION_DIVIDER) && !line.contains("not found") && !line.contains("version 2010 located")) {
+        while (!line.contains(SECTION_DIVIDER)) {
             line = reader.readLine();
         }
         line = reader.readLine();
-        while (!line.contains(SECTION_DIVIDER) && !line.contains("not found")) {
+        while (!line.contains(SECTION_DIVIDER)) {
             // record has the following format
             // 1294283922|REG|||OfficeDocs2010 - F:\Windows_time_Rules_xp.doc
             String tokens[] = line.split("\\|");
