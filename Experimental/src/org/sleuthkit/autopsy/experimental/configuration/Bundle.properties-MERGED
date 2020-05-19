@@ -75,6 +75,7 @@ MultiUserTestTool.unableCreatFile=Unable to create a file in case output directo
 MultiUserTestTool.unableToCheckService=Unable to check Multi User service state: {0}
 MultiUserTestTool.unableToCreateCase=Unable to create case
 MultiUserTestTool.unableToInitializeDatabase=Case database was not successfully initialized
+MultiUserTestTool.unableToInitializeFilTypeDetector=Unable to initialize File Type Detector
 MultiUserTestTool.unableToReadDatabase=Unable to read from case database
 MultiUserTestTool.unableToReadTestFileFromDatabase=Unable to read test file info from case database
 MultiUserTestTool.unableToRunIngest=Unable to run ingest on test data source

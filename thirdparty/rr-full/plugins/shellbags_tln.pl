@@ -358,6 +358,7 @@ sub parseVariableEntry {
 	  	while($tag) {
 	  		my $sz = unpack("V",substr($stuff,$cnt,4));
 	  		my $id = unpack("V",substr($stuff,$cnt + 4,4));
+            return %item unless (defined $sz);
 #--------------------------------------------------------------
 # sub-segment types
 # 0x0a - file name
@@ -387,6 +388,7 @@ sub parseVariableEntry {
 #	  	while($tag) {
 #	  		my $sz = unpack("V",substr($stuff,$cnt,4));
 #	  		my $id = unpack("V",substr($stuff,$cnt + 4,4));
+#           return %item unless (defined $sz); 
 #	  		
 #	  		if ($sz == 0x00) {
 #	  			$tag = 0;
@@ -709,6 +711,7 @@ sub parseFolderEntry {
 	my $str = "";
 	while($tag) {
 		my $s = substr($data,$ofs_shortname + $cnt,1);
+        return %item unless (defined $s);
 		if ($s =~ m/\00/ && ((($cnt + 1) % 2) == 0)) {
 			$tag = 0;
 		}
@@ -724,7 +727,9 @@ sub parseFolderEntry {
 	my $tag = 1;
 	my $cnt = 0;
 	while ($tag) {
-		if (unpack("v",substr($data,$ofs + $cnt,2)) == 0xbeef) {
+        my $s = substr($data,$ofs + $cnt,2);
+        return %item unless (defined $s); 
+		if (unpack("v",$s) == 0xbeef) {
 			$tag = 0;
 		}
 		else {
