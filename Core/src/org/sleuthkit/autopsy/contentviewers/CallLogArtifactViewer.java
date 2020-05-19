@@ -132,7 +132,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                         .addComponent(dateTimeLabel)
                         .addGap(18, 18, 18)
                         .addComponent(durationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(187, Short.MAX_VALUE))
+                .addContainerGap(199, Short.MAX_VALUE))
         );
         callDetailsPanelLayout.setVerticalGroup(
             callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -179,19 +179,20 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         otherParticipantsListPanelLayout.setHorizontalGroup(
             otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(otherParticipantsListPanelLayout.createSequentialGroup()
-                .addGap(56, 56, 56)
                 .addGroup(otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel8)
-                    .addComponent(jLabel9))
-                .addGap(37, 37, 37)
-                .addGroup(otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton3)
-                    .addComponent(jButton2))
-                .addGap(38, 174, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, otherParticipantsListPanelLayout.createSequentialGroup()
-                .addContainerGap(25, Short.MAX_VALUE)
-                .addComponent(otherParticipantsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 382, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                    .addGroup(otherParticipantsListPanelLayout.createSequentialGroup()
+                        .addGap(56, 56, 56)
+                        .addGroup(otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel8)
+                            .addComponent(jLabel9))
+                        .addGap(37, 37, 37)
+                        .addGroup(otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jButton3)
+                            .addComponent(jButton2)))
+                    .addGroup(otherParticipantsListPanelLayout.createSequentialGroup()
+                        .addGap(24, 24, 24)
+                        .addComponent(otherParticipantsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 378, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(23, Short.MAX_VALUE))
         );
         otherParticipantsListPanelLayout.setVerticalGroup(
             otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -202,7 +203,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 .addGroup(otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel8)
                     .addComponent(jButton2))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 86, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 80, Short.MAX_VALUE)
                 .addGroup(otherParticipantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel9)
                     .addComponent(jButton3))
@@ -215,10 +216,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
         bottomPanel.setLayout(new java.awt.BorderLayout());
 
-        otherAttributesPanel.setLayout(new java.awt.BorderLayout());
-
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.jLabel3.text")); // NOI18N
-        otherAttributesPanel.add(jLabel3, java.awt.BorderLayout.CENTER);
 
         javax.swing.GroupLayout otherAttributesListPanelLayout = new javax.swing.GroupLayout(otherAttributesListPanel);
         otherAttributesListPanel.setLayout(otherAttributesListPanelLayout);
@@ -228,10 +226,30 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         );
         otherAttributesListPanelLayout.setVerticalGroup(
             otherAttributesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
+            .addGap(0, 88, Short.MAX_VALUE)
         );
 
-        otherAttributesPanel.add(otherAttributesListPanel, java.awt.BorderLayout.PAGE_END);
+        javax.swing.GroupLayout otherAttributesPanelLayout = new javax.swing.GroupLayout(otherAttributesPanel);
+        otherAttributesPanel.setLayout(otherAttributesPanelLayout);
+        otherAttributesPanelLayout.setHorizontalGroup(
+            otherAttributesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(otherAttributesPanelLayout.createSequentialGroup()
+                .addGroup(otherAttributesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(otherAttributesListPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(otherAttributesPanelLayout.createSequentialGroup()
+                        .addGap(27, 27, 27)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 367, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(12, 12, 12))
+        );
+        otherAttributesPanelLayout.setVerticalGroup(
+            otherAttributesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(otherAttributesPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(otherAttributesListPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
 
         bottomPanel.add(otherAttributesPanel, java.awt.BorderLayout.PAGE_START);
 
@@ -263,7 +281,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                     .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                         .addComponent(dataSourceNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
                         .addComponent(deviceIdLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap(140, Short.MAX_VALUE))
+                .addContainerGap(152, Short.MAX_VALUE))
         );
         localAccountInfoPanelLayout.setVerticalGroup(
             localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
