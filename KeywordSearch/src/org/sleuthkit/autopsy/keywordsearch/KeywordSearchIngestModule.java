@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharSource;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +56,10 @@ import org.sleuthkit.autopsy.textextractors.TextFileExtractor;
 import org.sleuthkit.autopsy.textextractors.configs.ImageConfig;
 import org.sleuthkit.autopsy.textextractors.configs.StringsConfig;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
@@ -114,6 +120,30 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
 
+    private static final List<String> METADATA_TYPES
+            = ImmutableList.of(
+                    "Total-Time", //NON-NLS
+                    "Template", //NON-NLS
+                    "Revision-Number", //NON-NLS 
+                    "Last-Save-Date", //NON-NLS
+                    "Last-Printed", //NON-NLS
+                    "Last-Author", //NON-NLS
+                    "Edit-Time", //NON-NLS
+                    "Creation-Date", //NON-NLS
+                    "Company", //NON-NLS
+                    "Author", //NON-NLS
+                    "Application-Name", //NON-NLS
+                    "protected", //NON-NLS
+                    "SourceModified", //NON-NLS 
+                    "Last-Modified", //NON-NLS
+                    "Producer", //NON-NLS
+                    "pdf:docinfo:creator_tool", //NON-NLS
+                    "Title", //NON-NLS
+                    "pdf:encrypted", //NON-NLS
+                    "Description", //NON-NLS
+                    "pdf:PDFVersion"); //NON-NLS
+
+    
     /**
      * Options for this extractor
      */
@@ -493,6 +523,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 Reader finalReader;
                 try {
                     Map<String, String> metadata = extractor.getMetadata();
+                    if (!metadata.isEmpty()) {
+                        createMetadataArtifact(aFile, metadata);
+                    }
                     CharSource formattedMetadata = getMetaDataCharSource(metadata);
                     //Append the metadata to end of the file text
                     finalReader = CharSource.concat(new CharSource() {
@@ -513,6 +546,38 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
                 //No text extractor found... run the default instead
                 return false;
+            }
+        }
+        
+        private void createMetadataArtifact(AbstractFile aFile, Map<String, String> metadata) {
+    
+            String moduleName = KeywordSearchIngestModule.class.getName();
+            Collection<BlackboardAttribute> attributes = new ArrayList<>(); 
+            Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+            for (Map.Entry<String, String> entry : metadata.entrySet()) {
+                if (METADATA_TYPES.contains(entry.getKey())) {
+                    if (!entry.getValue().isEmpty() && !entry.getValue().contentEquals(" ")) {
+                        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, moduleName, entry.getKey()));
+                        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE, moduleName, entry.getValue()));
+                        try {
+                            BlackboardArtifact bbart = aFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA);
+                            bbart.addAttributes(attributes);
+                            bbartifacts.add(bbart);
+                        } catch (TskCoreException ex) {
+                            // return and continue processing 
+                            return;
+                        }
+                    }
+                }
+            }
+            if (!bbartifacts.isEmpty()) {
+                try{
+                    Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().postArtifacts(bbartifacts, moduleName);
+                } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
+                    // Ignore this and continue on
+                    //logger.log(Level.SEVERE, "Unable to post blackboard artifacts", ex); //NON-NLS
+                    return;
+                }
             }
         }
 
