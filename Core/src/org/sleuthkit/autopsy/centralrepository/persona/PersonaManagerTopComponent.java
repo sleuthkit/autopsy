@@ -154,7 +154,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
             results = Persona.getPersonaByName(searchField.getText());
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Failed to search personas", ex);
-            JOptionPane.showMessageDialog(PersonaManagerTopComponent.this,
+            JOptionPane.showMessageDialog(this,
                     Bundle.PMTopComponent_search_exception_Title(),
                     Bundle.PMTopComponent_search_exception_msg(),
                     JOptionPane.ERROR_MESSAGE);

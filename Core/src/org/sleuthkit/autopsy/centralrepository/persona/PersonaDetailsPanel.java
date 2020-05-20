@@ -24,6 +24,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -55,10 +56,10 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
 
     private Persona currentPersona;
     private String currentName = null;
-    private ArrayList<PersonaAccount> currentAccounts = null;
-    private ArrayList<PersonaMetadata> currentMetadata = null;
-    private ArrayList<PersonaAlias> currentAliases = null;
-    private ArrayList<CorrelationCase> currentCases = null;
+    private List<PersonaAccount> currentAccounts;
+    private List<PersonaMetadata> currentMetadata;
+    private List<PersonaAlias> currentAliases;
+    private List<CorrelationCase> currentCases;
 
     // Creation
     private PersonaDetailsTableModel accountsModel;
@@ -566,6 +567,8 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
             case VIEW:
                 loadPersona(parent, persona);
                 break;
+            default:
+                logger.log(Level.WARNING, "Unsupported mode: {0}", mode);
         }
         initializeFields();
     }
