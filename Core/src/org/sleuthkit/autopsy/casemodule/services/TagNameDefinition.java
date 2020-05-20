@@ -68,6 +68,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
 
     private static final List<TagNameDefinition> STANDARD_TAGS_DEFINITIONS = new ArrayList<>();
     private static final List<TagNameDefinition> PROJECT_VIC_TAG_DEFINITIONS = new ArrayList<>();
+     private static final List<String> OLD_CATEGORY_TAG_NAMES = new ArrayList<>();
 
     static {
         STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
@@ -79,6 +80,14 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         PROJECT_VIC_TAG_DEFINITIONS.add(new TagNameDefinition(CATEGORY_THREE_NAME, "", TagName.HTML_COLOR.YELLOW, TskData.FileKnown.BAD));
         PROJECT_VIC_TAG_DEFINITIONS.add(new TagNameDefinition(CATEGORY_FOUR_NAME, "", TagName.HTML_COLOR.PURPLE, TskData.FileKnown.UNKNOWN));
         PROJECT_VIC_TAG_DEFINITIONS.add(new TagNameDefinition(CATEGORY_FIVE_NAME, "", TagName.HTML_COLOR.FUCHSIA, TskData.FileKnown.UNKNOWN));
+
+        OLD_CATEGORY_TAG_NAMES.add("CAT-1: " + CATEGORY_ONE_NAME);
+        OLD_CATEGORY_TAG_NAMES.add("CAT-2: " + CATEGORY_TWO_NAME);
+        OLD_CATEGORY_TAG_NAMES.add("CAT-3: " + CATEGORY_THREE_NAME);
+        OLD_CATEGORY_TAG_NAMES.add("CAT-4: " + CATEGORY_FOUR_NAME);
+        OLD_CATEGORY_TAG_NAMES.add("CAT-5: " + CATEGORY_FIVE_NAME);
+        OLD_CATEGORY_TAG_NAMES.add("CAT-0: Uncategorized");
+
     }
 
     /**
@@ -331,6 +340,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         if (version == null) {
             String tagsProperty = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
             if (tagsProperty == null || tagsProperty.isEmpty()) {
+                ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_SETTING_VERSION_KEY, Integer.toString(TAG_SETTINGS_VERSION));
                 return;
             }
 
@@ -370,7 +380,8 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         List<String> tagStrings = new ArrayList<>();
         List<String> standardTags = getStandardTagNames();
         for (TagNameDefinition def : definitions) {
-            if (!standardTags.contains(def.getDisplayName())) {
+            if (!standardTags.contains(def.getDisplayName()) && 
+                    !OLD_CATEGORY_TAG_NAMES.contains(def.getDisplayName())) {
                 tagStrings.add(def.toSettingsFormat());
             }
         }
