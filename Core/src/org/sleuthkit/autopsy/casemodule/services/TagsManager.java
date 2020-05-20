@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,7 +55,7 @@ public class TagsManager implements Closeable {
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
     private final SleuthkitCase caseDb;
 
-    static String DEFAULT_TAG_SET_NAME = "Project VIC (United States)";
+    private static String DEFAULT_TAG_SET_NAME = "Project VIC";
 
     static {
 
@@ -184,7 +184,35 @@ public class TagsManager implements Closeable {
      * @return list of predefined tag names
      */
     public static List<String> getStandardTagNames() {
-        return TagNameDefinition.getStandardTagNames();
+        List<String> tagList = new ArrayList<>();
+
+        for (TagNameDefinition tagNameDef : TagNameDefinition.getStandardTagNameDefinitions()) {
+            tagList.add(tagNameDef.getDisplayName());
+        }
+
+        try {
+            List<TagSet> tagSetList = Case.getCurrentCaseThrows().getSleuthkitCase().getTaggingManager().getTagSets();
+            for (TagSet tagSet : tagSetList) {
+                if (tagSet.getName().equals(DEFAULT_TAG_SET_NAME)) {
+                    for (TagName tagName : tagSet.getTagNames()) {
+                        tagList.add(tagName.getDisplayName());
+                    }
+                }
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get Project VIC tags from the database.", ex);
+        }
+
+        return tagList;
+    }
+
+    /**
+     * Returns the name of the Category TagSet.
+     *
+     * @return Name of category TagSet.
+     */
+    public static String getCategoryTagSetName() {
+        return DEFAULT_TAG_SET_NAME;
     }
 
     /**
