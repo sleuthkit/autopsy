@@ -125,6 +125,33 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     }
 
     /**
+     * Returns the bookmark tag display string.
+     *
+     * @return
+     */
+    static String getBookmarkDisplayString() {
+        return Bundle.TagNameDefinition_predefTagNames_bookmark_text();
+    }
+
+    /**
+     * Returns the Follow Up tag display string.
+     *
+     * @return
+     */
+    static String getFollowUpDisplayString() {
+        return Bundle.TagNameDefinition_predefTagNames_followUp_text();
+    }
+
+    /**
+     * Returns the Notable tag display string.
+     *
+     * @return
+     */
+    static String getNotableDisplayString() {
+        return Bundle.TagNameDefinition_predefTagNames_notableItem_text();
+    }
+
+    /**
      * Gets the display name for the tag name.
      *
      * @return The display name.
