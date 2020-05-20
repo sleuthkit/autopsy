@@ -55,11 +55,11 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     private static final String TAG_SETTING_VERSION_KEY = "CustomTagNameVersion";
     private static final int TAG_SETTINGS_VERSION = 1;
 
-    private static final String CATEGORY_ONE_NAME = "CAT-1: Child Exploitation (Illegal)";
-    private static final String CATEGORY_TWO_NAME = "CAT-2: Child Exploitation (Non-Illegal/Age Difficult)";
-    private static final String CATEGORY_THREE_NAME = "CAT-3: CGI/Animation (Child Exploitive)";
-    private static final String CATEGORY_FOUR_NAME = "CAT-4: Exemplar/Comparison (Internal Use Only)";
-    private static final String CATEGORY_FIVE_NAME = "CAT-5: Non-pertinent";
+    private static final String CATEGORY_ONE_NAME = "Child Exploitation (Illegal)";
+    private static final String CATEGORY_TWO_NAME = "Child Exploitation (Non-Illegal/Age Difficult)";
+    private static final String CATEGORY_THREE_NAME = "CGI/Animation (Child Exploitive)";
+    private static final String CATEGORY_FOUR_NAME = "Exemplar/Comparison (Internal Use Only)";
+    private static final String CATEGORY_FIVE_NAME = "Non-pertinent";
 
     private final String displayName;
     private final String description;
@@ -117,6 +117,33 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         }
 
         return strList;
+    }
+
+    /**
+     * Returns the bookmark tag display string.
+     *
+     * @return
+     */
+    static String getBookmarkDisplayString() {
+        return Bundle.TagNameDefinition_predefTagNames_bookmark_text();
+    }
+
+    /**
+     * Returns the Follow Up tag display string.
+     *
+     * @return
+     */
+    static String getFollowUpDisplayString() {
+        return Bundle.TagNameDefinition_predefTagNames_followUp_text();
+    }
+
+    /**
+     * Returns the Notable tag display string.
+     *
+     * @return
+     */
+    static String getNotableDisplayString() {
+        return Bundle.TagNameDefinition_predefTagNames_notableItem_text();
     }
 
     /**
