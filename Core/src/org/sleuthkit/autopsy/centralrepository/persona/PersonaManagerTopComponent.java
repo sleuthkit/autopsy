@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -49,7 +50,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
 
     private static final Logger logger = Logger.getLogger(PersonaManagerTopComponent.class.getName());
 
-    private ArrayList<Persona> currentResults = null;
+    private List<Persona> currentResults = null;
     private Persona selectedPersona = null;
 
     @Messages({

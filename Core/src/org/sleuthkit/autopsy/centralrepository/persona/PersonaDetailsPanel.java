@@ -51,6 +51,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @RetainLocation("personadetails")
 @SuppressWarnings("PMD.SingularField")
 public final class PersonaDetailsPanel extends javax.swing.JPanel {
+    
+    private static final long serialVersionUID = 1L;
+    
+    private static final Logger logger = Logger.getLogger(PersonaDetailsPanel.class.getName());
 
     private PersonaDetailsMode mode;
 
@@ -67,7 +71,6 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     private PersonaDetailsTableModel aliasesModel;
     private PersonaDetailsTableModel casesModel;
 
-    private static final Logger logger = Logger.getLogger(PersonaDetailsPanel.class.getName());
 
     @Messages({
         "PersonaDetailsPanel_NameEdit=Edit Persona",
@@ -569,6 +572,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 break;
             default:
                 logger.log(Level.WARNING, "Unsupported mode: {0}", mode);
+                break;
         }
         initializeFields();
     }
