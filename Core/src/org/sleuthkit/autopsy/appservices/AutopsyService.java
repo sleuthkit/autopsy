@@ -160,6 +160,16 @@ public interface AutopsyService {
         public boolean cancelRequested() {
             return this.cancelRequested;
         }
+        
+        /**
+         * Indicates whether or the case is a new case in the process of being
+         * created.
+         * 
+         * @return True if it is a new case.
+         */
+        public boolean isNewCase() {
+            return this.isNewCase;
+        }
     }
 
     /**
