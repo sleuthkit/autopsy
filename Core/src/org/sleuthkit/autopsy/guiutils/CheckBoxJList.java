@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.guiutils;
 
 import java.awt.BorderLayout;
 import java.awt.Component;

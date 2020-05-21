@@ -16,8 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.guiutils;
 
+import org.sleuthkit.autopsy.guiutils.CheckBoxJList;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
