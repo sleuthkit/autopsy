@@ -170,6 +170,35 @@ public class Persona {
         this.examiner = examiner;
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 67 * hash + (int) (this.id ^ (this.id >>> 32));
+        hash = 67 * hash + Objects.hashCode(this.uuidStr);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Persona other = (Persona) obj;
+        if (this.id != other.getId()) {
+            return false;
+        }
+        if (!Objects.equals(this.uuidStr, other.getUuidStr())) {
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Creates a Persona and associates the specified account with it.
      *
