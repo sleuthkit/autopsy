@@ -4,6 +4,7 @@
 #   
 # Change history
 #   20140130 - created
+#   20190211 - added "paragraphID" int to hex conversion
 #
 # References
 #   http://dfstream.blogspot.com/2014/01/ms-word-2013-reading-locations.html
@@ -66,7 +67,9 @@ sub pluginmain {
 				
 				eval {
 					my $p = $s->get_value("Position")->get_data();
-					::rptMsg("Position: ".$p);
+					my @ps = split(' ', $p);
+					my $paraid = sprintf("%X", $ps[0]);
+					::rptMsg("Position: ".$p." (ParagraphID: ".$paraid.")");
 				};
 				::rptMsg("");
 			}

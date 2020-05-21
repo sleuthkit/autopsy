@@ -5,12 +5,13 @@
 # other locations)
 # 
 # Change history
-#   20130115 - created
+#   20180705 - updated to support Win10, per data provided by Micah Jones
 #   20170129 - added support for http://www.hexacorn.com/blog/2017/01/29/beyond-good-ol-run-key-part-59/
+#   20130115 - created
 #
 # Category:
 # 
-# copyright 2017 Quantum Analytics Research, LLC
+# copyright 2018 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package bthport;
@@ -21,7 +22,7 @@ my %config = (hive          => "System",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20170129);
+              version       => 20180705);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -67,22 +68,21 @@ sub pluginmain {
 # Note: Need to get VID and PID values for translation and mapping					
 					my $devname;
 					eval {
-# May need to work on parsing the binary "Name" value data into an actual name...
-						my @str1 = split(//,unpack("H*",$s->get_value("Name")->get_data()));
-						my @s3;
-						my $str;
-						foreach my $i (0..((scalar(@str1)/2) - 1)) {
-							$s3[$i] = $str1[$i * 2].$str1[($i * 2) + 1];
-							if (hex($s3[$i]) > 0x1f && hex($s3[$i]) < 0x7f) {
-								$str .= chr(hex($s3[$i]));
-							}
-							else {
-								$str .= " ";
-							}
-						}
-						::rptMsg("Device Name: ".$str);
+						my $n = $s->get_value("Name")->get_data();
+						::rptMsg("Name            : ".$n);
 					};
 					
+					eval {
+						my ($t0,$t1) = unpack("VV",$s->get_value("LastSeen")->get_data());
+						::rptMsg("LastSeen        : ".gmtime(::getTime($t0,$t1))." Z");
+					};
+					
+					eval {
+						my ($t0,$t1) = unpack("VV",$s->get_value("LastConnected")->get_data());
+						::rptMsg("LastConnected   : ".gmtime(::getTime($t0,$t1))." Z");
+					};
+					
+					::rptMsg("");
 				}
 			}
 			else {
@@ -92,7 +92,7 @@ sub pluginmain {
 		else {
 			::rptMsg($cn_path." not found.");
 		}
-		
+		::rptMsg("");
 		my $rs_path = $ccs."\\services\\BTHPORT\\Parameters\\Radio Support";
 		my $rs;
 		if ($rs = $root_key->get_subkey($rs_path)) {

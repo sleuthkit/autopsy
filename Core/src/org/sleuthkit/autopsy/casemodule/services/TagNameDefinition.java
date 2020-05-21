@@ -57,11 +57,11 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     private static final String TAG_SETTING_VERSION_KEY = "CustomTagNameVersion";
     private static final int TAG_SETTINGS_VERSION = 1;
 
-    private static final String CATEGORY_ONE_NAME = "CAT-1: Child Exploitation (Illegal)";
-    private static final String CATEGORY_TWO_NAME = "CAT-2: Child Exploitation (Non-Illegal/Age Difficult)";
-    private static final String CATEGORY_THREE_NAME = "CAT-3: CGI/Animation (Child Exploitive)";
-    private static final String CATEGORY_FOUR_NAME = "CAT-4: Exemplar/Comparison (Internal Use Only)";
-    private static final String CATEGORY_FIVE_NAME = "CAT-5: Non-pertinent";
+    private static final String CATEGORY_ONE_NAME = "Child Exploitation (Illegal)";
+    private static final String CATEGORY_TWO_NAME = "Child Exploitation (Non-Illegal/Age Difficult)";
+    private static final String CATEGORY_THREE_NAME = "CGI/Animation (Child Exploitive)";
+    private static final String CATEGORY_FOUR_NAME = "Exemplar/Comparison (Internal Use Only)";
+    private static final String CATEGORY_FIVE_NAME = "Non-pertinent";
 
     private final String displayName;
     private final String description;
@@ -70,6 +70,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
 
     private static final Map<String, TagNameDefinition> STANDARD_TAGS_DEFINITIONS = new HashMap<>();
     private static final Map<String, TagNameDefinition> PROJECT_VIC_TAG_DEFINITIONS = new HashMap<>();
+    private static final List<String> OLD_CATEGORY_TAG_NAMES = new ArrayList<>();
 
     static {
         STANDARD_TAGS_DEFINITIONS.put(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
@@ -81,6 +82,14 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_THREE_NAME, new TagNameDefinition(CATEGORY_THREE_NAME, "", TagName.HTML_COLOR.YELLOW, TskData.FileKnown.BAD));
         PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_FOUR_NAME, new TagNameDefinition(CATEGORY_FOUR_NAME, "", TagName.HTML_COLOR.PURPLE, TskData.FileKnown.UNKNOWN));
         PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_FIVE_NAME, new TagNameDefinition(CATEGORY_FIVE_NAME, "", TagName.HTML_COLOR.FUCHSIA, TskData.FileKnown.UNKNOWN));
+        
+        OLD_CATEGORY_TAG_NAMES.add("CAT-1: " + CATEGORY_ONE_NAME);
+        OLD_CATEGORY_TAG_NAMES.add("CAT-2: " + CATEGORY_TWO_NAME);
+        OLD_CATEGORY_TAG_NAMES.add("CAT-3: " + CATEGORY_THREE_NAME);
+        OLD_CATEGORY_TAG_NAMES.add("CAT-4: " + CATEGORY_FOUR_NAME);
+        OLD_CATEGORY_TAG_NAMES.add("CAT-5: " + CATEGORY_FIVE_NAME);
+        OLD_CATEGORY_TAG_NAMES.add("CAT-0: Uncategorized");
+        
     }
 
     /**
@@ -113,6 +122,33 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         strList.addAll(PROJECT_VIC_TAG_DEFINITIONS.keySet());
 
         return strList;
+    }
+
+    /**
+     * Returns the bookmark tag display string.
+     *
+     * @return
+     */
+    static String getBookmarkDisplayString() {
+        return Bundle.TagNameDefinition_predefTagNames_bookmark_text();
+    }
+
+    /**
+     * Returns the Follow Up tag display string.
+     *
+     * @return
+     */
+    static String getFollowUpDisplayString() {
+        return Bundle.TagNameDefinition_predefTagNames_followUp_text();
+    }
+
+    /**
+     * Returns the Notable tag display string.
+     *
+     * @return
+     */
+    static String getNotableDisplayString() {
+        return Bundle.TagNameDefinition_predefTagNames_notableItem_text();
     }
 
     /**
@@ -300,6 +336,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         if (version == null) {
             String tagsProperty = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
             if (tagsProperty == null || tagsProperty.isEmpty()) {
+                ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_SETTING_VERSION_KEY, Integer.toString(TAG_SETTINGS_VERSION));
                 return;
             }
 
@@ -339,7 +376,8 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         List<String> tagStrings = new ArrayList<>();
         List<String> standardTags = getStandardTagNames();
         for (TagNameDefinition def : definitions) {
-            if (!standardTags.contains(def.getDisplayName())) {
+            if (!standardTags.contains(def.getDisplayName()) && 
+                    !OLD_CATEGORY_TAG_NAMES.contains(def.getDisplayName())) {
                 tagStrings.add(def.toSettingsFormat());
             }
         }

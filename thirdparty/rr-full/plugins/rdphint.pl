@@ -7,7 +7,7 @@
 package rdphint;
 use strict;
 
-my %config = (hive => "NTUSER",
+my %config = (hive => "NTUSER\.DAT",
               osmask => 22,
               hasShortDescr => 1,
               hasDescr => 0,

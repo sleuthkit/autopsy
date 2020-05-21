@@ -38,7 +38,6 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -62,9 +61,7 @@ public class CategoryManager {
     private static final Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
 
     /**
-     * the DrawableDB that backs the category counts cache. The counts are
-     * initialized from this, and the counting of CAT-0 is always delegated to
-     * this db.
+     * the DrawableDB that backs the category counts cache.
      */
     private final DrawableDB drawableDb;
 
