@@ -42,12 +42,14 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.apache.commons.lang3.ObjectUtils;
 
 /**
  * This is a viewer for TSK_CALLLOG artifacts.
  *
  *
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class CallLogArtifactViewer extends javax.swing.JPanel implements ArtifactContentViewer {
 
     private final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
@@ -635,7 +637,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         if (directionAttr != null) {
             // if direction is known,  depending on the direction,
             // the TO or the FROM attribute is the primary number of interest.
-            // annd the other is is possibly the number/address of device owner.
+            // and the other, if available, is possibly the local account of device owner.
             direction = directionAttr.getValueString();
 
             if (direction.equalsIgnoreCase("Incoming")) {
@@ -647,23 +649,16 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             }
 
         }
-        // if direction isn't known, look for any attribute that may have the number/address
+        // if direction isn't known, check all the usual attributes that may have the number/address
         if (numberAttr == null) {
-            numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
+            numberAttr = ObjectUtils.firstNonNull(
+                    artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)),
+                    artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)),
+                    artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)),
+                    artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID))
+            );
         }
-
-        if (numberAttr == null) {
-            numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO));
-        }
-
-        if (numberAttr == null) {
-            numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER));
-        }
-
-        if (numberAttr == null) {
-            numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID));
-        }
-        
+               
         if (numberAttr != null) {
 
             // check if it's a list of numbers and and if so,
@@ -681,33 +676,16 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             callLogViewData.setOtherParticipants(otherNumbers);
 
             // get date, duration,
-            BlackboardAttribute startTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
-            if (startTimeAttr == null) {
-                startTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
-            }
-            if (startTimeAttr != null) {
-                long startTime = startTimeAttr.getValueLong();
-                Content content = artifact.getDataSource();
-                if (null != content && 0 != startTime) {
-                    dateFormatter.setTimeZone(ContentUtils.getTimeZone(content));
-                    callLogViewData.setDateTimeStr(dateFormatter.format(new java.util.Date(startTime * 1000)));
-                }
+            extractTimeAndDuration(artifact, callLogViewData);
 
-                BlackboardAttribute endTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END));
-                if (endTimeAttr != null) {
-                    long endTime = endTimeAttr.getValueLong();
-                    if (endTime > 0) {
-                        callLogViewData.setDuration(String.format("%d seconds", (endTime - startTime)));
-                    }
-                }
-            }
-
+            // get the data source name and device id
             Content dataSource = artifact.getDataSource();
 
             callLogViewData.setDataSourceName(dataSource.getName());
             String deviceId = ((DataSource) dataSource).getDeviceId();
             callLogViewData.setDataSourceDeviceId(deviceId);
 
+            // set the local account, if it can be deduced
             if (localAccountAttr != null) {
                 String attrValue = localAccountAttr.getValueString();
                 if (attrValue.equalsIgnoreCase(deviceId) == false && attrValue.contains(",") == false) {
@@ -715,6 +693,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 }
             }
 
+            // set any other additional attriubutes.
             callLogViewData.setOtherAttributes(extractOtherAttributes(artifact));
 
         }
@@ -742,4 +721,37 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         return otherAttributes;
     }
     
+    /**
+     * Extract the call time and duration from the artifact and saves in the
+     * CallLogViewData.
+     *
+     * @param artifact Call log artifact.
+     * @param callLogViewData CallLogViewData object to save the time & duration
+     * in.
+     *
+     * @throws TskCoreException
+     */
+    private void extractTimeAndDuration(BlackboardArtifact artifact, CallLogViewData callLogViewData ) throws TskCoreException {
+        
+        BlackboardAttribute startTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
+        if (startTimeAttr == null) {
+            startTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
+        }
+        if (startTimeAttr != null) {
+            long startTime = startTimeAttr.getValueLong();
+            Content content = artifact.getDataSource();
+            if (null != content && 0 != startTime) {
+                dateFormatter.setTimeZone(ContentUtils.getTimeZone(content));
+                callLogViewData.setDateTimeStr(dateFormatter.format(new java.util.Date(startTime * 1000)));
+            }
+
+            BlackboardAttribute endTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END));
+            if (endTimeAttr != null) {
+                long endTime = endTimeAttr.getValueLong();
+                if (endTime > 0) {
+                    callLogViewData.setDuration(String.format("%d seconds", (endTime - startTime)));
+                }
+            }
+        }
+    }
 }
