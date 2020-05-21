@@ -73,6 +73,8 @@ public class ObjectDetectedFilterPanel extends AbstractDiscoveryFiltersPanel {
             }
         });
 
+        setPreferredSize(new java.awt.Dimension(300, 60));
+
         objectsList.setModel(new DefaultListModel<String>());
         objectsList.setEnabled(false);
         objectsList.setVisibleRowCount(2);
@@ -82,11 +84,13 @@ public class ObjectDetectedFilterPanel extends AbstractDiscoveryFiltersPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(objectsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 564, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(objectsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 12, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(objectsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(objectsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 

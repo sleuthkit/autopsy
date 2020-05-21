@@ -54,6 +54,8 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFiltersPanel {
             }
         });
 
+        setPreferredSize(new java.awt.Dimension(300, 60));
+
         dataSourceList.setModel(new DefaultListModel<DataSourceItem>());
         dataSourceList.setEnabled(false);
         dataSourceList.setVisibleRowCount(5);
@@ -63,11 +65,13 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFiltersPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dataSourceScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+            .addComponent(dataSourceScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dataSourceScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(dataSourceScrollPane)
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 

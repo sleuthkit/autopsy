@@ -20,8 +20,8 @@ final class ImageFilterPanel extends AbstractFilterPanel {
      * Creates new form ImageFilterPanel
      */
     ImageFilterPanel() {
+        super();
         initComponents();
-        initConstraints();
         SizeFilterPanel sizeFilterPanel = new SizeFilterPanel(FILE_TYPE);
         int[] sizeIndicesSelected = {1, 2, 3, 4, 5};
         addFilter(sizeFilterPanel, true, sizeIndicesSelected);
@@ -38,6 +38,7 @@ final class ImageFilterPanel extends AbstractFilterPanel {
         addFilter(new InterestingItemsFilterPanel(), false, null);
         addFilter(new ObjectDetectedFilterPanel(), false, null);
         addFilter(new ParentFolderFilterPanel(), false, null);
+        endPanel();
     }
 
     /**

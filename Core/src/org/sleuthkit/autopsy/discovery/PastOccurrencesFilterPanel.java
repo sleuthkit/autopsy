@@ -48,6 +48,8 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
             }
         });
 
+        setPreferredSize(new java.awt.Dimension(300, 60));
+
         crFrequencyList.setModel(new DefaultListModel<Frequency>());
         crFrequencyList.setEnabled(false);
         crFrequencyList.setVisibleRowCount(5);
@@ -57,11 +59,13 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(crFrequencyScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 564, Short.MAX_VALUE)
+            .addComponent(crFrequencyScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(crFrequencyScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(crFrequencyScrollPane)
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 

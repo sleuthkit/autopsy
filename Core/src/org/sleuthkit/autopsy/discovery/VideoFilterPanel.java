@@ -20,8 +20,8 @@ final class VideoFilterPanel extends AbstractFilterPanel {
      * Creates new form VideoFilterPanel
      */
     VideoFilterPanel() {
+        super();
         initComponents();
-        initConstraints();
         SizeFilterPanel sizeFilterPanel = new SizeFilterPanel(FileSearchData.FileType.VIDEO);
         addFilter(sizeFilterPanel, true, null);
         addFilter(new DataSourceFilterPanel(), false, null);

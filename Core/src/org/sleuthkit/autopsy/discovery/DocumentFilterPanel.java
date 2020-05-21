@@ -20,8 +20,8 @@ final class DocumentFilterPanel extends AbstractFilterPanel {
      * Creates new form DocumentFilterPanel
      */
     DocumentFilterPanel() {
+        super();
         initComponents();
-        initConstraints();
         SizeFilterPanel sizeFilterPanel = new SizeFilterPanel(FileSearchData.FileType.DOCUMENTS);
         addFilter(sizeFilterPanel, false, null);
         addFilter(new DataSourceFilterPanel(), false, null);

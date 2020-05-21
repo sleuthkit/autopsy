@@ -74,6 +74,8 @@ public class InterestingItemsFilterPanel extends AbstractDiscoveryFiltersPanel {
             }
         });
 
+        setPreferredSize(new java.awt.Dimension(300, 60));
+
         interestingItemsList.setModel(new DefaultListModel<String>());
         interestingItemsList.setEnabled(false);
         interestingItemsList.setVisibleRowCount(2);
@@ -83,11 +85,11 @@ public class InterestingItemsFilterPanel extends AbstractDiscoveryFiltersPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(interestingItemsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 491, Short.MAX_VALUE)
+            .addComponent(interestingItemsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(interestingItemsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(interestingItemsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 88, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 

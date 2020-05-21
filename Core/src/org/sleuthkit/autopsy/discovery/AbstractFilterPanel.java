@@ -8,6 +8,7 @@ package org.sleuthkit.autopsy.discovery;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -21,6 +22,16 @@ import javax.swing.event.ListSelectionListener;
  */
 abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionListener {
 
+    AbstractFilterPanel() {
+        constraints.fill = GridBagConstraints.VERTICAL;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.gridheight = 2;
+        constraints.gridwidth = LABEL_WIDTH;
+        constraints.weightx = LABEL_WEIGHT;
+        constraints.anchor = GridBagConstraints.NORTHWEST;
+        constraints.insets = new Insets(0, 8, 12, 8);
+    }
     private static final double LABEL_WEIGHT = 0;
     private static final double PANEL_WEIGHT = 0;
     private static final int LABEL_WIDTH = 1;
@@ -30,16 +41,6 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
     private final GridBagLayout layout = new GridBagLayout();
     private final GridBagConstraints constraints = new GridBagConstraints();
     private final List<AbstractDiscoveryFiltersPanel> filters = new ArrayList<>();
-
-    final void initConstraints() {
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.gridheight = 2;
-        constraints.gridwidth = LABEL_WIDTH;
-        constraints.weightx = LABEL_WEIGHT;
-        constraints.anchor = GridBagConstraints.NORTHWEST;
-    }
 
     abstract FileSearchData.FileType getFileType();
 
@@ -56,7 +57,21 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
         filters.add(filterPanel);
         addToGridBagLayout(filterPanel.getCheckbox(), null);
         addToGridBagLayout(filterPanel, null);
+        constraints.weightx = .9;
+        constraints.fill = GridBagConstraints.BOTH;
+        addToGridBagLayout(new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0)), null);
+        constraints.fill = GridBagConstraints.VERTICAL;
+        constraints.weightx = LABEL_WEIGHT;
         updateLayout();
+    }
+
+    void endPanel() {
+        //add filler at end
+        constraints.gridy++;
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.weightx = .9;
+        constraints.weighty = .9;
+        add(new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767)), constraints);
     }
 
     void clearFilters() {

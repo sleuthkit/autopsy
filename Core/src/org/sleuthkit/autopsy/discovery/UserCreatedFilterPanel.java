@@ -37,15 +37,17 @@ public class UserCreatedFilterPanel extends AbstractDiscoveryFiltersPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(userCreatedCheckbox, org.openide.util.NbBundle.getMessage(UserCreatedFilterPanel.class, "UserCreatedFilterPanel.userCreatedCheckbox.text_1")); // NOI18N
 
+        setPreferredSize(new java.awt.Dimension(300, 42));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGap(0, 300, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGap(0, 42, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 

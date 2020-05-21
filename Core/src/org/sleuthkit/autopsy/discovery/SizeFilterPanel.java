@@ -49,6 +49,8 @@ final class SizeFilterPanel extends AbstractDiscoveryFiltersPanel {
             }
         });
 
+        setPreferredSize(new java.awt.Dimension(300, 60));
+
         sizeList.setModel(new DefaultListModel<FileSize>());
         sizeList.setEnabled(false);
         sizeList.setVisibleRowCount(5);
@@ -58,12 +60,12 @@ final class SizeFilterPanel extends AbstractDiscoveryFiltersPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(sizeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+            .addComponent(sizeScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(sizeScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(sizeScrollPane)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
