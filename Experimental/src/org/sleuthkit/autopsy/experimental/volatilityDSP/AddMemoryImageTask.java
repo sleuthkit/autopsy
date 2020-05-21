@@ -146,30 +146,25 @@ final class AddMemoryImageTask implements Runnable {
         progressMonitor.setProgressText(Bundle.AddMemoryImageTask_progressMessage_addingImageFile( memoryImagePath));
 
         SleuthkitCase caseDatabase = Case.getCurrentCaseThrows().getSleuthkitCase();
-        caseDatabase.acquireSingleUserCaseWriteLock();
-        try {
-            /*
-             * Verify the memory image file exists.
-             */
-            File imageFile = Paths.get(memoryImagePath).toFile();
-            if (!imageFile.exists()) {
-                throw new TskCoreException(Bundle.AddMemoryImageTask_exceptionMessage_noImageFile(memoryImagePath, deviceId));
-            }
 
-            /*
-             * Add the data source.
-             *
-             * NOTE: The object id for device passed to
-             * SleuthkitCase.addImageInfo is hard-coded to zero for now. This
-             * will need to be changed when a Device abstraction is added to the
-             * SleuthKit data model.
-             */
-            Image dataSource = caseDatabase.addImageInfo(0, new ArrayList<>(Arrays.asList(memoryImagePath)), timeZone);
-            return dataSource;
-
-        } finally {
-            caseDatabase.releaseSingleUserCaseWriteLock();
+        /*
+         * Verify the memory image file exists.
+         */
+        File imageFile = Paths.get(memoryImagePath).toFile();
+        if (!imageFile.exists()) {
+            throw new TskCoreException(Bundle.AddMemoryImageTask_exceptionMessage_noImageFile(memoryImagePath, deviceId));
         }
+
+        /*
+         * Add the data source.
+         *
+         * NOTE: The object id for device passed to
+         * SleuthkitCase.addImageInfo is hard-coded to zero for now. This
+         * will need to be changed when a Device abstraction is added to the
+         * SleuthKit data model.
+         */
+        Image dataSource = caseDatabase.addImageInfo(0, new ArrayList<>(Arrays.asList(memoryImagePath)), timeZone);
+        return dataSource;
     }
 
     /**

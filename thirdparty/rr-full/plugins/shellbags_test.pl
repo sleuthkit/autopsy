@@ -2,7 +2,7 @@
 # shellbags_test.pl
 #
 #
-# License: GPL v3 
+#  
 # copyright 2012 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
@@ -358,7 +358,7 @@ sub parseFolderItem {
 	my $str = "";
 	while($tag) {
 		my $s = substr($data,$ofs_shortname + $cnt,1);
-                return %item unless (defined $s); 
+        return %item unless (defined $s);
 		if ($s =~ m/\x00/ && ((($cnt + 1) % 2) == 0)) {
 			$tag = 0;
 		}
@@ -374,8 +374,8 @@ sub parseFolderItem {
 	$tag = 1;
 	$cnt = 0;
 	while ($tag) {
-                my $s = substr($data,$ofs + $cnt,2);
-                return %item unless (defined $s); 
+        my $s = substr($data,$ofs + $cnt,2);
+        return %item unless (defined $s); 
 		if (unpack("v",$s) == 0xbeef) {
 			$tag = 0;
 		}
