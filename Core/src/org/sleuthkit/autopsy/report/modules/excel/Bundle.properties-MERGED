@@ -14,6 +14,6 @@ ReportExcel.writeSummary.caseName=Case Name:
 ReportExcel.writeSummary.caseNotes=Case Notes:
 ReportExcel.writeSummary.caseNum=Case Number:
 ReportExcel.writeSummary.examiner=Examiner:
-ReportExcel.writeSummary.numImages=Number of Images:
+ReportExcel.writeSummary.numImages=Number of data sources in case:
 ReportExcel.writeSummary.sheetName=Summary
 ReportExcel.writeSummary.summary=Summary

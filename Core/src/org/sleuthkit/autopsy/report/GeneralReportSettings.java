@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,54 +16,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.report.infrastructure;
+package org.sleuthkit.autopsy.report;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Class for persisting the file properties used by FileReportGenerator to drive
- * report generation by FileReportModules.
+ * Configuration parameters for general report modules
  */
-final class FileReportSettings implements Serializable {
-
+public class GeneralReportSettings implements Serializable {
     private static final long serialVersionUID = 1L;
-    private Map<FileReportDataTypes, Boolean> filePropertiesInfo = new HashMap<>();
+    
     private List<Long> selectedDataSources;
-
-    /**
-     * Creates FileReportSettings object.
-     *
-     * @param fileReportInfo The information that should be included about each
-     * file in the report.
-     */
-    FileReportSettings(Map<FileReportDataTypes, Boolean> fileReportInfo) {
-        this.filePropertiesInfo = fileReportInfo;
-    }
-
-    /**
-     * Gets file report settings.
-     *
-     * @return File report settings
-     */
-    Map<FileReportDataTypes, Boolean> getFileProperties() {
-        return filePropertiesInfo;
-    }
+    private String reportDirectoryPath;
     
     /**
      * Returns the selected data sources
+     * @return List of data source ids
      */
-    List<Long> getSelectedDataSources() {
+    public List<Long> getSelectedDataSources() {
         return selectedDataSources;
     }
     
     /**
      * Sets the selected data sources
+     * @param selectedDataSources List of data source ids
      */
-    void setSelectedDataSources(List<Long> selectedDataSources) {
+    public void setSelectedDataSources(List<Long> selectedDataSources) {
         this.selectedDataSources = new ArrayList<>(selectedDataSources);
+    }
+    
+    /**
+     * Returns the directory that the report file should be saved in.
+     * @return Path to report directory
+     */
+    public String getReportDirectoryPath() {
+        return this.reportDirectoryPath;
+    } 
+    
+     /**
+     * Sets the directory that the report file should be saved in.
+     * @param reportDirectoryPath Path to report directory
+     */
+    public void setReportDirectoryPath(String reportDirectoryPath) {
+        this.reportDirectoryPath = reportDirectoryPath;
     }
 }

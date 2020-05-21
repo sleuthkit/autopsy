@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -307,7 +307,7 @@ class ExcelReport implements TableReportModule {
         "ReportExcel.writeSummary.sheetName=Summary",
         "ReportExcel.writeSummary.summary=Summary",
         "ReportExcel.writeSummary.caseName=Case Name:",
-        "ReportExcel.writeSummary.numImages=Number of Images:",
+        "ReportExcel.writeSummary.numImages=Number of data sources in case:",
         "ReportExcel.writeSummary.caseNum=Case Number:",
         "ReportExcel.writeSummary.caseNotes=Case Notes:",
         "ReportExcel.writeSummary.examiner=Examiner:"
