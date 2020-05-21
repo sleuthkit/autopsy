@@ -290,22 +290,18 @@ public class CentralRepoPersonasTest  extends TestCase {
            
             String comment = "The best dog ever";
             Persona.PersonaStatus status = Persona.PersonaStatus.ACTIVE;
-            PersonaAccount pa1 = Persona.createPersonaForAccount(DOG_PERSONA_NAME, comment , status, phoneAccount1, "Because I said so", Persona.Confidence.LOW );
+            Persona dogPersona = Persona.createPersonaForAccount(DOG_PERSONA_NAME, comment , status, phoneAccount1, "Because I said so", Persona.Confidence.LOW );
                 
 
-            Persona dogPersona = pa1.getPersona();
-            
             // Verify Persona name, status etc.
-            Assert.assertEquals(DOG_PERSONA_NAME, pa1.getPersona().getName());
+            Assert.assertEquals(DOG_PERSONA_NAME, dogPersona.getName());
             Assert.assertEquals(status.name(), dogPersona.getStatus().name());
-            Assert.assertTrue(dogPersona.getExaminer().getLoginName().equalsIgnoreCase(pa1.getExaminer().getLoginName()));
             
             // Assert that the persona was created by the currently logged in user
             Assert.assertTrue(dogPersona.getExaminer().getLoginName().equalsIgnoreCase(System.getProperty("user.name")));
 
             // Assert that Persona was created within the last 10 mins 
-            Assert.assertTrue(Instant.now().toEpochMilli() - pa1.getDateAdded() < 600 * 1000);
-            Assert.assertEquals(pa1.getConfidence(), Persona.Confidence.LOW);
+            Assert.assertTrue(Instant.now().toEpochMilli() - dogPersona.getCreatedDate() < 600 * 1000);
 
             // Step 3. Add Persona Aliases
             PersonaAlias alias1 = dogPersona.addAlias("Good Boy", "Coz he's is the best dog ever", Persona.Confidence.MEDIUM);
@@ -363,9 +359,9 @@ public class CentralRepoPersonasTest  extends TestCase {
             // Step 6: Create a Second Persona, that shares a common account with another persona
            
             String comment2 = "The fiercest cat alive.";
-            PersonaAccount pa2 = Persona.createPersonaForAccount(CAT_PERSONA_NAME, comment2 , Persona.PersonaStatus.ACTIVE, catdogFBAccount, "Smells like a cat.", Persona.Confidence.LOW );
-            Assert.assertNotNull(pa2);
-            Assert.assertTrue(pa2.getPersona().getName().equalsIgnoreCase(CAT_PERSONA_NAME));
+            Persona catPersona = Persona.createPersonaForAccount(CAT_PERSONA_NAME, comment2 , Persona.PersonaStatus.ACTIVE, catdogFBAccount, "Smells like a cat.", Persona.Confidence.LOW );
+            Assert.assertNotNull(catPersona);
+            Assert.assertTrue(catPersona.getName().equalsIgnoreCase(CAT_PERSONA_NAME));
             
             
             // Get ALL personas for an account
@@ -448,22 +444,20 @@ public class CentralRepoPersonasTest  extends TestCase {
         // Create Persona for the Dog, using the shared FB account
         String comment = "The best dog ever";
         Persona.PersonaStatus status = Persona.PersonaStatus.ACTIVE;
-        PersonaAccount pa1 = Persona.createPersonaForAccount(DOG_PERSONA_NAME, 
+        Persona dogPersona = Persona.createPersonaForAccount(DOG_PERSONA_NAME, 
                                 comment , 
                                 status, catdogFBAccount, "Because I said so", Persona.Confidence.LOW );
-        Persona dogPersona = pa1.getPersona();
+        
                
         
       
         // create a second persona for the same account - Cat has the same FB account as dog
         String comment2 = "The fiercest cat alive.";
-        PersonaAccount pa2 = Persona.createPersonaForAccount(CAT_PERSONA_NAME, 
+        Persona catPersona = Persona.createPersonaForAccount(CAT_PERSONA_NAME, 
                                  comment2 , Persona.PersonaStatus.ACTIVE, 
                                  catdogFBAccount, "Smells like a cat.", Persona.Confidence.LOW );
-        
-        Persona catPersona = pa2.getPersona();
-        Assert.assertNotNull(pa2);
-        Assert.assertTrue(pa2.getPersona().getName().equalsIgnoreCase(CAT_PERSONA_NAME));
+        Assert.assertNotNull(catPersona);
+        Assert.assertTrue(catPersona.getName().equalsIgnoreCase(CAT_PERSONA_NAME));
         
         
         
@@ -559,13 +553,12 @@ public class CentralRepoPersonasTest  extends TestCase {
         
         
         // Create a person for the Skype account
-        PersonaAccount pa5 = Persona.createPersonaForAccount(HOLMES_PERSONA_NAME, 
+        Persona holmesPersona = Persona.createPersonaForAccount(HOLMES_PERSONA_NAME, 
                                  "Has a Pipe in his mouth." , Persona.PersonaStatus.ACTIVE, 
                                  holmesSkypeAccount, "The name says it all.", Persona.Confidence.LOW );
         
-        Persona holmesPersona = pa5.getPersona();
-        Assert.assertNotNull(pa5);
-        Assert.assertTrue(pa5.getPersona().getName().equalsIgnoreCase(HOLMES_PERSONA_NAME));
+        Assert.assertNotNull(holmesPersona);
+        Assert.assertTrue(holmesPersona.getName().equalsIgnoreCase(HOLMES_PERSONA_NAME));
         
         
      
@@ -681,11 +674,11 @@ public class CentralRepoPersonasTest  extends TestCase {
                         .getOrCreateAccount(emailAccountType, EMAIL_ID_1);
 
                 // Create a Persona with no name
-                PersonaAccount pa1 = Persona.createPersonaForAccount(null, "A persona with no name",
+                Persona persona = Persona.createPersonaForAccount(null, "A persona with no name",
                         Persona.PersonaStatus.ACTIVE, emailAccount1, "The person lost his name", Persona.Confidence.LOW);
                 
                 // Verify Persona has a default name
-                Assert.assertEquals("Unknown", pa1.getPersona().getName());
+                Assert.assertEquals("Unknown", persona.getName());
                 
             } catch (CentralRepoException ex) {
                 Assert.fail("No name persona test failed. Exception: " + ex);

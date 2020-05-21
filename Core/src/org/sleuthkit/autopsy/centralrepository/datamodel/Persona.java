@@ -182,12 +182,13 @@ public class Persona {
      * @param confidence Confidence level for this association of Persona &
      * account.
      *
-     * @return PersonaAccount
+     * @return Persona Persona created.
      * @throws CentralRepoException If there is an error creating the Persona.
      */
-    public static PersonaAccount createPersonaForAccount(String personaName, String comment, PersonaStatus status, CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
+    public static Persona createPersonaForAccount(String personaName, String comment, PersonaStatus status, CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
         Persona persona = createPersona(personaName, comment, status);
-        return persona.addAccountToPersona(account, justification, confidence);
+        persona.addAccountToPersona(account, justification, confidence);
+        return persona;
     }
 
     /**
