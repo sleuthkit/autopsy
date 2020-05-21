@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.services;
+package org.sleuthkit.autopsy.tags;
 
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
@@ -382,7 +382,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     private javax.swing.JLabel notableYesOrNoLabel;
     private javax.swing.JScrollPane panelDescriptionScrollPane;
     private javax.swing.JTextArea panelDescriptionTextArea;
-    private javax.swing.JList<org.sleuthkit.autopsy.casemodule.services.TagNameDefinition> tagNamesList;
+    private javax.swing.JList<org.sleuthkit.autopsy.tags.TagNameDefinition> tagNamesList;
     private javax.swing.JPanel tagTypesAdditionalPanel;
     private javax.swing.JLabel tagTypesListLabel;
     // End of variables declaration//GEN-END:variables

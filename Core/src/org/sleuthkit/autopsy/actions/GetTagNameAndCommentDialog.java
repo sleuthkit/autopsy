@@ -41,9 +41,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.tags.TagUtilities;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * This dialog allows tag assignment with a comment attached.
@@ -128,8 +128,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
 
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                String status = ((TagName) value).getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
-                String newValue = ((TagName) value).getDisplayName() + status;
+                String newValue = TagUtilities.getDecoratedTagDisplayName((TagName) value);
                 return super.getListCellRendererComponent(list, newValue, index, isSelected, cellHasFocus);
             }
         });

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.services;
+package org.sleuthkit.autopsy.tags;
 
 import java.awt.BorderLayout;
 import java.awt.event.WindowAdapter;
@@ -28,6 +28,7 @@ import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.datamodel.TskData;
 
 @Messages({"TagNameDialog.descriptionLabel.text=Description:",

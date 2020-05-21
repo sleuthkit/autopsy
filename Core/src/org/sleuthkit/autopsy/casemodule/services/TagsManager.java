@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule.services;
 
+import org.sleuthkit.autopsy.tags.TagNameDefinition;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -147,10 +148,11 @@ public class TagsManager implements Closeable {
     }
 
     /**
-     * Gets the set of display names of notable (TskData.FileKnown.BAD) tag types.
-     * If a case is not open the list will only include only the user defined 
-     * custom tags.  Otherwise the list will include all notable tags.
-     * @return 
+     * Gets the set of display names of notable (TskData.FileKnown.BAD) tag
+     * types. If a case is not open the list will only include only the user
+     * defined custom tags. Otherwise the list will include all notable tags.
+     *
+     * @return
      */
     public static List<String> getNotableTagDisplayNames() {
         List<String> tagDisplayNames = new ArrayList<>();
@@ -159,12 +161,12 @@ public class TagsManager implements Closeable {
                 tagDisplayNames.add(tagDef.getDisplayName());
             }
         }
-        
-         try {
+
+        try {
             TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
             for (TagName tagName : tagsManager.getAllTagNames()) {
-                if(tagName.getKnownStatus() == TskData.FileKnown.BAD &&
-                        !tagDisplayNames.contains(tagName.getDisplayName())) {
+                if (tagName.getKnownStatus() == TskData.FileKnown.BAD
+                        && !tagDisplayNames.contains(tagName.getDisplayName())) {
                     tagDisplayNames.add(tagName.getDisplayName());
                 }
             }
@@ -172,7 +174,7 @@ public class TagsManager implements Closeable {
             /*
              * No current case, nothing more to add to the set.
              */
-        } catch(TskCoreException ex) {
+        } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get list of TagNames from TagsManager.", ex);
         }
         return tagDisplayNames;
@@ -220,7 +222,7 @@ public class TagsManager implements Closeable {
      *
      * @return
      */
-    public static String getBookmarkDisplayString() {
+    public static String getBookmarkTagDisplayName() {
         return TagNameDefinition.getBookmarkDisplayString();
     }
 
@@ -229,7 +231,7 @@ public class TagsManager implements Closeable {
      *
      * @return
      */
-    public static String getFollowUpDisplayString() {
+    public static String getFollowUpTagDisplayName() {
         return TagNameDefinition.getFollowUpDisplayString();
     }
 
@@ -238,7 +240,7 @@ public class TagsManager implements Closeable {
      *
      * @return
      */
-    public static String getNotableDisplayString() {
+    public static String getNotableTagDisplayName() {
         return TagNameDefinition.getNotableDisplayString();
     }
 
@@ -376,39 +378,17 @@ public class TagsManager implements Closeable {
 
     /**
      * Gets a map of tag display names to tag name entries in the case database.
-     * It has keys for the display names of the standard tag types, the current
-     * user's custom tag types, and the tags in the case database. The value for
-     * a given key will be null if the corresponding tag type is defined, but a
-     * tag name entry has not yet added to the case database. In that case,
-     * addTagName may be called to add the tag name entry.
      *
-     * @return A map of tag display names to possibly null TagName object
-     *         references.
+     * @return A map of tag display names to TagName object references.
      *
      * @throws TskCoreException if there is an error querying the case database.
      */
     public Map<String, TagName> getDisplayNamesToTagNamesMap() throws TskCoreException {
-        /**
-         * Order is important here. The keys (display names) for the current
-         * user's custom tag types are added to the map first, with null TagName
-         * values. If tag name entries exist for those keys, loading of the tag
-         * names from the database supplies the missing values. Standard tag
-         * names are added during the initialization of the case database.
-         *
-         * Note that creating the map on demand increases the probability that
-         * the display names of newly added custom tag types and the display
-         * names of tags added to a multi-user case by other users appear in the
-         * map.
-         */
         Map<String, TagName> tagNames = new HashMap<>();
-        Set<TagNameDefinition> customTypes = TagNameDefinition.getTagNameDefinitions();
-        for (TagNameDefinition tagType : customTypes) {
-            tagNames.put(tagType.getDisplayName(), null);
-        }
         for (TagName tagName : caseDb.getAllTagNames()) {
             tagNames.put(tagName.getDisplayName(), tagName);
         }
-        return new HashMap<>(tagNames);
+        return tagNames;
     }
 
     /**
