@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
-import org.sleuthkit.autopsy.corecomponents.CheckBoxListPanel;
+import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
