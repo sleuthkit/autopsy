@@ -355,7 +355,7 @@ public class CentralRepoPersonasTest  extends TestCase {
             for (PersonaAccount pa: personaAccounts) {
                 //System.out.println(String.format("PersonaAccount: Justification = %s : Date Added = %s", pa.getJustification(), DATE_FORMAT.format(new Date(pa.getDateAdded())))) ;
                 Assert.assertFalse(pa.getJustification().isEmpty());
-                Assert.assertFalse(pa.getAccount().getTypeSpecificId().isEmpty());
+                Assert.assertFalse(pa.getAccount().getIdentifier().isEmpty());
                 Assert.assertTrue(pa.getDateAdded() > 0);
                 Assert.assertTrue(pa.getPersona().getCreatedDate()> 0);
             }
@@ -369,13 +369,13 @@ public class CentralRepoPersonasTest  extends TestCase {
             
             
             // Get ALL personas for an account
-            Collection<PersonaAccount> personaAccounts2 = PersonaAccount.getPersonaAccountsForAccount(catdogFBAccount.getAccountId());
+            Collection<PersonaAccount> personaAccounts2 = PersonaAccount.getPersonaAccountsForAccount(catdogFBAccount.getId());
             
             Assert.assertEquals(2, personaAccounts2.size());
             for (PersonaAccount pa: personaAccounts2) {
                 //System.out.println(String.format("PersonaAccount: Justification = %s : Date Added = %s", pa.getJustification(), DATE_FORMAT.format(new Date(pa.getDateAdded())))) ;
                 Assert.assertFalse(pa.getJustification().isEmpty());
-                Assert.assertFalse(pa.getAccount().getTypeSpecificId().isEmpty());
+                Assert.assertFalse(pa.getAccount().getIdentifier().isEmpty());
                 Assert.assertTrue(pa.getDateAdded() > 0);
                 Assert.assertTrue(pa.getPersona().getCreatedDate()> 0);
                 Assert.assertFalse(pa.getPersona().getName().isEmpty());
@@ -416,7 +416,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                     "",
                     TskData.FileKnown.UNKNOWN,
                     1001L,
-                    catdogFBAccount.getAccountId());
+                    catdogFBAccount.getId());
         CentralRepository.getInstance().addArtifactInstance(fbAcctInstance1);
         
             
@@ -428,7 +428,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                     "path2",
                     "",
                     TskData.FileKnown.UNKNOWN,
-                    1002L, catdogFBAccount.getAccountId());
+                    1002L, catdogFBAccount.getId());
         
         CentralRepository.getInstance().addArtifactInstance(fbAcctInstance2);
             
@@ -441,7 +441,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                     "path3",
                     "",
                     TskData.FileKnown.UNKNOWN,
-                    1003L, catdogFBAccount.getAccountId());
+                    1003L, catdogFBAccount.getId());
         CentralRepository.getInstance().addArtifactInstance(fbAcctInstance3);
         
         
@@ -480,7 +480,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                     "",
                     TskData.FileKnown.UNKNOWN,
                     1002L, 
-                  dogEmailAccount.getAccountId());
+                  dogEmailAccount.getId());
         
         CentralRepository.getInstance().addArtifactInstance(dogEmailAcctInstance);
         
@@ -502,7 +502,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                     "",
                     TskData.FileKnown.UNKNOWN,
                     1005L, 
-                  catWhatsAppAccount.getAccountId());
+                  catWhatsAppAccount.getId());
         CentralRepository.getInstance().addArtifactInstance(catWhatsAppAccountInstance1);
         
          CorrelationAttributeInstance catWhatsAppAccountInstance2 = new CorrelationAttributeInstance(whatsAppInstanceType, CAT_WHATSAPP_ID,
@@ -513,7 +513,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                     "",
                     TskData.FileKnown.UNKNOWN,
                     1006L, 
-                  catWhatsAppAccount.getAccountId());
+                  catWhatsAppAccount.getId());
         CentralRepository.getInstance().addArtifactInstance(catWhatsAppAccountInstance2);
         
         
@@ -526,8 +526,8 @@ public class CentralRepoPersonasTest  extends TestCase {
         Collection<PersonaAccount> dogPersonaAccounts =  dogPersona.getPersonaAccounts();
         Assert.assertEquals(2, dogPersonaAccounts.size()); // Dog has 2 accounts.
         for (PersonaAccount pa : dogPersonaAccounts) {
-                Assert.assertTrue(pa.getAccount().getTypeSpecificId().equalsIgnoreCase(FACEBOOK_ID_CATDOG)
-                        || pa.getAccount().getTypeSpecificId().equalsIgnoreCase(DOG_EMAIL_ID));
+                Assert.assertTrue(pa.getAccount().getIdentifier().equalsIgnoreCase(FACEBOOK_ID_CATDOG)
+                        || pa.getAccount().getIdentifier().equalsIgnoreCase(DOG_EMAIL_ID));
                 // System.out.println("Dog Account id : " + acct.getTypeSpecificId());
             }
         
@@ -536,8 +536,8 @@ public class CentralRepoPersonasTest  extends TestCase {
         Assert.assertEquals(2, catPersonaAccounts.size()); // cat has 2 accounts.
         for (PersonaAccount pa:catPersonaAccounts) {
             //System.out.println("Cat Account id : " + acct.getTypeSpecificId());
-            Assert.assertTrue(pa.getAccount().getTypeSpecificId().equalsIgnoreCase(FACEBOOK_ID_CATDOG)
-                        || pa.getAccount().getTypeSpecificId().equalsIgnoreCase(CAT_WHATSAPP_ID));
+            Assert.assertTrue(pa.getAccount().getIdentifier().equalsIgnoreCase(FACEBOOK_ID_CATDOG)
+                        || pa.getAccount().getIdentifier().equalsIgnoreCase(CAT_WHATSAPP_ID));
         }
         
         // create account and Persona for Sherlock Holmes.
@@ -554,7 +554,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                     "",
                     TskData.FileKnown.UNKNOWN,
                     1011L, 
-                  holmesSkypeAccount.getAccountId());
+                  holmesSkypeAccount.getId());
         CentralRepository.getInstance().addArtifactInstance(skypeAcctInstance);
         
         
@@ -825,49 +825,49 @@ public class CentralRepoPersonasTest  extends TestCase {
                 
                 
                 // Test1 Search on 'joe' - should get 2 
-                Collection<PersonaAccount> personaSearchResult = PersonaAccount.getPersonaAccountsForAccountIdentifier("joe");
+                Collection<PersonaAccount> personaSearchResult = PersonaAccount.getPersonaAccountsForIdentifierLike("joe");
                 Assert.assertEquals(2, personaSearchResult.size());
                 for (PersonaAccount pa: personaSearchResult) {
-                    Assert.assertTrue(pa.getAccount().getTypeSpecificId().contains("joe"));
+                    Assert.assertTrue(pa.getAccount().getIdentifier().contains("joe"));
                 }
                 
                 //  Search on 'exotic' - should get 2 
-                personaSearchResult = PersonaAccount.getPersonaAccountsForAccountIdentifier("exotic");
+                personaSearchResult = PersonaAccount.getPersonaAccountsForIdentifierLike("exotic");
                 Assert.assertEquals(2, personaSearchResult.size());
                 for (PersonaAccount pa: personaSearchResult) {
-                    Assert.assertTrue(pa.getAccount().getTypeSpecificId().contains("exotic"));
+                    Assert.assertTrue(pa.getAccount().getIdentifier().contains("exotic"));
                 }
                 
                 // Test1 Search on '999' - should get 2 
-                personaSearchResult = PersonaAccount.getPersonaAccountsForAccountIdentifier("999");
+                personaSearchResult = PersonaAccount.getPersonaAccountsForIdentifierLike("999");
                 Assert.assertEquals(2, personaSearchResult.size());
                 for (PersonaAccount pa: personaSearchResult) {
-                    Assert.assertTrue(pa.getAccount().getTypeSpecificId().contains("999"));
+                    Assert.assertTrue(pa.getAccount().getIdentifier().contains("999"));
                 }
                 
                 // Test1 Search on '555' - should get 4
-                personaSearchResult = PersonaAccount.getPersonaAccountsForAccountIdentifier("555");
+                personaSearchResult = PersonaAccount.getPersonaAccountsForIdentifierLike("555");
                 Assert.assertEquals(4, personaSearchResult.size());
                 for (PersonaAccount pa: personaSearchResult) {
-                    Assert.assertTrue(pa.getAccount().getTypeSpecificId().contains("555"));
+                    Assert.assertTrue(pa.getAccount().getIdentifier().contains("555"));
                 }
                 
                 // Test1 Search on 'doe' - should get 2
-                personaSearchResult = PersonaAccount.getPersonaAccountsForAccountIdentifier("doe");
+                personaSearchResult = PersonaAccount.getPersonaAccountsForIdentifierLike("doe");
                 Assert.assertEquals(2, personaSearchResult.size());
                 for (PersonaAccount pa: personaSearchResult) {
-                    Assert.assertTrue(pa.getAccount().getTypeSpecificId().contains("doe"));
+                    Assert.assertTrue(pa.getAccount().getIdentifier().contains("doe"));
                 }
                  
                 // Test1 Search on '@' - should get 4
-                personaSearchResult = PersonaAccount.getPersonaAccountsForAccountIdentifier("@");
+                personaSearchResult = PersonaAccount.getPersonaAccountsForIdentifierLike("@");
                 Assert.assertEquals(4, personaSearchResult.size());
                 for (PersonaAccount pa: personaSearchResult) {
-                    Assert.assertTrue(pa.getAccount().getTypeSpecificId().contains("@"));
+                    Assert.assertTrue(pa.getAccount().getIdentifier().contains("@"));
                 }
                 
                 // Test1 Search on '' - should get ALL (6)
-                personaSearchResult = PersonaAccount.getPersonaAccountsForAccountIdentifier("");
+                personaSearchResult = PersonaAccount.getPersonaAccountsForIdentifierLike("");
                 Assert.assertEquals(6, personaSearchResult.size());
                 
                 
@@ -878,6 +878,72 @@ public class CentralRepoPersonasTest  extends TestCase {
         
      }
      
+     /**
+      * Tests searching of accounts.
+      */
+     public void testAccountSearchByAccountIdentifier() {
+         
+        // Test1: create some accounts.
+        {
+            try {
+                // Create an email account1
+                CentralRepoAccount emailAccount1 = CentralRepository.getInstance()
+                        .getOrCreateAccount(emailAccountType, "joeexotic555@yahoo.com");
+
+             
+                // Create an phone account with number "+1 999 555 3366"
+                CentralRepoAccount phoneAccount1 = CentralRepository.getInstance()
+                        .getOrCreateAccount(phoneAccountType, "+1 999 555 3366");
+
+               
+                 // Create another email account1
+                CentralRepoAccount emailAccount2 = CentralRepository.getInstance()
+                        .getOrCreateAccount(emailAccountType, "jodoe@mail.com");
+
+               
+                 // create a WhatsApp account for cat, add 2 instances, and then add that to Cat persona
+                CentralRepoAccount catWhatsAppAccount = CentralRepository.getInstance()
+                    .getOrCreateAccount(whatsAppAccountType, CAT_WHATSAPP_ID);
+                
+                
+                
+                // Get all accounts - should get 4 
+                Collection<CentralRepoAccount> allAccounts = CentralRepoAccount.getAllAccounts();
+                Assert.assertEquals(4, allAccounts.size());
+                
+                // Get accounts with substring 555
+                Collection<CentralRepoAccount> accountsWithSubstring555 = CentralRepoAccount.getAccountsWithIdentifierLike("555");
+                Assert.assertEquals(2, accountsWithSubstring555.size());
+                for (CentralRepoAccount acc: accountsWithSubstring555) {
+                    Assert.assertTrue(acc.getIdentifier().contains("555"));
+                }
+                
+                 // Get accounts with substring 'jo'
+                Collection<CentralRepoAccount> accountsWithSubstringJo = CentralRepoAccount.getAccountsWithIdentifierLike("JO");
+                Assert.assertEquals(2, accountsWithSubstringJo.size());
+                for (CentralRepoAccount acc: accountsWithSubstringJo) {
+                    Assert.assertTrue(acc.getIdentifier().contains("jo"));
+                }
+                
+                // Get account with exact match 
+                Collection<CentralRepoAccount> accountsWithKnownIdentifier = CentralRepoAccount.getAccountsWithIdentifier(CAT_WHATSAPP_ID);
+                Assert.assertEquals(1, accountsWithKnownIdentifier.size());
+                for (CentralRepoAccount acc: accountsWithKnownIdentifier) {
+                    Assert.assertTrue(acc.getIdentifier().contains(CAT_WHATSAPP_ID));
+                }
+                
+                // Get account that doesnt exists
+                Collection<CentralRepoAccount> accountsWithUnknownIdentifier = CentralRepoAccount.getAccountsWithIdentifier("IdDoesntExist");
+                Assert.assertEquals(0, accountsWithUnknownIdentifier.size());
+                
+                
+            } catch (CentralRepoException ex) {
+                Assert.fail("No name persona test failed. Exception: " + ex);
+            }
+        }
+        
+     }
+      
      /**
      * Tests the getOrInsertExaminer() api.
      */

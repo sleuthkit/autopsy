@@ -193,7 +193,7 @@ public class PersonaAccount {
      * @throws CentralRepoException If there is an error in getting the
      * persona_account.
      */
-    public static Collection<PersonaAccount> getPersonaAccountsForAccountIdentifier(String accountIdentifierSubstring) throws CentralRepoException {
+    public static Collection<PersonaAccount> getPersonaAccountsForIdentifierLike(String accountIdentifierSubstring) throws CentralRepoException {
         String queryClause = PERSONA_ACCOUNTS_QUERY_CALUSE
                 + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + accountIdentifierSubstring + "%')";
 

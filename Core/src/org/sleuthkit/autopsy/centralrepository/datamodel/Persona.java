@@ -246,7 +246,7 @@ public class Persona {
         String insertClause = " INTO persona_accounts (persona_id, account_id, justification, confidence_id, date_added, examiner_id ) "
                 + "VALUES ( "
                 + this.getId() + ", "
-                + account.getAccountId() + ", "
+                + account.getId() + ", "
                 + "'" + ((StringUtils.isBlank(justification) ? "" : SleuthkitCase.escapeSingleQuotes(justification))) + "', "
                 + confidence.getLevelId() + ", "
                 + timeStampMillis.toString() + ", "
@@ -452,7 +452,7 @@ public class Persona {
 
             String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(correlationType);
             String querySql = "SELECT DISTINCT case_id FROM " + tableName
-                    + " WHERE account_id = " + account.getAccountId();
+                    + " WHERE account_id = " + account.getId();
 
             CaseForAccountInstanceQueryCallback queryCallback = new CaseForAccountInstanceQueryCallback();
             CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);
@@ -515,7 +515,7 @@ public class Persona {
 
             String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(correlationType);
             String querySql = "SELECT case_id, data_source_id FROM " + tableName
-                    + " WHERE account_id = " + account.getAccountId();
+                    + " WHERE account_id = " + account.getId();
 
             DatasourceForAccountInstanceQueryCallback queryCallback = new DatasourceForAccountInstanceQueryCallback();
             CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);
