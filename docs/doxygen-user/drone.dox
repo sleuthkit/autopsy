@@ -13,6 +13,8 @@ Currently, the Drone Analyzer module works on images obtained from the internal 
 - Mavic Pro
 - Mavic Air
 
+The module will find DAT files and process them using DatCon (https://datfile.net/DatCon/intro.html). 
+
 \section drone_config Running the Module
 
 To enable the Drone Analyzer ingest module select the checkbox in the \ref ingest_configure "Ingest Modules configuration screen". 

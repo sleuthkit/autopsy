@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,6 +40,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TagSet;
+import org.sleuthkit.datamodel.TaggingManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.DbType;
@@ -52,9 +54,12 @@ public class TagsManager implements Closeable {
 
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
     private final SleuthkitCase caseDb;
-    
+
+    private static String DEFAULT_TAG_SET_NAME = "Project VIC";
+
     static {
-        //Create the contentviewer tags table (beta) if the current case does not 
+
+        //Create the contentviewer tags table if the current case does not 
         //have the table present
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), evt -> {
             if (evt.getNewValue() != null) {
@@ -64,7 +69,7 @@ public class TagsManager implements Closeable {
                     if (caseDb.tableExists(ContentViewerTagManager.TABLE_NAME)) {
                         return;
                     }
-                    
+
                     if (currentCase.getSleuthkitCase().getDatabaseType().equals(DbType.SQLITE)) {
                         caseDb.createTable(ContentViewerTagManager.TABLE_NAME, ContentViewerTagManager.TABLE_SCHEMA_SQLITE);
                     } else if (currentCase.getSleuthkitCase().getDatabaseType().equals(DbType.POSTGRESQL)) {
@@ -141,12 +146,34 @@ public class TagsManager implements Closeable {
         return tagDisplayNames;
     }
 
+    /**
+     * Gets the set of display names of notable (TskData.FileKnown.BAD) tag types.
+     * If a case is not open the list will only include only the user defined 
+     * custom tags.  Otherwise the list will include all notable tags.
+     * @return 
+     */
     public static List<String> getNotableTagDisplayNames() {
         List<String> tagDisplayNames = new ArrayList<>();
         for (TagNameDefinition tagDef : TagNameDefinition.getTagNameDefinitions()) {
             if (tagDef.getKnownStatus() == TskData.FileKnown.BAD) {
                 tagDisplayNames.add(tagDef.getDisplayName());
             }
+        }
+        
+         try {
+            TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
+            for (TagName tagName : tagsManager.getAllTagNames()) {
+                if(tagName.getKnownStatus() == TskData.FileKnown.BAD &&
+                        !tagDisplayNames.contains(tagName.getDisplayName())) {
+                    tagDisplayNames.add(tagName.getDisplayName());
+                }
+            }
+        } catch (NoCurrentCaseException ignored) {
+            /*
+             * No current case, nothing more to add to the set.
+             */
+        } catch(TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get list of TagNames from TagsManager.", ex);
         }
         return tagDisplayNames;
     }
@@ -157,7 +184,62 @@ public class TagsManager implements Closeable {
      * @return list of predefined tag names
      */
     public static List<String> getStandardTagNames() {
-        return TagNameDefinition.getStandardTagNames();
+        List<String> tagList = new ArrayList<>();
+
+        for (TagNameDefinition tagNameDef : TagNameDefinition.getStandardTagNameDefinitions()) {
+            tagList.add(tagNameDef.getDisplayName());
+        }
+
+        try {
+            List<TagSet> tagSetList = Case.getCurrentCaseThrows().getSleuthkitCase().getTaggingManager().getTagSets();
+            for (TagSet tagSet : tagSetList) {
+                if (tagSet.getName().equals(DEFAULT_TAG_SET_NAME)) {
+                    for (TagName tagName : tagSet.getTagNames()) {
+                        tagList.add(tagName.getDisplayName());
+                    }
+                }
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get Project VIC tags from the database.", ex);
+        }
+
+        return tagList;
+    }
+
+    /**
+     * Returns the name of the Category TagSet.
+     *
+     * @return Name of category TagSet.
+     */
+    public static String getCategoryTagSetName() {
+        return DEFAULT_TAG_SET_NAME;
+    }
+
+    /**
+     * Returns the bookmark tag display string.
+     *
+     * @return
+     */
+    public static String getBookmarkDisplayString() {
+        return TagNameDefinition.getBookmarkDisplayString();
+    }
+
+    /**
+     * Returns the Follow Up tag display string.
+     *
+     * @return
+     */
+    public static String getFollowUpDisplayString() {
+        return TagNameDefinition.getFollowUpDisplayString();
+    }
+
+    /**
+     * Returns the Notable tag display string.
+     *
+     * @return
+     */
+    public static String getNotableDisplayString() {
+        return TagNameDefinition.getNotableDisplayString();
     }
 
     /**
@@ -168,6 +250,28 @@ public class TagsManager implements Closeable {
      */
     TagsManager(SleuthkitCase caseDb) {
         this.caseDb = caseDb;
+
+        // Add standard tags and  the Project VIC default tag set and tags.
+        TaggingManager taggingMgr = caseDb.getTaggingManager();
+        try {
+            List<TagSet> setList = taggingMgr.getTagSets();
+            if (setList.isEmpty()) {
+                //Assume new case and add Project VIC tags.
+
+                List<TagName> tagNameList = new ArrayList<>();
+                for (TagNameDefinition def : TagNameDefinition.getProjectVICDefaultDefinitions()) {
+                    tagNameList.add(caseDb.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus()));
+                }
+                taggingMgr.addTagSet(DEFAULT_TAG_SET_NAME, tagNameList);
+
+                for (TagNameDefinition def : TagNameDefinition.getStandardTagNameDefinitions()) {
+                    caseDb.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus());
+                }
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error updating non-file object ", ex);
+        }
+
         for (TagNameDefinition tagName : TagNameDefinition.getTagNameDefinitions()) {
             tagName.saveToCase(caseDb);
         }
@@ -242,7 +346,8 @@ public class TagsManager implements Closeable {
     /**
      * Selects all of the rows from the tag_names table in the case database for
      * which there is at least one matching row in the content_tags or
-     * blackboard_artifact_tags tables, for the given data source object id and user.
+     * blackboard_artifact_tags tables, for the given data source object id and
+     * user.
      *
      * @param dsObjId  data source object id
      * @param userName - the user name that you want to get tags for
@@ -449,14 +554,16 @@ public class TagsManager implements Closeable {
      *                          database.
      */
     public ContentTag addContentTag(Content content, TagName tagName, String comment, long beginByteOffset, long endByteOffset) throws TskCoreException {
-        ContentTag tag;
-        tag = caseDb.addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
+        TaggingManager.ContentTagChange tagChange = caseDb.getTaggingManager().addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
         try {
-            Case.getCurrentCaseThrows().notifyContentTagAdded(tag);
+            Case currentCase = Case.getCurrentCaseThrows();
+
+            currentCase.notifyContentTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags());
+
         } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Added a tag to a closed case", ex);
         }
-        return tag;
+        return tagChange.getAddedTag();
     }
 
     /**
@@ -668,13 +775,14 @@ public class TagsManager implements Closeable {
      *                          database.
      */
     public BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
-        BlackboardArtifactTag tag = caseDb.addBlackboardArtifactTag(artifact, tagName, comment);
+        TaggingManager.BlackboardArtifactTagChange tagChange = caseDb.getTaggingManager().addArtifactTag(artifact, tagName, comment);
         try {
-            Case.getCurrentCaseThrows().notifyBlackBoardArtifactTagAdded(tag);
+            Case currentCase = Case.getCurrentCaseThrows();
+            currentCase.notifyBlackBoardArtifactTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags());
         } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Added a tag to a closed case", ex);
         }
-        return tag;
+        return tagChange.getAddedTag();
     }
 
     /**

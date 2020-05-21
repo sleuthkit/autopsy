@@ -257,6 +257,6 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
             return waypointMostRecent;
         }
 
-        return null;
+        return -1L;
     }
 }

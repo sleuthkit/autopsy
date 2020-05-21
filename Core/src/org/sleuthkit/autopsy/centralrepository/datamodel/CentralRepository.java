@@ -19,12 +19,14 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.datamodel.HashHitInfo;
 
 /**
  * Main interface for interacting with the database
@@ -159,6 +161,17 @@ public interface CentralRepository {
      * @param eamCase The case to update
      */
     void updateCase(CorrelationCase eamCase) throws CentralRepoException;
+    
+    /**
+     * Queries the examiner table for the given user name. 
+     * Adds a row if the user is not found in the examiner table.
+     *
+     * @param examinerLoginName user name to look for.
+     * @return CentralRepoExaminer for the given user name.
+     * @throws CentralRepoException If there is an error in looking up or
+     * inserting the user in the examiners table.
+     */
+    CentralRepoExaminer getOrInsertExaminer(String examinerLoginName) throws CentralRepoException;
 
     /**
      * Retrieves Central Repo case based on an Autopsy Case
@@ -541,6 +554,22 @@ public interface CentralRepository {
      */
     public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
+    
+    /**
+     * Retrieves the given file HashHitInfo if the given file hash is in this 
+     * reference set. Only searches the reference_files table.
+     *
+     * @param hash The hash to find in a search.
+     * @param referenceSetID The referenceSetID within which the file should exist.
+     *
+     * @return The HashHitInfo if found or null if not found.
+     *
+     * @throws CentralRepoException
+     * @throws CorrelationAttributeNormalizationException
+     */
+    HashHitInfo lookupHash(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException;
+
+    
     /**
      * Check if the given value is in a specific reference set
      *
@@ -807,6 +836,24 @@ public interface CentralRepository {
     
     
     /**
+     * Executes an INSERT sql statement on the central repository database.
+     * @param sql INSERT sql to execute.
+     * 
+     * @throws CentralRepoException  If there is an error.
+     */
+    void executeInsertSQL(String sql) throws CentralRepoException;
+    
+    /**
+     * Executes a SELECT sql statement on the central repository database.
+     * 
+     * @param sql SELECT sql to execute.
+     * @param queryCallback Query callback to handle the result of the query.
+     * 
+     * @throws CentralRepoException If there is an error.
+     */
+    void executeSelectSQL(String sql, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException;
+    
+    /**
      * Get account type by type name.
      * 
      * @param accountTypeName account type name to look for
@@ -815,6 +862,15 @@ public interface CentralRepository {
      */
     CentralRepoAccountType getAccountTypeByName(String accountTypeName) throws CentralRepoException;
      
+    /**
+     * Gets all account types.
+     * 
+     * @return Collection of all CR account types in the database.
+     * 
+     * @throws CentralRepoException 
+     */
+    Collection<CentralRepoAccountType> getAllAccountTypes() throws CentralRepoException;
+    
     /**
      * Get an account from the accounts table matching the given type/ID.  
      * Inserts a row if one doesn't exists.
@@ -826,6 +882,5 @@ public interface CentralRepository {
      * @throws CentralRepoException 
      */
     CentralRepoAccount getOrCreateAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException;
-    
-             
+   
 }

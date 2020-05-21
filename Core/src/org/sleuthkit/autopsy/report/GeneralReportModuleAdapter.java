@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,10 @@ public abstract class GeneralReportModuleAdapter implements GeneralReportModule 
     }
 
     @Override
-    public abstract void generateReport(String baseReportDir, ReportProgressPanel progressPanel);
+    @Deprecated
+    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
+        
+    }
 
     @Override
     public JPanel getConfigurationPanel() {

@@ -34,10 +34,10 @@ import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager.CategoryChangeEvent;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  * Displays summary statistics (counts) for each group
@@ -45,13 +45,13 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager.CategoryChan
 public class SummaryTablePane extends AnchorPane {
 
     @FXML
-    private TableColumn<Pair<DhsImageCategory, Long>, String> catColumn;
+    private TableColumn<Pair<TagName, Long>, String> catColumn;
 
     @FXML
-    private TableColumn<Pair<DhsImageCategory, Long>, Long> countColumn;
+    private TableColumn<Pair<TagName, Long>, Long> countColumn;
 
     @FXML
-    private TableView<Pair<DhsImageCategory, Long>> tableView;
+    private TableView<Pair<TagName, Long>> tableView;
 
     private final ImageGalleryController controller;
 
@@ -97,9 +97,9 @@ public class SummaryTablePane extends AnchorPane {
      */
     @Subscribe
     public void handleCategoryChanged(CategoryChangeEvent evt) {
-        final ObservableList<Pair<DhsImageCategory, Long>> data = FXCollections.observableArrayList();
+        final ObservableList<Pair<TagName, Long>> data = FXCollections.observableArrayList();
         if (Case.isCaseOpen()) {
-            for (DhsImageCategory cat : DhsImageCategory.values()) {
+            for (TagName cat : controller.getCategoryManager().getCategories()) {
                 data.add(new Pair<>(cat, controller.getCategoryManager().getCategoryCount(cat)));
             }
         }

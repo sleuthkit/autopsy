@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A task that updates one drawable file in the drawables database.
+ * A task that updates one drawable file in the drawable database.
  */
 class UpdateDrawableFileTask extends DrawableDbTask {
 
@@ -60,5 +60,5 @@ class UpdateDrawableFileTask extends DrawableDbTask {
             Logger.getLogger(UpdateDrawableFileTask.class.getName()).log(Level.SEVERE, "Error in update file task", ex); //NON-NLS
         }
     }
-    
+
 }

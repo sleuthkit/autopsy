@@ -61,7 +61,7 @@
                   <CheckBox fx:id="seenByOtherExaminersCheckBox" mnemonicParsing="false" text="Don't show groups seen by other examiners" HBox.hgrow="NEVER" />
                   <AnchorPane fx:id="nextButtonPane" minWidth="50.0" HBox.hgrow="NEVER">
                      <children>
-                              <Button fx:id="nextButton" contentDisplay="RIGHT" layoutX="44.0" layoutY="-1.0" mnemonicParsing="false" text="All Groups Gave Been Seen" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                              <Button fx:id="nextButton" contentDisplay="RIGHT" layoutX="44.0" layoutY="-1.0" mnemonicParsing="false" text="All Groups Have Been Seen" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                   <graphic>
                                       <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                                           <image>
@@ -181,35 +181,6 @@
                                     </graphic>
                                 </Button>
                             </children>
-                        </HBox>
-                        <HBox fx:id="catSegmentedContainer" alignment="CENTER" maxWidth="-Infinity" spacing="5.0">
-                            <children>
-                                <Label fx:id="catHeadingLabel" text="Category:">
-                                    <graphic>
-                                        <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
-                                            <image>
-                                                <Image url="@../../images/category-icon.png" />
-                                            </image>
-                                        </ImageView>
-                                    </graphic>
-                                </Label>
-                                <SegmentedButton fx:id="catSegmentedButton">
-                                    <buttons>
-                                        <RadioButton fx:id="cat0Toggle" mnemonicParsing="false" text="0" HBox.hgrow="ALWAYS">
-                                 <toggleGroup>
-                                                <ToggleGroup fx:id="cat" />
-                                 </toggleGroup></RadioButton>
-                                        <RadioButton fx:id="cat1Toggle" mnemonicParsing="false" style="" styleClass="button" text="1" toggleGroup="$cat" HBox.hgrow="ALWAYS" />
-                                        <RadioButton id="Cat2Toggle" fx:id="cat2Toggle" mnemonicParsing="false" styleClass="button" text="2" toggleGroup="$cat" HBox.hgrow="ALWAYS" />
-                                        <RadioButton fx:id="cat3Toggle" mnemonicParsing="false" styleClass="button" text="3" toggleGroup="$cat" HBox.hgrow="ALWAYS" />
-                                        <RadioButton fx:id="cat4Toggle" mnemonicParsing="false" styleClass="button" text="4" toggleGroup="$cat" HBox.hgrow="ALWAYS" />
-                                        <RadioButton fx:id="cat5Toggle" mnemonicParsing="false" text="5" toggleGroup="$cat" HBox.hgrow="ALWAYS" />
-                                    </buttons>
-                                </SegmentedButton>
-                            </children>
-                            <padding>
-                                <Insets left="5.0" />
-                            </padding>
                         </HBox>
                     </items>
                 </ToolBar>
