@@ -66,26 +66,15 @@ abstract class AbstractFiltersPanel extends javax.swing.JPanel implements Action
     private void nextSpot(int width) {
         constraints.gridx += width;
         if (constraints.gridx >= NUMBER_OF_COLUMNS) {
-            constraints.weightx = .9;
-            constraints.gridwidth = LABEL_WIDTH;
-            add(new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0)), constraints);
             constraints.fill = GridBagConstraints.VERTICAL;
             constraints.gridy += constraints.gridheight;
             constraints.gridx = 0;
         }
     }
 
-    final synchronized void endPanel() {
-        //add filler at end
-        constraints.gridy += constraints.gridheight;
-        constraints.fill = GridBagConstraints.BOTH;
-        constraints.weightx = .9;
-        constraints.weighty = .9;
-        add(new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767)), constraints);
-    }
 
     final synchronized void clearFilters() {
-        for (AbstractDiscoveryFilterPanel filterPanel : filters){
+        for (AbstractDiscoveryFilterPanel filterPanel : filters) {
             filterPanel.removeListeners();
         }
         filters.clear();
@@ -146,18 +135,34 @@ abstract class AbstractFiltersPanel extends javax.swing.JPanel implements Action
         System.out.println("ACTION PERFORMED");
         validateFields();
     }
-    
-    boolean isObjectsFilterSupported(){
+
+    boolean isObjectsFilterSupported() {
+        for (AbstractDiscoveryFilterPanel filter : filters) {
+            if (filter instanceof ObjectDetectedFilterPanel) {
+                return filter.getList().getModel().getSize() > 0;
+            }
+        }
         return false;
     }
 
-    boolean isHashSetFilterSupported(){
+    boolean isHashSetFilterSupported() {
+        for (AbstractDiscoveryFilterPanel filter : filters) {
+            if (filter instanceof HashSetFilterPanel) {
+                return filter.getList().getModel().getSize() > 0;
+            }
+        }
         return false;
     }
-    
-    boolean isInterestingItemsFilterSupported(){
+
+    boolean isInterestingItemsFilterSupported() {
+        for (AbstractDiscoveryFilterPanel filter : filters) {
+            if (filter instanceof InterestingItemsFilterPanel) {
+                return filter.getList().getModel().getSize() > 0;
+            }
+        }
         return false;
     }
+
     /**
      * Get a list of all filters selected by the user.
      *

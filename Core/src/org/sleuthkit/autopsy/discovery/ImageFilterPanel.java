@@ -35,10 +35,8 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
         addFilter(new UserCreatedFilterPanel(), false, null);
         addFilter(new HashSetFilterPanel(), false, null);
         addFilter(new InterestingItemsFilterPanel(), false, null);
-
         addFilter(new DataSourceFilterPanel(), false, null);
         addFilter(new ParentFolderFilterPanel(), false, null);
-        endPanel();
     }
 
     /**
