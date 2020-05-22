@@ -26,7 +26,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -399,9 +398,21 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             logger.log(Level.SEVERE, String.format("Error getting attributes for Calllog artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
         }
 
+        // update the view with the call log data
         if (callLogViewData != null) {
-            
-            if (callLogViewData.getNumberDesignator() != null ) {
+            updateView(callLogViewData);
+        }
+        // repaint
+        this.revalidate();
+    }
+
+    /**
+     * Updates the call log viewer UI components from the given data.
+     * 
+     * @param callLogViewData Call log data to display.
+     */
+    private void updateView(CallLogViewData callLogViewData) {
+         if (callLogViewData.getNumberDesignator() != null ) {
                 this.numberDesignatorLabel.setText(callLogViewData.getNumberDesignator());
             } else {
                 this.numberDesignatorLabel.setVisible(false);
@@ -451,12 +462,12 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             if (callLogViewData.getDataSourceDeviceId() != null) {
                 this.deviceIdLabel.setText(callLogViewData.getDataSourceDeviceId());
             }
-        }
-
-        // repaint
-        this.revalidate();
     }
-
+    /**
+     * Updates the other recipients panel.
+     * 
+     * @param otherRecipients  List of other recipients, may be null or empty.
+     */
     private void updateOtherRecipientsPanel(Collection<String> otherRecipients) {
 
         if (otherRecipients == null || otherRecipients.isEmpty()) {
@@ -515,6 +526,12 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
     }
 
+    /**
+     * Updates the Other Attributes panel with the given list of attributes.
+     * This panel displays any uncommon attributes that might not be shown already.
+     * 
+     * @param otherAttributes List of attributes to display.
+     */
     private void updateOtherAttributesPanel(Map<String, String> otherAttributes) {
         if (otherAttributes == null || otherAttributes.isEmpty()) {
             this.otherAttributesPanel.setVisible(false);
@@ -578,7 +595,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      * Extracts data from the call log artifact for display in the view.
      *
      * @param artifact Artifact to extract data from.
-     * @return CallLogViewData
+     * @return CallLogViewData Extracted data to be displayed.
      * @throws TskCoreException
      */
      @NbBundle.Messages({
@@ -666,10 +683,11 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     }
  
     /**
-     * Returns a map of attribute name/value pairs
+     * Returns  the attributes from the given artifact that are not already 
+     * displayed by the artifact viewer.
      *
-     * @param artifact
-     * @return
+     * @param artifact Call log artifact.
+     * @return Attribute names/values.
      * @throws TskCoreException
      */
     private Map<String, String> extractOtherAttributes(BlackboardArtifact artifact) throws TskCoreException {
