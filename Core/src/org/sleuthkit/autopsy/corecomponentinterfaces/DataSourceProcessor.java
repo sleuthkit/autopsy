@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import javax.swing.JPanel;
+import org.sleuthkit.autopsy.ingest.IngestStream;
 
 /**
  * Interface implemented by classes that add data sources of a particular type
@@ -111,6 +112,14 @@ public interface DataSourceProcessor {
      *                        to return results.
      */
     void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback);
+    
+    default void run(DataSourceProcessorProgressMonitor progress, DataSourceProcessorCallback callBack, IngestStream ingestStream) {
+        throw new UnsupportedOperationException("Ingest stream not supported for this data source processor");
+    }
+    
+    default boolean supportsIngestStream() {
+        return false;
+    }
 
     /**
      * Requests cancellation of the background task that adds a data source to

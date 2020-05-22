@@ -34,6 +34,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.DataSourceUtils;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.ingest.IngestJobInputStream;
+import org.sleuthkit.autopsy.ingest.IngestStream;
+import org.sleuthkit.autopsy.ingest.IngestStreamClosedException;
+import org.sleuthkit.datamodel.AddDataSourceCallbacks;
+import org.sleuthkit.datamodel.AddDataSourceCallbacksException;
 
 /**
  * A image file data source processor that implements the DataSourceProcessor
@@ -244,7 +249,10 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      * @param callback             Callback to call when processing is done.
      */
     private void run(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addImageTask = new AddImageTask(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, progressMonitor, callback);
+        addImageTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null), 
+                progressMonitor, 
+                new AddImageCallbacks(new IngestJobInputStream()), 
+                new AddImageTaskCallback(new IngestJobInputStream(), callback));
         new Thread(addImageTask).start();
     }
 
@@ -317,6 +325,37 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         this.ignoreFatOrphanFiles = false;
         setDataSourceOptionsCalled = true;
         run(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
+    }
+    
+    private static class AddImageCallbacks implements AddDataSourceCallbacks {
+        private final IngestStream ingestStream;
+        
+        AddImageCallbacks(IngestStream stream) {
+            ingestStream = stream;
+        }
+
+        @Override
+        public void onDataSourceAdded(long dataSourceObjectId) throws AddDataSourceCallbacksException {
+            try {
+                ingestStream.addDataSource(dataSourceObjectId);
+            } catch (IngestStreamClosedException ex) {
+                throw new AddDataSourceCallbacksException("Error adding files to ingest stream - ingest stream is closed", ex);
+            }
+        }
+        
+        @Override
+        public void onFilesAdded(List<Long> fileObjectIds) throws AddDataSourceCallbacksException {
+            try {
+                ingestStream.addFiles(fileObjectIds);
+            } catch (IngestStreamClosedException ex) {
+                throw new AddDataSourceCallbacksException("Error adding files to ingest stream - ingest stream is closed", ex);
+            }
+        }
+
+        @Override
+        public void onCompleted() throws AddDataSourceCallbacksException {
+            System.out.println("### AddImageCallbacks - onCompleted()");
+        }
     }
 
     /**

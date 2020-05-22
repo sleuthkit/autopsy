@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterService;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
+import org.sleuthkit.datamodel.AddDataSourceCallbacks;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitJNI;
@@ -52,7 +53,9 @@ class AddImageTask implements Runnable {
     private final String sha1;
     private final String sha256;
     private final DataSourceProcessorProgressMonitor progressMonitor;
-    private final DataSourceProcessorCallback callback;
+    //private final DataSourceProcessorCallback callback;
+    private final AddDataSourceCallbacks addDataSourceCallbacks;
+    private final AddImageTaskCallback addImageTaskCallback;
     private boolean criticalErrorOccurred;
 
     /*
@@ -95,18 +98,19 @@ class AddImageTask implements Runnable {
      *                             processing.
      * @param callback             Callback to call when processing is done.
      */
-    AddImageTask(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, ImageWriterSettings imageWriterSettings,
-            DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        this.deviceId = deviceId;
-        this.imagePath = imagePath;
-        this.sectorSize = sectorSize;
-        this.timeZone = timeZone;
-        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
-        this.md5 = md5;
-        this.sha1 = sha1;
-        this.sha256 = sha256;
-        this.imageWriterSettings = imageWriterSettings;
-        this.callback = callback;
+    AddImageTask(ImageDetails imageDetails, DataSourceProcessorProgressMonitor progressMonitor, AddDataSourceCallbacks addDataSourceCallbacks,  
+            AddImageTaskCallback addImageTaskCallback) {
+        this.deviceId = imageDetails.deviceId;
+        this.imagePath = imageDetails.imagePath;
+        this.sectorSize = imageDetails.sectorSize;
+        this.timeZone = imageDetails.timeZone;
+        this.ignoreFatOrphanFiles = imageDetails.ignoreFatOrphanFiles;
+        this.md5 = imageDetails.md5;
+        this.sha1 = imageDetails.sha1;
+        this.sha256 = imageDetails.sha256;
+        this.imageWriterSettings = imageDetails.imageWriterSettings;
+        this.addDataSourceCallbacks = addDataSourceCallbacks;
+        this.addImageTaskCallback = addImageTaskCallback;
         this.progressMonitor = progressMonitor;
         tskAddImageProcessLock = new Object();
     }
@@ -154,7 +158,11 @@ class AddImageTask implements Runnable {
             } else {
                 result = DataSourceProcessorResult.NO_ERRORS;
             }
-            callback.done(result, errorMessages, newDataSources);
+            try {
+                addDataSourceCallbacks.onCompleted();
+            } catch (Exception ex) { // TODO fix
+                ex.printStackTrace();
+            }
         }
     }
 
@@ -191,7 +199,7 @@ class AddImageTask implements Runnable {
      */
     private void runAddImageProcess(List<String> errorMessages) {
         try {
-            tskAddImageProcess.run(deviceId, new String[]{imagePath}, sectorSize);
+            tskAddImageProcess.run(deviceId, new String[]{imagePath}, sectorSize, this.addDataSourceCallbacks);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Critical error occurred adding image %s", imagePath), ex); //NON-NLS
             criticalErrorOccurred = true;
@@ -352,4 +360,27 @@ class AddImageTask implements Runnable {
         }
     }
 
+    static class ImageDetails {
+        String deviceId;
+        String imagePath;
+        int sectorSize;
+        String timeZone;
+        boolean ignoreFatOrphanFiles;
+        String md5;
+        String sha1; 
+        String sha256; 
+        ImageWriterSettings imageWriterSettings;
+        
+        ImageDetails(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, ImageWriterSettings imageWriterSettings) {
+            this.deviceId = deviceId;
+            this.imagePath = imagePath;
+            this.sectorSize = sectorSize;
+            this.timeZone = timeZone;
+            this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
+            this.md5 = md5;
+            this.sha1 = sha1; 
+            this.sha256 = sha256; 
+            this.imageWriterSettings = imageWriterSettings;
+        }
+    }
 }
