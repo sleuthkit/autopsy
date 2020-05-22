@@ -401,6 +401,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         if (tc.isOpened() == false) {
             tc.open();
         }
+
         tc.resetTopComponent();
         List<FileSearchFiltering.FileFilter> filters;
         if (videosButton.isSelected()) {
@@ -413,11 +414,11 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.SearchStartedEvent(fileType));
 
         // Get the grouping attribute and group sorting method
-        FileSearch.AttributeType groupingAttr = FileSearch.GroupingAttributeType.FILE_SIZE.getAttributeType();
-        FileGroup.GroupSortingAlgorithm groupSortAlgorithm = FileGroup.GroupSortingAlgorithm.BY_GROUP_NAME;
+        FileSearch.AttributeType groupingAttr = groupByCombobox.getItemAt(groupByCombobox.getSelectedIndex()).getAttributeType();
+        FileGroup.GroupSortingAlgorithm groupSortAlgorithm = groupSortingComboBox.getItemAt(groupSortingComboBox.getSelectedIndex());
 
         // Get the file sorting method
-        FileSorter.SortingMethod fileSort = FileSorter.SortingMethod.BY_FILE_NAME;
+        FileSorter.SortingMethod fileSort = (FileSorter.SortingMethod) orderByCombobox.getSelectedItem();
         CentralRepository centralRepoDb = null;
         if (CentralRepository.isEnabled()) {
             try {
