@@ -604,8 +604,10 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     private CallLogViewData getCallLogViewData(BlackboardArtifact artifact) throws TskCoreException {
 
         BlackboardAttribute directionAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION));
+        BlackboardAttribute recipientsAttr  = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO));
         BlackboardAttribute numberAttr = null;
         BlackboardAttribute localAccountAttr = null;
+        
 
         CallLogViewData callLogViewData = null;
         String direction = null;
@@ -640,21 +642,19 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                
         if (numberAttr != null) {
 
-            // check if it's a list of numbers and and if so,
-            // split it, take the first one. and put the others in otherParticicpants....
+            // check if it's a list of numbers and if so,
+            // split it, take the first one.
             String[] numbers = numberAttr.getValueString().split(",");
-            List<String> otherNumbers = null;
-            if (numbers.length > 1) {
-                otherNumbers = new ArrayList<>();
-                for (int i = 1; i < numbers.length; i++) {
-                    otherNumbers.add(numbers[i]);
-                }
-
-            }
-            callLogViewData = new CallLogViewData(numbers[0], direction);
-            callLogViewData.setOtherRecipients(otherNumbers);
-
+        
+            // create a CallLogViewData with the primary number/id.
+            callLogViewData = new CallLogViewData(numbers[0]);
+      
+            // set direction
+            callLogViewData.setDirection(direction);
             callLogViewData.setNumberDesignator(numberDesignator);
+            
+            // get other recipients
+            extractOtherRecipeints(recipientsAttr, directionAttr, callLogViewData);
             
             // get date, duration,
             extractTimeAndDuration(artifact, callLogViewData);
@@ -676,12 +676,45 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
             // set any other additional attriubutes.
             callLogViewData.setOtherAttributes(extractOtherAttributes(artifact));
-
         }
 
         return callLogViewData;
     }
  
+    /**
+     * Extracts the other recipients numbers from the given attribute.
+     * Updates the given CallLogViewData with the other recipients list.
+     * 
+     * @param recipientsAttr TO attribute, must not be null. 
+     * @param directionAttr  Direction attribute.
+     * @param callLogViewData CallLogViewData object to update.
+     * 
+     */
+    private void extractOtherRecipeints(BlackboardAttribute recipientsAttr, BlackboardAttribute directionAttr, CallLogViewData callLogViewData) {
+        if (recipientsAttr == null) {
+            return;
+        }
+        // check if it's a list of numbers and and if so,
+        // split it,
+        String[] numbers = recipientsAttr.getValueString().split(",");
+        List<String> otherNumbers = null;
+        int startIdx = 0;
+        // for an outgoing call, the first number has already been plucked as the primary recipient.
+        // for an incoming call with multiple recipeints, we can't distinguish the local account number, so everyone is "other"
+        if (directionAttr != null && directionAttr.getValueString().equalsIgnoreCase("Outgoing")) {
+            startIdx = 1;
+        }
+        if (numbers.length > 1) {
+            otherNumbers = new ArrayList<>();
+            for (int i = startIdx; i < numbers.length; i++) {
+                otherNumbers.add(numbers[i]);
+            }
+        }
+        
+        callLogViewData.setOtherRecipients(otherNumbers);
+    }
+       
+    
     /**
      * Returns  the attributes from the given artifact that are not already 
      * displayed by the artifact viewer.
