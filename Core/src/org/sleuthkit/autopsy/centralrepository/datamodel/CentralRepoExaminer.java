@@ -74,10 +74,7 @@ final public class CentralRepoExaminer {
         if (this.id != other.getId()) {
             return false;
         }
-        if (!Objects.equals(this.loginName, other.getLoginName())) {
-            return false;
-        }
-        return true;
+        return this.loginName.equalsIgnoreCase(other.getLoginName());
     }
 
     

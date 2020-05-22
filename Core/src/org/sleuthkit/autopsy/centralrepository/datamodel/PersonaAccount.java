@@ -105,10 +105,7 @@ public class PersonaAccount {
         if (!Objects.equals(this.account, other.getAccount())) {
             return false;
         }
-        if (!Objects.equals(this.examiner, other.getExaminer())) {
-            return false;
-        }
-        return true;
+        return Objects.equals(this.examiner, other.getExaminer());
     }
 
         

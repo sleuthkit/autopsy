@@ -134,10 +134,7 @@ public final class CentralRepoAccount {
 		if ((this.typeSpecificIdentifier == null) ? (other.getIdentifier() != null) : !this.typeSpecificIdentifier.equals(other.getIdentifier())) {
 			return false;
 		}
-		if (this.accountType != other.getAccountType() && (this.accountType == null || !this.accountType.equals(other.getAccountType()))) {
-			return false;
-		}
-		return true;
+		return !(this.accountType != other.getAccountType() && (this.accountType == null || !this.accountType.equals(other.getAccountType())));
 	}
     
     /**
@@ -171,7 +168,7 @@ public final class CentralRepoAccount {
     };
 
     
-    private static final String ACCOUNTS_QUERY_CALUSE
+    private static final String ACCOUNTS_QUERY_CLAUSE
             = "SELECT accounts.id as account_id,  "
             + " accounts.account_type_id as account_type_id, accounts.account_unique_identifier as account_unique_identifier,"
             + " account_types.id as account_type_id, "
@@ -192,7 +189,7 @@ public final class CentralRepoAccount {
      */
     public static Collection<CentralRepoAccount> getAccountsWithIdentifierLike(String accountIdentifierSubstring) throws CentralRepoException {
        
-        String queryClause = ACCOUNTS_QUERY_CALUSE
+        String queryClause = ACCOUNTS_QUERY_CLAUSE
                 + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + accountIdentifierSubstring + "%')";
 
         AccountsQueryCallback queryCallback = new AccountsQueryCallback();
@@ -213,7 +210,7 @@ public final class CentralRepoAccount {
      */
     public static Collection<CentralRepoAccount> getAccountsWithIdentifier(String accountIdentifier) throws CentralRepoException {
        
-        String queryClause = ACCOUNTS_QUERY_CALUSE
+        String queryClause = ACCOUNTS_QUERY_CLAUSE
                 + " WHERE LOWER(accounts.account_unique_identifier) = LOWER('" + accountIdentifier + "')";
 
         AccountsQueryCallback queryCallback = new AccountsQueryCallback();
@@ -232,7 +229,7 @@ public final class CentralRepoAccount {
      */
     public static Collection<CentralRepoAccount> getAllAccounts() throws CentralRepoException {
        
-        String queryClause = ACCOUNTS_QUERY_CALUSE;
+        String queryClause = ACCOUNTS_QUERY_CLAUSE;
 
         AccountsQueryCallback queryCallback = new AccountsQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);

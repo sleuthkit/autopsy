@@ -193,10 +193,7 @@ public class Persona {
         if (this.id != other.getId()) {
             return false;
         }
-        if (!Objects.equals(this.uuidStr, other.getUuidStr())) {
-            return false;
-        }
-        return true;
+        return this.uuidStr.equalsIgnoreCase(other.getUuidStr());
     }
 
     /**

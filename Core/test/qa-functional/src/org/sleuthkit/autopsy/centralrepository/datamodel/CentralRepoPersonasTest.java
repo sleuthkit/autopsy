@@ -880,22 +880,22 @@ public class CentralRepoPersonasTest  extends TestCase {
         {
             try {
                 // Create an email account1
-                CentralRepoAccount emailAccount1 = CentralRepository.getInstance()
+                CentralRepository.getInstance()
                         .getOrCreateAccount(emailAccountType, "joeexotic555@yahoo.com");
 
              
                 // Create an phone account with number "+1 999 555 3366"
-                CentralRepoAccount phoneAccount1 = CentralRepository.getInstance()
+                CentralRepository.getInstance()
                         .getOrCreateAccount(phoneAccountType, "+1 999 555 3366");
 
                
                  // Create another email account1
-                CentralRepoAccount emailAccount2 = CentralRepository.getInstance()
+                CentralRepository.getInstance()
                         .getOrCreateAccount(emailAccountType, "jodoe@mail.com");
 
                
                  // create a WhatsApp account for cat, add 2 instances, and then add that to Cat persona
-                CentralRepoAccount catWhatsAppAccount = CentralRepository.getInstance()
+                CentralRepository.getInstance()
                     .getOrCreateAccount(whatsAppAccountType, CAT_WHATSAPP_ID);
                 
                 
