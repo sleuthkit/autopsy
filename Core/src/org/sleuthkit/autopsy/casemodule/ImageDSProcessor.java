@@ -63,6 +63,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     private static final List<FileFilter> filtersList = new ArrayList<>();
     private final ImageFilePanel configPanel;
     private AddImageTask addImageTask;
+    private IngestStream ingestStream = null;
     /*
      * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
      * when the deprecated method setDataSourceOptions is removed.
@@ -197,6 +198,60 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         }
         run(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progressMonitor, callback);
     }
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Files found during ingest will be sent directly to the
+     * IngestStream provided. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
+     *
+     * This method should not be called unless isPanelValid returns true, and 
+     * should only be called for DSPs that support ingest streams.
+     * 
+     * @param progress        Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callBack        Callback that will be used by the background task
+     *                        to return results.
+     * @param ingestStream    The ingest stream to send data to
+     */
+    @Override
+    public void run(DataSourceProcessorProgressMonitor progress, DataSourceProcessorCallback callBack, IngestStream ingestStream) {
+        this.ingestStream = ingestStream;
+                if (!setDataSourceOptionsCalled) {
+            configPanel.storeSettings();
+            deviceId = UUID.randomUUID().toString();
+            imagePath = configPanel.getContentPaths();
+            sectorSize = configPanel.getSectorSize();
+            timeZone = configPanel.getTimeZone();
+            ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
+            md5 = configPanel.getMd5();
+            if (md5.isEmpty()) {
+                md5 = null;
+            }
+            sha1 = configPanel.getSha1();
+            if (sha1.isEmpty()) {
+                sha1 = null;
+            }
+            sha256 = configPanel.getSha256();
+            if (sha256.isEmpty()) {
+                sha256 = null;
+            }
+        }
+                
+        
+    }
+    
+    /**
+     * Check if this DSP supports ingest streams.
+     * 
+     * @return True if this DSP supports an ingest stream, false otherwise.
+     */
+    @Override
+    public boolean supportsIngestStream() {
+        return true;
+    }    
 
     /**
      * Adds a data source to the case database using a background task in a

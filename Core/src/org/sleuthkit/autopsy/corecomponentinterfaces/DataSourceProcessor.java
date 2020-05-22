@@ -113,10 +113,32 @@ public interface DataSourceProcessor {
      */
     void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback);
     
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Files found during ingest will be sent directly to the
+     * IngestStream provided. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
+     *
+     * This method should not be called unless isPanelValid returns true, and 
+     * should only be called for DSPs that support ingest streams.
+     * 
+     * @param progress        Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callBack        Callback that will be used by the background task
+     *                        to return results.
+     * @param ingestStream    The ingest stream to send data to
+     */
     default void run(DataSourceProcessorProgressMonitor progress, DataSourceProcessorCallback callBack, IngestStream ingestStream) {
         throw new UnsupportedOperationException("Ingest stream not supported for this data source processor");
     }
     
+    /**
+     * Check if this DSP supports ingest streams.
+     * 
+     * @return True if this DSP supports an ingest stream, false otherwise.
+     */
     default boolean supportsIngestStream() {
         return false;
     }
