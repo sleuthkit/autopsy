@@ -11,7 +11,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
  *
  * @author wschaefer
  */
-final class VideoFilterPanel extends AbstractFilterPanel {
+final class VideoFilterPanel extends AbstractFiltersPanel {
 
     private static final long serialVersionUID = 1L;
     private static final FileSearchData.FileType FILE_TYPE = FileSearchData.FileType.VIDEO;
@@ -20,10 +20,8 @@ final class VideoFilterPanel extends AbstractFilterPanel {
      * Creates new form VideoFilterPanel
      */
     VideoFilterPanel() {
-        super();
         initComponents();
-        SizeFilterPanel sizeFilterPanel = new SizeFilterPanel(FileSearchData.FileType.VIDEO);
-        addFilter(sizeFilterPanel, true, null);
+        addFilter(new SizeFilterPanel(FileSearchData.FileType.VIDEO), true, null);
         addFilter(new DataSourceFilterPanel(), false, null);
         int[] pastOccurrencesIndices;
         if (!CentralRepository.isEnabled()) {

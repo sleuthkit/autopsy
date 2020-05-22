@@ -16,7 +16,7 @@ import org.sleuthkit.autopsy.discovery.FileSearchData.Frequency;
  *
  * @author wschaefer
  */
-public class PastOccurrencesFilterPanel extends AbstractDiscoveryFiltersPanel {
+public class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
 

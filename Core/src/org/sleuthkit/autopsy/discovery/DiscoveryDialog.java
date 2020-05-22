@@ -28,6 +28,9 @@ import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.discovery.FileGroup.GroupSortingAlgorithm;
+import org.sleuthkit.autopsy.discovery.FileSearch.GroupingAttributeType;
+import org.sleuthkit.autopsy.discovery.FileSorter.SortingMethod;
 
 final class DiscoveryDialog extends javax.swing.JDialog {
 
@@ -41,6 +44,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private SearchWorker searchWorker = null;
     private static DiscoveryDialog discoveryDialog;
     private FileSearchData.FileType fileType = FileSearchData.FileType.IMAGE;
+    private final PropertyChangeListener listener;
 
     private DiscoveryDialog() {
         this(null, true);
@@ -59,10 +63,12 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private DiscoveryDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        PropertyChangeListener listener = new PropertyChangeListener() {
+        listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
+                System.out.println("PROPERTY CHANGE EVENT");
                 if (evt.getNewValue() instanceof String) {
+                    System.out.println("IS A STRING");
                     String errorMessage = (String) evt.getNewValue();
                     if (StringUtils.isBlank(errorMessage)) {
                         setValid();
@@ -73,11 +79,10 @@ final class DiscoveryDialog extends javax.swing.JDialog {
 
             }
         };
-        imageFilterPanel.addPropertyChangeListener(listener);
-        videoFilterPanel.addPropertyChangeListener(listener);
-        documentFilterPanel.addPropertyChangeListener(listener);
+        for (GroupSortingAlgorithm groupSortAlgorithm : GroupSortingAlgorithm.values()) {
+            groupSortingComboBox.addItem(groupSortAlgorithm);
+        }
         updateSearchSettings();
-
     }
 
     /**
@@ -97,9 +102,34 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         fileType = FileSearchData.FileType.IMAGE;
         remove(imageFilterPanel);
         remove(videoFilterPanel);
+        videoFilterPanel.removePropertyChangeListener(listener);
         remove(documentFilterPanel);
+        documentFilterPanel.removePropertyChangeListener(listener);
         add(imageFilterPanel, CENTER);
+        imageFilterPanel.removePropertyChangeListener(listener);
+        imageFilterPanel.addPropertyChangeListener(listener);
+        groupByCombobox.removeAllItems();
+        // Set up the grouping attributes
+        for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.getOptionsForGrouping()) {
+            if ((type != GroupingAttributeType.FREQUENCY || CentralRepository.isEnabled())
+                    && (type != GroupingAttributeType.OBJECT_DETECTED || imageFilterPanel.isObjectsFilterSupported())
+                    && (type != GroupingAttributeType.INTERESTING_ITEM_SET || imageFilterPanel.isInterestingItemsFilterSupported())
+                    && (type != GroupingAttributeType.HASH_LIST_NAME || imageFilterPanel.isHashSetFilterSupported())) {
+                groupByCombobox.addItem(type);
+            }
+        }
+
+        orderByCombobox.removeAllItems();
+        // Set up the file order list
+        for (FileSorter.SortingMethod method : FileSorter.SortingMethod.getOptionsForOrdering()) {
+            if (method != SortingMethod.BY_FREQUENCY || CentralRepository.isEnabled()) {
+                orderByCombobox.addItem(method);
+            }
+        }
+
+        groupSortingComboBox.setSelectedIndex(0);
         pack();
+        repaint();
     }
 
     /**
@@ -119,10 +149,17 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         searchButton = new javax.swing.JButton();
         errorLabel = new javax.swing.JLabel();
         javax.swing.JButton cancelButton = new javax.swing.JButton();
+        javax.swing.JPanel sortingPanel = new javax.swing.JPanel();
+        groupByCombobox = new javax.swing.JComboBox<>();
+        orderByCombobox = new javax.swing.JComboBox<>();
+        javax.swing.JLabel orderGroupsByLabel = new javax.swing.JLabel();
+        javax.swing.JLabel orderByLabel = new javax.swing.JLabel();
+        javax.swing.JLabel groupByLabel = new javax.swing.JLabel();
+        groupSortingComboBox = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setMinimumSize(new java.awt.Dimension(800, 600));
-        setPreferredSize(new java.awt.Dimension(1000, 600));
+        setMinimumSize(new java.awt.Dimension(1000, 300));
+        setPreferredSize(new java.awt.Dimension(1200, 600));
 
         imagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/pictures-icon.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(imagesButton, org.openide.util.NbBundle.getMessage(DiscoveryDialog.class, "DiscoveryDialog.imagesButton.text")); // NOI18N
@@ -206,23 +243,72 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             }
         });
 
+        sortingPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(DiscoveryDialog.class, "DiscoveryDialog.sortingPanel.border.title"))); // NOI18N
+        sortingPanel.setPreferredSize(new java.awt.Dimension(345, 112));
+
+        org.openide.awt.Mnemonics.setLocalizedText(orderGroupsByLabel, org.openide.util.NbBundle.getMessage(DiscoveryDialog.class, "DiscoveryDialog.orderGroupsByLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(orderByLabel, org.openide.util.NbBundle.getMessage(DiscoveryDialog.class, "DiscoveryDialog.orderByLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(groupByLabel, org.openide.util.NbBundle.getMessage(DiscoveryDialog.class, "DiscoveryDialog.groupByLabel.text")); // NOI18N
+
+        javax.swing.GroupLayout sortingPanelLayout = new javax.swing.GroupLayout(sortingPanel);
+        sortingPanel.setLayout(sortingPanelLayout);
+        sortingPanelLayout.setHorizontalGroup(
+            sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(sortingPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(sortingPanelLayout.createSequentialGroup()
+                        .addComponent(groupByLabel)
+                        .addGap(88, 88, 88)
+                        .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(groupSortingComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(groupByCombobox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(orderByLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(orderByCombobox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(orderGroupsByLabel))
+                .addContainerGap())
+        );
+        sortingPanelLayout.setVerticalGroup(
+            sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(sortingPanelLayout.createSequentialGroup()
+                .addGap(6, 6, 6)
+                .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(groupByCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(groupByLabel)
+                    .addComponent(orderByCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(orderByLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(groupSortingComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(orderGroupsByLabel))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 828, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cancelButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(searchButton)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(sortingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 976, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 828, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cancelButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(searchButton)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addComponent(sortingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -239,7 +325,9 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private void imagesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imagesButtonActionPerformed
 //        resetTopComponent();
         remove(videoFilterPanel);
+        videoFilterPanel.removePropertyChangeListener(listener);
         remove(documentFilterPanel);
+        documentFilterPanel.removePropertyChangeListener(listener);
         add(imageFilterPanel, CENTER);
         imagesButton.setSelected(true);
         imagesButton.setEnabled(false);
@@ -252,11 +340,16 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setEnabled(true);
         documentsButton.setBackground(UNSELECTED_COLOR);
         fileType = FileSearchData.FileType.IMAGE;
+        imageFilterPanel.addPropertyChangeListener(listener);
+        pack();
+        repaint();
     }//GEN-LAST:event_imagesButtonActionPerformed
 
     private void videosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_videosButtonActionPerformed
         remove(imageFilterPanel);
+        imageFilterPanel.removePropertyChangeListener(listener);
         remove(documentFilterPanel);
+        documentFilterPanel.removePropertyChangeListener(listener);
         add(videoFilterPanel, CENTER);
         imagesButton.setSelected(false);
         imagesButton.setEnabled(true);
@@ -268,13 +361,19 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setSelected(false);
         documentsButton.setEnabled(true);
         documentsButton.setBackground(UNSELECTED_COLOR);
+        videoFilterPanel.addPropertyChangeListener(listener);
         fileType = FileSearchData.FileType.VIDEO;
+        pack();
+        repaint();
     }//GEN-LAST:event_videosButtonActionPerformed
 
     private void documentsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsButtonActionPerformed
         remove(imageFilterPanel);
-        remove(documentFilterPanel);
+        imageFilterPanel.removePropertyChangeListener(listener);
+        remove(videoFilterPanel);
+        videoFilterPanel.removePropertyChangeListener(listener);
         add(documentFilterPanel, CENTER);
+        documentFilterPanel.removePropertyChangeListener(listener);
         documentsButton.setSelected(true);
         documentsButton.setEnabled(false);
         documentsButton.setBackground(SELECTED_COLOR);
@@ -286,6 +385,9 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         imagesButton.setEnabled(true);
         imagesButton.setBackground(UNSELECTED_COLOR);
         fileType = FileSearchData.FileType.DOCUMENTS;
+        documentFilterPanel.addPropertyChangeListener(listener);
+        pack();
+        repaint();
     }//GEN-LAST:event_documentsButtonActionPerformed
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
@@ -347,6 +449,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * The settings are valid so enable the Search button
      */
     private void setValid() {
+        System.out.println("SET VALID");
         errorLabel.setText("");
         searchButton.setEnabled(true);
     }
@@ -358,6 +461,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * @param error
      */
     private void setInvalid(String error) {
+        System.out.println("SET INVALID");
         errorLabel.setText(error);
         searchButton.setEnabled(false);
     }
@@ -365,8 +469,11 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton documentsButton;
     private javax.swing.JLabel errorLabel;
+    private javax.swing.JComboBox<GroupingAttributeType> groupByCombobox;
+    private javax.swing.JComboBox<GroupSortingAlgorithm> groupSortingComboBox;
     private javax.swing.JButton imagesButton;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JComboBox<SortingMethod> orderByCombobox;
     private javax.swing.JButton searchButton;
     private javax.swing.JButton videosButton;
     // End of variables declaration//GEN-END:variables

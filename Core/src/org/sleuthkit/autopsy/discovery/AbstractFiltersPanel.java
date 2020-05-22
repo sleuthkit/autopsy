@@ -20,85 +20,87 @@ import javax.swing.event.ListSelectionListener;
  *
  * @author wschaefer
  */
-abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionListener {
+abstract class AbstractFiltersPanel extends javax.swing.JPanel implements ActionListener, ListSelectionListener {
 
-    AbstractFilterPanel() {
-        constraints.fill = GridBagConstraints.VERTICAL;
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.gridheight = 2;
-        constraints.gridwidth = LABEL_WIDTH;
-        constraints.weightx = LABEL_WEIGHT;
-        constraints.anchor = GridBagConstraints.NORTHWEST;
-        constraints.insets = new Insets(0, 8, 12, 8);
-    }
+    private static boolean isInitialized = false;
     private static final double LABEL_WEIGHT = 0;
-    private static final double PANEL_WEIGHT = 0;
+    private static final double PANEL_WEIGHT = .1;
     private static final int LABEL_WIDTH = 1;
     private static final int PANEL_WIDTH = 2;
     private static final int NUMBER_OF_COLUMNS = 6;
     private static final long serialVersionUID = 1L;
     private final GridBagLayout layout = new GridBagLayout();
     private final GridBagConstraints constraints = new GridBagConstraints();
-    private final List<AbstractDiscoveryFiltersPanel> filters = new ArrayList<>();
+    private final List<AbstractDiscoveryFilterPanel> filters = new ArrayList<>();
 
     abstract FileSearchData.FileType getFileType();
 
-    void addFilter(AbstractDiscoveryFiltersPanel filterPanel, boolean isSelected, int[] indicesSelected) {
+    final synchronized void addFilter(AbstractDiscoveryFilterPanel filterPanel, boolean isSelected, int[] indicesSelected) {
+        if (!isInitialized) {
+            constraints.fill = GridBagConstraints.VERTICAL;
+            constraints.gridx = 0;
+            constraints.gridy = 0;
+            constraints.gridheight = 2;
+            constraints.gridwidth = LABEL_WIDTH;
+            constraints.weightx = LABEL_WEIGHT;
+            constraints.anchor = GridBagConstraints.NORTHWEST;
+            constraints.insets = new Insets(0, 8, 12, 8);
+            isInitialized = true;
+        }
         filterPanel.configurePanel(isSelected, indicesSelected);
-        filterPanel.addListeners(this, new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent evt) {
-                if (!evt.getValueIsAdjusting()) {
-                    validateFields();
-                }
-            }
-        });
-        filters.add(filterPanel);
-        addToGridBagLayout(filterPanel.getCheckbox(), null);
-        addToGridBagLayout(filterPanel, null);
-        constraints.weightx = .9;
-        constraints.fill = GridBagConstraints.BOTH;
-        addToGridBagLayout(new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0)), null);
+        filterPanel.addListeners(this, this);
         constraints.fill = GridBagConstraints.VERTICAL;
+        filters.add(filterPanel);
         constraints.weightx = LABEL_WEIGHT;
+        constraints.gridwidth = LABEL_WIDTH;
+        addToGridBagLayout(filterPanel.getCheckbox(), null);
+        nextSpot(LABEL_WIDTH);
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.weightx = PANEL_WEIGHT;
+        constraints.gridwidth = PANEL_WIDTH;
+        addToGridBagLayout(filterPanel, null);
+        nextSpot(PANEL_WIDTH);
         updateLayout();
     }
 
-    void endPanel() {
+    private void nextSpot(int width) {
+        constraints.gridx += width;
+        if (constraints.gridx >= NUMBER_OF_COLUMNS) {
+            constraints.weightx = .9;
+            constraints.gridwidth = LABEL_WIDTH;
+            add(new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0)), constraints);
+            constraints.fill = GridBagConstraints.VERTICAL;
+            constraints.gridy += constraints.gridheight;
+            constraints.gridx = 0;
+        }
+    }
+
+    final synchronized void endPanel() {
         //add filler at end
-        constraints.gridy++;
+        constraints.gridy += constraints.gridheight;
         constraints.fill = GridBagConstraints.BOTH;
         constraints.weightx = .9;
         constraints.weighty = .9;
         add(new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767)), constraints);
     }
 
-    void clearFilters() {
+    final synchronized void clearFilters() {
+        for (AbstractDiscoveryFilterPanel filterPanel : filters){
+            filterPanel.removeListeners();
+        }
         filters.clear();
     }
 
     private void addToGridBagLayout(Component componentToAdd, Component additionalComponentToAdd) {
-        if (constraints.gridx % 2 == 0) {
-            constraints.weightx = LABEL_WEIGHT;
-            constraints.gridwidth = LABEL_WIDTH;
-        } else {
-            constraints.weightx = PANEL_WEIGHT;
-            constraints.gridwidth = PANEL_WIDTH;
-        }
         if (additionalComponentToAdd != null) {
-            constraints.gridheight = 1;
+            constraints.gridheight /= 2;
             add(componentToAdd, constraints);
-            constraints.gridy++;
+            constraints.gridy += constraints.gridheight;
             add(additionalComponentToAdd, constraints);
-            constraints.gridy--;
-            constraints.gridheight = 2;
+            constraints.gridy -= constraints.gridheight;
+            constraints.gridheight *= 2;
         } else {
             add(componentToAdd, constraints);
-        }
-        constraints.gridx = (constraints.gridx + LABEL_WIDTH) % NUMBER_OF_COLUMNS;
-        if (constraints.gridx == 0) {
-            constraints.gridy += constraints.gridheight;
         }
     }
 
@@ -113,6 +115,7 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
      * @param error
      */
     private void setInvalid(String error) {
+        System.out.println("ERROR FIRED " + error);
         firePropertyChange("FilterError", error, error);
     }
 
@@ -120,26 +123,41 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
      * The settings are valid so enable the Search button
      */
     private void setValid() {
+        System.out.println("VALID FIRED");
         firePropertyChange("FilterError", null, null);
     }
 
     private void validateFields() {
         String errorString;
-        for (AbstractDiscoveryFiltersPanel filterPanel : filters) {
+        System.out.println("VALIDATE FIELDS");
+        for (AbstractDiscoveryFilterPanel filterPanel : filters) {
             errorString = filterPanel.checkForError();
             if (errorString != null) {
                 setInvalid(errorString);
                 return;
             }
+            System.out.println("FILTER VALID");
         }
         setValid();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        System.out.println("ACTION PERFORMED");
         validateFields();
     }
+    
+    boolean isObjectsFilterSupported(){
+        return false;
+    }
 
+    boolean isHashSetFilterSupported(){
+        return false;
+    }
+    
+    boolean isInterestingItemsFilterSupported(){
+        return false;
+    }
     /**
      * Get a list of all filters selected by the user.
      *
@@ -150,10 +168,10 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
      *
      * @return the list of filters
      */
-    List<FileSearchFiltering.FileFilter> getFilters() {
+    synchronized List<FileSearchFiltering.FileFilter> getFilters() {
         List<FileSearchFiltering.FileFilter> filtersToUse = new ArrayList<>();
         filtersToUse.add(new FileSearchFiltering.FileTypeFilter(getFileType()));
-        for (AbstractDiscoveryFiltersPanel filterPanel : filters) {
+        for (AbstractDiscoveryFilterPanel filterPanel : filters) {
             if (filterPanel.getCheckbox().isSelected()) {
                 FileSearchFiltering.FileFilter filter = filterPanel.getFilter();
                 if (filter != null) {
@@ -162,6 +180,14 @@ abstract class AbstractFilterPanel extends javax.swing.JPanel implements ActionL
             }
         }
         return filtersToUse;
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent evt) {
+        System.out.println("VALUE CHANGED");
+        if (!evt.getValueIsAdjusting()) {
+            validateFields();
+        }
     }
 
 }

@@ -11,7 +11,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
  *
  * @author wschaefer
  */
-final class DocumentFilterPanel extends AbstractFilterPanel {
+final class DocumentFilterPanel extends AbstractFiltersPanel {
 
     private static final long serialVersionUID = 1L;
       private static final FileSearchData.FileType FILE_TYPE = FileSearchData.FileType.DOCUMENTS;
@@ -20,10 +20,8 @@ final class DocumentFilterPanel extends AbstractFilterPanel {
      * Creates new form DocumentFilterPanel
      */
     DocumentFilterPanel() {
-        super();
         initComponents();
-        SizeFilterPanel sizeFilterPanel = new SizeFilterPanel(FileSearchData.FileType.DOCUMENTS);
-        addFilter(sizeFilterPanel, false, null);
+        addFilter(new SizeFilterPanel(FileSearchData.FileType.DOCUMENTS), false, null);
         addFilter(new DataSourceFilterPanel(), false, null);
         int[] pastOccurrencesIndices;
         if (!CentralRepository.isEnabled()) {

@@ -17,7 +17,7 @@ import org.sleuthkit.autopsy.discovery.FileSearchData.FileSize;
  *
  * @author wschaefer
  */
-final class SizeFilterPanel extends AbstractDiscoveryFiltersPanel {
+final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -43,13 +43,23 @@ final class SizeFilterPanel extends AbstractDiscoveryFiltersPanel {
         sizeList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(sizeCheckbox, org.openide.util.NbBundle.getMessage(SizeFilterPanel.class, "SizeFilterPanel.sizeCheckbox.text")); // NOI18N
+        sizeCheckbox.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        sizeCheckbox.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        sizeCheckbox.setMaximumSize(new java.awt.Dimension(103, 25));
+        sizeCheckbox.setMinimumSize(new java.awt.Dimension(103, 25));
+        sizeCheckbox.setPreferredSize(new java.awt.Dimension(103, 25));
+        sizeCheckbox.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        sizeCheckbox.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
         sizeCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 sizeCheckboxActionPerformed(evt);
             }
         });
 
+        setMinimumSize(new java.awt.Dimension(200, 30));
         setPreferredSize(new java.awt.Dimension(300, 60));
+
+        sizeScrollPane.setPreferredSize(new java.awt.Dimension(300, 60));
 
         sizeList.setModel(new DefaultListModel<FileSize>());
         sizeList.setEnabled(false);
@@ -60,12 +70,12 @@ final class SizeFilterPanel extends AbstractDiscoveryFiltersPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(sizeScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(sizeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(sizeScrollPane)
+                .addComponent(sizeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents

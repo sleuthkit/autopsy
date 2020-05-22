@@ -13,7 +13,7 @@ import javax.swing.JList;
  *
  * @author wschaefer
  */
-public class UserCreatedFilterPanel extends AbstractDiscoveryFiltersPanel {
+public class UserCreatedFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
 

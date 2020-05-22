@@ -20,7 +20,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * @author wschaefer
  */
-public class ObjectDetectedFilterPanel extends AbstractDiscoveryFiltersPanel {
+public class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(ObjectDetectedFilterPanel.class.getName());
@@ -66,14 +66,27 @@ public class ObjectDetectedFilterPanel extends AbstractDiscoveryFiltersPanel {
         objectsScrollPane = new javax.swing.JScrollPane();
         objectsList = new javax.swing.JList<>();
 
-        org.openide.awt.Mnemonics.setLocalizedText(objectsCheckbox, org.openide.util.NbBundle.getMessage(ObjectDetectedFilterPanel.class, "ObjectDetectedFilterPanel.objectsCheckbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(objectsCheckbox, org.openide.util.NbBundle.getMessage(ObjectDetectedFilterPanel.class, "ObjectDetectedFilterPanel.text")); // NOI18N
+        objectsCheckbox.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        objectsCheckbox.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        objectsCheckbox.setMaximumSize(new java.awt.Dimension(103, 25));
+        objectsCheckbox.setMinimumSize(new java.awt.Dimension(103, 25));
+        objectsCheckbox.setName(""); // NOI18N
+        objectsCheckbox.setPreferredSize(new java.awt.Dimension(103, 25));
+        objectsCheckbox.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        objectsCheckbox.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
         objectsCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 objectsCheckboxActionPerformed(evt);
             }
         });
 
+        setMinimumSize(new java.awt.Dimension(200, 30));
         setPreferredSize(new java.awt.Dimension(300, 60));
+
+        objectsScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
+        objectsScrollPane.setName(""); // NOI18N
+        objectsScrollPane.setPreferredSize(new java.awt.Dimension(260, 50));
 
         objectsList.setModel(new DefaultListModel<String>());
         objectsList.setEnabled(false);
@@ -84,13 +97,11 @@ public class ObjectDetectedFilterPanel extends AbstractDiscoveryFiltersPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(objectsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 12, Short.MAX_VALUE))
+            .addComponent(objectsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(objectsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
+            .addComponent(objectsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 64, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 

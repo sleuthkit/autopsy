@@ -15,7 +15,7 @@ import javax.swing.event.ListSelectionListener;
  *
  * @author wschaefer
  */
-abstract class AbstractDiscoveryFiltersPanel extends javax.swing.JPanel {
+abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -55,5 +55,18 @@ abstract class AbstractDiscoveryFiltersPanel extends javax.swing.JPanel {
     }
 
     abstract FileSearchFiltering.FileFilter getFilter();
+
+    void removeListeners() {
+        if (getCheckbox() != null) {
+            for (ActionListener listener : getCheckbox().getActionListeners()) {
+                getCheckbox().removeActionListener(listener);
+            }
+        }
+        if (getList() != null) {
+            for (ListSelectionListener listener : getList().getListSelectionListeners()) {
+                getList().removeListSelectionListener(listener);
+            }
+        }
+    }
 
 }

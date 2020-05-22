@@ -20,7 +20,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * @author wschaefer
  */
-public class InterestingItemsFilterPanel extends AbstractDiscoveryFiltersPanel {
+public class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(InterestingItemsFilterPanel.class.getName());

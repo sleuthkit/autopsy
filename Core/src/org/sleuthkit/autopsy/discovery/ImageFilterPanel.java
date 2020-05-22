@@ -11,7 +11,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
  *
  * @author wschaefer
  */
-final class ImageFilterPanel extends AbstractFilterPanel {
+final class ImageFilterPanel extends AbstractFiltersPanel {
 
     private static final long serialVersionUID = 1L;
     private static final FileSearchData.FileType FILE_TYPE = FileSearchData.FileType.IMAGE;
@@ -20,12 +20,11 @@ final class ImageFilterPanel extends AbstractFilterPanel {
      * Creates new form ImageFilterPanel
      */
     ImageFilterPanel() {
-        super();
         initComponents();
         SizeFilterPanel sizeFilterPanel = new SizeFilterPanel(FILE_TYPE);
         int[] sizeIndicesSelected = {1, 2, 3, 4, 5};
         addFilter(sizeFilterPanel, true, sizeIndicesSelected);
-        addFilter(new DataSourceFilterPanel(), false, null);
+        addFilter(new ObjectDetectedFilterPanel(), false, null);
         int[] pastOccurrencesIndices;
         if (!CentralRepository.isEnabled()) {
             pastOccurrencesIndices = new int[]{0};
@@ -36,7 +35,8 @@ final class ImageFilterPanel extends AbstractFilterPanel {
         addFilter(new UserCreatedFilterPanel(), false, null);
         addFilter(new HashSetFilterPanel(), false, null);
         addFilter(new InterestingItemsFilterPanel(), false, null);
-        addFilter(new ObjectDetectedFilterPanel(), false, null);
+
+        addFilter(new DataSourceFilterPanel(), false, null);
         addFilter(new ParentFolderFilterPanel(), false, null);
         endPanel();
     }

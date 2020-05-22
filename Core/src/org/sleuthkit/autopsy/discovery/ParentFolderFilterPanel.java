@@ -17,11 +17,12 @@ import org.sleuthkit.autopsy.discovery.FileSearchFiltering.ParentSearchTerm;
  *
  * @author wschaefer
  */
-public class ParentFolderFilterPanel extends AbstractDiscoveryFiltersPanel {
+public class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private DefaultListModel<FileSearchFiltering.ParentSearchTerm> parentListModel;
-
+    private static final String[] DEFAULT_IGNORED_PATHS = {"/Windows/", "/Program Files/"}; //NON-NLS
+    
     /**
      * Creates new form ParentFolderFilterPanel
      */
@@ -37,6 +38,9 @@ public class ParentFolderFilterPanel extends AbstractDiscoveryFiltersPanel {
         fullRadioButton.setSelected(true);
         includeRadioButton.setSelected(true);
         parentListModel = (DefaultListModel<FileSearchFiltering.ParentSearchTerm>) parentList.getModel();
+        for (String ignorePath : DEFAULT_IGNORED_PATHS) {
+            parentListModel.add(parentListModel.size(), new ParentSearchTerm(ignorePath, false, false));
+        }
     }
 
     /**
