@@ -424,6 +424,9 @@ class TableReportGenerator {
      * Generate the tables for the tagged artifacts
      */
     @SuppressWarnings("deprecation")
+    @Messages({
+        "ReportGenerator.errList.failedGetBBArtifactTags=Failed to get result tags."
+    })
     private void makeBlackboardArtifactTagsTables() {
 
         List<BlackboardArtifactTag> tags;
