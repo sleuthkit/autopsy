@@ -3,6 +3,7 @@
 # RR plugin to parse (Vista, Win7/Win2008R2) shell bags
 #
 # History:
+#   20180702 - code updates, including to parseGUID() function
 #   20120810 - added support for parsing Network types; added handling of 
 #              offsets for Folder types (ie, transition to long name offset),
 #              based on OS version (Vista, Win7); tested against one Win2008R2
@@ -26,7 +27,7 @@
 # Moore for writing the shell bag parser for Registry Decoder, as well as 
 # assistance with some parsing.
 #
-# License: GPL v3 
+#  
 # copyright 2012 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
@@ -42,12 +43,12 @@ my %config = (hive          => "USRCLASS\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20120810);
+              version       => 20180702);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Shell/BagMRU traversal in Win7 USRCLASS.DAT hives";	
+	return "Shell/BagMRU traversal in Win7 USRCLASS\.DAT hives";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -84,6 +85,7 @@ my %cp_guids = ("{bb64f8a7-bee7-4e1a-ab8d-7d8273f7fdb6}" => "Action Center",
     "{a3dd4f92-658a-410f-84fd-6fbbbef2fffe}" => "Internet Options",
     "{a304259d-52b8-4526-8b1a-a1d6cecc8243}" => "iSCSI Initiator",
     "{725be8f7-668e-4c7b-8f90-46bdb0936430}" => "Keyboard",
+    "{bf782cc9-5a52-4a17-806c-2a894ffeeac5}" => "Language Settings",
     "{e9950154-c418-419e-a90a-20c5287ae24b}" => "Location and Other Sensors",
     "{1fa9085f-25a2-489b-85d4-86326eedcd87}" => "Manage Wireless Networks",
     "{6c8eec18-8d75-41b2-a177-8831d59d2d50}" => "Mouse",
@@ -356,7 +358,7 @@ sub parseVariableEntry {
 	  	while($tag) {
 	  		my $sz = unpack("V",substr($stuff,$cnt,4));
 	  		my $id = unpack("V",substr($stuff,$cnt + 4,4));
-                        return %item unless (defined $sz); 
+            return %item unless (defined $sz);            
 #--------------------------------------------------------------
 # sub-segment types
 # 0x0a - file name
@@ -372,7 +374,7 @@ sub parseVariableEntry {
 	  			
 	  			my $num = unpack("V",substr($stuff,$cnt + 13,4));
 	  			my $str = substr($stuff,$cnt + 13 + 4,($num * 2));
-	  			$str =~ s/\x00//g;
+	  			$str =~ s/\00//g;
 	  			$item{name} = $str;
 	  		}
 	  		$cnt += $sz;
@@ -386,8 +388,8 @@ sub parseVariableEntry {
 #	  	while($tag) {
 #	  		my $sz = unpack("V",substr($stuff,$cnt,4));
 #	  		my $id = unpack("V",substr($stuff,$cnt + 4,4));
+#           return %item unless (defined $sz); 
 #	  		
-#                        return %item unless (defined $sz); 
 #	  		if ($sz == 0x00) {
 #	  			$tag = 0;
 #	  			next;
@@ -396,7 +398,7 @@ sub parseVariableEntry {
 #	  			
 #	  			my $num = unpack("V",substr($stuff,$cnt + 13,4));
 #	  			my $str = substr($stuff,$cnt + 13 + 4,($num * 2));
-#	  			$str =~ s/\x00//g;
+#	  			$str =~ s/\00//g;
 #	  			$item{name} = $str;
 #	  		}
 #	  		$cnt += $sz;
@@ -410,12 +412,12 @@ sub parseVariableEntry {
 	elsif ($tag == 0x7b || $tag == 0xbb || $tag == 0xfb) {
 		my ($sz1,$sz2,$sz3) = unpack("VVV",substr($data,0x3e,12));
 		$item{name} = substr($data,0x4a,$sz1 * 2);
-		$item{name} =~ s/\x00//g;
+		$item{name} =~ s/\00//g;
 	}
 	elsif ($tag == 0x02 || $tag == 0x03) {
 		my ($sz1,$sz2,$sz3,$sz4) = unpack("VVVV",substr($data,0x26,16));
 		$item{name} = substr($data,0x36,$sz1 * 2);
-		$item{name} =~ s/\x00//g;
+		$item{name} =~ s/\00//g;
 	}
 	else {
 		$item{name} = "Unknown Type";	
@@ -432,7 +434,7 @@ sub parseNetworkEntry {
 	my %item = ();	
 	$item{type} = unpack("C",substr($data,2,1));
 	
-	my @n = split(/\x00/,substr($data,4,length($data) - 4));
+	my @n = split(/\00/,substr($data,4,length($data) - 4));
 	$item{name} = $n[0];
 	return %item;
 }
@@ -449,13 +451,13 @@ sub parseZipSubFolderItem {
 
 # Get the opened/accessed date/time	
 	$item{datetime} = substr($data,0x24,6);
-	$item{datetime} =~ s/\x00//g;
+	$item{datetime} =~ s/\00//g;
 	if ($item{datetime} eq "N/A") {
 		
 	}
 	else {
 		$item{datetime} = substr($data,0x24,40);
-		$item{datetime} =~ s/\x00//g;
+		$item{datetime} =~ s/\00//g;
 		my ($date,$time) = split(/\s+/,$item{datetime},2);
 		my ($mon,$day,$yr) = split(/\//,$date,3);
 		my ($hr,$min,$sec) = split(/:/,$time,3);
@@ -468,9 +470,9 @@ sub parseZipSubFolderItem {
 	my $sz2 = unpack("V",substr($data,0x58,4));
 		
 	my $str1 = substr($data,0x5C,$sz *2) if ($sz > 0);
-	$str1 =~ s/\x00//g;
+	$str1 =~ s/\00//g;
 	my $str2 = substr($data,0x5C + ($sz * 2),$sz2 *2) if ($sz2 > 0);
-	$str2 =~ s/\x00//g;
+	$str2 =~ s/\00//g;
 		
 	if ($sz2 > 0) {
 		$item{name} = $str1."\\".$str2;
@@ -509,10 +511,10 @@ sub parseURIEntry {
 	
 	my $sz = unpack("V",substr($data,0x2a,4));
 	my $uri = substr($data,0x2e,$sz);
-	$uri =~ s/\x00//g;
+	$uri =~ s/\00//g;
 	
 	my $proto = substr($data,length($data) - 6, 6);
-	$proto =~ s/\x00//g;
+	$proto =~ s/\00//g;
 	
 	$item{name} = $proto."://".$uri;
 	
@@ -562,8 +564,28 @@ sub parseGUID {
   my $d3 = unpack("v",substr($data,6,2));
 	my $d4 = unpack("H*",substr($data,8,2));
   my $d5 = unpack("H*",substr($data,10,6));
-  return sprintf "{%08x-%x-%x-$d4-$d5}",$d1,$d2,$d3;
+  return sprintf "{%08x-%04x-%04x-$d4-$d5}",$d1,$d2,$d3;
 }
+
+#-----------------------------------------------------------
+#
+#-----------------------------------------------------------
+#sub parseDeviceEntry {
+#	my $data = shift;
+#	my %item = ();
+#	
+#	my $userlen = unpack("V",substr($data,30,4));
+#	my $devlen  = unpack("V",substr($data,34,4));
+#	
+#	my $user    = substr($data,0x28,$userlen * 2);
+#	$user =~ s/\00//g;
+#	
+#	my $dev = substr($data,0x28 + ($userlen * 2),$devlen * 2);
+#	$dev =~ s/\00//g;
+#	
+#	$item{name} = $user;
+#	return %item;
+#}
 
 #-----------------------------------------------------------
 #
@@ -571,17 +593,52 @@ sub parseGUID {
 sub parseDeviceEntry {
 	my $data = shift;
 	my %item = ();
+
+	my $ofs = unpack("v",substr($data,4,2));
+	my $tag = unpack("V",substr($data,6,4));
 	
-	my $userlen = unpack("V",substr($data,30,4));
-	my $devlen  = unpack("V",substr($data,34,4));
-	
-	my $user    = substr($data,0x28,$userlen * 2);
-	$user =~ s/\x00//g;
-	
-	my $dev = substr($data,0x28 + ($userlen * 2),$devlen * 2);
-	$dev =~ s/\x00//g;
-	
-	$item{name} = $user;
+#-----------------------------------------------------	
+# DEBUG
+#  ::rptMsg("parseDeviceEntry, tag = ".$tag);	
+#-----------------------------------------------------		
+	if ($tag == 0) {
+		my $guid1 = parseGUID(substr($data,$ofs + 6,16));
+		my $guid2 = parseGUID(substr($data,$ofs + 6 + 16,16));
+		$item{name} = $guid1."\\".$guid2
+	}
+	elsif ($tag == 2) {
+		$item{name} = substr($data,0x0a,($ofs + 6) - 0x0a);
+		$item{name} =~ s/\00//g;
+	}
+	else {
+    my $ver = unpack("C",substr($data,9,1));
+		my $idx = unpack("C",substr($data,3,1));
+		
+		if ($idx == 0x80) {
+			$item{name} = parseGUID(substr($data,4,16));
+		}
+# Version 3 = XP    
+    elsif ($ver == 3) {
+    	my $guid1 = parseGUID(substr($data,$ofs + 6,16));
+			my $guid2 = parseGUID(substr($data,$ofs + 6 + 16,16));
+			$item{name} = $guid1."\\".$guid2
+    
+    }
+# Version 8 = Win7    
+    elsif ($ver == 8) {
+    	my $userlen = unpack("V",substr($data,30,4));
+			my $devlen  = unpack("V",substr($data,34,4));
+			my $user    = substr($data,0x28,$userlen * 2);
+			$user =~ s/\00//g;
+			my $dev = substr($data,0x28 + ($userlen * 2),$devlen * 2);
+			$dev =~ s/\00//g;
+			$item{name} = $user;	
+		}
+# Version unknown    
+    else { 
+    	$item{name} = "Device Entry - Unknown Version";
+    } 
+	}
 	return %item;
 }
 
@@ -647,15 +704,15 @@ sub parseFolderEntry {
 	($item{mtime_str},$item{mtime}) = convertDOSDate($m[0],$m[1]);
 	
 # Need to read in short name; nul-term ASCII
-#	$item{shortname} = (split(/\x00/,substr($data,12,length($data) - 12),2))[0];
+#	$item{shortname} = (split(/\00/,substr($data,12,length($data) - 12),2))[0];
 	$ofs_shortname = $ofs_mdate + 6;	
 	my $tag = 1;
 	my $cnt = 0;
 	my $str = "";
 	while($tag) {
 		my $s = substr($data,$ofs_shortname + $cnt,1);
-                return %item unless (defined $s); 
-		if ($s =~ m/\x00/ && ((($cnt + 1) % 2) == 0)) {
+        return %item unless (defined $s);
+		if ($s =~ m/\00/ && ((($cnt + 1) % 2) == 0)) {
 			$tag = 0;
 		}
 		else {
@@ -663,15 +720,15 @@ sub parseFolderEntry {
 			$cnt++;
 		}
 	}
-#	$str =~ s/\x00//g;
+#	$str =~ s/\00//g;
 	my $shortname = $str;
 	my $ofs = $ofs_shortname + $cnt + 1;
 # Read progressively, 1 byte at a time, looking for 0xbeef	
-	$tag = 1;
-	$cnt = 0;
+	my $tag = 1;
+	my $cnt = 0;
 	while ($tag) {
-                my $s = substr($data,$ofs + $cnt,2);
-                return %item unless (defined $s); 
+        my $s = substr($data,$ofs + $cnt,2);
+        return %item unless (defined $s); 
 		if (unpack("v",$s) == 0xbeef) {
 			$tag = 0;
 		}
@@ -682,10 +739,10 @@ sub parseFolderEntry {
 	$item{extver} = unpack("v",substr($data,$ofs + $cnt - 4,2));
 	$ofs = $ofs + $cnt + 2;
 	
-	@m = unpack("vv",substr($data,$ofs,4));
+	my @m = unpack("vv",substr($data,$ofs,4));
 	($item{ctime_str},$item{ctime}) = convertDOSDate($m[0],$m[1]);
 	$ofs += 4;
-	@m = unpack("vv",substr($data,$ofs,4));
+	my @m = unpack("vv",substr($data,$ofs,4));
 	($item{atime_str},$item{atime}) = convertDOSDate($m[0],$m[1]);
 	
 	my $jmp;
@@ -695,12 +752,16 @@ sub parseFolderEntry {
 	elsif ($item{extver} == 0x08) {
 		$jmp = 30;
 	}
+	elsif ($item{extver} == 0x09) {
+			$jmp = 34;
+	}
+	else {}
 	
 	$ofs += $jmp;
 	
-	$str = substr($data,$ofs,length($data) - 30);
-	my $longname = (split(/\x00\x00/,$str,2))[0];
-	$longname =~ s/\x00//g;
+	my $str = substr($data,$ofs,length($data) - 30);
+	my $longname = (split(/\00\00/,$str,2))[0];
+	$longname =~ s/\00//g;
 	
 	if ($longname ne "") {
 		$item{name} = $longname;
@@ -750,7 +811,7 @@ sub parseNetworkEntry {
 	my $data     = shift;
 	my %item = ();
 	$item{type} = unpack("C",substr($data,2,1));
-	my @names = split(/\x00/,substr($data,5,length($data) - 5));
+	my @names = split(/\00/,substr($data,5,length($data) - 5));
 	$item{name} = $names[0];
 	return %item;
 }

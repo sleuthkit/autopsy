@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,7 +55,7 @@ public class TagsManager implements Closeable {
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
     private final SleuthkitCase caseDb;
 
-    static String DEFAULT_TAG_SET_NAME = "Project VIC (United States)";
+    private static String DEFAULT_TAG_SET_NAME = "Project VIC";
 
     static {
 
@@ -146,12 +146,34 @@ public class TagsManager implements Closeable {
         return tagDisplayNames;
     }
 
+    /**
+     * Gets the set of display names of notable (TskData.FileKnown.BAD) tag types.
+     * If a case is not open the list will only include only the user defined 
+     * custom tags.  Otherwise the list will include all notable tags.
+     * @return 
+     */
     public static List<String> getNotableTagDisplayNames() {
         List<String> tagDisplayNames = new ArrayList<>();
         for (TagNameDefinition tagDef : TagNameDefinition.getTagNameDefinitions()) {
             if (tagDef.getKnownStatus() == TskData.FileKnown.BAD) {
                 tagDisplayNames.add(tagDef.getDisplayName());
             }
+        }
+        
+         try {
+            TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
+            for (TagName tagName : tagsManager.getAllTagNames()) {
+                if(tagName.getKnownStatus() == TskData.FileKnown.BAD &&
+                        !tagDisplayNames.contains(tagName.getDisplayName())) {
+                    tagDisplayNames.add(tagName.getDisplayName());
+                }
+            }
+        } catch (NoCurrentCaseException ignored) {
+            /*
+             * No current case, nothing more to add to the set.
+             */
+        } catch(TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get list of TagNames from TagsManager.", ex);
         }
         return tagDisplayNames;
     }
@@ -162,7 +184,62 @@ public class TagsManager implements Closeable {
      * @return list of predefined tag names
      */
     public static List<String> getStandardTagNames() {
-        return TagNameDefinition.getStandardTagNames();
+        List<String> tagList = new ArrayList<>();
+
+        for (TagNameDefinition tagNameDef : TagNameDefinition.getStandardTagNameDefinitions()) {
+            tagList.add(tagNameDef.getDisplayName());
+        }
+
+        try {
+            List<TagSet> tagSetList = Case.getCurrentCaseThrows().getSleuthkitCase().getTaggingManager().getTagSets();
+            for (TagSet tagSet : tagSetList) {
+                if (tagSet.getName().equals(DEFAULT_TAG_SET_NAME)) {
+                    for (TagName tagName : tagSet.getTagNames()) {
+                        tagList.add(tagName.getDisplayName());
+                    }
+                }
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get Project VIC tags from the database.", ex);
+        }
+
+        return tagList;
+    }
+
+    /**
+     * Returns the name of the Category TagSet.
+     *
+     * @return Name of category TagSet.
+     */
+    public static String getCategoryTagSetName() {
+        return DEFAULT_TAG_SET_NAME;
+    }
+
+    /**
+     * Returns the bookmark tag display string.
+     *
+     * @return
+     */
+    public static String getBookmarkDisplayString() {
+        return TagNameDefinition.getBookmarkDisplayString();
+    }
+
+    /**
+     * Returns the Follow Up tag display string.
+     *
+     * @return
+     */
+    public static String getFollowUpDisplayString() {
+        return TagNameDefinition.getFollowUpDisplayString();
+    }
+
+    /**
+     * Returns the Notable tag display string.
+     *
+     * @return
+     */
+    public static String getNotableDisplayString() {
+        return TagNameDefinition.getNotableDisplayString();
     }
 
     /**
@@ -481,7 +558,7 @@ public class TagsManager implements Closeable {
         try {
             Case currentCase = Case.getCurrentCaseThrows();
 
-            currentCase.notifyContentTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags().get(0));
+            currentCase.notifyContentTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags());
 
         } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Added a tag to a closed case", ex);
@@ -701,7 +778,7 @@ public class TagsManager implements Closeable {
         TaggingManager.BlackboardArtifactTagChange tagChange = caseDb.getTaggingManager().addArtifactTag(artifact, tagName, comment);
         try {
             Case currentCase = Case.getCurrentCaseThrows();
-            currentCase.notifyBlackBoardArtifactTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags().get(0));
+            currentCase.notifyBlackBoardArtifactTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags());
         } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Added a tag to a closed case", ex);
         }

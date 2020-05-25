@@ -1,8 +1,15 @@
 #-----------------------------------------------------------
 # disablelastaccess.pl
+#
+# History:
+#  20181207 - updated for Win10 v.1803 (Maxim, David Cohen)
+#  20090118 - 
 # 
 # References:
-#    http://support.microsoft.com/kb/555041
+#    https://twitter.com/errno_fail/status/1070838120545955840
+#    https://dfir.ru/2018/12/08/the-last-access-updates-are-almost-back/
+#    https://www.hecfblog.com/2018/12/daily-blog-557-changes-in.html
+#		 http://support.microsoft.com/kb/555041
 #    http://support.microsoft.com/kb/894372
 #
 # copyright 2008 H. Carvey, keydet89@yahoo.com
@@ -15,9 +22,14 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20090118);
+              version       => 20181207);
 
 sub getConfig{return %config}
+
+my %dla = (0x80000000 => "(User Managed, Updates Enabled)",
+           0x80000001 => "(User Managed, Updates Disabled)",
+           0x80000002 => "(System Managed, Updates Enabled)",
+           0x80000003 => "(System Managed, Updates Disabled)");
 
 sub getShortDescr {
 	return "Get NTFSDisableLastAccessUpdate value";	
@@ -48,7 +60,8 @@ sub pluginmain {
 		$ccs = "ControlSet00".$current;
 	}
 
-	$key_path = $ccs."\\Control\\FileSystem";
+	my $key_path = $ccs."\\Control\\FileSystem";
+	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("NtfsDisableLastAccessUpdate");
 		::rptMsg($key_path);
@@ -57,8 +70,19 @@ sub pluginmain {
 		if (scalar(@vals) > 0) {
 			foreach my $v (@vals) {
 				if ($v->get_name() eq "NtfsDisableLastAccessUpdate") {
-					::rptMsg("NtfsDisableLastAccessUpdate = ".$v->get_data());
+					my $dat = $v->get_data();
+					::rptMsg(sprintf "NtfsDisableLastAccessUpdate = 0x%08x",$dat);
 					$found = 1;
+					
+					if ($dat > 1) {
+						::rptMsg($dla{$dat});
+						eval {
+							my $thresh = $key->get_value("NtfsLastAccessUpdatePolicyVolumeSizeThreshold")->get_data();
+							::rptMsg(sprintf "NtfsLastAccessUpdatePolicyVolumeSizeThreshold value = 0x%08x",$thresh);
+						};
+						
+					}
+					
 				}
 			}
 			::rptMsg("NtfsDisableLastAccessUpdate value not found.") if ($found == 0);

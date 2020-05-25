@@ -126,7 +126,7 @@ public class GeoPath {
      *
      * @return
      */
-    final BlackboardArtifact getArtifact() {
+    public final BlackboardArtifact getArtifact() {
         return artifact;
     }
 

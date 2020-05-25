@@ -1563,11 +1563,12 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param newTag     new ContentTag added
-     * @param deletedTag Removed ContentTag
+     * @param newTag            The added ContentTag.
+     * @param deletedTagList    List of ContentTags that were removed as a result 
+     *                          of the addition of newTag.
      */
-    public void notifyContentTagAdded(ContentTag newTag, ContentTag deletedTag) {
-        eventPublisher.publish(new ContentTagAddedEvent(newTag, deletedTag));
+    public void notifyContentTagAdded(ContentTag newTag, List<ContentTag> deletedTagList) {
+        eventPublisher.publish(new ContentTagAddedEvent(newTag, deletedTagList));
     }
 
     /**
@@ -1627,11 +1628,12 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param newTag     new BlackboardArtifactTag added
-     * @param removedTag The BlackboardArtifactTag that was removed.
+     * @param newTag            The added ContentTag.
+     * @param removedTagList    List of ContentTags that were removed as a result 
+     *                          of the addition of newTag.
      */
-    public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag, BlackboardArtifactTag removedTag) {
-        eventPublisher.publish(new BlackBoardArtifactTagAddedEvent(newTag, removedTag));
+    public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag, List<BlackboardArtifactTag> removedTagList) {
+        eventPublisher.publish(new BlackBoardArtifactTagAddedEvent(newTag, removedTagList));
     }
 
     /**
@@ -1956,7 +1958,7 @@ public class Case {
             checkForCancellation();
             openCaseLevelServices(progressIndicator);
             checkForCancellation();
-            openAppServiceCaseResources(progressIndicator);
+            openAppServiceCaseResources(progressIndicator, true);
             checkForCancellation();
             openCommunicationChannels(progressIndicator);
             return null;
@@ -2005,7 +2007,7 @@ public class Case {
             checkForCancellation();
             openCaseLevelServices(progressIndicator);
             checkForCancellation();
-            openAppServiceCaseResources(progressIndicator);
+            openAppServiceCaseResources(progressIndicator, false);
             checkForCancellation();
             openCommunicationChannels(progressIndicator);
             checkForCancellation();
@@ -2058,6 +2060,7 @@ public class Case {
 
         private final SleuthkitCase tskCase;
         private final String caseName;
+        private final long MAX_IMAGE_THRESHOLD = 100;
         private final ProgressIndicator progressIndicator;
 
         /**
@@ -2115,28 +2118,18 @@ public class Case {
          *                                      event that the operation is
          *                                      cancelled prior to completion.
          */
-        private void openFileSystems(List<Image> images) throws InterruptedException {
+        private void openFileSystems(List<Image> images) throws TskCoreException, InterruptedException {
             byte[] tempBuff = new byte[512];
-
+            
             for (Image image : images) {
                 String imageStr = image.getName();
 
                 progressIndicator.progress(Bundle.Case_openFileSystems_openingImage(imageStr));
 
-                Collection<FileSystem> fileSystems = this.tskCase.getFileSystems(image);
+                Collection<FileSystem> fileSystems = this.tskCase.getImageFileSystems(image);
                 checkIfCancelled();
                 for (FileSystem fileSystem : fileSystems) {
-                    try {
-                        fileSystem.read(tempBuff, 0, 512);
-                    } catch (TskCoreException ex) {
-                        String fileSysStr = fileSystem.getName();
-
-                        logger.log(
-                                Level.WARNING,
-                                String.format("Could not open filesystem: %s in image: %s for case: %s.", fileSysStr, imageStr, caseName),
-                                ex);
-                    }
-
+                    fileSystem.read(tempBuff, 0, 512);
                     checkIfCancelled();
                 }
 
@@ -2151,6 +2144,14 @@ public class Case {
                 if (images == null) {
                     return;
                 }
+                
+                if (images.size() > MAX_IMAGE_THRESHOLD) {
+                    // If we have a large number of images, don't try to preload anything
+                    logger.log(
+                        Level.INFO,
+                        String.format("Skipping background load of file systems due to large number of images in case (%d)", images.size()));
+                    return;
+                }
 
                 checkIfCancelled();
                 openFileSystems(images);
@@ -2158,6 +2159,9 @@ public class Case {
                 logger.log(
                         Level.INFO,
                         String.format("Background operation opening all file systems in %s has been cancelled.", caseName));
+            } catch (Exception ex) {
+                // Exception firewall
+                logger.log(Level.WARNING, "Error while opening file systems in background", ex);
             }
         }
 
@@ -2514,7 +2518,7 @@ public class Case {
         "# {0} - service name", "Case.serviceOpenCaseResourcesProgressIndicator.cancellingMessage=Cancelling opening case resources by {0}...",
         "# {0} - service name", "Case.servicesException.notificationTitle={0} Error"
     })
-    private void openAppServiceCaseResources(ProgressIndicator progressIndicator) throws CaseActionException {
+    private void openAppServiceCaseResources(ProgressIndicator progressIndicator, boolean isNewCase) throws CaseActionException {
         /*
          * Each service gets its own independently cancellable/interruptible
          * task, running in a named thread managed by an executor service, with
@@ -2546,7 +2550,7 @@ public class Case {
                 appServiceProgressIndicator = new LoggingProgressIndicator();
             }
             appServiceProgressIndicator.start(Bundle.Case_progressMessage_preparing());
-            AutopsyService.CaseContext context = new AutopsyService.CaseContext(this, appServiceProgressIndicator);
+            AutopsyService.CaseContext context = new AutopsyService.CaseContext(this, appServiceProgressIndicator, isNewCase);
             String threadNameSuffix = service.getServiceName().replaceAll("[ ]", "-"); //NON-NLS
             threadNameSuffix = threadNameSuffix.toLowerCase();
             TaskThreadFactory threadFactory = new TaskThreadFactory(String.format(CASE_RESOURCES_THREAD_NAME, threadNameSuffix));

@@ -385,6 +385,12 @@ public class AutopsyTestCases {
             listOperator.clickOnItem(0, 1);
             jbo0.pushNoBlock();
             new Timeout("pausing", 2000).sleep();
+            
+            // Next button on the data source selection panel
+            JButtonOperator dataSourceSelectionPanelNext = new JButtonOperator(reportDialogOperator, "Next");
+            dataSourceSelectionPanelNext.pushNoBlock();
+            new Timeout("pausing", 2000).sleep();
+   
             JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
             jbo1.pushNoBlock();
             JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);

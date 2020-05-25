@@ -63,9 +63,7 @@ public class GroupSortBy implements Comparator<DrawableGroup> {
      */
     public final static GroupSortBy PRIORITY
             = new GroupSortBy(Bundle.GroupSortBy_priority(), "hashset_hits.png",
-                    Comparator.comparing(DrawableGroup::getHashHitDensity)
-                            .thenComparing(Comparator.comparing(DrawableGroup::getUncategorizedCount))
-                            .reversed());
+                    Comparator.comparing(DrawableGroup::getHashHitDensity).reversed());
 
     private final static ObservableList<GroupSortBy> values = FXCollections.unmodifiableObservableList(FXCollections.observableArrayList(PRIORITY, NONE, GROUP_BY_VALUE, FILE_COUNT));
 
