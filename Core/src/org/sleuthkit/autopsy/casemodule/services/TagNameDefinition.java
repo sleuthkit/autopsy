@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.tags;
+package org.sleuthkit.autopsy.casemodule.services;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -133,7 +133,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return
      */
-    static public String getBookmarkDisplayString() {
+    static String getBookmarkTagDisplayName() {
         return Bundle.TagNameDefinition_predefTagNames_bookmark_text();
     }
 
@@ -142,7 +142,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return
      */
-    static public String getFollowUpDisplayString() {
+    static String getFollowUpTagDisplayName() {
         return Bundle.TagNameDefinition_predefTagNames_followUp_text();
     }
 
@@ -151,7 +151,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return
      */
-    static public String getNotableDisplayString() {
+    static String getNotableTagDisplayName() {
         return Bundle.TagNameDefinition_predefTagNames_notableItem_text();
     }
 
@@ -160,7 +160,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return The display name.
      */
-    public String getDisplayName() {
+    String getDisplayName() {
         return displayName;
     }
 
@@ -169,7 +169,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return The description.
      */
-    public String getDescription() {
+    String getDescription() {
         return description;
     }
 
@@ -178,7 +178,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return The color.
      */
-    public TagName.HTML_COLOR getColor() {
+    TagName.HTML_COLOR getColor() {
         return color;
     }
 
@@ -187,7 +187,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return a value of TskData.FileKnown which is associated with this tag
      */
-    public TskData.FileKnown getKnownStatus() {
+    TskData.FileKnown getKnownStatus() {
         return knownStatus;
     }
 
@@ -255,7 +255,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
         return displayName + "," + description + "," + color.name() + "," + knownStatus.toString();
     }
 
-    public TagName saveToCase(SleuthkitCase caseDb) {
+    TagName saveToCase(SleuthkitCase caseDb) {
         TagName tagName = null;
         try {
             tagName = caseDb.addOrUpdateTagName(displayName, description, color, knownStatus);
@@ -279,7 +279,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return A set of tag name definition objects.
      */
-    public static synchronized Set<TagNameDefinition> getTagNameDefinitions() {
+    static synchronized Set<TagNameDefinition> getTagNameDefinitions() {
         if (needsVersionUpdate()) {
             updateTagDefinitions();
         }
@@ -311,7 +311,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @param tagNames A set of tag name definition objects.
      */
-    public static synchronized void setTagNameDefinitions(Set<TagNameDefinition> tagNames) {
+    static synchronized void setTagNameDefinitions(Set<TagNameDefinition> tagNames) {
         StringBuilder setting = new StringBuilder();
         for (TagNameDefinition tagName : tagNames) {
             if (setting.length() != 0) {

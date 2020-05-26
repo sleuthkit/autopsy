@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule.services;
 
-import org.sleuthkit.autopsy.tags.TagNameDefinition;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -223,7 +222,7 @@ public class TagsManager implements Closeable {
      * @return
      */
     public static String getBookmarkTagDisplayName() {
-        return TagNameDefinition.getBookmarkDisplayString();
+        return TagNameDefinition.getBookmarkTagDisplayName();
     }
 
     /**
@@ -232,7 +231,7 @@ public class TagsManager implements Closeable {
      * @return
      */
     public static String getFollowUpTagDisplayName() {
-        return TagNameDefinition.getFollowUpDisplayString();
+        return TagNameDefinition.getFollowUpTagDisplayName();
     }
 
     /**
@@ -241,7 +240,7 @@ public class TagsManager implements Closeable {
      * @return
      */
     public static String getNotableTagDisplayName() {
-        return TagNameDefinition.getNotableDisplayString();
+        return TagNameDefinition.getNotableTagDisplayName();
     }
 
     /**
