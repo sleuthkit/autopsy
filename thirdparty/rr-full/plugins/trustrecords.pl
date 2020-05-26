@@ -4,10 +4,15 @@
 #   the default security settings for the application 
 #
 # Change history
+#  20190626 - updated to more recent versions of Office
 #  20160224 - modified per Mari's blog post
 #  20120716 - created
 #
 # References
+# 20190626 updates
+#  https://decentsecurity.com/block-office-macros
+#  https://gist.github.com/PSJoshi/749cf1733217d8791cf956574a3583a2
+#
 #  http://az4n6.blogspot.com/2016/02/more-on-trust-records-macros-and.html
 #  ForensicArtifacts.com posting by Andrew Case:
 #    http://forensicartifacts.com/2012/07/ntuser-trust-records/
@@ -25,7 +30,7 @@ my %config = (hive          => "NTUSER\.DAT",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20160224);
+              version       => 20190626);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -76,7 +81,7 @@ sub pluginmain {
 # Now that we have the most recent version of Office installed, let's 
 # start looking at the various subkeys
 	my @apps = ("Word","PowerPoint","Excel","Access");	
-	$key_path = "Software\\Microsoft\\Office\\".$office_version;
+	my $key_path = "Software\\Microsoft\\Office\\".$office_version;
 	
 	foreach my $app (@apps) {
 		::rptMsg("**".$app."**");
@@ -90,11 +95,22 @@ sub pluginmain {
 				::rptMsg("");
 			}
 		};
+
+# Added 20190626		
+		eval {
+		  if (my $sec = $root_key->get_subkey($app_path)) {
+				my $blk = $sec->get_value("blockcontentexecutionfrominternet")->get_data();
+				::rptMsg("blockcontentexecutionfrominternet = ".$blk);
+				::rptMsg("");
+			}
+	  };
+	
 # Trusted Documents/Trust Records		
 		$app_path = $key_path."\\".$app."\\Security\\Trusted Documents";
 		if (my $app_key = $root_key->get_subkey($app_path)) {
 			if (my $trust = $app_key->get_subkey("TrustRecords")) {
 				my @vals = $trust->get_list_of_values();
+				::rptMsg("TrustRecords");
 				foreach my $v (@vals) {
 					my $data = $v->get_data();
 					my ($t0,$t1) = (unpack("VV",substr($data,0,8)));

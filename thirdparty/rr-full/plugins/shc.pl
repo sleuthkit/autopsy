@@ -3,8 +3,14 @@
 # This key may have something to do with the Start Menu Cache - nothing 
 #  definitive yet.
 #
+# In my tests *some* installers/applications populate this key on *some* systems
+#  and Windows shows *some* of these items as "Recently Installed" at the top of
+#  the start menu. More research is still needed. -Keith Twombley
+#  ktwombley@gmail.com
+#
 # Change history
 #   20130412 - created - IN PROCESS; NOT COMPLETE
+#   20190305 - updated - outputs entries from shc
 #   
 #
 # References
@@ -26,7 +32,7 @@ my %config = (hive          => "NTUSER\.DAT",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 32,  #Windows 8
-              version       => 20130412);
+              version       => 20190305);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -57,9 +63,16 @@ sub pluginmain {
 		my @vals = $key->get_list_of_values();
 		
 		if (scalar(@vals) > 0) {
+			my %shc;
+
 			foreach my $v (@vals) {
-				
-				
+				my $name = $v->get_name();
+				my $data = $v->get_data();
+				$shc{$name} = $data
+			}
+
+			foreach my $u (sort {$a <=> $b} keys %shc) {
+				::rptMsg("  ".$u." -> ".$shc{$u});
 			}
 		}
 		else {
