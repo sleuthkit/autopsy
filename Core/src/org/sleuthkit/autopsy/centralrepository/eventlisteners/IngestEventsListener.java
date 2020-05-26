@@ -421,8 +421,7 @@ public class IngestEventsListener {
                     PersonaAccount personaAccount;
                     // If persona doesnt exist, create one
                     if (persona == null) {
-                        personaAccount = Persona.createPersonaForAccount(personaName, "Auto generated contact persona", Persona.PersonaStatus.UNKNOWN, crAccount, "Found in contact book entry", Persona.Confidence.DERIVED);
-                        personaToReturn = personaAccount.getPersona();
+                        personaToReturn = Persona.createPersonaForAccount(personaName, "Auto generated contact persona", Persona.PersonaStatus.UNKNOWN, crAccount, "Found in contact book entry", Persona.Confidence.DERIVED);
                     } else {
                         persona.addAccountToPersona(crAccount, "Found in contact book entry", Persona.Confidence.DERIVED);
                     }

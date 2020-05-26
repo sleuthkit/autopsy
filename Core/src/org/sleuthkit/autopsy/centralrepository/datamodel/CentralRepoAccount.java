@@ -18,6 +18,11 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import org.sleuthkit.datamodel.Account;
 
 
@@ -30,8 +35,9 @@ public final class CentralRepoAccount {
 	private final long accountId;
 
 	private final CentralRepoAccountType accountType;
-        // type specifc unique account id
-	private final String typeSpecificId;
+        
+        // type specific unique account identifier
+	private final String typeSpecificIdentifier;
         
     /**
      * Encapsulates a central repo account type and the correlation type
@@ -67,10 +73,10 @@ public final class CentralRepoAccount {
         }
     }
     
-    public CentralRepoAccount(long accountId, CentralRepoAccountType accountType, String typeSpecificId) {
+    public CentralRepoAccount(long accountId, CentralRepoAccountType accountType, String typeSpecificIdentifier) {
 		this.accountId = accountId;
 		this.accountType = accountType;
-		this.typeSpecificId = typeSpecificId;
+		this.typeSpecificIdentifier = typeSpecificIdentifier;
 	}
 
 	/**
@@ -79,8 +85,8 @@ public final class CentralRepoAccount {
 	 *
 	 * @return type specific account id.
 	 */
-	public String getTypeSpecificId() {
-		return this.typeSpecificId;
+	public String getIdentifier() {
+		return this.typeSpecificIdentifier;
 	}
 
 	/**
@@ -97,7 +103,7 @@ public final class CentralRepoAccount {
 	 *
 	 * @return unique row id.
 	 */
-	public long getAccountId() {
+	public long getId() {
 		return this.accountId;
 	}
 
@@ -106,7 +112,7 @@ public final class CentralRepoAccount {
 		int hash = 5;
 		hash = 43 * hash + (int) (this.accountId ^ (this.accountId >>> 32));
 		hash = 43 * hash + (this.accountType != null ? this.accountType.hashCode() : 0);
-		hash = 43 * hash + (this.typeSpecificId != null ? this.typeSpecificId.hashCode() : 0);
+		hash = 43 * hash + (this.typeSpecificIdentifier != null ? this.typeSpecificIdentifier.hashCode() : 0);
 		return hash;
 	}
 
@@ -122,16 +128,113 @@ public final class CentralRepoAccount {
 			return false;
 		}
 		final CentralRepoAccount other = (CentralRepoAccount) obj;
-		if (this.accountId != other.getAccountId()) {
+		if (this.accountId != other.getId()) {
 			return false;
 		}
-		if ((this.typeSpecificId == null) ? (other.getTypeSpecificId() != null) : !this.typeSpecificId.equals(other.getTypeSpecificId())) {
+		if ((this.typeSpecificIdentifier == null) ? (other.getIdentifier() != null) : !this.typeSpecificIdentifier.equals(other.getIdentifier())) {
 			return false;
 		}
-		if (this.accountType != other.getAccountType() && (this.accountType == null || !this.accountType.equals(other.getAccountType()))) {
-			return false;
-		}
-		return true;
+		return !(this.accountType != other.getAccountType() && (this.accountType == null || !this.accountType.equals(other.getAccountType())));
 	}
+    
+    /**
+     * Callback to process a query that gets accounts
+     */
+    private static class AccountsQueryCallback implements CentralRepositoryDbQueryCallback {
+
+        Collection<CentralRepoAccount> accountsList = new ArrayList<>();
+
+        @Override
+        public void process(ResultSet rs) throws CentralRepoException, SQLException {
+
+            while (rs.next()) {
+
+                // create account
+                Account.Type acctType = new Account.Type(rs.getString("type_name"), rs.getString("display_name"));
+                CentralRepoAccountType crAccountType = new CentralRepoAccountType(rs.getInt("account_type_id"), acctType, rs.getInt("correlation_type_id"));
+                 
+                CentralRepoAccount account = new CentralRepoAccount(
+                        rs.getInt("account_id"),
+                        crAccountType,
+                        rs.getString("account_unique_identifier"));
+
+                accountsList.add(account);
+            }
+        }
+
+        Collection<CentralRepoAccount> getAccountsList() {
+            return Collections.unmodifiableCollection(accountsList);
+        }
+    };
+
+    
+    private static final String ACCOUNTS_QUERY_CLAUSE
+            = "SELECT accounts.id as account_id,  "
+            + " accounts.account_type_id as account_type_id, accounts.account_unique_identifier as account_unique_identifier,"
+            + " account_types.id as account_type_id, "
+            + " account_types.type_name as type_name, account_types.display_name as display_name, account_types.correlation_type_id as correlation_type_id  "
+            + " FROM accounts "
+            + " JOIN account_types as account_types on accounts.account_type_id = account_types.id ";
+     
+     
+     /**
+     * Get all accounts with account identifier matching the given substring.
+     *
+     * @param accountIdentifierSubstring Account identifier substring to look for.
+     *
+     * @return Collection of all accounts with identifier matching the given substring, may
+     * be empty.
+     * 
+     * @throws CentralRepoException If there is an error in getting the accounts.
+     */
+    public static Collection<CentralRepoAccount> getAccountsWithIdentifierLike(String accountIdentifierSubstring) throws CentralRepoException {
+       
+        String queryClause = ACCOUNTS_QUERY_CLAUSE
+                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + accountIdentifierSubstring + "%')";
+
+        AccountsQueryCallback queryCallback = new AccountsQueryCallback();
+        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+
+        return queryCallback.getAccountsList();
+    }
+    
+    /**
+     * Get all accounts with account identifier matching the given identifier.
+     *
+     * @param accountIdentifier Account identifier to look for.
+     *
+     * @return Collection of all accounts with identifier matching the given identifier, may
+     * be empty.
+     * 
+     * @throws CentralRepoException If there is an error in getting the accounts.
+     */
+    public static Collection<CentralRepoAccount> getAccountsWithIdentifier(String accountIdentifier) throws CentralRepoException {
+       
+        String queryClause = ACCOUNTS_QUERY_CLAUSE
+                + " WHERE LOWER(accounts.account_unique_identifier) = LOWER('" + accountIdentifier + "')";
+
+        AccountsQueryCallback queryCallback = new AccountsQueryCallback();
+        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+
+        return queryCallback.getAccountsList();
+    }
+    
+    /**
+     * Get all central repo accounts.
+     *
+     * @return Collection of all accounts with identifier matching the given identifier, may
+     * be empty.
+     * 
+     * @throws CentralRepoException If there is an error in getting the accounts.
+     */
+    public static Collection<CentralRepoAccount> getAllAccounts() throws CentralRepoException {
+       
+        String queryClause = ACCOUNTS_QUERY_CLAUSE;
+
+        AccountsQueryCallback queryCallback = new AccountsQueryCallback();
+        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+
+        return queryCallback.getAccountsList();
+    }
     
 }
