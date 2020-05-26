@@ -18,83 +18,38 @@
  */
 package org.sleuthkit.autopsy.centralrepository.persona;
 
-import java.awt.Component;
-import java.io.Serializable;
-import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
-import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
+import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Configuration dialog for adding an account to a persona.
+ * Configuration dialog for adding aliases to a persona.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class AddAccountDialog extends JDialog {
+public class AddAliasDialog extends JDialog {
 
-    private static final Logger logger = Logger.getLogger(AddAccountDialog.class.getName());
+    private static final Logger logger = Logger.getLogger(AddAliasDialog.class.getName());
 
     private static final long serialVersionUID = 1L;
-    
-    private final TypeChoiceRenderer ACC_CHOICE_RENDERER = new TypeChoiceRenderer();
+
     private final PersonaDetailsPanel pdp;
-    
+
     /**
-     * Creates new add account dialog
+     * Creates new add alias dialog
      */
-    @Messages({"AddAccountDialog.title.text=Add Account",})
-    public AddAccountDialog(PersonaDetailsPanel pdp) {
+    @Messages({"AddAliasDialog.title.text=Add Alias",})
+    public AddAliasDialog(PersonaDetailsPanel pdp) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
-                Bundle.AddAccountDialog_title_text(),
+                Bundle.AddAliasDialog_title_text(),
                 false);
         this.pdp = pdp;
 
         initComponents();
-        accountsComboBox.setRenderer(ACC_CHOICE_RENDERER);
         display();
-    }
-    
-    /**
-     * This class handles displaying and rendering drop down menu for account type choices
-     */
-    private class TypeChoiceRenderer extends JLabel implements ListCellRenderer<PersonaAccount>, Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public Component getListCellRendererComponent(
-                JList<? extends PersonaAccount> list, PersonaAccount value,
-                int index, boolean isSelected, boolean cellHasFocus) {
-            setText(value.getAccount().getTypeSpecificId());
-            return this;
-        }
-    }
-    
-    @Messages({
-        "AddAccountDialog_get_types_exception_Title=Central Repository failure",
-        "AddAccountDialog_get_types_exception_msg=Failed to access central repository",
-    })
-    private PersonaAccount[] getAllAccounts() {
-        PersonaAccount[] ret = new PersonaAccount[0];
-        try {
-            // todo change this to proper getAllAccounts function when that exists
-            // todo don't show accounts that are already assocated with this persona
-            ret = PersonaAccount.getPersonaAccountsForAccountIdentifier("").toArray(new PersonaAccount[0]);
-        } catch (CentralRepoException e) {
-            logger.log(Level.SEVERE, "Failed to access central repository", e);
-            JOptionPane.showMessageDialog(this,
-                                    Bundle.AddAccountDialog_get_types_exception_Title(),
-                                    Bundle.AddAccountDialog_get_types_exception_msg(),
-                                    JOptionPane.ERROR_MESSAGE);
-        }
-        return ret;
     }
 
     /**
@@ -107,8 +62,12 @@ public class AddAccountDialog extends JDialog {
     private void initComponents() {
 
         settingsPanel = new javax.swing.JPanel();
-        accountsLbl = new javax.swing.JLabel();
-        accountsComboBox = new javax.swing.JComboBox<>();
+        aliasLbl = new javax.swing.JLabel();
+        aliasTextField = new javax.swing.JTextField();
+        justificationLbl = new javax.swing.JLabel();
+        justificationTextField = new javax.swing.JTextField();
+        confidenceLbl = new javax.swing.JLabel();
+        confidenceComboBox = new javax.swing.JComboBox<>();
         cancelBtn = new javax.swing.JButton();
         okBtn = new javax.swing.JButton();
 
@@ -117,9 +76,17 @@ public class AddAccountDialog extends JDialog {
 
         settingsPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        org.openide.awt.Mnemonics.setLocalizedText(accountsLbl, org.openide.util.NbBundle.getMessage(AddAccountDialog.class, "AddAccountDialog.accountsLbl.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(aliasLbl, org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.aliasLbl.text")); // NOI18N
 
-        accountsComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(getAllAccounts()));
+        aliasTextField.setText(org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.aliasTextField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(justificationLbl, org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.justificationLbl.text")); // NOI18N
+
+        justificationTextField.setText(org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.justificationTextField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(confidenceLbl, org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.confidenceLbl.text")); // NOI18N
+
+        confidenceComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(org.sleuthkit.autopsy.centralrepository.datamodel.Persona.Confidence.values()));
 
         javax.swing.GroupLayout settingsPanelLayout = new javax.swing.GroupLayout(settingsPanel);
         settingsPanel.setLayout(settingsPanelLayout);
@@ -127,21 +94,40 @@ public class AddAccountDialog extends JDialog {
             settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(settingsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(accountsLbl)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(accountsComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(settingsPanelLayout.createSequentialGroup()
+                        .addComponent(aliasLbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(aliasTextField))
+                    .addGroup(settingsPanelLayout.createSequentialGroup()
+                        .addComponent(justificationLbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(justificationTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 262, Short.MAX_VALUE))
+                    .addGroup(settingsPanelLayout.createSequentialGroup()
+                        .addComponent(confidenceLbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(confidenceComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         settingsPanelLayout.setVerticalGroup(
             settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(settingsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(accountsLbl)
-                    .addComponent(accountsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(aliasLbl)
+                    .addComponent(aliasTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(justificationTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(justificationLbl))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(confidenceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(confidenceLbl))
+                .addContainerGap())
         );
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelBtn, org.openide.util.NbBundle.getMessage(AddAccountDialog.class, "AddAccountDialog.cancelBtn.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelBtn, org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.cancelBtn.text_1")); // NOI18N
         cancelBtn.setMaximumSize(new java.awt.Dimension(79, 23));
         cancelBtn.setMinimumSize(new java.awt.Dimension(79, 23));
         cancelBtn.setPreferredSize(new java.awt.Dimension(79, 23));
@@ -151,7 +137,7 @@ public class AddAccountDialog extends JDialog {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(okBtn, org.openide.util.NbBundle.getMessage(AddAccountDialog.class, "AddAccountDialog.okBtn.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okBtn, org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.okBtn.text_1")); // NOI18N
         okBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okBtnActionPerformed(evt);
@@ -163,14 +149,12 @@ public class AddAccountDialog extends JDialog {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(62, 62, 62)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(okBtn)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cancelBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(settingsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
+            .addComponent(settingsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {cancelBtn, okBtn});
@@ -195,27 +179,34 @@ public class AddAccountDialog extends JDialog {
     }
 
     @Messages({
-        "AddAccountDialog_dup_Title=Account add failure",
-        "AddAccountDialog_dup_msg=This account is already added to the persona",})
+        "AddAliasDialog_dup_Title=Alias add failure",
+        "AddAliasDialog_dup_msg=This alias has already been added to this persona",})
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
-        if (pdp.addAccount(((PersonaAccount) accountsComboBox.getSelectedItem()).getAccount())) {
+        if (pdp.addAlias(
+                aliasTextField.getText(),
+                justificationTextField.getText(),
+                (Persona.Confidence) confidenceComboBox.getSelectedItem())) {
             dispose();
         } else {
             JOptionPane.showMessageDialog(this,
-                    Bundle.AddAccountDialog_dup_msg(),
-                    Bundle.AddAccountDialog_dup_Title(),
-                    JOptionPane.ERROR_MESSAGE);
+                        Bundle.AddAliasDialog_dup_msg(),
+                        Bundle.AddAliasDialog_dup_Title(),
+                        JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_okBtnActionPerformed
 
     private void cancelBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelBtnActionPerformed
         dispose();
     }//GEN-LAST:event_cancelBtnActionPerformed
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount> accountsComboBox;
-    private javax.swing.JLabel accountsLbl;
+    private javax.swing.JLabel aliasLbl;
+    private javax.swing.JTextField aliasTextField;
     private javax.swing.JButton cancelBtn;
+    private javax.swing.JComboBox<org.sleuthkit.autopsy.centralrepository.datamodel.Persona.Confidence> confidenceComboBox;
+    private javax.swing.JLabel confidenceLbl;
+    private javax.swing.JLabel justificationLbl;
+    private javax.swing.JTextField justificationTextField;
     private javax.swing.JButton okBtn;
     private javax.swing.JPanel settingsPanel;
     // End of variables declaration//GEN-END:variables
