@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.report.infrastructure;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import org.sleuthkit.autopsy.report.GeneralReportSettings;
 
 /**
  * A bundling of all the settings objects that define a report configuration.
@@ -32,6 +33,7 @@ final class ReportingConfig implements Serializable {
     private Map<String, ReportModuleConfig> moduleConfigs = new HashMap<>();
     private TableReportSettings tableReportSettings;
     private FileReportSettings fileReportSettings;
+    private GeneralReportSettings generalReportSettings;
 
     /**
      * Creates ReportingConfig object.
@@ -74,4 +76,11 @@ final class ReportingConfig implements Serializable {
         return this.fileReportSettings;
     }
 
+    GeneralReportSettings getGeneralReportSettings() {
+        return this.generalReportSettings;
+    }
+    
+    void setGeneralReportSettings(GeneralReportSettings generalReportSettings) {
+        this.generalReportSettings = generalReportSettings;
+    }
 }

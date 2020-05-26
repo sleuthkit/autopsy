@@ -4,6 +4,8 @@
 
 The Object Detection module uses OpenCV to try to detect objects in images.
 
+The \ref experimental_page must be enabled to run this module.
+
 \section object_setup Setup
 
 To start, you will need some classifiers, which are xml files. Autopsy can not create classifiers - do a web search for "train OpenCV classifiers" to find information on how to make classifiers, or visit the <a href="https://docs.opencv.org/2.4/doc/user_guide/ug_traincascade.html">OpenCV page</a>.
