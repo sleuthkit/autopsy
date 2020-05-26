@@ -324,6 +324,8 @@ public class ReportGenerator {
             
             // finish progress, wrap up
             errorList = generator.getErrorList();
+            
+            // if error list is empty, the operation has completed successfully.  If not there is an error
             ReportProgressPanel.ReportStatus finalStatus = (errorList == null || errorList.isEmpty()) ?
                 ReportProgressPanel.ReportStatus.COMPLETE :
                 ReportProgressPanel.ReportStatus.ERROR;
