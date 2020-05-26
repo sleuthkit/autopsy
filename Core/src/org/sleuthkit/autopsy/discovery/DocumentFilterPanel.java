@@ -20,20 +20,22 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
      * Creates new form DocumentFilterPanel
      */
     DocumentFilterPanel() {
+        super();
         initComponents();
-        addFilter(new SizeFilterPanel(FileSearchData.FileType.DOCUMENTS), false, null);
-        addFilter(new DataSourceFilterPanel(), false, null);
+        addFilter(new SizeFilterPanel(FileSearchData.FileType.DOCUMENTS), false, null, 0);
+        addFilter(new DataSourceFilterPanel(), false, null, 0);
         int[] pastOccurrencesIndices;
         if (!CentralRepository.isEnabled()) {
             pastOccurrencesIndices = new int[]{0};
         } else {
             pastOccurrencesIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
         }
-        addFilter(new PastOccurrencesFilterPanel(), true, pastOccurrencesIndices);
-        addFilter(new HashSetFilterPanel(), false, null);
-        addFilter(new InterestingItemsFilterPanel(), false, null);
-        addFilter(new ObjectDetectedFilterPanel(), false, null);
-        addFilter(new ParentFolderFilterPanel(), false, null);
+        addFilter(new PastOccurrencesFilterPanel(), true, pastOccurrencesIndices, 0);
+        addFilter(new HashSetFilterPanel(), false, null, 1);
+        addFilter(new InterestingItemsFilterPanel(), false, null, 1);
+        addFilter(new ObjectDetectedFilterPanel(), false, null, 1);
+        addFilter(new ParentFolderFilterPanel(), false, null, 1);
+        addPanelsToScrollPane(documentsFiltersSplitPane);
     }
 
     /**
@@ -45,21 +47,29 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-        );
+        documentFiltersScrollPane = new javax.swing.JScrollPane();
+        documentFiltersPanel = new javax.swing.JPanel();
+        documentsFiltersSplitPane = new javax.swing.JSplitPane();
+
+        setLayout(new java.awt.BorderLayout());
+
+        documentFiltersPanel.setLayout(new java.awt.BorderLayout());
+
+        documentsFiltersSplitPane.setResizeWeight(0.5);
+        documentFiltersPanel.add(documentsFiltersSplitPane, java.awt.BorderLayout.CENTER);
+
+        documentFiltersScrollPane.setViewportView(documentFiltersPanel);
+
+        add(documentFiltersScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
     @Override
     FileSearchData.FileType getFileType() {
         return FILE_TYPE;
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel documentFiltersPanel;
+    private javax.swing.JScrollPane documentFiltersScrollPane;
+    private javax.swing.JSplitPane documentsFiltersSplitPane;
     // End of variables declaration//GEN-END:variables
+
 }

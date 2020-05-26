@@ -20,23 +20,25 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
      * Creates new form ImageFilterPanel
      */
     ImageFilterPanel() {
+        super();
         initComponents();
         SizeFilterPanel sizeFilterPanel = new SizeFilterPanel(FILE_TYPE);
         int[] sizeIndicesSelected = {1, 2, 3, 4, 5};
-        addFilter(sizeFilterPanel, true, sizeIndicesSelected);
-        addFilter(new ObjectDetectedFilterPanel(), false, null);
+        addFilter(sizeFilterPanel, true, sizeIndicesSelected, 0);
+        addFilter(new ObjectDetectedFilterPanel(), false, null, 0);
         int[] pastOccurrencesIndices;
         if (!CentralRepository.isEnabled()) {
             pastOccurrencesIndices = new int[]{0};
         } else {
             pastOccurrencesIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
         }
-        addFilter(new PastOccurrencesFilterPanel(), true, pastOccurrencesIndices);
-        addFilter(new UserCreatedFilterPanel(), false, null);
-        addFilter(new HashSetFilterPanel(), false, null);
-        addFilter(new InterestingItemsFilterPanel(), false, null);
-        addFilter(new DataSourceFilterPanel(), false, null);
-        addFilter(new ParentFolderFilterPanel(), false, null);
+        addFilter(new PastOccurrencesFilterPanel(), true, pastOccurrencesIndices, 0);
+        addFilter(new UserCreatedFilterPanel(), false, null, 1);
+        addFilter(new HashSetFilterPanel(), false, null, 1);
+        addFilter(new InterestingItemsFilterPanel(), false, null, 1);
+        addFilter(new DataSourceFilterPanel(), false, null, 1);
+        addFilter(new ParentFolderFilterPanel(), false, null, 1);
+        addPanelsToScrollPane(imageFiltersSplitPane);
     }
 
     /**
@@ -48,7 +50,21 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        setLayout(new java.awt.GridBagLayout());
+        imageFiltersScrollPane = new javax.swing.JScrollPane();
+        imageFiltersPanel = new javax.swing.JPanel();
+        imageFiltersSplitPane = new javax.swing.JSplitPane();
+
+        setLayout(new java.awt.BorderLayout());
+
+        imageFiltersPanel.setLayout(new java.awt.BorderLayout());
+
+        imageFiltersSplitPane.setResizeWeight(0.5);
+        imageFiltersSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(ImageFilterPanel.class, "ImageFilterPanel.imageFiltersSplitPane.toolTipText")); // NOI18N
+        imageFiltersPanel.add(imageFiltersSplitPane, java.awt.BorderLayout.CENTER);
+
+        imageFiltersScrollPane.setViewportView(imageFiltersPanel);
+
+        add(imageFiltersScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     @Override
@@ -57,5 +73,8 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel imageFiltersPanel;
+    private javax.swing.JScrollPane imageFiltersScrollPane;
+    private javax.swing.JSplitPane imageFiltersSplitPane;
     // End of variables declaration//GEN-END:variables
 }

@@ -43,8 +43,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
         sizeList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(sizeCheckbox, org.openide.util.NbBundle.getMessage(SizeFilterPanel.class, "SizeFilterPanel.sizeCheckbox.text")); // NOI18N
-        sizeCheckbox.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        sizeCheckbox.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        sizeCheckbox.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         sizeCheckbox.setMaximumSize(new java.awt.Dimension(103, 25));
         sizeCheckbox.setMinimumSize(new java.awt.Dimension(103, 25));
         sizeCheckbox.setPreferredSize(new java.awt.Dimension(103, 25));

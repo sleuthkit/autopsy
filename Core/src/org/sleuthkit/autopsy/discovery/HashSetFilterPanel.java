@@ -47,7 +47,9 @@ public class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
                 hashListModel.add(count, name);
                 count++;
             }
+            System.out.println("SETUP COMPLETE");
         } catch (TskCoreException ex) {
+            System.out.println("SETUP ERROR");
             logger.log(Level.SEVERE, "Error loading hash set names", ex);
             hashSetCheckbox.setEnabled(false);
             hashSetList.setEnabled(false);
@@ -106,6 +108,7 @@ public class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
+        System.out.println("CONFIG PANEL HASHSET");
         boolean hasHashSets = hashSetList.getModel().getSize() > 0;
         hashSetCheckbox.setEnabled(hasHashSets);
         hashSetCheckbox.setSelected(selected && hasHashSets);
@@ -115,9 +118,11 @@ public class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
             if (indicesSelected != null) {
                 hashSetList.setSelectedIndices(indicesSelected);
             }
+            System.out.println("PANEL ENABLED SETUP");
         } else {
             hashSetScrollPane.setEnabled(false);
             hashSetList.setEnabled(false);
+            System.out.println("PAENL DISABLED SETUP");
         }
     }
 

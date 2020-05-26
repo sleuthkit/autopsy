@@ -88,4 +88,9 @@ public class UserCreatedFilterPanel extends AbstractDiscoveryFilterPanel {
         }
         return null;
     }
+
+    @Override
+    boolean hasPanel() {
+        return false;
+    }
 }

@@ -13,6 +13,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -20,58 +22,76 @@ import javax.swing.event.ListSelectionListener;
  *
  * @author wschaefer
  */
-abstract class AbstractFiltersPanel extends javax.swing.JPanel implements ActionListener, ListSelectionListener {
+abstract class AbstractFiltersPanel extends JPanel implements ActionListener, ListSelectionListener {
 
-    private static boolean isInitialized = false;
+    private boolean isInitialized = false;
     private static final double LABEL_WEIGHT = 0;
     private static final double PANEL_WEIGHT = .1;
     private static final int LABEL_WIDTH = 1;
     private static final int PANEL_WIDTH = 2;
-    private static final int NUMBER_OF_COLUMNS = 6;
+    private static final int LABEL_HEIGHT = 1;
+    private static final int PANEL_HEIGHT = 2;
     private static final long serialVersionUID = 1L;
-    private final GridBagLayout layout = new GridBagLayout();
     private final GridBagConstraints constraints = new GridBagConstraints();
     private final List<AbstractDiscoveryFilterPanel> filters = new ArrayList<>();
+    private final JPanel firstColumnPanel = new JPanel();
+    private final JPanel secondColumnPanel = new JPanel();
+    private int firstColumnY = 0;
+    private int secondColumnY = 0;
+
+    AbstractFiltersPanel() {
+        firstColumnPanel.setLayout(new GridBagLayout());
+        secondColumnPanel.setLayout(new GridBagLayout());
+    }
 
     abstract FileSearchData.FileType getFileType();
 
-    final synchronized void addFilter(AbstractDiscoveryFilterPanel filterPanel, boolean isSelected, int[] indicesSelected) {
+    final synchronized void addFilter(AbstractDiscoveryFilterPanel filterPanel, boolean isSelected, int[] indicesSelected, int column) {
         if (!isInitialized) {
-            constraints.fill = GridBagConstraints.VERTICAL;
-            constraints.gridx = 0;
             constraints.gridy = 0;
-            constraints.gridheight = 2;
-            constraints.gridwidth = LABEL_WIDTH;
-            constraints.weightx = LABEL_WEIGHT;
-            constraints.anchor = GridBagConstraints.NORTHWEST;
-            constraints.insets = new Insets(0, 8, 12, 8);
+            constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+            constraints.insets = new Insets(8, 8, 8, 8);
             isInitialized = true;
         }
+        if (column == 0) {
+            constraints.gridy = firstColumnY;
+        } else {
+            constraints.gridy = secondColumnY;
+        }
+        constraints.gridx = 0;
         filterPanel.configurePanel(isSelected, indicesSelected);
         filterPanel.addListeners(this, this);
-        constraints.fill = GridBagConstraints.VERTICAL;
         filters.add(filterPanel);
-        constraints.weightx = LABEL_WEIGHT;
+        constraints.fill = GridBagConstraints.VERTICAL;
+        constraints.gridheight = LABEL_HEIGHT;
         constraints.gridwidth = LABEL_WIDTH;
-        addToGridBagLayout(filterPanel.getCheckbox(), null);
-        nextSpot(LABEL_WIDTH);
-        constraints.fill = GridBagConstraints.BOTH;
-        constraints.weightx = PANEL_WEIGHT;
-        constraints.gridwidth = PANEL_WIDTH;
-        addToGridBagLayout(filterPanel, null);
-        nextSpot(PANEL_WIDTH);
-        updateLayout();
-    }
-
-    private void nextSpot(int width) {
-        constraints.gridx += width;
-        if (constraints.gridx >= NUMBER_OF_COLUMNS) {
-            constraints.fill = GridBagConstraints.VERTICAL;
-            constraints.gridy += constraints.gridheight;
-            constraints.gridx = 0;
+        constraints.weightx = LABEL_WEIGHT;
+        constraints.weighty = LABEL_WEIGHT;
+        constraints.gridwidth = LABEL_WIDTH;
+        addToGridBagLayout(filterPanel.getCheckbox(), null, column);
+        if (filterPanel.hasPanel()) {
+            System.out.println("filterPanel has panel" + filterPanel.getClass().toString());
+            constraints.gridx += constraints.gridwidth;
+            constraints.fill = GridBagConstraints.BOTH;
+            constraints.gridheight = PANEL_HEIGHT;
+            constraints.weightx = PANEL_WEIGHT;
+            constraints.weighty = PANEL_WEIGHT;
+            constraints.gridwidth = PANEL_WIDTH;
+            addToGridBagLayout(filterPanel, null, column);
+        } else {
+            System.out.println("filterPanel missing panel" + filterPanel.getClass().toString());
+        }
+        if (column == 0) {
+            firstColumnY += constraints.gridheight;
+        } else {
+            secondColumnY += constraints.gridheight;
         }
     }
 
+    final void addPanelsToScrollPane(JSplitPane splitPane) {
+        splitPane.setLeftComponent(firstColumnPanel);
+        splitPane.setRightComponent(secondColumnPanel);
+    }
 
     final synchronized void clearFilters() {
         for (AbstractDiscoveryFilterPanel filterPanel : filters) {
@@ -80,21 +100,21 @@ abstract class AbstractFiltersPanel extends javax.swing.JPanel implements Action
         filters.clear();
     }
 
-    private void addToGridBagLayout(Component componentToAdd, Component additionalComponentToAdd) {
+    private void addToGridBagLayout(Component componentToAdd, Component additionalComponentToAdd, int columnIndex) {
+        addToColumn(componentToAdd, constraints, columnIndex);
         if (additionalComponentToAdd != null) {
-            constraints.gridheight /= 2;
-            add(componentToAdd, constraints);
             constraints.gridy += constraints.gridheight;
-            add(additionalComponentToAdd, constraints);
+            addToColumn(additionalComponentToAdd, constraints, columnIndex);
             constraints.gridy -= constraints.gridheight;
-            constraints.gridheight *= 2;
-        } else {
-            add(componentToAdd, constraints);
-        }
+        } 
     }
 
-    private void updateLayout() {
-        setLayout(layout);
+    private void addToColumn(Component component, Object constraints, int columnNumber) {
+        if (columnNumber == 0) {
+            firstColumnPanel.add(component, constraints);
+        } else {
+            secondColumnPanel.add(component, constraints);
+        }
     }
 
     /**

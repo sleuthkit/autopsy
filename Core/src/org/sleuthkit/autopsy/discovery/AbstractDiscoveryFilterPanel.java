@@ -69,4 +69,8 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
         }
     }
 
+    boolean hasPanel() {
+        return true;
+    }
+
 }

@@ -20,21 +20,23 @@ final class VideoFilterPanel extends AbstractFiltersPanel {
      * Creates new form VideoFilterPanel
      */
     VideoFilterPanel() {
+        super();
         initComponents();
-        addFilter(new SizeFilterPanel(FileSearchData.FileType.VIDEO), true, null);
-        addFilter(new DataSourceFilterPanel(), false, null);
+        addFilter(new SizeFilterPanel(FileSearchData.FileType.VIDEO), true, null, 0);
+        addFilter(new DataSourceFilterPanel(), false, null, 0);
         int[] pastOccurrencesIndices;
         if (!CentralRepository.isEnabled()) {
             pastOccurrencesIndices = new int[]{0};
         } else {
             pastOccurrencesIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
         }
-        addFilter(new PastOccurrencesFilterPanel(), true, pastOccurrencesIndices);
-        addFilter(new UserCreatedFilterPanel(), false, null);
-        addFilter(new HashSetFilterPanel(), false, null);
-        addFilter(new InterestingItemsFilterPanel(), false, null);
-        addFilter(new ObjectDetectedFilterPanel(), false, null);
-        addFilter(new ParentFolderFilterPanel(), false, null);
+        addFilter(new PastOccurrencesFilterPanel(), true, pastOccurrencesIndices, 0);
+        addFilter(new UserCreatedFilterPanel(), false, null, 0);
+        addFilter(new HashSetFilterPanel(), false, null, 0);
+        addFilter(new InterestingItemsFilterPanel(), false, null, 0);
+        addFilter(new ObjectDetectedFilterPanel(), false, null, 0);
+        addFilter(new ParentFolderFilterPanel(), false, null, 0);
+        addPanelsToScrollPane(videoFiltersSplitPane);
     }
 
     /**
@@ -46,16 +48,20 @@ final class VideoFilterPanel extends AbstractFiltersPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-        );
+        videoFiltersScrollPane = new javax.swing.JScrollPane();
+        videoFiltersPanel = new javax.swing.JPanel();
+        videoFiltersSplitPane = new javax.swing.JSplitPane();
+
+        setLayout(new java.awt.BorderLayout());
+
+        videoFiltersPanel.setLayout(new java.awt.BorderLayout());
+
+        videoFiltersSplitPane.setResizeWeight(0.5);
+        videoFiltersPanel.add(videoFiltersSplitPane, java.awt.BorderLayout.CENTER);
+
+        videoFiltersScrollPane.setViewportView(videoFiltersPanel);
+
+        add(videoFiltersScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
     @Override
     FileSearchData.FileType getFileType() {
@@ -63,5 +69,9 @@ final class VideoFilterPanel extends AbstractFiltersPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel videoFiltersPanel;
+    private javax.swing.JScrollPane videoFiltersScrollPane;
+    private javax.swing.JSplitPane videoFiltersSplitPane;
     // End of variables declaration//GEN-END:variables
+
 }
