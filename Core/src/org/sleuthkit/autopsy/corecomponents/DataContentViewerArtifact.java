@@ -41,6 +41,7 @@ import org.sleuthkit.datamodel.TskException;
 import java.util.Arrays;
 import java.util.Collections;
 import org.sleuthkit.autopsy.contentviewers.ArtifactContentViewer;
+import org.sleuthkit.autopsy.contentviewers.CallLogArtifactViewer;
 import org.sleuthkit.autopsy.contentviewers.ContactArtifactViewer;
 import org.sleuthkit.autopsy.contentviewers.DefaultArtifactContentViewer;
 
@@ -74,7 +75,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     private final Collection<ArtifactContentViewer> KNOWN_ARTIFACT_VIEWERS = 
             Arrays.asList(
-                    new ContactArtifactViewer()
+                    new ContactArtifactViewer(),
+                    new CallLogArtifactViewer()
             );
     
     public DataContentViewerArtifact() {
