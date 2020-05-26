@@ -22,10 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
@@ -68,28 +66,28 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     private final TagName.HTML_COLOR color;
     private final TskData.FileKnown knownStatus;
 
-    private static final Map<String, TagNameDefinition> STANDARD_TAGS_DEFINITIONS = new HashMap<>();
-    private static final Map<String, TagNameDefinition> PROJECT_VIC_TAG_DEFINITIONS = new HashMap<>();
-    private static final List<String> OLD_CATEGORY_TAG_NAMES = new ArrayList<>();
+    private static final List<TagNameDefinition> STANDARD_TAGS_DEFINITIONS = new ArrayList<>();
+    private static final List<TagNameDefinition> PROJECT_VIC_TAG_DEFINITIONS = new ArrayList<>();
+     private static final List<String> OLD_CATEGORY_TAG_NAMES = new ArrayList<>();
 
     static {
-        STANDARD_TAGS_DEFINITIONS.put(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
-        STANDARD_TAGS_DEFINITIONS.put(Bundle.TagNameDefinition_predefTagNames_followUp_text(), new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_followUp_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
-        STANDARD_TAGS_DEFINITIONS.put(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
+        STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
+        STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_followUp_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
+        STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
 
-        PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_ONE_NAME, new TagNameDefinition(CATEGORY_ONE_NAME, "", TagName.HTML_COLOR.RED, TskData.FileKnown.BAD));
-        PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_TWO_NAME, new TagNameDefinition(CATEGORY_TWO_NAME, "", TagName.HTML_COLOR.LIME, TskData.FileKnown.BAD));
-        PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_THREE_NAME, new TagNameDefinition(CATEGORY_THREE_NAME, "", TagName.HTML_COLOR.YELLOW, TskData.FileKnown.BAD));
-        PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_FOUR_NAME, new TagNameDefinition(CATEGORY_FOUR_NAME, "", TagName.HTML_COLOR.PURPLE, TskData.FileKnown.UNKNOWN));
-        PROJECT_VIC_TAG_DEFINITIONS.put(CATEGORY_FIVE_NAME, new TagNameDefinition(CATEGORY_FIVE_NAME, "", TagName.HTML_COLOR.FUCHSIA, TskData.FileKnown.UNKNOWN));
-        
+        PROJECT_VIC_TAG_DEFINITIONS.add(new TagNameDefinition(CATEGORY_ONE_NAME, "", TagName.HTML_COLOR.RED, TskData.FileKnown.BAD));
+        PROJECT_VIC_TAG_DEFINITIONS.add(new TagNameDefinition(CATEGORY_TWO_NAME, "", TagName.HTML_COLOR.LIME, TskData.FileKnown.BAD));
+        PROJECT_VIC_TAG_DEFINITIONS.add(new TagNameDefinition(CATEGORY_THREE_NAME, "", TagName.HTML_COLOR.YELLOW, TskData.FileKnown.BAD));
+        PROJECT_VIC_TAG_DEFINITIONS.add(new TagNameDefinition(CATEGORY_FOUR_NAME, "", TagName.HTML_COLOR.PURPLE, TskData.FileKnown.UNKNOWN));
+        PROJECT_VIC_TAG_DEFINITIONS.add(new TagNameDefinition(CATEGORY_FIVE_NAME, "", TagName.HTML_COLOR.FUCHSIA, TskData.FileKnown.UNKNOWN));
+
         OLD_CATEGORY_TAG_NAMES.add("CAT-1: " + CATEGORY_ONE_NAME);
         OLD_CATEGORY_TAG_NAMES.add("CAT-2: " + CATEGORY_TWO_NAME);
         OLD_CATEGORY_TAG_NAMES.add("CAT-3: " + CATEGORY_THREE_NAME);
         OLD_CATEGORY_TAG_NAMES.add("CAT-4: " + CATEGORY_FOUR_NAME);
         OLD_CATEGORY_TAG_NAMES.add("CAT-5: " + CATEGORY_FIVE_NAME);
         OLD_CATEGORY_TAG_NAMES.add("CAT-0: Uncategorized");
-        
+
     }
 
     /**
@@ -109,17 +107,23 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     }
 
     static Collection<TagNameDefinition> getProjectVICDefaultDefinitions() {
-        return Collections.unmodifiableCollection(PROJECT_VIC_TAG_DEFINITIONS.values());
+        return Collections.unmodifiableCollection(PROJECT_VIC_TAG_DEFINITIONS);
     }
 
     static Collection<TagNameDefinition> getStandardTagNameDefinitions() {
-        return Collections.unmodifiableCollection(STANDARD_TAGS_DEFINITIONS.values());
+        return Collections.unmodifiableCollection(STANDARD_TAGS_DEFINITIONS);
     }
 
     static List<String> getStandardTagNames() {
         List<String> strList = new ArrayList<>();
-        strList.addAll(STANDARD_TAGS_DEFINITIONS.keySet());
-        strList.addAll(PROJECT_VIC_TAG_DEFINITIONS.keySet());
+
+        for (TagNameDefinition def : STANDARD_TAGS_DEFINITIONS) {
+            strList.add(def.getDisplayName());
+        }
+
+        for (TagNameDefinition def : PROJECT_VIC_TAG_DEFINITIONS) {
+            strList.add(def.getDisplayName());
+        }
 
         return strList;
     }

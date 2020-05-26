@@ -286,11 +286,18 @@ public class CategoryManager {
         }
     }
 
+    /**
+     * Returns the a list of the given TagName values sorted by rank.
+     *
+     * @param tagNames A list of TagNames to be sorted.
+     *
+     * @return A sorted list of TagName values.
+     */
     private List<TagName> getSortedTagNames(List<TagName> tagNames) {
         Comparator<TagName> compareByDisplayName = new Comparator<TagName>() {
             @Override
             public int compare(TagName tagName1, TagName tagName2) {
-                return tagName1.getDisplayName().compareTo(tagName2.getDisplayName());
+                return ((Integer) tagName1.getRank()).compareTo(tagName2.getRank());
             }
         };
 
