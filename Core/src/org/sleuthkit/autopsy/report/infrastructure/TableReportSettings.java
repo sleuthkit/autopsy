@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,6 +45,7 @@ final class TableReportSettings implements Serializable {
     private final List<String> tagNames = new ArrayList<>();
     private final boolean useStoredTagsAndArtifactsLists;
     private final TableReportOption reportOption;
+    private List<Long> selectedDataSources;
 
     /**
      * Creates TableReportSettings object. This constructor is used when user
@@ -98,5 +99,19 @@ final class TableReportSettings implements Serializable {
      */
     TableReportOption getSelectedReportOption() {
         return reportOption;
+    }
+    
+    /**
+     * Returns the selected data sources
+     */
+    List<Long> getSelectedDataSources() {
+        return selectedDataSources;
+    }
+    
+    /**
+     * Sets the selected data sources
+     */
+    void setSelectedDataSources(List<Long> selectedDataSources) {
+        this.selectedDataSources = new ArrayList<>(selectedDataSources);
     }
 }
