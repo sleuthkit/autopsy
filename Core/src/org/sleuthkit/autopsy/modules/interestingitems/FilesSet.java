@@ -44,6 +44,7 @@ public final class FilesSet implements Serializable {
     private final String description;
     private final boolean ignoreKnownFiles;
     private final boolean ignoreUnallocatedSpace;
+    private transient boolean readOnly = false;
     private final Map<String, Rule> rules = new HashMap<>();
 
     /**
@@ -70,6 +71,24 @@ public final class FilesSet implements Serializable {
             this.rules.putAll(rules);
         }
     }
+
+    /**
+     * 
+     * @return  Whether or not the file set is read only.
+     */
+    boolean isReadOnly() {
+        return readOnly;
+    }
+
+    /**
+     * 
+     * @param readOnly Whether or not the file set should be read only.
+     */
+    void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
+    }
+    
+    
 
     /**
      * Gets the name of this interesting files set.
