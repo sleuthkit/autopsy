@@ -59,14 +59,15 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     private PersonaDetailsMode mode;
 
     private Persona currentPersona;
-    private List<CentralRepoAccount> currentAccounts = new ArrayList();
-    private List<PersonaMetadata> currentMetadata = new ArrayList();
-    private List<PersonaAlias> currentAliases = new ArrayList();
-    private List<CorrelationCase> currentCases = new ArrayList();
+    private List<CentralRepoAccount> currentAccounts = new ArrayList<>();
+    private List<PersonaMetadata> currentMetadata = new ArrayList<>();
+    private List<PersonaAlias> currentAliases = new ArrayList<>();
+    private List<CorrelationCase> currentCases = new ArrayList<>();
 
     // Not-yet-created
-    private List<PMetadata> metadataToAdd = new ArrayList();
-    private List<PAlias> aliasesToAdd = new ArrayList();
+    private List<PAccount> accountsToAdd = new ArrayList<>();
+    private List<PMetadata> metadataToAdd = new ArrayList<>();
+    private List<PAlias> aliasesToAdd = new ArrayList<>();
 
     private PersonaDetailsTableModel accountsModel;
     private PersonaDetailsTableModel metadataModel;
@@ -88,7 +89,12 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         deleteAccountBtn.addActionListener((ActionEvent e) -> {
             int selectedRow = accountsTable.getSelectedRow();
             if (selectedRow != -1) {
-                currentAccounts.remove(selectedRow);
+                // We're keeping accounts in two separate data structures
+                if (selectedRow >= currentAccounts.size()) {
+                    accountsToAdd.remove(selectedRow - currentAccounts.size());
+                } else {
+                    currentAccounts.remove(selectedRow);
+                }
                 updateAccountsTable();
             }
         });
@@ -146,65 +152,48 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         }
         btn.setEnabled(mode != PersonaDetailsMode.VIEW && table.getSelectedRow() != -1);
     }
+    
+    /**
+     * A data bucket class for yet-to-be-created PersonaAccount
+     */
+    private class PAccount {
 
-    boolean addAccount(CentralRepoAccount account) {
-        if (currentAccounts.stream().anyMatch((acc) -> (acc.getId() == account.getId()))) {
-            return false;
+        private final CentralRepoAccount account;
+        private final String justification;
+        private final Persona.Confidence confidence;
+
+        PAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) {
+            this.account = account;
+            this.justification = justification;
+            this.confidence = confidence;
         }
-        currentAccounts.add(account);
-        updateAccountsTable();
-        return true;
+    }
+    
+    boolean accountExists(CentralRepoAccount account) {
+        for (CentralRepoAccount acc : currentAccounts) {
+            if (acc.getId() == account.getId()) {
+                return true;
+            }
+        }
+        for (PAccount acc : accountsToAdd) {
+            if (acc.account.getId() == account.getId()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    boolean addAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) {
+        if (!accountExists(account)) {
+            accountsToAdd.add(new PAccount(account, justification, confidence));
+            updateAccountsTable();
+            return true;
+        }
+        return false;
     }
 
     Collection<CentralRepoAccount> getCurrentAccounts() {
         return currentAccounts;
-    }
-
-    @Messages({
-        "PersonaDetailsPanel_NotEnoughAccounts_msg=Two or more accounts are necessary to create a persona",
-        "PersonaDetailsPanel_NotEnoughAccounts_Title=Not enough accounts",
-        "PersonaDetailsPanel_CentralRepoErr_msg=Failure to write to Central Repository",
-        "PersonaDetailsPanel_CentralRepoErr_Title=Central Repository failure",})
-    Persona okHandler() {
-        Persona ret = null;
-        switch (mode) {
-            case CREATE:
-                if (currentAccounts.size() < 2) {
-                    JOptionPane.showMessageDialog(this,
-                        Bundle.PersonaDetailsPanel_NotEnoughAccounts_msg(),
-                        Bundle.PersonaDetailsPanel_NotEnoughAccounts_Title(),
-                        JOptionPane.ERROR_MESSAGE);
-                    break;
-                }
-                try {
-                    ret = Persona.createPersonaForAccount(nameField.getText(),
-                            "", Persona.PersonaStatus.ACTIVE, currentAccounts.get(0),
-                            "", Persona.Confidence.UNKNOWN);
-                    for (int i = 1; i < currentAccounts.size(); i++) {
-                        ret.addAccountToPersona(currentAccounts.get(i), "", Persona.Confidence.UNKNOWN);
-                    }
-                    for (PMetadata md : metadataToAdd) {
-                        ret.addMetadata(md.name, md.value, md.justification, md.confidence);
-                    }
-                    for (PAlias pa : aliasesToAdd) {
-                        ret.addAlias(pa.alias, pa.justification, pa.confidence);
-                    }
-                } catch (CentralRepoException e) {
-                    logger.log(Level.SEVERE, "Failed to access central repository", e);
-                    JOptionPane.showMessageDialog(this,
-                        Bundle.PersonaDetailsPanel_CentralRepoErr_msg(),
-                        Bundle.PersonaDetailsPanel_CentralRepoErr_Title(),
-                        JOptionPane.ERROR_MESSAGE);
-                    break;
-                }
-                break;
-            case EDIT:
-                // todo implement
-                break;
-            default:
-                logger.log(Level.SEVERE, "Unsupported mode: {0}", mode);
-        }
-        return ret;
     }
 
     /**
@@ -231,8 +220,8 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 return true;
             }
         }
-        for (PMetadata pma : metadataToAdd) {
-            if (pma.name.equals(name)) {
+        for (PMetadata pm : metadataToAdd) {
+            if (pm.name.equals(name)) {
                 return true;
             }
         }
@@ -270,8 +259,8 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 return true;
             }
         }
-        for (PAlias p : aliasesToAdd) {
-            if (p.alias.equals(alias)) {
+        for (PAlias pa : aliasesToAdd) {
+            if (pa.alias.equals(alias)) {
                 return true;
             }
         }
@@ -612,12 +601,19 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     }
 
     private void updateAccountsTable() {
-        Object[][] rows = new Object[currentAccounts.size()][2];
+        Object[][] rows = new Object[currentAccounts.size() + accountsToAdd.size()][2];
         int i = 0;
-        for (CentralRepoAccount account : currentAccounts) {
+        for (CentralRepoAccount acc : currentAccounts) {
             rows[i] = new Object[]{
-                account.getAccountType().getAcctType().getDisplayName(),
-                account.getIdentifier()
+                acc.getAccountType().getAcctType().getDisplayName(),
+                acc.getIdentifier()
+            };
+            i++;
+        }
+        for (PAccount acc : accountsToAdd) {
+            rows[i] = new Object[]{
+                acc.account.getAccountType().getAcctType().getDisplayName(),
+                acc.account.getIdentifier()
             };
             i++;
         }
@@ -716,5 +712,64 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 break;
         }
         initializeFields();
+    }
+    
+        @Messages({
+        "PersonaDetailsPanel_NotEnoughAccounts_msg=Two or more accounts are necessary to create a persona",
+        "PersonaDetailsPanel_NotEnoughAccounts_Title=Not enough accounts",
+        "PersonaDetailsPanel_CentralRepoErr_msg=Failure to write to Central Repository",
+        "PersonaDetailsPanel_CentralRepoErr_Title=Central Repository failure",
+        "PersonaDetailsPanel_EmptyName_msg=Persona name cannot be empty",
+        "PersonaDetailsPanel_EmptyName_Title=Empty persona name",})
+    Persona okHandler() {
+        Persona ret = null;
+        switch (mode) {
+            case CREATE:
+                if (accountsToAdd.size() < 2) {
+                    JOptionPane.showMessageDialog(this,
+                        Bundle.PersonaDetailsPanel_NotEnoughAccounts_msg(),
+                        Bundle.PersonaDetailsPanel_NotEnoughAccounts_Title(),
+                        JOptionPane.ERROR_MESSAGE);
+                    break;
+                }
+                if (nameField.getText().isEmpty()) {
+                    JOptionPane.showMessageDialog(this,
+                        Bundle.PersonaDetailsPanel_EmptyName_msg(),
+                        Bundle.PersonaDetailsPanel_EmptyName_Title(),
+                        JOptionPane.ERROR_MESSAGE);
+                    break;
+                }
+                try {
+                    PAccount firstAccount = accountsToAdd.get(0);
+                    ret = Persona.createPersonaForAccount(nameField.getText(),
+                            "", Persona.PersonaStatus.ACTIVE, firstAccount.account, 
+                            firstAccount.justification, firstAccount.confidence);
+                    for (int i = 1; i < accountsToAdd.size(); i++) {
+                        ret.addAccountToPersona(accountsToAdd.get(i).account,
+                                accountsToAdd.get(i).justification,
+                                accountsToAdd.get(i).confidence);
+                    }
+                    for (PMetadata md : metadataToAdd) {
+                        ret.addMetadata(md.name, md.value, md.justification, md.confidence);
+                    }
+                    for (PAlias pa : aliasesToAdd) {
+                        ret.addAlias(pa.alias, pa.justification, pa.confidence);
+                    }
+                } catch (CentralRepoException e) {
+                    logger.log(Level.SEVERE, "Failed to access central repository", e);
+                    JOptionPane.showMessageDialog(this,
+                        Bundle.PersonaDetailsPanel_CentralRepoErr_msg(),
+                        Bundle.PersonaDetailsPanel_CentralRepoErr_Title(),
+                        JOptionPane.ERROR_MESSAGE);
+                    break;
+                }
+                break;
+            case EDIT:
+                // todo implement
+                break;
+            default:
+                logger.log(Level.SEVERE, "Unsupported mode: {0}", mode);
+        }
+        return ret;
     }
 }
