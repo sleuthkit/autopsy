@@ -107,8 +107,6 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         localAccountIdLabel = new javax.swing.JLabel();
         sourceSectionLabel = new javax.swing.JLabel();
 
-        setLayout(new java.awt.BorderLayout());
-
         topPanel.setLayout(new java.awt.BorderLayout());
 
         callDetailsPanel.setPreferredSize(new java.awt.Dimension(400, 150));
@@ -135,7 +133,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         );
         participantsListPanelLayout.setVerticalGroup(
             participantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 38, Short.MAX_VALUE)
+            .addGap(0, 58, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout callDetailsPanelLayout = new javax.swing.GroupLayout(callDetailsPanel);
@@ -165,11 +163,11 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         callDetailsPanelLayout.setVerticalGroup(
             callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(callDetailsPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
                 .addComponent(callDetailsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(participantsListPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(participantsListPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(directionLabel)
                     .addComponent(callLabel))
@@ -220,8 +218,6 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         );
 
         topPanel.add(otherAttributesPanel, java.awt.BorderLayout.PAGE_END);
-
-        add(topPanel, java.awt.BorderLayout.PAGE_START);
 
         bottomPanel.setLayout(new java.awt.BorderLayout());
 
@@ -284,7 +280,21 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
         bottomPanel.add(localAccountInfoPanel, java.awt.BorderLayout.NORTH);
 
-        add(bottomPanel, java.awt.BorderLayout.PAGE_END);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(topPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 860, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(bottomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(topPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(bottomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
     }// </editor-fold>//GEN-END:initComponents
 
     private void customizeComponents() {
