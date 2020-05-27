@@ -352,7 +352,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
                 double currentSolrVersion = NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion());
                 double indexSolrVersion = NumberUtils.toDouble(indexToUse.getSolrVersion());
-                if (indexSolrVersion == currentSolrVersion) {
+                // ELTODO if (indexSolrVersion == currentSolrVersion) {
                     // latest Solr version but schema not compatible. index should be used in read-only mode
                     if (!indexToUse.isCompatible(IndexFinder.getCurrentSchemaVersion()) && RuntimeProperties.runningWithGUI()) {
                         // pop up a message box to indicate the read-only restrictions.
@@ -374,12 +374,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     }
                     // proceed with case open
                     currentVersionIndex = indexToUse;
-                } else {
+                /* ELTODO } else {
                     // index needs to be upgraded to latest supported version of Solr
                     // ELTODO REMOVE 
                     currentVersionIndex = indexToUse;
                     // ELTODO REMOVE throw new AutopsyServiceException("Unable to find index to use for Case open");
-                }
+                }*/
             }
         }
 

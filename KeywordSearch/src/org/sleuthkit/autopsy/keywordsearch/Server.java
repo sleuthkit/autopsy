@@ -546,9 +546,9 @@ public class Server {
     }
     
     void start() throws KeywordSearchModuleException, SolrServerNoPortException {
-        startSolr8();
+        //startSolr8();
         
-        //startSolr4();
+        startSolr4();
         
         //startSolr8();
         

@@ -183,7 +183,8 @@ class DropdownToolbar extends javax.swing.JPanel {
                             }
                             else {
                                 Index indexInfo = server.getIndexInfo();
-                                if (IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
+                                // ELTODO
+                                // ELTODO if (IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
                                     /*
                                      * Solr version is current, so check the Solr
                                      * schema version and selectively enable the ad
@@ -194,13 +195,13 @@ class DropdownToolbar extends javax.swing.JPanel {
                                     searchDropButton.setEnabled(true);
                                     dropPanel.setRegexSearchEnabled(schemaIsCompatible);
                                     active = true;
-                                } else {
+                                /*}  ELTODO else {
                                     /*
                                      * Unsupported Solr version, disable the ad hoc
                                      * search UI components.
                                      */
-                                    disableSearch = true;
-                                }
+                                    // ELTODO disableSearch = true;
+                                //}
                             }
                         } catch (NoOpenCoreException ex) {
                             /*
