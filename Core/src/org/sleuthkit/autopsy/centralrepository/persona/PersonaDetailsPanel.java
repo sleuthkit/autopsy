@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import org.openide.windows.TopComponent;
@@ -91,6 +92,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 updateAccountsTable();
             }
         });
+        accountsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         accountsTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
             handleSelectionChange(e, deleteAccountBtn, accountsTable);
         });
@@ -111,6 +113,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 updateMetadataTable();
             }
         });
+        metadataTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         metadataTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
             handleSelectionChange(e, deleteMetadataBtn, metadataTable);
         });
@@ -131,6 +134,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 updateAliasesTable();
             }
         });
+        aliasesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         aliasesTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
             handleSelectionChange(e, deleteAliasBtn, aliasesTable);
         });
