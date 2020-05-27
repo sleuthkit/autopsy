@@ -26,6 +26,8 @@ import javafx.util.Pair;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationParseResult;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationParseResult.SeparationResult;
 import org.sleuthkit.autopsy.geolocation.datamodel.Track;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder;
@@ -76,19 +78,25 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
      *
      * @param mapWaypoints List of filtered MapWaypoints.
      */
-    abstract void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks);
+    abstract void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, 
+        List<GeoLocationParseResult<Track>> failedTracks, List<GeoLocationParseResult<Waypoint>> failedWaypoints);
 
     @Override
-    public void process(List<Waypoint> waypoints) {
-        List<Track> tracks = new ArrayList<>();
+    public void process(List<GeoLocationParseResult<Waypoint>> waypointResults) {
+        List<GeoLocationParseResult<Track>> trackResults = new ArrayList<>();
         if (filters.getArtifactTypes().contains(ARTIFACT_TYPE.TSK_GPS_TRACK)) {
             try {
-                tracks = Track.getTracks(Case.getCurrentCase().getSleuthkitCase(), filters.getDataSources());
+                trackResults = Track.getTracks(Case.getCurrentCase().getSleuthkitCase(), filters.getDataSources());
             } catch (GeoLocationDataException ex) {
                 logger.log(Level.WARNING, "Exception thrown while retrieving list of Tracks", ex);
             }
         }
-        Pair<List<Waypoint>, List<List<Waypoint>>> waypointsAndTracks = createWaypointList(waypoints, tracks);
+        
+        SeparationResult<Waypoint> separatedWaypoints = GeoLocationParseResult.separate(waypointResults);
+        SeparationResult<Track> separatedTracks = GeoLocationParseResult.separate(trackResults);
+        
+        Pair<List<Waypoint>, List<List<Waypoint>>> waypointsAndTracks = 
+            createWaypointList(separatedWaypoints.getParsedItems(), separatedTracks.getParsedItems());
         
         final Set<MapWaypoint> pointSet = MapWaypoint.getWaypoints(waypointsAndTracks.getKey());
         final List<Set<MapWaypoint>> trackSets = new ArrayList<>();
@@ -96,7 +104,7 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
             trackSets.add(MapWaypoint.getWaypoints(t));
         }
 
-        handleFilteredWaypointSet(pointSet, trackSets);
+        handleFilteredWaypointSet(pointSet, trackSets, separatedTracks.getFailedItems(), separatedWaypoints.getFailedItems());
     }
 
     /**

@@ -22,16 +22,18 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Class representing a series of waypoints that form a path.
  */
 public class GeoPath {
-
+    private static final Logger LOGGER = Logger.getLogger(GeoPath.class.getName());
     private final List<Waypoint> waypointList;
     private final String pathName;
     private final BlackboardArtifact artifact;
@@ -74,15 +76,19 @@ public class GeoPath {
      *
      * @throws GeoLocationDataException
      */
-    static public List<Track> getTracks(SleuthkitCase skCase, List<? extends Content> sourceList) throws GeoLocationDataException {
+    public static List<GeoLocationParseResult<Track>> getTracks(SleuthkitCase skCase, List<? extends Content> sourceList) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
-        List<Track> tracks = new ArrayList<>();
+        List<GeoLocationParseResult<Track>> tracks = new ArrayList<>();
         try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK);
             for (BlackboardArtifact artifact : artifacts) {
                 if (sourceList == null || sourceList.contains(artifact.getDataSource())) {
-                    Track route = new Track(artifact);
-                    tracks.add(route);
+                    try {
+                        Track route = new Track(artifact);
+                        tracks.add(GeoLocationParseResult.create(artifact,route));
+                    } catch (GeoLocationDataException e) {
+                        tracks.add(GeoLocationParseResult.error(artifact, e));
+                    }
                 }
             }
         } catch (TskCoreException ex) {

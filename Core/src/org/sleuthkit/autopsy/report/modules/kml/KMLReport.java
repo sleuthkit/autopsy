@@ -33,6 +33,7 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -46,6 +47,8 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationParseResult;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationParseResult.SeparationResult;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.autopsy.geolocation.datamodel.Track;
@@ -208,7 +211,11 @@ public final class KMLReport implements GeneralReportModule {
 
         try {
             makeRoutes(skCase);
-            makeTracks(skCase);
+            List<GeoLocationParseResult<Track>> errors = makeTracks(skCase);
+            if (!errors.isEmpty()) {
+                result = ReportProgressPanel.ReportStatus.ERROR;
+            }
+            
             addLocationsToReport(skCase, baseReportDir);
         } catch (GeoLocationDataException | IOException | TskCoreException ex) {
             errorMessage = "Failed to complete report.";
@@ -515,16 +522,21 @@ public final class KMLReport implements GeneralReportModule {
      * Add the track to the track folder in the document.
      *
      * @param skCase Currently open case.
-     *
+     * @return The items that could not be parsed appropriately.
+     * 
      * @throws TskCoreException
      */
-    void makeTracks(SleuthkitCase skCase) throws GeoLocationDataException, TskCoreException {
+    List<GeoLocationParseResult<Track>> makeTracks(SleuthkitCase skCase) throws GeoLocationDataException, TskCoreException {
         List<Track> tracks = null;
-
+        List<GeoLocationParseResult<Track>> failedItems;
+        
         if (waypointList == null) {
-            tracks = Track.getTracks(skCase, null);
+            SeparationResult<Track> result = GeoLocationParseResult.separate(Track.getTracks(skCase, null));
+            tracks = result.getParsedItems();
+            failedItems = result.getFailedItems();
         } else {
             tracks = WaypointBuilder.getTracks(waypointList);
+            failedItems = new ArrayList<>();
         }
 
         for (Track track : tracks) {
@@ -533,6 +545,8 @@ public final class KMLReport implements GeneralReportModule {
             }
             addTrackToReport(track);
         }
+        
+        return failedItems;
     }
 
     /**
