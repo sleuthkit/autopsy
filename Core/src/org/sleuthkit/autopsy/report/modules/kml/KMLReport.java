@@ -211,7 +211,11 @@ public final class KMLReport implements GeneralReportModule {
 
         try {
             makeRoutes(skCase);
-            makeTracks(skCase);
+            List<GeoLocationParseResult<Track>> errors = makeTracks(skCase);
+            if (!errors.isEmpty()) {
+                result = ReportProgressPanel.ReportStatus.ERROR;
+            }
+            
             addLocationsToReport(skCase, baseReportDir);
         } catch (GeoLocationDataException | IOException | TskCoreException ex) {
             errorMessage = "Failed to complete report.";
@@ -518,18 +522,21 @@ public final class KMLReport implements GeneralReportModule {
      * Add the track to the track folder in the document.
      *
      * @param skCase Currently open case.
-     *
+     * @return The items that could not be parsed appropriately.
+     * 
      * @throws TskCoreException
      */
-    void makeTracks(SleuthkitCase skCase) throws GeoLocationDataException, TskCoreException {
+    List<GeoLocationParseResult<Track>> makeTracks(SleuthkitCase skCase) throws GeoLocationDataException, TskCoreException {
         List<Track> tracks = null;
-
+        List<GeoLocationParseResult<Track>> failedItems;
+        
         if (waypointList == null) {
             SeparationResult<Track> result = GeoLocationParseResult.separate(Track.getTracks(skCase, null));
             tracks = result.getParsedItems();
-            handleErrors(result.getFailedItems());
+            failedItems = result.getFailedItems();
         } else {
             tracks = WaypointBuilder.getTracks(waypointList);
+            failedItems = new ArrayList<>();
         }
 
         for (Track track : tracks) {
@@ -538,6 +545,8 @@ public final class KMLReport implements GeneralReportModule {
             }
             addTrackToReport(track);
         }
+        
+        return failedItems;
     }
 
     /**

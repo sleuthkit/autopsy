@@ -22,16 +22,18 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Class representing a series of waypoints that form a path.
  */
 public class GeoPath {
-
+    private static final Logger LOGGER = Logger.getLogger(GeoPath.class.getName());
     private final List<Waypoint> waypointList;
     private final String pathName;
     private final BlackboardArtifact artifact;

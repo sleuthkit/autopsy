@@ -497,6 +497,10 @@ public final class GeolocationTopComponent extends TopComponent {
      *  Extends AbstractWaypointFetcher to handle the returning of
      *  the filters set of MapWaypoints.
      */
+    @Messages({
+        "GeolocationTopComponent.WaypointFetcher.onErrorTitle=Error gathering GPS Track Data",
+        "GeolocationTopComponent.WaypointFetcher.onErrorDescription=There was an error gathering some GPS Track Data.  Some results have been excluded."
+    })
     final private class WaypointFetcher extends AbstractWaypointFetcher {
 
         WaypointFetcher(GeoFilter filters) {
@@ -507,7 +511,14 @@ public final class GeolocationTopComponent extends TopComponent {
         void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, 
                 List<GeoLocationParseResult<Track>> failedTracks, List<GeoLocationParseResult<Waypoint>> failedWaypoints) {
             addWaypointsToMap(mapWaypoints, tracks);
-            handleErrors(failedTracks, failedWaypoints);
+            
+            // if there is an error, present to the user.
+            if ((failedTracks != null && !failedTracks.isEmpty()) || (failedWaypoints != null && !failedWaypoints.isEmpty())) {
+                JOptionPane.showMessageDialog(GeolocationTopComponent.this, 
+                    Bundle.GeolocationTopComponent_WaypointFetcher_onErrorDescription(), 
+                    Bundle.GeolocationTopComponent_WaypointFetcher_onErrorTitle(),
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 }
