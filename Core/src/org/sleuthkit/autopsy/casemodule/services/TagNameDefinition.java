@@ -67,7 +67,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
         STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
         STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_followUp_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
         STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
-        
+
         OLD_CATEGORY_TAG_NAMES.add("CAT-1: Child Exploitation (Illegal)");
         OLD_CATEGORY_TAG_NAMES.add("CAT-2: Child Exploitation (Non-Illegal/Age Difficult)");
         OLD_CATEGORY_TAG_NAMES.add("CAT-3: CGI/Animation (Child Exploitive)");
@@ -91,7 +91,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
         this.color = color;
         this.knownStatus = status;
     }
-    
+
     static Collection<TagNameDefinition> getStandardTagNameDefinitions() {
         return Collections.unmodifiableCollection(STANDARD_TAGS_DEFINITIONS);
     }
@@ -102,7 +102,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
         for (TagNameDefinition def : STANDARD_TAGS_DEFINITIONS) {
             strList.add(def.getDisplayName());
         }
-        
+
         return strList;
     }
 
@@ -238,7 +238,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
         try {
             tagName = caseDb.addOrUpdateTagName(displayName, description, color, knownStatus);
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error updating non-file object ", ex);
+            LOGGER.log(Level.SEVERE, "Error saving tag name definition", ex);
         }
         return tagName;
     }

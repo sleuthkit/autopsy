@@ -28,7 +28,6 @@ import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.datamodel.TskData;
 
 @Messages({"TagNameDialog.descriptionLabel.text=Description:",

@@ -26,7 +26,6 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagNameDefinition;
-import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TagSet;
@@ -130,10 +129,10 @@ public class ImageGalleryService implements AutopsyService {
 
     /**
      * Add the default category tag set to the case db.
-     * 
+     *
      * @param skCase Currently open case.
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     private void addDefaultTagSet(Case currentCase) throws TskCoreException {
         List<TagName> tagNames = new ArrayList<>();

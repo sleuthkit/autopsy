@@ -279,7 +279,7 @@ public class TagsManager implements Closeable {
                 }
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error updating non-file object ", ex);
+            LOGGER.log(Level.SEVERE, "Error updating standard tag name and tag set definitions", ex);
         } catch(IOException ex) {
             LOGGER.log(Level.SEVERE, "Error loading tag set JSON files", ex);
         }
