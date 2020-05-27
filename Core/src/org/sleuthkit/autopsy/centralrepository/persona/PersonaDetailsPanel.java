@@ -30,7 +30,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
-import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
@@ -59,7 +58,6 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     private PersonaDetailsMode mode;
 
     private Persona currentPersona;
-    private String currentName = null;
     private List<CentralRepoAccount> currentAccounts = new ArrayList();
     private List<PersonaMetadata> currentMetadata = new ArrayList();
     private List<PersonaAlias> currentAliases = new ArrayList();
@@ -175,7 +173,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                     break;
                 }
                 try {
-                    ret = Persona.createPersonaForAccount(currentName,
+                    ret = Persona.createPersonaForAccount(nameField.getText(),
                             "", Persona.PersonaStatus.ACTIVE, currentAccounts.get(0),
                             "", Persona.Confidence.UNKNOWN);
                     for (int i = 1; i < currentAccounts.size(); i++) {
@@ -564,7 +562,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
             return;
         }
         this.currentPersona = persona;
-        this.currentName = name;
+        this.nameField.setText(name);
         this.currentAccounts.addAll(accounts);
         this.currentMetadata.addAll(metadata);
         this.currentAliases.addAll(aliases);
@@ -573,7 +571,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
 
     void clear() {
         currentPersona = null;
-        currentName = Persona.getDefaultName();
+        nameField.setText(Persona.getDefaultName());
         currentAccounts = new ArrayList<>();
         currentMetadata = new ArrayList<>();
         currentAliases = new ArrayList<>();
@@ -689,7 +687,6 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     }
 
     void initializeFields() {
-        nameField.setText(currentName);
         updateAccountsTable();
         updateMetadataTable();
         updateAliasesTable();

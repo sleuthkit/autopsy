@@ -111,6 +111,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
                 handleSelectionChange();
             }
             currentDialog = null;
+            createBtn.setEnabled(true);
         }
     }
     
@@ -118,6 +119,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
         @Override
         public void callback(Persona persona) {
             currentDialog = null;
+            createBtn.setEnabled(true);
         }
     }
 

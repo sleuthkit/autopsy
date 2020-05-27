@@ -24,15 +24,12 @@ import javax.swing.JOptionPane;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Configuration dialog for adding metadata to a persona.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class AddMetadataDialog extends JDialog {
-
-    private static final Logger logger = Logger.getLogger(AddMetadataDialog.class.getName());
 
     private static final long serialVersionUID = 1L;
 

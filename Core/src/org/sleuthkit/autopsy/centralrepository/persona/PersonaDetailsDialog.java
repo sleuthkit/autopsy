@@ -24,7 +24,6 @@ import javax.swing.JFrame;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Configuration dialog for editing or creating a persona
@@ -34,8 +33,6 @@ public class PersonaDetailsDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
     
-    private final Component parent;
-    private final PersonaDetailsMode mode;
     private final PersonaDetailsDialogCallback callback;
 
     @NbBundle.Messages({
@@ -47,8 +44,6 @@ public class PersonaDetailsDialog extends JDialog {
                         Bundle.PersonaDetailsDialogCreateTitle() : 
                         Bundle.PersonaDetailsDialogEditTitle(),
                 false);
-        this.parent = parent;
-        this.mode = mode;
         this.callback = callback;
 
         initComponents();
@@ -130,8 +125,11 @@ public class PersonaDetailsDialog extends JDialog {
     }
 
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
-        callback.callback(pdp.okHandler());
-        dispose();
+        Persona ret = pdp.okHandler();
+        if (ret != null) {
+            callback.callback(ret);
+            dispose();
+        }
     }//GEN-LAST:event_okBtnActionPerformed
 
     private void cancelBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelBtnActionPerformed

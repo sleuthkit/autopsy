@@ -24,15 +24,12 @@ import javax.swing.JOptionPane;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Configuration dialog for adding aliases to a persona.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class AddAliasDialog extends JDialog {
-
-    private static final Logger logger = Logger.getLogger(AddAliasDialog.class.getName());
 
     private static final long serialVersionUID = 1L;
 
