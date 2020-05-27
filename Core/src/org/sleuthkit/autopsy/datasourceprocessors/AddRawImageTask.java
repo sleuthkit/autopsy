@@ -146,8 +146,7 @@ final class AddRawImageTask implements Runnable {
             return;
         }        
         imageFilePaths.add(imageFilePath); 
-        try { 
-            caseDatabase.acquireSingleUserCaseWriteLock();
+        try {
             /*
              * Get Image that will be added to case
              */
@@ -187,9 +186,6 @@ final class AddRawImageTask implements Runnable {
             errorMessages.add(errorMessage);
             logger.log(Level.SEVERE, errorMessage, ex);
             criticalErrorOccurred = true;
-        } finally {
-            caseDatabase.releaseSingleUserCaseWriteLock();
         }
-
     }    
 }

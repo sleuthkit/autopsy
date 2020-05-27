@@ -5,6 +5,8 @@
 # works within an analysis process.
 #
 # History:
+#  20190112 - updated parsing for Win8.1
+#  20180311 - updated for more recent version of Win10/Win2016
 #  20160528 - updated
 #  20160502 - created
 #
@@ -32,7 +34,7 @@ my %config = (hive          => "System",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 31,  
-              version       => 20160528);
+              version       => 20190112);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -110,7 +112,10 @@ sub pluginmain {
 			elsif ($sig == 0x80) {
 				appWin8($app_data);				
 			}
-			elsif ($sig == 0x30) {
+			elsif ($sig == 0x0) {
+				appWin81($app_data);
+			}
+			elsif ($sig == 0x30 || $sig == 0x34) {
 				appWin10($app_data);				
 			}
 			else {
@@ -283,7 +288,7 @@ sub appWin8 {
 	
 	while($ofs < $len) {
 		my $tag = unpack("V",substr($data,$ofs,4));
-                last unless (defined $tag); 
+        last unless (defined $tag);
 # 32-bit		
 		if ($tag == 0x73746f72) {
 			$jmp = unpack("V",substr($data,$ofs + 8,4));
@@ -316,6 +321,39 @@ sub appWin8 {
 }
 
 #-----------------------------------------------------------
+# appWin81()
+# 
+#-----------------------------------------------------------
+sub appWin81 {
+	my $data = shift;
+	my $len = length($data);
+	my ($tag, $sz, $t0, $t1, $name, $name_len);
+	my $ct = 0;
+#	my $ofs = unpack("V",substr($data,0,4));
+	my $ofs = 0x80;
+	
+	while ($ofs < $len) {
+		$tag = substr($data,$ofs,4);
+        last unless (defined $tag);
+		if ($tag eq "10ts") {
+			
+			$sz = unpack("V",substr($data,$ofs + 0x08,4));
+			$name_len   = unpack("v",substr($data,$ofs + 0x0c,2));
+			my $name      = substr($data,$ofs + 0x0e,$name_len);
+			$name =~ s/\00//g;
+#			($t0,$t1) = unpack("VV",substr($data,$ofs + 0x03 + $name_len,8));
+			($t0,$t1) = unpack("VV",substr($data,$ofs + 0x0e + $name_len + 0x0a,8));
+			$files{$ct}{filename} = $name;
+			$files{$ct}{modtime} = ::getTime($t0,$t1);
+
+			$ct++;
+			$ofs += ($sz + 0x0c);
+		}
+	}
+}
+
+
+#-----------------------------------------------------------
 # appWin10()
 # Ref: http://binaryforay.blogspot.com/2015/04/appcompatcache-changes-in-windows-10.html
 #-----------------------------------------------------------
@@ -324,11 +362,11 @@ sub appWin10 {
 	my $len = length($data);
 	my ($tag, $sz, $t0, $t1, $name, $name_len);
 	my $ct = 0;
-	my $ofs = 0x30;
+	my $ofs = unpack("V",substr($data,0,4));
+#	my $ofs = 0x30;
 	
 	while ($ofs < $len) {
 		$tag = substr($data,$ofs,4);
-                last unless (defined $tag); 
 		if ($tag eq "10ts") {
 			
 			$sz = unpack("V",substr($data,$ofs + 0x08,4));

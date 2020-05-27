@@ -25,7 +25,7 @@ my %config = (hive          => "System",
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Lists services/drivers in Services key by LastWrite times in a short format with warnings for type mismatches\n^^^^ Indicates non-standard Type\n<<<< Indicates Start mismatch for Driver\n**** Indicates ObjectName mismatch for Driver\n>>>> Indicates Start mismatch for Service\n++++ Indicates nonstandard ObjectName for Service.";	
+	return "Lists services/drivers in Services key by LastWrite times in a short format with warnings for type mismatches; ^^^^ Indicates non-standard Type, <<<< Indicates Start mismatch for Driver, **** Indicates ObjectName mismatch for Driver, >>>> Indicates Start mismatch for Service, ++++ Indicates nonstandard ObjectName for Service.";	
 }
 sub getDescr{}
 sub getRefs {}
