@@ -100,7 +100,7 @@
             </Property>
           </Properties>
           <AuxValues>
-            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount&gt;"/>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount&gt;"/>
           </AuxValues>
         </Component>
       </SubComponents>

@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.centralrepository.persona;
 
 import java.awt.Component;
-import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import org.openide.util.NbBundle;
@@ -32,17 +31,17 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class PersonaDetailsDialog extends JDialog {
-    private static final Logger logger = Logger.getLogger(PersonaDetailsDialog.class.getName());
 
     private static final long serialVersionUID = 1L;
     
     private final Component parent;
     private final PersonaDetailsMode mode;
+    private final PersonaDetailsDialogCallback callback;
 
     @NbBundle.Messages({
         "PersonaDetailsDialogCreateTitle=Create Persona",
         "PersonaDetailsDialogEditTitle=Edit Persona",})
-    PersonaDetailsDialog(Component parent, PersonaDetailsMode mode, Persona persona) {
+    PersonaDetailsDialog(Component parent, PersonaDetailsMode mode, Persona persona, PersonaDetailsDialogCallback callback) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 mode == PersonaDetailsMode.CREATE ? 
                         Bundle.PersonaDetailsDialogCreateTitle() : 
@@ -50,6 +49,7 @@ public class PersonaDetailsDialog extends JDialog {
                 false);
         this.parent = parent;
         this.mode = mode;
+        this.callback = callback;
 
         initComponents();
         
@@ -130,16 +130,7 @@ public class PersonaDetailsDialog extends JDialog {
     }
 
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
-        switch (mode) {
-            case CREATE:
-                // todo implement
-                break;
-            case EDIT:
-                // todo implement
-                break;
-            default:
-                logger.log(Level.SEVERE, "Unsupported mode: {0}", mode);
-        }
+        callback.callback(pdp.okHandler());
         dispose();
     }//GEN-LAST:event_okBtnActionPerformed
 

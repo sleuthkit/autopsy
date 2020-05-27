@@ -30,6 +30,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
+import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
@@ -145,12 +146,63 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     }
 
     boolean addAccount(CentralRepoAccount account) {
-        if (currentAccounts.contains(account)) {
+        if (currentAccounts.stream().anyMatch((acc) -> (acc.getId() == account.getId()))) {
             return false;
         }
         currentAccounts.add(account);
         updateAccountsTable();
         return true;
+    }
+
+    Collection<CentralRepoAccount> getCurrentAccounts() {
+        return currentAccounts;
+    }
+
+    @Messages({
+        "PersonaDetailsPanel_NotEnoughAccounts_msg=Two or more accounts are necessary to create a persona",
+        "PersonaDetailsPanel_NotEnoughAccounts_Title=Not enough accounts",
+        "PersonaDetailsPanel_CentralRepoErr_msg=Failure to write to Central Repository",
+        "PersonaDetailsPanel_CentralRepoErr_Title=Central Repository failure",})
+    Persona okHandler() {
+        Persona ret = null;
+        switch (mode) {
+            case CREATE:
+                if (currentAccounts.size() < 2) {
+                    JOptionPane.showMessageDialog(this,
+                        Bundle.PersonaDetailsPanel_NotEnoughAccounts_msg(),
+                        Bundle.PersonaDetailsPanel_NotEnoughAccounts_Title(),
+                        JOptionPane.ERROR_MESSAGE);
+                    break;
+                }
+                try {
+                    ret = Persona.createPersonaForAccount(currentName,
+                            "", Persona.PersonaStatus.ACTIVE, currentAccounts.get(0),
+                            "", Persona.Confidence.UNKNOWN);
+                    for (int i = 1; i < currentAccounts.size(); i++) {
+                        ret.addAccountToPersona(currentAccounts.get(i), "", Persona.Confidence.UNKNOWN);
+                    }
+                    for (PMetadata md : metadataToAdd) {
+                        ret.addMetadata(md.name, md.value, md.justification, md.confidence);
+                    }
+                    for (PAlias pa : aliasesToAdd) {
+                        ret.addAlias(pa.alias, pa.justification, pa.confidence);
+                    }
+                } catch (CentralRepoException e) {
+                    logger.log(Level.SEVERE, "Failed to access central repository", e);
+                    JOptionPane.showMessageDialog(this,
+                        Bundle.PersonaDetailsPanel_CentralRepoErr_msg(),
+                        Bundle.PersonaDetailsPanel_CentralRepoErr_Title(),
+                        JOptionPane.ERROR_MESSAGE);
+                    break;
+                }
+                break;
+            case EDIT:
+                // todo implement
+                break;
+            default:
+                logger.log(Level.SEVERE, "Unsupported mode: {0}", mode);
+        }
+        return ret;
     }
 
     /**
@@ -563,13 +615,13 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         for (CentralRepoAccount account : currentAccounts) {
             rows[i] = new Object[]{
                 account.getAccountType().getAcctType().getDisplayName(),
-                account.getTypeSpecificId()
+                account.getIdentifier()
             };
             i++;
         }
         accountsModel = new PersonaDetailsTableModel(
                 rows,
-                new String[]{"Type", "ID"}
+                new String[]{"Type", "Identifier"}
         );
         accountsTable.setModel(accountsModel);
 

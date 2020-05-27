@@ -49,6 +49,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public final class PersonaManagerTopComponent extends TopComponent {
 
     private static final Logger logger = Logger.getLogger(PersonaManagerTopComponent.class.getName());
+    
+    private PersonaDetailsDialog currentDialog;
 
     private List<Persona> currentResults = null;
     private Persona selectedPersona = null;
@@ -71,26 +73,52 @@ public final class PersonaManagerTopComponent extends TopComponent {
         editBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                PersonaDetailsDialog editDialog =
-                        new PersonaDetailsDialog(PersonaManagerTopComponent.this, PersonaDetailsMode.EDIT, selectedPersona);
+                currentDialog = new PersonaDetailsDialog(PersonaManagerTopComponent.this,
+                                PersonaDetailsMode.EDIT, selectedPersona, new EditCallbackImpl());
+                editBtn.setEnabled(false);
+                createBtn.setEnabled(false);
             }
         });
 
         createBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                PersonaDetailsDialog createDialog =
-                        new PersonaDetailsDialog(PersonaManagerTopComponent.this, PersonaDetailsMode.CREATE, selectedPersona);
+                currentDialog = new PersonaDetailsDialog(PersonaManagerTopComponent.this,
+                                PersonaDetailsMode.CREATE, selectedPersona, new CreateCallbackImpl());
+                editBtn.setEnabled(false);
+                createBtn.setEnabled(false);
             }
         });
 
         // Results table
         resultsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         resultsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
             public void valueChanged(ListSelectionEvent e) {
                 handleSelectionChange(e);
             }
         });
+    }
+    
+    class CreateCallbackImpl implements PersonaDetailsDialogCallback {
+        @Override
+        public void callback(Persona persona) {
+            if (persona != null) {
+                searchField.setText("");
+                executeSearch();
+                int newPersonaRow = currentResults.size() - 1;
+                resultsTable.getSelectionModel().setSelectionInterval(newPersonaRow, newPersonaRow);
+                handleSelectionChange();
+            }
+            currentDialog = null;
+        }
+    }
+    
+    class EditCallbackImpl implements PersonaDetailsDialogCallback {
+        @Override
+        public void callback(Persona persona) {
+            currentDialog = null;
+        }
     }
 
     void setPersona(int index) {
@@ -120,6 +148,10 @@ public final class PersonaManagerTopComponent extends TopComponent {
         if (e.getValueIsAdjusting()) {
             return;
         }
+        handleSelectionChange();
+    }
+    
+    private void handleSelectionChange() {
         int selectedRow = resultsTable.getSelectedRow();
         if (selectedRow != -1) {
             setPersona(resultsTable.getSelectedRow());

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.persona;
 
 import java.awt.Component;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -29,8 +30,8 @@ import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -43,7 +44,7 @@ public class AddAccountDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
     
-    private final TypeChoiceRenderer ACC_CHOICE_RENDERER = new TypeChoiceRenderer();
+    private final AccountChoiceRenderer ACC_CHOICE_RENDERER = new AccountChoiceRenderer();
     private final PersonaDetailsPanel pdp;
     
     /**
@@ -62,17 +63,17 @@ public class AddAccountDialog extends JDialog {
     }
     
     /**
-     * This class handles displaying and rendering drop down menu for account type choices
+     * This class handles displaying and rendering drop down menu for account choices
      */
-    private class TypeChoiceRenderer extends JLabel implements ListCellRenderer<PersonaAccount>, Serializable {
+    private class AccountChoiceRenderer extends JLabel implements ListCellRenderer<CentralRepoAccount>, Serializable {
 
         private static final long serialVersionUID = 1L;
 
         @Override
         public Component getListCellRendererComponent(
-                JList<? extends PersonaAccount> list, PersonaAccount value,
+                JList<? extends CentralRepoAccount> list, CentralRepoAccount value,
                 int index, boolean isSelected, boolean cellHasFocus) {
-            setText(value.getAccount().getTypeSpecificId());
+            setText(value.getIdentifier());
             return this;
         }
     }
@@ -81,20 +82,19 @@ public class AddAccountDialog extends JDialog {
         "AddAccountDialog_get_types_exception_Title=Central Repository failure",
         "AddAccountDialog_get_types_exception_msg=Failed to access central repository",
     })
-    private PersonaAccount[] getAllAccounts() {
-        PersonaAccount[] ret = new PersonaAccount[0];
+    private CentralRepoAccount[] getAllAccounts() {
+        ArrayList<CentralRepoAccount> allAccounts;
         try {
-            // todo change this to proper getAllAccounts function when that exists
-            // todo don't show accounts that are already assocated with this persona
-            ret = PersonaAccount.getPersonaAccountsForAccountIdentifier("").toArray(new PersonaAccount[0]);
+            allAccounts = new ArrayList<>(CentralRepoAccount.getAllAccounts());
         } catch (CentralRepoException e) {
             logger.log(Level.SEVERE, "Failed to access central repository", e);
             JOptionPane.showMessageDialog(this,
                                     Bundle.AddAccountDialog_get_types_exception_Title(),
                                     Bundle.AddAccountDialog_get_types_exception_msg(),
                                     JOptionPane.ERROR_MESSAGE);
+            return new CentralRepoAccount[0];
         }
-        return ret;
+        return allAccounts.toArray(new CentralRepoAccount[0]);
     }
 
     /**
@@ -198,7 +198,7 @@ public class AddAccountDialog extends JDialog {
         "AddAccountDialog_dup_Title=Account add failure",
         "AddAccountDialog_dup_msg=This account is already added to the persona",})
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
-        if (pdp.addAccount(((PersonaAccount) accountsComboBox.getSelectedItem()).getAccount())) {
+        if (pdp.addAccount((CentralRepoAccount) accountsComboBox.getSelectedItem())) {
             dispose();
         } else {
             JOptionPane.showMessageDialog(this,
@@ -213,7 +213,7 @@ public class AddAccountDialog extends JDialog {
     }//GEN-LAST:event_cancelBtnActionPerformed
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount> accountsComboBox;
+    private javax.swing.JComboBox<org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount> accountsComboBox;
     private javax.swing.JLabel accountsLbl;
     private javax.swing.JButton cancelBtn;
     private javax.swing.JButton okBtn;
