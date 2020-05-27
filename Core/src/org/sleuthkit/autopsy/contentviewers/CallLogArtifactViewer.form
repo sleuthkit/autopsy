@@ -238,7 +238,7 @@
         <Container class="javax.swing.JPanel" name="localAccountInfoPanel">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
-              <BorderConstraints direction="Last"/>
+              <BorderConstraints direction="North"/>
             </Constraint>
           </Constraints>
 

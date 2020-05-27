@@ -282,7 +282,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 .addContainerGap(22, Short.MAX_VALUE))
         );
 
-        bottomPanel.add(localAccountInfoPanel, java.awt.BorderLayout.PAGE_END);
+        bottomPanel.add(localAccountInfoPanel, java.awt.BorderLayout.NORTH);
 
         add(bottomPanel, java.awt.BorderLayout.PAGE_END);
     }// </editor-fold>//GEN-END:initComponents
