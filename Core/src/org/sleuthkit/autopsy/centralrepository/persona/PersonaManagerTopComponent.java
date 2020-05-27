@@ -75,8 +75,6 @@ public final class PersonaManagerTopComponent extends TopComponent {
             public void actionPerformed(ActionEvent e) {
                 currentDialog = new PersonaDetailsDialog(PersonaManagerTopComponent.this,
                                 PersonaDetailsMode.EDIT, selectedPersona, new EditCallbackImpl());
-                editBtn.setEnabled(false);
-                createBtn.setEnabled(false);
             }
         });
 
@@ -85,8 +83,6 @@ public final class PersonaManagerTopComponent extends TopComponent {
             public void actionPerformed(ActionEvent e) {
                 currentDialog = new PersonaDetailsDialog(PersonaManagerTopComponent.this,
                                 PersonaDetailsMode.CREATE, selectedPersona, new CreateCallbackImpl());
-                editBtn.setEnabled(false);
-                createBtn.setEnabled(false);
             }
         });
 
