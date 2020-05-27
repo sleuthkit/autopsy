@@ -73,7 +73,7 @@ public final class FilesSet implements Serializable {
     }
 
     /**
-     * 
+     * Returns whether or not the file set is read only.
      * @return  Whether or not the file set is read only.
      */
     boolean isReadOnly() {
@@ -81,7 +81,7 @@ public final class FilesSet implements Serializable {
     }
 
     /**
-     * 
+     *Sets whether or not the file set is read only.  This is a transient field that is not
      * @param readOnly Whether or not the file set should be read only.
      */
     void setReadOnly(boolean readOnly) {
