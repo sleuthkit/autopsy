@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * This class represents an association between a Persona and an Account.
@@ -73,6 +74,41 @@ public class PersonaAccount {
         return examiner;
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 83 * hash + Objects.hashCode(this.persona);
+        hash = 83 * hash + Objects.hashCode(this.account);
+        hash = 83 * hash + (int) (this.dateAdded ^ (this.dateAdded >>> 32));
+        hash = 83 * hash + Objects.hashCode(this.examiner);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final PersonaAccount other = (PersonaAccount) obj;
+        if (this.dateAdded != other.getDateAdded()) {
+            return false;
+        }
+        if (!Objects.equals(this.persona, other.getPersona())) {
+            return false;
+        }
+        if (!Objects.equals(this.account, other.getAccount())) {
+            return false;
+        }
+        return Objects.equals(this.examiner, other.getExaminer());
+    }
+
+        
     /**
      * Callback to process a Persona Accounts query.
      */
@@ -193,7 +229,7 @@ public class PersonaAccount {
      * @throws CentralRepoException If there is an error in getting the
      * persona_account.
      */
-    public static Collection<PersonaAccount> getPersonaAccountsForAccountIdentifier(String accountIdentifierSubstring) throws CentralRepoException {
+    public static Collection<PersonaAccount> getPersonaAccountsForIdentifierLike(String accountIdentifierSubstring) throws CentralRepoException {
         String queryClause = PERSONA_ACCOUNTS_QUERY_CALUSE
                 + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + accountIdentifierSubstring + "%')";
 

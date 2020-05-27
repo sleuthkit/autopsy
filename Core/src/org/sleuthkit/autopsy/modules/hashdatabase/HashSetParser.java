@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.HashEntry;
 
 interface HashSetParser {
 
@@ -26,7 +27,8 @@ interface HashSetParser {
      * Get the next hash to import
      *
      * @return The hash as a string, or null if the end of file was reached
-     * without error
+     *         without error
+     *
      * @throws TskCoreException
      */
     String getNextHash() throws TskCoreException;
@@ -50,4 +52,20 @@ interface HashSetParser {
      * Closes the import file
      */
     void close();
+
+    /**
+     * Get the next hash to import as a HashEntry object.
+     *
+     * @return A new hash entry for the next item parsed.
+     *
+     * @throws TskCoreException
+     */
+    default HashEntry getNextHashEntry() throws TskCoreException {
+        String next = getNextHash();
+        if (next == null) {
+            return null;
+        }
+
+        return new HashEntry(null, next, null, null, null);
+    }
 }

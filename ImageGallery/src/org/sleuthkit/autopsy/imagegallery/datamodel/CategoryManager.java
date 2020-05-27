@@ -38,7 +38,6 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -62,9 +61,7 @@ public class CategoryManager {
     private static final Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
 
     /**
-     * the DrawableDB that backs the category counts cache. The counts are
-     * initialized from this, and the counting of CAT-0 is always delegated to
-     * this db.
+     * the DrawableDB that backs the category counts cache.
      */
     private final DrawableDB drawableDb;
 
@@ -289,11 +286,18 @@ public class CategoryManager {
         }
     }
 
+    /**
+     * Returns the a list of the given TagName values sorted by rank.
+     *
+     * @param tagNames A list of TagNames to be sorted.
+     *
+     * @return A sorted list of TagName values.
+     */
     private List<TagName> getSortedTagNames(List<TagName> tagNames) {
         Comparator<TagName> compareByDisplayName = new Comparator<TagName>() {
             @Override
             public int compare(TagName tagName1, TagName tagName2) {
-                return tagName1.getDisplayName().compareTo(tagName2.getDisplayName());
+                return ((Integer) tagName1.getRank()).compareTo(tagName2.getRank());
             }
         };
 

@@ -13,6 +13,4 @@ DrawableAttribute.name=Name
 DrawableAttribute.path=Path
 DrawableAttribute.tags=Tags
 DrawableAttribute.width=Width
-DrawableTagsManager.bookMark=Bookmark
-DrawableTagsManager.followUp=Follow Up
 VideoFile.getMedia.progress=writing temporary file to disk

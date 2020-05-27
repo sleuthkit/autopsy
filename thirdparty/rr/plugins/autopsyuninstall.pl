@@ -9,6 +9,8 @@
 #    http://msdn.microsoft.com/en-us/library/ms954376.aspx
 #
 # Change History:
+#    20140512 - updated to include NTUSER.DAT (recommended by 
+#               Bartosz Inglot, bartosz.inglot@uk.pwc.com)
 #    20120523 - updated to include 64-bit systems
 #    20100116 - Minor updates
 #    20090413 - Extract DisplayVersion info
@@ -19,7 +21,7 @@
 package autopsyuninstall;
 use strict;
 
-my %config = (hive          => "Software",
+my %config = (hive          => "Software, NTUSER\.DAT",
               osmask        => 22,
               hasShortDescr => 1,
               hasDescr      => 0,

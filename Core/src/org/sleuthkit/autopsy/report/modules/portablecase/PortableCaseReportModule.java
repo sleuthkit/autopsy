@@ -65,6 +65,7 @@ import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TaggingManager.ContentTagChange;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskData;
@@ -740,13 +741,13 @@ public class PortableCaseReportModule implements ReportModule {
                 if (! oldTagNameToNewTagName.containsKey(tag.getName())) {
                     throw new TskCoreException("TagName map is missing entry for ID " + tag.getName().getId() + " with display name " + tag.getName().getDisplayName()); // NON-NLS
                 }
-                ContentTag newContentTag = portableSkCase.addContentTag(newIdToContent.get(newFileId), oldTagNameToNewTagName.get(tag.getName()), tag.getComment(), tag.getBeginByteOffset(), tag.getEndByteOffset());
+                ContentTagChange newContentTag = portableSkCase.getTaggingManager().addContentTag(newIdToContent.get(newFileId), oldTagNameToNewTagName.get(tag.getName()), tag.getComment(), tag.getBeginByteOffset(), tag.getEndByteOffset());
 
                 // Get the image tag data associated with this tag (empty string if there is none)
                 // and save it if present
                 String appData = getImageTagDataForContentTag(tag);
                 if (! appData.isEmpty()) {
-                    addImageTagToPortableCase(newContentTag, appData);
+                    addImageTagToPortableCase(newContentTag.getAddedTag(), appData);
                 }
             }
         }  
@@ -847,7 +848,7 @@ public class PortableCaseReportModule implements ReportModule {
             if (! oldTagNameToNewTagName.containsKey(tag.getName())) {
                 throw new TskCoreException("TagName map is missing entry for ID " + tag.getName().getId() + " with display name " + tag.getName().getDisplayName()); // NON-NLS
             }
-            portableSkCase.addBlackboardArtifactTag(newArtifact, oldTagNameToNewTagName.get(tag.getName()), tag.getComment());
+            portableSkCase.getTaggingManager().addArtifactTag(newArtifact, oldTagNameToNewTagName.get(tag.getName()), tag.getComment());
         }  
     }    
     
