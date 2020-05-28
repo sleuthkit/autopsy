@@ -19,13 +19,18 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharSource;
 import java.io.IOException;
 import java.io.Reader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import static java.util.Locale.US;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -120,28 +125,24 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
 
-    private static final List<String> METADATA_TYPES
+    private static final List<String> METADATA_DATE_TYPES
             = ImmutableList.of(
-                    "Total-Time", //NON-NLS
-                    "Template", //NON-NLS
-                    "Revision-Number", //NON-NLS 
                     "Last-Save-Date", //NON-NLS
                     "Last-Printed", //NON-NLS
-                    "Last-Author", //NON-NLS
-                    "Edit-Time", //NON-NLS
-                    "Creation-Date", //NON-NLS
-                    "Company", //NON-NLS
-                    "Author", //NON-NLS
-                    "Application-Name", //NON-NLS
-                    "protected", //NON-NLS
-                    "SourceModified", //NON-NLS 
-                    "Last-Modified", //NON-NLS
-                    "Producer", //NON-NLS
-                    "pdf:docinfo:creator_tool", //NON-NLS
-                    "Title", //NON-NLS
-                    "pdf:encrypted", //NON-NLS
-                    "Description", //NON-NLS
-                    "pdf:PDFVersion"); //NON-NLS
+                    "Creation-Date"); //NON-NLS
+
+    private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> METADATA_TYPES_MAP = ImmutableMap.<String, BlackboardAttribute.ATTRIBUTE_TYPE>builder()  
+                   .put("Last-Save-Date", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED) 
+                   .put("Last-Author", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID) 
+                   .put("Creation-Date", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED) 
+                   .put("Company", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ORGANIZATION) 
+                   .put("Author", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OWNER)
+                   .put("Application-Name", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME)
+                   .put("Last-Printed", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_PRINTED_DATETIME)
+                   .put("Producer", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME) 
+                   .put("Title", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION) 
+                   .put("pdf:PDFVersion", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VERSION)
+                   .build();
 
     
     /**
@@ -552,31 +553,49 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         private void createMetadataArtifact(AbstractFile aFile, Map<String, String> metadata) {
     
             String moduleName = KeywordSearchIngestModule.class.getName();
+            
             Collection<BlackboardAttribute> attributes = new ArrayList<>(); 
             Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
             for (Map.Entry<String, String> entry : metadata.entrySet()) {
-                if (METADATA_TYPES.contains(entry.getKey())) {
-                    if (!entry.getValue().isEmpty() && !entry.getValue().contentEquals(" ")) {
-                        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, moduleName, entry.getKey()));
-                        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE, moduleName, entry.getValue()));
-                        try {
-                            BlackboardArtifact bbart = aFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA);
-                            bbart.addAttributes(attributes);
-                            bbartifacts.add(bbart);
-                        } catch (TskCoreException ex) {
-                            // return and continue processing 
-                            return;
+                if (METADATA_TYPES_MAP.containsKey(entry.getKey())) {
+                    if (!entry.getValue().isEmpty() && !entry.getValue().startsWith(" ")) {
+                        if (METADATA_DATE_TYPES.contains(entry.getKey())) {
+                            SimpleDateFormat metadataDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", US);    
+                            Long metadataDateTime = Long.valueOf(0);
+                            try {
+                                String metadataDate = entry.getValue().replaceAll("T"," ").replaceAll("Z", "");
+                                Date usedDate = metadataDateFormat.parse(metadataDate);
+                                metadataDateTime = usedDate.getTime()/1000;
+                                attributes.add(new BlackboardAttribute(METADATA_TYPES_MAP.get(entry.getKey()), moduleName, metadataDateTime));
+                            } catch (ParseException ex) {
+                                // catching error and displaying date that could not be parsed then will continue on.
+                                logger.log(Level.WARNING, String.format("Failed to parse date/time %s for metadata attribute %s.", entry.getValue(), entry.getKey()), ex); //NON-NLS
+                                continue;
+                            }
+                        } else {
+                            attributes.add(new BlackboardAttribute(METADATA_TYPES_MAP.get(entry.getKey()), moduleName, entry.getValue()));
                         }
                     }
                 }
             }
-            if (!bbartifacts.isEmpty()) {
-                try{
-                    Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().postArtifacts(bbartifacts, moduleName);
-                } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
-                    // Ignore this and continue on
-                    //logger.log(Level.SEVERE, "Unable to post blackboard artifacts", ex); //NON-NLS
-                    return;
+            if (!attributes.isEmpty()) {
+                try {
+                    BlackboardArtifact bbart = aFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA);
+                    bbart.addAttributes(attributes);
+                    bbartifacts.add(bbart);
+                } catch (TskCoreException ex) {
+                    // Log error and return to continue processing
+                   logger.log(Level.WARNING, String.format("Error creatinkg or adding artifact."), ex); //NON-NLS
+                   return;
+                }
+                if (!bbartifacts.isEmpty()) {
+                    try{
+                        Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().postArtifacts(bbartifacts, moduleName);
+                    } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
+                        // Log error and return to continue processing
+                        logger.log(Level.WARNING, "Unable to post blackboard artifacts", ex); //NON-NLS
+                        return;
+                    }
                 }
             }
         }
