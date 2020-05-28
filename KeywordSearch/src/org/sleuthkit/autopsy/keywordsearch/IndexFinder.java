@@ -20,9 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.lang.math.NumberUtils;
@@ -94,85 +91,5 @@ class IndexFinder {
             }
         }
         return bestCandidateIndex;
-    }
-
-    /**
-     * Find existing Solr 4 Schema 1.8 index directory location for the case.
-     * This is done via subdirectory search of all existing
-     * "ModuleOutput/node_name/keywordsearch/data/" folders.
-     *
-     * @param theCase the case to get index dir for
-     *
-     * @return List of Index objects for each found index directory
-     */
-    static Index findOldIndexDir(Case theCase) {
-        // first find all existing "/ModuleOutput/keywordsearch/data/" folders
-        if (theCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
-            // multi user cases contain a subfolder for each node that participated in case ingest or review.
-            // Any one (but only one!) of those subfolders may contain the actual index.
-            /*
-             * NOTE: the following path is an example of valid Solr 4 Schema 1.8
-             * multi-user index path:
-             * X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
-             */
-
-            // get a list of all folder's contents
-            List<File> contents = getAllContentsInFolder(theCase.getCaseDirectory());
-            if (!contents.isEmpty()) {
-                // decipher "ModuleOutput" directory name from module output path 
-                // (e.g. X:\Case\ingest4\ModuleOutput\) because there is no other way to get it...
-                String moduleOutDirName = new File(theCase.getModuleDirectory()).getName();
-
-                // scan all topLevelOutputDir subfolders for presence of non-empty "/ModuleOutput/keywordsearch/data/" folder
-                for (File item : contents) {
-                    File path = Paths.get(item.getAbsolutePath(), moduleOutDirName, KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, INDEX_FOLDER_NAME).toFile(); //NON-NLS
-                    // must be a non-empty index directory
-                    if (isNonEmptyIndexFolder(path)) {
-                        return new Index(path.toString(), "4", "1.8", theCase.getTextIndexName(), theCase.getName());
-                    }
-                }
-            }
-        } else {
-            // single user case
-            /*
-             * NOTE: the following path is valid single user Solr 4 Schema 1.8
-             * index path: X:\Case\ModuleOutput\keywordsearch\data\index
-             */
-            File path = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, INDEX_FOLDER_NAME).toFile(); //NON-NLS
-            // must be a non-empty index directory
-            if (isNonEmptyIndexFolder(path)) {
-                return new Index(path.toString(), "4", "1.8", theCase.getTextIndexName(), theCase.getName());
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Returns a list of all contents in the folder of interest.
-     *
-     * @param path Absolute targetDirPath of the folder of interest
-     *
-     * @return List of all contents in the folder of interest
-     */
-    private static List<File> getAllContentsInFolder(String path) {
-        File directory = new File(path);
-        File[] contents = directory.listFiles();
-        if (contents == null) {
-            // the directory file is not really a directory..
-            return Collections.emptyList();
-        } else if (contents.length == 0) {
-            // Folder is empty
-            return Collections.emptyList();
-        } else {
-            // Folder has contents
-            return new ArrayList<>(Arrays.asList(contents));
-        }
-    }
-
-    private static boolean isNonEmptyIndexFolder(File path) {
-        if (path.exists() && path.isDirectory() && path.getName().equals(INDEX_FOLDER_NAME) && path.listFiles().length > 0) {
-            return true;
-        }
-        return false;
     }
 }

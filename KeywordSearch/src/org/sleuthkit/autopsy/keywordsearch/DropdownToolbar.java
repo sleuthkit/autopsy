@@ -183,25 +183,14 @@ class DropdownToolbar extends javax.swing.JPanel {
                             }
                             else {
                                 Index indexInfo = server.getIndexInfo();
-                                // ELTODO
-                                // ELTODO if (IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
-                                    /*
-                                     * Solr version is current, so check the Solr
-                                     * schema version and selectively enable the ad
-                                     * hoc search UI components.
-                                     */
-                                    boolean schemaIsCompatible = indexInfo.isCompatible(IndexFinder.getCurrentSchemaVersion());
-                                    listsButton.setEnabled(schemaIsCompatible);
-                                    searchDropButton.setEnabled(true);
-                                    dropPanel.setRegexSearchEnabled(schemaIsCompatible);
-                                    active = true;
-                                /*}  ELTODO else {
-                                    /*
-                                     * Unsupported Solr version, disable the ad hoc
-                                     * search UI components.
-                                     */
-                                    // ELTODO disableSearch = true;
-                                //}
+
+                                // Check the Solr schema version and selectively 
+                                // enable the ad hoc search UI components.
+                                boolean schemaIsCompatible = indexInfo.isCompatible(IndexFinder.getCurrentSchemaVersion());
+                                listsButton.setEnabled(schemaIsCompatible);
+                                searchDropButton.setEnabled(true);
+                                dropPanel.setRegexSearchEnabled(schemaIsCompatible);
+                                active = true;
                             }
                         } catch (NoOpenCoreException ex) {
                             /*
