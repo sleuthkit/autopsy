@@ -160,8 +160,9 @@ public class PersonaMetadata {
     static Collection<PersonaMetadata> getPersonaMetadata(long personaId) throws CentralRepoException {
         String queryClause = "SELECT pmd.id, pmd.persona_id, pmd.name, pmd.value, pmd.justification, pmd.confidence_id, pmd.date_added, pmd.examiner_id, e.login_name, e.display_name "
                 + "FROM persona_metadata as pmd "
-                + "INNER JOIN examiners as e ON e.id = pmd.examiner_id ";
-
+                + "INNER JOIN examiners as e ON e.id = pmd.examiner_id "
+                + "WHERE pmd.persona_id = " + personaId;
+        
         PersonaMetadataQueryCallback queryCallback = new PersonaMetadataQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
 

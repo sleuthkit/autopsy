@@ -383,6 +383,129 @@ public class CentralRepoPersonasTest  extends TestCase {
         }
     }
     
+     /**
+     * Tests Persona alias and metadata.
+     * 
+     */
+    public void testPersonaAliasesAndMetadata() {
+            
+        
+        try {
+            
+            // Step 1: Create an account
+            CentralRepoAccount phoneAccount1 = CentralRepository.getInstance()
+                    .getOrCreateAccount(phoneAccountType, PHONE_NUM_1);
+            
+            
+            // Step 2: Create a Persona for the Account
+            String comment = "The best dog ever";
+            Persona.PersonaStatus status = Persona.PersonaStatus.ACTIVE;
+            Persona dogPersona = Persona.createPersonaForAccount(DOG_PERSONA_NAME, comment , status, phoneAccount1, "Because I said so", Persona.Confidence.LOW );
+                
+
+            // Step 3. Add Persona Aliases
+            PersonaAlias alias1 = dogPersona.addAlias("Good Boy", "Coz he's is the best dog ever", Persona.Confidence.MEDIUM);
+            PersonaAlias alias2 = dogPersona.addAlias("WoofWoof", "How many dumb comments can I come up with?", Persona.Confidence.LOW);
+
+            Assert.assertNotNull(alias1);
+            Assert.assertNotNull(alias2);
+
+            //Step 4: Add Persona metadata
+            PersonaMetadata metadata1 = dogPersona.addMetadata("Color", "Black", "He's got thick black hair.", Persona.Confidence.MEDIUM);
+            PersonaMetadata metadata2 = dogPersona.addMetadata("Gender", "Male", "Because...", Persona.Confidence.LOW);
+
+            Assert.assertNotNull(metadata1);
+            Assert.assertNotNull(metadata2);
+
+             // get all aliases for persona1
+            Collection<PersonaAlias> dogAliases1 = dogPersona.getAliases();
+            Assert.assertEquals(2, dogAliases1.size());
+            for (PersonaAlias alias: dogAliases1) {
+                //System.out.println(" Dog Alias: "+ alias.getAlias()) ;
+                Assert.assertFalse(alias.getAlias().isEmpty());
+            }
+            // get all metadata for persona1
+            Collection<PersonaMetadata> dogMetadataList = dogPersona.getMetadata();
+            Assert.assertEquals(2, dogMetadataList.size());
+            for (PersonaMetadata md: dogMetadataList) {
+                //System.out.println(String.format("Metadata: %s : %s", md.getName(), md.getValue())) ;
+                Assert.assertFalse(md.getName().isEmpty());
+                Assert.assertFalse(md.getValue().isEmpty());
+            }
+            
+            
+            // Step 5: Create another account
+            CentralRepoAccount catdogFBAccount = CentralRepository.getInstance()
+                    .getOrCreateAccount(facebookAccountType, FACEBOOK_ID_CATDOG);
+            
+            // Add an account to persona
+            dogPersona.addAccountToPersona(catdogFBAccount,  "Looks like dog, barks like a dog...",  Persona.Confidence.MEDIUM);
+            
+            
+            // Step 6: Create a Second Persona
+           
+            String comment2 = "The fiercest cat alive.";
+            Persona catPersona = Persona.createPersonaForAccount(CAT_PERSONA_NAME, comment2 , Persona.PersonaStatus.ACTIVE, catdogFBAccount, "Smells like a cat.", Persona.Confidence.LOW );
+            Assert.assertNotNull(catPersona);
+            Assert.assertTrue(catPersona.getName().equalsIgnoreCase(CAT_PERSONA_NAME));
+            
+          
+              // Add Persona Aliases
+            PersonaAlias catAlias1 = catPersona.addAlias("CutieKitty", "Because", Persona.Confidence.MEDIUM);
+            Assert.assertNotNull(catAlias1);
+          
+            
+            //Step 4: Add Persona metadata
+            PersonaMetadata catMetadata1 = catPersona.addMetadata("Color", "White", "White as snow.", Persona.Confidence.MEDIUM);
+            PersonaMetadata catMetadata2 = catPersona.addMetadata("Breed", "Persian", "Just Because...", Persona.Confidence.LOW);
+            PersonaMetadata catMetadata3 = catPersona.addMetadata("Legs", "Four", "I counted", Persona.Confidence.HIGH);
+              
+            Assert.assertNotNull(catMetadata1);
+            Assert.assertNotNull(catMetadata2);
+            Assert.assertNotNull(catMetadata3);
+            
+           
+             // get all aliases for persona2
+            Collection<PersonaAlias> catAliases1 = catPersona.getAliases();
+            Assert.assertEquals(1, catAliases1.size());
+            for (PersonaAlias alias: dogAliases1) {
+                //System.out.println("Alias: "+ alias.getAlias()) ;
+                Assert.assertFalse(alias.getAlias().isEmpty());
+            }
+            // get all metadata for persona2
+            Collection<PersonaMetadata> catMetadataList = catPersona.getMetadata();
+            Assert.assertEquals(3, catMetadataList.size());
+            for (PersonaMetadata md: catMetadataList) {
+                //System.out.println(String.format("Metadata: %s : %s", md.getName(), md.getValue())) ;
+                Assert.assertFalse(md.getName().isEmpty());
+                Assert.assertFalse(md.getValue().isEmpty());
+            }
+            
+            
+            // Create a 3rd account and persona
+              CentralRepoAccount holmesSkypeAccount = CentralRepository.getInstance()
+                    .getOrCreateAccount(skypeAccountType, HOLMES_SKYPE_ID);
+      
+            // Create a person for the Skype account
+            Persona holmesPersona = Persona.createPersonaForAccount(HOLMES_PERSONA_NAME,
+                    "Has a Pipe in his mouth.", Persona.PersonaStatus.ACTIVE,
+                    holmesSkypeAccount, "The name says it all.", Persona.Confidence.LOW);
+
+            // This persona has no aliases or metadata. Verify 
+            // get all aliases for holmesPersona
+            Collection<PersonaAlias> holmesAliases = holmesPersona.getAliases();
+            Assert.assertEquals(0, holmesAliases.size());
+
+            // get all metadata for holmesPersona
+            Collection<PersonaMetadata> holmesMetadataList = holmesPersona.getMetadata();
+            Assert.assertEquals(0, holmesMetadataList.size());
+
+            
+        } catch (CentralRepoException ex) {
+             Assert.fail("Didn't expect an exception here. Exception: " + ex);
+        }
+    }
+    
     /**
      * Tests Personas & X_Accounts and X_instances in the context of Case/data source.
      *  There are 4 Cases. 
