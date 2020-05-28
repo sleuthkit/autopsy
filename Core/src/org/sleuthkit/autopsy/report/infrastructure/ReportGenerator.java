@@ -321,9 +321,16 @@ public class ReportGenerator {
             TableReportGenerator generator = new TableReportGenerator(tableReportSettings, progressIndicator, tableReport);
             generator.execute();
             tableReport.endReport();
+            
             // finish progress, wrap up
-            progressIndicator.complete(ReportProgressPanel.ReportStatus.COMPLETE);
             errorList = generator.getErrorList();
+            
+            // if error list is empty, the operation has completed successfully.  If not there is an error
+            ReportProgressPanel.ReportStatus finalStatus = (errorList == null || errorList.isEmpty()) ?
+                ReportProgressPanel.ReportStatus.COMPLETE :
+                ReportProgressPanel.ReportStatus.ERROR;
+            
+            progressIndicator.complete(finalStatus);
         }
     }
 
