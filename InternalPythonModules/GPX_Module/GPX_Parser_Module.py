@@ -236,7 +236,8 @@ class GPXParserFileIngestModule(FileIngestModule):
                         Waypoint(point.latitude, point.longitude, point.elevation, point.name))
 
                 try:
-                    geoArtifactHelper.addRoute(None, None, geoWaypoints, None)
+                    if not geoWaypoints.isEmpty():
+                        geoArtifactHelper.addRoute(None, None, geoWaypoints, None)
                 except Blackboard.BlackboardException as e:
                     self.log("Error posting GPS route artifact for " + file.getUniquePath() +
                              " (objID = " + str(file.getId()) + "):" + e.getMessage())
