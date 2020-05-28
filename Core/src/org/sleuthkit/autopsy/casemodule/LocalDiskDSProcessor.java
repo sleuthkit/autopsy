@@ -148,8 +148,8 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         addDiskTask = new AddImageTask(
                 new AddImageTask.ImageDetails(deviceId, drivePath, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
                 progressMonitor,
-                new AddLocalDiskCallbacks(new IngestJobInputStream()), 
-                new AddImageTaskCallback(new IngestJobInputStream(), callback));
+                new AddLocalDiskCallbacks(new DefaultIngestStream()), 
+                new AddImageTaskCallback(new DefaultIngestStream(), callback));
         new Thread(addDiskTask).start();
     }
 
@@ -203,8 +203,8 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     private void run(String deviceId, String drivePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, drivePath, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
                 progressMonitor, 
-                new AddLocalDiskCallbacks(new IngestJobInputStream()), 
-                new AddImageTaskCallback(new IngestJobInputStream(), callback));
+                new AddLocalDiskCallbacks(new DefaultIngestStream()), 
+                new AddImageTaskCallback(new DefaultIngestStream(), callback));
         new Thread(addDiskTask).start();
     }
 
@@ -258,11 +258,6 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
             } catch (IngestStreamClosedException ex) {
                 throw new AddDataSourceCallbacksException("Error adding files to ingest stream - ingest stream is closed", ex);
             }
-        }
-
-        @Override
-        public void onCompleted() throws AddDataSourceCallbacksException {
-            System.out.println("### AddLocalDiskCallbacks - onCompleted()");
         }
     }
 

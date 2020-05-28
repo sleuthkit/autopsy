@@ -76,27 +76,12 @@ class AddImageTask implements Runnable {
 
     /**
      * Constructs a runnable task that adds an image to the case database.
-     *
-     * @param deviceId             An ASCII-printable identifier for the device
-     *                             associated with the data source that is
-     *                             intended to be unique across multiple cases
-     *                             (e.g., a UUID).
-     * @param imagePath            Path to the image file.
-     * @param sectorSize           The sector size (use '0' for autodetect).
-     * @param timeZone             The time zone to use when processing dates
-     *                             and times for the image, obtained from
-     *                             java.util.TimeZone.getID.
-     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
-     *                             FAT filesystem.
-     * @param md5                  The MD5 hash of the image, may be null.
-     * @param sha1                 The SHA-1 hash of the image, may be null.
-     * @param sha256               The SHA-256 hash of the image, may be null.
-     * @param imageWriterPath      Path that a copy of the image should be
-     *                             written to. Use empty string to disable image
-     *                             writing
+     * 
+     * @param imageDetails         Holds all data about the image.
      * @param progressMonitor      Progress monitor to report progress during
      *                             processing.
-     * @param callback             Callback to call when processing is done.
+     * @param addDataSourceCallbacks  Callback for sending data to the ingest pipeline if an ingest stream is being used.
+     * @param addImageTaskCallback    Callback for dealing with add image task completion.
      */
     AddImageTask(ImageDetails imageDetails, DataSourceProcessorProgressMonitor progressMonitor, AddDataSourceCallbacks addDataSourceCallbacks,  
             AddImageTaskCallback addImageTaskCallback) {
@@ -158,11 +143,7 @@ class AddImageTask implements Runnable {
             } else {
                 result = DataSourceProcessorResult.NO_ERRORS;
             }
-            try {
-                addDataSourceCallbacks.onCompleted();
-            } catch (Exception ex) { // TODO fix
-                ex.printStackTrace();
-            }
+            addImageTaskCallback.onCompleted(result, errorMessages, newDataSources);
         }
     }
 
@@ -360,6 +341,9 @@ class AddImageTask implements Runnable {
         }
     }
 
+    /**
+     * Utility class to hold image data.
+     */
     static class ImageDetails {
         String deviceId;
         String imagePath;

@@ -219,7 +219,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     @Override
     public void run(DataSourceProcessorProgressMonitor progress, DataSourceProcessorCallback callBack, IngestStream ingestStream) {
         this.ingestStream = ingestStream;
-                if (!setDataSourceOptionsCalled) {
+        if (!setDataSourceOptionsCalled) {
             configPanel.storeSettings();
             deviceId = UUID.randomUUID().toString();
             imagePath = configPanel.getContentPaths();
@@ -240,7 +240,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             }
         }
                 
-        
+        run(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progress, callBack);
     }
     
     /**
@@ -304,10 +304,13 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      * @param callback             Callback to call when processing is done.
      */
     private void run(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        if (ingestStream == null) {
+            ingestStream = new DefaultIngestStream();
+        }
         addImageTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null), 
                 progressMonitor, 
-                new AddImageCallbacks(new IngestJobInputStream()), 
-                new AddImageTaskCallback(new IngestJobInputStream(), callback));
+                new AddImageCallbacks(ingestStream), 
+                new AddImageTaskCallback(ingestStream, callback));
         new Thread(addImageTask).start();
     }
 
@@ -322,6 +325,9 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     public void cancel() {
         if (null != addImageTask) {
             addImageTask.cancelTask();
+        }
+        if (ingestStream != null) {
+            ingestStream.close(false);
         }
     }
 
@@ -382,9 +388,17 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         run(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
     }
     
+    /**
+     * Callback to send files from the data source processor to the ingest stream.
+     */
     private static class AddImageCallbacks implements AddDataSourceCallbacks {
         private final IngestStream ingestStream;
         
+        /**
+         * Create the AddImageCallbacks object.
+         * 
+         * @param stream The IngestStream to send data to
+         */
         AddImageCallbacks(IngestStream stream) {
             ingestStream = stream;
         }
@@ -405,11 +419,6 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             } catch (IngestStreamClosedException ex) {
                 throw new AddDataSourceCallbacksException("Error adding files to ingest stream - ingest stream is closed", ex);
             }
-        }
-
-        @Override
-        public void onCompleted() throws AddDataSourceCallbacksException {
-            System.out.println("### AddImageCallbacks - onCompleted()");
         }
     }
 
