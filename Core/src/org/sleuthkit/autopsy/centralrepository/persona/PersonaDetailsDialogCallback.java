@@ -20,6 +20,10 @@ package org.sleuthkit.autopsy.centralrepository.persona;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 
+/**
+ * This interface allows the client to implement callback methods which the 
+ * PersonaDetailsDialog will call when the "OK" button is pressed.
+ */
 public interface PersonaDetailsDialogCallback {
     void callback(Persona persona);
 }

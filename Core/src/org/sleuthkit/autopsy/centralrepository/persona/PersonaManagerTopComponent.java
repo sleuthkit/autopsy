@@ -96,6 +96,9 @@ public final class PersonaManagerTopComponent extends TopComponent {
         });
     }
     
+    /**
+     * Callback method for the create mode of the PersonaDetailsDialog
+     */
     class CreateCallbackImpl implements PersonaDetailsDialogCallback {
         @Override
         public void callback(Persona persona) {
@@ -111,6 +114,9 @@ public final class PersonaManagerTopComponent extends TopComponent {
         }
     }
     
+    /**
+     * Callback method for the edit mode of the PersonaDetailsDialog
+     */
     class EditCallbackImpl implements PersonaDetailsDialogCallback {
         @Override
         public void callback(Persona persona) {

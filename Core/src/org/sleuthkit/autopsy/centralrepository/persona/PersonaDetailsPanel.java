@@ -57,17 +57,17 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(PersonaDetailsPanel.class.getName());
 
     private PersonaDetailsMode mode;
+    
+    // Not-yet-created
+    private final List<PAccount> accountsToAdd = new ArrayList<>();
+    private final List<PMetadata> metadataToAdd = new ArrayList<>();
+    private final List<PAlias> aliasesToAdd = new ArrayList<>();
 
     private Persona currentPersona;
     private List<CentralRepoAccount> currentAccounts = new ArrayList<>();
     private List<PersonaMetadata> currentMetadata = new ArrayList<>();
     private List<PersonaAlias> currentAliases = new ArrayList<>();
     private List<CorrelationCase> currentCases = new ArrayList<>();
-
-    // Not-yet-created
-    private List<PAccount> accountsToAdd = new ArrayList<>();
-    private List<PMetadata> metadataToAdd = new ArrayList<>();
-    private List<PAlias> aliasesToAdd = new ArrayList<>();
 
     private PersonaDetailsTableModel accountsModel;
     private PersonaDetailsTableModel metadataModel;
@@ -569,6 +569,9 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         currentMetadata = new ArrayList<>();
         currentAliases = new ArrayList<>();
         currentCases = new ArrayList<>();
+        accountsToAdd.clear();
+        metadataToAdd.clear();
+        aliasesToAdd.clear();
         nameField.setEditable(false);
 
         initializeFields();
