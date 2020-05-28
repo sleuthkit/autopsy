@@ -65,12 +65,11 @@ class AddImageTaskCallback {
      * @param newDataSources  The list of new data sources.
      */
     void onCompleted(DataSourceProcessorResult result, List<String> errList, List<Content> newDataSources) {
-        System.out.println("### In AddImageTaskCallback with result: " + result.toString());
         if (result.equals(DataSourceProcessorResult.CRITICAL_ERRORS)) {
             ingestStream.close(false);
         } else {
             ingestStream.close(true);
         }
-        dspCallback.done(result, errList, newDataSources); // TODO - doneEDT???
+        dspCallback.done(result, errList, newDataSources);
     }
 }
