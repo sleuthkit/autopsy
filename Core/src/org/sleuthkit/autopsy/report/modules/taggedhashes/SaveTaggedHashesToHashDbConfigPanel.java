@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettingsPanel;
-import org.sleuthkit.autopsy.tags.TagUtilities;
+import org.sleuthkit.autopsy.tags.TagUtils;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -221,7 +221,7 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
                 setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
-                setText(TagUtilities.getDecoratedTagDisplayName(value));
+                setText(TagUtils.getDecoratedTagDisplayName(value));
                 return this;
             }
             return new JLabel();

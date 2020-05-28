@@ -29,11 +29,11 @@ import org.sleuthkit.datamodel.TskData;
  *
  * Utility methods for Tags.
  */
-public class TagUtilities {
+public final class TagUtils {
 
-    private static final Logger logger = Logger.getLogger(TagUtilities.class.getName());
+    private static final Logger logger = Logger.getLogger(TagUtils.class.getName());
 
-    private TagUtilities() {
+    private TagUtils() {
         // Intentionally empty constructor;
     }
 

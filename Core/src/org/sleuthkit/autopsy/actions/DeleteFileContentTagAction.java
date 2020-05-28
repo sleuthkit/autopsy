@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.tags.TagUtilities;
+import org.sleuthkit.autopsy.tags.TagUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -199,7 +199,7 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                             TagName tagName = entry.getValue();
                             for (ContentTag contentTag : existingTagsList) {
                                 if (tagDisplayName.equals(contentTag.getName().getDisplayName())) {
-                                    JMenuItem tagNameItem = new JMenuItem(TagUtilities.getDecoratedTagDisplayName(tagName));
+                                    JMenuItem tagNameItem = new JMenuItem(TagUtils.getDecoratedTagDisplayName(tagName));
                                     tagNameItem.addActionListener((ActionEvent e) -> {
                                         deleteTag(tagName, contentTag, file.getId());
                                     });

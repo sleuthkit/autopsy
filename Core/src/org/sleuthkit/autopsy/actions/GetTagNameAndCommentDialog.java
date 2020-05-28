@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.tags.TagUtilities;
+import org.sleuthkit.autopsy.tags.TagUtils;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -128,7 +128,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
 
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                String newValue = TagUtilities.getDecoratedTagDisplayName((TagName) value);
+                String newValue = TagUtils.getDecoratedTagDisplayName((TagName) value);
                 return super.getListCellRendererComponent(list, newValue, index, isSelected, cellHasFocus);
             }
         });
