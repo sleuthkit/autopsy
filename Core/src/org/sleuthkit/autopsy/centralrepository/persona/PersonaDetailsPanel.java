@@ -84,7 +84,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
 
         // Accounts
         addAccountBtn.addActionListener((ActionEvent e) -> {
-            AddAccountDialog dialog = new AddAccountDialog(this);
+            new AddAccountDialog(this);
         });
         deleteAccountBtn.addActionListener((ActionEvent e) -> {
             int selectedRow = accountsTable.getSelectedRow();
@@ -105,7 +105,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
 
         // Metadata
         addMetadataBtn.addActionListener((ActionEvent e) -> {
-            AddMetadataDialog dialog = new AddMetadataDialog(this);
+            new AddMetadataDialog(this);
         });
         deleteMetadataBtn.addActionListener((ActionEvent e) -> {
             int selectedRow = metadataTable.getSelectedRow();
@@ -126,7 +126,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
 
         // Aliases
         addAliasBtn.addActionListener((ActionEvent e) -> {
-            AddAliasDialog dialog = new AddAliasDialog(this);
+            new AddAliasDialog(this);
         });
         deleteAliasBtn.addActionListener((ActionEvent e) -> {
             int selectedRow = aliasesTable.getSelectedRow();

@@ -49,8 +49,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public final class PersonaManagerTopComponent extends TopComponent {
 
     private static final Logger logger = Logger.getLogger(PersonaManagerTopComponent.class.getName());
-    
-    private PersonaDetailsDialog currentDialog;
 
     private List<Persona> currentResults = null;
     private Persona selectedPersona = null;
@@ -73,7 +71,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
         editBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                currentDialog = new PersonaDetailsDialog(PersonaManagerTopComponent.this,
+                new PersonaDetailsDialog(PersonaManagerTopComponent.this,
                                 PersonaDetailsMode.EDIT, selectedPersona, new EditCallbackImpl());
             }
         });
@@ -81,7 +79,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
         createBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                currentDialog = new PersonaDetailsDialog(PersonaManagerTopComponent.this,
+                new PersonaDetailsDialog(PersonaManagerTopComponent.this,
                                 PersonaDetailsMode.CREATE, selectedPersona, new CreateCallbackImpl());
             }
         });
@@ -109,7 +107,6 @@ public final class PersonaManagerTopComponent extends TopComponent {
                 resultsTable.getSelectionModel().setSelectionInterval(newPersonaRow, newPersonaRow);
                 handleSelectionChange();
             }
-            currentDialog = null;
             createBtn.setEnabled(true);
         }
     }
@@ -120,7 +117,6 @@ public final class PersonaManagerTopComponent extends TopComponent {
     class EditCallbackImpl implements PersonaDetailsDialogCallback {
         @Override
         public void callback(Persona persona) {
-            currentDialog = null;
             createBtn.setEnabled(true);
         }
     }
