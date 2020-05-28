@@ -166,7 +166,7 @@ public class CentralRepoAccountsTest extends TestCase {
                     .getOrCreateAccount(expectedAccountType, "+1 441-231-2552");
             
             Assert.assertEquals(expectedAccountType, actualAccount.getAccountType());
-            Assert.assertEquals("+1 441-231-2552", actualAccount.getTypeSpecificId());
+            Assert.assertEquals("+1 441-231-2552", actualAccount.getIdentifier());
         } catch (CentralRepoException ex) {
              Assert.fail("Didn't expect an exception here. Exception: " + ex);
         }

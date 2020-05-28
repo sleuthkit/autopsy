@@ -5,8 +5,10 @@
 #  http://msdn2.microsoft.com/en-us/library/a329t4ed(VS\.80)\.aspx
 #  CWDIllegalInDllSearch: http://support.microsoft.com/kb/2264107
 #  http://carnal0wnage.attackresearch.com/2012/04/privilege-escalation-via-sticky-keys.html
+#  'Auto' value - https://docs.microsoft.com/en-us/windows/desktop/debug/configuring-automatic-debugging
 #
 # Change history:
+#  20190511 - added search for 'auto' value
 #  20131007 - added Carnal0wnage reference
 #  20130425 - added alertMsg() functionality
 #  20130410 - added Wow6432Node support
@@ -23,7 +25,7 @@ my %config = (hive          => "Software",
               hasRefs       => 0,
               osmask        => 22,
               category      => "malware",
-              version       => 20131007);
+              version       => 20190511);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -76,6 +78,11 @@ sub pluginmain {
 					eval {
 						$dllsearch = $s->get_value("CWDIllegalInDllSearch")->get_data();
 					};
+# 20190511 - added search for 'auto' value					
+					eval {
+						$debug{$name}{auto} = $s->get_value("Auto")->get_data();
+					};
+		
 # If the eval{} throws an error, it's b/c the Debugger value isn't
 # found within the key, so we don't need to do anything w/ the error
 					if ($dllsearch ne "") {
@@ -88,7 +95,7 @@ sub pluginmain {
 					foreach my $d (keys %debug) {
 						::rptMsg($d."  LastWrite: ".gmtime($debug{$d}{lastwrite}));
 						::rptMsg("  Debugger             : ".$debug{$d}{debug}) if (exists $debug{$d}{debug});
-						::alertMsg("Alert: imagefile: Debugger value found : ".$debug{$d}{debug}) if (exists $debug{$d}{debug});
+						::rptMsg("  Auto                 : ".$debug{$d}{auto}) if (exists $debug{$d}{auto});
 						::rptMsg("  CWDIllegalInDllSearch: ".$debug{$d}{dllsearch}) if (exists $debug{$d}{dllsearch});
 					}
 				}

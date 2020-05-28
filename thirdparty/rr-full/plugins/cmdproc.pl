@@ -3,11 +3,13 @@
 # Checks key for files to autostart from cmd.exe
 #
 # Change History
+#   20190223 - added reference
 #   20130425 - added alertMsg() functionality
 #   20130115 - created
 #
 # References:
-#   
+#   https://unit42.paloaltonetworks.com/new-babyshark-malware-targets-u-s-national-security-think-tanks/
+#
 # Category: autostart,malware,programexecution 
 #
 # copyright 2013 Quantum Analytics Research,
@@ -21,12 +23,12 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20130425);
+              version       => 20190223);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Autostart - get Command Processor\\AutoRun value from NTUSER.DAT hive";	
+	return "Autostart - get Command Processor\\AutoRun value from NTUSER\.DAT hive";	
 }
 sub getDescr{}
 sub getRefs {}

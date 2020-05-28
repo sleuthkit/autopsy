@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.report.GeneralReportSettings;
 
 /**
  * Utility class responsible for managing serialization and deserialization of
@@ -48,6 +49,7 @@ final class ReportingConfigLoader {
     private static final String REPORT_SETTINGS_FILE_EXTENSION = ".settings";
     private static final String TABLE_REPORT_CONFIG_FILE = "TableReportSettings.settings";
     private static final String FILE_REPORT_CONFIG_FILE = "FileReportSettings.settings";
+    private static final String GENERAL_REPORT_CONFIG_FILE = "GeneralReportSettings.settings";
     private static final String MODULE_CONFIG_FILE = "ModuleConfigs.settings";
 
     /**
@@ -95,6 +97,13 @@ final class ReportingConfigLoader {
             config.setFileReportSettings((FileReportSettings) in.readObject());
         } catch (IOException | ClassNotFoundException ex) {
             throw new ReportConfigException("Unable to read file report settings " + filePath, ex);
+        }
+        
+        filePath = reportDirPath.resolve(GENERAL_REPORT_CONFIG_FILE).toString();
+        try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
+            config.setGeneralReportSettings((GeneralReportSettings) in.readObject());
+        } catch (IOException | ClassNotFoundException ex) {
+            throw new ReportConfigException("Unable to read general report settings " + filePath, ex);
         }
 
         // read map of module configuration objects
@@ -172,6 +181,13 @@ final class ReportingConfigLoader {
             out.writeObject(reportConfig.getFileReportSettings());
         } catch (IOException ex) {
             throw new ReportConfigException("Unable to save file report configuration " + filePath, ex);
+        }
+        
+        filePath = pathToConfigDir.resolve(GENERAL_REPORT_CONFIG_FILE).toString();
+        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
+            out.writeObject(reportConfig.getGeneralReportSettings());
+        } catch (IOException ex) {
+            throw new ReportConfigException("Unable to save general report configuration " + filePath, ex);
         }
 
         // save map of module configuration objects
