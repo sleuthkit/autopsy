@@ -71,31 +71,60 @@ public final class PersonaManagerTopComponent extends TopComponent {
         editBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                detailsPanel.setMode(PersonaManagerTopComponent.this, PersonaDetailsMode.EDIT, selectedPersona);
+                new PersonaDetailsDialog(PersonaManagerTopComponent.this,
+                                PersonaDetailsMode.EDIT, selectedPersona, new EditCallbackImpl());
             }
         });
 
         createBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                detailsPanel.setMode(PersonaManagerTopComponent.this, PersonaDetailsMode.CREATE, null);
-                resultsTable.clearSelection();
+                new PersonaDetailsDialog(PersonaManagerTopComponent.this,
+                                PersonaDetailsMode.CREATE, selectedPersona, new CreateCallbackImpl());
             }
         });
 
         // Results table
         resultsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         resultsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
             public void valueChanged(ListSelectionEvent e) {
                 handleSelectionChange(e);
             }
         });
     }
+    
+    /**
+     * Callback method for the create mode of the PersonaDetailsDialog
+     */
+    class CreateCallbackImpl implements PersonaDetailsDialogCallback {
+        @Override
+        public void callback(Persona persona) {
+            if (persona != null) {
+                searchField.setText("");
+                executeSearch();
+                int newPersonaRow = currentResults.size() - 1;
+                resultsTable.getSelectionModel().setSelectionInterval(newPersonaRow, newPersonaRow);
+                handleSelectionChange();
+            }
+            createBtn.setEnabled(true);
+        }
+    }
+    
+    /**
+     * Callback method for the edit mode of the PersonaDetailsDialog
+     */
+    class EditCallbackImpl implements PersonaDetailsDialogCallback {
+        @Override
+        public void callback(Persona persona) {
+            createBtn.setEnabled(true);
+        }
+    }
 
     void setPersona(int index) {
         Persona persona = currentResults.get(index);
         selectedPersona = persona;
-        editBtn.setEnabled(true);
+        //editBtn.setEnabled(true); todo uncomment when we add edit support
     }
 
     /**
@@ -119,6 +148,10 @@ public final class PersonaManagerTopComponent extends TopComponent {
         if (e.getValueIsAdjusting()) {
             return;
         }
+        handleSelectionChange();
+    }
+    
+    private void handleSelectionChange() {
         int selectedRow = resultsTable.getSelectedRow();
         if (selectedRow != -1) {
             setPersona(resultsTable.getSelectedRow());
@@ -239,6 +272,11 @@ public final class PersonaManagerTopComponent extends TopComponent {
             .addGroup(searchPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(searchPanelLayout.createSequentialGroup()
+                        .addComponent(createBtn)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(editBtn)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(resultsPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addComponent(searchField)
                     .addGroup(searchPanelLayout.createSequentialGroup()
@@ -246,11 +284,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(searchAccountRadio)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(searchBtn))
-                    .addGroup(searchPanelLayout.createSequentialGroup()
-                        .addComponent(editBtn)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(createBtn)))
+                        .addComponent(searchBtn)))
                 .addContainerGap())
         );
         searchPanelLayout.setVerticalGroup(
@@ -264,7 +298,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
                     .addComponent(searchAccountRadio)
                     .addComponent(searchBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(resultsPane, javax.swing.GroupLayout.DEFAULT_SIZE, 619, Short.MAX_VALUE)
+                .addComponent(resultsPane, javax.swing.GroupLayout.DEFAULT_SIZE, 528, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(editBtn)
@@ -279,11 +313,11 @@ public final class PersonaManagerTopComponent extends TopComponent {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 675, Short.MAX_VALUE)
+            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 692, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1)
+            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 650, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
