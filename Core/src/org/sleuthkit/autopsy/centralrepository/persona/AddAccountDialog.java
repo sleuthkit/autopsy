@@ -35,7 +35,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.Cent
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
-import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -265,10 +264,9 @@ public class AddAccountDialog extends JDialog {
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
-        Collection<PersonaAccount> candidates;
+        Collection<CentralRepoAccount> candidates;
         try {
-            candidates = 
-                    PersonaAccount.getPersonaAccountsForIdentifierLike(identifierTextField.getText());
+            candidates = CentralRepoAccount.getAccountsWithIdentifier(identifierTextField.getText());
         } catch (CentralRepoException e) {
             logger.log(Level.SEVERE, "Failed to access central repository", e);
             JOptionPane.showMessageDialog(this,
@@ -284,9 +282,9 @@ public class AddAccountDialog extends JDialog {
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
-        PersonaAccount result = null;
-        for (PersonaAccount cand : candidates) {
-            if (cand.getAccount().getAccountType().getAcctType().equals(
+        CentralRepoAccount result = null;
+        for (CentralRepoAccount cand : candidates) {
+            if (cand.getAccountType().getAcctType().equals(
                     ((CentralRepoAccountType) typeComboBox.getSelectedItem()).getAcctType())) {
                 result = cand;
                 break;
@@ -301,7 +299,7 @@ public class AddAccountDialog extends JDialog {
         }
         
         if (pdp.addAccount(
-                result.getAccount(),
+                result,
                 justificationTextField.getText(),
                 (Persona.Confidence) confidenceComboBox.getSelectedItem())) {
             dispose();
