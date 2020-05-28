@@ -306,7 +306,7 @@ public class CorrelationAttributeUtil {
             CorrelationAttributeInstance corrAttr = makeCorrAttr(acctArtifact, corrType, accountIdStr);
             if (corrAttr != null) {
                 // set the account_id in correlation attribute
-                corrAttr.setAccountId(crAccount.getAccountId());
+                corrAttr.setAccountId(crAccount.getId());
                 corrAttrInstances.add(corrAttr);
             }
         }

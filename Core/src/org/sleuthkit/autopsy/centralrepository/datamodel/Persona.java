@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -114,9 +115,6 @@ public class Persona {
         }
     }
 
-    // Persona name to use if no name is specified.
-    private static final String DEFAULT_PERSONA_NAME = "Unknown";
-
     // primary key in the Personas table in CR database
     private final long id;
     private final String uuidStr;
@@ -126,6 +124,11 @@ public class Persona {
     private final long modifiedDate;
     private final PersonaStatus status;
     private final CentralRepoExaminer examiner;
+    
+    @NbBundle.Messages("Persona.defaultName=Unnamed")
+    public static String getDefaultName() {
+        return Bundle.Persona_defaultName();
+    }
 
     public long getId() {
         return id;
@@ -170,6 +173,32 @@ public class Persona {
         this.examiner = examiner;
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 67 * hash + (int) (this.id ^ (this.id >>> 32));
+        hash = 67 * hash + Objects.hashCode(this.uuidStr);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Persona other = (Persona) obj;
+        if (this.id != other.getId()) {
+            return false;
+        }
+        return this.uuidStr.equalsIgnoreCase(other.getUuidStr());
+    }
+
     /**
      * Creates a Persona and associates the specified account with it.
      *
@@ -182,12 +211,13 @@ public class Persona {
      * @param confidence Confidence level for this association of Persona &
      * account.
      *
-     * @return PersonaAccount
+     * @return Persona Persona created.
      * @throws CentralRepoException If there is an error creating the Persona.
      */
-    public static PersonaAccount createPersonaForAccount(String personaName, String comment, PersonaStatus status, CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
+    public static Persona createPersonaForAccount(String personaName, String comment, PersonaStatus status, CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
         Persona persona = createPersona(personaName, comment, status);
-        return persona.addAccountToPersona(account, justification, confidence);
+        persona.addAccountToPersona(account, justification, confidence);
+        return persona;
     }
 
     /**
@@ -213,7 +243,7 @@ public class Persona {
         String insertClause = " INTO personas (uuid, comment, name, created_date, modified_date, status_id, examiner_id ) "
                 + "VALUES ( '" + uuidStr + "', "
                 + "'" + ((StringUtils.isBlank(comment) ? "" : SleuthkitCase.escapeSingleQuotes(comment))) + "',"
-                + "'" + ((StringUtils.isBlank(name) ? DEFAULT_PERSONA_NAME : SleuthkitCase.escapeSingleQuotes(name))) + "',"
+                + "'" + ((StringUtils.isBlank(name) ? getDefaultName() : SleuthkitCase.escapeSingleQuotes(name))) + "',"
                 + timeStampMillis.toString() + ","
                 + timeStampMillis.toString() + ","
                 + status.getStatusId() + ","
@@ -246,7 +276,7 @@ public class Persona {
         String insertClause = " INTO persona_accounts (persona_id, account_id, justification, confidence_id, date_added, examiner_id ) "
                 + "VALUES ( "
                 + this.getId() + ", "
-                + account.getAccountId() + ", "
+                + account.getId() + ", "
                 + "'" + ((StringUtils.isBlank(justification) ? "" : SleuthkitCase.escapeSingleQuotes(justification))) + "', "
                 + confidence.getLevelId() + ", "
                 + timeStampMillis.toString() + ", "
@@ -452,7 +482,7 @@ public class Persona {
 
             String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(correlationType);
             String querySql = "SELECT DISTINCT case_id FROM " + tableName
-                    + " WHERE account_id = " + account.getAccountId();
+                    + " WHERE account_id = " + account.getId();
 
             CaseForAccountInstanceQueryCallback queryCallback = new CaseForAccountInstanceQueryCallback();
             CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);
@@ -515,7 +545,7 @@ public class Persona {
 
             String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(correlationType);
             String querySql = "SELECT case_id, data_source_id FROM " + tableName
-                    + " WHERE account_id = " + account.getAccountId();
+                    + " WHERE account_id = " + account.getId();
 
             DatasourceForAccountInstanceQueryCallback queryCallback = new DatasourceForAccountInstanceQueryCallback();
             CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);

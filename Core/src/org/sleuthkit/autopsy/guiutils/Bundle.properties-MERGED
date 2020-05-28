@@ -1,3 +1,6 @@
+CheckBoxListPanel.titleLabel.text=
+CheckBoxListPanel.checkButton.text=Check All
+CheckBoxListPanel.uncheckButton.text=Uncheck All
 StatusIconCellRenderer.tooltiptext.error=An error occurred
 StatusIconCellRenderer.tooltiptext.ok=OK
 StatusIconCellRenderer.tooltiptext.warning=A warning occurred

@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import java.util.Objects;
+
 /**
  * Encapsulates the concept of an examiner.
  */
@@ -49,4 +51,31 @@ final public class CentralRepoExaminer {
         return this.loginName;
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 37 * hash + (int) (this.id ^ (this.id >>> 32));
+        hash = 37 * hash + Objects.hashCode(this.loginName);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CentralRepoExaminer other = (CentralRepoExaminer) obj;
+        if (this.id != other.getId()) {
+            return false;
+        }
+        return this.loginName.equalsIgnoreCase(other.getLoginName());
+    }
+
+    
 }

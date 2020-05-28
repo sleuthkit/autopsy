@@ -44,6 +44,7 @@ EamDbUtil.centralRepoConnectionFailed.message=Unable to connect to Central Repos
 EamDbUtil.centralRepoDisabled.message=\ The Central Repository has been disabled.
 EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade Central Repository.
 EamDbUtil.exclusiveLockAquisitionFailure.message=Unable to acquire exclusive lock for Central Repository.
+Persona.defaultName=Unnamed
 PostgresEamDb.centralRepoDisabled.message=Central Repository module is not enabled.
 PostgresEamDb.connectionFailed.message=Error getting connection to database.
 PostgresEamDb.multiUserLockError.message=Error acquiring database lock

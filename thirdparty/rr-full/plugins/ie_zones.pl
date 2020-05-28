@@ -17,7 +17,7 @@
 package ie_zones;
 use strict;
 
-my %config = (hive          => "NTUSER\.DAT;Software",
+my %config = (hive          => "NTUSER\.DAT,Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
