@@ -274,7 +274,6 @@ public class Server {
         // variable to the Solr script but it can be overridden by the user in
         // either autopsy-solr.cmd or autopsy-solr-in.cmd.
         javaPath = PlatformUtil.getJavaPath();
-        //javaPath = "java"; // ELTODO
         
         // This is our customized version of the Solr batch script to start/stop Solr.
         solr8CmdPath = Paths.get(solr8Folder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
@@ -462,7 +461,10 @@ public class Server {
         Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr"); //NON-NLS
         solrProcessBuilder.redirectError(solrStderrPath.toFile());
         
-        solrProcessBuilder.environment().put("SOLR_JAVA_HOME", javaPath); // NON-NLS
+        // get the path to the JRE folder. That's what Solr needs as SOLR_JAVA_HOME
+        String jreFolderPath = new File(javaPath).getParentFile().getParentFile().getAbsolutePath();
+        
+        solrProcessBuilder.environment().put("SOLR_JAVA_HOME", jreFolderPath); // NON-NLS
         solrProcessBuilder.environment().put("SOLR_HOME", solr8Home.toString()); // NON-NLS
         solrProcessBuilder.environment().put("STOP_KEY", KEY); // NON-NLS 
         solrProcessBuilder.environment().put("SOLR_JAVA_MEM", MAX_SOLR_MEM_MB_PAR); // NON-NLS 
@@ -484,7 +486,6 @@ public class Server {
     private Process runSolr4Command(List<String> solrArguments) throws IOException {
         final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + UserPreferences.getMaxSolrVMSize() + "m"; //NON-NLS
 
-        String javaPath = "java"; // ELTODO
         List<String> commandLine = new ArrayList<>();
         commandLine.add(javaPath);
         commandLine.add(MAX_SOLR_MEM_MB_PAR);
@@ -546,11 +547,9 @@ public class Server {
     }
     
     void start() throws KeywordSearchModuleException, SolrServerNoPortException {
-        //startSolr8();
+        startSolr8();
         
-        startSolr4();
-        
-        //startSolr8();
+        //stop();
         
         //startSolr4();
     }
