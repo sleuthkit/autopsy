@@ -129,6 +129,8 @@ public final class KMLReport implements GeneralReportModule {
      * @param waypointList
      */
     @Messages({
+        "KMLReport.failedToCompleteReport=Failed to complete report.",
+        "KMLReport.partialFailure=There was an error creating the report.  Some items were not exported.",
         "KMLReport.unableToExtractPhotos=Could not extract photo information.",
         "KMLReport.exifPhotoError=Could not extract photos with EXIF metadata.",
         "KMLReport.bookmarkError=Could not extract Bookmark information.",
@@ -214,11 +216,12 @@ public final class KMLReport implements GeneralReportModule {
             List<GeoLocationParseResult<Track>> errors = makeTracks(skCase);
             if (!errors.isEmpty()) {
                 result = ReportProgressPanel.ReportStatus.ERROR;
+                errorMessage = Bundle.KMLReport_partialFailure();
             }
             
             addLocationsToReport(skCase, baseReportDir);
         } catch (GeoLocationDataException | IOException | TskCoreException ex) {
-            errorMessage = "Failed to complete report.";
+            errorMessage = Bundle.KMLReport_failedToCompleteReport();
             logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
         }
