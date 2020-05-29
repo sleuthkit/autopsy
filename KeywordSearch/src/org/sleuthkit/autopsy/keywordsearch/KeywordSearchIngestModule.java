@@ -558,23 +558,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
             for (Map.Entry<String, String> entry : metadata.entrySet()) {
                 if (METADATA_TYPES_MAP.containsKey(entry.getKey())) {
-                    if (!entry.getValue().isEmpty() && !entry.getValue().startsWith(" ")) {
-                        if (METADATA_DATE_TYPES.contains(entry.getKey())) {
-                            SimpleDateFormat metadataDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", US);    
-                            Long metadataDateTime = Long.valueOf(0);
-                            try {
-                                String metadataDate = entry.getValue().replaceAll("T"," ").replaceAll("Z", "");
-                                Date usedDate = metadataDateFormat.parse(metadataDate);
-                                metadataDateTime = usedDate.getTime()/1000;
-                                attributes.add(new BlackboardAttribute(METADATA_TYPES_MAP.get(entry.getKey()), moduleName, metadataDateTime));
-                            } catch (ParseException ex) {
-                                // catching error and displaying date that could not be parsed then will continue on.
-                                logger.log(Level.WARNING, String.format("Failed to parse date/time %s for metadata attribute %s.", entry.getValue(), entry.getKey()), ex); //NON-NLS
-                                continue;
-                            }
-                        } else {
-                            attributes.add(new BlackboardAttribute(METADATA_TYPES_MAP.get(entry.getKey()), moduleName, entry.getValue()));
-                        }
+                    BlackboardAttribute bba = checkAttribute(entry.getKey(), entry.getValue());
+                    if (bba != null) {
+                        attributes.add(bba);
                     }
                 }
             }
@@ -599,7 +585,34 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 }
             }
         }
+        
 
+        private BlackboardAttribute checkAttribute(String key, String value) {
+            String moduleName = KeywordSearchIngestModule.class.getName();
+            if (!value.isEmpty() && value.charAt(0) != ' ') { 
+                if (METADATA_DATE_TYPES.contains(key)) {
+                    SimpleDateFormat metadataDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", US);    
+                    Long metadataDateTime = Long.valueOf(0);
+                    try {
+                        String metadataDate = value.replaceAll("T"," ").replaceAll("Z", "");
+                        Date usedDate = metadataDateFormat.parse(metadataDate);
+                        metadataDateTime = usedDate.getTime()/1000;
+                        return new BlackboardAttribute(METADATA_TYPES_MAP.get(key), moduleName, metadataDateTime);
+                    } catch (ParseException ex) {
+                        // catching error and displaying date that could not be parsed then will continue on.
+                        logger.log(Level.WARNING, String.format("Failed to parse date/time %s for metadata attribute %s.", value, key), ex); //NON-NLS
+                        return null;
+                    }
+                } else {
+                    return new BlackboardAttribute(METADATA_TYPES_MAP.get(key), moduleName, value);
+                }
+            }
+            
+            return null;
+
+        }
+    
+    
         /**
          * Pretty print the text extractor metadata.
          *
