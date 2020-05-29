@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.TskDataException;
  * Implementation of IngestStream. Will collect data from the data source
  * processor to be sent to the ingest pipeline.
  */
-public class IngestJobInputStream implements IngestStream {
+class IngestJobInputStream implements IngestStream {
     private final IngestJob ingestJob;
     private long dataSourceObjectId = -1;
     private DataSource dataSource = null;

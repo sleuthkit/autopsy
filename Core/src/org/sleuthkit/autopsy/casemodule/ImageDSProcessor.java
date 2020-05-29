@@ -34,11 +34,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.DataSourceUtils;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
-import org.sleuthkit.autopsy.ingest.IngestJobInputStream;
 import org.sleuthkit.autopsy.ingest.IngestStream;
-import org.sleuthkit.autopsy.ingest.IngestStreamClosedException;
-import org.sleuthkit.datamodel.AddDataSourceCallbacks;
-import org.sleuthkit.datamodel.AddDataSourceCallbacksException;
 
 /**
  * A image file data source processor that implements the DataSourceProcessor
@@ -176,27 +172,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        if (!setDataSourceOptionsCalled) {
-            configPanel.storeSettings();
-            deviceId = UUID.randomUUID().toString();
-            imagePath = configPanel.getContentPaths();
-            sectorSize = configPanel.getSectorSize();
-            timeZone = configPanel.getTimeZone();
-            ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
-            md5 = configPanel.getMd5();
-            if (md5.isEmpty()) {
-                md5 = null;
-            }
-            sha1 = configPanel.getSha1();
-            if (sha1.isEmpty()) {
-                sha1 = null;
-            }
-            sha256 = configPanel.getSha256();
-            if (sha256.isEmpty()) {
-                sha256 = null;
-            }
-        }
-        run(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progressMonitor, callback);
+	run (progressMonitor, callback, new DefaultIngestStream());
     }
     
     /**
@@ -386,40 +362,6 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         this.ignoreFatOrphanFiles = false;
         setDataSourceOptionsCalled = true;
         run(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
-    }
-    
-    /**
-     * Callback to send files from the data source processor to the ingest stream.
-     */
-    private static class AddImageCallbacks implements AddDataSourceCallbacks {
-        private final IngestStream ingestStream;
-        
-        /**
-         * Create the AddImageCallbacks object.
-         * 
-         * @param stream The IngestStream to send data to
-         */
-        AddImageCallbacks(IngestStream stream) {
-            ingestStream = stream;
-        }
-
-        @Override
-        public void onDataSourceAdded(long dataSourceObjectId) throws AddDataSourceCallbacksException {
-            try {
-                ingestStream.addDataSource(dataSourceObjectId);
-            } catch (IngestStreamClosedException ex) {
-                throw new AddDataSourceCallbacksException("Error adding files to ingest stream - ingest stream is closed", ex);
-            }
-        }
-        
-        @Override
-        public void onFilesAdded(List<Long> fileObjectIds) throws AddDataSourceCallbacksException {
-            try {
-                ingestStream.addFiles(fileObjectIds);
-            } catch (IngestStreamClosedException ex) {
-                throw new AddDataSourceCallbacksException("Error adding files to ingest stream - ingest stream is closed", ex);
-            }
-        }
     }
 
     /**

@@ -24,7 +24,6 @@ class DefaultIngestStream implements IngestStream {
     @Override
     public void addDataSource(long dataSourceObjectId) throws IngestStreamClosedException {
         // Do nothing
-        System.out.println("### DefaultAddImageTaskIngestStream - addDataSource " + dataSourceObjectId);
     }
 
     @Override
@@ -35,7 +34,6 @@ class DefaultIngestStream implements IngestStream {
     @Override
     public void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException {
         // Do nothing
-        System.out.println("### DefaultAddImageTaskIngestStream - addFiles " + fileObjectIds.size());
     }
 
     @Override

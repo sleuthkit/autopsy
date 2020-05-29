@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.util.Calendar;
-import java.util.List;
 import java.util.UUID;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
@@ -28,11 +27,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
-import org.sleuthkit.autopsy.ingest.IngestJobInputStream;
-import org.sleuthkit.autopsy.ingest.IngestStream;
-import org.sleuthkit.autopsy.ingest.IngestStreamClosedException;
-import org.sleuthkit.datamodel.AddDataSourceCallbacks;
-import org.sleuthkit.datamodel.AddDataSourceCallbacksException;
 
 /**
  * A local drive data source processor that implements the DataSourceProcessor
@@ -148,7 +142,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         addDiskTask = new AddImageTask(
                 new AddImageTask.ImageDetails(deviceId, drivePath, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
                 progressMonitor,
-                new AddLocalDiskCallbacks(new DefaultIngestStream()), 
+                new AddImageCallbacks(new DefaultIngestStream()), 
                 new AddImageTaskCallback(new DefaultIngestStream(), callback));
         new Thread(addDiskTask).start();
     }
@@ -203,7 +197,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     private void run(String deviceId, String drivePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, drivePath, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
                 progressMonitor, 
-                new AddLocalDiskCallbacks(new DefaultIngestStream()), 
+                new AddImageCallbacks(new DefaultIngestStream()), 
                 new AddImageTaskCallback(new DefaultIngestStream(), callback));
         new Thread(addDiskTask).start();
     }
@@ -233,32 +227,6 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         timeZone = null;
         ignoreFatOrphanFiles = false;
         setDataSourceOptionsCalled = false;
-    }
-    
-    private static class AddLocalDiskCallbacks implements AddDataSourceCallbacks {
-        private final IngestStream ingestStream;
-        
-        AddLocalDiskCallbacks(IngestStream stream) {
-            ingestStream = stream;
-        }
-
-        @Override
-        public void onDataSourceAdded(long dataSourceObjectId) throws AddDataSourceCallbacksException {
-            try {
-                ingestStream.addDataSource(dataSourceObjectId);
-            } catch (IngestStreamClosedException ex) {
-                throw new AddDataSourceCallbacksException("Error adding files to ingest stream - ingest stream is closed", ex);
-            }
-        }
-        
-        @Override
-        public void onFilesAdded(List<Long> fileObjectIds) throws AddDataSourceCallbacksException {
-            try {
-                ingestStream.addFiles(fileObjectIds);
-            } catch (IngestStreamClosedException ex) {
-                throw new AddDataSourceCallbacksException("Error adding files to ingest stream - ingest stream is closed", ex);
-            }
-        }
     }
 
     /**
