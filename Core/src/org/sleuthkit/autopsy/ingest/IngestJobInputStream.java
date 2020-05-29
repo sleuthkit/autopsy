@@ -52,6 +52,9 @@ class IngestJobInputStream implements IngestStream {
     @Override
     public void addDataSource(long dataSourceObjectId) throws IngestStreamClosedException {
         synchronized(this) {
+	    if (isClosed) {
+		throw new IngestStreamClosedException("Can not add data source - ingest stream is closed");
+	    }
             this.dataSourceObjectId = dataSourceObjectId;
             ingestJob.start();
         }
@@ -82,8 +85,14 @@ class IngestJobInputStream implements IngestStream {
     }
 
     @Override
-    public void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException {
+    public void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException, TskCoreException {
         synchronized(this) {
+	    if (isClosed) {
+		throw new IngestStreamClosedException("Can not add files - ingest stream is closed");
+	    }
+	    if (dataSource == null) {
+		throw new TskCoreException("Files can not be added without a data source");
+	    }
             fileIdQueue.addAll(fileObjectIds);
         }
     }
