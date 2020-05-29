@@ -139,7 +139,11 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
                 imageWriterSettings = null;
             }
         }
-        addDiskTask = new AddImageTask(deviceId, drivePath, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings, progressMonitor, callback);
+        addDiskTask = new AddImageTask(
+                new AddImageTask.ImageDetails(deviceId, drivePath, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
+                progressMonitor,
+                new AddImageCallbacks(new DefaultIngestStream()), 
+                new AddImageTaskCallback(new DefaultIngestStream(), callback));
         new Thread(addDiskTask).start();
     }
 
@@ -191,7 +195,10 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      * @param callback             Callback to call when processing is done.
      */
     private void run(String deviceId, String drivePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addDiskTask = new AddImageTask(deviceId, drivePath, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings, progressMonitor, callback);
+        addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, drivePath, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
+                progressMonitor, 
+                new AddImageCallbacks(new DefaultIngestStream()), 
+                new AddImageTaskCallback(new DefaultIngestStream(), callback));
         new Thread(addDiskTask).start();
     }
 

@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.DataSourceUtils;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.ingest.IngestStream;
 
 /**
  * A image file data source processor that implements the DataSourceProcessor
@@ -58,6 +59,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     private static final List<FileFilter> filtersList = new ArrayList<>();
     private final ImageFilePanel configPanel;
     private AddImageTask addImageTask;
+    private IngestStream ingestStream = null;
     /*
      * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
      * when the deprecated method setDataSourceOptions is removed.
@@ -170,6 +172,29 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+	run (progressMonitor, callback, new DefaultIngestStream());
+    }
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Files found during ingest will be sent directly to the
+     * IngestStream provided. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
+     *
+     * This method should not be called unless isPanelValid returns true, and 
+     * should only be called for DSPs that support ingest streams.
+     * 
+     * @param progress        Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callBack        Callback that will be used by the background task
+     *                        to return results.
+     * @param ingestStream    The ingest stream to send data to
+     */
+    @Override
+    public void run(DataSourceProcessorProgressMonitor progress, DataSourceProcessorCallback callBack, IngestStream ingestStream) {
+        this.ingestStream = ingestStream;
         if (!setDataSourceOptionsCalled) {
             configPanel.storeSettings();
             deviceId = UUID.randomUUID().toString();
@@ -190,8 +215,19 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
                 sha256 = null;
             }
         }
-        run(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progressMonitor, callback);
+                
+        run(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progress, callBack);
     }
+    
+    /**
+     * Check if this DSP supports ingest streams.
+     * 
+     * @return True if this DSP supports an ingest stream, false otherwise.
+     */
+    @Override
+    public boolean supportsIngestStream() {
+        return true;
+    }    
 
     /**
      * Adds a data source to the case database using a background task in a
@@ -244,7 +280,13 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      * @param callback             Callback to call when processing is done.
      */
     private void run(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addImageTask = new AddImageTask(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, progressMonitor, callback);
+        if (ingestStream == null) {
+            ingestStream = new DefaultIngestStream();
+        }
+        addImageTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null), 
+                progressMonitor, 
+                new AddImageCallbacks(ingestStream), 
+                new AddImageTaskCallback(ingestStream, callback));
         new Thread(addImageTask).start();
     }
 
@@ -259,6 +301,9 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     public void cancel() {
         if (null != addImageTask) {
             addImageTask.cancelTask();
+        }
+        if (ingestStream != null) {
+            ingestStream.close(false);
         }
     }
 
