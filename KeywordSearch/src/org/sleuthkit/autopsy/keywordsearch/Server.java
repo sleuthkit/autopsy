@@ -69,7 +69,6 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -229,8 +228,6 @@ public class Server {
     private int currentSolrServerPort = 0;
     private int currentSolrStopPort = 0;
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
-    private static final String SOLR = "solr";
-    private static final String CORE_PROPERTIES = "core.properties";
     private static final int NUM_COLLECTION_CREATION_RETRIES = 5;
 
     public enum CORE_EVT_STATES {
@@ -556,6 +553,14 @@ public class Server {
     void start() throws KeywordSearchModuleException, SolrServerNoPortException {
         startSolr(SOLR_VERSION.SOLR8);
     }
+    
+    private void startLocalSolrServer(Index index) throws KeywordSearchModuleException, SolrServerNoPortException {
+        if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
+            startSolr(SOLR_VERSION.SOLR8);
+        } else {
+            startSolr(SOLR_VERSION.SOLR4);
+        }
+    }
 
     /**
      * Tries to start a local Solr instance in a separate process. Returns
@@ -566,8 +571,15 @@ public class Server {
         "Server.status.failed.msg=Local Solr server did not respond to status request. This may be because the server failed to start or is taking too long to initialize.",})
     void startSolr(SOLR_VERSION version) throws KeywordSearchModuleException, SolrServerNoPortException {
         
-        // If an embedded Solr server is running, we stop it.
-        stop();
+        if (isEmbeddedSolrRunning()) {
+            if (localServerVersion == version) {
+                // this version of local server is already running
+                return;
+            } else {
+                // wrong version of local server is running, stop it
+                stop();
+            }
+        }
         
         // set which version of embedded server is currently running
         localServerVersion = version;
@@ -712,14 +724,6 @@ public class Server {
      * Waits for the stop command to finish before returning.
      */
     synchronized void stop() {
-        
-        try {
-            if (!isEmbeddedSolrRunning()) {
-                return;
-            }
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Unable to check if embedded server is currently runing: ", ex); //NON-NLS
-        }
 
         try {
             // Close any open core before stopping server
@@ -955,8 +959,11 @@ public class Server {
 
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
+                
+                // makes sure the proper embedded Solr server is running
+                startLocalSolrServer(index);
+                
                 currentSolrServer = this.localSolrServer;
-                UserPreferences.setMaxNumShards(1);
 
                 // check if the embedded Solr server is running
                 if (!this.isEmbeddedSolrRunning()) {
@@ -1013,18 +1020,6 @@ public class Server {
                 File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
                 if (!dataDir.exists()) {
                     dataDir.mkdirs();
-                }
-
-                // In single user mode, if there is a core.properties file already,
-                // we've hit a solr bug. Compensate by deleting it.
-                // ELTODO make sure we use the proper SolrFolder, can it be a Solr 4 case?
-                Path corePropertiesFile = Paths.get(solr8Folder.toString(), SOLR, collectionName, CORE_PROPERTIES);
-                if (corePropertiesFile.toFile().exists()) {
-                    try {
-                        corePropertiesFile.toFile().delete();
-                    } catch (Exception ex) {
-                        logger.log(Level.INFO, "Could not delete pre-existing core.properties prior to opening the core."); //NON-NLS
-                    }
                 }
 
                 // for single user cases, we unload the core when we close the case. So we have to load the core again. 
