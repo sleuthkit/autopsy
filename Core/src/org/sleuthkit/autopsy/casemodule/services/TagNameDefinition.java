@@ -133,7 +133,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return
      */
-    static String getBookmarkDisplayString() {
+    static String getBookmarkTagDisplayName() {
         return Bundle.TagNameDefinition_predefTagNames_bookmark_text();
     }
 
@@ -142,7 +142,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return
      */
-    static String getFollowUpDisplayString() {
+    static String getFollowUpTagDisplayName() {
         return Bundle.TagNameDefinition_predefTagNames_followUp_text();
     }
 
@@ -151,7 +151,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return
      */
-    static String getNotableDisplayString() {
+    static String getNotableTagDisplayName() {
         return Bundle.TagNameDefinition_predefTagNames_notableItem_text();
     }
 
