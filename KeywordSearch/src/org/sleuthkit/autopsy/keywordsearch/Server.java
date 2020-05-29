@@ -242,7 +242,7 @@ public class Server {
 
     // A reference to the locally running Solr instance.
     private final ConcurrentUpdateSolrClient localSolrServer;
-    private SOLR_VERSION localServerVersion = SOLR_VERSION.SOLR8; // start embedded Solr 8 by default
+    private SOLR_VERSION localServerVersion = SOLR_VERSION.SOLR8; // start local Solr 8 by default
 
     // A reference to the Solr server we are currently connected to for the Case.
     // This could be a local or remote server.
@@ -571,7 +571,7 @@ public class Server {
         "Server.status.failed.msg=Local Solr server did not respond to status request. This may be because the server failed to start or is taking too long to initialize.",})
     void startSolr(SOLR_VERSION version) throws KeywordSearchModuleException, SolrServerNoPortException {
         
-        if (isEmbeddedSolrRunning()) {
+        if (isLocalSolrRunning()) {
             if (localServerVersion == version) {
                 // this version of local server is already running
                 return;
@@ -581,7 +581,7 @@ public class Server {
             }
         }
         
-        // set which version of embedded server is currently running
+        // set which version of local server is currently running
         localServerVersion = version;
 
         if (!isPortAvailable(currentSolrServerPort)) {
@@ -629,7 +629,7 @@ public class Server {
 
                 // Wait for the Solr server to start and respond to a statusRequest request.
                 for (int numRetries = 0; numRetries < 6; numRetries++) {
-                    if (isEmbeddedSolrRunning()) {
+                    if (isLocalSolrRunning()) {
                         final List<Long> pids = this.getSolrPIDs();
                         logger.log(Level.INFO, "New Solr process PID: {0}", pids); //NON-NLS
                         return;
@@ -778,7 +778,7 @@ public class Server {
      * @return false if the request failed with a connection error, otherwise
      * true
      */
-    synchronized boolean isEmbeddedSolrRunning() throws KeywordSearchModuleException {
+    synchronized boolean isLocalSolrRunning() throws KeywordSearchModuleException {
         try {
 
             if (isPortAvailable(currentSolrServerPort)) {
@@ -960,19 +960,19 @@ public class Server {
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 
-                // makes sure the proper embedded Solr server is running
+                // makes sure the proper local Solr server is running
                 startLocalSolrServer(index);
                 
                 currentSolrServer = this.localSolrServer;
 
-                // check if the embedded Solr server is running
-                if (!this.isEmbeddedSolrRunning()) {
-                    logger.log(Level.SEVERE, "Embedded Solr server is not running"); //NON-NLS
+                // check if the local Solr server is running
+                if (!this.isLocalSolrRunning()) {
+                    logger.log(Level.SEVERE, "Local Solr server is not running"); //NON-NLS
                     throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg")); 
                 }              
             } else {
-                // connect to the Solr server that was specified in MU options
-                String solrUrl = "http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr";
+                IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+                String solrUrl = "http://" + properties.getHost() + ":" + properties.getPort() + "/solr";
                 currentSolrServer = getSolrClient(solrUrl);
                 
                 // get list of all live Solr servers in the cluster
@@ -1673,7 +1673,7 @@ public class Server {
     }
     
     /**
-     * Attempts to connect to the embedded Solr server, which is NOT running in SolrCloud mode.
+     * Attempts to connect to the local Solr server, which is NOT running in SolrCloud mode.
      *
      * @param solrServer
      *
@@ -1688,7 +1688,7 @@ public class Server {
 
     /**
      * Attempts to connect to the given Solr server, which is running in SoulrCloud mode. This API does not work
-     * for the embedded Solr which is NOT running in SolrCloud mode.
+     * for the local Solr which is NOT running in SolrCloud mode.
      *
      * @param solrServer
      *
@@ -1792,14 +1792,12 @@ public class Server {
             this.caseType = theCase.getCaseType();
             this.textIndex = index;
 
-            // ELTODO get this from some configuration or UI
-            //IndexingServerProperties properties = getMultiUserServerProperties(Case.getCurrentCase().getCaseDirectory());
-           
             String solrUrl;
             if (caseType == CaseType.SINGLE_USER_CASE) {
                 solrUrl = "http://localhost:" + currentSolrServerPort + "/solr/" + name;
             } else {
-                solrUrl = "http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr/" + name;
+                IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+                solrUrl = "http://" + properties.getHost() + ":" + properties.getPort() + "/solr/" + name;
             }
             solrClient = getSolrClient(solrUrl);
         }

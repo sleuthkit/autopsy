@@ -264,7 +264,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             } else {
                 // for single-user cases need to verify connection to local SOLR service
                 try {
-                    if (!server.isEmbeddedSolrRunning()) {
+                    if (!server.isLocalSolrRunning()) {
                         throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_tryStopSolrMsg(Bundle.KeywordSearchIngestModule_init_badInitMsg()));
                     }
                 } catch (KeywordSearchModuleException ex) {
