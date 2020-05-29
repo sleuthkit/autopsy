@@ -1201,7 +1201,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 if (manifest == null) {
                     return CONTINUE;
                 }
-                
                 /*
                  * If a manifest file has been found, get the corresponding auto
                  * ingest job state from the manifest file coordination service
@@ -1463,6 +1462,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 job = new AutoIngestJob(nodeData);
                 job.setCaseDirectoryPath(caseDirectoryPath);
             } else {
+                /*
+                 * Upgrade the auto ingest node data to the current version.
+                 */
                 job = new AutoIngestJob(manifest);
                 job.setCaseDirectoryPath(caseDirectoryPath);
                 job.setCompletedDate(nodeData.getCompletedDate());
