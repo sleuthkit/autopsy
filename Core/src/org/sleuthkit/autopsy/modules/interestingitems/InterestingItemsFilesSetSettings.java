@@ -35,6 +35,7 @@ import java.util.regex.PatternSyntaxException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -79,6 +80,8 @@ class InterestingItemsFilesSetSettings implements Serializable {
     private static final Logger logger = Logger.getLogger(InterestingItemsFilesSetSettings.class.getName());
     private static final String TYPE_FILTER_ATTR = "typeFilter"; //NON-NLS
     private static final String EXTENSION_RULE_TAG = "EXTENSION"; //NON-NLS
+    private static final String READONLY = "readOnly";
+    private static final String VERSION_NUMBER = "versionNumber";
 
     private Map<String, FilesSet> filesSets;
 
@@ -378,6 +381,26 @@ class InterestingItemsFilesSetSettings implements Serializable {
         if (!ignoreUnallocated.isEmpty()) {
             ignoreUnallocatedSpace = Boolean.parseBoolean(ignoreUnallocated);
         }
+        
+        String isReadonlyString = setElem.getAttribute(READONLY);
+        boolean isReadOnly = false;
+        if (StringUtils.isNotBlank(isReadonlyString)) {
+            isReadOnly = Boolean.parseBoolean(isReadonlyString);
+        }
+        
+        String versionNumberString = setElem.getAttribute(VERSION_NUMBER);
+        int versionNumber = 0;
+        if (StringUtils.isNotBlank(isReadonlyString)) {
+            try {
+                versionNumber = Integer.parseInt(versionNumberString);
+            }
+            catch (NumberFormatException ex) {
+                logger.log(Level.WARNING, 
+                    String.format("Unable to parse version number for files set named: %s with provided input: '%s'", setName, versionNumberString),
+                    ex);
+            }
+        }
+        
         // Read the set membership rules, if any.
         Map<String, FilesSet.Rule> rules = new HashMap<>();
         NodeList allRuleElems = setElem.getChildNodes();
@@ -401,7 +424,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
         // Make the files set. Note that degenerate sets with no rules are
         // allowed to facilitate the separation of set definition and rule
         // definitions. A set without rules is simply the empty set.
-        FilesSet set = new FilesSet(setName, description, ignoreKnownFiles, ignoreUnallocatedSpace, rules);
+        FilesSet set = new FilesSet(setName, description, ignoreKnownFiles, ignoreUnallocatedSpace, rules, isReadOnly, versionNumber);
         filesSets.put(set.getName(), set);
     }
     // Note: This method takes a file path to support the possibility of
@@ -518,6 +541,8 @@ class InterestingItemsFilesSetSettings implements Serializable {
                 setElement.setAttribute(NAME_ATTR, set.getName());
                 setElement.setAttribute(DESC_ATTR, set.getDescription());
                 setElement.setAttribute(IGNORE_KNOWN_FILES_ATTR, Boolean.toString(set.ignoresKnownFiles()));
+                setElement.setAttribute(READONLY, Boolean.toString(set.isReadOnly()));
+                setElement.setAttribute(VERSION_NUMBER, Integer.toString(set.getVersionNumber()));
                 // Add the child elements for the set membership rules.
                 // All conditions of a rule will be written as a single element in the xml
                 for (FilesSet.Rule rule : set.getRules().values()) {

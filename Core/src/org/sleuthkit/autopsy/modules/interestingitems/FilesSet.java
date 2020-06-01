@@ -44,7 +44,10 @@ public final class FilesSet implements Serializable {
     private final String description;
     private final boolean ignoreKnownFiles;
     private final boolean ignoreUnallocatedSpace;
-    private transient boolean readOnly = false;
+    
+    private final boolean readOnly;
+    private final int versionNumber;
+    
     private final Map<String, Rule> rules = new HashMap<>();
 
     /**
@@ -60,9 +63,36 @@ public final class FilesSet implements Serializable {
      *                               but a set with no rules is the empty set.
      */
     public FilesSet(String name, String description, boolean ignoreKnownFiles, boolean ignoreUnallocatedSpace, Map<String, Rule> rules) {
+        this(name, description, ignoreKnownFiles, ignoreUnallocatedSpace, rules, false, 0);
+    }
+        
+    /**
+     * Constructs an interesting files set.
+     *
+     * @param name                   The name of the set.
+     * @param description            A description of the set, may be null.
+     * @param ignoreKnownFiles       Whether or not to exclude known files from
+     *                               the set.
+     * @param ignoreUnallocatedSpace Whether or not to exclude unallocated space
+     *                               from the set.
+     * @param readOnly               Whether or not the FilesSet should be read only (if not it is editable).
+     * @param versionNumber          The versionNumber for the FilesSet so that older versions can be replaced with newer versions.
+     * @param rules                  The rules that define the set. May be null,
+     *                               but a set with no rules is the empty set.
+     */
+    public FilesSet(String name, String description, boolean ignoreKnownFiles, boolean ignoreUnallocatedSpace, Map<String, Rule> rules,
+            boolean readOnly, int versionNumber) {
         if ((name == null) || (name.isEmpty())) {
             throw new IllegalArgumentException("Interesting files set name cannot be null or empty");
         }
+        
+        if (versionNumber < 0) {
+            throw new IllegalArgumentException("version number must be >= 0");
+        }
+            
+        this.readOnly = readOnly;
+        this.versionNumber = versionNumber;
+        
         this.name = name;
         this.description = (description != null ? description : "");
         this.ignoreKnownFiles = ignoreKnownFiles;
@@ -81,13 +111,13 @@ public final class FilesSet implements Serializable {
     }
 
     /**
-     *Sets whether or not the file set is read only.  This is a transient field that is not
-     * @param readOnly Whether or not the file set should be read only.
+     * Returns he versionNumber for the FilesSet so that older versions can be replaced with newer versions.
+     * @return The versionNumber for the FilesSet so that older versions can be replaced with newer versions.
      */
-    void setReadOnly(boolean readOnly) {
-        this.readOnly = readOnly;
+    int getVersionNumber() {
+        return versionNumber;
     }
-    
+
     
 
     /**
