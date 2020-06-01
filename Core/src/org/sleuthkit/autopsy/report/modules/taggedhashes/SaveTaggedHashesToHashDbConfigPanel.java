@@ -29,19 +29,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
+import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
-import javax.swing.ListModel;
-import javax.swing.event.ListDataListener;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettingsPanel;
+import org.sleuthkit.autopsy.tags.TagUtils;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -54,9 +54,9 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private List<TagName> tagNames;
-    private Map<String, Boolean> tagNameSelections = new LinkedHashMap<>();
-    private TagNamesListModel tagsNamesListModel;
-    private TagsNamesListCellRenderer tagsNamesRenderer;
+    private Map<TagName, Boolean> tagNameSelections = new LinkedHashMap<>();
+    private DefaultListModel<TagName> tagsNamesListModel = new DefaultListModel<>();
+    private TagsNamesListCellRenderer tagsNamesRenderer = new TagsNamesListCellRenderer();
     private String selectedHashSetName;
     private List<HashDb> updateableHashSets = new ArrayList<>();
 
@@ -67,9 +67,6 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         // Set up the tag names JList component to be a collection of check boxes
         // for selecting tag names. The mouse click listener updates tagNameSelections
         // to reflect user choices.
-        //tagNamesListBox.setModel(tagsNamesListModel);
-        //tagNamesListBox.setCellRenderer(tagsNamesRenderer);
-        //tagNamesListBox.setVisibleRowCount(-1);
         tagNamesListBox.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent evt) {
@@ -79,13 +76,13 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
                 JList<?> list = (JList) evt.getSource();
                 int index = list.locationToIndex(evt.getPoint());
                 if (index > -1) {
-                    String value = tagsNamesListModel.getElementAt(index);
-                    tagNameSelections.put(value, !tagNameSelections.get(value));
+                    TagName tagName = tagsNamesListModel.getElementAt(index);
+                    tagNameSelections.put(tagName, !tagNameSelections.get(tagName));
                     list.repaint();
                 }
             }
         });
- 
+
         this.jAllTagsCheckBox.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -96,22 +93,22 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
             }
         });
     }
-    
+
     HashesReportModuleSettings getConfiguration() {
         return new HashesReportModuleSettings(jAllTagsCheckBox.isSelected(), selectedHashSetName);
     }
-    
+
     void setConfiguration(HashesReportModuleSettings settings) {
         // Need to reset tags. User may have opened a different case or
         // there may not be a case open any more (Command Line wizard).
         customizeComponents();
-        
+
         // update tag selection
         jAllTagsCheckBox.setSelected(settings.isExportAllTags());
         if (settings.isExportAllTags()) {
             selectAllTags(true);
         }
-        
+
         // update hash database selection
         if (settings.getHashDbName() != null) {
             populateHashSetComponents();
@@ -119,25 +116,28 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         }
     }
 
-    private void customizeComponents() {        
-        populateTagNameComponents();
-        
-        tagsNamesListModel = new TagNamesListModel();
+    private void customizeComponents() {
+        tagsNamesListModel = new DefaultListModel<>();
         tagsNamesRenderer = new TagsNamesListCellRenderer();
+        populateTagNameComponents();
+
         tagNamesListBox.setModel(tagsNamesListModel);
         tagNamesListBox.setCellRenderer(tagsNamesRenderer);
         tagNamesListBox.setVisibleRowCount(-1);
-        
+
         populateHashSetComponents();
     }
 
     private void populateTagNameComponents() {
         // Get the tag names in use for the current case.
         tagNames = new ArrayList<>();
-        Map<String, Boolean> updatedTagNameSelections = new LinkedHashMap<>();
+        Map<TagName, Boolean> updatedTagNameSelections = new LinkedHashMap<>();
         try {
             // There may not be a case open when configuring report modules for Command Line execution
             tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
+            for (TagName tagName : tagNames) {
+                tagsNamesListModel.addElement(tagName);
+            }
         } catch (TskCoreException ex) {
             Logger.getLogger(SaveTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
         } catch (NoCurrentCaseException ex) {
@@ -151,10 +151,10 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         // LinkedHashMap so that order is preserved and the tagNames and tagNameSelections
         // containers are "parallel" containers.
         for (TagName tagName : tagNames) {
-            if (tagNameSelections.get(tagName.getDisplayName()) != null && Objects.equals(tagNameSelections.get(tagName.getDisplayName()), Boolean.TRUE)) {
-                updatedTagNameSelections.put(tagName.getDisplayName(), Boolean.TRUE);
+            if (tagNameSelections.get(tagName) != null && Objects.equals(tagNameSelections.get(tagName), Boolean.TRUE)) {
+                updatedTagNameSelections.put(tagName, Boolean.TRUE);
             } else {
-                updatedTagNameSelections.put(tagName.getDisplayName(), Boolean.FALSE);
+                updatedTagNameSelections.put(tagName, Boolean.FALSE);
             }
         }
         tagNameSelections = updatedTagNameSelections;
@@ -165,7 +165,7 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         // and when the user changes the hash set configuration.
         hashSetsComboBox.removeAllItems();
         selectedHashSetName = "";
-        
+
         // Get the updateable hash databases and add their hash set names to the
         // JComboBox component.
         updateableHashSets = HashDbManager.getInstance().getUpdateableHashSets();
@@ -187,7 +187,7 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     List<TagName> getSelectedTagNames() {
         List<TagName> selectedTagNames = new ArrayList<>();
         for (TagName tagName : tagNames) {
-            if (tagNameSelections.get(tagName.getDisplayName())) {
+            if (tagNameSelections.get(tagName)) {
                 selectedTagNames.add(tagName);
             }
         }
@@ -208,41 +208,20 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         return null;
     }
 
-    // This class is a list model for the tag names JList component.
-    private class TagNamesListModel implements ListModel<String> {
-
-        @Override
-        public int getSize() {
-            return tagNames.size();
-        }
-
-        @Override
-        public String getElementAt(int index) {
-            return tagNames.get(index).getDisplayName();
-        }
-
-        @Override
-        public void addListDataListener(ListDataListener l) {
-        }
-
-        @Override
-        public void removeListDataListener(ListDataListener l) {
-        }
-    }
-
     // This class renders the items in the tag names JList component as JCheckbox components.
-    private class TagsNamesListCellRenderer extends JCheckBox implements ListCellRenderer<String> {
+    private class TagsNamesListCellRenderer extends JCheckBox implements ListCellRenderer<TagName> {
+
         private static final long serialVersionUID = 1L;
 
         @Override
-        public Component getListCellRendererComponent(JList<? extends String> list, String value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<? extends TagName> list, TagName value, int index, boolean isSelected, boolean cellHasFocus) {
             if (value != null) {
                 setEnabled(list.isEnabled());
                 setSelected(tagNameSelections.get(value));
                 setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
-                setText(value);
+                setText(TagUtils.getDecoratedTagDisplayName(value));
                 return this;
             }
             return new JLabel();
@@ -364,7 +343,7 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_selectAllButtonActionPerformed
 
     private void hashSetsComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hashSetsComboBoxActionPerformed
-        selectedHashSetName = (String)hashSetsComboBox.getSelectedItem();
+        selectedHashSetName = (String) hashSetsComboBox.getSelectedItem();
     }//GEN-LAST:event_hashSetsComboBoxActionPerformed
 
     private void deselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllButtonActionPerformed
@@ -389,7 +368,7 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
             state = Boolean.FALSE;
         }
         for (TagName tagName : tagNames) {
-            tagNameSelections.put(tagName.getDisplayName(), state);
+            tagNameSelections.put(tagName, state);
         }
         tagNamesListBox.repaint();
     }
@@ -406,6 +385,6 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton selectAllButton;
-    private javax.swing.JList<String> tagNamesListBox;
+    private javax.swing.JList<TagName> tagNamesListBox;
     // End of variables declaration//GEN-END:variables
 }

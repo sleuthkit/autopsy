@@ -40,11 +40,11 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.tags.TagUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * Instances of this Action allow users to delete tags applied to blackboard
@@ -194,8 +194,7 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
                             TagName tagName = entry.getValue();
                             for (BlackboardArtifactTag artifactTag : existingTagsList) {
                                 if (tagDisplayName.equals(artifactTag.getName().getDisplayName())) {
-                                    String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
-                                    JMenuItem tagNameItem = new JMenuItem(tagDisplayName + notableString);
+                                    JMenuItem tagNameItem = new JMenuItem(TagUtils.getDecoratedTagDisplayName(tagName));
                                     tagNameItem.addActionListener((ActionEvent e) -> {
                                         deleteTag(tagName, artifactTag, artifact.getArtifactID());
                                     });

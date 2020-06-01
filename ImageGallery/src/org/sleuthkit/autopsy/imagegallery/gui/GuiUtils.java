@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.logging.Level;
 import javafx.scene.control.ButtonBase;
+import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
@@ -65,7 +67,8 @@ public final class GuiUtils {
      * @return
      */
     public static MenuItem createAutoAssigningMenuItem(ButtonBase button, Action action) {
-        MenuItem menuItem = ActionUtils.createMenuItem(action);
+        MenuItem menuItem = new CustomMenuItem(new Label(action.getText(), action.getGraphic()));
+        ActionUtils.configureMenuItem(action, menuItem);
         menuItem.setOnAction(actionEvent -> {
             action.handle(actionEvent);
             button.setText(action.getText());

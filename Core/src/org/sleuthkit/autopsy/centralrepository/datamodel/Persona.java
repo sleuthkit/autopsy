@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -114,9 +115,6 @@ public class Persona {
         }
     }
 
-    // Persona name to use if no name is specified.
-    private static final String DEFAULT_PERSONA_NAME = "Unknown";
-
     // primary key in the Personas table in CR database
     private final long id;
     private final String uuidStr;
@@ -126,6 +124,11 @@ public class Persona {
     private final long modifiedDate;
     private final PersonaStatus status;
     private final CentralRepoExaminer examiner;
+    
+    @NbBundle.Messages("Persona.defaultName=Unnamed")
+    public static String getDefaultName() {
+        return Bundle.Persona_defaultName();
+    }
 
     public long getId() {
         return id;
@@ -240,7 +243,7 @@ public class Persona {
         String insertClause = " INTO personas (uuid, comment, name, created_date, modified_date, status_id, examiner_id ) "
                 + "VALUES ( '" + uuidStr + "', "
                 + "'" + ((StringUtils.isBlank(comment) ? "" : SleuthkitCase.escapeSingleQuotes(comment))) + "',"
-                + "'" + ((StringUtils.isBlank(name) ? DEFAULT_PERSONA_NAME : SleuthkitCase.escapeSingleQuotes(name))) + "',"
+                + "'" + ((StringUtils.isBlank(name) ? getDefaultName() : SleuthkitCase.escapeSingleQuotes(name))) + "',"
                 + timeStampMillis.toString() + ","
                 + timeStampMillis.toString() + ","
                 + status.getStatusId() + ","
