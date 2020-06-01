@@ -183,7 +183,8 @@ class GPXParserFileIngestModule(FileIngestModule):
                             point.latitude, point.longitude, elevation, None, 0, 0, 0, timeStamp))
 
                     try:
-                        geoArtifactHelper.addTrack("Track", geoPointList, None)
+                        if not geoPointList.isEmpty():
+                            geoArtifactHelper.addTrack("Track", geoPointList, None)
                     except Blackboard.BlackboardException as e:
                         self.log(Level.SEVERE, "Error posting GPS track artifact for " +
                                  file.getUniquePath() + " (objID = " + str(file.getId()) + "):" + e.getMessage())
