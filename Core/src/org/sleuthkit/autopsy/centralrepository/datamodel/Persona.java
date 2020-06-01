@@ -258,7 +258,6 @@ public class Persona {
      * Associates an account with a persona by creating a row in the
      * PersonaAccounts table.
      *
-     * @param persona Persona to add the account to.
      * @param account Account to add to persona.
      * @param justification Reason for adding the account to persona, may be
      * null.
@@ -658,7 +657,7 @@ public class Persona {
     /**
      * Get all the persona for a given data source.
      *
-     * @param CorrelationDataSource Data source to look the persona in.
+     * @param dataSource Data source to look the persona in.
      *
      * @return Collection of personas, may be empty.
      * @throws CentralRepoException

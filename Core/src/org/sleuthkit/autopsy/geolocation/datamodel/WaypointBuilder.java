@@ -98,7 +98,7 @@ public final class WaypointBuilder {
         /**
          * This function will be called after the waypoints have been filtered.
          *
-         * @param waypoints The list of waypoints determined.
+         * @param waypoints The list of waypoints.
          */
         void process(List<GeoLocationParseResult<Waypoint>> waypoints);
     }
