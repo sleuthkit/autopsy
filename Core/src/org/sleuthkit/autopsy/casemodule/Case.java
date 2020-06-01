@@ -2506,6 +2506,7 @@ public class Case {
      * specific to this case.
      *
      * @param progressIndicator A progress indicator.
+     * @param isNewCase True if case is new
      *
      * @throws CaseActionException If there is a problem completing the
      *                             operation. The exception will have a
