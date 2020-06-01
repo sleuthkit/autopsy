@@ -33,6 +33,7 @@ import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
+import org.openide.util.Pair;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -57,7 +58,8 @@ import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
  * it.
  */
 public final class DataSourceIngestJob {
-
+    private static String AUTOPSY_MODULE_PREFIX = "org.sleuthkit.autopsy";
+    
     private static final Logger logger = Logger.getLogger(DataSourceIngestJob.class.getName());
 
     /**
@@ -215,6 +217,30 @@ public final class DataSourceIngestJob {
         this.createTime = new Date().getTime();
         this.createIngestPipelines();
     }
+    
+    
+    
+    /**
+     * Adds ingest modules to a list with autopsy modules first and third party modules next.
+     * @param dest  The destination for the modules to be added.
+     * @param src   A map of fully qualified class name mapped to the IngestModuleTemplate.
+     */
+    private static void addOrdered(final List<IngestModuleTemplate> dest, final Map<String, IngestModuleTemplate> src) {
+        final List<IngestModuleTemplate> autopsyModules = new ArrayList<>();
+        final List<IngestModuleTemplate> thirdPartyModules = new ArrayList<>();
+        
+        src.entrySet().stream().forEach((templateEntry) -> {
+            if (templateEntry.getKey().startsWith(AUTOPSY_MODULE_PREFIX)) {
+                autopsyModules.add(templateEntry.getValue());
+            }
+            else {
+                thirdPartyModules.add(templateEntry.getValue());
+            }
+        });
+        
+        dest.addAll(autopsyModules);
+        dest.addAll(thirdPartyModules);
+    }
 
     /**
      * Creates the file and data source ingest pipelines.
@@ -250,13 +276,9 @@ public final class DataSourceIngestJob {
          * configuration to an appropriate pipeline - either the first stage
          * data source ingest pipeline or the file ingest pipeline.
          */
-        for (IngestModuleTemplate template : dataSourceModuleTemplates.values()) {
-            firstStageDataSourceModuleTemplates.add(template);
-        }
-        for (IngestModuleTemplate template : fileModuleTemplates.values()) {
-            fileIngestModuleTemplates.add(template);
-        }
-
+        addOrdered(firstStageDataSourceModuleTemplates, dataSourceModuleTemplates);
+        addOrdered(fileIngestModuleTemplates, fileModuleTemplates);
+        
         /**
          * Construct the data source ingest pipelines.
          */
