@@ -22,13 +22,20 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.openide.modules.OnStart;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -108,6 +115,43 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
         }
         return standardInterestingFileSets;
     }
+    
+    
+    private static List<String> getResourceFolderContents(String directory) {
+        // taken from https://stackoverflow.com/questions/11012819/how-can-i-get-a-resource-folder-from-inside-my-jar-file
+        final File jarFile = new File(StandardInterestingFilesSetsLoader.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+        List<String> toRet = new ArrayList<>();
+        
+        if(jarFile.isFile()) {
+            JarFile jar = null;
+            try {
+                jar = new JarFile(jarFile);
+                final Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
+                while(entries.hasMoreElements()) {
+                    final String name = entries.nextElement().getName();
+                    if (name.startsWith(directory + "/")) { //filter according to the path
+                        toRet.add(name);
+                    }
+                }
+            jar.close();
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, "There was an error reading contents of jar file.", ex);
+            } finally {
+                if (jar != null) {
+                    try {
+                        jar.close();                        
+                    } catch (IOException ex) {
+                        LOGGER.log(Level.SEVERE, "There was an error closing jar resources while loading contents.", ex);
+                    }
+                }
+            }
+        } else {
+            LOGGER.log(Level.WARNING, "Jar file could not be opened.  No standard interesting files sets will be loaded.");
+        }
+        
+        return toRet;
+    }
+    
 
     /**
      * Add the InterestingFileSetRules directory to the user’s app data config
@@ -118,29 +162,9 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
      *                       non-null.
      */
     private static void copyRulesDirectory(File rulesConfigDir) {
-        if (rulesConfigDir.exists()) {
-            LOGGER.info(String.format("%s settings directory already exists.  Not going to perform copy of class resource standard interesting files to directory.",
-                    rulesConfigDir.getAbsolutePath()));
-        }
-
-        // taken from https://stackoverflow.com/a/19459180
-        URL url = StandardInterestingFilesSetsLoader.class.getClassLoader().getResource(CONFIG_DIR);
-        File resourceDirectory = null;
+        
         try {
-            resourceDirectory = new File(url.toURI());
-        } catch (URISyntaxException ignored) {
-            resourceDirectory = new File(url.getPath());
-        }
-
-        if (resourceDirectory == null || !resourceDirectory.exists()) {
-            LOGGER.severe(
-                    String.format("Unable to find resource directory for standard interesting file sets, %s.",
-                            (rulesConfigDir != null) ? rulesConfigDir.getAbsolutePath() : "<null>"));
-            return;
-        }
-
-        try {
-            for (File resourceFile : resourceDirectory.listFiles(DEFAULT_XML_FILTER)) {
+            for (String resourceFile : getResourceFolderContents(DEFAULT_XML_FILTER)) {
                 updateStandardFilesSetConfigFile(rulesConfigDir, resourceFile);
             }
         } catch (IOException ex) {
@@ -155,45 +179,37 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
      * version.
      *
      * @param rulesConfigDir The directory for standard interesting files sets.
-     * @param resourceFile   The standard interesting files set resource file
+     * @param resourceInputStream  The standard interesting files set resource file
      *                       located within the jar.
-     *
-     * @throws IOException
      */
-    private static void updateStandardFilesSetConfigFile(File rulesConfigDir, File resourceFile) throws IOException {
-        File configDirFile = new File(rulesConfigDir, resourceFile.getName());
-
+    private static void updateStandardFilesSetConfigFile(File rulesConfigDir, InputStream resourceInputStream, String resourceName) {
+        File configDirFile = new File(rulesConfigDir, resourceName);
+        
+        Map<String, FilesSet> resourceFilesSet = null;
+        try {
+            resourceFilesSet = InterestingItemsFilesSetSettings.readDefinitionsXML(resourceFile);
+        } catch (FilesSetsManager.FilesSetsManagerException ex) {
+            LOGGER.log(Level.SEVERE, "Unable to read FilesSet data from resource file: " + resourceName, ex);
+            return;
+        }
+            
         if (configDirFile.exists()) {
-            Map<String, FilesSet> resourceFilesSet = null;
-            try {
-                resourceFilesSet = InterestingItemsFilesSetSettings.readDefinitionsXML(resourceFile);
-            } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to read FilesSet data from resource file: " + resourceFile.getName(), ex);
-            }
-
             Map<String, FilesSet> configDirFilesSet = null;
             try {
                 configDirFilesSet = InterestingItemsFilesSetSettings.readDefinitionsXML(configDirFile);
             } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                LOGGER.log(Level.WARNING, "Unable to read FilesSet data from config file: " + resourceFile.getName(), ex);
+                LOGGER.log(Level.WARNING, "Unable to read FilesSet data from config file: " + resourceName, ex);
             }
 
-            if (resourceFilesSet == null && configDirFilesSet != null) {
-                return;
-            } else if (configDirFilesSet != null && resourceFilesSet != null) {
-                Map<String, FilesSet> newMapping = new HashMap<>();
-                copyOnNewer(resourceFilesSet, newMapping);
-                copyOnNewer(configDirFilesSet, newMapping);
-
-                try (final NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(configDirFile))) {
-                    out.writeObject(new InterestingItemsFilesSetSettings(newMapping));
-                } catch (IOException ex) {
-                    LOGGER.log(Level.SEVERE, "Unable to create new standard interesting files set for " + configDirFile.getPath(), ex);
-                }
-            }
+            copyOnNewer(configDirFilesSet, resourceFilesSet);
         }
 
-        FileUtils.copyFileToDirectory(resourceFile, rulesConfigDir);
+        try {
+            InterestingItemsFilesSetSettings.writeDefinitionsFile(configDirFile.getAbsolutePath(), resourceFilesSet);
+        } catch (FilesSetsManager.FilesSetsManagerException ex) {
+            String configDirFilePath = configDirFile.getAbsolutePath();
+            LOGGER.log(Level.WARNING, "Unable to write FilesSet data to disk at: " + configDirFilePath, ex);
+        }
     }
 
     /**

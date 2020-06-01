@@ -469,25 +469,45 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
     static Map<String, FilesSet> readDefinitionsXML(File xmlFile) throws FilesSetsManager.FilesSetsManagerException {
-        Map<String, FilesSet> filesSets = new HashMap<>();
         if (!xmlFile.exists()) {
-            return filesSets;
+            return new HashMap<>();
         }
         // Check if the file can be read.
         if (!xmlFile.canRead()) {
             logger.log(Level.SEVERE, "FilesSet definition file at {0} exists, but cannot be read", xmlFile.getPath()); // NON-NLS
-            return filesSets;
+            return new HashMap<>();
         }
-        // Parse the XML in the file.
+        
         Document doc = XMLUtil.loadDoc(InterestingItemsFilesSetSettings.class, xmlFile.getPath());
+        return readDefinitionsXML(doc, xmlFile);
+    }
+       
+    /**
+     * Reads an XML file and returns a map of fileSets. Allows for legacy XML
+     * support as well as importing of file sets to XMLs.
+     *
+
+     * @param doc The xml document.
+     *
+     * @return fileSets - a Map<String, Filesset> of the definition(s) found in
+     *         the xml file for logging purposes (can provide null).
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
+     */
+    static Map<String, FilesSet> readDefinitionsXML(Document doc, File xmlFile) throws FilesSetsManager.FilesSetsManagerException {
+        // Parse the XML in the file.
+        Map<String, FilesSet> filesSets = new HashMap<>();
+        
         if (doc == null) {
-            logger.log(Level.SEVERE, "FilesSet definition file at {0}", xmlFile.getPath()); // NON-NLS
+            logger.log(Level.SEVERE, "FilesSet definition file at {0}", (xmlFile == null) ? "<null>" : xmlFile.getPath()); // NON-NLS
             return filesSets;
         }
         // Get the root element.
         Element root = doc.getDocumentElement();
         if (root == null) {
-            logger.log(Level.SEVERE, "Failed to get root {0} element tag of FilesSet definition file at {1}", new Object[]{FILE_SETS_ROOT_TAG, xmlFile.getPath()}); // NON-NLS
+            logger.log(Level.SEVERE, "Failed to get root {0} element tag of FilesSet definition file at {1}", 
+                    new Object[]{FILE_SETS_ROOT_TAG, (xmlFile == null) ? "<null>" : xmlFile.getPath()}); // NON-NLS
             return filesSets;
         }
         // Read in the files set definitions.
