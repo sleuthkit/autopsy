@@ -285,9 +285,9 @@ public class Server {
         if (!solr8Home.toFile().exists()) {
             try {
                 Files.createDirectory(solr8Home);
-                Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "solr", "solr.xml"), solr8Home.resolve("solr.xml")); //NON-NLS
-                Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "solr", "zoo.cfg"), solr8Home.resolve("zoo.cfg")); //NON-NLS
-                FileUtils.copyDirectory(Paths.get(solr8Folder.getAbsolutePath(), "solr", "configsets").toFile(), solr8Home.resolve("configsets").toFile()); //NON-NLS
+                Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "solr.xml"), solr8Home.resolve("solr.xml")); //NON-NLS
+                Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "zoo.cfg"), solr8Home.resolve("zoo.cfg")); //NON-NLS
+                FileUtils.copyDirectory(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "configsets").toFile(), solr8Home.resolve("configsets").toFile()); //NON-NLS
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
             }
@@ -299,7 +299,6 @@ public class Server {
                 Files.createDirectory(solr4Home);
                 Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "solr.xml"), solr4Home.resolve("solr.xml")); //NON-NLS
                 Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "zoo.cfg"), solr4Home.resolve("zoo.cfg")); //NON-NLS
-                // ELTODO FileUtils.copyDirectory(Paths.get(solr4Folder.getAbsolutePath(), "solr", "configsets").toFile(), solr4Home.resolve("configsets").toFile()); //NON-NLS
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
             }
