@@ -50,6 +50,7 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      * Add a new element to the check box list.
      *
      * @param displayName display name for the checkbox
+     * @param icon
      * @param obj         Object that the checkbox represents
      */
     public void addElement(String displayName, Icon icon, T obj) {
