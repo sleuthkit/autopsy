@@ -1,5 +1,5 @@
-set JAVA_HOME=C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1
-set SOLR_SERVER_DIR=C:\Bitnami\solr-8.2.0-2/apache-solr/server
+REM set JAVA_HOME=C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1
+REM set SOLR_SERVER_DIR=C:\Bitnami\solr-8.2.0-2/apache-solr/server
 set SOLR_PORT=8983
 set STOP_PORT=8079
 
