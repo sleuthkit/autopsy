@@ -93,7 +93,7 @@ public class STIXReportModule implements GeneralReportModule {
     }
 
     /**
-     * @param baseReportDir path to save the report
+     * @param settings      Report settings.
      * @param progressPanel panel to update the report's progress
      */
     @Override

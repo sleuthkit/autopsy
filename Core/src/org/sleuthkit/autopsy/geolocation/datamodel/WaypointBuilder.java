@@ -96,7 +96,7 @@ public final class WaypointBuilder {
         /**
          * This function will be called after the waypoints have been filtered.
          *
-         * @param wwaypoints This of waypoints.
+         * @param waypoints The list of waypoints.
          */
         void process(List<Waypoint> waypoints);
     }

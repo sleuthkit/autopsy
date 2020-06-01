@@ -40,11 +40,11 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.tags.TagUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * Instances of this Action allow users to delete tags applied to content.
@@ -199,8 +199,7 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                             TagName tagName = entry.getValue();
                             for (ContentTag contentTag : existingTagsList) {
                                 if (tagDisplayName.equals(contentTag.getName().getDisplayName())) {
-                                    String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
-                                    JMenuItem tagNameItem = new JMenuItem(tagDisplayName + notableString);
+                                    JMenuItem tagNameItem = new JMenuItem(TagUtils.getDecoratedTagDisplayName(tagName));
                                     tagNameItem.addActionListener((ActionEvent e) -> {
                                         deleteTag(tagName, contentTag, file.getId());
                                     });

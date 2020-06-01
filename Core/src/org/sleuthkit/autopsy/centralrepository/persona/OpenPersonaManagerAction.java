@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.persona;
+package org.sleuthkit.autopsy.centralrepository.persona;
 
 import javax.swing.JMenuItem;
 import org.openide.awt.ActionID;
@@ -28,33 +28,33 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
- * An Action that opens the Personas window.
+ * An Action that opens the Persona Search window.
  */
 
-@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.persona.Personas")
-@ActionRegistration(displayName = "#CTL_OpenPersonas", lazy = false)
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.centralrepository.persona.OpenPersonaManagerAction")
+@ActionRegistration(displayName = "#CTL_OpenPersonaManager", lazy = false)
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 105)
 })
-public final class OpenPersonasAction extends CallableSystemAction {
+public final class OpenPersonaManagerAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
 
     private final JMenuItem menuItem;
 
-
-    public OpenPersonasAction() {
+    public OpenPersonaManagerAction() {
         menuItem = super.getMenuPresenter();
-        this.setEnabled(true);
+        this.setEnabled(CentralRepository.isEnabled());
     }
 
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void performAction() {
-        final TopComponent topComponent = WindowManager.getDefault().findTopComponent("PersonasTopComponent");
+        final TopComponent topComponent = WindowManager.getDefault().findTopComponent("PersonaManagerTopComponent");
         if (topComponent != null) {
             if (topComponent.isOpened() == false) {
                 topComponent.open();
@@ -65,7 +65,7 @@ public final class OpenPersonasAction extends CallableSystemAction {
     }
 
     @Override
-    @NbBundle.Messages("OpenPersonasAction.displayName=Personas")
+    @NbBundle.Messages("OpenPersonasAction.displayName=Persona Manager")
     public String getName() {
         return Bundle.OpenPersonasAction_displayName();
     }
@@ -84,6 +84,11 @@ public final class OpenPersonasAction extends CallableSystemAction {
     public void setEnabled(boolean enable) {
         super.setEnabled(enable);
         menuItem.setEnabled(enable);
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return CentralRepository.isEnabled();
     }
 
     @Override
