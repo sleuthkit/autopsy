@@ -43,10 +43,9 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
         sizeList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(sizeCheckbox, org.openide.util.NbBundle.getMessage(SizeFilterPanel.class, "SizeFilterPanel.sizeCheckbox.text")); // NOI18N
-        sizeCheckbox.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        sizeCheckbox.setMaximumSize(new java.awt.Dimension(103, 25));
-        sizeCheckbox.setMinimumSize(new java.awt.Dimension(103, 25));
-        sizeCheckbox.setPreferredSize(new java.awt.Dimension(103, 25));
+        sizeCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
+        sizeCheckbox.setMinimumSize(new java.awt.Dimension(150, 25));
+        sizeCheckbox.setPreferredSize(new java.awt.Dimension(150, 25));
         sizeCheckbox.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         sizeCheckbox.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
         sizeCheckbox.addActionListener(new java.awt.event.ActionListener() {
@@ -55,13 +54,15 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
             }
         });
 
-        setMinimumSize(new java.awt.Dimension(200, 30));
-        setPreferredSize(new java.awt.Dimension(300, 60));
+        setMinimumSize(new java.awt.Dimension(250, 30));
+        setName(""); // NOI18N
+        setPreferredSize(new java.awt.Dimension(250, 30));
 
-        sizeScrollPane.setPreferredSize(new java.awt.Dimension(300, 60));
+        sizeScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
 
         sizeList.setModel(new DefaultListModel<FileSize>());
         sizeList.setEnabled(false);
+        sizeList.setMaximumSize(new java.awt.Dimension(32767, 32767));
         sizeList.setVisibleRowCount(5);
         sizeScrollPane.setViewportView(sizeList);
 

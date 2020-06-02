@@ -36,8 +36,12 @@ public class UserCreatedFilterPanel extends AbstractDiscoveryFilterPanel {
         userCreatedCheckbox = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(userCreatedCheckbox, org.openide.util.NbBundle.getMessage(UserCreatedFilterPanel.class, "UserCreatedFilterPanel.userCreatedCheckbox.text_1")); // NOI18N
+        userCreatedCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
+        userCreatedCheckbox.setMinimumSize(new java.awt.Dimension(150, 25));
+        userCreatedCheckbox.setPreferredSize(new java.awt.Dimension(150, 25));
 
-        setPreferredSize(new java.awt.Dimension(300, 42));
+        setMinimumSize(new java.awt.Dimension(250, 30));
+        setPreferredSize(new java.awt.Dimension(250, 30));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

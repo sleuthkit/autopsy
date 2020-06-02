@@ -65,6 +65,9 @@ public class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
         parentTextField = new javax.swing.JTextField();
 
         org.openide.awt.Mnemonics.setLocalizedText(parentCheckbox, org.openide.util.NbBundle.getMessage(ParentFolderFilterPanel.class, "ParentFolderFilterPanel.parentCheckbox.text_1")); // NOI18N
+        parentCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
+        parentCheckbox.setMinimumSize(new java.awt.Dimension(150, 25));
+        parentCheckbox.setPreferredSize(new java.awt.Dimension(150, 25));
         parentCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 parentCheckboxActionPerformed(evt);
@@ -72,8 +75,14 @@ public class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(parentLabel, org.openide.util.NbBundle.getMessage(ParentFolderFilterPanel.class, "ParentFolderFilterPanel.parentLabel.text_1")); // NOI18N
+        parentLabel.setMaximumSize(new java.awt.Dimension(150, 25));
+        parentLabel.setMinimumSize(new java.awt.Dimension(150, 25));
+        parentLabel.setPreferredSize(new java.awt.Dimension(150, 25));
 
-        setPreferredSize(new java.awt.Dimension(314, 170));
+        setMinimumSize(new java.awt.Dimension(250, 120));
+        setPreferredSize(new java.awt.Dimension(250, 120));
+
+        parentScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
 
         parentList.setModel(new DefaultListModel<ParentSearchTerm>());
         parentList.setEnabled(false);
@@ -137,9 +146,9 @@ public class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
                     .addComponent(substringRadioButton)
                     .addComponent(excludeRadioButton)))
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                .addComponent(parentScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(parentScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                    .addComponent(parentTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE)
+                    .addComponent(parentTextField)
                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addComponent(deleteButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -148,8 +157,8 @@ public class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(parentScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 74, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(parentScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(fullRadioButton)
                     .addComponent(substringRadioButton))
@@ -161,7 +170,8 @@ public class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(parentTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(addButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(addButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 

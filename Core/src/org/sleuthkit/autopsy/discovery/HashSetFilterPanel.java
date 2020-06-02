@@ -70,13 +70,17 @@ public class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
         hashSetList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(hashSetCheckbox, org.openide.util.NbBundle.getMessage(HashSetFilterPanel.class, "HashSetFilterPanel.hashSetCheckbox.text")); // NOI18N
+        hashSetCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
+        hashSetCheckbox.setMinimumSize(new java.awt.Dimension(150, 25));
+        hashSetCheckbox.setPreferredSize(new java.awt.Dimension(150, 25));
         hashSetCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 hashSetCheckboxActionPerformed(evt);
             }
         });
 
-        setPreferredSize(new java.awt.Dimension(300, 60));
+        setMinimumSize(new java.awt.Dimension(250, 30));
+        setPreferredSize(new java.awt.Dimension(250, 30));
 
         hashSetList.setModel(new DefaultListModel<String>());
         hashSetList.setEnabled(false);

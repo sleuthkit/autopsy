@@ -48,13 +48,20 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
         dataSourceList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(dataSourceCheckbox, org.openide.util.NbBundle.getMessage(DataSourceFilterPanel.class, "DataSourceFilterPanel.dataSourceCheckbox.text")); // NOI18N
+        dataSourceCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
+        dataSourceCheckbox.setMinimumSize(new java.awt.Dimension(150, 25));
+        dataSourceCheckbox.setPreferredSize(new java.awt.Dimension(150, 25));
         dataSourceCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 dataSourceCheckboxActionPerformed(evt);
             }
         });
 
-        setPreferredSize(new java.awt.Dimension(300, 60));
+        setMinimumSize(new java.awt.Dimension(250, 30));
+        setPreferredSize(new java.awt.Dimension(250, 30));
+        setRequestFocusEnabled(false);
+
+        dataSourceScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
 
         dataSourceList.setModel(new DefaultListModel<DataSourceItem>());
         dataSourceList.setEnabled(false);
@@ -70,7 +77,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(dataSourceScrollPane)
+                .addComponent(dataSourceScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents

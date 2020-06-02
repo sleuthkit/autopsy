@@ -91,6 +91,8 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     final void addPanelsToScrollPane(JSplitPane splitPane) {
         splitPane.setLeftComponent(firstColumnPanel);
         splitPane.setRightComponent(secondColumnPanel);
+        validate();
+        repaint();
     }
 
     final synchronized void clearFilters() {

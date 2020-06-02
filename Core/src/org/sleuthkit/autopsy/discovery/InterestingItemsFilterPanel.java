@@ -68,13 +68,19 @@ public class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
         interestingItemsList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(interestingItemsCheckbox, org.openide.util.NbBundle.getMessage(InterestingItemsFilterPanel.class, "InterestingItemsFilterPanel.interestingItemsCheckbox.text")); // NOI18N
+        interestingItemsCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
+        interestingItemsCheckbox.setMinimumSize(new java.awt.Dimension(150, 25));
+        interestingItemsCheckbox.setPreferredSize(new java.awt.Dimension(150, 25));
         interestingItemsCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 interestingItemsCheckboxActionPerformed(evt);
             }
         });
 
-        setPreferredSize(new java.awt.Dimension(300, 60));
+        setMinimumSize(new java.awt.Dimension(250, 30));
+        setPreferredSize(new java.awt.Dimension(250, 30));
+
+        interestingItemsScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
 
         interestingItemsList.setModel(new DefaultListModel<String>());
         interestingItemsList.setEnabled(false);

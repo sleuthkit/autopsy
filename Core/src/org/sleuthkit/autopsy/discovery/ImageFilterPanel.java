@@ -39,6 +39,7 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
         addFilter(new DataSourceFilterPanel(), false, null, 1);
         addFilter(new ParentFolderFilterPanel(), false, null, 1);
         addPanelsToScrollPane(imageFiltersSplitPane);
+        
     }
 
     /**

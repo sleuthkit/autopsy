@@ -42,13 +42,19 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
         crFrequencyList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(pastOccurrencesCheckbox, org.openide.util.NbBundle.getMessage(PastOccurrencesFilterPanel.class, "PastOccurrencesFilterPanel.pastOccurrencesCheckbox.text")); // NOI18N
+        pastOccurrencesCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
+        pastOccurrencesCheckbox.setMinimumSize(new java.awt.Dimension(150, 25));
+        pastOccurrencesCheckbox.setPreferredSize(new java.awt.Dimension(150, 25));
         pastOccurrencesCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pastOccurrencesCheckboxActionPerformed(evt);
             }
         });
 
-        setPreferredSize(new java.awt.Dimension(300, 60));
+        setMinimumSize(new java.awt.Dimension(250, 30));
+        setPreferredSize(new java.awt.Dimension(250, 30));
+
+        crFrequencyScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
 
         crFrequencyList.setModel(new DefaultListModel<Frequency>());
         crFrequencyList.setEnabled(false);
@@ -64,7 +70,7 @@ public class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(crFrequencyScrollPane)
+                .addComponent(crFrequencyScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents

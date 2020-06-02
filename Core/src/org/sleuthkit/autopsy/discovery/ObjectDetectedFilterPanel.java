@@ -67,12 +67,10 @@ public class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
         objectsList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(objectsCheckbox, org.openide.util.NbBundle.getMessage(ObjectDetectedFilterPanel.class, "ObjectDetectedFilterPanel.text")); // NOI18N
-        objectsCheckbox.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        objectsCheckbox.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-        objectsCheckbox.setMaximumSize(new java.awt.Dimension(103, 25));
-        objectsCheckbox.setMinimumSize(new java.awt.Dimension(103, 25));
+        objectsCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
+        objectsCheckbox.setMinimumSize(new java.awt.Dimension(150, 25));
         objectsCheckbox.setName(""); // NOI18N
-        objectsCheckbox.setPreferredSize(new java.awt.Dimension(103, 25));
+        objectsCheckbox.setPreferredSize(new java.awt.Dimension(150, 25));
         objectsCheckbox.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         objectsCheckbox.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
         objectsCheckbox.addActionListener(new java.awt.event.ActionListener() {
@@ -81,15 +79,15 @@ public class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
             }
         });
 
-        setMinimumSize(new java.awt.Dimension(200, 30));
-        setPreferredSize(new java.awt.Dimension(300, 60));
+        setMinimumSize(new java.awt.Dimension(250, 30));
+        setPreferredSize(new java.awt.Dimension(250, 30));
 
-        objectsScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
         objectsScrollPane.setName(""); // NOI18N
-        objectsScrollPane.setPreferredSize(new java.awt.Dimension(260, 50));
+        objectsScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
 
         objectsList.setModel(new DefaultListModel<String>());
         objectsList.setEnabled(false);
+        objectsList.setMaximumSize(new java.awt.Dimension(32767, 32767));
         objectsList.setVisibleRowCount(2);
         objectsScrollPane.setViewportView(objectsList);
 
