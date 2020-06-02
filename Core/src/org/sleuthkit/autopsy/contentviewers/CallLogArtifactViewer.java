@@ -90,6 +90,8 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     
     private final List<PersonaSearcherTask> personaSearchtasks = new ArrayList<>();
   
+    private static final int TOP_INSET = 4;
+     
     /**
      * Creates new form CalllogArtifactViewer
      */
@@ -479,7 +481,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         constraints.gridy = 0;
-        constraints.insets = new java.awt.Insets(4, 0, 0, 0);
+        constraints.insets = new java.awt.Insets(TOP_INSET, 0, 0, 0);
         
         // show primary sender/receiver
         showParticipant(callLogViewData.getNumberDesignator(), callLogViewData.getNumber(), gridBagLayout, constraints );
@@ -566,9 +568,15 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         javax.swing.JButton personaButton = new javax.swing.JButton();
         personaButton.setText(Bundle.CallLogArtifactViewer_persona_button_view());
         personaButton.setEnabled(false);
+        
+        // no top inset of the button, in order to center align with the labels.
+        constraints.insets = new java.awt.Insets(0, 0, 0, 0);
+          
         gridBagLayout.setConstraints(personaButton, constraints);
         participantsListPanel.add(personaButton);
 
+        constraints.insets = new java.awt.Insets(TOP_INSET, 0, 0, 0);
+          
 
         // Kick off a background thread to search for the persona 
         // for this particpant account.
