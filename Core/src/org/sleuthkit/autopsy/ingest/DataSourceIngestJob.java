@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -38,8 +37,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestPipeline.PipelineModule;
-import org.sleuthkit.autopsy.ingest.IngestJob.CancellationReason;
 import org.sleuthkit.autopsy.ingest.IngestTasksScheduler.IngestJobTasksSnapshot;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -56,7 +53,7 @@ import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
  * Encapsulates a data source and the ingest module pipelines used to process
  * it.
  */
-public final class DataSourceIngestJob {
+final class DataSourceIngestJob {
 
     private static final Logger logger = Logger.getLogger(DataSourceIngestJob.class.getName());
 
@@ -1155,194 +1152,4 @@ public final class DataSourceIngestJob {
                 cancelled, cancellationReason, cancelledDataSourceIngestModules,
                 processedFilesCount, estimatedFilesToProcessCount, snapShotTime, tasksSnapshot);
     }
-
-    /**
-     * Stores basic diagnostic statistics for a data source ingest job.
-     */
-    public static final class Snapshot implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        private final String dataSource;
-        private final long jobId;
-        private final long jobStartTime;
-        private final long snapShotTime;
-        transient private final PipelineModule dataSourceLevelIngestModule;
-        private final boolean fileIngestRunning;
-        private final Date fileIngestStartTime;
-        private final long processedFiles;
-        private final long estimatedFilesToProcess;
-        private final IngestJobTasksSnapshot tasksSnapshot;
-        transient private final boolean jobCancelled;
-        transient private final CancellationReason jobCancellationReason;
-        transient private final List<String> cancelledDataSourceModules;
-
-        /**
-         * Constructs an object to store basic diagnostic statistics for a data
-         * source ingest job.
-         */
-        Snapshot(String dataSourceName, long jobId, long jobStartTime, PipelineModule dataSourceIngestModule,
-                boolean fileIngestRunning, Date fileIngestStartTime,
-                boolean jobCancelled, CancellationReason cancellationReason, List<String> cancelledModules,
-                long processedFiles, long estimatedFilesToProcess,
-                long snapshotTime, IngestJobTasksSnapshot tasksSnapshot) {
-            this.dataSource = dataSourceName;
-            this.jobId = jobId;
-            this.jobStartTime = jobStartTime;
-            this.dataSourceLevelIngestModule = dataSourceIngestModule;
-
-            this.fileIngestRunning = fileIngestRunning;
-            this.fileIngestStartTime = fileIngestStartTime;
-            this.jobCancelled = jobCancelled;
-            this.jobCancellationReason = cancellationReason;
-            this.cancelledDataSourceModules = cancelledModules;
-
-            this.processedFiles = processedFiles;
-            this.estimatedFilesToProcess = estimatedFilesToProcess;
-            this.snapShotTime = snapshotTime;
-            this.tasksSnapshot = tasksSnapshot;
-        }
-
-        /**
-         * Gets time these statistics were collected.
-         *
-         * @return The statistics collection time as number of milliseconds
-         *         since January 1, 1970, 00:00:00 GMT.
-         */
-        long getSnapshotTime() {
-            return snapShotTime;
-        }
-
-        /**
-         * Gets the name of the data source associated with the ingest job that
-         * is the subject of this snapshot.
-         *
-         * @return A data source name string.
-         */
-        String getDataSource() {
-            return dataSource;
-        }
-
-        /**
-         * Gets the identifier of the ingest job that is the subject of this
-         * snapshot.
-         *
-         * @return The ingest job id.
-         */
-        long getJobId() {
-            return this.jobId;
-        }
-
-        /**
-         * Gets the time the ingest job was started.
-         *
-         * @return The start time as number of milliseconds since January 1,
-         *         1970, 00:00:00 GMT.
-         */
-        long getJobStartTime() {
-            return jobStartTime;
-        }
-
-        DataSourceIngestPipeline.PipelineModule getDataSourceLevelIngestModule() {
-            return this.dataSourceLevelIngestModule;
-        }
-
-        boolean getFileIngestIsRunning() {
-            return this.fileIngestRunning;
-        }
-
-        Date getFileIngestStartTime() {
-            return this.fileIngestStartTime;
-        }
-
-        /**
-         * Gets files per second throughput since the ingest job that is the
-         * subject of this snapshot started.
-         *
-         * @return Files processed per second (approximate).
-         */
-        double getSpeed() {
-            return (double) processedFiles / ((snapShotTime - jobStartTime) / 1000);
-        }
-
-        /**
-         * Gets the number of files processed for the job so far.
-         *
-         * @return The number of processed files.
-         */
-        long getFilesProcessed() {
-            return processedFiles;
-        }
-
-        /**
-         * Gets an estimate of the files that still need to be processed for
-         * this job.
-         *
-         * @return The estimate.
-         */
-        long getFilesEstimated() {
-            return estimatedFilesToProcess;
-        }
-
-        long getRootQueueSize() {
-            if (null == this.tasksSnapshot) {
-                return 0;
-            }
-            return this.tasksSnapshot.getRootQueueSize();
-        }
-
-        long getDirQueueSize() {
-            if (null == this.tasksSnapshot) {
-                return 0;
-            }
-            return this.tasksSnapshot.getDirectoryTasksQueueSize();
-        }
-
-        long getFileQueueSize() {
-            if (null == this.tasksSnapshot) {
-                return 0;
-            }
-            return this.tasksSnapshot.getFileQueueSize();
-        }
-
-        long getDsQueueSize() {
-            if (null == this.tasksSnapshot) {
-                return 0;
-            }
-            return this.tasksSnapshot.getDsQueueSize();
-        }
-
-        long getRunningListSize() {
-            if (null == this.tasksSnapshot) {
-                return 0;
-            }
-            return this.tasksSnapshot.getRunningListSize();
-        }
-
-        boolean isCancelled() {
-            return this.jobCancelled;
-        }
-
-        /**
-         * Gets the reason this job was cancelled.
-         *
-         * @return The cancellation reason, may be not cancelled.
-         */
-        IngestJob.CancellationReason getCancellationReason() {
-            return this.jobCancellationReason;
-        }
-
-        /**
-         * Gets a list of the display names of any canceled data source level
-         * ingest modules
-         *
-         * @return A list of canceled data source level ingest module display
-         *         names, possibly empty.
-         */
-        List<String> getCancelledDataSourceIngestModules() {
-            return Collections.unmodifiableList(this.cancelledDataSourceModules);
-        }
-
-    }
-
 }

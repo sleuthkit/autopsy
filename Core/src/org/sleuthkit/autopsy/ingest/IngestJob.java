@@ -199,8 +199,8 @@ public final class IngestJob {
      *
      * @return A list of data source ingest job progress snapshots.
      */
-    List<DataSourceIngestJob.Snapshot> getDataSourceIngestJobSnapshots() {
-        List<DataSourceIngestJob.Snapshot> snapshots = new ArrayList<>();
+    List<Snapshot> getDataSourceIngestJobSnapshots() {
+        List<Snapshot> snapshots = new ArrayList<>();
         this.dataSourceJobs.values().stream().forEach((dataSourceJob) -> {
             snapshots.add(dataSourceJob.getSnapshot(true));
         });
@@ -290,9 +290,9 @@ public final class IngestJob {
          */
         public final class DataSourceProcessingSnapshot {
 
-            private final DataSourceIngestJob.Snapshot snapshot;
+            private final Snapshot snapshot;
 
-            private DataSourceProcessingSnapshot(DataSourceIngestJob.Snapshot snapshot) {
+            private DataSourceProcessingSnapshot(Snapshot snapshot) {
                 this.snapshot = snapshot;
             }
 
@@ -347,7 +347,7 @@ public final class IngestJob {
             fileIngestStartTime = null;
             dataSourceProcessingSnapshots = new ArrayList<>();
             for (DataSourceIngestJob dataSourceJob : dataSourceJobs.values()) {
-                DataSourceIngestJob.Snapshot snapshot = dataSourceJob.getSnapshot(getIngestTasksSnapshot);
+                Snapshot snapshot = dataSourceJob.getSnapshot(getIngestTasksSnapshot);
                 dataSourceProcessingSnapshots.add(new DataSourceProcessingSnapshot(snapshot));
                 if (null == dataSourceModule) {
                     DataSourceIngestPipeline.PipelineModule module = snapshot.getDataSourceLevelIngestModule();
