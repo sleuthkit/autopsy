@@ -854,6 +854,16 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
     }
     
     @Override
+    public void executeUpdateSQL(String updateSQL) throws CentralRepoException {
+        try {
+            acquireSharedLock();
+            super.executeUpdateSQL(updateSQL);
+        } finally {
+            releaseSharedLock();
+        }
+    }
+    
+    @Override
     public void executeDeleteSQL(String deleteSQL) throws CentralRepoException {
         try {
             acquireSharedLock();

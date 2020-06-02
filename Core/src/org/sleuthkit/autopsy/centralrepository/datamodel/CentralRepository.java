@@ -854,6 +854,15 @@ public interface CentralRepository {
     void executeSelectSQL(String sql, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException;
     
     /**
+     * Executes an UPDATE sql statement on the central repository database.
+     * 
+     * @param sql UPDATE sql to execute.
+     * 
+     * @throws CentralRepoException If there is an error.
+     */
+    void executeUpdateSQL(String sql) throws CentralRepoException;
+    
+    /**
      * Executes a DELETE sql statement on the central repository database.
      * 
      * @param sql DELETE sql to execute.

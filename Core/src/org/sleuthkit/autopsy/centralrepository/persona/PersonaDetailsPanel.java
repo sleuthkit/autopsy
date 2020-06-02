@@ -768,7 +768,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
             case EDIT:
                 try {
                     ret = currentPersona;
-                    //currentPersona.setName(nameField.getText()); //todo
+                    currentPersona.setName(nameField.getText());
                     for (PAccount acc : accountsToAdd) {
                         ret.addAccount(acc.account, acc.justification, acc.confidence);
                     }

@@ -2585,6 +2585,28 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
     
     @Override
+    public void executeUpdateSQL(String updateSQL) throws CentralRepoException {
+
+        if (updateSQL == null) {
+            throw new CentralRepoException("Update SQL is null");
+        }
+
+        StringBuilder sqlSb = new StringBuilder(QUERY_STR_MAX_LEN);
+        if (updateSQL.trim().toUpperCase().startsWith("UPDATE") == false) {
+            sqlSb.append("UPDATE ");
+        }
+        
+        sqlSb.append(updateSQL);
+        
+        try (Connection conn = connect();
+                PreparedStatement preparedStatement = conn.prepareStatement(sqlSb.toString());) {
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new CentralRepoException(String.format("Error running SQL %s, exception = %s", updateSQL, ex.getMessage()), ex);
+        }
+    }
+    
+    @Override
     public void executeDeleteSQL(String deleteSQL) throws CentralRepoException {
         
         if (deleteSQL == null) {

@@ -253,6 +253,18 @@ public class Persona {
         CentralRepository.getInstance().executeInsertSQL(insertClause);
         return getPersonaByUUID(uuidStr);
     }
+    
+    /**
+     * Sets the name of this persona
+     *
+     * @param name The new name.
+     * 
+     * @throws CentralRepoException If there is an error.
+     */
+    public void setName(String name) throws CentralRepoException {
+        String updateClause = "UPDATE personas SET name = \"" + name + "\" WHERE id = " + id;
+        CentralRepository.getInstance().executeUpdateSQL(updateClause);
+    }
 
     /**
      * Associates an account with a persona by creating a row in the
