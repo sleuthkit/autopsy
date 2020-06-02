@@ -134,7 +134,7 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
         for (String resourceFile : INTERESTING_FILESETS_RULES_NAMES) {
             String resourcePath = String.join("/", CONFIG_DIR, resourceFile);
             if (StandardInterestingFilesSetsLoader.class.getResource(resourcePath) == null) {
-                LOGGER.log(Level.SEVERE, String.format("Expected resource: %s could not be found at %s.", resourceFile, resourcePath));
+                LOGGER.log(Level.SEVERE, String.format("Expected resource: '%s' could not be found at '%s'.", resourceFile, resourcePath));
             } else {
                 InputStream fileSetStream = StandardInterestingFilesSetsLoader.class.getResourceAsStream(resourcePath);
                 updateStandardFilesSetConfigFile(rulesConfigDir, fileSetStream, resourceFile);
@@ -143,10 +143,14 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
     }
 
     /**
+     * gets a copy of the Files Set forcing the standard file set flag to what
+     * is provided as a parameter.
      *
-     * @param origFilesSet
+     * @param origFilesSet     The fileset to get a copy of.
+     * @param standardFilesSet Whether or not the copy should be a standard
+     *                         files set.
      *
-     * @return
+     * @return The copy.
      */
     static FilesSet getAsStandardFilesSet(FilesSet origFilesSet, boolean standardFilesSet) {
         return new FilesSet(
@@ -250,9 +254,9 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
                 // to the user-defined rule set and add it back to the Map.  
                 if (appendCustom && srcFileSet.isStandardSet() != destFileSet.isStandardSet()) {
                     if (srcFileSet.isStandardSet()) {
-                        addCustomFile(dest, key, destFileSet);
+                        addCustomFile(dest, destFileSet);
                     } else {
-                        addCustomFile(dest, key, srcFileSet);
+                        addCustomFile(dest, srcFileSet);
                         src.put(key, destFileSet);
                     }
                     continue;
@@ -274,24 +278,34 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
      * the key with " (custom)" appended.
      *
      * @param dest        The destination map.
-     * @param key         The key that will be used for the basis of the name
-     *                    and the key in the hashmap ("custom" will be
-     *                    appended).
      * @param srcFilesSet The FilesSet to append as custom. A non-readonly
      *                    filesset must be provided.
      */
-    @Messages({
-        "# {0} - filesSetName",
-        "StandardInterestingFileSetsLoader.customSuffixed={0} (Custom)"
-    })
-    private static void addCustomFile(Map<String, FilesSet> dest, String key, FilesSet srcFilesSet) {
+    private static void addCustomFile(Map<String, FilesSet> dest, FilesSet srcFilesSet) {
         if (srcFilesSet.isStandardSet()) {
             LOGGER.log(Level.SEVERE, "An attempt to create a custom file that was a standard set.");
             return;
         }
 
-        String customKey = Bundle.StandardInterestingFileSetsLoader_customSuffixed(key);
-        FilesSet customFilesSet = new FilesSet(
+        FilesSet customCopy = getAsCustomFileSet(srcFilesSet);
+        dest.put(customCopy.getName(), customCopy);
+    }
+
+    /**
+     * Gets a copy of the FilesSet as a non-standard files set with " (custom)"
+     * appended.
+     *
+     * @param srcFilesSet The files set.
+     *
+     * @return The altered copy.
+     */
+    @Messages({
+        "# {0} - filesSetName",
+        "StandardInterestingFileSetsLoader.customSuffixed={0} (Custom)"
+    })
+    static FilesSet getAsCustomFileSet(FilesSet srcFilesSet) {
+        String customKey = Bundle.StandardInterestingFileSetsLoader_customSuffixed(srcFilesSet.getName());
+        return new FilesSet(
                 customKey,
                 srcFilesSet.getDescription(),
                 srcFilesSet.ignoresKnownFiles(),
@@ -300,7 +314,5 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
                 false,
                 srcFilesSet.getVersionNumber()
         );
-        dest.put(customKey, customFilesSet);
     }
-
 }

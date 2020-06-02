@@ -38,6 +38,7 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.apache.commons.lang3.tuple.Pair;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -244,12 +245,11 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * Clears the list models and resets all of the components.
      */
     private void resetComponents() {
-        this.resetRuleComponents();
         this.setsListModel.clear();
         this.setDescriptionTextArea.setText("");
         this.ignoreKnownFilesCheckbox.setSelected(true);
         this.ingoreUnallocCheckbox.setSelected(true);
-        enableButtons();
+        this.resetRuleComponents();
     }
 
     /**
@@ -281,7 +281,9 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             if (e.getValueIsAdjusting()) {
                 return;
             }
+
             FilesSetDefsPanel.this.rulesListModel.clear();
+            FilesSetDefsPanel.this.resetRuleComponents();
 
             // Get the selected interesting files set and populate the set
             // components.
@@ -309,8 +311,6 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     FilesSetDefsPanel.this.rulesList.setSelectedIndex(0);
                 }
             }
-
-            FilesSetDefsPanel.this.resetRuleComponents();
         }
     }
 
@@ -441,10 +441,19 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 // Preserve the existing rules from the set being edited.
                 rules.putAll(selectedSet.getRules());
             }
+
+            FilesSet filesSet = new FilesSet(
+                    panel.getFilesSetName(),
+                    panel.getFilesSetDescription(),
+                    panel.getFileSetIgnoresKnownFiles(),
+                    panel.getFileSetIgnoresUnallocatedSpace(),
+                    rules
+            );
+
             if (shouldCreateNew) {
-                this.replaceFilesSet(null, panel.getFilesSetName(), panel.getFilesSetDescription(), panel.getFileSetIgnoresKnownFiles(), panel.getFileSetIgnoresUnallocatedSpace(), rules);
+                this.replaceFilesSet(null, filesSet, null);
             } else {
-                this.replaceFilesSet(selectedSet, panel.getFilesSetName(), panel.getFilesSetDescription(), panel.getFileSetIgnoresKnownFiles(), panel.getFileSetIgnoresUnallocatedSpace(), rules);
+                this.replaceFilesSet(selectedSet, filesSet, null);
             }
         }
     }
@@ -492,7 +501,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
             // Add the new/edited files set definition, replacing any previous
             // definition with the same name and refreshing the display.
-            this.replaceFilesSet(selectedSet, selectedSet.getName(), selectedSet.getDescription(), selectedSet.ignoresKnownFiles(), selectedSet.ingoresUnallocatedSpace(), rules);
+            this.replaceFilesSet(selectedSet, selectedSet, rules);
 
             // Select the new/edited rule. Queue it up so it happens after the
             // selection listeners react to the selection of the "new" files
@@ -508,17 +517,16 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * owned by this panel. If there is a definition with the same name, it will
      * be replaced, so this is an add/edit operation.
      *
-     * @param oldSet                    A set to replace, null if the new set is
-     *                                  not a replacement.
-     * @param name                      The name of the files set.
-     * @param description               The description of the files set.
-     * @param ignoresKnownFiles         Whether or not the files set ignores
-     *                                  known files.
-     * @param rules                     The set membership rules for the set.
-     * @param processesUnallocatedSpace Whether or not this set of rules
-     *                                  processes unallocated space
+     * @param oldSet            A set to replace, null if the new set is not a
+     *                          replacement.
+     * @param name              The name of the files set.
+     * @param description       The description of the files set.
+     * @param ignoresKnownFiles Whether or not the files set ignores known
+     *                          files.
+     * @param rules             The set membership rules for the set. If null,
+     *                          the rules in the new set will be used.
      */
-    void replaceFilesSet(FilesSet oldSet, String name, String description, boolean ignoresKnownFiles, boolean ignoresUnallocatedSpace, Map<String, FilesSet.Rule> rules) {
+    private void replaceFilesSet(FilesSet oldSet, FilesSet newSet, Map<String, FilesSet.Rule> rules) {
         if (oldSet != null) {
             // Remove the set to be replaced from the working copy if the files
             // set definitions.
@@ -527,7 +535,18 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         // Make the new/edited set definition and add it to the working copy of
         // the files set definitions.
-        FilesSet newSet = new FilesSet(name, description, ignoresKnownFiles, ignoresUnallocatedSpace, rules);
+        if (rules != null) {
+            newSet = new FilesSet(
+                    newSet.getName(),
+                    newSet.getDescription(),
+                    newSet.ignoresKnownFiles(),
+                    newSet.ingoresUnallocatedSpace(),
+                    rules,
+                    newSet.isStandardSet(),
+                    newSet.getVersionNumber()
+            );
+        }
+
         this.filesSets.put(newSet.getName(), newSet);
 
         // Redo the list model for the files set list component, which will make
@@ -1046,7 +1065,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         Map<String, FilesSet.Rule> rules = new HashMap<>(oldSet.getRules());
         FilesSet.Rule selectedRule = this.rulesList.getSelectedValue();
         rules.remove(selectedRule.getUuid());
-        this.replaceFilesSet(oldSet, oldSet.getName(), oldSet.getDescription(), oldSet.ignoresKnownFiles(), oldSet.ingoresUnallocatedSpace(), rules);
+        this.replaceFilesSet(oldSet, oldSet, rules);
         if (!this.rulesListModel.isEmpty()) {
             this.rulesList.setSelectedIndex(0);
         } else {
@@ -1101,10 +1120,13 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     }//GEN-LAST:event_copySetButtonActionPerformed
     @NbBundle.Messages({
         "FilesSetDefsPanel.yesOwMsg=Yes, overwrite",
+        "FilesSetDefsPanel.yesStandardFileConflictCreate=Yes, create",
         "FilesSetDefsPanel.noSkipMsg=No, skip",
         "FilesSetDefsPanel.cancelImportMsg=Cancel import",
         "# {0} - FilesSet name",
         "FilesSetDefsPanel.interesting.overwriteSetPrompt=Interesting files set <{0}> already exists locally, overwrite?",
+        "# {0} - FilesSet name",
+        "FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name <{0}>.  Would you like to create a custom version of this file set?",
         "FilesSetDefsPanel.interesting.importOwConflict=Import Interesting files set conflict",
         "FilesSetDefsPanel.interesting.failImportMsg=Interesting files set not imported",
         "FilesSetDefsPanel.interesting.fileExtensionFilterLbl=Autopsy Interesting File Set File (xml)",
@@ -1151,28 +1173,8 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     .map((filesSet) -> StandardInterestingFilesSetsLoader.getAsStandardFilesSet(filesSet, false))
                     .collect(Collectors.toList());
 
-            for (FilesSet set : importedSets) {
-                int choice = JOptionPane.OK_OPTION;
-                if (filesSets.containsKey(set.getName())) {
-                    Object[] options = {NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.yesOwMsg"),
-                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.noSkipMsg"),
-                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.cancelImportMsg")};
-                    choice = JOptionPane.showOptionDialog(this,
-                            NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.overwriteSetPrompt", set.getName()),
-                            NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.importOwConflict"),
-                            JOptionPane.YES_NO_CANCEL_OPTION,
-                            JOptionPane.QUESTION_MESSAGE,
-                            null,
-                            options,
-                            options[0]);
-                }
-                if (choice == JOptionPane.OK_OPTION) {
-                    selectedSet = set;
-                    this.filesSets.put(set.getName(), set);
-                } else if (choice == JOptionPane.CANCEL_OPTION) {
-                    break;
-                }
-            }
+            FilesSet newSelected = determineFilesToImport(importedSets);
+
             // Redo the list model for the files set list component
             FilesSetDefsPanel.this.setsListModel.clear();
             this.filesSets.values().forEach((set) -> {
@@ -1181,11 +1183,103 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             // Select the new/edited files set definition in the set definitions
             // list. This will cause the selection listeners to repopulate the
             // subordinate components.
-            this.setsList.setSelectedValue(selectedSet, true);
+            this.setsList.setSelectedValue(newSelected == null ? selectedSet : newSelected, true);
+
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
 
     }//GEN-LAST:event_importSetButtonActionPerformed
+
+    /**
+     * From the files sets that can be imported, this method rectifies any
+     * conflicts that may occur.
+     *
+     * @param importedSets The sets to be imported.
+     *
+     * @return The files set to be selected or null if no items imported.
+     */
+    private FilesSet determineFilesToImport(Collection<FilesSet> importedSets) {
+        FilesSet selectedSet = null;
+
+        for (FilesSet set : importedSets) {
+            Pair<FilesSet, Integer> conflictResult = handleConflict(set);
+            int choice = conflictResult.getRight();
+            FilesSet resultingFilesSet = conflictResult.getLeft();
+
+            if (choice == JOptionPane.OK_OPTION) {
+                selectedSet = resultingFilesSet;
+                this.filesSets.put(resultingFilesSet.getName(), resultingFilesSet);
+            } else if (choice == JOptionPane.CANCEL_OPTION) {
+                break;
+            }
+        }
+
+        return selectedSet;
+    }
+
+    /**
+     * Handles any possible conflicts that may arise from importing a files set.
+     *
+     * @param set The set to potentially import.
+     *
+     * @return A pair of the files set to be imported (or null if none) and the
+     *         integer corresponding to the JOptionPane choice of the
+     *         yes_no_cancel_option.
+     */
+    private Pair<FilesSet, Integer> handleConflict(FilesSet set) {
+        FilesSet conflict = this.filesSets.get(set.getName());
+        // if no conflict, return the files set as is with the option to proceed
+        if (conflict == null) {
+            return Pair.of(set, JOptionPane.OK_OPTION);
+        } else if (conflict.isStandardSet()) {
+            // if there is a conflict and the conflicting files set is a standard files set,
+            // see if allowing a custom files set is okay.
+            Object[] options = {
+                Bundle.FilesSetDefsPanel_yesStandardFileConflictCreate(),
+                Bundle.FilesSetDefsPanel_noSkipMsg(),
+                Bundle.FilesSetDefsPanel_cancelImportMsg()
+            };
+
+            int conflictChoice = JOptionPane.showOptionDialog(this,
+                    Bundle.FilesSetDefsPanel_interesting_standardFileConflict(set.getName()),
+                    Bundle.FilesSetDefsPanel_interesting_importOwConflict(),
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    options,
+                    options[0]);
+
+            // if it is okay, try again to see if there is a conflict.
+            if (conflictChoice == JOptionPane.OK_OPTION) {
+                return handleConflict(StandardInterestingFilesSetsLoader.getAsCustomFileSet(set));
+            }
+
+            return Pair.of(null, conflictChoice);
+        } else {
+            // if there is a conflict, see if it is okay to overwrite.
+            Object[] options = {
+                Bundle.FilesSetDefsPanel_yesOwMsg(),
+                Bundle.FilesSetDefsPanel_noSkipMsg(),
+                Bundle.FilesSetDefsPanel_cancelImportMsg()
+            };
+
+            int conflictChoice = JOptionPane.showOptionDialog(this,
+                    Bundle.FilesSetDefsPanel_interesting_overwriteSetPrompt(set.getName()),
+                    Bundle.FilesSetDefsPanel_interesting_importOwConflict(),
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    options,
+                    options[0]);
+
+            if (conflictChoice == JOptionPane.OK_OPTION) {
+                // if so, just return the files set to be placed in the map overwriting what is currently present.
+                return Pair.of(set, conflictChoice);
+            }
+
+            return Pair.of(null, conflictChoice);
+        }
+    }
 
     @NbBundle.Messages({"FilesSetDefsPanel.interesting.exportButtonAction.featureName=Interesting Files Set Export",
         "# {0} - file name",
