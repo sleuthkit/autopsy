@@ -53,9 +53,8 @@ public interface IngestStream {
      * @param fileObjectIds List of file object IDs.
      * 
      * @throws IngestStreamClosedException 
-     * @throws TskCoreException
      */
-    void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException, TskCoreException;
+    void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException;
     
     /**
      * Returns the next set of files that are ready for ingest.

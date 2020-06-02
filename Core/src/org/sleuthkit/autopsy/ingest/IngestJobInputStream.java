@@ -85,13 +85,13 @@ class IngestJobInputStream implements IngestStream {
     }
 
     @Override
-    public void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException, TskCoreException {
+    public void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException {
         synchronized(this) {
             if (isClosed) {
                 throw new IngestStreamClosedException("Can not add files - ingest stream is closed");
             }
             if (dataSource == null) {
-                throw new TskCoreException("Files can not be added without a data source");
+                throw new IllegalStateException("Files can not be added before a data source");
             }
             fileIdQueue.addAll(fileObjectIds);
         }
