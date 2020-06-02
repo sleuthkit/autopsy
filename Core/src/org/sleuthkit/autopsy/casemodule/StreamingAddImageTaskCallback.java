@@ -25,41 +25,39 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Called on completion of the add image task.
+ * A callback to be called on completion of an add image task. This
+ * implementation of the interface is suitable for streaming ingest use cases.
+ * It closes the ingest stream and then calls the data source processor done
+ * callback.
  */
-class DefaultAddImageTaskCallback implements AddImageTaskCallback {
+class StreamingAddImageTaskCallback implements AddImageTaskCallback {
+
     private final IngestStream ingestStream;
     private final DataSourceProcessorCallback dspCallback;
-    
+
     /**
-     * Callback to use with an ingest stream.
-     * 
+     * Constructs a callback to be called on completion of an add image task.
+     * This implementation of the interface is suitable for streaming ingest use
+     * cases. It closes the ingest stream and then calls the data source
+     * processor done callback.
+     *
      * @param ingestStream The ingest stream that data is being sent to.
-     * @param dspCallback  The callback for non-ingest stream related processing.
+     * @param dspCallback  The callback for non-ingest stream related
+     *                     processing.
      */
-    DefaultAddImageTaskCallback(IngestStream ingestStream, DataSourceProcessorCallback dspCallback) {
+    StreamingAddImageTaskCallback(IngestStream ingestStream, DataSourceProcessorCallback dspCallback) {
         this.ingestStream = ingestStream;
         this.dspCallback = dspCallback;
     }
-   
-    /**
-     * Callback to use without an ingest stream.
-     * Will create a default ingest stream object that does nothing.
-     * 
-     * @param dspCallback  The callback for non-ingest stream related processing.
-     */    
-    DefaultAddImageTaskCallback(DataSourceProcessorCallback dspCallback) {
-        this.ingestStream = new DefaultIngestStream();
-        this.dspCallback = dspCallback;
-    }   
 
     /**
      * Called when the add image task is completed.
-     * 
-     * @param result   The result from the data source processor.
-     * @param errList  The list of errors.
-     * @param newDataSources  The list of new data sources.
+     *
+     * @param result         The result from the data source processor.
+     * @param errList        The list of errors.
+     * @param newDataSources The list of new data sources.
      */
+    @Override
     public void onCompleted(DataSourceProcessorResult result, List<String> errList, List<Content> newDataSources) {
         if (result.equals(DataSourceProcessorResult.CRITICAL_ERRORS)) {
             ingestStream.close(false);
@@ -68,4 +66,5 @@ class DefaultAddImageTaskCallback implements AddImageTaskCallback {
         }
         dspCallback.done(result, errList, newDataSources);
     }
+    
 }

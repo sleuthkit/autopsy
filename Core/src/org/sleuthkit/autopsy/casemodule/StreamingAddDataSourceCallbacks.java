@@ -26,36 +26,42 @@ import org.sleuthkit.autopsy.ingest.IngestStreamClosedException;
 import org.sleuthkit.datamodel.AddDataSourceCallbacks;
 
 /**
- * Callback to send files from the data source processor to the ingest stream.
+ * A set of callbacks to be called during the process of adding a data source to
+ * the case database. This implementation of the interface is suitable for
+ * streaming ingest use cases.
  */
-class AddImageCallbacks implements AddDataSourceCallbacks {
-    private final Logger logger = Logger.getLogger(AddImageCallbacks.class.getName());
+class StreamingAddDataSourceCallbacks implements AddDataSourceCallbacks {
+
+    private final Logger logger = Logger.getLogger(StreamingAddDataSourceCallbacks.class.getName());
     private final IngestStream ingestStream;
 
     /**
-     * Create the AddImageCallbacks object.
-     * 
+     * Constructs a set of callbacks to be called during the process of adding a
+     * data source to the case database. This implementation of the interface is
+     * suitable for streaming ingest use cases.
+     *
      * @param stream The IngestStream to send data to
      */
-    AddImageCallbacks(IngestStream stream) {
-	ingestStream = stream;
+    StreamingAddDataSourceCallbacks(IngestStream stream) {
+        ingestStream = stream;
     }
 
     @Override
     public void onDataSourceAdded(long dataSourceObjectId) {
-	try {
-	    ingestStream.addDataSource(dataSourceObjectId);
-	} catch (IngestStreamClosedException ex) {
-	    logger.log(Level.SEVERE, "Error adding data source with ID {0} to ingest stream - ingest stream is closed", dataSourceObjectId);
-	}
+        try {
+            ingestStream.addDataSource(dataSourceObjectId);
+        } catch (IngestStreamClosedException ex) {
+            logger.log(Level.SEVERE, "Error adding data source with ID {0} to ingest stream - ingest stream is closed", dataSourceObjectId);
+        }
     }
 
     @Override
     public void onFilesAdded(List<Long> fileObjectIds) {
-	try {
-	    ingestStream.addFiles(fileObjectIds);
-	} catch (IngestStreamClosedException ex) {
-	    logger.log(Level.SEVERE, "Error adding {0} files to ingest stream - ingest stream is closed", fileObjectIds.size());
-	}
+        try {
+            ingestStream.addFiles(fileObjectIds);
+        } catch (IngestStreamClosedException ex) {
+            logger.log(Level.SEVERE, "Error adding {0} files to ingest stream - ingest stream is closed", fileObjectIds.size());
+        }
     }
+    
 }
