@@ -23,12 +23,12 @@ import java.util.List;
 import org.python.google.common.collect.ImmutableList;
 
 /**
- * The result of attempting to parse a GeoLocation object.
+ * The result of attempting to parse GeoLocation objects.
  */
 public class GeoLocationParseResult<T> {
 
     private boolean successfullyParsed;
-    private List<T> items = new ArrayList<>();
+    private final List<T> items = new ArrayList<>();
 
     /**
      * Returns a GeoLocationParseResult with no items and declared successfully
@@ -61,10 +61,7 @@ public class GeoLocationParseResult<T> {
      * @param toAdd The GeoLocationParseResult to add.
      */
     public void add(GeoLocationParseResult<T> toAdd) {
-        this.successfullyParsed = (this.successfullyParsed == false)
-                ? false
-                : toAdd.isSuccessfullyParsed();
-
+        this.successfullyParsed = this.successfullyParsed && toAdd.isSuccessfullyParsed();
         this.items.addAll(toAdd.getItems());
     }
 
