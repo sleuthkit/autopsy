@@ -571,7 +571,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     // Log error and return to continue processing
-                   logger.log(Level.WARNING, String.format("Error creatinkg or adding artifact."), ex); //NON-NLS
+                   logger.log(Level.WARNING, String.format("Error creating or adding artifact."), ex); //NON-NLS
                    return;
                 }
                 if (!bbartifacts.isEmpty()) {
