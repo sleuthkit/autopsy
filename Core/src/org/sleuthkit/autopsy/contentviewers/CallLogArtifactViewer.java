@@ -840,8 +840,10 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     }
     
     
-    /* *
+    /**
      * A data bag for the persona searching thread.
+     * It wraps the account id to search for, and the UI label and button
+     * to update once the search completes.
      */
     private class AccountPersonaSearcherData {
 
@@ -936,7 +938,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                     }
                     // Show a 'View' button
                     personaButtonText = Bundle.CallLogArtifactViewer_persona_button_view();
-                    buttonActionListener = new ViewPersonaButtonListener(personaSearcherData, persona);
+                    buttonActionListener = new ViewPersonaButtonListener(persona);
                 }
                 
                 personaSearcherData.getPersonaNameLabel().setText(personaLabelText);
@@ -956,35 +958,42 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         }
     }
         
-        private class CreatePersonaButtonListener implements ActionListener {
+    /**
+     * Action listener for Create persona button.
+     */
+    private class CreatePersonaButtonListener implements ActionListener {
 
-            private final AccountPersonaSearcherData personaSearcherData;
-            CreatePersonaButtonListener(AccountPersonaSearcherData personaSearcherData) {
-                 this.personaSearcherData = personaSearcherData;
-            }
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                // Launch the Persona Create dialog
-                new PersonaDetailsDialog(CallLogArtifactViewer.this,
-                                PersonaDetailsMode.CREATE, null, new PersonaCreateCallbackImpl(personaSearcherData));
-            }
+        private final AccountPersonaSearcherData personaSearcherData;
+
+        CreatePersonaButtonListener(AccountPersonaSearcherData personaSearcherData) {
+            this.personaSearcherData = personaSearcherData;
         }
+
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            // Launch the Persona Create dialog
+            new PersonaDetailsDialog(CallLogArtifactViewer.this,
+                    PersonaDetailsMode.CREATE, null, new PersonaCreateCallbackImpl(personaSearcherData));
+        }
+    }
         
-        private class ViewPersonaButtonListener implements ActionListener {
-            
-            private final AccountPersonaSearcherData personaSearcherData;
-            private final Persona persona;
-            ViewPersonaButtonListener(AccountPersonaSearcherData personaSearcherData, Persona persona) {
-                this.personaSearcherData = personaSearcherData;
-                this.persona = persona;
-            }
-            
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                new PersonaDetailsDialog(CallLogArtifactViewer.this,
-                               PersonaDetailsMode.VIEW, persona, new PersonaViewCallbackImpl());
-            }
+    /**
+     * Action listener for View persona button.
+     */
+    private class ViewPersonaButtonListener implements ActionListener {
+
+        private final Persona persona;
+
+        ViewPersonaButtonListener(Persona persona) {
+            this.persona = persona;
         }
+
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            new PersonaDetailsDialog(CallLogArtifactViewer.this,
+                    PersonaDetailsMode.VIEW, persona, new PersonaViewCallbackImpl());
+        }
+    }
        
         
     /**
@@ -1010,7 +1019,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 for (ActionListener act : personaButton.getActionListeners()) {
                     personaButton.removeActionListener(act);
                 }
-                personaButton.addActionListener(new ViewPersonaButtonListener (personaSearcherData, persona));
+                personaButton.addActionListener(new ViewPersonaButtonListener (persona));
                 
             }
            
