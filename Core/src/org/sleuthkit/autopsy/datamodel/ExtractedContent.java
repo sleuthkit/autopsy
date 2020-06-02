@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -151,6 +152,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
         // maps the artifact type to its child node 
         private final HashMap<BlackboardArtifact.Type, TypeNode> typeNodeList = new HashMap<>();
 
+        private final RefreshThrottler refreshThrottler = new RefreshThrottler();
+
         @SuppressWarnings("deprecation")
         TypeFactory() {
             super();
@@ -174,6 +177,10 @@ public class ExtractedContent implements AutopsyVisitableItem {
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
             String eventType = evt.getPropertyName();
             if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                if (!refreshThrottler.isRefreshDue()) {
+                    return;
+                }
+
                 /**
                  * This is a stop gap measure until a different way of handling
                  * the closing of cases is worked out. Currently, remote events
@@ -188,7 +195,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      */
                     final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
                     if (null != event && !(this.doNotShow.contains(event.getBlackboardArtifactType()))) {
-                        refresh(true);
+                        refresh(false);
+                        refreshThrottler.setLastRefreshTime(Instant.now());
                     }
                 } catch (NoCurrentCaseException notUsed) {
                     /**
@@ -204,7 +212,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                  */
                 try {
                     Case.getCurrentCaseThrows();
-                    refresh(true);
+                    refresh(false);
                 } catch (NoCurrentCaseException notUsed) {
                     /**
                      * Case is closed, do nothing.
@@ -358,6 +366,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
     private class ArtifactFactory extends BaseChildFactory<BlackboardArtifact> {
 
         private BlackboardArtifact.Type type;
+        private final RefreshThrottler refreshThrottler = new RefreshThrottler();
 
         ArtifactFactory(BlackboardArtifact.Type type) {
             super(type.getTypeName());
@@ -369,6 +378,10 @@ public class ExtractedContent implements AutopsyVisitableItem {
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
                 if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                    if (!refreshThrottler.isRefreshDue()) {
+                        return;
+                    }
+
                     /**
                      * Checking for a current case is a stop gap measure until a
                      * different way of handling the closing of cases is worked
@@ -385,7 +398,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
                          */
                         final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
                         if (null != event && event.getBlackboardArtifactType().equals(type)) {
-                            refresh(true);
+                            refresh(false);
+                            refreshThrottler.setLastRefreshTime(Instant.now());
                         }
                     } catch (NoCurrentCaseException notUsed) {
                         /**
@@ -402,7 +416,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      */
                     try {
                         Case.getCurrentCaseThrows();
-                        refresh(true);
+                        refresh(false);
                     } catch (NoCurrentCaseException notUsed) {
                         /**
                          * Case is closed, do nothing.
