@@ -508,12 +508,11 @@ public final class GeolocationTopComponent extends TopComponent {
         }
 
         @Override
-        void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, 
-                List<GeoLocationParseResult<Track>> failedTracks, List<GeoLocationParseResult<Waypoint>> failedWaypoints) {
+        void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, boolean wasEntirelySuccessful) {
             addWaypointsToMap(mapWaypoints, tracks);
             
             // if there is an error, present to the user.
-            if ((failedTracks != null && !failedTracks.isEmpty()) || (failedWaypoints != null && !failedWaypoints.isEmpty())) {
+            if (!wasEntirelySuccessful) {
                 JOptionPane.showMessageDialog(GeolocationTopComponent.this, 
                     Bundle.GeolocationTopComponent_WaypointFetcher_onErrorDescription(), 
                     Bundle.GeolocationTopComponent_WaypointFetcher_onErrorTitle(),
