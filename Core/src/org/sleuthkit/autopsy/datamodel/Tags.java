@@ -32,7 +32,6 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -45,7 +44,6 @@ import org.sleuthkit.autopsy.tags.TagUtils;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
-import org.sleuthkit.datamodel.TagSet;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -258,7 +256,7 @@ public class Tags implements AutopsyVisitableItem {
                 Collections.sort(tagNamesInUse, new Comparator<TagName>() {
                     @Override
                     public int compare(TagName o1, TagName o2) {
-                        return  TagUtils.getDecoratedTagDisplayName(o1).compareTo(TagUtils.getDecoratedTagDisplayName(o2));
+                        return TagUtils.getDecoratedTagDisplayName(o1).compareTo(TagUtils.getDecoratedTagDisplayName(o2));
                     }
                 });
                 keys.addAll(tagNamesInUse);
