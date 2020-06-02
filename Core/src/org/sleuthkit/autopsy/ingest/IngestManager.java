@@ -828,8 +828,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @return A list of ingest job state snapshots.
      */
     @Override
-    public List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots() {
-        List<DataSourceIngestJob.Snapshot> snapShots = new ArrayList<>();
+    public List<Snapshot> getIngestJobSnapshots() {
+        List<Snapshot> snapShots = new ArrayList<>();
         synchronized (ingestJobsById) {
             ingestJobsById.values().forEach((job) -> {
                 snapShots.addAll(job.getDataSourceIngestJobSnapshots());
