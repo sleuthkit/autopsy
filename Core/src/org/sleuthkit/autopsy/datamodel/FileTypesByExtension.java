@@ -43,6 +43,8 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesKey;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -94,6 +96,25 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                         || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
                         || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
                         || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+
+                    /**
+                     * If a new file has been added but does not have an extension
+                     * there is nothing to do.
+                     */
+                    if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+                        if ((evt.getOldValue() instanceof ModuleContentEvent) == false) {
+                            return;
+                        }
+                        ModuleContentEvent moduleContentEvent = (ModuleContentEvent) evt.getOldValue();
+                        if ((moduleContentEvent.getSource() instanceof AbstractFile) == false) {
+                            return;
+                        }
+                        AbstractFile abstractFile = (AbstractFile) moduleContentEvent.getSource();
+                        if (abstractFile.getNameExtension().isEmpty()) {
+                            return;
+                        }
+                    }
+
                     /**
                      * Checking for a current case is a stop gap measure until a
                      * different way of handling the closing of cases is worked
@@ -415,7 +436,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
         @Override
         public void update(Observable o, Object arg) {
-            refresh(true);
+            refresh(false);
         }
 
         @Override

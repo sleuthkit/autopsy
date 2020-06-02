@@ -75,8 +75,8 @@ public final class DrawableTagsManager {
 
     public DrawableTagsManager(ImageGalleryController controller) throws TskCoreException {
         this.autopsyTagsManager = controller.getCase().getServices().getTagsManager();
-        followUpTagName = getTagName(TagsManager.getFollowUpDisplayString());
-        bookmarkTagName = getTagName(TagsManager.getBookmarkDisplayString());
+        followUpTagName = getTagName(TagsManager.getFollowUpTagDisplayName());
+        bookmarkTagName = getTagName(TagsManager.getBookmarkTagDisplayName());
         this.controller = controller;
 
         compareByDisplayName = new Comparator<TagName>() {

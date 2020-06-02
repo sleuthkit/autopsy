@@ -149,7 +149,8 @@ public class PersonaAlias {
     public static Collection<PersonaAlias> getPersonaAliases(long personaId) throws CentralRepoException {
         String queryClause = "SELECT pa.id, pa.persona_id, pa.alias, pa.justification, pa.confidence_id, pa.date_added, pa.examiner_id, e.login_name, e.display_name "
                 + "FROM persona_alias as pa "
-                + "INNER JOIN examiners as e ON e.id = pa.examiner_id ";
+                + "INNER JOIN examiners as e ON e.id = pa.examiner_id "
+                + "WHERE pa.persona_id = " + personaId;
 
         PersonaAliasesQueryCallback queryCallback = new PersonaAliasesQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);

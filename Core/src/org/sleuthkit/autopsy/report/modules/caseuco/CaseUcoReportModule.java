@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -36,6 +37,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
+import org.sleuthkit.autopsy.report.GeneralReportSettings;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -98,11 +100,16 @@ public final class CaseUcoReportModule implements GeneralReportModule {
     public static String getReportFileName() {
         return REPORT_FILE_NAME;
     }
+    
+    @Override
+    public boolean supportsDataSourceSelection() {
+        return true;
+    }
 
     /**
      * Generates a CASE-UCO format report for all files in the Case.
      *
-     * @param baseReportDir caseDirPath to save the report
+     * @param settings      Report settings.
      * @param progressPanel panel to update the report's progress
      */
     @NbBundle.Messages({
@@ -117,14 +124,13 @@ public final class CaseUcoReportModule implements GeneralReportModule {
         "CaseUcoReportModule.srcModuleName=CASE-UCO Report"
     })
     @Override
-    @SuppressWarnings("deprecation")
-    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
+    public void generateReport(GeneralReportSettings settings, ReportProgressPanel progressPanel) {
         try {
             // Check if ingest has finished
             warnIngest(progressPanel);
             
             //Create report paths if they don't already exist.
-            Path reportDirectory = Paths.get(baseReportDir);
+            Path reportDirectory = Paths.get(settings.getReportDirectoryPath());
             try {
                 Files.createDirectories(reportDirectory);
             } catch (IOException ex) {
@@ -141,7 +147,16 @@ public final class CaseUcoReportModule implements GeneralReportModule {
             Case caseObj = Case.getCurrentCaseThrows();
             generator.addCase(caseObj);
             
-            List<Content> dataSources = caseObj.getDataSources();
+            List<Content> dataSources = caseObj.getDataSources().stream()
+                     .filter((dataSource) -> {
+                        if(settings.getSelectedDataSources() == null) {
+                            // Assume all data sources if list is null.
+                            return true;
+                        }
+                        return settings.getSelectedDataSources().contains(dataSource.getId());
+                    })
+                    .collect(Collectors.toList());
+            
             progressPanel.setIndeterminate(false);
             progressPanel.setMaximumProgress(dataSources.size());
             progressPanel.start();

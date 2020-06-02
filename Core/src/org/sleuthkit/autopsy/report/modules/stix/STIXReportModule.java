@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 - 2018 Basis Technology Corp.
+ * Copyright 2013 - 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
+import org.sleuthkit.autopsy.report.GeneralReportSettings;
 import org.sleuthkit.autopsy.report.NoReportModuleSettings;
 import org.sleuthkit.autopsy.report.ReportModuleSettings;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
@@ -92,15 +93,16 @@ public class STIXReportModule implements GeneralReportModule {
     }
 
     /**
-     * @param baseReportDir path to save the report
+     * @param settings      Report settings.
      * @param progressPanel panel to update the report's progress
      */
     @Override
     @Messages({"STIXReportModule.srcModuleName.text=STIX Report"})
-    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
+    public void generateReport(GeneralReportSettings settings, ReportProgressPanel progressPanel) {
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
+        String baseReportDir = settings.getReportDirectoryPath();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.readSTIX"));        
         reportPath = baseReportDir + getRelativeFilePath();
         File reportFile = new File(reportPath);
