@@ -5,10 +5,15 @@ ChromeCacheExtract_adding_artifacts_msg=Chrome Cache: Adding %d artifacts for an
 ChromeCacheExtract_adding_extracted_files_msg=Chrome Cache: Adding %d extracted files for analysis.
 ChromeCacheExtract_loading_files_msg=Chrome Cache: Loading files from %s.
 ChromeCacheExtractor.moduleName=ChromeCacheExtractor
+# {0} - module name
+# {1} - row number
+# {2} - table length
+# {3} - cache path
 ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}
 DataSourceUsage_AndroidMedia=Android Media Card
 DataSourceUsage_DJU_Drone_DAT=DJI Internal SD Card
 DataSourceUsage_FlashDrive=Flash Drive
+# {0} - OS name
 DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})
 DataSourceUsageAnalyzer.parentModuleName=Recent Activity
 Extract.indexError.message=Failed to index artifact for keyword search.
@@ -202,6 +207,7 @@ Recently_Used_Artifacts_Officedocs=Recently opened according to Office MRU
 Recently_Used_Artifacts_Winrar=Recently opened according to WinRAR MRU
 RegRipperFullNotFound=Full version RegRipper executable not found.
 RegRipperNotFound=Autopsy RegRipper executable not found.
+# {0} - file name
 SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}.
 SearchEngineURLQueryAnalyzer.moduleName.text=Search Engine
 SearchEngineURLQueryAnalyzer.engineName.none=NONE
