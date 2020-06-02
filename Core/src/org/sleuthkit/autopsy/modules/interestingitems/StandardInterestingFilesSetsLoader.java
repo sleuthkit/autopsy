@@ -26,7 +26,9 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -130,7 +132,7 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
      */
     private static void copyRulesDirectory(File rulesConfigDir) {
         for (String resourceFile : INTERESTING_FILESETS_RULES_NAMES) {
-            String resourcePath = "./" + CONFIG_DIR + "/" + resourceFile;
+            String resourcePath = String.join("/", CONFIG_DIR, resourceFile);
             if (StandardInterestingFilesSetsLoader.class.getResource(resourcePath) == null) {
                 LOGGER.log(Level.SEVERE, String.format("Expected resource: %s could not be found at %s.", resourceFile, resourcePath));
             } else {
@@ -165,6 +167,20 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
             return;
         }
 
+        // ensure that read resources are standard sets
+        resourceFilesSet = resourceFilesSet.values()
+            .stream()
+            .map((origFilesSet) -> new FilesSet(
+                origFilesSet.getName(),
+                origFilesSet.getDescription(),
+                origFilesSet.ignoresKnownFiles(),
+                origFilesSet.ingoresUnallocatedSpace(),
+                origFilesSet.getRules(),
+                true,
+                origFilesSet.getVersionNumber()
+            ))
+            .collect(Collectors.toMap(FilesSet::getName, Function.identity()));
+                
         if (configDirFile.exists()) {
             Map<String, FilesSet> configDirFilesSet = null;
             try {
@@ -177,10 +193,17 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
         }
 
         try {
-            InterestingItemsFilesSetSettings.writeDefinitionsFile(configDirFile.getAbsolutePath(), resourceFilesSet);
-        } catch (FilesSetsManager.FilesSetsManagerException ex) {
-            String configDirFilePath = configDirFile.getAbsolutePath();
-            LOGGER.log(Level.WARNING, "Unable to write FilesSet data to disk at: " + configDirFilePath, ex);
+            rulesConfigDir.mkdirs();
+        } catch (SecurityException ex) {
+            LOGGER.log(Level.WARNING, "Unable to write FilesSet data to disk at: " + configDirFile.getAbsolutePath(), ex);
+            return;
+        }
+        
+        boolean successfulWrite = InterestingItemsFilesSetSettings.exportXmlDefinitionsFile(configDirFile, 
+                resourceFilesSet.values().stream().collect(Collectors.toList()));
+        
+        if (!successfulWrite) {
+            LOGGER.log(Level.WARNING, "Unable to write FilesSet data to disk at: " + configDirFile.getAbsolutePath());            
         }
     }
 
