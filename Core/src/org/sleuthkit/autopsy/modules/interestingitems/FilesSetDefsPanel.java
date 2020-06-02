@@ -173,19 +173,27 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     }
 
     public void enableButtons(boolean isEnabled) {
-        boolean setSelected = (FilesSetDefsPanel.this.setsList.getSelectedValue() != null);
-        boolean ruleSelected = (FilesSetDefsPanel.this.rulesList.getSelectedValue() != null);
         canBeEnabled = isEnabled;
-        newRuleButton.setEnabled(isEnabled);
-        copySetButton.setEnabled(isEnabled && setSelected);
-        newSetButton.setEnabled(isEnabled);
-        editRuleButton.setEnabled(isEnabled && ruleSelected);
-        editSetButton.setEnabled(isEnabled && setSelected);
+        enableButtons();
+    }
+    
+    private void enableButtons() {
+        FilesSet selectedFilesSet = FilesSetDefsPanel.this.setsList.getSelectedValue();
+        boolean setSelected = (selectedFilesSet != null);
+        boolean isStandardSet = (selectedFilesSet != null && selectedFilesSet.isStandardSet());
+        
+        boolean ruleSelected = (FilesSetDefsPanel.this.rulesList.getSelectedValue() != null);
+        
+        newRuleButton.setEnabled(canBeEnabled && !isStandardSet);
+        copySetButton.setEnabled(canBeEnabled && setSelected);
+        newSetButton.setEnabled(canBeEnabled);
+        editRuleButton.setEnabled(canBeEnabled && ruleSelected && !isStandardSet);
+        editSetButton.setEnabled(canBeEnabled && setSelected && !isStandardSet);
         exportSetButton.setEnabled(setSelected);
-        importSetButton.setEnabled(isEnabled);
-        deleteRuleButton.setEnabled(isEnabled && ruleSelected);
-        deleteSetButton.setEnabled(isEnabled && setSelected);
-        ingestWarningLabel.setVisible(!isEnabled);
+        importSetButton.setEnabled(canBeEnabled);
+        deleteRuleButton.setEnabled(canBeEnabled && ruleSelected && !isStandardSet);
+        deleteSetButton.setEnabled(canBeEnabled && setSelected && !isStandardSet);
+        ingestWarningLabel.setVisible(!canBeEnabled);
     }
 
     @Override
@@ -236,12 +244,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.setDescriptionTextArea.setText("");
         this.ignoreKnownFilesCheckbox.setSelected(true);
         this.ingoreUnallocCheckbox.setSelected(true);
-        this.newSetButton.setEnabled(true && canBeEnabled);
-        this.editSetButton.setEnabled(false);
-        this.copySetButton.setEnabled(false);
-        this.exportSetButton.setEnabled(false);
-        this.importSetButton.setEnabled(true && canBeEnabled);
-        this.deleteSetButton.setEnabled(false);
+        enableButtons();
     }
 
     /**
@@ -260,9 +263,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.equalitySignComboBox.setSelectedIndex(2);
         this.fileSizeUnitComboBox.setSelectedIndex(1);
         this.fileSizeSpinner.setValue(0);
-        this.newRuleButton.setEnabled(!this.setsListModel.isEmpty() && canBeEnabled);
-        this.editRuleButton.setEnabled(false);
-        this.deleteRuleButton.setEnabled(false);
+        enableButtons();
     }
 
     /**
@@ -276,10 +277,6 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 return;
             }
             FilesSetDefsPanel.this.rulesListModel.clear();
-            FilesSetDefsPanel.this.resetRuleComponents();
-            //enable the new button
-            FilesSetDefsPanel.this.newSetButton.setEnabled(canBeEnabled);
-            FilesSetDefsPanel.this.importSetButton.setEnabled(canBeEnabled);
             
             // Get the selected interesting files set and populate the set
             // components.
@@ -291,11 +288,6 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 FilesSetDefsPanel.this.setDescriptionTextArea.setText(selectedSet.getDescription());
                 FilesSetDefsPanel.this.ignoreKnownFilesCheckbox.setSelected(selectedSet.ignoresKnownFiles());
                 FilesSetDefsPanel.this.ingoreUnallocCheckbox.setSelected(selectedSet.ingoresUnallocatedSpace());
-                // Enable the copy, export, edit and delete set buttons.
-                FilesSetDefsPanel.this.editSetButton.setEnabled(canBeEnabled);
-                FilesSetDefsPanel.this.deleteSetButton.setEnabled(canBeEnabled);
-                FilesSetDefsPanel.this.copySetButton.setEnabled(canBeEnabled);
-                FilesSetDefsPanel.this.exportSetButton.setEnabled(true);
                 // Populate the rule definitions list, sorted by name.
                 List<FilesSet.Rule> rules = new ArrayList<>(selectedSet.getRules().values());
                 Collections.sort(rules, new Comparator<FilesSet.Rule>() {
@@ -311,15 +303,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 if (!FilesSetDefsPanel.this.rulesListModel.isEmpty()) {
                     FilesSetDefsPanel.this.rulesList.setSelectedIndex(0);
                 }
-            } else {
-                // Disable the edit, delete, copy, and export buttons
-                FilesSetDefsPanel.this.editSetButton.setEnabled(false);
-                FilesSetDefsPanel.this.deleteSetButton.setEnabled(false);
-                FilesSetDefsPanel.this.copySetButton.setEnabled(false);
-                FilesSetDefsPanel.this.exportSetButton.setEnabled(false);
             }
+            
+            FilesSetDefsPanel.this.resetRuleComponents();
         }
-
     }
 
     /**
@@ -395,10 +382,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 else {
                      FilesSetDefsPanel.this.daysIncludedTextField.setText("");
                 }
-                // Enable the new, edit and delete rule buttons.
-                FilesSetDefsPanel.this.newRuleButton.setEnabled(true && canBeEnabled);
-                FilesSetDefsPanel.this.editRuleButton.setEnabled(true && canBeEnabled);
-                FilesSetDefsPanel.this.deleteRuleButton.setEnabled(true && canBeEnabled);
+                enableButtons();
             } else {
                 FilesSetDefsPanel.this.resetRuleComponents();
             }
