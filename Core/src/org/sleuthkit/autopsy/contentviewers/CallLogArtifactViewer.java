@@ -127,6 +127,9 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         localAccountLabel = new javax.swing.JLabel();
         localAccountIdLabel = new javax.swing.JLabel();
         sourceSectionLabel = new javax.swing.JLabel();
+        localAccountPersonaLabel = new javax.swing.JLabel();
+        localAccountPersonaNameLabel = new javax.swing.JLabel();
+        localAccountPersonaButton = new javax.swing.JButton();
 
         topPanel.setLayout(new java.awt.BorderLayout());
 
@@ -257,6 +260,12 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         sourceSectionLabel.setFont(sourceSectionLabel.getFont().deriveFont(sourceSectionLabel.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(sourceSectionLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.sourceSectionLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(localAccountPersonaLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.localAccountPersonaLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(localAccountPersonaNameLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.localAccountPersonaNameLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(localAccountPersonaButton, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.localAccountPersonaButton.text")); // NOI18N
+
         javax.swing.GroupLayout localAccountInfoPanelLayout = new javax.swing.GroupLayout(localAccountInfoPanel);
         localAccountInfoPanel.setLayout(localAccountInfoPanelLayout);
         localAccountInfoPanelLayout.setHorizontalGroup(
@@ -271,9 +280,19 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                             .addComponent(jLabel4))
                         .addGap(24, 24, 24)
                         .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(localAccountIdLabel)
-                            .addComponent(dataSourceNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(deviceIdLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE)))
+                            .addComponent(deviceIdLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE)
+                            .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
+                                .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(dataSourceNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
+                                        .addComponent(localAccountIdLabel)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(localAccountPersonaLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(localAccountPersonaNameLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(localAccountPersonaButton)))
+                                .addGap(0, 0, Short.MAX_VALUE))))
                     .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
                         .addGap(25, 25, 25)
                         .addComponent(sourceSectionLabel)))
@@ -287,7 +306,10 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(localAccountLabel)
-                    .addComponent(localAccountIdLabel))
+                    .addComponent(localAccountIdLabel)
+                    .addComponent(localAccountPersonaLabel)
+                    .addComponent(localAccountPersonaNameLabel)
+                    .addComponent(localAccountPersonaButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -340,6 +362,9 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     private javax.swing.JLabel localAccountIdLabel;
     private javax.swing.JPanel localAccountInfoPanel;
     private javax.swing.JLabel localAccountLabel;
+    private javax.swing.JButton localAccountPersonaButton;
+    private javax.swing.JLabel localAccountPersonaLabel;
+    private javax.swing.JLabel localAccountPersonaNameLabel;
     private javax.swing.JLabel onLabel;
     private javax.swing.JPanel otherAttributesListPanel;
     private javax.swing.JPanel otherAttributesPanel;
@@ -402,17 +427,13 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 this.durationLabel.setVisible(false);
             }
 
-            // Populate other attributs panel
+            // Populate other attributes panel
             updateOtherAttributesPanel(callLogViewData.getOtherAttributes());
 
+            // update local account
+            updateLocalAccount(callLogViewData);
             // populate local account and data source
-            if (callLogViewData.getLocalAccountId() != null) {
-                // Vik-6383 find and display the persona for this account, and a button
-                this.localAccountIdLabel.setText(callLogViewData.getLocalAccountId());
-            } else {
-                this.localAccountLabel.setVisible(false);
-                this.localAccountIdLabel.setVisible(false);
-            }
+            
             if (callLogViewData.getDataSourceName() != null) {
                 this.dataSourceNameLabel.setText(callLogViewData.getDataSourceName());
             }
@@ -421,6 +442,30 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             }
     }
    
+    /**
+     * Displays the information for local account, if known.
+     * 
+     * @param callLogViewData Call log data 
+     */
+    private void updateLocalAccount(CallLogViewData callLogViewData) {
+        if (callLogViewData.getLocalAccountId() != null) {
+            localAccountIdLabel.setText(callLogViewData.getLocalAccountId());
+
+            // kick off a task to find the persona for this account
+            PersonaSearcherTask task = new PersonaSearcherTask(new AccountPersonaSearcherData(callLogViewData.getLocalAccountId(), localAccountPersonaNameLabel, localAccountPersonaButton));
+            personaSearchtasks.add(task);
+            personatasksExecutor.submit(task);
+
+        } else {
+            // no local account info, hide all fields.
+            localAccountLabel.setVisible(false);
+            localAccountIdLabel.setVisible(false);
+            localAccountPersonaLabel.setVisible(false);
+            localAccountPersonaNameLabel.setVisible(false);
+            localAccountPersonaLabel.setVisible(false);
+            localAccountPersonaButton.setVisible(false);
+        }
+    }
 
     /**
      * Updates the Call participants panel.
