@@ -203,7 +203,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 .addGap(20, 20, 20))
         );
 
-        topPanel.add(callDetailsPanel, java.awt.BorderLayout.PAGE_START);
+        topPanel.add(callDetailsPanel, java.awt.BorderLayout.CENTER);
 
         otherInfoLabel.setFont(otherInfoLabel.getFont().deriveFont(otherInfoLabel.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(otherInfoLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.otherInfoLabel.text")); // NOI18N
@@ -333,7 +333,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(topPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(topPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bottomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())

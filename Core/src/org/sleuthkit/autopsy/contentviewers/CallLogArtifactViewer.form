@@ -23,7 +23,7 @@
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
-              <Component id="topPanel" min="-2" max="-2" attributes="0"/>
+              <Component id="topPanel" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="bottomPanel" min="-2" pref="297" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -44,7 +44,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
-              <BorderConstraints direction="First"/>
+              <BorderConstraints direction="Center"/>
             </Constraint>
           </Constraints>
 
