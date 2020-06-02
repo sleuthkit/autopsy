@@ -82,7 +82,7 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
         }
 
         if (userConfiguredSettings == null) {
-            return;
+            userConfiguredSettings = new HashMap<>();
         }
 
         // Add each FilesSet read from the standard rules set XML files that is missing from the Map to the Map.
@@ -112,7 +112,7 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
             for (File standardFileSetsFile : rulesConfigDir.listFiles(DEFAULT_XML_FILTER)) {
                 try {
                     Map<String, FilesSet> thisFilesSet = InterestingItemsFilesSetSettings.readDefinitionsXML(standardFileSetsFile);
-                    copyOnNewer(standardInterestingFileSets, thisFilesSet);
+                    copyOnNewer(thisFilesSet, standardInterestingFileSets);
                 } catch (FilesSetsManager.FilesSetsManagerException ex) {
                     LOGGER.log(Level.WARNING, String.format("There was a problem importing the standard interesting file set at: %s.",
                             standardFileSetsFile.getAbsoluteFile()), ex);
@@ -143,6 +143,24 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
     }
 
     /**
+     *
+     * @param origFilesSet
+     *
+     * @return
+     */
+    static FilesSet getAsStandardFilesSet(FilesSet origFilesSet, boolean standardFilesSet) {
+        return new FilesSet(
+                origFilesSet.getName(),
+                origFilesSet.getDescription(),
+                origFilesSet.ignoresKnownFiles(),
+                origFilesSet.ingoresUnallocatedSpace(),
+                origFilesSet.getRules(),
+                standardFilesSet,
+                origFilesSet.getVersionNumber()
+        );
+    }
+
+    /**
      * Updates the standard interesting files set config file if there is no
      * corresponding files set on disk or the files set on disk has an older
      * version.
@@ -169,18 +187,10 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
 
         // ensure that read resources are standard sets
         resourceFilesSet = resourceFilesSet.values()
-            .stream()
-            .map((origFilesSet) -> new FilesSet(
-                origFilesSet.getName(),
-                origFilesSet.getDescription(),
-                origFilesSet.ignoresKnownFiles(),
-                origFilesSet.ingoresUnallocatedSpace(),
-                origFilesSet.getRules(),
-                true,
-                origFilesSet.getVersionNumber()
-            ))
-            .collect(Collectors.toMap(FilesSet::getName, Function.identity()));
-                
+                .stream()
+                .map((filesSet) -> getAsStandardFilesSet(filesSet, true))
+                .collect(Collectors.toMap(FilesSet::getName, Function.identity()));
+
         if (configDirFile.exists()) {
             Map<String, FilesSet> configDirFilesSet = null;
             try {
@@ -198,12 +208,12 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
             LOGGER.log(Level.WARNING, "Unable to write FilesSet data to disk at: " + configDirFile.getAbsolutePath(), ex);
             return;
         }
-        
-        boolean successfulWrite = InterestingItemsFilesSetSettings.exportXmlDefinitionsFile(configDirFile, 
+
+        boolean successfulWrite = InterestingItemsFilesSetSettings.exportXmlDefinitionsFile(configDirFile,
                 resourceFilesSet.values().stream().collect(Collectors.toList()));
-        
+
         if (!successfulWrite) {
-            LOGGER.log(Level.WARNING, "Unable to write FilesSet data to disk at: " + configDirFile.getAbsolutePath());            
+            LOGGER.log(Level.WARNING, "Unable to write FilesSet data to disk at: " + configDirFile.getAbsolutePath());
         }
     }
 

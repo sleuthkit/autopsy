@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -43,6 +44,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestProfiles;
 import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
@@ -100,6 +102,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.panelType = panelType;
         this.initComponents();
         this.customInit();
+
         this.setsList.setModel(setsListModel);
         this.setsList.addListSelectionListener(new FilesSetDefsPanel.SetsListSelectionListener());
         this.rulesList.setModel(rulesListModel);
@@ -133,6 +136,13 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             this.ruleDialogTitle = "FilesSetPanel.interesting.title";
             this.ingoreUnallocCheckbox.setVisible(false);
         }
+
+        IngestManager.getInstance().addIngestJobEventListener((ignored) -> {
+            canBeEnabled
+                    = !IngestManager.getInstance().isIngestRunning();
+            enableButtons();
+        });
+        canBeEnabled = !IngestManager.getInstance().isIngestRunning();
     }
 
     @NbBundle.Messages({"FilesSetDefsPanel.Interesting.Title=Global Interesting Items Settings",
@@ -172,18 +182,13 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         }
     }
 
-    public void enableButtons(boolean isEnabled) {
-        canBeEnabled = isEnabled;
-        enableButtons();
-    }
-    
-    private void enableButtons() {
+    public void enableButtons() {
         FilesSet selectedFilesSet = FilesSetDefsPanel.this.setsList.getSelectedValue();
         boolean setSelected = (selectedFilesSet != null);
         boolean isStandardSet = (selectedFilesSet != null && selectedFilesSet.isStandardSet());
-        
+
         boolean ruleSelected = (FilesSetDefsPanel.this.rulesList.getSelectedValue() != null);
-        
+
         newRuleButton.setEnabled(canBeEnabled && !isStandardSet);
         copySetButton.setEnabled(canBeEnabled && setSelected);
         newSetButton.setEnabled(canBeEnabled);
@@ -277,7 +282,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 return;
             }
             FilesSetDefsPanel.this.rulesListModel.clear();
-            
+
             // Get the selected interesting files set and populate the set
             // components.
             FilesSet selectedSet = FilesSetDefsPanel.this.setsList.getSelectedValue();
@@ -304,7 +309,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     FilesSetDefsPanel.this.rulesList.setSelectedIndex(0);
                 }
             }
-            
+
             FilesSetDefsPanel.this.resetRuleComponents();
         }
     }
@@ -376,15 +381,14 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     FilesSetDefsPanel.this.equalitySignComboBox.setSelectedIndex(2);
                     FilesSetDefsPanel.this.fileSizeSpinner.setValue(0);
                 }
-                if (dateCondition != null){
-                     FilesSetDefsPanel.this.daysIncludedTextField.setText(Integer.toString(dateCondition.getDaysIncluded()));
-                }
-                else {
-                     FilesSetDefsPanel.this.daysIncludedTextField.setText("");
+                if (dateCondition != null) {
+                    FilesSetDefsPanel.this.daysIncludedTextField.setText(Integer.toString(dateCondition.getDaysIncluded()));
+                } else {
+                    FilesSetDefsPanel.this.daysIncludedTextField.setText("");
                 }
                 enableButtons();
             } else {
-                FilesSetDefsPanel.this.resetRuleComponents();
+                resetRuleComponents();
             }
         }
 
@@ -1141,6 +1145,12 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 logger.log(Level.WARNING, "No Interesting files set definitions were read from the selected file, exception", ex);
                 return;
             }
+
+            importedSets = importedSets
+                    .stream()
+                    .map((filesSet) -> StandardInterestingFilesSetsLoader.getAsStandardFilesSet(filesSet, false))
+                    .collect(Collectors.toList());
+
             for (FilesSet set : importedSets) {
                 int choice = JOptionPane.OK_OPTION;
                 if (filesSets.containsKey(set.getName())) {
