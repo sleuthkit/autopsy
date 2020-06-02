@@ -80,7 +80,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
     private static final Logger logger = Logger.getLogger(InterestingItemsFilesSetSettings.class.getName());
     private static final String TYPE_FILTER_ATTR = "typeFilter"; //NON-NLS
     private static final String EXTENSION_RULE_TAG = "EXTENSION"; //NON-NLS
-    private static final String READONLY = "readOnly";
+    private static final String STANDARD_SET = "standardSet";
     private static final String VERSION_NUMBER = "versionNumber";
 
     private Map<String, FilesSet> filesSets;
@@ -382,15 +382,15 @@ class InterestingItemsFilesSetSettings implements Serializable {
             ignoreUnallocatedSpace = Boolean.parseBoolean(ignoreUnallocated);
         }
         
-        String isReadonlyString = setElem.getAttribute(READONLY);
-        boolean isReadOnly = false;
-        if (StringUtils.isNotBlank(isReadonlyString)) {
-            isReadOnly = Boolean.parseBoolean(isReadonlyString);
+        String isStandardSetString = setElem.getAttribute(STANDARD_SET);
+        boolean isStandardSet = false;
+        if (StringUtils.isNotBlank(isStandardSetString)) {
+            isStandardSet = Boolean.parseBoolean(isStandardSetString);
         }
         
         String versionNumberString = setElem.getAttribute(VERSION_NUMBER);
         int versionNumber = 0;
-        if (StringUtils.isNotBlank(isReadonlyString)) {
+        if (StringUtils.isNotBlank(isStandardSetString)) {
             try {
                 versionNumber = Integer.parseInt(versionNumberString);
             }
@@ -424,7 +424,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
         // Make the files set. Note that degenerate sets with no rules are
         // allowed to facilitate the separation of set definition and rule
         // definitions. A set without rules is simply the empty set.
-        FilesSet set = new FilesSet(setName, description, ignoreKnownFiles, ignoreUnallocatedSpace, rules, isReadOnly, versionNumber);
+        FilesSet set = new FilesSet(setName, description, ignoreKnownFiles, ignoreUnallocatedSpace, rules, isStandardSet, versionNumber);
         filesSets.put(set.getName(), set);
     }
     // Note: This method takes a file path to support the possibility of
@@ -479,7 +479,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
         }
         
         Document doc = XMLUtil.loadDoc(InterestingItemsFilesSetSettings.class, xmlFile.getPath());
-        return readDefinitionsXML(doc, xmlFile);
+        return readDefinitionsXML(doc, xmlFile.getPath());
     }
        
     /**
@@ -495,25 +495,25 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @throws
      * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
-    static Map<String, FilesSet> readDefinitionsXML(Document doc, File xmlFile) throws FilesSetsManager.FilesSetsManagerException {
+    static Map<String, FilesSet> readDefinitionsXML(Document doc, String resourceName) throws FilesSetsManager.FilesSetsManagerException {
         // Parse the XML in the file.
         Map<String, FilesSet> filesSets = new HashMap<>();
         
         if (doc == null) {
-            logger.log(Level.SEVERE, "FilesSet definition file at {0}", (xmlFile == null) ? "<null>" : xmlFile.getPath()); // NON-NLS
+            logger.log(Level.SEVERE, "FilesSet definition file at {0}", resourceName); // NON-NLS
             return filesSets;
         }
         // Get the root element.
         Element root = doc.getDocumentElement();
         if (root == null) {
             logger.log(Level.SEVERE, "Failed to get root {0} element tag of FilesSet definition file at {1}", 
-                    new Object[]{FILE_SETS_ROOT_TAG, (xmlFile == null) ? "<null>" : xmlFile.getPath()}); // NON-NLS
+                    new Object[]{FILE_SETS_ROOT_TAG, resourceName}); // NON-NLS
             return filesSets;
         }
         // Read in the files set definitions.
         NodeList setElems = root.getElementsByTagName(FILE_SET_TAG);
         for (int i = 0; i < setElems.getLength(); ++i) {
-            readFilesSet((Element) setElems.item(i), filesSets, xmlFile.getPath());
+            readFilesSet((Element) setElems.item(i), filesSets, resourceName);
         }
         return filesSets;
     }
@@ -561,7 +561,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
                 setElement.setAttribute(NAME_ATTR, set.getName());
                 setElement.setAttribute(DESC_ATTR, set.getDescription());
                 setElement.setAttribute(IGNORE_KNOWN_FILES_ATTR, Boolean.toString(set.ignoresKnownFiles()));
-                setElement.setAttribute(READONLY, Boolean.toString(set.isReadOnly()));
+                setElement.setAttribute(STANDARD_SET, Boolean.toString(set.isStandardSet()));
                 setElement.setAttribute(VERSION_NUMBER, Integer.toString(set.getVersionNumber()));
                 // Add the child elements for the set membership rules.
                 // All conditions of a rule will be written as a single element in the xml

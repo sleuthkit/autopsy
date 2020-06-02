@@ -18,28 +18,24 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
+import com.google.common.collect.ImmutableList;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.logging.Level;
-import org.apache.commons.io.FileUtils;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.openide.modules.OnStart;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 /**
  * When the interesting items module loads, this runnable loads standard
@@ -47,6 +43,14 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  */
 @OnStart
 public class StandardInterestingFilesSetsLoader implements Runnable {
+
+    // The list of class resources representing the standard interesting files sets
+    // NOTE: This list must be updated to correspond to the standard interesting files sets in 'InterestingFileSetRules'
+    private final static List<String> INTERESTING_FILESETS_RULES_NAMES = ImmutableList.of(
+            "Cloud Storage.xml",
+            "Cryptocurrency Wallets.xml",
+            "Encryption Programs.xml"
+    );
 
     private static final Logger LOGGER = Logger.getLogger(StandardInterestingFilesSetsLoader.class.getName());
 
@@ -115,43 +119,6 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
         }
         return standardInterestingFileSets;
     }
-    
-    
-    private static List<String> getResourceFolderContents(String directory) {
-        // taken from https://stackoverflow.com/questions/11012819/how-can-i-get-a-resource-folder-from-inside-my-jar-file
-        final File jarFile = new File(StandardInterestingFilesSetsLoader.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-        List<String> toRet = new ArrayList<>();
-        
-        if(jarFile.isFile()) {
-            JarFile jar = null;
-            try {
-                jar = new JarFile(jarFile);
-                final Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
-                while(entries.hasMoreElements()) {
-                    final String name = entries.nextElement().getName();
-                    if (name.startsWith(directory + "/")) { //filter according to the path
-                        toRet.add(name);
-                    }
-                }
-            jar.close();
-            } catch (IOException ex) {
-                LOGGER.log(Level.SEVERE, "There was an error reading contents of jar file.", ex);
-            } finally {
-                if (jar != null) {
-                    try {
-                        jar.close();                        
-                    } catch (IOException ex) {
-                        LOGGER.log(Level.SEVERE, "There was an error closing jar resources while loading contents.", ex);
-                    }
-                }
-            }
-        } else {
-            LOGGER.log(Level.WARNING, "Jar file could not be opened.  No standard interesting files sets will be loaded.");
-        }
-        
-        return toRet;
-    }
-    
 
     /**
      * Add the InterestingFileSetRules directory to the user’s app data config
@@ -162,14 +129,14 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
      *                       non-null.
      */
     private static void copyRulesDirectory(File rulesConfigDir) {
-        
-        try {
-            for (String resourceFile : getResourceFolderContents(DEFAULT_XML_FILTER)) {
-                updateStandardFilesSetConfigFile(rulesConfigDir, resourceFile);
+        for (String resourceFile : INTERESTING_FILESETS_RULES_NAMES) {
+            String resourcePath = "./" + CONFIG_DIR + "/" + resourceFile;
+            if (StandardInterestingFilesSetsLoader.class.getResource(resourcePath) == null) {
+                LOGGER.log(Level.SEVERE, String.format("Expected resource: %s could not be found at %s.", resourceFile, resourcePath));
+            } else {
+                InputStream fileSetStream = StandardInterestingFilesSetsLoader.class.getResourceAsStream(resourcePath);
+                updateStandardFilesSetConfigFile(rulesConfigDir, fileSetStream, resourceFile);
             }
-        } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, String.format("There was an error copying %s to %s.",
-                    resourceDirectory.getAbsolutePath(), rulesConfigDir.getAbsolutePath()), ex);
         }
     }
 
@@ -178,21 +145,26 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
      * corresponding files set on disk or the files set on disk has an older
      * version.
      *
-     * @param rulesConfigDir The directory for standard interesting files sets.
-     * @param resourceInputStream  The standard interesting files set resource file
-     *                       located within the jar.
+     * @param rulesConfigDir      The directory for standard interesting files
+     *                            sets.
+     * @param resourceInputStream The standard interesting files set resource
+     *                            file located within the jar.
+     * @param resourceName        The filename of the resource to be copied.
      */
     private static void updateStandardFilesSetConfigFile(File rulesConfigDir, InputStream resourceInputStream, String resourceName) {
         File configDirFile = new File(rulesConfigDir, resourceName);
-        
+
         Map<String, FilesSet> resourceFilesSet = null;
+        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         try {
-            resourceFilesSet = InterestingItemsFilesSetSettings.readDefinitionsXML(resourceFile);
-        } catch (FilesSetsManager.FilesSetsManagerException ex) {
+            DocumentBuilder builder = builderFactory.newDocumentBuilder();
+            Document xmlDoc = builder.parse(resourceInputStream);
+            resourceFilesSet = InterestingItemsFilesSetSettings.readDefinitionsXML(xmlDoc, resourceName);
+        } catch (ParserConfigurationException | SAXException | IOException | FilesSetsManager.FilesSetsManagerException ex) {
             LOGGER.log(Level.SEVERE, "Unable to read FilesSet data from resource file: " + resourceName, ex);
             return;
         }
-            
+
         if (configDirFile.exists()) {
             Map<String, FilesSet> configDirFilesSet = null;
             try {
@@ -243,8 +215,8 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
             if (destFileSet != null) {
                 // If and only if there is a naming conflict with a user-defined rule set, append “(Custom)” 
                 // to the user-defined rule set and add it back to the Map.  
-                if (appendCustom && srcFileSet.isReadOnly() != destFileSet.isReadOnly()) {
-                    if (srcFileSet.isReadOnly()) {
+                if (appendCustom && srcFileSet.isStandardSet() != destFileSet.isStandardSet()) {
+                    if (srcFileSet.isStandardSet()) {
                         addCustomFile(dest, key, destFileSet);
                     } else {
                         addCustomFile(dest, key, srcFileSet);
@@ -280,8 +252,8 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
         "StandardInterestingFileSetsLoader.customSuffixed={0} (Custom)"
     })
     private static void addCustomFile(Map<String, FilesSet> dest, String key, FilesSet srcFilesSet) {
-        if (srcFilesSet.isReadOnly()) {
-            LOGGER.log(Level.SEVERE, "An attempt to create a custom file that was not readonly");
+        if (srcFilesSet.isStandardSet()) {
+            LOGGER.log(Level.SEVERE, "An attempt to create a custom file that was a standard set.");
             return;
         }
 
