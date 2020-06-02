@@ -216,7 +216,7 @@ public class Persona {
      */
     public static Persona createPersonaForAccount(String personaName, String comment, PersonaStatus status, CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
         Persona persona = createPersona(personaName, comment, status);
-        persona.addAccountToPersona(account, justification, confidence);
+        persona.addAccount(account, justification, confidence);
         return persona;
     }
 
@@ -267,24 +267,20 @@ public class Persona {
      * @return PersonaAccount
      * @throws CentralRepoException If there is an error.
      */
-    public PersonaAccount addAccountToPersona(CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
-
-        CentralRepoExaminer currentExaminer = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
-
-        Instant instant = Instant.now();
-        Long timeStampMillis = instant.toEpochMilli();
-        String insertClause = " INTO persona_accounts (persona_id, account_id, justification, confidence_id, date_added, examiner_id ) "
-                + "VALUES ( "
-                + this.getId() + ", "
-                + account.getId() + ", "
-                + "'" + ((StringUtils.isBlank(justification) ? "" : SleuthkitCase.escapeSingleQuotes(justification))) + "', "
-                + confidence.getLevelId() + ", "
-                + timeStampMillis.toString() + ", "
-                + currentExaminer.getId()
-                + ")";
-
-        CentralRepository.getInstance().executeInsertSQL(insertClause);
-        return new PersonaAccount(this, account, justification, confidence, timeStampMillis, currentExaminer);
+    public PersonaAccount addAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
+        return PersonaAccount.addPersonaAccount(this, account, justification, confidence);
+    }
+    
+    /**
+     * Removes the given account from this persona
+     *
+     * @param account account to remove
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public void removeAccount(PersonaAccount account) throws CentralRepoException {
+        PersonaAccount.removePersonaAccount(this, account.getId());
     }
 
     /**
@@ -390,6 +386,18 @@ public class Persona {
     public PersonaAlias addAlias(String alias, String justification, Persona.Confidence confidence) throws CentralRepoException {
         return PersonaAlias.addPersonaAlias(this, alias, justification, confidence);
     }
+    
+    /**
+     * Removes the given alias from this persona
+     *
+     * @param alias alias to remove
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public void removeAlias(PersonaAlias alias) throws CentralRepoException {
+        PersonaAlias.removePersonaAlias(this, alias);
+    }
 
     /**
      * Gets all aliases for the persona.
@@ -415,6 +423,18 @@ public class Persona {
      */
     public PersonaMetadata addMetadata(String name, String value, String justification, Persona.Confidence confidence) throws CentralRepoException {
         return PersonaMetadata.addPersonaMetadata(this.getId(), name, value, justification, confidence);
+    }
+    
+    /**
+     * Removes the given metadata from this persona
+     *
+     * @param metadata metadata to remove
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public void removeMetadata(PersonaMetadata metadata) throws CentralRepoException {
+        PersonaMetadata.removePersonaMetadata(this, metadata);
     }
 
     /**

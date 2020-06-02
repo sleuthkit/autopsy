@@ -854,6 +854,15 @@ public interface CentralRepository {
     void executeSelectSQL(String sql, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException;
     
     /**
+     * Executes a DELETE sql statement on the central repository database.
+     * 
+     * @param sql DELETE sql to execute.
+     * 
+     * @throws CentralRepoException If there is an error.
+     */
+    void executeDeleteSQL(String sql) throws CentralRepoException;
+    
+    /**
      * Get account type by type name.
      * 
      * @param accountTypeName account type name to look for
