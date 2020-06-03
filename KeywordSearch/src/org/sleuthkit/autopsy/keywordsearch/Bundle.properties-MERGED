@@ -214,7 +214,9 @@ NoOpenCoreException.err.noOpenSorlCore.msg=No currently open Solr core.
 SearchRunner.query.exception.msg=Error performing query:
 # {0} - colelction name
 Server.deleteCore.exception.msg=Failed to delete Solr colelction {0}
+Server.exceptionMessage.unableToBackupCollection=Unable to backup Solr collection
 Server.exceptionMessage.unableToCreateCollection=Unable to create Solr collection
+Server.exceptionMessage.unableToRestoreCollection=Unable to restore Solr collection
 Server.start.exception.cantStartSolr.msg=Could not start Solr server process
 Server.start.exception.cantStartSolr.msg2=Could not start Solr server process
 Server.isRunning.exception.errCheckSolrRunning.msg=Error checking if Solr server is running

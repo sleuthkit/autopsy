@@ -60,7 +60,8 @@ public final class UserPreferences {
     public static final String EXTERNAL_DATABASE_TYPE = "ExternalDatabaseType"; //NON-NLS
     public static final String INDEXING_SERVER_HOST = "IndexingServerHost"; //NON-NLS
     public static final String INDEXING_SERVER_PORT = "IndexingServerPort"; //NON-NLS
-    public static final String INDEXING_SERVER_LIST = "IndexingServerList"; //NON-NLS
+    public static final String SOLR4_SERVER_HOST = "Solr4ServerHost"; //NON-NLS
+    public static final String SOLR4_SERVER_PORT = "Solr4ServerPort"; //NON-NLS    
     public static final String INDEXING_MAX_SHARDS = "IndexingMaxShards"; //NON-NLS
     public static final String INDEXING_DOC_QUEUE_SIZE = "IndexingDocumentQueueSize"; //NON-NLS
     public static final String INDEXING_NUM_THREADS = "IndexingNumThreads"; //NON-NLS
@@ -349,8 +350,24 @@ public final class UserPreferences {
         preferences.putInt(INDEXING_SERVER_PORT, port);
     }
     
+    public static String getSolr4ServerHost() {
+        return preferences.get(SOLR4_SERVER_HOST, "");
+    }
+
+    public static void setSolr4ServerHost(String hostName) {
+        preferences.put(SOLR4_SERVER_HOST, hostName);
+    }    
+    
+    public static String getSolr4ServerPort() {
+        return preferences.get(SOLR4_SERVER_PORT, "");
+    }
+
+    public static void setSolr4ServerPort(int port) {
+        preferences.putInt(SOLR4_SERVER_PORT, port);
+    }    
+    
     public static String getZkServerHost() {
-        return preferences.get(ZK_SERVER_HOST, "localhost"); // ELTODO change default
+        return preferences.get(ZK_SERVER_HOST, "");
     }
     
     public static void setZkServerHost(String hostName) {
@@ -358,7 +375,7 @@ public final class UserPreferences {
     }
 
     public static String getZkServerPort() {
-        return preferences.get(ZK_SERVER_PORT, "9983");
+        return preferences.get(ZK_SERVER_PORT, "");
     }
 
     public static void setZkServerPort(int port) {

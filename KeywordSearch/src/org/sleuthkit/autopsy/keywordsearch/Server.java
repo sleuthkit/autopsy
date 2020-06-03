@@ -347,7 +347,7 @@ public class Server {
             client = new ConcurrentUpdateSolrClient.Builder(solrUrl)
                     .withQueueSize(numDocs)
                     .withThreadCount(numThreads)
-                    .withConnectionTimeout(1000) // ELTODO do we need this?
+                    .withConnectionTimeout(1000)
                     .withResponseParser(new XMLResponseParser())
                     .build();
             solrClients.put(solrUrl, client);
@@ -553,12 +553,53 @@ public class Server {
         startSolr(SOLR_VERSION.SOLR8);
     }
     
-    private void startLocalSolrServer(Index index) throws KeywordSearchModuleException, SolrServerNoPortException {
-        if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
-            startSolr(SOLR_VERSION.SOLR8);
-        } else {
-            startSolr(SOLR_VERSION.SOLR4);
-        }
+    private ConcurrentUpdateSolrClient configureSolrConnection(Case theCase, Index index) throws KeywordSearchModuleException, SolrServerNoPortException {
+        
+        ConcurrentUpdateSolrClient solrClient = null;
+        try {
+            if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
+
+                // makes sure the proper local Solr server is running
+                if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
+                    startSolr(SOLR_VERSION.SOLR8);
+                } else {
+                    startSolr(SOLR_VERSION.SOLR4);
+                }
+
+                solrClient = this.localSolrServer;
+
+                // check if the local Solr server is running
+                if (!this.isLocalSolrRunning()) {
+                    logger.log(Level.SEVERE, "Local Solr server is not running"); //NON-NLS
+                    throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg")); 
+                }              
+            } else {
+                
+                String solrUrl;
+                if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
+                    // Solr 8
+                    
+                    // read Solr conenction info from user preferences, unless "solrserver.txt" is present
+                    IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+                    solrUrl = "http://" + properties.getHost() + ":" + properties.getPort() + "/solr";
+                } else {
+                    // Solr 4
+                    String solr4ServerHost = UserPreferences.getSolr4ServerHost().trim();
+                    String solr4ServerPort = UserPreferences.getSolr4ServerPort().trim();
+                    solrUrl = "http://" + solr4ServerHost + ":" + solr4ServerPort + "/solr";
+                }
+
+                // create SolrJ client to connect to remore Solr server
+                solrClient = getSolrClient(solrUrl);
+
+                // test the connection
+                connectToSolrServer(solrClient);
+            }
+        } catch (SolrServerException | IOException ex) {
+            throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
+        }        
+        
+        return solrClient;
     }
 
     /**
@@ -923,14 +964,6 @@ public class Server {
             } else {
                 logger.log(Level.WARNING, "Unable to delete collection {0}", coreName); //NON-NLS
             }
-            /* ELTODO It is possible to send a core unload request to the Solr server, with the
-                 * parameter set that request deleting the index and the
-                 * instance directory (deleteInstanceDir = true). Note that this
-                 * removes everything related to the core on the server (the
-                 * index directory, the configuration files, etc.), but does not
-                 * delete the actual Solr text index because it is currently
-                 * stored in the case directory.
-             */
         } catch (SolrServerException | IOException ex) {
             // We will get a RemoteSolrException with cause == null and detailsMessage
             // == "Already closed" if the core is not loaded. This is not an error in this scenario.
@@ -953,34 +986,21 @@ public class Server {
      */
     @NbBundle.Messages({
         "Server.exceptionMessage.unableToCreateCollection=Unable to create Solr collection",
+        "Server.exceptionMessage.unableToBackupCollection=Unable to backup Solr collection",
+        "Server.exceptionMessage.unableToRestoreCollection=Unable to restore Solr collection",
     })
     private Collection openCore(Case theCase, Index index) throws KeywordSearchModuleException {
 
         try {
-            if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
-                
-                // makes sure the proper local Solr server is running
-                startLocalSolrServer(index);
-                
-                currentSolrServer = this.localSolrServer;
+            // connect to proper Solr server
+            currentSolrServer = configureSolrConnection(theCase, index);
 
-                // check if the local Solr server is running
-                if (!this.isLocalSolrRunning()) {
-                    logger.log(Level.SEVERE, "Local Solr server is not running"); //NON-NLS
-                    throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg")); 
-                }              
-            } else {
-                IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
-                String solrUrl = "http://" + properties.getHost() + ":" + properties.getPort() + "/solr";
-                currentSolrServer = getSolrClient(solrUrl);
-                
+            if (theCase.getCaseType() == CaseType.MULTI_USER_CASE) {
                 // get list of all live Solr servers in the cluster
                 List<String> solrServerList = getSolrServerList();
-                
+
                 // split/shard the collection across all available Solr servers in current Solr Cloud
                 UserPreferences.setMaxNumShards(solrServerList.size());
-
-                connectToSolrServer(currentSolrServer);
             }
         } catch (SolrServerException | IOException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
@@ -1045,7 +1065,7 @@ public class Server {
     
     private boolean collectionExists(String collectionName) throws SolrServerException, IOException {
 
-        // ELTODO investigate this. Get exception "Solr instance is not running in SolrCloud mode"
+        // TODO we could potentially use this API. Currently set exception "Solr instance is not running in SolrCloud mode"
         // List<String> list = CollectionAdminRequest.listCollections(localSolrServer);
         
         CollectionAdminRequest.ClusterStatus statusRequest = CollectionAdminRequest.getClusterStatus().setCollectionName(collectionName);
@@ -1116,7 +1136,7 @@ public class Server {
             logger.log(Level.INFO, "Collection {0} successfully backep up.", collectionName);
         } else {
             logger.log(Level.SEVERE, "Unable to back up Solr collection {0}", collectionName); //NON-NLS
-            throw new KeywordSearchModuleException(Bundle.Server_exceptionMessage_unableToCreateCollection()); // ELTODO
+            throw new KeywordSearchModuleException(Bundle.Server_exceptionMessage_unableToBackupCollection());
         }
     }
     
@@ -1130,7 +1150,7 @@ public class Server {
             logger.log(Level.INFO, "Collection {0} successfully resored.", restoreCollectionName);
         } else {
             logger.log(Level.SEVERE, "Unable to restore Solr collection {0}", restoreCollectionName); //NON-NLS
-            throw new KeywordSearchModuleException(Bundle.Server_exceptionMessage_unableToCreateCollection()); // ELTODO
+            throw new KeywordSearchModuleException(Bundle.Server_exceptionMessage_unableToRestoreCollection());
         }
     }
     
@@ -1795,9 +1815,11 @@ public class Server {
             if (caseType == CaseType.SINGLE_USER_CASE) {
                 solrUrl = "http://localhost:" + currentSolrServerPort + "/solr/" + name;
             } else {
+                // read Solr conenction info from user preferences, unless "solrserver.txt" is present
                 IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
                 solrUrl = "http://" + properties.getHost() + ":" + properties.getPort() + "/solr/" + name;
             }
+            // get SolrJ client
             solrClient = getSolrClient(solrUrl);
         }
 
@@ -1917,7 +1939,6 @@ public class Server {
         synchronized void close() throws KeywordSearchModuleException {
             // We only unload cores for "single-user" cases.
             if (this.caseType == CaseType.MULTI_USER_CASE) {
-                // ELTODO solrClient.setDefaultCollection(null);
                 solrClient.close();
                 return;
             }
