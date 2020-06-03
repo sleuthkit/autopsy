@@ -20,12 +20,17 @@ package org.sleuthkit.autopsy.communications;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
@@ -36,11 +41,15 @@ import org.sleuthkit.datamodel.CommunicationsManager;
  * Node to represent an Account Device Instance in the CVT
  */
 final class AccountDeviceInstanceNode extends AbstractNode {
-
+    
+    private static final Logger logger = Logger.getLogger(AccountDeviceInstanceNode.class.getName());
+    
     private final AccountDeviceInstanceKey accountDeviceInstanceKey;
     private final CommunicationsManager commsManager;
     private final Account account;
-
+    
+    private static final String TOOLTIP_TEMPLATE = "Contact: %s - Persona: %s";
+    
     AccountDeviceInstanceNode(AccountDeviceInstanceKey accountDeviceInstanceKey, CommunicationsManager commsManager) {
         super(Children.LEAF, Lookups.fixed(accountDeviceInstanceKey, commsManager));
         this.accountDeviceInstanceKey = accountDeviceInstanceKey;
@@ -51,27 +60,27 @@ final class AccountDeviceInstanceNode extends AbstractNode {
         String iconPath = Utils.getIconFilePath(account.getAccountType());
         this.setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
     }
-
+    
     AccountDeviceInstance getAccountDeviceInstance() {
         return accountDeviceInstanceKey.getAccountDeviceInstance();
     }
-
+    
     AccountDeviceInstanceKey getAccountDeviceInstanceKey() {
         return accountDeviceInstanceKey;
     }
-
+    
     CommunicationsManager getCommsManager() {
         return commsManager;
     }
-
+    
     long getMessageCount() {
         return accountDeviceInstanceKey.getMessageCount();
     }
-
+    
     CommunicationsFilter getFilter() {
         return accountDeviceInstanceKey.getCommunicationsFilter();
     }
-
+    
     @Override
     @NbBundle.Messages(value = {"AccountNode.device=Device", "AccountNode.accountName=Account", "AccountNode.accountType=Type", "AccountNode.messageCount=Items"})
     protected Sheet createSheet() {
@@ -95,12 +104,35 @@ final class AccountDeviceInstanceNode extends AbstractNode {
                 accountDeviceInstanceKey.getDataSourceName())); // NON-NLS
         return sheet;
     }
-
+    
     @Override
     public Action[] getActions(boolean context) {
         ArrayList<Action> actions = new ArrayList<>(Arrays.asList(super.getActions(context)));
         actions.add(PinAccountsAction.getInstance());
         actions.add(ResetAndPinAccountsAction.getInstance());
         return actions.toArray(new Action[actions.size()]);
+    }
+    
+    @Override
+    public String getShortDescription() {
+        List<PersonaAccount> personaList;
+        try {
+            personaList = CVTPersonaCache.getInstance().getPersonaAccounts(getName());
+        } catch (ExecutionException ex) {
+            logger.log(Level.WARNING, "Failed to retrieve Persona details for node.", ex);
+            return getDisplayName();
+        }
+        
+        String personaName;
+        if (!personaList.isEmpty()) {
+            personaName = personaList.get(0).getPersona().getName();
+            if (personaList.size() > 1) {
+                personaName += String.format("(1 of %d)", personaList.size());
+            }
+        } else {
+            personaName = "None";
+        }
+        
+        return String.format(TOOLTIP_TEMPLATE, getDisplayName(), personaName);
     }
 }
