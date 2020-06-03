@@ -184,7 +184,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     }
 
     public void enableButtons() {
-        FilesSet selectedFilesSet = FilesSetDefsPanel.this.setsList.getSelectedValue();
+        FilesSet selectedFilesSet = this.setsList.getSelectedValue();
         boolean setSelected = (selectedFilesSet != null);
         boolean isStandardSet = (selectedFilesSet != null && selectedFilesSet.isStandardSet());
 
@@ -533,10 +533,12 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             this.filesSets.remove(oldSet.getName());
         }
 
+        FilesSet setToAdd = newSet;
+        
         // Make the new/edited set definition and add it to the working copy of
         // the files set definitions.
         if (rules != null) {
-            newSet = new FilesSet(
+            setToAdd = new FilesSet(
                     newSet.getName(),
                     newSet.getDescription(),
                     newSet.ignoresKnownFiles(),
@@ -547,7 +549,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             );
         }
 
-        this.filesSets.put(newSet.getName(), newSet);
+        this.filesSets.put(setToAdd.getName(), setToAdd);
 
         // Redo the list model for the files set list component, which will make
         // everything stays sorted as in the working copy tree set.
@@ -559,7 +561,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         // Select the new/edited files set definition in the set definitions
         // list. This will cause the selection listeners to repopulate the
         // subordinate components.
-        this.setsList.setSelectedValue(newSet, true);
+        this.setsList.setSelectedValue(setToAdd, true);
     }
 
     /**
