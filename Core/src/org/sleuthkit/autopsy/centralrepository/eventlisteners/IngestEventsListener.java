@@ -423,7 +423,7 @@ public class IngestEventsListener {
                     if (persona == null) {
                         personaToReturn = Persona.createPersonaForAccount(personaName, "Auto generated contact persona", Persona.PersonaStatus.UNKNOWN, crAccount, "Found in contact book entry", Persona.Confidence.DERIVED);
                     } else {
-                        persona.addAccountToPersona(crAccount, "Found in contact book entry", Persona.Confidence.DERIVED);
+                        persona.addAccount(crAccount, "Found in contact book entry", Persona.Confidence.DERIVED);
                     }
                 }
             }
