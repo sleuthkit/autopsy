@@ -38,7 +38,7 @@ public class PersonaDetailsDialog extends JDialog {
     @NbBundle.Messages({
         "PersonaDetailsDialogCreateTitle=Create Persona",
         "PersonaDetailsDialogEditTitle=Edit Persona",})
-    PersonaDetailsDialog(Component parent, PersonaDetailsMode mode, Persona persona, PersonaDetailsDialogCallback callback) {
+    public PersonaDetailsDialog(Component parent, PersonaDetailsMode mode, Persona persona, PersonaDetailsDialogCallback callback) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 mode == PersonaDetailsMode.CREATE ? 
                         Bundle.PersonaDetailsDialogCreateTitle() : 
