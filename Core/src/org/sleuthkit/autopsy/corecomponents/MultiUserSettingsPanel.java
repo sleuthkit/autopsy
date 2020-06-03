@@ -35,6 +35,8 @@ import java.awt.Cursor;
 import java.io.IOException;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coordinationservice.utils.CoordinationServiceUtils;
@@ -820,6 +822,13 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         CaseDbConnectionInfo info = null;
         
         if (multiUserCasesEnabled == true) {
+                                    
+            // Check if aplication restart is required.
+            boolean needsRestart = false;
+            // don't check if entring multi user data for the first time
+            if (prevSelected == true) {
+                needsRestart = isRestartRequired();
+            }
 
             /*
              * Currently only supporting multi-user cases with PostgreSQL case
@@ -855,19 +864,47 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
             } catch (UserPreferencesException ex) {
                 logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
-            }
+            } 
 
             UserPreferences.setIndexingServerHost(tbSolr8Hostname.getText().trim());
             UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolr8Port.getText().trim()));
             UserPreferences.setSolr4ServerHost(tbSolr4Hostname.getText().trim());
-            UserPreferences.setSolr4ServerPort(Integer.parseInt(tbSolr4Port.getText().trim()));
+            UserPreferences.setSolr4ServerPort(tbSolr4Port.getText().trim());
             UserPreferences.setZkServerHost(tbZkHostname.getText().trim());
-            UserPreferences.setZkServerPort(Integer.parseInt(tbZkPort.getText().trim()));
+            UserPreferences.setZkServerPort(tbZkPort.getText().trim());
+            
+            if (needsRestart) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this,
+                            NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.MustRestart"),
+                            NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.restartRequiredLabel.text"),
+                            JOptionPane.WARNING_MESSAGE);
+                });
+            }
         }
 
         // trigger changes to whether or not user can use multi user settings for central repository
         if (prevSelected != multiUserCasesEnabled || !areCaseDbConnectionEqual(prevConn, info))
             GlobalSettingsPanel.onMultiUserChange(this, prevSelected, multiUserCasesEnabled);
+    }
+    
+    private boolean isRestartRequired() {
+        // Restart is required any time standalone ZK info has changed. 
+        if (!(tbZkHostname.getText().trim().equalsIgnoreCase(UserPreferences.getZkServerHost()))
+                || !(tbZkPort.getText().trim().equals(UserPreferences.getZkServerPort()))) {
+            return true;
+        }
+        
+        // If standalone ZK info is not set, then restart is required if Solr settings 
+        // have changed, because we are using the embedded ZK of the Solr server.
+        if (tbZkHostname.getText().trim().isEmpty() && tbZkPort.getText().trim().isEmpty()) {
+            if (!(tbSolr8Hostname.getText().trim().equalsIgnoreCase(UserPreferences.getIndexingServerHost()))
+                    || !(tbSolr8Port.getText().trim().equals(UserPreferences.getIndexingServerPort()))) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     private static boolean arePropsEqual(Object a, Object b) {

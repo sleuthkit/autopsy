@@ -362,8 +362,8 @@ public final class UserPreferences {
         return preferences.get(SOLR4_SERVER_PORT, "");
     }
 
-    public static void setSolr4ServerPort(int port) {
-        preferences.putInt(SOLR4_SERVER_PORT, port);
+    public static void setSolr4ServerPort(String port) {
+        preferences.put(SOLR4_SERVER_PORT, port);
     }    
     
     public static String getZkServerHost() {
@@ -378,8 +378,8 @@ public final class UserPreferences {
         return preferences.get(ZK_SERVER_PORT, "");
     }
 
-    public static void setZkServerPort(int port) {
-        preferences.putInt(ZK_SERVER_PORT, port);
+    public static void setZkServerPort(String port) {
+        preferences.put(ZK_SERVER_PORT, port);
     }
     
     public static void setMaxNumShards(int maxShards) {
