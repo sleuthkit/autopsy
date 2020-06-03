@@ -133,14 +133,13 @@ public class PersonaAlias {
     }
     
     /**
-     * Removes an alias from the specified Persona.
+     * Removes a PersonaAlias.
      *
-     * @param persona Persona for which the alias is being removed.
      * @param alias Alias to remove.
      *
      * @throws CentralRepoException If there is an error in removing the alias.
      */
-    static void removePersonaAlias(Persona persona, PersonaAlias alias) throws CentralRepoException {
+    static void removePersonaAlias(PersonaAlias alias) throws CentralRepoException {
         String deleteClause = " DELETE FROM persona_alias WHERE id = " + alias.getId();
         CentralRepository.getInstance().executeDeleteSQL(deleteClause);
     }

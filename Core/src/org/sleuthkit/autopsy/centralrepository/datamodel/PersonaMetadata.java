@@ -144,14 +144,13 @@ public class PersonaMetadata {
     }
     
     /**
-     * Removes a metadata from the specified Persona.
+     * Removes the given PersonaMetadata
      *
-     * @param persona Persona for which the metadata is being removed.
      * @param metadata Metadata to remove.
      *
      * @throws CentralRepoException If there is an error in removing the metadata.
      */
-    static void removePersonaMetadata(Persona persona, PersonaMetadata metadata) throws CentralRepoException {
+    static void removePersonaMetadata(PersonaMetadata metadata) throws CentralRepoException {
         String deleteClause = " DELETE FROM persona_metadata WHERE id = " + metadata.getId();
         CentralRepository.getInstance().executeDeleteSQL(deleteClause);
     }

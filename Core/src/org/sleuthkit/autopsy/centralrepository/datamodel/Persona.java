@@ -284,7 +284,7 @@ public class Persona {
     }
     
     /**
-     * Removes the given account from this persona
+     * Removes the given PersonaAccount (persona/account association)
      *
      * @param account account to remove
      *
@@ -292,7 +292,7 @@ public class Persona {
      * Personas table.
      */
     public void removeAccount(PersonaAccount account) throws CentralRepoException {
-        PersonaAccount.removePersonaAccount(this, account.getId());
+        PersonaAccount.removePersonaAccount(account.getId());
     }
 
     /**
@@ -400,7 +400,7 @@ public class Persona {
     }
     
     /**
-     * Removes the given alias from this persona
+     * Removes the given alias
      *
      * @param alias alias to remove
      *
@@ -408,7 +408,7 @@ public class Persona {
      * Personas table.
      */
     public void removeAlias(PersonaAlias alias) throws CentralRepoException {
-        PersonaAlias.removePersonaAlias(this, alias);
+        PersonaAlias.removePersonaAlias(alias);
     }
 
     /**
@@ -446,7 +446,7 @@ public class Persona {
      * Personas table.
      */
     public void removeMetadata(PersonaMetadata metadata) throws CentralRepoException {
-        PersonaMetadata.removePersonaMetadata(this, metadata);
+        PersonaMetadata.removePersonaMetadata(metadata);
     }
 
     /**

@@ -721,7 +721,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         "PersonaDetailsPanel_EmptyName_msg=Persona name cannot be empty",
         "PersonaDetailsPanel_EmptyName_Title=Empty persona name",})
     Persona okHandler() {
-        if (accountsToAdd.size() + currentAccounts.size() < 2) {
+        if (accountsToAdd.size() + currentAccounts.size() < 1) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaDetailsPanel_NotEnoughAccounts_msg(),
                     Bundle.PersonaDetailsPanel_NotEnoughAccounts_Title(),

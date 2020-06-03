@@ -291,15 +291,14 @@ public class PersonaAccount {
     }
 
     /**
-     * Removes an account from the specified Persona.
+     * Removes the PersonaAccount row by the given id
      *
-     * @param persona Persona for which the account is being removed.
      * @param id row id for the account to be removed
      *
      * @throws CentralRepoException If there is an error in removing the
      * account.
      */
-    static void removePersonaAccount(Persona persona, long id) throws CentralRepoException {
+    static void removePersonaAccount(long id) throws CentralRepoException {
         String deleteClause = " DELETE FROM persona_accounts WHERE id = " + id;
         CentralRepository.getInstance().executeDeleteSQL(deleteClause);
     }
