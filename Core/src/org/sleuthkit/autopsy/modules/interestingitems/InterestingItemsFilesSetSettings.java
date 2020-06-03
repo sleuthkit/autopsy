@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCond
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MimeTypeCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.ParentPathCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.DateCondition;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -381,26 +382,25 @@ class InterestingItemsFilesSetSettings implements Serializable {
         if (!ignoreUnallocated.isEmpty()) {
             ignoreUnallocatedSpace = Boolean.parseBoolean(ignoreUnallocated);
         }
-        
+
         String isStandardSetString = setElem.getAttribute(STANDARD_SET);
         boolean isStandardSet = false;
         if (StringUtils.isNotBlank(isStandardSetString)) {
             isStandardSet = Boolean.parseBoolean(isStandardSetString);
         }
-        
+
         String versionNumberString = setElem.getAttribute(VERSION_NUMBER);
         int versionNumber = 0;
         if (StringUtils.isNotBlank(versionNumberString)) {
             try {
                 versionNumber = Integer.parseInt(versionNumberString);
-            }
-            catch (NumberFormatException ex) {
-                logger.log(Level.WARNING, 
-                    String.format("Unable to parse version number for files set named: %s with provided input: '%s'", setName, versionNumberString),
-                    ex);
+            } catch (NumberFormatException ex) {
+                logger.log(Level.WARNING,
+                        String.format("Unable to parse version number for files set named: %s with provided input: '%s'", setName, versionNumberString),
+                        ex);
             }
         }
-        
+
         // Read the set membership rules, if any.
         Map<String, FilesSet.Rule> rules = new HashMap<>();
         NodeList allRuleElems = setElem.getChildNodes();
@@ -477,16 +477,16 @@ class InterestingItemsFilesSetSettings implements Serializable {
             logger.log(Level.SEVERE, "FilesSet definition file at {0} exists, but cannot be read", xmlFile.getPath()); // NON-NLS
             return new HashMap<>();
         }
-        
+
         Document doc = XMLUtil.loadDoc(InterestingItemsFilesSetSettings.class, xmlFile.getPath());
         return readDefinitionsXML(doc, xmlFile.getPath());
     }
-       
+
     /**
      * Reads an XML file and returns a map of fileSets. Allows for legacy XML
      * support as well as importing of file sets to XMLs.
      *
-
+     *
      * @param doc The xml document.
      *
      * @return fileSets - a Map<String, Filesset> of the definition(s) found in
@@ -498,7 +498,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
     static Map<String, FilesSet> readDefinitionsXML(Document doc, String resourceName) throws FilesSetsManager.FilesSetsManagerException {
         // Parse the XML in the file.
         Map<String, FilesSet> filesSets = new HashMap<>();
-        
+
         if (doc == null) {
             logger.log(Level.SEVERE, "FilesSet definition file at {0}", resourceName); // NON-NLS
             return filesSets;
@@ -506,7 +506,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
         // Get the root element.
         Element root = doc.getDocumentElement();
         if (root == null) {
-            logger.log(Level.SEVERE, "Failed to get root {0} element tag of FilesSet definition file at {1}", 
+            logger.log(Level.SEVERE, "Failed to get root {0} element tag of FilesSet definition file at {1}",
                     new Object[]{FILE_SETS_ROOT_TAG, resourceName}); // NON-NLS
             return filesSets;
         }
@@ -622,13 +622,13 @@ class InterestingItemsFilesSetSettings implements Serializable {
                         ruleElement.setAttribute(FS_SIZE_ATTR, Integer.toString(sizeCondition.getSizeValue()));
                         ruleElement.setAttribute(FS_UNITS_ATTR, sizeCondition.getUnit().getName());
                     }
-                    
-                     //Add the optional date condition
+
+                    //Add the optional date condition
                     DateCondition dateCondition = rule.getDateCondition();
                     if (dateCondition != null) {
                         ruleElement.setAttribute(DAYS_INCLUDED_ATTR, Integer.toString(dateCondition.getDaysIncluded()));
                     }
-                    
+
                     setElement.appendChild(ruleElement);
                 }
                 rootElement.appendChild(setElement);

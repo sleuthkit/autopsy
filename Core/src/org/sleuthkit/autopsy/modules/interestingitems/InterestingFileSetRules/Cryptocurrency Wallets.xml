@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <INTERESTING_FILE_SETS>
- <INTERESTING_FILE_SET description="" ignoreKnown="false" name="Cryptocurrency Wallets">
+ <INTERESTING_FILE_SET description="" ignoreKnown="false" name="Cryptocurrency Wallets" standardSet="true" versionNumber="1">
   <NAME name="Electrum Portable" regex="true" typeFilter="file">^electrum(.*)portable.exe</NAME>
   <NAME name="Jaxx" regex="false" typeFilter="file">jaxx liberty.exe</NAME>
   <NAME name="Electron Cash Standalone" regex="true" typeFilter="file">^electron-cash(.*).exe$</NAME>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <INTERESTING_FILE_SETS>
- <INTERESTING_FILE_SET description="Identifies installed cloud storage applications" ignoreKnown="false" name="Cloud Storage">
+ <INTERESTING_FILE_SET description="Identifies installed cloud storage applications" ignoreKnown="false" name="Cloud Storage" standardSet="true" versionNumber="1">
   <NAME name="CloudMe" regex="false" typeFilter="file">CloudMe.exe</NAME>
   <NAME name="Resilio" regex="false" typeFilter="file">Resilio Sync.exe</NAME>
   <NAME name="pCloud" regex="false" typeFilter="file">pcloud.exe</NAME>
