@@ -390,7 +390,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
         
         String versionNumberString = setElem.getAttribute(VERSION_NUMBER);
         int versionNumber = 0;
-        if (StringUtils.isNotBlank(isStandardSetString)) {
+        if (StringUtils.isNotBlank(versionNumberString)) {
             try {
                 versionNumber = Integer.parseInt(versionNumberString);
             }
