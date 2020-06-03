@@ -53,24 +53,24 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
             "Cryptocurrency Wallets.xml",
             "Encryption Programs.xml"
     );
-
+    
     private static final Logger LOGGER = Logger.getLogger(StandardInterestingFilesSetsLoader.class.getName());
-
+    
     private static final String CONFIG_DIR = "InterestingFileSetRules";
-
+    
     private static final FilenameFilter DEFAULT_XML_FILTER = new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
             return name.endsWith(".xml");
         }
     };
-
+    
     @Override
     public void run() {
         File rulesConfigDir = new File(PlatformUtil.getUserConfigDirectory(), CONFIG_DIR);
-
+        
         copyRulesDirectory(rulesConfigDir);
-
+        
         Map<String, FilesSet> standardInterestingFileSets = readStandardFileXML(rulesConfigDir);
 
         // Call FilesSetManager.getInterestingFilesSets() to get a Map<String, FilesSet> of the existing rule sets.
@@ -80,14 +80,14 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
             LOGGER.log(Level.SEVERE, "Unable to properly read user-configured interesting files sets.", ex);
         }
-
+        
         if (userConfiguredSettings == null) {
             userConfiguredSettings = new HashMap<>();
         }
 
         // Add each FilesSet read from the standard rules set XML files that is missing from the Map to the Map.
         copyOnNewer(standardInterestingFileSets, userConfiguredSettings, true);
-
+        
         try {
             // Call FilesSetManager.setInterestingFilesSets with the updated Map.
             FilesSetsManager.getInstance().setInterestingFilesSets(userConfiguredSettings);
@@ -177,7 +177,7 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
      */
     private static void updateStandardFilesSetConfigFile(File rulesConfigDir, InputStream resourceInputStream, String resourceName) {
         File configDirFile = new File(rulesConfigDir, resourceName);
-
+        
         Map<String, FilesSet> resourceFilesSet = null;
         DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         try {
@@ -194,7 +194,7 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
                 .stream()
                 .map((filesSet) -> getAsStandardFilesSet(filesSet, true))
                 .collect(Collectors.toMap(FilesSet::getName, Function.identity()));
-
+        
         if (configDirFile.exists()) {
             Map<String, FilesSet> configDirFilesSet = null;
             try {
@@ -202,20 +202,20 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
             } catch (FilesSetsManager.FilesSetsManagerException ex) {
                 LOGGER.log(Level.WARNING, "Unable to read FilesSet data from config file: " + resourceName, ex);
             }
-
+            
             copyOnNewer(configDirFilesSet, resourceFilesSet);
         }
-
+        
         try {
             rulesConfigDir.mkdirs();
         } catch (SecurityException ex) {
             LOGGER.log(Level.WARNING, "Unable to write FilesSet data to disk at: " + configDirFile.getAbsolutePath(), ex);
             return;
         }
-
+        
         boolean successfulWrite = InterestingItemsFilesSetSettings.exportXmlDefinitionsFile(configDirFile,
                 resourceFilesSet.values().stream().collect(Collectors.toList()));
-
+        
         if (!successfulWrite) {
             LOGGER.log(Level.WARNING, "Unable to write FilesSet data to disk at: " + configDirFile.getAbsolutePath());
         }
@@ -255,9 +255,9 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
                 if (appendCustom && srcFileSet.isStandardSet() != destFileSet.isStandardSet()) {
                     if (srcFileSet.isStandardSet()) {
                         addCustomFile(dest, destFileSet);
+                        dest.put(key, srcFileSet);
                     } else {
                         addCustomFile(dest, srcFileSet);
-                        src.put(key, destFileSet);
                     }
                     continue;
                 }
@@ -268,7 +268,7 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
                     continue;
                 }
             }
-
+            
             dest.put(srcEntry.getKey(), srcEntry.getValue());
         }
     }
@@ -286,9 +286,12 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
             LOGGER.log(Level.SEVERE, "An attempt to create a custom file that was a standard set.");
             return;
         }
-
-        FilesSet customCopy = getAsCustomFileSet(srcFilesSet);
-        dest.put(customCopy.getName(), customCopy);
+        
+        do {
+            srcFilesSet = getAsCustomFileSet(srcFilesSet);
+        } while (dest.containsKey(srcFilesSet.getName()));
+        
+        dest.put(srcFilesSet.getName(), srcFilesSet);
     }
 
     /**
