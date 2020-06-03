@@ -46,7 +46,7 @@ public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<Blackboar
     }
 
     /**
-     * Extension of {@link DeletedTagInfo} for BlackBoardArtifactTags that
+     * Extension of DeletedTagInfo for BlackBoardArtifactTags that
      * includes artifact related info.
      */
     @Immutable
