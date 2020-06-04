@@ -47,15 +47,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Extract the EVTX Event logs to individual SQLite databases to be used by a
@@ -102,9 +97,8 @@ final class ExtractPrefetch extends Extract {
         
         final String prefetchDumper = getPathForPrefetchDumper();
         if (prefetchDumper == null) {
-//            this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_unableFindESEViewer());
-            logger.log(Level.SEVERE, "Error finding export_prefetchdb program"); //NON-NLS
-            return; //If we cannot find the ESEDatabaseView we cannot proceed
+            logger.log(Level.SEVERE, "Error finding parse_prefetch program"); //NON-NLS
+            return; //If we cannot find the parse_prefetch program we cannot proceed
         }
 
         if (context.dataSourceIngestIsCancelled()) {
@@ -121,11 +115,9 @@ final class ExtractPrefetch extends Extract {
         }
         try {
             createAppExecArtifacts(modOutFile, dataSource);
- //           createPrefetchArtifacts(modOutFile, dataSource);
         } finally {
             return;
         }
-//        (new File(tempDirPath)).delete();
     }
 
     void extractPrefetchFiles(Content dataSource) {
@@ -133,9 +125,7 @@ final class ExtractPrefetch extends Extract {
 
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
         String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "prefetch"); //NON-NLS
-//       String tempOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + "prefetch" + File.separator + "Autopsy_PF_DB.db3"; //NON-NLS
 
-//        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
             pFiles = fileManager.findFiles(dataSource, "%.pf"); //NON-NLS            
         } catch (TskCoreException ex) {
