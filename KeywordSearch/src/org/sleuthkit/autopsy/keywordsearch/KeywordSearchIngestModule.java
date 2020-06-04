@@ -132,16 +132,16 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     "Creation-Date"); //NON-NLS
 
     private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> METADATA_TYPES_MAP = ImmutableMap.<String, BlackboardAttribute.ATTRIBUTE_TYPE>builder()  
-                   .put("Last-Save-Date", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED) 
-                   .put("Last-Author", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID) 
-                   .put("Creation-Date", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED) 
-                   .put("Company", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ORGANIZATION) 
-                   .put("Author", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OWNER)
-                   .put("Application-Name", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME)
-                   .put("Last-Printed", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_PRINTED_DATETIME)
-                   .put("Producer", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME) 
-                   .put("Title", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION) 
-                   .put("pdf:PDFVersion", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VERSION)
+                    .put("Last-Save-Date", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED) 
+                    .put("Last-Author", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID) 
+                    .put("Creation-Date", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED) 
+                    .put("Company", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ORGANIZATION) 
+                    .put("Author", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OWNER)
+                    .put("Application-Name", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME)
+                    .put("Last-Printed", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_PRINTED_DATETIME)
+                    .put("Producer", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME) 
+                    .put("Title", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION) 
+                    .put("pdf:PDFVersion", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VERSION)
                    .build();
 
     
@@ -571,7 +571,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     // Log error and return to continue processing
-                   logger.log(Level.WARNING, String.format("Error creating or adding artifact."), ex); //NON-NLS
+                   logger.log(Level.WARNING, String.format("Error creating or adding metadata artifact for file %s.", aFile.getParentPath() + aFile.getName()), ex); //NON-NLS
                    return;
                 }
                 if (!bbartifacts.isEmpty()) {
@@ -579,7 +579,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                         Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().postArtifacts(bbartifacts, moduleName);
                     } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
                         // Log error and return to continue processing
-                        logger.log(Level.WARNING, "Unable to post blackboard artifacts", ex); //NON-NLS
+                        logger.log(Level.WARNING, String.format("Unable to post blackboard artifacts for file $s.", aFile.getParentPath() + aFile.getName()) , ex); //NON-NLS
                         return;
                     }
                 }
