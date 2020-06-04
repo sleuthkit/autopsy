@@ -24,7 +24,9 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.event.ListSelectionListener;
 
-
+/**
+ * Abstract class extending JPanel for filter controls.
+ */
 abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -40,20 +42,44 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
      */
     abstract void configurePanel(boolean selected, int[] indicesSelected);
 
+    /**
+     * Get the checkbox which enables and disables this filter.
+     *
+     * @return The JCheckBox which enables and disables this filter.
+     */
     abstract JCheckBox getCheckbox();
 
+    /**
+     * Get the list of values associated with this filter if one exists. If one
+     * does not exist this should return null.
+     *
+     * @return The JList which contains the values available for selection for
+     *         this filter.
+     */
     abstract JList<?> getList();
 
+    /**
+     * Get any additional text that should be displayed under the checkbox. If
+     * no text should be displayed this should return null.
+     *
+     * @return The JLabel to display under the JCheckBox.
+     */
     abstract JLabel getAdditionalLabel();
 
+    /**
+     * Check if this filter is configured to valid settings.
+     *
+     * @return True if the filter is configured with valid search settings,
+     *         false otherwise.
+     */
     abstract String checkForError();
 
     /**
      * Add listeners to the checkbox/list set if listeners have not already been
      * added.
      *
-     * @param listener
-     * @param listListener
+     * @param actionlistener The listener for the checkbox selection events.
+     * @param listListener   The listener for the list selection events.
      */
     void addListeners(ActionListener actionListener, ListSelectionListener listListener) {
         if (getCheckbox() != null) {
@@ -64,8 +90,17 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Get the FileFilter which is represented by this Panel.
+     *
+     * @return The FileFilter for the selected settings, null if the settings
+     *         are not in use.
+     */
     abstract FileSearchFiltering.FileFilter getFilter();
 
+    /**
+     * Remove listeners from the checkbox and the list if they exist.
+     */
     void removeListeners() {
         if (getCheckbox() != null) {
             for (ActionListener listener : getCheckbox().getActionListeners()) {
@@ -79,6 +114,12 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Return whether or not this filter has a panel.
+     *
+     * @return True if there is a panel to display associated with this filter,
+     *         return false if the filter only has a checkbox.
+     */
     boolean hasPanel() {
         return true;
     }

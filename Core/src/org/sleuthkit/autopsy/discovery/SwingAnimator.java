@@ -24,12 +24,10 @@ import javax.swing.Timer;
 
 /**
  *
- * Class to animate Layouts and Fades for a given component.
+ * Class to animate Layouts for a given component.
  *
  * @author Greg Cope
  * https://www.algosome.com/articles/java-swing-panel-animation.html
- *
- *
  *
  */
 final class SwingAnimator {
@@ -41,77 +39,38 @@ final class SwingAnimator {
     private Timer timer = null;
 
     //duration in milliseconds betweeen each firing of the Timer
-    private static final int INITIAL_DURATION = 10;
-    private static int duration = INITIAL_DURATION;
+    private static final int INITIAL_TIMING = 10;
+    private static int timing = INITIAL_TIMING;
 
     /**
      *
      * Constructs a new SwingAnimator.
      *
-     *
-     * @param callback The object to callback to
+     * @param callback The SwingAnimatorCallback to call.
      *
      */
     SwingAnimator(SwingAnimatorCallback callback) {
-
-        this(callback, false);
-
+        this(callback, INITIAL_TIMING);
     }
 
     /**
      *
+     * Constructs a new SwingAnimator.
      *
-     *
-     * @param callback The object to callback to
-     *
-     * @param start    true to automatically start the animation, false
-     *                 otherwise
-     *
-     */
-    SwingAnimator(SwingAnimatorCallback callback, boolean start) {
-
-        this(callback, INITIAL_DURATION, start);
-
-    }
-
-    /**
-     *
-     *
-     *
-     * @param callback    The object to callback to
-     *
-     * @param frameTiming Timing between each call to callback.
-     *
-     * @param start       true to automatically start the animation, false
-     *                    otherwise
-     *
-     */
-    SwingAnimator(SwingAnimatorCallback callback, int frameTiming, boolean start) {
-        this.callback = callback;
-        duration = frameTiming;
-        if (start) {
-            start();
-        }
-    }
-
-    /**
-     *
-     *
-     *
-     * @param callback    The object to callback to
-     *
+     * @param callback    The SwingAnimatorCallback to call.
      * @param frameTiming Timing between each call to callback.
      *
      */
     SwingAnimator(SwingAnimatorCallback callback, int frameTiming) {
-        this(callback, frameTiming, false);
+        this.callback = callback;
+        timing = frameTiming;
     }
 
     /**
      *
      * Checks if this animator is running.
      *
-     * @return
+     * @return True if the animator is running, false otherwise.
      *
      */
     boolean isRunning() {
@@ -135,26 +94,19 @@ final class SwingAnimator {
     /**
      *
      * Starts the timer to fire. If the current timer is non-null and running,
-     * this method will first
-     *
-     * stop the timer before beginning a new one. *
+     * this method will first stop the timer before beginning a new one. 
      */
     void start() {
-
         if (timer != null && timer.isRunning()) {
             stop();
         }
-        timer = new Timer(duration, new CallbackListener());
+        timer = new Timer(timing, new CallbackListener());
         timer.start();
     }
 
     /**
      *
-     * ActionListener implements to be passed to the internal timer instance
-     *
-     * @author Greg Cope
-     *
-     *
+     * ActionListener implements to be passed to the internal timer instance.
      *
      */
     private class CallbackListener implements ActionListener {
@@ -170,5 +122,5 @@ final class SwingAnimator {
             callback.callback(SwingAnimator.this);
         }
     }
-    
+
 }

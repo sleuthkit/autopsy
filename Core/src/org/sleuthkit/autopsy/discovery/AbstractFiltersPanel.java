@@ -31,7 +31,10 @@ import javax.swing.JSplitPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-
+/**
+ * Abstract class extending JPanel for displaying all the filters associated
+ * with a type.
+ */
 abstract class AbstractFiltersPanel extends JPanel implements ActionListener, ListSelectionListener {
 
     private boolean isInitialized = false;
@@ -49,13 +52,32 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     private int firstColumnY = 0;
     private int secondColumnY = 0;
 
+    /**
+     * Setup necessary for implementations of this abstract class.
+     */
     AbstractFiltersPanel() {
         firstColumnPanel.setLayout(new GridBagLayout());
         secondColumnPanel.setLayout(new GridBagLayout());
     }
 
+    /**
+     * Get the type of results this filters panel is for.
+     *
+     * @return The type of results this panel filters.
+     */
     abstract FileSearchData.FileType getFileType();
 
+    /**
+     * Add a DiscoveryFilterPanel to the specified column with the specified
+     * settings.
+     *
+     * @param filterPanel     The DiscoveryFilterPanel to add to this panel.
+     * @param isSelected      True if the checkbox should be selected, false
+     *                        otherwise.
+     * @param indicesSelected The array of indices that are selected in the
+     *                        list, null if none are selected.
+     * @param column          The column to add the DiscoveryFilterPanel to.
+     */
     final synchronized void addFilter(AbstractDiscoveryFilterPanel filterPanel, boolean isSelected, int[] indicesSelected, int column) {
         if (!isInitialized) {
             constraints.gridy = 0;
@@ -98,6 +120,11 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         }
     }
 
+    /**
+     * Add the panels representing the two columns to the specified JSplitPane.
+     *
+     * @param splitPane The JSplitPane which the columns are added to.
+     */
     final void addPanelsToScrollPane(JSplitPane splitPane) {
         splitPane.setLeftComponent(firstColumnPanel);
         splitPane.setRightComponent(secondColumnPanel);
@@ -105,6 +132,9 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         repaint();
     }
 
+    /**
+     * Clear the filters from the panel
+     */
     final synchronized void clearFilters() {
         for (AbstractDiscoveryFilterPanel filterPanel : filters) {
             filterPanel.removeListeners();
@@ -118,7 +148,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
             constraints.gridy += constraints.gridheight;
             addToColumn(additionalComponentToAdd, constraints, columnIndex);
             constraints.gridy -= constraints.gridheight;
-        } 
+        }
     }
 
     private void addToColumn(Component component, Object constraints, int columnNumber) {

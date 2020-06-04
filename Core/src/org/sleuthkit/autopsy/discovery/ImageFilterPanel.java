@@ -34,7 +34,7 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
         SizeFilterPanel sizeFilterPanel = new SizeFilterPanel(FILE_TYPE);
         int[] sizeIndicesSelected = {1, 2, 3, 4, 5};
         addFilter(sizeFilterPanel, true, sizeIndicesSelected, 0);
-        addFilter(new ObjectDetectedFilterPanel(), false, null, 0);
+        addFilter(new DataSourceFilterPanel(), false, null, 0);
         int[] pastOccurrencesIndices;
         if (!CentralRepository.isEnabled()) {
             pastOccurrencesIndices = new int[]{0};
@@ -45,10 +45,10 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
         addFilter(new UserCreatedFilterPanel(), false, null, 1);
         addFilter(new HashSetFilterPanel(), false, null, 1);
         addFilter(new InterestingItemsFilterPanel(), false, null, 1);
-        addFilter(new DataSourceFilterPanel(), false, null, 1);
+        addFilter(new ObjectDetectedFilterPanel(), false, null, 1);
         addFilter(new ParentFolderFilterPanel(), false, null, 1);
         addPanelsToScrollPane(imageFiltersSplitPane);
-        
+
     }
 
     /**

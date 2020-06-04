@@ -50,15 +50,12 @@ final class GroupListPanel extends javax.swing.JPanel {
      */
     GroupListPanel() {
         initComponents();
-        SwingUtilities.invokeLater(() -> {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        });
     }
 
     /**
-     * Subscribe to and reset the panel in response to SearchStartedEvents
+     * Subscribe to and reset the panel in response to SearchStartedEvents.
      *
-     * @param searchStartedEvent the SearchStartedEvent which was received
+     * @param searchStartedEvent The SearchStartedEvent which was received.
      */
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
@@ -70,9 +67,9 @@ final class GroupListPanel extends javax.swing.JPanel {
         "GroupsListPanel.noResults.title.text=No results found"})
     /**
      * Subscribe to and update list of groups in response to
-     * SearchCompleteEvents
+     * SearchCompleteEvents.
      *
-     * @param searchCompleteEvent the SearchCompleteEvent which was received
+     * @param searchCompleteEvent The SearchCompleteEvent which was received.
      */
     @Subscribe
     void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
@@ -91,6 +88,18 @@ final class GroupListPanel extends javax.swing.JPanel {
                         Bundle.GroupsListPanel_noResults_title_text(),
                         JOptionPane.INFORMATION_MESSAGE);
             }
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
+    }
+
+    /**
+     * Subscribe to SearchCancelledEvent and reset the panel in response to it.
+     *
+     * @param searchCancelledEvent The SearchCancelledEvent which was received.
+     */
+    @Subscribe
+    void handleSearchCancelledEvent(DiscoveryEventUtils.SearchCancelledEvent searchCancelledEvent) {
+        SwingUtilities.invokeLater(() -> {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
     }
@@ -138,6 +147,9 @@ final class GroupListPanel extends javax.swing.JPanel {
      * Reset the group list to be empty.
      */
     void resetGroupList() {
+        SwingUtilities.invokeLater(() -> {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        });
         groupKeyList.setListData(new GroupKey[0]);
     }
 
@@ -160,6 +172,7 @@ final class GroupListPanel extends javax.swing.JPanel {
                 }
             } else {
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.NoResultsEvent());
+
             }
         }
     }//GEN-LAST:event_groupSelected

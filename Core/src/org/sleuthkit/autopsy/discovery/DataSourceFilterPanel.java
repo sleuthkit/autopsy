@@ -136,6 +136,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
         try {
             DefaultListModel<DataSourceItem> dsListModel = (DefaultListModel<DataSourceItem>) dataSourceList.getModel();
             dsListModel.removeAllElements();
+            System.out.println("CASE: " + Case.getCurrentCase().getName());
             for (DataSource ds : Case.getCurrentCase().getSleuthkitCase().getDataSources()) {
                 dsListModel.add(count, new DataSourceItem(ds));
             }

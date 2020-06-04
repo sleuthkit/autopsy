@@ -109,9 +109,6 @@ final class ResultsPanel extends javax.swing.JPanel {
                 }
             }
         });
-              SwingUtilities.invokeLater(() -> {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        });
     }
 
     /**
@@ -138,6 +135,18 @@ final class ResultsPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Subscribe to and reset the panel in response to SearchStartedEvents
+     *
+     * @param searchStartedEvent the SearchStartedEvent which was received
+     */
+    @Subscribe
+    void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
+        SwingUtilities.invokeLater(() -> {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        });
+    }
+
+    /**
      * Subscribe and respond to PageRetrievedEvents.
      *
      * @param pageRetrievedEvent The PageRetrievedEvent received.
@@ -145,6 +154,7 @@ final class ResultsPanel extends javax.swing.JPanel {
     @Subscribe
     void handlePageRetrievedEvent(DiscoveryEventUtils.PageRetrievedEvent pageRetrievedEvent) {
         SwingUtilities.invokeLater(() -> {
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             //send populateMesage
             DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
 
@@ -257,7 +267,6 @@ final class ResultsPanel extends javax.swing.JPanel {
             resultType = groupSelectedEvent.getResultType();
             groupSize = groupSelectedEvent.getGroupSize();
             setPage(0);
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
     }
 
@@ -270,6 +279,7 @@ final class ResultsPanel extends javax.swing.JPanel {
     @Subscribe
     void handleNoResultsEvent(DiscoveryEventUtils.NoResultsEvent noResultsEvent) {
         SwingUtilities.invokeLater(() -> {
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             groupSize = 0;
             currentPage = 0;
             updateControls();
@@ -280,6 +290,8 @@ final class ResultsPanel extends javax.swing.JPanel {
             resultsViewerPanel.repaint();
         });
     }
+
+    @Subscribe
 
     /**
      * Set the page number and retrieve its contents.

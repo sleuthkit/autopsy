@@ -132,7 +132,6 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
     @Override
     public void setEnabled(boolean value) {
         super.setEnabled(value);
-        DiscoveryDialog.getDiscoveryDialogInstance().updateSearchSettings();
         toolbarButton.setEnabled(value);
     }
 

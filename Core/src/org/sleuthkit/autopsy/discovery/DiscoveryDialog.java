@@ -22,9 +22,12 @@ import static java.awt.BorderLayout.CENTER;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -34,6 +37,8 @@ import org.sleuthkit.autopsy.discovery.FileSorter.SortingMethod;
 
 final class DiscoveryDialog extends javax.swing.JDialog {
 
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
+            Case.Events.DATA_SOURCE_ADDED, Case.Events.DATA_SOURCE_DELETED);
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(DiscoveryDialog.class.getName());
     private ImageFilterPanel imageFilterPanel = new ImageFilterPanel();
@@ -83,12 +88,14 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             groupSortingComboBox.addItem(groupSortAlgorithm);
         }
         updateSearchSettings();
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this.new CasePropertyChangeListener());
     }
 
     /**
      * Update the search settings to a default state.
      */
     void updateSearchSettings() {
+        System.out.println("UPDATE CALLED");
         imageFilterPanel = new ImageFilterPanel();
         videoFilterPanel = new VideoFilterPanel();
         documentFilterPanel = new DocumentFilterPanel();
@@ -487,4 +494,30 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private javax.swing.JButton searchButton;
     private javax.swing.JButton videosButton;
     // End of variables declaration//GEN-END:variables
+
+    private class CasePropertyChangeListener implements PropertyChangeListener {
+
+        @Override
+        @SuppressWarnings("fallthrough")
+        public void propertyChange(PropertyChangeEvent evt) {
+            System.out.println("EVENT RECEIVED");
+            switch (Case.Events.valueOf(evt.getPropertyName())) {
+                case CURRENT_CASE: {
+                    if (evt.getNewValue() == null) {
+                        //do not refresh when a case is closed only when it is opened.
+                        break;
+                    }
+                    //else fallthrough
+                }
+                case DATA_SOURCE_ADDED:
+                //fallthrough
+                case DATA_SOURCE_DELETED:
+                    updateSearchSettings();
+                    break;
+                default:
+                    //do nothing if the event is not one of the above events.
+                    break;
+            }
+        }
+    }
 }

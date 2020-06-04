@@ -20,7 +20,9 @@ package org.sleuthkit.autopsy.discovery;
 
 /**
  *
- * Callback interface to be notified by a SwingAnimator of a new time frame.  *
+ * Callback interface to be notified by a SwingAnimator of a new time frame.
+ *
+ *
  * @author Greg Cope
  * https://www.algosome.com/articles/java-swing-panel-animation.html
  *
@@ -29,17 +31,18 @@ interface SwingAnimatorCallback {
 
     /**
      *
-     * Callback method for the SwingAnimator
+     * Callback method for the SwingAnimator.
      *
-     * @param caller
+     * @param caller The object which is calling the Callback.
      *
      */
     void callback(Object caller);
 
     /**
      *
-     * Returns true if the SwingAnimator should terminate.      *
-     * @return
+     * Returns true if the SwingAnimator has terminated.
+     *
+     * @return True if the animator has terminated, false otherwise.
      *
      */
     boolean hasTerminated();
