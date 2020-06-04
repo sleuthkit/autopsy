@@ -293,6 +293,14 @@ public class Persona {
     public void removeAccount(PersonaAccount account) throws CentralRepoException {
         PersonaAccount.removePersonaAccount(account.getId());
     }
+    
+    /**
+     * Marks this persona as deleted
+     */
+    public void delete() throws CentralRepoException {
+        String deleteSQL = "UPDATE personas SET status_id = " + PersonaStatus.DELETED.status_id + " WHERE id = " + this.id;
+        CentralRepository.getInstance().executeUpdateSQL(deleteSQL);
+    }
 
     /**
      * Callback to process a Persona query from the persona table.
@@ -364,7 +372,8 @@ public class Persona {
     }
 
     /**
-     * Gets the rows from the Personas table with matching name.
+     * Gets the rows from the Personas table with matching name. 
+     * Persona marked as DELETED are not returned.
      *
      * @param partialName Name substring to match.
      * @return Collection of personas matching the given name substring, may be
@@ -376,7 +385,8 @@ public class Persona {
     public static Collection<Persona> getPersonaByName(String partialName) throws CentralRepoException {
 
         String queryClause = PERSONA_QUERY
-                + "WHERE LOWER(p.name) LIKE " + "LOWER('%" + partialName + "%')" ;
+                + "WHERE p.status_id != " + PersonaStatus.DELETED.status_id + 
+                " AND LOWER(p.name) LIKE " + "LOWER('%" + partialName + "%')" ;
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
