@@ -71,6 +71,7 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
 
         imageFiltersPanel.setLayout(new java.awt.BorderLayout());
 
+        imageFiltersSplitPane.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ImageFilterPanel.class, "ImageFilterPanel.imageFiltersSplitPane.border.title"))); // NOI18N
         imageFiltersSplitPane.setResizeWeight(0.5);
         imageFiltersSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(ImageFilterPanel.class, "ImageFilterPanel.imageFiltersSplitPane.toolTipText")); // NOI18N
         imageFiltersPanel.add(imageFiltersSplitPane, java.awt.BorderLayout.CENTER);

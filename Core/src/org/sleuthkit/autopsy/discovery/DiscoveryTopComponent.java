@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.discovery;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Color;
 import java.awt.Graphics;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.discovery.FileSearchFiltering.FileFilter;
 
 /**
  * Create a dialog for displaying the Discovery results.
@@ -124,6 +126,8 @@ public final class DiscoveryTopComponent extends TopComponent {
         rightSplitPane = new AnimatedSplitPane();
         jPanel1 = new javax.swing.JPanel();
         newSearchButton = new javax.swing.JButton();
+        progressMessageScrollPane = new javax.swing.JScrollPane();
+        progressMessageTextArea = new javax.swing.JTextArea();
 
         setMinimumSize(new java.awt.Dimension(199, 200));
         setPreferredSize(new java.awt.Dimension(1100, 700));
@@ -141,11 +145,22 @@ public final class DiscoveryTopComponent extends TopComponent {
         add(mainSplitPane, java.awt.BorderLayout.CENTER);
 
         org.openide.awt.Mnemonics.setLocalizedText(newSearchButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "FileSearchDialog.cancelButton.text")); // NOI18N
+        newSearchButton.setMaximumSize(new java.awt.Dimension(110, 26));
+        newSearchButton.setMinimumSize(new java.awt.Dimension(110, 26));
+        newSearchButton.setPreferredSize(new java.awt.Dimension(110, 26));
         newSearchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newSearchButtonActionPerformed(evt);
             }
         });
+
+        progressMessageScrollPane.setBorder(null);
+
+        progressMessageTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        progressMessageTextArea.setColumns(20);
+        progressMessageTextArea.setRows(2);
+        progressMessageTextArea.setBorder(null);
+        progressMessageScrollPane.setViewportView(progressMessageTextArea);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -153,14 +168,21 @@ public final class DiscoveryTopComponent extends TopComponent {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(newSearchButton)
-                .addContainerGap(1017, Short.MAX_VALUE))
+                .addComponent(newSearchButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(progressMessageScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 954, Short.MAX_VALUE)
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(newSearchButton)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(8, 8, 8)
+                        .addComponent(progressMessageScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(17, 17, 17)
+                        .addComponent(newSearchButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
 
@@ -213,10 +235,14 @@ public final class DiscoveryTopComponent extends TopComponent {
      * @param searchStartedEvent The event which indicates the start of a
      *                           search.
      */
-    @Messages({"DiscoveryTopComponent.cancelButton.text=Cancel Search"})
+    @Messages({"DiscoveryTopComponent.cancelButton.text=Cancel Search",
+        "# {0} - searchType",
+        "DiscoveryTopComponent.searchInProgress.text=Performing search for results of type {0}. Please wait."})
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_cancelButton_text());
+        progressMessageTextArea.setForeground(Color.red);
+        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getType().name()));
     }
 
     /**
@@ -226,9 +252,13 @@ public final class DiscoveryTopComponent extends TopComponent {
      *                            search.
      */
     @Subscribe
-    @Messages("DiscoveryTopComponent.newSearch.text=New Search")
+    @Messages({"DiscoveryTopComponent.newSearch.text=New Search",
+        "# {0} - search",
+        "DiscoveryTopComponent.searchComplete.text=Results displayed have the following filters applied: {0}"})
     void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
+        progressMessageTextArea.setForeground(Color.black);
+        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(searchCompleteEvent.getFilters().stream().map(FileFilter::getDesc).collect(Collectors.joining(", "))));
     }
 
     /**
@@ -237,9 +267,12 @@ public final class DiscoveryTopComponent extends TopComponent {
      * @param searchCancelledEvent The event which indicates the cancellation of
      *                             a search.
      */
+    @Messages({"DiscoveryTopComponent.searchCancelled.text=Search has been cancelled."})
     @Subscribe
     void handleSearchCancelledEvent(DiscoveryEventUtils.SearchCancelledEvent searchCancelledEvent) {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
+        progressMessageTextArea.setForeground(Color.red);
+        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchCancelled_text());
     }
 
     /**
@@ -289,6 +322,8 @@ public final class DiscoveryTopComponent extends TopComponent {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JSplitPane mainSplitPane;
     private javax.swing.JButton newSearchButton;
+    private javax.swing.JScrollPane progressMessageScrollPane;
+    private javax.swing.JTextArea progressMessageTextArea;
     private javax.swing.JSplitPane rightSplitPane;
     // End of variables declaration//GEN-END:variables
 

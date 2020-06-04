@@ -67,6 +67,7 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
 
         documentFiltersPanel.setLayout(new java.awt.BorderLayout());
 
+        documentsFiltersSplitPane.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(DocumentFilterPanel.class, "DocumentFilterPanel.documentsFiltersSplitPane.border.title"))); // NOI18N
         documentsFiltersSplitPane.setResizeWeight(0.5);
         documentFiltersPanel.add(documentsFiltersSplitPane, java.awt.BorderLayout.CENTER);
 

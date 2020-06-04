@@ -68,6 +68,7 @@ final class VideoFilterPanel extends AbstractFiltersPanel {
 
         videoFiltersPanel.setLayout(new java.awt.BorderLayout());
 
+        videoFiltersSplitPane.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(VideoFilterPanel.class, "VideoFilterPanel.videoFiltersSplitPane.border.title"))); // NOI18N
         videoFiltersSplitPane.setResizeWeight(0.5);
         videoFiltersPanel.add(videoFiltersSplitPane, java.awt.BorderLayout.CENTER);
 

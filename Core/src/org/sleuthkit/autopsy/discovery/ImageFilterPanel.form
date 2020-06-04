@@ -31,6 +31,13 @@
           <SubComponents>
             <Container class="javax.swing.JSplitPane" name="imageFiltersSplitPane">
               <Properties>
+                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                  <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                    <TitledBorder title="Step 2: Filter which images to show">
+                      <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/discovery/Bundle.properties" key="ImageFilterPanel.imageFiltersSplitPane.border.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </TitledBorder>
+                  </Border>
+                </Property>
                 <Property name="resizeWeight" type="double" value="0.5"/>
                 <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/discovery/Bundle.properties" key="ImageFilterPanel.imageFiltersSplitPane.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
