@@ -74,6 +74,8 @@ final class ExtractPrefetch extends Extract {
     private static final String PREFETCH_TOOL_NAME_LINUX = "parse_prefetch_linux"; //NON-NLS
     private static final String PREFETCH_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
     private static final String PREFETCH_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
+    private static final String PREFETCH_PARSER_DB_FILE = "Autopsy_PF_DB.db3"; //NON-NLS
+    private static final String PREFETCH_DIR_NAME = "prefetch"; //NON-NLS
 
     @Messages({
         "ExtractPrefetch_module_name=Windows Prefetch Extractor"
@@ -87,7 +89,7 @@ final class ExtractPrefetch extends Extract {
 
         this.context = context;
 
-        String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + "prefetch";
+        String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + PREFETCH_DIR_NAME;
         File dir = new File(modOutPath);
         if (dir.exists() == false) {
             dir.mkdirs();
@@ -105,18 +107,13 @@ final class ExtractPrefetch extends Extract {
             return;
         }
 
-        String modOutFile = modOutPath + File.separator + "Autopsy_PF_DB.db3";
+        String modOutFile = modOutPath + File.separator + PREFETCH_PARSER_DB_FILE;
         try {
-            String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "prefetch");
+            String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), PREFETCH_DIR_NAME );
             parsePrefetchFiles(prefetchDumper, tempDirPath, modOutFile, modOutPath);
             createAppExecArtifacts(modOutFile, dataSource);
         } catch (IOException ex) {
-
-        }
-        try {
-            createAppExecArtifacts(modOutFile, dataSource);
-        } finally {
-            return;
+            logger.log(Level.WARNING, "Error runing parse_prefetch or creating artifacts.", ex); //NON-NLS             
         }
     }
 
