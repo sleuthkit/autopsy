@@ -11,7 +11,7 @@ DiscoveryTopComponent.name=\ Discovery
 DiscoveryTopComponent.newSearch.text=New Search
 DiscoveryTopComponent.searchCancelled.text=Search has been cancelled.
 # {0} - search
-DiscoveryTopComponent.searchComplete.text=Results displayed have the following filters applied: {0}
+DiscoveryTopComponent.searchComplete.text=Results for {0}
 # {0} - searchType
 DiscoveryTopComponent.searchInProgress.text=Performing search for results of type {0}. Please wait.
 DiscoveryUiUtility.bytes.text=bytes
@@ -256,10 +256,10 @@ DiscoveryDialog.groupByLabel.text=Group By:
 DiscoveryDialog.orderByLabel.text=Order Within Groups By:
 DiscoveryDialog.orderGroupsByLabel.text=Order Groups By:
 ImageFilterPanel.imageFiltersSplitPane.toolTipText=
-DiscoveryDialog.jLabel1.text=Step 1: Choose result type
 DocumentFilterPanel.documentsFiltersSplitPane.border.title=Step 2: Filter which documents to show
 ImageFilterPanel.imageFiltersSplitPane.border.title=Step 2: Filter which images to show
 VideoFilterPanel.videoFiltersSplitPane.border.title=Step 2: Filter which videos to show
+DiscoveryDialog.step1Label.text=Step 1: Choose result type
 VideoThumbnailPanel.bytes.text=bytes
 VideoThumbnailPanel.deleted.text=All instances of file are deleted.
 VideoThumbnailPanel.gigaBytes.text=GB
