@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.discovery;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Cursor;
 import java.awt.Image;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ import org.sleuthkit.autopsy.textsummarizer.TextSummary;
  * Panel for displaying of Discovery results and handling the paging of those
  * results.
  */
-public class ResultsPanel extends javax.swing.JPanel {
+final class ResultsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(ResultsPanel.class.getName());
@@ -67,7 +68,7 @@ public class ResultsPanel extends javax.swing.JPanel {
      */
     @Messages({"ResultsPanel.viewFileInDir.name=View File in Directory",
         "ResultsPanel.openInExternalViewer.name=Open in External Viewer"})
-    public ResultsPanel() {
+    ResultsPanel() {
         initComponents();
         imageThumbnailViewer = new ImageThumbnailViewer();
         videoThumbnailViewer = new VideoThumbnailViewer();
@@ -108,7 +109,9 @@ public class ResultsPanel extends javax.swing.JPanel {
                 }
             }
         });
-
+              SwingUtilities.invokeLater(() -> {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        });
     }
 
     /**
@@ -254,6 +257,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             resultType = groupSelectedEvent.getResultType();
             groupSize = groupSelectedEvent.getGroupSize();
             setPage(0);
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
     }
 

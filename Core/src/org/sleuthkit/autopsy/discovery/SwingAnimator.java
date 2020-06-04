@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy
+ *
+ * Copyright 2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.discovery;
 
@@ -13,13 +26,13 @@ import javax.swing.Timer;
  *
  * Class to animate Layouts and Fades for a given component.
  *
- *
  * @author Greg Cope
+ * https://www.algosome.com/articles/java-swing-panel-animation.html
  *
  *
  *
  */
-public final class SwingAnimator {
+final class SwingAnimator {
 
     //callback object
     private final SwingAnimatorCallback callback;
@@ -39,7 +52,7 @@ public final class SwingAnimator {
      * @param callback The object to callback to
      *
      */
-    public SwingAnimator(SwingAnimatorCallback callback) {
+    SwingAnimator(SwingAnimatorCallback callback) {
 
         this(callback, false);
 
@@ -55,7 +68,7 @@ public final class SwingAnimator {
      *                 otherwise
      *
      */
-    public SwingAnimator(SwingAnimatorCallback callback, boolean start) {
+    SwingAnimator(SwingAnimatorCallback callback, boolean start) {
 
         this(callback, INITIAL_DURATION, start);
 
@@ -73,18 +86,12 @@ public final class SwingAnimator {
      *                    otherwise
      *
      */
-    public SwingAnimator(SwingAnimatorCallback callback, int frameTiming, boolean start) {
-
+    SwingAnimator(SwingAnimatorCallback callback, int frameTiming, boolean start) {
         this.callback = callback;
-
         duration = frameTiming;
-
         if (start) {
-
             start();
-
         }
-
     }
 
     /**
@@ -96,10 +103,8 @@ public final class SwingAnimator {
      * @param frameTiming Timing between each call to callback.
      *
      */
-    public SwingAnimator(SwingAnimatorCallback callback, int frameTiming) {
-
+    SwingAnimator(SwingAnimatorCallback callback, int frameTiming) {
         this(callback, frameTiming, false);
-
     }
 
     /**
@@ -109,16 +114,11 @@ public final class SwingAnimator {
      * @return
      *
      */
-    public boolean isRunning() {
-
+    boolean isRunning() {
         if (timer == null) {
-
             return false;
-
         }
-
         return timer.isRunning();
-
     }
 
     /**
@@ -126,14 +126,10 @@ public final class SwingAnimator {
      * Stops the timer
      *
      */
-    public void stop() {
-
+    void stop() {
         if (timer != null) {
-
             timer.stop();
-
         }
-
     }
 
     /**
@@ -143,18 +139,13 @@ public final class SwingAnimator {
      *
      * stop the timer before beginning a new one. *
      */
-    public void start() {
+    void start() {
 
         if (timer != null && timer.isRunning()) {
-
             stop();
-
         }
-
         timer = new Timer(duration, new CallbackListener());
-
         timer.start();
-
     }
 
     /**
@@ -169,25 +160,15 @@ public final class SwingAnimator {
     private class CallbackListener implements ActionListener {
 
         @Override
-
         public void actionPerformed(ActionEvent e) {
-
             if (callback.hasTerminated()) {
-
                 if (timer == null) {
-
                     throw new IllegalStateException("Callback listener should not be fired outside of SwingAnimator timer control");
-
                 }
-
                 timer.stop();
-
             }
-
             callback.callback(SwingAnimator.this);
-
         }
-
     }
-
+    
 }

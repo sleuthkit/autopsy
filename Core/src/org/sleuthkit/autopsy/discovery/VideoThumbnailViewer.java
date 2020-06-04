@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * A JPanel to display video thumbnails.
  *
  */
-public class VideoThumbnailViewer extends javax.swing.JPanel {
+final class VideoThumbnailViewer extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private final DefaultListModel<VideoThumbnailsWrapper> thumbnailListModel = new DefaultListModel<>();
@@ -36,7 +36,7 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
     /**
      * Creates new form VideoThumbnailViewer
      */
-    public VideoThumbnailViewer() {
+    VideoThumbnailViewer() {
         initComponents();
     }
 

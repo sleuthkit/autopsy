@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * A JPanel to display document previews.
  */
-public class DocumentPreviewViewer extends javax.swing.JPanel {
+final class DocumentPreviewViewer extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private final DefaultListModel<DocumentWrapper> documentListModel = new DefaultListModel<>();
@@ -35,7 +35,7 @@ public class DocumentPreviewViewer extends javax.swing.JPanel {
     /**
      * Creates new form DocumentViewer
      */
-    public DocumentPreviewViewer() {
+    DocumentPreviewViewer() {
         initComponents();
     }
 

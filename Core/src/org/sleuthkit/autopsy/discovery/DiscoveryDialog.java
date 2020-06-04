@@ -50,7 +50,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         this(null, true);
     }
 
-    public static synchronized DiscoveryDialog getDiscoveryDialogInstance() {
+    static synchronized DiscoveryDialog getDiscoveryDialogInstance() {
         if (discoveryDialog == null) {
             discoveryDialog = new DiscoveryDialog();
         }
@@ -145,6 +145,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         imagesButton = new javax.swing.JButton();
         videosButton = new javax.swing.JButton();
         documentsButton = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         searchButton = new javax.swing.JButton();
         errorLabel = new javax.swing.JLabel();
@@ -201,12 +202,16 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(DiscoveryDialog.class, "DiscoveryDialog.jLabel1.text")); // NOI18N
+
         javax.swing.GroupLayout toolBarPanelLayout = new javax.swing.GroupLayout(toolBarPanel);
         toolBarPanel.setLayout(toolBarPanelLayout);
         toolBarPanelLayout.setHorizontalGroup(
             toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(toolBarPanelLayout.createSequentialGroup()
-                .addContainerGap(239, Short.MAX_VALUE)
+                .addContainerGap(55, Short.MAX_VALUE)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(imagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(videosButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -221,7 +226,8 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(videosButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(imagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(documentsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(documentsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1))
                 .addContainerGap())
         );
 
@@ -472,6 +478,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private javax.swing.JComboBox<GroupingAttributeType> groupByCombobox;
     private javax.swing.JComboBox<GroupSortingAlgorithm> groupSortingComboBox;
     private javax.swing.JButton imagesButton;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JComboBox<SortingMethod> orderByCombobox;
     private javax.swing.JButton searchButton;

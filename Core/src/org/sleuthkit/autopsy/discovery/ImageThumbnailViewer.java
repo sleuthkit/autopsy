@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * A JPanel to display image thumbnails.
  *
  */
-public class ImageThumbnailViewer extends javax.swing.JPanel {
+final class ImageThumbnailViewer extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -37,7 +37,7 @@ public class ImageThumbnailViewer extends javax.swing.JPanel {
     /**
      * Creates new form ImageThumbnailViewer
      */
-    public ImageThumbnailViewer() {
+    ImageThumbnailViewer() {
         initComponents();
 
     }

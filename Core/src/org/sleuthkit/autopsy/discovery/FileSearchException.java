@@ -21,25 +21,26 @@ package org.sleuthkit.autopsy.discovery;
 /**
  * Exception type used for FileSearch
  */
-public class FileSearchException extends Exception {
+final public class FileSearchException extends Exception {
+
     private static final long serialVersionUID = 1L;
-    
+
     /**
      * Create exception from a string
-     * 
-     * @param message 
+     *
+     * @param message
      */
-    public FileSearchException(String message) {
+    FileSearchException(String message) {
         super(message);
     }
-    
+
     /**
      * Create exception for a string and cause
-     * 
+     *
      * @param message
-     * @param cause 
+     * @param cause
      */
-    public FileSearchException(String message, Throwable cause) {
+    FileSearchException(String message, Throwable cause) {
         super(message, cause);
     }
 }

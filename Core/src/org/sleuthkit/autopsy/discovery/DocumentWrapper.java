@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.textsummarizer.TextSummary;
  * Class to wrap all the information necessary for a document summary to be
  * displayed.
  */
-public class DocumentWrapper {
+final class DocumentWrapper {
 
     private TextSummary summary;
     private final ResultFile resultFile;

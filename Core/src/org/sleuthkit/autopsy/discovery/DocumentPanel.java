@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
 /**
  * Class which displays a preview and details about a document.
  */
-public class DocumentPanel extends javax.swing.JPanel implements ListCellRenderer<DocumentWrapper> {
+class DocumentPanel extends javax.swing.JPanel implements ListCellRenderer<DocumentWrapper> {
 
     private static final long serialVersionUID = 1L;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
@@ -42,7 +42,7 @@ public class DocumentPanel extends javax.swing.JPanel implements ListCellRendere
     /**
      * Creates new form DocumentPanel
      */
-    public DocumentPanel() {
+    DocumentPanel() {
         initComponents();
     }
 

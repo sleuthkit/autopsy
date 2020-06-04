@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.coreutils.ImageUtils;
  * Class to wrap all the information necessary for an image thumbnail to be
  * displayed.
  */
-public class ImageThumbnailWrapper {
+final class ImageThumbnailWrapper {
 
     private Image thumbnail;
     private final ResultFile resultFile;

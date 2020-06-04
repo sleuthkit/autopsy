@@ -104,8 +104,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     }
 
     private void cancelCurrentSearch() {
-        final DiscoveryDialog discDialog = DiscoveryDialog.getDiscoveryDialogInstance();
-        discDialog.cancelSearch();
+        DiscoveryDialog.getDiscoveryDialogInstance().cancelSearch();
     }
 
     /**
@@ -119,6 +118,8 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         mainSplitPane = new javax.swing.JSplitPane();
         rightSplitPane = new AnimatedSplitPane();
+        jPanel1 = new javax.swing.JPanel();
+        jButton1 = new javax.swing.JButton();
 
         setMinimumSize(new java.awt.Dimension(199, 200));
         setPreferredSize(new java.awt.Dimension(1100, 700));
@@ -133,7 +134,38 @@ public final class DiscoveryTopComponent extends TopComponent {
         mainSplitPane.setRightComponent(rightSplitPane);
 
         add(mainSplitPane, java.awt.BorderLayout.CENTER);
+
+        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.jButton1.text")); // NOI18N
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jButton1)
+                .addContainerGap(987, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jButton1)
+                .addContainerGap())
+        );
+
+        add(jPanel1, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        close();
+        new  OpenDiscoveryAction().actionPerformed(evt);
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     @Override
     public List<Mode> availableModes(List<Mode> modes) {
@@ -220,6 +252,8 @@ public final class DiscoveryTopComponent extends TopComponent {
 
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton1;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JSplitPane mainSplitPane;
     private javax.swing.JSplitPane rightSplitPane;
     // End of variables declaration//GEN-END:variables

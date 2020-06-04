@@ -19,12 +19,14 @@
 package org.sleuthkit.autopsy.discovery;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Cursor;
 import java.util.List;
 import java.util.Map;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.discovery.FileSearchData.FileType;
@@ -32,7 +34,7 @@ import org.sleuthkit.autopsy.discovery.FileSearchData.FileType;
 /**
  * Panel to display the list of groups which are provided by a search
  */
-class GroupListPanel extends javax.swing.JPanel {
+final class GroupListPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private FileType resultType = null;
@@ -48,6 +50,9 @@ class GroupListPanel extends javax.swing.JPanel {
      */
     GroupListPanel() {
         initComponents();
+        SwingUtilities.invokeLater(() -> {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        });
     }
 
     /**
@@ -77,14 +82,17 @@ class GroupListPanel extends javax.swing.JPanel {
         groupSort = searchCompleteEvent.getGroupSort();
         fileSortMethod = searchCompleteEvent.getFileSort();
         groupKeyList.setListData(groupMap.keySet().toArray(new GroupKey[groupMap.keySet().size()]));
-        if (groupKeyList.getModel().getSize() > 0) {
-            groupKeyList.setSelectedIndex(0);
-        } else {
-            JOptionPane.showMessageDialog(DiscoveryTopComponent.getTopComponent(),
-                    Bundle.GroupsListPanel_noResults_message_text(),
-                    Bundle.GroupsListPanel_noResults_title_text(),
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
+        SwingUtilities.invokeLater(() -> {
+            if (groupKeyList.getModel().getSize() > 0) {
+                groupKeyList.setSelectedIndex(0);
+            } else {
+                JOptionPane.showMessageDialog(DiscoveryTopComponent.getTopComponent(),
+                        Bundle.GroupsListPanel_noResults_message_text(),
+                        Bundle.GroupsListPanel_noResults_title_text(),
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
     }
 
     /**

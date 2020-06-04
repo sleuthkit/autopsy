@@ -44,11 +44,8 @@ import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- *
- * @author wschaefer
- */
-public class DetailsPanel extends javax.swing.JPanel {
+
+final class DetailsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -59,7 +56,7 @@ public class DetailsPanel extends javax.swing.JPanel {
     /**
      * Creates new form DetailsPanel
      */
-    public DetailsPanel() {
+    DetailsPanel() {
         initComponents();
         dataContentPanel = DataContentPanel.createInstance();
 

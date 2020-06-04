@@ -32,7 +32,7 @@ import org.openide.util.NbBundle;
 /**
  * Class which displays a thumbnail and information for an image file.
  */
-public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellRenderer<ImageThumbnailWrapper> {
+final class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellRenderer<ImageThumbnailWrapper> {
 
     private static final long serialVersionUID = 1L;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
@@ -41,7 +41,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
     /**
      * Creates new form ImageThumbnailPanel
      */
-    public ImageThumbnailPanel() {
+   ImageThumbnailPanel() {
         initComponents();
     }
 

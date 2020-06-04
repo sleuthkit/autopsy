@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Extracts AbstractFiles to a location selected by the user.
  */
-public final class DiscoveryExtractAction extends AbstractAction {
+final class DiscoveryExtractAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
     private final Collection<AbstractFile> files = new HashSet<>();
@@ -40,7 +40,7 @@ public final class DiscoveryExtractAction extends AbstractAction {
      *
      * @param selectedFiles The files to extract from the current case.
      */
-    public DiscoveryExtractAction(Collection<AbstractFile> selectedFiles) {
+    DiscoveryExtractAction(Collection<AbstractFile> selectedFiles) {
         super(NbBundle.getMessage(DiscoveryExtractAction.class, "DiscoveryExtractAction.title.extractFiles.text"));
         files.addAll(selectedFiles);
     }
