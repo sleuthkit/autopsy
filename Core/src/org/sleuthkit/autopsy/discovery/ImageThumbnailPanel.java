@@ -41,7 +41,7 @@ final class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     /**
      * Creates new form ImageThumbnailPanel
      */
-   ImageThumbnailPanel() {
+    ImageThumbnailPanel() {
         initComponents();
     }
 

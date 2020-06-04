@@ -36,9 +36,9 @@ final class DiscoveryDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(DiscoveryDialog.class.getName());
-    private final ImageFilterPanel imageFilterPanel = new ImageFilterPanel();
-    private final VideoFilterPanel videoFilterPanel = new VideoFilterPanel();
-    private final DocumentFilterPanel documentFilterPanel = new DocumentFilterPanel();
+    private ImageFilterPanel imageFilterPanel = new ImageFilterPanel();
+    private VideoFilterPanel videoFilterPanel = new VideoFilterPanel();
+    private DocumentFilterPanel documentFilterPanel = new DocumentFilterPanel();
     private static final Color SELECTED_COLOR = new Color(216, 230, 242);
     private static final Color UNSELECTED_COLOR = new Color(240, 240, 240);
     private SearchWorker searchWorker = null;
@@ -88,7 +88,10 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     /**
      * Update the search settings to a default state.
      */
-    private void updateSearchSettings() {
+    void updateSearchSettings() {
+        imageFilterPanel = new ImageFilterPanel();
+        videoFilterPanel = new VideoFilterPanel();
+        documentFilterPanel = new DocumentFilterPanel();
         imagesButton.setSelected(true);
         imagesButton.setEnabled(false);
         imagesButton.setBackground(SELECTED_COLOR);

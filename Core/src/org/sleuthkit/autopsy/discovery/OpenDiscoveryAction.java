@@ -64,7 +64,7 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
         toolbarButton.addActionListener(OpenDiscoveryAction.this::actionPerformed);
         this.setEnabled(false);
     }
-
+    
     @Override
     public boolean isEnabled() {
         return Case.isCaseOpen();
@@ -132,6 +132,7 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
     @Override
     public void setEnabled(boolean value) {
         super.setEnabled(value);
+        DiscoveryDialog.getDiscoveryDialogInstance().updateSearchSettings();
         toolbarButton.setEnabled(value);
     }
 
