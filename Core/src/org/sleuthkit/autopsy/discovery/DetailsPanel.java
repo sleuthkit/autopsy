@@ -44,7 +44,9 @@ import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
+/**
+ * Panel to display the details of the selected result.
+ */
 final class DetailsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -54,12 +56,11 @@ final class DetailsPanel extends javax.swing.JPanel {
     private ListSelectionListener listener = null;
 
     /**
-     * Creates new form DetailsPanel
+     * Creates new form DetailsPanel.
      */
     DetailsPanel() {
         initComponents();
         dataContentPanel = DataContentPanel.createInstance();
-
         detailsSplitPane.setBottomComponent(dataContentPanel);
         //Add the context menu when right clicking
         instancesList.addMouseListener(new MouseAdapter() {
@@ -101,6 +102,13 @@ final class DetailsPanel extends javax.swing.JPanel {
         instancesList.addListSelectionListener(listener);
     }
 
+    /**
+     * Clears the instances list in response to the clear instance selection
+     * event.
+     *
+     * @param clearEvent The ClearInstanceSelectionEvent which has been
+     *                   received.
+     */
     @Subscribe
     void handleClearSelectionListener(DiscoveryEventUtils.ClearInstanceSelectionEvent clearEvent) {
         instancesList.clearSelection();
@@ -108,6 +116,9 @@ final class DetailsPanel extends javax.swing.JPanel {
 
     /**
      * Populate the instances list.
+     *
+     * @param populateEvent The PopulateInstancesListEvent which indicates the
+     *                      instances list should be populated
      */
     @Subscribe
     synchronized void handlePopulateInstancesListEvent(DiscoveryEventUtils.PopulateInstancesListEvent populateEvent) {

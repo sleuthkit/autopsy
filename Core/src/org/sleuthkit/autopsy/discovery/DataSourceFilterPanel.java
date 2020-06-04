@@ -30,14 +30,16 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
+/**
+ * A panel which displays the controls for the Data Source Filter.
+ */
 final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(DataSourceFilterPanel.class.getName());
 
     /**
-     * Creates new form DataSourceFilterPanel
+     * Creates new form DataSourceFilterPanel.
      */
     DataSourceFilterPanel() {
         initComponents();
@@ -129,14 +131,13 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     /**
-     * Initialize the data source filter
+     * Initialize the data source filter.
      */
     private void setUpDataSourceFilter() {
         int count = 0;
         try {
             DefaultListModel<DataSourceItem> dsListModel = (DefaultListModel<DataSourceItem>) dataSourceList.getModel();
             dsListModel.removeAllElements();
-            System.out.println("CASE: " + Case.getCurrentCase().getName());
             for (DataSource ds : Case.getCurrentCase().getSleuthkitCase().getDataSources()) {
                 dsListModel.add(count, new DataSourceItem(ds));
             }

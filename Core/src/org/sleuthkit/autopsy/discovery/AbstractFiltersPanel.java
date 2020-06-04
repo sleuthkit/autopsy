@@ -142,16 +142,32 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         filters.clear();
     }
 
+    /**
+     * Update the constraints and add a component to one of the columns.
+     *
+     * @param componentToAdd           The Component to add to the specified
+     *                                 column.
+     * @param additionalComponentToAdd An additional Component which may appear
+     *                                 below the componentToAdd in the specified
+     *                                 column.
+     * @param columnIndex              The column to add the Component to.
+     */
     private void addToGridBagLayout(Component componentToAdd, Component additionalComponentToAdd, int columnIndex) {
-        addToColumn(componentToAdd, constraints, columnIndex);
+        addToColumn(componentToAdd, columnIndex);
         if (additionalComponentToAdd != null) {
             constraints.gridy += constraints.gridheight;
-            addToColumn(additionalComponentToAdd, constraints, columnIndex);
+            addToColumn(additionalComponentToAdd, columnIndex);
             constraints.gridy -= constraints.gridheight;
         }
     }
 
-    private void addToColumn(Component component, Object constraints, int columnNumber) {
+    /**
+     * Add the Component to the specified column with the current constraints.
+     *
+     * @param component    The Component to add.
+     * @param columnNumber The column to add the Component to.
+     */
+    private void addToColumn(Component component, int columnNumber) {
         if (columnNumber == 0) {
             firstColumnPanel.add(component, constraints);
         } else {
@@ -160,36 +176,23 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     }
 
     /**
-     * The settings are not valid so disable the search button and display the
-     * given error message.
-     *
-     * @param error
+     * Check if the fields are valid, and fire a property change event to
+     * indicate any errors.
      */
-    private void setInvalid(String error) {
-        System.out.println("ERROR FIRED " + error);
-        firePropertyChange("FilterError", error, error);
-    }
-
-    /**
-     * The settings are valid so enable the Search button
-     */
-    private void setValid() {
-        System.out.println("VALID FIRED");
-        firePropertyChange("FilterError", null, null);
-    }
-
     private void validateFields() {
         String errorString;
         System.out.println("VALIDATE FIELDS");
         for (AbstractDiscoveryFilterPanel filterPanel : filters) {
             errorString = filterPanel.checkForError();
             if (errorString != null) {
-                setInvalid(errorString);
+                System.out.println("ERROR FIRED " + errorString);
+                firePropertyChange("FilterError", errorString, errorString);
                 return;
             }
             System.out.println("FILTER VALID");
         }
-        setValid();
+        System.out.println("VALID FIRED");
+        firePropertyChange("FilterError", null, null);
     }
 
     @Override
@@ -198,6 +201,11 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         validateFields();
     }
 
+    /**
+     * Is the Objects Detected Filter Supported.
+     *
+     * @return True if the ObjectsDetectedFilter is supported, false otherwise.
+     */
     boolean isObjectsFilterSupported() {
         for (AbstractDiscoveryFilterPanel filter : filters) {
             if (filter instanceof ObjectDetectedFilterPanel) {
@@ -207,6 +215,11 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         return false;
     }
 
+    /**
+     * Is the Hash Set Filter Supported.
+     *
+     * @return True if the HashSetFilter is supported, false otherwise.
+     */
     boolean isHashSetFilterSupported() {
         for (AbstractDiscoveryFilterPanel filter : filters) {
             if (filter instanceof HashSetFilterPanel) {
@@ -216,6 +229,11 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         return false;
     }
 
+    /**
+     * Is the Interesting Items Filter Supported.
+     *
+     * @return True if the InterestingItemsFilter is supported, false otherwise.
+     */
     boolean isInterestingItemsFilterSupported() {
         for (AbstractDiscoveryFilterPanel filter : filters) {
             if (filter instanceof InterestingItemsFilterPanel) {
@@ -228,12 +246,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     /**
      * Get a list of all filters selected by the user.
      *
-     * @return the list of filters
-     */
-    /**
-     * Get a list of all filters selected by the user.
-     *
-     * @return the list of filters
+     * @return The list of filters selected by the user.
      */
     synchronized List<FileSearchFiltering.FileFilter> getFilters() {
         List<FileSearchFiltering.FileFilter> filtersToUse = new ArrayList<>();

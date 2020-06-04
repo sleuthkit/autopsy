@@ -41,9 +41,9 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             Case.Events.DATA_SOURCE_ADDED, Case.Events.DATA_SOURCE_DELETED);
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(DiscoveryDialog.class.getName());
-    private ImageFilterPanel imageFilterPanel = new ImageFilterPanel();
-    private VideoFilterPanel videoFilterPanel = new VideoFilterPanel();
-    private DocumentFilterPanel documentFilterPanel = new DocumentFilterPanel();
+    private ImageFilterPanel imageFilterPanel = null;
+    private VideoFilterPanel videoFilterPanel = null;
+    private DocumentFilterPanel documentFilterPanel = null;
     private static final Color SELECTED_COLOR = new Color(216, 230, 242);
     private static final Color UNSELECTED_COLOR = new Color(240, 240, 240);
     private SearchWorker searchWorker = null;
@@ -95,7 +95,21 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * Update the search settings to a default state.
      */
     void updateSearchSettings() {
-        System.out.println("UPDATE CALLED");
+        if (imageFilterPanel != null) {
+            imageFilterPanel.removePropertyChangeListener(listener);
+            remove(imageFilterPanel);
+            imageFilterPanel = null;
+        }
+        if (videoFilterPanel != null) {
+            videoFilterPanel.removePropertyChangeListener(listener);
+            remove(videoFilterPanel);
+            videoFilterPanel = null;
+        }
+        if (documentFilterPanel != null) {
+            documentFilterPanel.removePropertyChangeListener(listener);
+            remove(documentFilterPanel);
+            documentFilterPanel = null;
+        }
         imageFilterPanel = new ImageFilterPanel();
         videoFilterPanel = new VideoFilterPanel();
         documentFilterPanel = new DocumentFilterPanel();
@@ -110,13 +124,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setEnabled(true);
         documentsButton.setBackground(UNSELECTED_COLOR);
         fileType = FileSearchData.FileType.IMAGE;
-        remove(imageFilterPanel);
-        remove(videoFilterPanel);
-        videoFilterPanel.removePropertyChangeListener(listener);
-        remove(documentFilterPanel);
-        documentFilterPanel.removePropertyChangeListener(listener);
         add(imageFilterPanel, CENTER);
-        imageFilterPanel.removePropertyChangeListener(listener);
         imageFilterPanel.addPropertyChangeListener(listener);
         groupByCombobox.removeAllItems();
         // Set up the grouping attributes
