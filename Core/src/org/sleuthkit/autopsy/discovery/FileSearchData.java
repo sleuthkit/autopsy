@@ -268,7 +268,7 @@ final class FileSearchData {
         }
     }
 
-    //File discovery uses a different list of document mime types than FileTypeUtils.FileTypeCategory.DOCUMENTS
+    //Discovery uses a different list of document mime types than FileTypeUtils.FileTypeCategory.DOCUMENTS
     private static final ImmutableSet<String> DOCUMENT_MIME_TYPES
             = new ImmutableSet.Builder<String>()
                     .add("text/html", //NON-NLS

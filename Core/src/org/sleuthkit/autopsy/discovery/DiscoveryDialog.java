@@ -23,19 +23,32 @@ import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import org.apache.commons.lang.StringUtils;
+import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.ImageFilePanel;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.discovery.FileGroup.GroupSortingAlgorithm;
 import org.sleuthkit.autopsy.discovery.FileSearch.GroupingAttributeType;
 import org.sleuthkit.autopsy.discovery.FileSorter.SortingMethod;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.IngestJobInfo;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Dialog for displaying the controls and filters for configuration of a
+ * Discovery search.
+ */
 final class DiscoveryDialog extends javax.swing.JDialog {
 
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
@@ -52,15 +65,19 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private FileSearchData.FileType fileType = FileSearchData.FileType.IMAGE;
     private final PropertyChangeListener listener;
 
+    /**
+     * Private constructor to construct a new DiscoveryDialog
+     */
+    @Messages("DiscoveryDialog.name.text=Discovery")
     private DiscoveryDialog() {
-        this(null, true);
+        this(WindowManager.getDefault().getMainWindow(), true);
+        setName(Bundle.DiscoveryDialog_name_text());
     }
 
     static synchronized DiscoveryDialog getDiscoveryDialogInstance() {
         if (discoveryDialog == null) {
             discoveryDialog = new DiscoveryDialog();
         }
-        discoveryDialog.validateDialog();
         return discoveryDialog;
     }
 
@@ -94,21 +111,10 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * Update the search settings to a default state.
      */
     void updateSearchSettings() {
-        if (imageFilterPanel != null) {
-            imageFilterPanel.removePropertyChangeListener(listener);
-            remove(imageFilterPanel);
-            imageFilterPanel = null;
-        }
-        if (videoFilterPanel != null) {
-            videoFilterPanel.removePropertyChangeListener(listener);
-            remove(videoFilterPanel);
-            videoFilterPanel = null;
-        }
-        if (documentFilterPanel != null) {
-            documentFilterPanel.removePropertyChangeListener(listener);
-            remove(documentFilterPanel);
-            documentFilterPanel = null;
-        }
+        removeAllPanels();
+        imageFilterPanel = null;
+        videoFilterPanel = null;
+        documentFilterPanel = null;
         imageFilterPanel = new ImageFilterPanel();
         videoFilterPanel = new VideoFilterPanel();
         documentFilterPanel = new DocumentFilterPanel();
@@ -135,7 +141,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 groupByCombobox.addItem(type);
             }
         }
-
         orderByCombobox.removeAllItems();
         // Set up the file order list
         for (FileSorter.SortingMethod method : FileSorter.SortingMethod.getOptionsForOrdering()) {
@@ -143,7 +148,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 orderByCombobox.addItem(method);
             }
         }
-
         groupSortingComboBox.setSelectedIndex(0);
         pack();
         repaint();
@@ -152,7 +156,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     /**
      * Validate the current filter settings of the selected type.
      */
-    private void validateDialog() {
+    synchronized void validateDialog() {
         switch (fileType) {
             case IMAGE:
                 if (imageFilterPanel != null) {
@@ -172,7 +176,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             default:
                 break;
         }
-        setInvalid("No filter panels exist");
     }
 
     /**
@@ -371,11 +374,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void imagesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imagesButtonActionPerformed
-//        resetTopComponent();
-        remove(videoFilterPanel);
-        videoFilterPanel.removePropertyChangeListener(listener);
-        remove(documentFilterPanel);
-        documentFilterPanel.removePropertyChangeListener(listener);
+        removeAllPanels();
         add(imageFilterPanel, CENTER);
         imagesButton.setSelected(true);
         imagesButton.setEnabled(false);
@@ -395,10 +394,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_imagesButtonActionPerformed
 
     private void videosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_videosButtonActionPerformed
-        remove(imageFilterPanel);
-        imageFilterPanel.removePropertyChangeListener(listener);
-        remove(documentFilterPanel);
-        documentFilterPanel.removePropertyChangeListener(listener);
+        removeAllPanels();
         add(videoFilterPanel, CENTER);
         imagesButton.setSelected(false);
         imagesButton.setEnabled(true);
@@ -418,10 +414,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_videosButtonActionPerformed
 
     private void documentsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsButtonActionPerformed
-        remove(imageFilterPanel);
-        imageFilterPanel.removePropertyChangeListener(listener);
-        remove(videoFilterPanel);
-        videoFilterPanel.removePropertyChangeListener(listener);
+        removeAllPanels();
         add(documentFilterPanel, CENTER);
         documentsButton.setSelected(true);
         documentsButton.setEnabled(false);
@@ -439,6 +432,24 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         pack();
         repaint();
     }//GEN-LAST:event_documentsButtonActionPerformed
+
+    /**
+     * Helper method to remove all filter panels and their listeners
+     */
+    private void removeAllPanels() {
+        if (imageFilterPanel != null) {
+            remove(imageFilterPanel);
+            imageFilterPanel.removePropertyChangeListener(listener);
+        }
+        if (documentFilterPanel != null) {
+            remove(documentFilterPanel);
+            documentFilterPanel.removePropertyChangeListener(listener);
+        }
+        if (videoFilterPanel != null) {
+            remove(videoFilterPanel);
+            videoFilterPanel.removePropertyChangeListener(listener);
+        }
+    }
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         // Get the selected filters
@@ -475,7 +486,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 centralRepoDb = CentralRepository.getInstance();
             } catch (CentralRepoException ex) {
                 centralRepoDb = null;
-                logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for File Discovery", ex);
+                logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for Discovery", ex);
             }
         }
         searchWorker = new SearchWorker(centralRepoDb, filters, groupingAttr, groupSortAlgorithm, fileSort);
@@ -485,6 +496,10 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         tc.requestActive();
     }//GEN-LAST:event_searchButtonActionPerformed
 
+    @Override
+    public void dispose(){
+        setVisible(false);
+    }
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
         this.setVisible(false);
@@ -494,6 +509,37 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         if (searchWorker != null) {
             searchWorker.cancel(true);
         }
+    }
+
+    /**
+     * Helper method to display an error message when the results of the
+     * Discovery Top component may be incomplete.
+     *
+     * @param tc The Discovery Top component.
+     */
+    void displayErrorMessage() {
+        //check if modules run and assemble message
+        try {
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            Map<Long, DataSourceModulesWrapper> dataSourceIngestModules = new HashMap<>();
+            for (DataSource dataSource : skCase.getDataSources()) {
+                dataSourceIngestModules.put(dataSource.getId(), new DataSourceModulesWrapper(dataSource.getName()));
+            }
+
+            for (IngestJobInfo jobInfo : skCase.getIngestJobs()) {
+                dataSourceIngestModules.get(jobInfo.getObjectId()).updateModulesRun(jobInfo);
+            }
+            String message = "";
+            for (DataSourceModulesWrapper dsmodulesWrapper : dataSourceIngestModules.values()) {
+                message += dsmodulesWrapper.getMessage();
+            }
+            if (!message.isEmpty()) {
+                JOptionPane.showMessageDialog(discoveryDialog, message, Bundle.OpenDiscoveryAction_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.WARNING, "Exception while determining which modules have been run for Discovery", ex);
+        }
+        validateDialog();
     }
 
     /**

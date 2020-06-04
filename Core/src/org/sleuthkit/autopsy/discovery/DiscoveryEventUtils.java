@@ -27,16 +27,16 @@ import org.sleuthkit.autopsy.discovery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Class to handle event bus and events for file discovery tool.
+ * Class to handle event bus and events for discovery tool.
  */
 final class DiscoveryEventUtils {
 
     private final static EventBus discoveryEventBus = new EventBus();
 
     /**
-     * Get the file discovery event bus.
+     * Get the discovery event bus.
      *
-     * @return The file discovery event bus.
+     * @return The discovery event bus.
      */
     static EventBus getDiscoveryEventBus() {
         return discoveryEventBus;

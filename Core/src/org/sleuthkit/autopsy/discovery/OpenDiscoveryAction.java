@@ -19,12 +19,8 @@
 package org.sleuthkit.autopsy.discovery;
 
 import java.awt.Component;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JOptionPane;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -34,12 +30,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.IngestJobInfo;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Class to open the Discovery top component. Allows the user to run searches
@@ -64,7 +55,7 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
         toolbarButton.addActionListener(OpenDiscoveryAction.this::actionPerformed);
         this.setEnabled(false);
     }
-    
+
     @Override
     public boolean isEnabled() {
         return Case.isCaseOpen();
@@ -73,42 +64,11 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
     @NbBundle.Messages({"OpenDiscoveryAction.resultsIncomplete.text=Results may be incomplete"})
 
     @Override
-    @SuppressWarnings("fallthrough")
     public void performAction() {
         final DiscoveryDialog discDialog = DiscoveryDialog.getDiscoveryDialogInstance();
         discDialog.cancelSearch();
         discDialog.setVisible(true);
-        displayErrorMessage(discDialog);
-    }
-
-    /**
-     * Private helper method to display an error message when the results of the
-     * Discovery Top component may be incomplete.
-     *
-     * @param tc The Discovery Top component.
-     */
-    private void displayErrorMessage(DiscoveryDialog discDialog) {
-        //check if modules run and assemble message
-        try {
-            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            Map<Long, DataSourceModulesWrapper> dataSourceIngestModules = new HashMap<>();
-            for (DataSource dataSource : skCase.getDataSources()) {
-                dataSourceIngestModules.put(dataSource.getId(), new DataSourceModulesWrapper(dataSource.getName()));
-            }
-
-            for (IngestJobInfo jobInfo : skCase.getIngestJobs()) {
-                dataSourceIngestModules.get(jobInfo.getObjectId()).updateModulesRun(jobInfo);
-            }
-            String message = "";
-            for (DataSourceModulesWrapper dsmodulesWrapper : dataSourceIngestModules.values()) {
-                message += dsmodulesWrapper.getMessage();
-            }
-            if (!message.isEmpty()) {
-                JOptionPane.showMessageDialog(discDialog, message, Bundle.OpenDiscoveryAction_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
-            }
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.WARNING, "Exception while determining which modules have been run for Discovery", ex);
-        }
+        discDialog.displayErrorMessage();
     }
 
     /**

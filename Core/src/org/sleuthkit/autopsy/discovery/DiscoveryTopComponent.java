@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JSplitPane;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
@@ -119,7 +120,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         mainSplitPane = new javax.swing.JSplitPane();
         rightSplitPane = new AnimatedSplitPane();
         jPanel1 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
+        newSearchButton = new javax.swing.JButton();
 
         setMinimumSize(new java.awt.Dimension(199, 200));
         setPreferredSize(new java.awt.Dimension(1100, 700));
@@ -128,6 +129,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         mainSplitPane.setDividerLocation(250);
         mainSplitPane.setPreferredSize(new java.awt.Dimension(1100, 700));
 
+        rightSplitPane.setDividerSize(15);
         rightSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         rightSplitPane.setResizeWeight(1.0);
         rightSplitPane.setPreferredSize(new java.awt.Dimension(800, 700));
@@ -135,10 +137,10 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         add(mainSplitPane, java.awt.BorderLayout.CENTER);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.jButton1.text")); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(newSearchButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.newSearchButton.text")); // NOI18N
+        newSearchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                newSearchButtonActionPerformed(evt);
             }
         });
 
@@ -148,24 +150,27 @@ public final class DiscoveryTopComponent extends TopComponent {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jButton1)
+                .addComponent(newSearchButton)
                 .addContainerGap(987, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jButton1)
+                .addComponent(newSearchButton)
                 .addContainerGap())
         );
 
         add(jPanel1, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void newSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newSearchButtonActionPerformed
         close();
-        new OpenDiscoveryAction().actionPerformed(evt);
-    }//GEN-LAST:event_jButton1ActionPerformed
+        final DiscoveryDialog discDialog = DiscoveryDialog.getDiscoveryDialogInstance();
+        discDialog.cancelSearch();
+        discDialog.setVisible(true);
+        discDialog.validateDialog();
+    }//GEN-LAST:event_newSearchButtonActionPerformed
 
     @Override
     public List<Mode> availableModes(List<Mode> modes) {
@@ -194,6 +199,22 @@ public final class DiscoveryTopComponent extends TopComponent {
             animator = new SwingAnimator(new HideDetailsAreaCallback());
         }
         animator.start();
+    }
+
+    @Messages({"DiscoveryTopComponent.cancelButton.text=Cancel Search"})
+    @Subscribe
+    void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
+        newSearchButton.setText(Bundle.DiscoveryTopComponent_cancelButton_text());
+    }
+
+    @Subscribe
+    void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
+        newSearchButton.setText("New Search");
+    }
+
+    @Subscribe
+    void handleSearchCancelledEvent(DiscoveryEventUtils.SearchCancelledEvent searchCancelledEvent) {
+        newSearchButton.setText("New Search");
     }
 
     /**
@@ -252,12 +273,15 @@ public final class DiscoveryTopComponent extends TopComponent {
 
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JSplitPane mainSplitPane;
+    private javax.swing.JButton newSearchButton;
     private javax.swing.JSplitPane rightSplitPane;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Class for the split pane which will be animated
+     */
     private final class AnimatedSplitPane extends JSplitPane {
 
         private static final long serialVersionUID = 1L;
