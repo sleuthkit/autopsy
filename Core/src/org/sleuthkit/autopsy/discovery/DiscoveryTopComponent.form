@@ -74,7 +74,7 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="newSearchButton" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace pref="987" max="32767" attributes="0"/>
+                  <EmptySpace pref="1017" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -92,7 +92,7 @@
         <Component class="javax.swing.JButton" name="newSearchButton">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/discovery/Bundle.properties" key="DiscoveryTopComponent.newSearchButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="org/sleuthkit/autopsy/discovery/Bundle.properties" key="FileSearchDialog.cancelButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>

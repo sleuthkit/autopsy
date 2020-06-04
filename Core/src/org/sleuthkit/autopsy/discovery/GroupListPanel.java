@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.discovery.FileSearchData.FileType;
 
 /**
- * Panel to display the list of groups which are provided by a search
+ * Panel to display the list of groups which are provided by a search.
  */
 final class GroupListPanel extends javax.swing.JPanel {
 
@@ -46,7 +46,7 @@ final class GroupListPanel extends javax.swing.JPanel {
     private GroupKey selectedGroupKey;
 
     /**
-     * Creates new form GroupListPanel
+     * Creates new form GroupListPanel.
      */
     GroupListPanel() {
         initComponents();

@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
 
 /**
- * Class to hold the results of the filtering/grouping/sorting operations
+ * Class to hold the results of the filtering/grouping/sorting operations.
  */
 class SearchResults {
 
@@ -42,13 +42,13 @@ class SearchResults {
     private static final long MAX_OUTPUT_FILES = 2000; // For debug UI - maximum number of lines to print
 
     /**
-     * Create an empty SearchResults object
+     * Create an empty SearchResults object.
      *
      * @param groupSortingType  The method that should be used to
-     *                          sortGroupsAndFiles the groups
-     * @param attrType          The attribute type to use for grouping
+     *                          sortGroupsAndFiles the groups.
+     * @param attrType          The attribute type to use for grouping.
      * @param fileSortingMethod The method that should be used to
-     *                          sortGroupsAndFiles the files in each group
+     *                          sortGroupsAndFiles the files in each group.
      */
     SearchResults(FileGroup.GroupSortingAlgorithm groupSortingType, FileSearch.AttributeType attrType,
             FileSorter.SortingMethod fileSortingMethod) {
@@ -68,9 +68,9 @@ class SearchResults {
     }
 
     /**
-     * Add a list of ResultFile to the results
+     * Add a list of ResultFile to the results.
      *
-     * @param files the ResultFiles
+     * @param files The list of ResultFiles to add.
      */
     void add(List<ResultFile> files) {
         for (ResultFile file : files) {
@@ -124,20 +124,20 @@ class SearchResults {
     }
 
     /**
-     * Get the names of the groups with counts
+     * Get the names of the groups with counts.
      *
-     * @return the group names
+     * @return The list of group names.
      */
     List<String> getGroupNamesWithCounts() {
         return groupList.stream().map(p -> p.getDisplayName() + " (" + p.getFiles().size() + ")").collect(Collectors.toList());
     }
 
     /**
-     * Get the result files for the selected group
+     * Get the result files for the selected group.
      *
      * @param groupName The name of the group. Can have the size appended.
      *
-     * @return the list of result files
+     * @return The list of result files.
      */
     List<ResultFile> getResultFilesInGroup(String groupName) {
         if (groupName != null) {
@@ -154,7 +154,7 @@ class SearchResults {
     /**
      * Transform the results into a LinkedHashMap with result files.
      *
-     * @return the grouped and sorted results
+     * @return The grouped and sorted results.
      */
     Map<GroupKey, List<ResultFile>> toLinkedHashMap() throws FileSearchException {
         Map<GroupKey, List<ResultFile>> map = new LinkedHashMap<>();

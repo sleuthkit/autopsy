@@ -43,9 +43,9 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     private static final int BYTE_UNIT_CONVERSION = 1000;
     private static final long serialVersionUID = 1L;
     private static final int MAX_NAME_STRING = 120;
-    
+
     /**
-     * Creates new form VideoThumbnailPanel
+     * Creates new form VideoThumbnailPanel.
      */
     VideoThumbnailPanel() {
         initComponents();
@@ -55,7 +55,8 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     /**
      * Add the thumbnails to the panel.
      *
-     * @param thumbnailWrapper
+     * @param thumbnailWrapper The object which contains the video thumbnails to
+     *                         add.
      */
     private void addThumbnails(VideoThumbnailsWrapper thumbnailWrapper) {
         imagePanel.removeAll();

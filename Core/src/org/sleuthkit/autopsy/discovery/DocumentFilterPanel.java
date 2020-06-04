@@ -20,14 +20,16 @@ package org.sleuthkit.autopsy.discovery;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
-
+/**
+ * Class which displays all filters available for the Documents search type.
+ */
 final class DocumentFilterPanel extends AbstractFiltersPanel {
 
     private static final long serialVersionUID = 1L;
-      private static final FileSearchData.FileType FILE_TYPE = FileSearchData.FileType.DOCUMENTS;
+    private static final FileSearchData.FileType FILE_TYPE = FileSearchData.FileType.DOCUMENTS;
 
     /**
-     * Creates new form DocumentFilterPanel
+     * Constructs a new DocumentFilterPanel.
      */
     DocumentFilterPanel() {
         super();

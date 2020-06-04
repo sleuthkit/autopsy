@@ -25,12 +25,15 @@ import javax.swing.JList;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.FileSearchData.Frequency;
 
+/**
+ * Panel to allow configuration of the Past Occurrences filter.
+ */
 final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Creates new form PastOccurrencesFilterPanel
+     * Creates new form PastOccurrencesFilterPanel.
      */
     PastOccurrencesFilterPanel() {
         initComponents();
@@ -89,7 +92,7 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
     }//GEN-LAST:event_pastOccurrencesCheckboxActionPerformed
 
     /**
-     * Initialize the frequency filter
+     * Initialize the frequency filter.
      */
     private void setUpFrequencyFilter() {
         int count = 0;

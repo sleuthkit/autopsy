@@ -40,7 +40,7 @@ class DocumentPanel extends javax.swing.JPanel implements ListCellRenderer<Docum
     private static final int MAX_NAME_STRING = 90;
 
     /**
-     * Creates new form DocumentPanel
+     * Creates new form DocumentPanel.
      */
     DocumentPanel() {
         initComponents();

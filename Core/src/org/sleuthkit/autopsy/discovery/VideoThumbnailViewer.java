@@ -34,7 +34,7 @@ final class VideoThumbnailViewer extends javax.swing.JPanel {
     private final DefaultListModel<VideoThumbnailsWrapper> thumbnailListModel = new DefaultListModel<>();
 
     /**
-     * Creates new form VideoThumbnailViewer
+     * Creates new form VideoThumbnailViewer.
      */
     VideoThumbnailViewer() {
         initComponents();

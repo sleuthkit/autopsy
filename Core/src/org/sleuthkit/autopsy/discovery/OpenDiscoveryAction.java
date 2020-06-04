@@ -33,8 +33,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Class to open the Discovery top component. Allows the user to run searches
- * and see results.
+ * Class to open the Discovery dialog. Allows the user to run searches and see
+ * results in the DiscoveryTopComponent.
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.newpackage.OpenDiscoveryAction")
 @ActionReferences(value = {
@@ -51,6 +51,9 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
     private static final long serialVersionUID = 1L;
     private final JButton toolbarButton = new JButton();
 
+    /**
+     * Construct a new OpenDiscoveryAction.
+     */
     public OpenDiscoveryAction() {
         toolbarButton.addActionListener(OpenDiscoveryAction.this::actionPerformed);
         this.setEnabled(false);

@@ -20,13 +20,16 @@ package org.sleuthkit.autopsy.discovery;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
+/**
+ * Panel for displaying all the filters associated with the Image type.
+ */
 final class ImageFilterPanel extends AbstractFiltersPanel {
 
     private static final long serialVersionUID = 1L;
     private static final FileSearchData.FileType FILE_TYPE = FileSearchData.FileType.IMAGE;
 
     /**
-     * Creates new form ImageFilterPanel
+     * Creates new form ImageFilterPanel.
      */
     ImageFilterPanel() {
         super();

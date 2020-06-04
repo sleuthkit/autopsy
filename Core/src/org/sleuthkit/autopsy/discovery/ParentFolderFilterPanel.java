@@ -26,14 +26,17 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import org.sleuthkit.autopsy.discovery.FileSearchFiltering.ParentSearchTerm;
 
+/**
+ * Panel to allow configuration of the Parent Folder filter.
+ */
 final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private DefaultListModel<FileSearchFiltering.ParentSearchTerm> parentListModel;
     private static final String[] DEFAULT_IGNORED_PATHS = {"/Windows/", "/Program Files/"}; //NON-NLS
-    
+
     /**
-     * Creates new form ParentFolderFilterPanel
+     * Creates new form ParentFolderFilterPanel.
      */
     ParentFolderFilterPanel() {
         initComponents();
@@ -41,7 +44,7 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     /**
-     * Initialize the parent path filter
+     * Initialize the parent path filter.
      */
     private void setUpParentPathFilter() {
         fullRadioButton.setSelected(true);

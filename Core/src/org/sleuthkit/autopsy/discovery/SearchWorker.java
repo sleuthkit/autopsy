@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
- * SwingWorker to perform search on a background thread
+ * SwingWorker to perform search on a background thread.
  */
 final class SearchWorker extends SwingWorker<Void, Void> {
 
@@ -43,13 +43,14 @@ final class SearchWorker extends SwingWorker<Void, Void> {
     private final Map<GroupKey, Integer> results = new LinkedHashMap<>();
 
     /**
-     * Create a SwingWorker which performs a search
+     * Create a SwingWorker which performs a search.
      *
-     * @param centralRepo       the central repository being used for the search
-     * @param searchfilters     the FileFilters to use for the search
-     * @param groupingAttribute the AttributeType to group by
-     * @param groupSort         the Algorithm to sort groups by
-     * @param fileSortMethod    the SortingMethod to use for files
+     * @param centralRepo       The central repository being used for the
+     *                          search.
+     * @param searchfilters     The FileFilters to use for the search.
+     * @param groupingAttribute The AttributeType to group by.
+     * @param groupSort         The Algorithm to sort groups by.
+     * @param fileSortMethod    The SortingMethod to use for files.
      */
     SearchWorker(CentralRepository centralRepo, List<FileSearchFiltering.FileFilter> searchfilters, FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod) {
         centralRepoDb = centralRepo;

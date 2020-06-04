@@ -22,12 +22,15 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 
+/**
+ * Panel to allow configuration of the User Created Filter.
+ */
 final class UserCreatedFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Creates new form UserCreatedFilterPanel
+     * Creates new form UserCreatedFilterPanel.
      */
     UserCreatedFilterPanel() {
         initComponents();

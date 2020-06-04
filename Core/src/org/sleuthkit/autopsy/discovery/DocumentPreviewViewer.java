@@ -33,7 +33,7 @@ final class DocumentPreviewViewer extends javax.swing.JPanel {
     private final DefaultListModel<DocumentWrapper> documentListModel = new DefaultListModel<>();
 
     /**
-     * Creates new form DocumentViewer
+     * Creates new form DocumentViewer.
      */
     DocumentPreviewViewer() {
         initComponents();

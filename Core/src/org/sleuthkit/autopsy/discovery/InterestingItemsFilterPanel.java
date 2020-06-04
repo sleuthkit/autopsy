@@ -29,14 +29,16 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
+/**
+ * Class to allow configuration of the Interesting Items filter.
+ */
 final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(InterestingItemsFilterPanel.class.getName());
 
     /**
-     * Creates new form InterestingItemsFilterPanel
+     * Creates new form InterestingItemsFilterPanel.
      */
     InterestingItemsFilterPanel() {
         initComponents();

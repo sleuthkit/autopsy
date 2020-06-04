@@ -66,14 +66,10 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private final PropertyChangeListener listener;
 
     /**
-     * Private constructor to construct a new DiscoveryDialog
+     * Get the Discovery dialog instance.
+     *
+     * @return The instance of the Discovery Dialog.
      */
-    @Messages("DiscoveryDialog.name.text=Discovery")
-    private DiscoveryDialog() {
-        this(WindowManager.getDefault().getMainWindow(), true);
-        setName(Bundle.DiscoveryDialog_name_text());
-    }
-
     static synchronized DiscoveryDialog getDiscoveryDialogInstance() {
         if (discoveryDialog == null) {
             discoveryDialog = new DiscoveryDialog();
@@ -82,10 +78,11 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Creates new form DiscoveryDialog
+     * Private constructor to construct a new DiscoveryDialog
      */
-    private DiscoveryDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+    @Messages("DiscoveryDialog.name.text=Discovery")
+    private DiscoveryDialog() {
+        super(WindowManager.getDefault().getMainWindow(), Bundle.DiscoveryDialog_name_text(), true);
         initComponents();
         listener = new PropertyChangeListener() {
             @Override
@@ -458,11 +455,9 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             setInvalid("No Top Component Found");
             return;
         }
-
         if (tc.isOpened() == false) {
             tc.open();
         }
-
         tc.resetTopComponent();
         List<FileSearchFiltering.FileFilter> filters;
         if (videosButton.isSelected()) {
@@ -497,7 +492,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_searchButtonActionPerformed
 
     @Override
-    public void dispose(){
+    public void dispose() {
         setVisible(false);
     }
 
@@ -505,6 +500,9 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         this.setVisible(false);
     }//GEN-LAST:event_cancelButtonActionPerformed
 
+    /**
+     * Cancel the searchWorker if it exists.
+     */
     void cancelSearch() {
         if (searchWorker != null) {
             searchWorker.cancel(true);
@@ -514,8 +512,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     /**
      * Helper method to display an error message when the results of the
      * Discovery Top component may be incomplete.
-     *
-     * @param tc The Discovery Top component.
      */
     void displayErrorMessage() {
         //check if modules run and assemble message
@@ -554,7 +550,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * The settings are not valid so disable the search button and display the
      * given error message.
      *
-     * @param error
+     * @param error The error message to display.
      */
     private void setInvalid(String error) {
         errorLabel.setText(error);
@@ -574,6 +570,10 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private javax.swing.JButton videosButton;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * PropertyChangeListener to listen to case level events that may modify the
+     * filters available.
+     */
     private class CasePropertyChangeListener implements PropertyChangeListener {
 
         @Override

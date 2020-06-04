@@ -29,13 +29,16 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Panel for displaying the Hash Set filter controls.
+ */
 final class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(HashSetFilterPanel.class.getName());
 
     /**
-     * Creates new form HashSetFilterPaenl
+     * Creates new form HashSetFilterPaenl.
      */
     HashSetFilterPanel() {
         initComponents();

@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Container for files that holds all necessary data for grouping and sorting
+ * Container for files that holds all necessary data for grouping and sorting.
  */
 class ResultFile {
 

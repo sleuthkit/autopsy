@@ -177,7 +177,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      * Check if the fields are valid, and fire a property change event to
      * indicate any errors.
      */
-     synchronized void validateFields() {
+    synchronized void validateFields() {
         String errorString = null;
         for (AbstractDiscoveryFilterPanel filterPanel : filters) {
             errorString = filterPanel.checkForError();

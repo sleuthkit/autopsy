@@ -104,6 +104,9 @@ public final class DiscoveryTopComponent extends TopComponent {
         super.componentClosed();
     }
 
+    /**
+     * Cancel the in progress search.
+     */
     private void cancelCurrentSearch() {
         DiscoveryDialog.getDiscoveryDialogInstance().cancelSearch();
     }
@@ -137,7 +140,7 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         add(mainSplitPane, java.awt.BorderLayout.CENTER);
 
-        org.openide.awt.Mnemonics.setLocalizedText(newSearchButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.newSearchButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(newSearchButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "FileSearchDialog.cancelButton.text")); // NOI18N
         newSearchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newSearchButtonActionPerformed(evt);
@@ -151,7 +154,7 @@ public final class DiscoveryTopComponent extends TopComponent {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(newSearchButton)
-                .addContainerGap(987, Short.MAX_VALUE))
+                .addContainerGap(1017, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -184,8 +187,11 @@ public final class DiscoveryTopComponent extends TopComponent {
     }
 
     /**
+     * Subscribe to the DetailsVisible event and animate the panel as it changes
+     * visibility.
      *
-     * Fades this JPanel in. *
+     * @param detailsVisibleEvent The DetailsVisibleEvent which indicates if the
+     *                            panel should be made visible or hidden.
      */
     @Subscribe
     void handleDetailsVisibleEvent(DiscoveryEventUtils.DetailsVisibleEvent detailsVisibleEvent) {
@@ -201,30 +207,43 @@ public final class DiscoveryTopComponent extends TopComponent {
         animator.start();
     }
 
+    /**
+     * Subscribe to the SearchStartedEvent for updating the UI accordingly.
+     *
+     * @param searchStartedEvent The event which indicates the start of a
+     *                           search.
+     */
     @Messages({"DiscoveryTopComponent.cancelButton.text=Cancel Search"})
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_cancelButton_text());
     }
 
+    /**
+     * Subscribe to the SearchCompleteEvent for updating the UI accordingly.
+     *
+     * @param searchCompleteEvent The event which indicates the completion of a
+     *                            search.
+     */
     @Subscribe
+    @Messages("DiscoveryTopComponent.newSearch.text=New Search")
     void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
-        newSearchButton.setText("New Search");
-    }
-
-    @Subscribe
-    void handleSearchCancelledEvent(DiscoveryEventUtils.SearchCancelledEvent searchCancelledEvent) {
-        newSearchButton.setText("New Search");
+        newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
     }
 
     /**
+     * Subscribe to the SearchCancelledEvent for updating the UI accordingly.
      *
-     * Callback implementation for fading in
-     *
-     * @author Greg Cope
-     *
-     *
-     *
+     * @param searchCancelledEvent The event which indicates the cancellation of
+     *                             a search.
+     */
+    @Subscribe
+    void handleSearchCancelledEvent(DiscoveryEventUtils.SearchCancelledEvent searchCancelledEvent) {
+        newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
+    }
+
+    /**
+     * Callback for animating the details area into a visible position.
      */
     private final class ShowDetailsAreaCallback implements SwingAnimatorCallback {
 
@@ -246,13 +265,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     }
 
     /**
-     *
-     * Callback implementation to fade out
-     *
-     * @author Greg Cope
-     *
-     *
-     *
+     * Callback for animating the details area into a hidden position.
      */
     private final class HideDetailsAreaCallback implements SwingAnimatorCallback {
 
@@ -280,7 +293,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Class for the split pane which will be animated
+     * Class for the split pane which will be animated.
      */
     private final class AnimatedSplitPane extends JSplitPane {
 

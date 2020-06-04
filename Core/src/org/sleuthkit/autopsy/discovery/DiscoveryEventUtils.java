@@ -42,7 +42,11 @@ final class DiscoveryEventUtils {
         return discoveryEventBus;
     }
 
+    /**
+     * Private no arg constructor for Utility class.
+     */
     private DiscoveryEventUtils() {
+        //Utility class private constructor intentionally left blank.
     }
 
     /**
@@ -71,6 +75,9 @@ final class DiscoveryEventUtils {
         }
     }
 
+    /**
+     * Event to signal that the Instances list should have selection cleared.
+     */
     static final class ClearInstanceSelectionEvent {
 
         /**
@@ -81,6 +88,9 @@ final class DiscoveryEventUtils {
         }
     }
 
+    /**
+     * Event to signal that the Instances list should be populated.
+     */
     static final class PopulateInstancesListEvent {
 
         private final List<AbstractFile> instances;
@@ -364,17 +374,28 @@ final class DiscoveryEventUtils {
 
     }
 
+    /**
+     * Event to signal that the visibility of the Details area should change.
+     */
     static class DetailsVisibleEvent {
 
         private final boolean showDetailsArea;
 
+        /**
+         * Construct a new DetailsVisibleEvent.
+         *
+         * @param isVisible True if the details area should be visible, false
+         *                  otherwise.
+         */
         DetailsVisibleEvent(boolean isVisible) {
             showDetailsArea = isVisible;
             //no arg constructor
         }
 
         /**
-         * @return the showDetailsArea
+         * Get the visibility of the Details area.
+         *
+         * @return True if the details area should be visible, false otherwise.
          */
         boolean isShowDetailsArea() {
             return showDetailsArea;

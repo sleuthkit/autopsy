@@ -102,7 +102,7 @@ final class DiscoveryUiUtils {
         return UNSUPPORTED_DOCUMENT_THUMBNAIL;
     }
 
-        /**
+    /**
      * Get the names of the sets which exist in the case database for the
      * specified artifact and attribute types.
      *
@@ -130,7 +130,7 @@ final class DiscoveryUiUtils {
         Collections.sort(setNames);
         return setNames;
     }
-    
+
     /**
      * Helper method to see if point is on the icon.
      *

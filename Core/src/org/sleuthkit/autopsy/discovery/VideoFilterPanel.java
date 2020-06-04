@@ -20,13 +20,16 @@ package org.sleuthkit.autopsy.discovery;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
+/**
+ * Panel for displaying all filters available for the searches of type Video.
+ */
 final class VideoFilterPanel extends AbstractFiltersPanel {
 
     private static final long serialVersionUID = 1L;
     private static final FileSearchData.FileType FILE_TYPE = FileSearchData.FileType.VIDEO;
 
     /**
-     * Creates new form VideoFilterPanel
+     * Creates new form VideoFilterPanel.
      */
     VideoFilterPanel() {
         super();

@@ -135,9 +135,9 @@ final class ResultsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Subscribe to and reset the panel in response to SearchStartedEvents
+     * Subscribe to and reset the panel in response to SearchStartedEvents.
      *
-     * @param searchStartedEvent the SearchStartedEvent which was received
+     * @param searchStartedEvent The SearchStartedEvent which was received.
      */
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {

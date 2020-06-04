@@ -94,7 +94,7 @@ final class SwingAnimator {
     /**
      *
      * Starts the timer to fire. If the current timer is non-null and running,
-     * this method will first stop the timer before beginning a new one. 
+     * this method will first stop the timer before beginning a new one.
      */
     void start() {
         if (timer != null && timer.isRunning()) {

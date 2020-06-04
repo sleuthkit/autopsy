@@ -29,13 +29,16 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Class to allow configuration of the Objects Detected filter.
+ */
 final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(ObjectDetectedFilterPanel.class.getName());
 
     /**
-     * Creates new form ObjectDetectedFilter
+     * Creates new form ObjectDetectedFilter.
      */
     ObjectDetectedFilterPanel() {
         initComponents();
@@ -43,7 +46,7 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     /**
-     * Initialize the object filter
+     * Initialize the object filter.
      */
     private void setUpObjectFilter() {
         int count = 0;

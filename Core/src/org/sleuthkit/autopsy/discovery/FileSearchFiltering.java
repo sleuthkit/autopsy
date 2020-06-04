@@ -842,7 +842,8 @@ class FileSearchFiltering {
     }
 
     /**
-     * A filter for specifying that the file must have user content suspected data.
+     * A filter for specifying that the file must have user content suspected
+     * data.
      */
     static class UserCreatedFilter extends FileFilter {
 

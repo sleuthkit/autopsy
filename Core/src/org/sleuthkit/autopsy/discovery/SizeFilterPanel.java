@@ -26,12 +26,17 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import org.sleuthkit.autopsy.discovery.FileSearchData.FileSize;
 
+/**
+ * Panel to allow configuration of the Size Filter.
+ */
 final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Creates new form SizeFilterPanel
+     * Creates new form SizeFilterPanel=
+     *
+     * @param type The type of result being searched for.
      */
     SizeFilterPanel(FileSearchData.FileType type) {
         initComponents();
@@ -126,7 +131,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     /**
-     * Initialize the file size filter
+     * Initialize the file size filter.
      */
     private void setUpSizeFilter(FileSearchData.FileType fileType) {
         int count = 0;

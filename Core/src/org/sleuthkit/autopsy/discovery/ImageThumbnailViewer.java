@@ -35,7 +35,7 @@ final class ImageThumbnailViewer extends javax.swing.JPanel {
     private final DefaultListModel<ImageThumbnailWrapper> thumbnailListModel = new DefaultListModel<>();
 
     /**
-     * Creates new form ImageThumbnailViewer
+     * Creates new form ImageThumbnailViewer.
      */
     ImageThumbnailViewer() {
         initComponents();
