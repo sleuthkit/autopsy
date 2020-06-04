@@ -177,6 +177,35 @@
                 <package>org.apache.http.protocol</package>
                 <package>org.apache.http.ssl</package>
                 <package>org.apache.http.util</package>
+                <package>org.apache.solr.client.solrj</package>
+                <package>org.apache.solr.client.solrj.beans</package>
+                <package>org.apache.solr.client.solrj.cloud</package>
+                <package>org.apache.solr.client.solrj.cloud.autoscaling</package>
+                <package>org.apache.solr.client.solrj.embedded</package>
+                <package>org.apache.solr.client.solrj.impl</package>
+                <package>org.apache.solr.client.solrj.io</package>
+                <package>org.apache.solr.client.solrj.io.comp</package>
+                <package>org.apache.solr.client.solrj.io.eq</package>
+                <package>org.apache.solr.client.solrj.io.eval</package>
+                <package>org.apache.solr.client.solrj.io.graph</package>
+                <package>org.apache.solr.client.solrj.io.ops</package>
+                <package>org.apache.solr.client.solrj.io.sql</package>
+                <package>org.apache.solr.client.solrj.io.stream</package>
+                <package>org.apache.solr.client.solrj.io.stream.expr</package>
+                <package>org.apache.solr.client.solrj.io.stream.metrics</package>
+                <package>org.apache.solr.client.solrj.request</package>
+                <package>org.apache.solr.client.solrj.request.json</package>
+                <package>org.apache.solr.client.solrj.request.schema</package>
+                <package>org.apache.solr.client.solrj.response</package>
+                <package>org.apache.solr.client.solrj.response.json</package>
+                <package>org.apache.solr.client.solrj.response.schema</package>
+                <package>org.apache.solr.client.solrj.util</package>
+                <package>org.apache.solr.common</package>
+                <package>org.apache.solr.common.cloud</package>
+                <package>org.apache.solr.common.cloud.rule</package>
+                <package>org.apache.solr.common.luke</package>
+                <package>org.apache.solr.common.params</package>
+                <package>org.apache.solr.common.util</package>
                 <package>org.apache.tika.parser.txt</package>
                 <package>org.codehaus.stax2</package>
                 <package>org.codehaus.stax2.evt</package>
