@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.TskData;
  * A tag name definition consisting of a display name, description and color.
  */
 @Immutable
-final class TagNameDefinition implements Comparable<TagNameDefinition> {
+final public class TagNameDefinition implements Comparable<TagNameDefinition> {
 
     private static final Logger LOGGER = Logger.getLogger(TagNameDefinition.class.getName());
     @Messages({
@@ -55,39 +55,25 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     private static final String TAG_SETTING_VERSION_KEY = "CustomTagNameVersion";
     private static final int TAG_SETTINGS_VERSION = 1;
 
-    private static final String CATEGORY_ONE_NAME = "Child Exploitation (Illegal)";
-    private static final String CATEGORY_TWO_NAME = "Child Exploitation (Non-Illegal/Age Difficult)";
-    private static final String CATEGORY_THREE_NAME = "CGI/Animation (Child Exploitive)";
-    private static final String CATEGORY_FOUR_NAME = "Exemplar/Comparison (Internal Use Only)";
-    private static final String CATEGORY_FIVE_NAME = "Non-pertinent";
-
     private final String displayName;
     private final String description;
     private final TagName.HTML_COLOR color;
     private final TskData.FileKnown knownStatus;
 
     private static final List<TagNameDefinition> STANDARD_TAGS_DEFINITIONS = new ArrayList<>();
-    private static final List<TagNameDefinition> PROJECT_VIC_TAG_DEFINITIONS = new ArrayList<>();
-     private static final List<String> OLD_CATEGORY_TAG_NAMES = new ArrayList<>();
+    private static final List<String> OLD_CATEGORY_TAG_NAMES = new ArrayList<>();
 
     static {
         STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
         STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_followUp_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
         STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
 
-        PROJECT_VIC_TAG_DEFINITIONS.add(new TagNameDefinition(CATEGORY_ONE_NAME, "", TagName.HTML_COLOR.RED, TskData.FileKnown.BAD));
-        PROJECT_VIC_TAG_DEFINITIONS.add(new TagNameDefinition(CATEGORY_TWO_NAME, "", TagName.HTML_COLOR.LIME, TskData.FileKnown.BAD));
-        PROJECT_VIC_TAG_DEFINITIONS.add(new TagNameDefinition(CATEGORY_THREE_NAME, "", TagName.HTML_COLOR.YELLOW, TskData.FileKnown.BAD));
-        PROJECT_VIC_TAG_DEFINITIONS.add(new TagNameDefinition(CATEGORY_FOUR_NAME, "", TagName.HTML_COLOR.PURPLE, TskData.FileKnown.UNKNOWN));
-        PROJECT_VIC_TAG_DEFINITIONS.add(new TagNameDefinition(CATEGORY_FIVE_NAME, "", TagName.HTML_COLOR.FUCHSIA, TskData.FileKnown.UNKNOWN));
-
-        OLD_CATEGORY_TAG_NAMES.add("CAT-1: " + CATEGORY_ONE_NAME);
-        OLD_CATEGORY_TAG_NAMES.add("CAT-2: " + CATEGORY_TWO_NAME);
-        OLD_CATEGORY_TAG_NAMES.add("CAT-3: " + CATEGORY_THREE_NAME);
-        OLD_CATEGORY_TAG_NAMES.add("CAT-4: " + CATEGORY_FOUR_NAME);
-        OLD_CATEGORY_TAG_NAMES.add("CAT-5: " + CATEGORY_FIVE_NAME);
+        OLD_CATEGORY_TAG_NAMES.add("CAT-1: Child Exploitation (Illegal)");
+        OLD_CATEGORY_TAG_NAMES.add("CAT-2: Child Exploitation (Non-Illegal/Age Difficult)");
+        OLD_CATEGORY_TAG_NAMES.add("CAT-3: CGI/Animation (Child Exploitive)");
+        OLD_CATEGORY_TAG_NAMES.add("CAT-4: Exemplar/Comparison (Internal Use Only)");
+        OLD_CATEGORY_TAG_NAMES.add("CAT-5: Non-pertinent");
         OLD_CATEGORY_TAG_NAMES.add("CAT-0: Uncategorized");
-
     }
 
     /**
@@ -99,15 +85,11 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      * @param color       The color for the tag name.
      * @param status      The status denoted by the tag name.
      */
-    TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
+    public TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
         this.displayName = displayName;
         this.description = description;
         this.color = color;
         this.knownStatus = status;
-    }
-
-    static Collection<TagNameDefinition> getProjectVICDefaultDefinitions() {
-        return Collections.unmodifiableCollection(PROJECT_VIC_TAG_DEFINITIONS);
     }
 
     static Collection<TagNameDefinition> getStandardTagNameDefinitions() {
@@ -121,10 +103,6 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
             strList.add(def.getDisplayName());
         }
 
-        for (TagNameDefinition def : PROJECT_VIC_TAG_DEFINITIONS) {
-            strList.add(def.getDisplayName());
-        }
-
         return strList;
     }
 
@@ -133,7 +111,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return
      */
-    static String getBookmarkDisplayString() {
+    static String getBookmarkTagDisplayName() {
         return Bundle.TagNameDefinition_predefTagNames_bookmark_text();
     }
 
@@ -142,7 +120,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return
      */
-    static String getFollowUpDisplayString() {
+    static String getFollowUpTagDisplayName() {
         return Bundle.TagNameDefinition_predefTagNames_followUp_text();
     }
 
@@ -151,7 +129,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return
      */
-    static String getNotableDisplayString() {
+    static String getNotableTagDisplayName() {
         return Bundle.TagNameDefinition_predefTagNames_notableItem_text();
     }
 
@@ -160,7 +138,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return The display name.
      */
-    String getDisplayName() {
+    public String getDisplayName() {
         return displayName;
     }
 
@@ -169,7 +147,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return The description.
      */
-    String getDescription() {
+    public String getDescription() {
         return description;
     }
 
@@ -178,7 +156,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return The color.
      */
-    TagName.HTML_COLOR getColor() {
+    public TagName.HTML_COLOR getColor() {
         return color;
     }
 
@@ -187,7 +165,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return a value of TskData.FileKnown which is associated with this tag
      */
-    TskData.FileKnown getKnownStatus() {
+    public TskData.FileKnown getKnownStatus() {
         return knownStatus;
     }
 
@@ -260,7 +238,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         try {
             tagName = caseDb.addOrUpdateTagName(displayName, description, color, knownStatus);
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error updating non-file object ", ex);
+            LOGGER.log(Level.SEVERE, "Error saving tag name definition", ex);
         }
         return tagName;
     }
@@ -380,8 +358,8 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         List<String> tagStrings = new ArrayList<>();
         List<String> standardTags = getStandardTagNames();
         for (TagNameDefinition def : definitions) {
-            if (!standardTags.contains(def.getDisplayName()) && 
-                    !OLD_CATEGORY_TAG_NAMES.contains(def.getDisplayName())) {
+            if (!standardTags.contains(def.getDisplayName())
+                    && !OLD_CATEGORY_TAG_NAMES.contains(def.getDisplayName())) {
                 tagStrings.add(def.toSettingsFormat());
             }
         }

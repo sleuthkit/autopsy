@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -114,9 +115,6 @@ public class Persona {
         }
     }
 
-    // Persona name to use if no name is specified.
-    private static final String DEFAULT_PERSONA_NAME = "Unknown";
-
     // primary key in the Personas table in CR database
     private final long id;
     private final String uuidStr;
@@ -126,6 +124,11 @@ public class Persona {
     private final long modifiedDate;
     private final PersonaStatus status;
     private final CentralRepoExaminer examiner;
+    
+    @NbBundle.Messages("Persona.defaultName=Unnamed")
+    public static String getDefaultName() {
+        return Bundle.Persona_defaultName();
+    }
 
     public long getId() {
         return id;
@@ -213,7 +216,7 @@ public class Persona {
      */
     public static Persona createPersonaForAccount(String personaName, String comment, PersonaStatus status, CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
         Persona persona = createPersona(personaName, comment, status);
-        persona.addAccountToPersona(account, justification, confidence);
+        persona.addAccount(account, justification, confidence);
         return persona;
     }
 
@@ -240,7 +243,7 @@ public class Persona {
         String insertClause = " INTO personas (uuid, comment, name, created_date, modified_date, status_id, examiner_id ) "
                 + "VALUES ( '" + uuidStr + "', "
                 + "'" + ((StringUtils.isBlank(comment) ? "" : SleuthkitCase.escapeSingleQuotes(comment))) + "',"
-                + "'" + ((StringUtils.isBlank(name) ? DEFAULT_PERSONA_NAME : SleuthkitCase.escapeSingleQuotes(name))) + "',"
+                + "'" + ((StringUtils.isBlank(name) ? getDefaultName() : SleuthkitCase.escapeSingleQuotes(name))) + "',"
                 + timeStampMillis.toString() + ","
                 + timeStampMillis.toString() + ","
                 + status.getStatusId() + ","
@@ -250,12 +253,23 @@ public class Persona {
         CentralRepository.getInstance().executeInsertSQL(insertClause);
         return getPersonaByUUID(uuidStr);
     }
+    
+    /**
+     * Sets the name of this persona
+     *
+     * @param name The new name.
+     * 
+     * @throws CentralRepoException If there is an error.
+     */
+    public void setName(String name) throws CentralRepoException {
+        String updateClause = "UPDATE personas SET name = \"" + name + "\" WHERE id = " + id;
+        CentralRepository.getInstance().executeUpdateSQL(updateClause);
+    }
 
     /**
      * Associates an account with a persona by creating a row in the
      * PersonaAccounts table.
      *
-     * @param persona Persona to add the account to.
      * @param account Account to add to persona.
      * @param justification Reason for adding the account to persona, may be
      * null.
@@ -264,24 +278,20 @@ public class Persona {
      * @return PersonaAccount
      * @throws CentralRepoException If there is an error.
      */
-    public PersonaAccount addAccountToPersona(CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
-
-        CentralRepoExaminer currentExaminer = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
-
-        Instant instant = Instant.now();
-        Long timeStampMillis = instant.toEpochMilli();
-        String insertClause = " INTO persona_accounts (persona_id, account_id, justification, confidence_id, date_added, examiner_id ) "
-                + "VALUES ( "
-                + this.getId() + ", "
-                + account.getId() + ", "
-                + "'" + ((StringUtils.isBlank(justification) ? "" : SleuthkitCase.escapeSingleQuotes(justification))) + "', "
-                + confidence.getLevelId() + ", "
-                + timeStampMillis.toString() + ", "
-                + currentExaminer.getId()
-                + ")";
-
-        CentralRepository.getInstance().executeInsertSQL(insertClause);
-        return new PersonaAccount(this, account, justification, confidence, timeStampMillis, currentExaminer);
+    public PersonaAccount addAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
+        return PersonaAccount.addPersonaAccount(this, account, justification, confidence);
+    }
+    
+    /**
+     * Removes the given PersonaAccount (persona/account association)
+     *
+     * @param account account to remove
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public void removeAccount(PersonaAccount account) throws CentralRepoException {
+        PersonaAccount.removePersonaAccount(account.getId());
     }
 
     /**
@@ -387,6 +397,18 @@ public class Persona {
     public PersonaAlias addAlias(String alias, String justification, Persona.Confidence confidence) throws CentralRepoException {
         return PersonaAlias.addPersonaAlias(this, alias, justification, confidence);
     }
+    
+    /**
+     * Removes the given alias
+     *
+     * @param alias alias to remove
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public void removeAlias(PersonaAlias alias) throws CentralRepoException {
+        PersonaAlias.removePersonaAlias(alias);
+    }
 
     /**
      * Gets all aliases for the persona.
@@ -412,6 +434,18 @@ public class Persona {
      */
     public PersonaMetadata addMetadata(String name, String value, String justification, Persona.Confidence confidence) throws CentralRepoException {
         return PersonaMetadata.addPersonaMetadata(this.getId(), name, value, justification, confidence);
+    }
+    
+    /**
+     * Removes the given metadata from this persona
+     *
+     * @param metadata metadata to remove
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public void removeMetadata(PersonaMetadata metadata) throws CentralRepoException {
+        PersonaMetadata.removePersonaMetadata(metadata);
     }
 
     /**
@@ -655,7 +689,7 @@ public class Persona {
     /**
      * Get all the persona for a given data source.
      *
-     * @param CorrelationDataSource Data source to look the persona in.
+     * @param dataSource Data source to look the persona in.
      *
      * @return Collection of personas, may be empty.
      * @throws CentralRepoException

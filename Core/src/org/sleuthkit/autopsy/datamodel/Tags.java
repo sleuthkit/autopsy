@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Observable;
@@ -39,6 +40,7 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.tags.TagUtils;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -251,7 +253,12 @@ public class Tags implements AutopsyVisitableItem {
                             ? Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse(filteringDSObjId)
                             : Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
                 }
-                Collections.sort(tagNamesInUse);
+                Collections.sort(tagNamesInUse, new Comparator<TagName>() {
+                    @Override
+                    public int compare(TagName o1, TagName o2) {
+                        return TagUtils.getDecoratedTagDisplayName(o1).compareTo(TagUtils.getDecoratedTagDisplayName(o2));
+                    }
+                });
                 keys.addAll(tagNamesInUse);
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(TagNameNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
@@ -284,9 +291,9 @@ public class Tags implements AutopsyVisitableItem {
         public TagNameNode(TagName tagName) {
             super(Children.create(new TagTypeNodeFactory(tagName), true), Lookups.singleton(NbBundle.getMessage(TagNameNode.class, "TagNameNode.namePlusTags.text", tagName.getDisplayName())));
             this.tagName = tagName;
-            setName(tagName.getDisplayName());
+            setName(TagUtils.getDecoratedTagDisplayName(tagName));
             updateDisplayName();
-            if (tagName.getDisplayName().equals(NbBundle.getMessage(this.getClass(), "TagNameNode.bookmark.text"))) {
+            if (tagName.getDisplayName().equals(TagsManager.getBookmarkTagDisplayName())) {
                 setIconBaseWithExtension(BOOKMARK_TAG_ICON_PATH);
             } else {
                 setIconBaseWithExtension(ICON_PATH);
@@ -319,7 +326,7 @@ public class Tags implements AutopsyVisitableItem {
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "Failed to get tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
             }
-            setDisplayName(tagName.getDisplayName() + " \u200E(\u200E" + tagsCount + ")\u200E");
+            setDisplayName(TagUtils.getDecoratedTagDisplayName(tagName) + " \u200E(\u200E" + tagsCount + ")\u200E");
         }
 
         @Override

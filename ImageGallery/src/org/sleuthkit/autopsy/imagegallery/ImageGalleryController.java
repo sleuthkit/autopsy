@@ -57,7 +57,6 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
-import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -96,6 +95,8 @@ public final class ImageGalleryController {
     private static final Logger logger = Logger.getLogger(ImageGalleryController.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_STARTED, IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED, IngestManager.IngestModuleEvent.FILE_DONE);
+
+    private static String DEFAULT_TAG_SET_NAME = "Project VIC";
     /*
      * The file limit for image gallery. If the selected data source (or all
      * data sources, if that option is selected) has more than this many files
@@ -737,7 +738,7 @@ public final class ImageGalleryController {
         List<TagSet> tagSetList = getCaseDatabase().getTaggingManager().getTagSets();
         if (tagSetList != null && !tagSetList.isEmpty()) {
             for (TagSet set : tagSetList) {
-                if (set.getName().equals(TagsManager.getCategoryTagSetName())) {
+                if (set.getName().equals(getCategoryTagSetName())) {
                     return set;
                 }
             }
@@ -746,6 +747,15 @@ public final class ImageGalleryController {
         } else {
             throw new TskCoreException("Error loading Project VIC tag set: Tag set not found.");
         }
+    }
+
+    /**
+     * Returns the name of the category tag set.
+     *
+     * @return Tagset name
+     */
+    static String getCategoryTagSetName() {
+        return DEFAULT_TAG_SET_NAME;
     }
 
     /**

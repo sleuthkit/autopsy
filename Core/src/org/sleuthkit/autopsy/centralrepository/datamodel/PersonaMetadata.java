@@ -36,6 +36,12 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class PersonaMetadata {
     
+    private static final String SELECT_QUERY_BASE = 
+            "SELECT pmd.id, pmd.persona_id, pmd.name, pmd.value, pmd.justification, pmd.confidence_id, pmd.date_added, pmd.examiner_id, e.login_name, e.display_name "
+                + "FROM persona_metadata as pmd "
+                + "INNER JOIN examiners as e ON e.id = pmd.examiner_id ";
+    
+    private final long id;
     private final long personaId;
     private final String name;
     private final String value;
@@ -43,6 +49,10 @@ public class PersonaMetadata {
     private final Persona.Confidence confidence;
     private final long dateAdded;
     private final CentralRepoExaminer examiner;
+    
+    public long getId() {
+        return id;
+    }
 
     public long getPersonaId() {
         return personaId;
@@ -72,7 +82,8 @@ public class PersonaMetadata {
         return examiner;
     }
     
-    public PersonaMetadata(long personaId, String name, String value, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
+    public PersonaMetadata(long id, long personaId, String name, String value, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
+        this.id = id;
         this.personaId = personaId;
         this.name = name;
         this.value = value;
@@ -113,7 +124,35 @@ public class PersonaMetadata {
                 + ")";
 
         CentralRepository.getInstance().executeInsertSQL(insertClause);
-        return new PersonaMetadata(personaId, name, value, justification, confidence, timeStampMillis, examiner);
+        
+        String queryClause = SELECT_QUERY_BASE
+                + "WHERE pmd.persona_id = " + personaId
+                + " AND pmd.name = \"" + name + "\""
+                + " AND pmd.value = \"" + value + "\""
+                + " AND pmd.date_added = " + timeStampMillis
+                + " AND pmd.examiner_id = " + examiner.getId();
+        
+        PersonaMetadataQueryCallback queryCallback = new PersonaMetadataQueryCallback();
+        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        
+        Collection<PersonaMetadata> metadata = queryCallback.getMetadataList();
+        if (metadata.size() != 1) {
+            throw new CentralRepoException("Metadata add query failed");
+        }
+        
+        return metadata.iterator().next();
+    }
+    
+    /**
+     * Removes the given PersonaMetadata
+     *
+     * @param metadata Metadata to remove.
+     *
+     * @throws CentralRepoException If there is an error in removing the metadata.
+     */
+    static void removePersonaMetadata(PersonaMetadata metadata) throws CentralRepoException {
+        String deleteClause = " DELETE FROM persona_metadata WHERE id = " + metadata.getId();
+        CentralRepository.getInstance().executeDeleteSQL(deleteClause);
     }
     
     /**
@@ -132,6 +171,7 @@ public class PersonaMetadata {
                         rs.getString("login_name"));
 
                 PersonaMetadata metaData = new PersonaMetadata(
+                        rs.getLong("id"),
                         rs.getLong("persona_id"),
                         rs.getString("name"),
                         rs.getString("value"),
@@ -158,10 +198,8 @@ public class PersonaMetadata {
      * @throws CentralRepoException If there is an error in retrieving aliases.
      */
     static Collection<PersonaMetadata> getPersonaMetadata(long personaId) throws CentralRepoException {
-        String queryClause = "SELECT pmd.id, pmd.persona_id, pmd.name, pmd.value, pmd.justification, pmd.confidence_id, pmd.date_added, pmd.examiner_id, e.login_name, e.display_name "
-                + "FROM persona_metadata as pmd "
-                + "INNER JOIN examiners as e ON e.id = pmd.examiner_id ";
-
+        String queryClause = SELECT_QUERY_BASE + "WHERE pmd.persona_id = " + personaId;
+        
         PersonaMetadataQueryCallback queryCallback = new PersonaMetadataQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
 
