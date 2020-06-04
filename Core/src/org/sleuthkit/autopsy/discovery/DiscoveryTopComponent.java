@@ -31,7 +31,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
- * Create a dialog for displaying the file discovery tool
+ * Create a dialog for displaying the Discovery results.
  */
 @TopComponent.Description(preferredID = "DiscoveryTopComponent", persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "discovery", openAtStartup = false)
@@ -52,7 +52,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     private SwingAnimator animator = null;
 
     /**
-     * Creates new form FileDiscoveryDialog
+     * Creates new form DiscoveryTopComponent.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public DiscoveryTopComponent() {
@@ -164,7 +164,7 @@ public final class DiscoveryTopComponent extends TopComponent {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         close();
-        new  OpenDiscoveryAction().actionPerformed(evt);
+        new OpenDiscoveryAction().actionPerformed(evt);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     @Override

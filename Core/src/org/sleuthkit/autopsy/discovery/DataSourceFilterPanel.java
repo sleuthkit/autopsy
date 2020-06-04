@@ -161,10 +161,20 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
 
         private final DataSource ds;
 
+        /**
+         * Construct a new DataSourceItem.
+         *
+         * @param ds The data source being wrapped.
+         */
         DataSourceItem(DataSource ds) {
             this.ds = ds;
         }
 
+        /**
+         * Get the data source represented by this data source item.
+         *
+         * @return The data source represented by this data source item.
+         */
         DataSource getDataSource() {
             return ds;
         }

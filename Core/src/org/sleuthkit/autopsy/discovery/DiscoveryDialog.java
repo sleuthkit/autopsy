@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.ImageFilePanel;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -59,6 +60,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         if (discoveryDialog == null) {
             discoveryDialog = new DiscoveryDialog();
         }
+        discoveryDialog.validateDialog();
         return discoveryDialog;
     }
 
@@ -71,7 +73,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getNewValue() != null) {
+                if (evt.getPropertyName().equals("FilterError") && evt.getNewValue() != null) {
                     String errorMessage = evt.getNewValue().toString();
                     if (!StringUtils.isBlank(errorMessage)) {
                         setInvalid(errorMessage);
@@ -145,6 +147,32 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         groupSortingComboBox.setSelectedIndex(0);
         pack();
         repaint();
+    }
+
+    /**
+     * Validate the current filter settings of the selected type.
+     */
+    private void validateDialog() {
+        switch (fileType) {
+            case IMAGE:
+                if (imageFilterPanel != null) {
+                    imageFilterPanel.validateFields();
+                }
+                return;
+            case VIDEO:
+                if (videoFilterPanel != null) {
+                    videoFilterPanel.validateFields();
+                }
+                return;
+            case DOCUMENTS:
+                if (documentFilterPanel != null) {
+                    documentFilterPanel.validateFields();
+                }
+                return;
+            default:
+                break;
+        }
+        setInvalid("No filter panels exist");
     }
 
     /**
@@ -361,7 +389,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setBackground(UNSELECTED_COLOR);
         fileType = FileSearchData.FileType.IMAGE;
         imageFilterPanel.addPropertyChangeListener(listener);
-        imageFilterPanel.validateFields();
+        validateDialog();
         pack();
         repaint();
     }//GEN-LAST:event_imagesButtonActionPerformed
@@ -384,7 +412,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setBackground(UNSELECTED_COLOR);
         videoFilterPanel.addPropertyChangeListener(listener);
         fileType = FileSearchData.FileType.VIDEO;
-        videoFilterPanel.validateFields();
+        validateDialog();
         pack();
         repaint();
     }//GEN-LAST:event_videosButtonActionPerformed
@@ -407,7 +435,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         imagesButton.setBackground(UNSELECTED_COLOR);
         fileType = FileSearchData.FileType.DOCUMENTS;
         documentFilterPanel.addPropertyChangeListener(listener);
-        documentFilterPanel.validateFields();
+        validateDialog();
         pack();
         repaint();
     }//GEN-LAST:event_documentsButtonActionPerformed
