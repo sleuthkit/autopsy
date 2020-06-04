@@ -38,10 +38,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * and evicted from the cache after 5 minutes.
  */
 final class CVTPersonaCache {
-    
+
     private static final Logger logger = Logger.getLogger(CVTPersonaCache.class.getName());
     private final LoadingCache<String, List<PersonaAccount>> accountMap;
-    
+
     private static CVTPersonaCache instance;
 
     /**
@@ -54,7 +54,7 @@ final class CVTPersonaCache {
             public List<PersonaAccount> load(String key) {
                 List<PersonaAccount> accountList = new ArrayList<>();
                 try {
-                    if(CentralRepository.isEnabled()) {
+                    if (CentralRepository.isEnabled()) {
                         Collection<PersonaAccount> accounts = PersonaAccount.getPersonaAccountsForIdentifierLike(key);
                         accountList.addAll(accounts);
                     }
@@ -72,11 +72,11 @@ final class CVTPersonaCache {
      *
      * @return CVTPersonaCache instance.
      */
-    private static CVTPersonaCache getInstance() {
+    private static synchronized CVTPersonaCache getInstance() {
         if (instance == null) {
             instance = new CVTPersonaCache();
         }
-        
+
         return instance;
     }
 
