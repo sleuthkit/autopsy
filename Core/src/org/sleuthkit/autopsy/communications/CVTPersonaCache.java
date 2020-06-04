@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * PersonaAccounts for a given Account typeSpecificID retrieved on first access
  * and evicted from the cache after 5 minutes.
  */
-class CVTPersonaCache {
+final class CVTPersonaCache {
     
     private static final Logger logger = Logger.getLogger(CVTPersonaCache.class.getName());
     private final LoadingCache<String, List<PersonaAccount>> accountMap;
@@ -72,7 +72,7 @@ class CVTPersonaCache {
      *
      * @return CVTPersonaCache instance.
      */
-    static CVTPersonaCache getInstance() {
+    private static CVTPersonaCache getInstance() {
         if (instance == null) {
             instance = new CVTPersonaCache();
         }
@@ -89,7 +89,7 @@ class CVTPersonaCache {
      *
      * @throws ExecutionException
      */
-    List<PersonaAccount> getPersonaAccounts(String typeSpecificID) throws ExecutionException {
-        return accountMap.get(typeSpecificID);
+    static synchronized List<PersonaAccount> getPersonaAccounts(String typeSpecificID) throws ExecutionException {
+        return getInstance().accountMap.get(typeSpecificID);
     }
 }
