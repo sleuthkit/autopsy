@@ -31,7 +31,7 @@ final class VideoFilterPanel extends AbstractFiltersPanel {
     VideoFilterPanel() {
         super();
         initComponents();
-        addFilter(new SizeFilterPanel(FileSearchData.FileType.VIDEO), true, null, 0);
+        addFilter(new SizeFilterPanel(FileSearchData.FileType.VIDEO), false, null, 0);
         addFilter(new DataSourceFilterPanel(), false, null, 0);
         int[] pastOccurrencesIndices;
         if (!CentralRepository.isEnabled()) {
