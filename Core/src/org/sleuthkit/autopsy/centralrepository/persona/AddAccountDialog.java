@@ -57,7 +57,7 @@ public class AddAccountDialog extends JDialog {
     public AddAccountDialog(PersonaDetailsPanel pdp) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.AddAccountDialog_title_text(),
-                false);
+                true);
         this.pdp = pdp;
 
         initComponents();
