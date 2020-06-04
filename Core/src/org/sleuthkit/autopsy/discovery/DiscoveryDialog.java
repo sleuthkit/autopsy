@@ -71,17 +71,14 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                System.out.println("PROPERTY CHANGE EVENT");
-                if (evt.getNewValue() instanceof String) {
-                    System.out.println("IS A STRING");
-                    String errorMessage = (String) evt.getNewValue();
-                    if (StringUtils.isBlank(errorMessage)) {
-                        setValid();
-                    } else {
+                if (evt.getNewValue() != null) {
+                    String errorMessage = evt.getNewValue().toString();
+                    if (!StringUtils.isBlank(errorMessage)) {
                         setInvalid(errorMessage);
+                        return;
                     }
                 }
-
+                setValid();
             }
         };
         for (GroupSortingAlgorithm groupSortAlgorithm : GroupSortingAlgorithm.values()) {
@@ -364,6 +361,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setBackground(UNSELECTED_COLOR);
         fileType = FileSearchData.FileType.IMAGE;
         imageFilterPanel.addPropertyChangeListener(listener);
+        imageFilterPanel.validateFields();
         pack();
         repaint();
     }//GEN-LAST:event_imagesButtonActionPerformed
@@ -386,6 +384,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setBackground(UNSELECTED_COLOR);
         videoFilterPanel.addPropertyChangeListener(listener);
         fileType = FileSearchData.FileType.VIDEO;
+        videoFilterPanel.validateFields();
         pack();
         repaint();
     }//GEN-LAST:event_videosButtonActionPerformed
@@ -396,7 +395,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         remove(videoFilterPanel);
         videoFilterPanel.removePropertyChangeListener(listener);
         add(documentFilterPanel, CENTER);
-        documentFilterPanel.removePropertyChangeListener(listener);
         documentsButton.setSelected(true);
         documentsButton.setEnabled(false);
         documentsButton.setBackground(SELECTED_COLOR);
@@ -409,6 +407,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         imagesButton.setBackground(UNSELECTED_COLOR);
         fileType = FileSearchData.FileType.DOCUMENTS;
         documentFilterPanel.addPropertyChangeListener(listener);
+        documentFilterPanel.validateFields();
         pack();
         repaint();
     }//GEN-LAST:event_documentsButtonActionPerformed
@@ -473,7 +472,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * The settings are valid so enable the Search button
      */
     private void setValid() {
-        System.out.println("SET VALID");
         errorLabel.setText("");
         searchButton.setEnabled(true);
     }
@@ -485,7 +483,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * @param error
      */
     private void setInvalid(String error) {
-        System.out.println("SET INVALID");
         errorLabel.setText(error);
         searchButton.setEnabled(false);
     }
@@ -508,7 +505,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         @Override
         @SuppressWarnings("fallthrough")
         public void propertyChange(PropertyChangeEvent evt) {
-            System.out.println("EVENT RECEIVED");
             switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case CURRENT_CASE: {
                     if (evt.getNewValue() == null) {

@@ -30,6 +30,7 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Abstract class extending JPanel for displaying all the filters associated
@@ -102,7 +103,6 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         constraints.gridwidth = LABEL_WIDTH;
         addToGridBagLayout(filterPanel.getCheckbox(), null, column);
         if (filterPanel.hasPanel()) {
-            System.out.println("filterPanel has panel" + filterPanel.getClass().toString());
             constraints.gridx += constraints.gridwidth;
             constraints.fill = GridBagConstraints.BOTH;
             constraints.gridheight = PANEL_HEIGHT;
@@ -110,8 +110,6 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
             constraints.weighty = PANEL_WEIGHT;
             constraints.gridwidth = PANEL_WIDTH;
             addToGridBagLayout(filterPanel, null, column);
-        } else {
-            System.out.println("filterPanel missing panel" + filterPanel.getClass().toString());
         }
         if (column == 0) {
             firstColumnY += constraints.gridheight;
@@ -179,25 +177,19 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      * Check if the fields are valid, and fire a property change event to
      * indicate any errors.
      */
-    private void validateFields() {
-        String errorString;
-        System.out.println("VALIDATE FIELDS");
+    void validateFields() {
+        String errorString = null;
         for (AbstractDiscoveryFilterPanel filterPanel : filters) {
             errorString = filterPanel.checkForError();
-            if (errorString != null) {
-                System.out.println("ERROR FIRED " + errorString);
-                firePropertyChange("FilterError", errorString, errorString);
-                return;
+            if (!StringUtils.isBlank(errorString)) {
+                break;
             }
-            System.out.println("FILTER VALID");
         }
-        System.out.println("VALID FIRED");
-        firePropertyChange("FilterError", null, null);
+        firePropertyChange("FilterError", null, errorString);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        System.out.println("ACTION PERFORMED");
         validateFields();
     }
 
@@ -264,7 +256,6 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
 
     @Override
     public void valueChanged(ListSelectionEvent evt) {
-        System.out.println("VALUE CHANGED");
         if (!evt.getValueIsAdjusting()) {
             validateFields();
         }
