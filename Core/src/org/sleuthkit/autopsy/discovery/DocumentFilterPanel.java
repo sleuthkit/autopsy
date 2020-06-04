@@ -65,11 +65,25 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
 
         setLayout(new java.awt.BorderLayout());
 
-        documentFiltersPanel.setLayout(new java.awt.BorderLayout());
-
         documentsFiltersSplitPane.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(DocumentFilterPanel.class, "DocumentFilterPanel.documentsFiltersSplitPane.border.title"))); // NOI18N
         documentsFiltersSplitPane.setResizeWeight(0.5);
-        documentFiltersPanel.add(documentsFiltersSplitPane, java.awt.BorderLayout.CENTER);
+
+        javax.swing.GroupLayout documentFiltersPanelLayout = new javax.swing.GroupLayout(documentFiltersPanel);
+        documentFiltersPanel.setLayout(documentFiltersPanelLayout);
+        documentFiltersPanelLayout.setHorizontalGroup(
+            documentFiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(documentFiltersPanelLayout.createSequentialGroup()
+                .addGap(8, 8, 8)
+                .addComponent(documentsFiltersSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 294, Short.MAX_VALUE)
+                .addGap(8, 8, 8))
+        );
+        documentFiltersPanelLayout.setVerticalGroup(
+            documentFiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(documentFiltersPanelLayout.createSequentialGroup()
+                .addGap(8, 8, 8)
+                .addComponent(documentsFiltersSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 84, Short.MAX_VALUE)
+                .addGap(8, 8, 8))
+        );
 
         documentFiltersScrollPane.setViewportView(documentFiltersPanel);
 

@@ -66,11 +66,27 @@ final class VideoFilterPanel extends AbstractFiltersPanel {
 
         setLayout(new java.awt.BorderLayout());
 
-        videoFiltersPanel.setLayout(new java.awt.BorderLayout());
+        videoFiltersPanel.setPreferredSize(new java.awt.Dimension(223, 66));
 
         videoFiltersSplitPane.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(VideoFilterPanel.class, "VideoFilterPanel.videoFiltersSplitPane.border.title"))); // NOI18N
         videoFiltersSplitPane.setResizeWeight(0.5);
-        videoFiltersPanel.add(videoFiltersSplitPane, java.awt.BorderLayout.CENTER);
+
+        javax.swing.GroupLayout videoFiltersPanelLayout = new javax.swing.GroupLayout(videoFiltersPanel);
+        videoFiltersPanel.setLayout(videoFiltersPanelLayout);
+        videoFiltersPanelLayout.setHorizontalGroup(
+            videoFiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(videoFiltersPanelLayout.createSequentialGroup()
+                .addGap(8, 8, 8)
+                .addComponent(videoFiltersSplitPane)
+                .addGap(8, 8, 8))
+        );
+        videoFiltersPanelLayout.setVerticalGroup(
+            videoFiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(videoFiltersPanelLayout.createSequentialGroup()
+                .addGap(8, 8, 8)
+                .addComponent(videoFiltersSplitPane)
+                .addGap(8, 8, 8))
+        );
 
         videoFiltersScrollPane.setViewportView(videoFiltersPanel);
 

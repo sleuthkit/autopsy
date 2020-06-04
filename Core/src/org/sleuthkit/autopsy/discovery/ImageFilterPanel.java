@@ -69,12 +69,26 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
 
         setLayout(new java.awt.BorderLayout());
 
-        imageFiltersPanel.setLayout(new java.awt.BorderLayout());
-
         imageFiltersSplitPane.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ImageFilterPanel.class, "ImageFilterPanel.imageFiltersSplitPane.border.title"))); // NOI18N
         imageFiltersSplitPane.setResizeWeight(0.5);
         imageFiltersSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(ImageFilterPanel.class, "ImageFilterPanel.imageFiltersSplitPane.toolTipText")); // NOI18N
-        imageFiltersPanel.add(imageFiltersSplitPane, java.awt.BorderLayout.CENTER);
+
+        javax.swing.GroupLayout imageFiltersPanelLayout = new javax.swing.GroupLayout(imageFiltersPanel);
+        imageFiltersPanel.setLayout(imageFiltersPanelLayout);
+        imageFiltersPanelLayout.setHorizontalGroup(
+            imageFiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(imageFiltersPanelLayout.createSequentialGroup()
+                .addGap(8, 8, 8)
+                .addComponent(imageFiltersSplitPane)
+                .addGap(8, 8, 8))
+        );
+        imageFiltersPanelLayout.setVerticalGroup(
+            imageFiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(imageFiltersPanelLayout.createSequentialGroup()
+                .addGap(8, 8, 8)
+                .addComponent(imageFiltersSplitPane)
+                .addGap(8, 8, 8))
+        );
 
         imageFiltersScrollPane.setViewportView(imageFiltersPanel);
 
