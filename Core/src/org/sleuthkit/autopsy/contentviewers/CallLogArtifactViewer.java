@@ -25,7 +25,6 @@ import java.awt.GridBagLayout;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,12 +43,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  * This is a viewer for TSK_CALLLOG artifacts.
  *
  *
  */
+@ServiceProvider(service = ArtifactContentViewer.class)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class CallLogArtifactViewer extends javax.swing.JPanel implements ArtifactContentViewer {
 

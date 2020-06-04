@@ -40,10 +40,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.contentviewers.TranslatablePanel.TranslatablePanelException;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -52,7 +49,6 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
@@ -73,7 +69,6 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHO
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
@@ -84,12 +79,13 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.URL
 /**
  * Shows SMS/MMS/EMail messages
  */
-@ServiceProvider(service = DataContentViewer.class, position = 5)
+@ServiceProvider(service = ArtifactContentViewer.class)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class MessageContentViewer extends javax.swing.JPanel implements DataContentViewer {
+public class MessageContentViewer extends javax.swing.JPanel implements ArtifactContentViewer {
 
     /**
-     * This is a text component viewer to be a child component to be placed in a {@link TranslatablePanel TranslatablePanel}.  
+     * This is a text component viewer to be a child component to be placed in a
+     * {@link TranslatablePanel TranslatablePanel}.
      */
     class TextComponent implements TranslatablePanel.ContentComponent {
 
@@ -400,13 +396,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     // End of variables declaration//GEN-END:variables
 
     @Override
-    public void setNode(Node node) {
-        if (node == null) {
-            resetComponent();
-            return;
-        }
-
-        artifact = getNodeArtifact(node);
+    public void setArtifact(BlackboardArtifact artifact) {
+        this.artifact = artifact;
         if (artifact == null) {
             resetComponent();
             return;
@@ -419,16 +410,16 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
             try {
                 getAssociatedArtifact(artifact).ifPresent(associatedArtifact -> {
-                    artifact = associatedArtifact;
+                    this.artifact = associatedArtifact;
                 });
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "error getting associated artifact", ex);
             }
         }
 
-        if (artifact.getArtifactTypeID() == TSK_MESSAGE.getTypeID()) {
+        if (this.artifact.getArtifactTypeID() == TSK_MESSAGE.getTypeID()) {
             displayMsg();
-        } else if (artifact.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID()) {
+        } else if (this.artifact.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID()) {
             displayEmailMsg();
         } else {
             resetComponent();
@@ -439,11 +430,11 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      * Get the artifact associated with the given artifact, if there is one.
      *
      * @param artifact The artifact to get the associated artifact from. Must
-     * not be null
+     *                 not be null
      *
      * @throws TskCoreException If there is a critical error querying the DB.
      * @return An optional containing the artifact associated with the given
-     * artifact, if there is one.
+     *         artifact, if there is one.
      */
     private static Optional<BlackboardArtifact> getAssociatedArtifact(final BlackboardArtifact artifact) throws TskCoreException {
         BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_TYPE);
@@ -454,29 +445,11 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     }
 
     @Override
-    @NbBundle.Messages("MessageContentViewer.title=Message")
-    public String getTitle() {
-        return Bundle.MessageContentViewer_title();
-    }
-
-    @Override
-    @NbBundle.Messages("MessageContentViewer.toolTip=Displays messages.")
-    public String getToolTip() {
-        return Bundle.MessageContentViewer_toolTip();
-    }
-
-    @Override
-    public DataContentViewer createInstance() {
-        return new MessageContentViewer();
-    }
-
-    @Override
     public Component getComponent() {
         return this;
     }
 
-    @Override
-    final public void resetComponent() {
+    private void resetComponent() {
         // reset all fields
         fromText.setText("");
         fromLabel.setEnabled(false);
@@ -500,99 +473,43 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     }
 
     @Override
-    public boolean isSupported(Node node) {
-        BlackboardArtifact nodeArtifact = getNodeArtifact(node);
-
-        if (nodeArtifact == null) {
+    public boolean isSupported(BlackboardArtifact artifact) {
+        if (artifact == null) {
             return false;
         }
         //if the artifact is a keyword hit, check if its associated artifact is a message or email.
-        if (nodeArtifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
+        if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
             try {
-                if (getAssociatedArtifact(nodeArtifact).map(MessageContentViewer::isMessageArtifact).orElse(false)) {
+                if (getAssociatedArtifact(artifact).map(MessageContentViewer::isMessageArtifact).orElse(false)) {
                     return true;
                 }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "error getting associated artifact", ex);
             }
         }
-        return isMessageArtifact(nodeArtifact);
+        return isMessageArtifact(artifact);
     }
 
     /**
      * Is the given artifact one that can be shown in this viewer?
      *
      * @param nodeArtifact An artifact that might be a message. Must not be
-     * null.
+     *                     null.
      *
      * @return True if the given artifact can be shown as a message in this
-     * viewer.
+     *         viewer.
      */
-    private static boolean isMessageArtifact(BlackboardArtifact nodeArtifact) {
+    public static boolean isMessageArtifact(BlackboardArtifact nodeArtifact) {
         final int artifactTypeID = nodeArtifact.getArtifactTypeID();
         return artifactTypeID == TSK_EMAIL_MSG.getTypeID()
                 || artifactTypeID == TSK_MESSAGE.getTypeID();
     }
 
     /**
-     * Returns the artifact represented by node.
-     *
-     * If the node lookup has an artifact, that artifact is returned. However,
-     * if the node lookup is a file, then we look for a TSK_ASSOCIATED_OBJECT
-     * artifact on the file, and if a message artifact is found associated with
-     * the file, that artifact is returned.
-     *
-     * @param node Node to check.
-     * @return Blackboard artifact for the node, null if there isn't any.
-     */
-    private BlackboardArtifact getNodeArtifact(Node node) {
-        BlackboardArtifact nodeArtifact = node.getLookup().lookup(BlackboardArtifact.class);
-
-        if (nodeArtifact == null) {
-            try {
-                SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-                if (file != null) {
-                    List<BlackboardArtifact> artifactsList = tskCase.getBlackboardArtifacts(TSK_ASSOCIATED_OBJECT, file.getId());
-
-                    for (BlackboardArtifact fileArtifact : artifactsList) {
-                        BlackboardAttribute associatedArtifactAttribute = fileArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
-                        if (associatedArtifactAttribute != null) {
-                            BlackboardArtifact associatedArtifact = fileArtifact.getSleuthkitCase().getBlackboardArtifact(associatedArtifactAttribute.getValueLong());
-                            if (isMessageArtifact(associatedArtifact)) {
-                                nodeArtifact = associatedArtifact;
-                            }
-                        }
-                    }
-                }
-            } catch (NoCurrentCaseException | TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get file for selected node.", ex); //NON-NLS
-            }
-        }
-
-        return nodeArtifact;
-    }
-
-    @Override
-    public int isPreferred(Node node) {
-        // For message artifacts this is a high priority viewer, 
-        // but for attachment files, this a lower priority vewer.
-        if (isSupported(node)) {
-            BlackboardArtifact nodeArtifact = node.getLookup().lookup(BlackboardArtifact.class);
-            if (nodeArtifact != null) {
-                return 7;
-            } else {
-                return 1;
-            }
-        }
-        return 0;
-    }
-
-    /**
      * Configure the text area at the given index to show the content of the
      * given type.
      *
-     * @param type The ATTRIBUT_TYPE to show in the indexed tab.
+     * @param type  The ATTRIBUT_TYPE to show in the indexed tab.
      * @param index The index of the text area to configure.
      *
      * @throws TskCoreException
@@ -647,8 +564,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 for (URLAttachment urlAttachment : urlAttachments) {
                     attachments.add(urlAttachment);
                 }
-            } 
-            catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
+            } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
                 LOGGER.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
             }
         } else {    // For backward compatibility - email attachements are derived files and children of the email message artifact
@@ -666,10 +582,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         msgbodyTabbedPane.setTitleAt(ATTM_TAB_INDEX, "Attachments (" + numberOfAttachments + ")");
         drp.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(
                 new AttachmentsChildren(attachments))), true));
-    }
-
-    private static String wrapInHtmlBody(String htmlText) {
-        return "<html><body>" + htmlText + "</body></html>";
     }
 
     private void displayEmailMsg() {
