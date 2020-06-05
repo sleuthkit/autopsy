@@ -174,13 +174,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Private helper method to perform orderByComboBox update.
-     */
-    private void updateOrderByComboBox() {
-
-    }
-
-    /**
      * Validate the current filter settings of the selected type.
      */
     synchronized void validateDialog() {
