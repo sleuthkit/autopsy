@@ -115,15 +115,17 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         fileType = FileSearchData.FileType.IMAGE;
         add(imageFilterPanel, CENTER);
         imageFilterPanel.addPropertyChangeListener(listener);
-        updateComboBoxes();
+        updateGroupByComboBox();
+        updateOrderByComboBox();
+        groupSortingComboBox.setSelectedIndex(0);
         pack();
         repaint();
     }
 
     /**
-     * Private helper method to perform combo box updates.
+     * Private helper method to perform groupByComboBox update.
      */
-    private void updateComboBoxes() {
+    private void updateGroupByComboBox() {
         groupByCombobox.removeAllItems();
         // Set up the grouping attributes
         for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.getOptionsForGrouping()) {
@@ -134,6 +136,12 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 groupByCombobox.addItem(type);
             }
         }
+    }
+
+    /**
+     * Private helper method to perform orderByComboBox update.
+     */
+    private void updateOrderByComboBox() {
         orderByCombobox.removeAllItems();
         // Set up the file order list
         for (FileSorter.SortingMethod method : FileSorter.SortingMethod.getOptionsForOrdering()) {
@@ -141,7 +149,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 orderByCombobox.addItem(method);
             }
         }
-        groupSortingComboBox.setSelectedIndex(0);
+
     }
 
     /**

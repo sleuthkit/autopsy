@@ -99,7 +99,6 @@ final class ResultsPanel extends javax.swing.JPanel {
         documentPreviewViewer.addListSelectionListener((e) -> {
             if (resultType == FileSearchData.FileType.DOCUMENTS) {
                 if (!e.getValueIsAdjusting()) {
-                    List<AbstractFile> files = getInstancesForSelected();
                     //send populateMesage
                     DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
                 } else {
