@@ -97,7 +97,7 @@ MediaViewVideoPanel.progressLabel.text=00:00
 MediaViewVideoPanel.infoLabel.text=info
 MediaViewImagePanel.imgFileTooLarge.msg=Could not load image file (too large): {0}
 
-MessageArtifactViewer.AtrachmentsPanel.title=Attachments
+MessageArtifactViewer.AttachmentPanel.title=Attachments
 Metadata.nodeText.none=None
 Metadata.nodeText.truncated=(results truncated)
 Metadata.nodeText.unknown=Unknown
@@ -129,7 +129,7 @@ Metadata.toolTip=Displays metadata about the file.
 Metadata.nodeText.nonFilePassedIn=Non-file passed in
 Metadata.nodeText.text=From The Sleuth Kit istat Tool:
 Metadata.nodeText.exceptionNotice.text=Error getting file metadata:
-MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle=Text
+MessageArtifactViewer.textbodyScrollPane.TabConstraints.tabTitle=Text
 JPEGViewerDummy.jLabel1.text=You are looking at a JPEG file:
 JPEGViewerDummy.jTextField1.text=jTextField1
 PDFViewer.encryptedDialog=This document is password protected.
