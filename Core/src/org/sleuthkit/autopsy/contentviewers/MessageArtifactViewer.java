@@ -81,7 +81,7 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.URL
  */
 @ServiceProvider(service = ArtifactContentViewer.class)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class MessageContentViewer extends javax.swing.JPanel implements ArtifactContentViewer {
+public class MessageArtifactViewer extends javax.swing.JPanel implements ArtifactContentViewer {
 
     /**
      * This is a text component viewer to be a child component to be placed in a
@@ -117,7 +117,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements Artifact
     }
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(MessageContentViewer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(MessageArtifactViewer.class.getName());
     private static final BlackboardAttribute.Type TSK_ASSOCIATED_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
 
     private static final int HDR_TAB_INDEX = 0;
@@ -140,15 +140,14 @@ public class MessageContentViewer extends javax.swing.JPanel implements Artifact
      * Creates new MessageContentViewer
      */
     @NbBundle.Messages("MessageContentViewer.AtrachmentsPanel.title=Attachments")
-    public MessageContentViewer() {
+    public MessageArtifactViewer() {
         initComponents();
         htmlPane.add(htmlPanel);
         envelopePanel.setBackground(new Color(0, 0, 0, 38));
         drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageContentViewer_AtrachmentsPanel_title(), "", new TableFilterNode(Node.EMPTY, false), 0, null);
         attachmentsScrollPane.setViewportView(drp);
 
-        msgbodyTabbedPane.insertTab(
-                NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle"),
+        msgbodyTabbedPane.insertTab(NbBundle.getMessage(MessageArtifactViewer.class, "MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle"),
                 null,
                 textPanel,
                 null,
@@ -209,31 +208,31 @@ public class MessageContentViewer extends javax.swing.JPanel implements Artifact
 
         envelopePanel.setBackground(new java.awt.Color(204, 204, 204));
 
-        org.openide.awt.Mnemonics.setLocalizedText(fromLabel, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.fromLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(fromLabel, org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.fromLabel.text")); // NOI18N
 
         datetimeText.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        org.openide.awt.Mnemonics.setLocalizedText(datetimeText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.datetimeText.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(datetimeText, org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.datetimeText.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(fromText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.fromText.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(fromText, org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.fromText.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(toLabel, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.toLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(toLabel, org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.toLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(toText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.toText.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(toText, org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.toText.text")); // NOI18N
         toText.setAutoscrolls(true);
         toText.setMinimumSize(new java.awt.Dimension(27, 14));
 
-        org.openide.awt.Mnemonics.setLocalizedText(ccLabel, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.ccLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(ccLabel, org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.ccLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(ccText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.ccText.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(ccText, org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.ccText.text")); // NOI18N
         ccText.setMinimumSize(new java.awt.Dimension(27, 14));
 
-        org.openide.awt.Mnemonics.setLocalizedText(subjectLabel, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.subjectLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(subjectLabel, org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.subjectLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(subjectText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.subjectText.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(subjectText, org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.subjectText.text")); // NOI18N
         subjectText.setMinimumSize(new java.awt.Dimension(26, 14));
 
         directionText.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        org.openide.awt.Mnemonics.setLocalizedText(directionText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.directionText.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(directionText, org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.directionText.text")); // NOI18N
 
         javax.swing.GroupLayout envelopePanelLayout = new javax.swing.GroupLayout(envelopePanel);
         envelopePanel.setLayout(envelopePanelLayout);
@@ -300,19 +299,19 @@ public class MessageContentViewer extends javax.swing.JPanel implements Artifact
         headersTextArea.setWrapStyleWord(true);
         headersScrollPane.setViewportView(headersTextArea);
 
-        msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.headersScrollPane.TabConstraints.tabTitle"), headersScrollPane); // NOI18N
+        msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.headersScrollPane.TabConstraints.tabTitle"), headersScrollPane); // NOI18N
 
         htmlPane.setLayout(new java.awt.BorderLayout());
-        msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.htmlPane.TabConstraints.tabTitle"), htmlPane); // NOI18N
+        msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.htmlPane.TabConstraints.tabTitle"), htmlPane); // NOI18N
 
         rtfbodyScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
         rtfbodyTextPane.setEditable(false);
         rtfbodyScrollPane.setViewportView(rtfbodyTextPane);
 
-        msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.rtfbodyScrollPane.TabConstraints.tabTitle"), rtfbodyScrollPane); // NOI18N
+        msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.rtfbodyScrollPane.TabConstraints.tabTitle"), rtfbodyScrollPane); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(viewInNewWindowButton, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.viewInNewWindowButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(viewInNewWindowButton, org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.viewInNewWindowButton.text")); // NOI18N
         viewInNewWindowButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewInNewWindowButtonActionPerformed(evt);
@@ -341,7 +340,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements Artifact
                 .addGap(0, 0, 0))
         );
 
-        msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.attachmentsPanel.TabConstraints.tabTitle"), attachmentsPanel); // NOI18N
+        msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.attachmentsPanel.TabConstraints.tabTitle"), attachmentsPanel); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -363,8 +362,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements Artifact
                 .addComponent(msgbodyTabbedPane)
                 .addGap(5, 5, 5))
         );
-
-        msgbodyTabbedPane.getAccessibleContext().setAccessibleParent(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void viewInNewWindowButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewInNewWindowButtonActionPerformed
@@ -480,7 +477,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements Artifact
         //if the artifact is a keyword hit, check if its associated artifact is a message or email.
         if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
             try {
-                if (getAssociatedArtifact(artifact).map(MessageContentViewer::isMessageArtifact).orElse(false)) {
+                if (getAssociatedArtifact(artifact).map(MessageArtifactViewer::isMessageArtifact).orElse(false)) {
                     return true;
                 }
             } catch (TskCoreException ex) {

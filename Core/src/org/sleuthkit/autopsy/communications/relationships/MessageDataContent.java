@@ -25,7 +25,7 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.contentviewers.MessageContentViewer;
+import org.sleuthkit.autopsy.contentviewers.MessageArtifactViewer;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * solution to a very similar problem.
  *
  */
-final class MessageDataContent extends MessageContentViewer implements DataContent, ExplorerManager.Provider {
+final class MessageDataContent extends MessageArtifactViewer implements DataContent, ExplorerManager.Provider {
 
     private static final Logger LOGGER = Logger.getLogger(MessageDataContent.class.getName());
 
