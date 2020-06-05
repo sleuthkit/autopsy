@@ -53,8 +53,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Extract the EVTX Event logs to individual SQLite databases to be used by a
- * content viewer
+ * Extract the Prefetch Files and process them thru an External program.  The data will then be added to the 
+ * TSK_PROG_RUN artifact.  Associated artifacts will be created if possible. 
  */
 final class ExtractPrefetch extends Extract {
 
@@ -151,22 +151,23 @@ final class ExtractPrefetch extends Extract {
     }
     
     /**
-     * Run the export prefetchdb program against the prefetchdb.dat file
+     * Run the export parse_prefetch program against the prefetch files
      *
-     * @param prefetchExePath
-     * @param tempDirPath
-     * @param tempOutPath
+     * @param prefetchExePath - Path to the Executable to run
+     * @param prefetchDir - Directory where the prefetch files reside to be processed. 
+     * @param tempOutFile - Output database file name and path.
+     * @param tempOutPath - Directory to store the output and error files.
      *
      * @throws FileNotFoundException
      * @throws IOException
      */
-    void parsePrefetchFiles(String prefetchExePath, String prefetchFile, String tempOutFile, String tempOutPath) throws FileNotFoundException, IOException {
+    void parsePrefetchFiles(String prefetchExePath, String prefetchDir, String tempOutFile, String tempOutPath) throws FileNotFoundException, IOException {
         final Path outputFilePath = Paths.get(tempOutPath, PREFETCH_OUTPUT_FILE_NAME);
         final Path errFilePath = Paths.get(tempOutPath, PREFETCH_ERROR_FILE_NAME);
 
         List<String> commandLine = new ArrayList<>();
         commandLine.add(prefetchExePath);
-        commandLine.add(prefetchFile);  //NON-NLS
+        commandLine.add(prefetchDir);  //NON-NLS
         commandLine.add(tempOutFile);
 
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
