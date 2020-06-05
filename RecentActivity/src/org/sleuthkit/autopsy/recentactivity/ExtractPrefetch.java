@@ -256,48 +256,51 @@ final class ExtractPrefetch extends Extract {
 
                 AbstractFile pfAbstractFile = getAbstractFile(prefetchFileName, PREFETCH_FILE_LOCATION);
                 
-                if (pfAbstractFile == null) {
-                    logger.log(Level.SEVERE, "File has a null value " + prefetchFileName);//NON-NLS
-                }
-                
-               for (Long executionTime : executionTimes) {
+                if (pfAbstractFile != null) {
+                    for (Long executionTime : executionTimes) {
 
-                    // only add prefetch file entries that have an actual date associated with them
-                    if (executionTime > 0) {                 
-                        Collection<BlackboardAttribute> bbattributes = Arrays.asList(
-                            new BlackboardAttribute(
+                        // only add prefetch file entries that have an actual date associated with them
+                        if (executionTime > 0) {                 
+                            Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                                new BlackboardAttribute(
                                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
                                     applicationName),//NON-NLS
-                            new BlackboardAttribute(
+                                new BlackboardAttribute(
                                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
                                     executionTime),
-                            new BlackboardAttribute(
+                                new BlackboardAttribute(
                                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT, getName(), Integer.valueOf(timesProgramRun)),
-                            new BlackboardAttribute(
+                                new BlackboardAttribute(
                                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), PREFETCH_TSK_COMMENT));
 
-                        try {
-                            BlackboardArtifact bbart = pfAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
-                            bbart.addAttributes(bbattributes);
-                            bba.add(bbart);
-                            BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), filePath, bbart);
-                            if (associateBbArtifact != null) {
-                                bba.add(associateBbArtifact);
+                            try {
+                                BlackboardArtifact bbart = pfAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
+                                bbart.addAttributes(bbattributes);
+                                bba.add(bbart);
+                                BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), filePath, bbart);
+                                if (associateBbArtifact != null) {
+                                    bba.add(associateBbArtifact);
+                                }
+                            } catch (TskCoreException ex) {
+                                logger.log(Level.SEVERE, "Exception Adding Artifact.", ex);//NON-NLS
                             }
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Exception Adding Artifact.", ex);//NON-NLS
                         }
                     }
-               }
+                } else {
+                    logger.log(Level.SEVERE, "File has a null value " + prefetchFileName);//NON-NLS
+                }
+                    
             }
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
 
-        try {
-            blackboard.postArtifacts(bba, MODULE_NAME);
-        } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
+        if (!bba.isEmpty()) {
+            try {
+                blackboard.postArtifacts(bba, MODULE_NAME);
+            } catch (Blackboard.BlackboardException ex) {
+                logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
+            }
         }
     }
     
