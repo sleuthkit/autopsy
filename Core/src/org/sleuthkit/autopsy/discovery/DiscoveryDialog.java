@@ -115,52 +115,20 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         fileType = FileSearchData.FileType.IMAGE;
         add(imageFilterPanel, CENTER);
         imageFilterPanel.addPropertyChangeListener(listener);
-        updateGroupByComboBox();
-        updateOrderByComboBox();
-        groupSortingComboBox.setSelectedIndex(0);
+        updateComboBoxes();
         pack();
         repaint();
     }
 
     /**
-     * Private helper method to perform groupByComboBox update.
+     * Private helper method to perform update of comboboxes update.
      */
-    private void updateGroupByComboBox() {
+    private void updateComboBoxes() {
         groupByCombobox.removeAllItems();
         // Set up the grouping attributes
         for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.getOptionsForGrouping()) {
-            switch (type) {
-                case FREQUENCY:
-                    if (!CentralRepository.isEnabled()) {
-                        continue;
-                    }
-                    break;
-                case OBJECT_DETECTED:
-                    if (!imageFilterPanel.isObjectsFilterSupported()) {
-                        continue;
-                    }
-                    break;
-                case INTERESTING_ITEM_SET:
-                    if (!imageFilterPanel.isInterestingItemsFilterSupported()) {
-                        continue;
-                    }
-                    break;
-                case HASH_LIST_NAME:
-                    if (!imageFilterPanel.isHashSetFilterSupported()) {
-                        continue;
-                    }
-                    break;
-                default:
-                    break;
-            }
-            groupByCombobox.addItem(type);
+            addTypeToGroupByComboBox(type);
         }
-    }
-
-    /**
-     * Private helper method to perform orderByComboBox update.
-     */
-    private void updateOrderByComboBox() {
         orderByCombobox.removeAllItems();
         // Set up the file order list
         for (FileSorter.SortingMethod method : FileSorter.SortingMethod.getOptionsForOrdering()) {
@@ -168,6 +136,47 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 orderByCombobox.addItem(method);
             }
         }
+        groupSortingComboBox.setSelectedIndex(0);
+    }
+
+    /**
+     * Private helper method to add GroupingAttributeType to the
+     * groupByCombobox.
+     *
+     * @param type The Type of GroupingAttribute to add.
+     */
+    private void addTypeToGroupByComboBox(GroupingAttributeType type) {
+        switch (type) {
+            case FREQUENCY:
+                if (!CentralRepository.isEnabled()) {
+                    return;
+                }
+                break;
+            case OBJECT_DETECTED:
+                if (!imageFilterPanel.isObjectsFilterSupported()) {
+                    return;
+                }
+                break;
+            case INTERESTING_ITEM_SET:
+                if (!imageFilterPanel.isInterestingItemsFilterSupported()) {
+                    return;
+                }
+                break;
+            case HASH_LIST_NAME:
+                if (!imageFilterPanel.isHashSetFilterSupported()) {
+                    return;
+                }
+                break;
+            default:
+                break;
+        }
+        groupByCombobox.addItem(type);
+    }
+
+    /**
+     * Private helper method to perform orderByComboBox update.
+     */
+    private void updateOrderByComboBox() {
 
     }
 
