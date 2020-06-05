@@ -129,7 +129,6 @@ final class ExtractPrefetch extends Extract {
         List<AbstractFile> pFiles;
 
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-        String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "prefetch"); //NON-NLS
 
         try {
             pFiles = fileManager.findFiles(dataSource, "%.pf"); //NON-NLS            
@@ -138,15 +137,13 @@ final class ExtractPrefetch extends Extract {
             return;  // No need to continue
         }
 
-        AbstractFile prefetchAbstractFile = null;
-
         for (AbstractFile pFile : pFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
-            String prefetchFile = tempDirPath + File.separator + pFile.getName();
+            String prefetchFile = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "prefetch") + File.separator + pFile.getName();
             if (pFile.getParentPath().contains(PREFETCH_FILE_LOCATION)) {
                 try {
                     ContentUtils.writeToFile(pFile, new File(prefetchFile));
