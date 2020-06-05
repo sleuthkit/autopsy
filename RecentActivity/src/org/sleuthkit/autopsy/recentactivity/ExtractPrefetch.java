@@ -255,12 +255,13 @@ final class ExtractPrefetch extends Extract {
                 String filePath = resultSet.getString("file_path");
 
                 AbstractFile pfAbstractFile = getAbstractFile(prefetchFileName, PREFETCH_FILE_LOCATION);
+               
+                List<Long> prefetchExecutionTimes = findNonZeroExecutionTimes(executionTimes);
                 
                 if (pfAbstractFile != null) {
-                    for (Long executionTime : executionTimes) {
+                    for (Long executionTime : prefetchExecutionTimes) {
 
                         // only add prefetch file entries that have an actual date associated with them
-                        if (executionTime > 0) {                 
                             Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                                 new BlackboardAttribute(
                                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
@@ -284,7 +285,6 @@ final class ExtractPrefetch extends Extract {
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Exception Adding Artifact.", ex);//NON-NLS
                             }
-                        }
                     }
                 } else {
                     logger.log(Level.SEVERE, "File has a null value " + prefetchFileName);//NON-NLS
@@ -303,7 +303,24 @@ final class ExtractPrefetch extends Extract {
             }
         }
     }
+
+   /**
+    * Cycle thru the execution times list and only return a new list of times that are greater than zero.
+    * 
+    * @param executionTimes - list of prefetch execution times 8 possible timestamps
+    * 
+    * @return List of timestamps that are greater than zero
+    */
     
+   private List<Long> findNonZeroExecutionTimes(List<Long> executionTimes) {
+       List<Long> prefetchExecutionTimes = new ArrayList<>();  
+       for (Long executionTime : executionTimes) {                        // only add prefetch file entries that have an actual date associated with them
+           if (executionTime > 0) {
+               prefetchExecutionTimes.add(executionTime);
+           }                 
+       }
+       return prefetchExecutionTimes;
+   }    
    /**
      * Create associated artifacts using file path name and the artifact it associates with
      * 
