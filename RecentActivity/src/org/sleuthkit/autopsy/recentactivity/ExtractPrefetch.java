@@ -111,11 +111,19 @@ final class ExtractPrefetch extends Extract {
         try {
             String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), PREFETCH_DIR_NAME );
             parsePrefetchFiles(prefetchDumper, tempDirPath, modOutFile, modOutPath);
-            createAppExecArtifacts(modOutFile, dataSource);
+            createAppExecArtifacts(modOutFile);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error runing parse_prefetch or creating artifacts.", ex); //NON-NLS             
         }
     }
+    
+    /**
+     * Extract prefetch file to temp directory to process.  Checks to make sure that the prefetch files only
+     * come from the /Windows/Prefetch directory
+     * 
+     * @param dataSource - datasource to search for prefetch files
+     * 
+     */
 
     void extractPrefetchFiles(Content dataSource) {
         List<AbstractFile> pFiles;
@@ -176,6 +184,14 @@ final class ExtractPrefetch extends Extract {
 
         ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
     }
+    
+    /**
+     * Get the path and executable for the parse_prefetch program.  Checks for specific version of OS to
+     * get proper executable.
+     * 
+     * @return - path and executable to run.
+     * 
+     */
 
     private String getPathForPrefetchDumper() {
         Path path = null;
@@ -201,8 +217,15 @@ final class ExtractPrefetch extends Extract {
         return null;
 
     }
+    
+    /**
+     * Create the artifacts from external run of the parse_prefetch program
+     * 
+     * @param prefetchDb - Database file to read from running the parse_prefetch program.
+     * 
+     */
 
-    private void createAppExecArtifacts(String prefetchDb, Content dataSource) {
+    private void createAppExecArtifacts(String prefetchDb) {
         List<BlackboardArtifact> bba = new ArrayList<>();
 
         String sqlStatement = "SELECT prefetch_File_Name, actual_File_Name, file_path, Number_time_file_run, Embeded_date_Time_Unix_1, " +
@@ -285,7 +308,6 @@ final class ExtractPrefetch extends Extract {
      * Create associated artifacts using file path name and the artifact it associates with
      * 
      * @param filePathName file and path of object being associated with
-     * 
      * @param bba blackboard artifact to associate with
      * 
      * @returnv BlackboardArtifact or a null value 
@@ -306,6 +328,16 @@ final class ExtractPrefetch extends Extract {
        
         return null;
     }
+    
+    /**
+     * Get the abstract file for the prefetch file.
+     * 
+     * @param fileName - File name of the prefetch file to find.
+     * @param filePath - Path where the prefetch file is located.
+     * 
+     * @return Abstract file of the prefetch file.
+     * 
+     */
     
     AbstractFile getAbstractFile(String fileName, String filePath) {
         List<AbstractFile> files;
