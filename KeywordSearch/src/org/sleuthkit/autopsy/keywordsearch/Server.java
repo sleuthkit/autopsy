@@ -246,7 +246,6 @@ public class Server {
 
     // A reference to the Solr server we are currently connected to for the Case.
     // This could be a local or remote server.
-    private final Map<String, ConcurrentUpdateSolrClient> solrClients = new HashMap<>();
     private ConcurrentUpdateSolrClient currentSolrServer;
 
     private Collection currentCollection;
@@ -335,23 +334,16 @@ public class Server {
         }
     }
 
-    synchronized ConcurrentUpdateSolrClient getSolrClient(String solrUrl) {
-        ConcurrentUpdateSolrClient client;
-        if (solrClients.containsKey(solrUrl)) {
-            logger.log(Level.INFO, "Re-using exiting ConcurrentUpdateSolrClient"); //NON-NLS
-            client = solrClients.get(solrUrl);
-        } else {
-            int numThreads = UserPreferences.getNumThreads();
-            int numDocs = UserPreferences.getDocumentsQueueSize();
-            logger.log(Level.INFO, "Creating new ConcurrentUpdateSolrClient. Queue size = {0}, Number of threads = {1}", new Object[]{numDocs, numThreads}); //NON-NLS
-            client = new ConcurrentUpdateSolrClient.Builder(solrUrl)
-                    .withQueueSize(numDocs)
-                    .withThreadCount(numThreads)
-                    .withConnectionTimeout(1000)
-                    .withResponseParser(new XMLResponseParser())
-                    .build();
-            solrClients.put(solrUrl, client);
-        }
+    private ConcurrentUpdateSolrClient getSolrClient(String solrUrl) {
+        int numThreads = UserPreferences.getNumThreads();
+        int numDocs = UserPreferences.getDocumentsQueueSize();
+        logger.log(Level.INFO, "Creating new ConcurrentUpdateSolrClient. Queue size = {0}, Number of threads = {1}", new Object[]{numDocs, numThreads}); //NON-NLS
+        ConcurrentUpdateSolrClient client = new ConcurrentUpdateSolrClient.Builder(solrUrl)
+                .withQueueSize(numDocs)
+                .withThreadCount(numThreads)
+                .withConnectionTimeout(1000)
+                .withResponseParser(new XMLResponseParser())
+                .build();
 
         return client;
     }
@@ -991,16 +983,14 @@ public class Server {
     })
     private Collection openCore(Case theCase, Index index) throws KeywordSearchModuleException {
 
+        int numShardsToUse = 1;
         try {
             // connect to proper Solr server
             currentSolrServer = configureSolrConnection(theCase, index);
 
             if (theCase.getCaseType() == CaseType.MULTI_USER_CASE) {
-                // get list of all live Solr servers in the cluster
-                List<String> solrServerList = getSolrServerList();
-
-                // split/shard the collection across all available Solr servers in current Solr Cloud
-                UserPreferences.setMaxNumShards(solrServerList.size());
+                // select number of shards to use
+                numShardsToUse = getNumShardsToUse();
             }
         } catch (SolrServerException | IOException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
@@ -1018,7 +1008,7 @@ public class Server {
                     for (int reTryAttempt = 0; reTryAttempt < NUM_COLLECTION_CREATION_RETRIES; reTryAttempt++) {
                         try {
                             doRetry = false;
-                            createMultiUserCollection(collectionName, UserPreferences.getMaxNumShards());
+                            createMultiUserCollection(collectionName, numShardsToUse);
                         } catch (Exception ex) {
                             if (reTryAttempt >= NUM_COLLECTION_CREATION_RETRIES) {
                                 logger.log(Level.SEVERE, "Unable to create Solr collection " + collectionName, ex); //NON-NLS
@@ -1061,6 +1051,19 @@ public class Server {
             logger.log(Level.SEVERE, "Exception during Solr collection creation.", ex); //NON-NLS
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         }
+    }
+    
+    private int getNumShardsToUse() throws SolrServerException, IOException {
+
+        // if we want to use a specific sharding strategy, use that
+        if (UserPreferences.getMaxNumShards() > 0) {
+            return UserPreferences.getMaxNumShards();
+        }
+
+        // otherwise get list of all live Solr servers in the cluster
+        List<String> solrServerList = getSolrServerList();
+        // shard across all available servers
+        return solrServerList.size();
     }
     
     private boolean collectionExists(String collectionName) throws SolrServerException, IOException {
