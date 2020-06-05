@@ -97,14 +97,8 @@ public class TimeLineModule {
             }
 
             if (Case.Events.valueOf(evt.getPropertyName()).equals(CURRENT_CASE)) {
-                // we care only about case closing here
-                if (evt.getNewValue() == null) {
-                    synchronized (controllerLock) {
-                        if (controller != null) {
-                            SwingUtilities.invokeLater(controller::shutDownTimeLine);
-                        }
-                        controller = null;
-                    }
+                synchronized (controllerLock) {
+                    controller = null;
                 }
             }
         }
