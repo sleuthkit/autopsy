@@ -98,19 +98,12 @@ public final class DiscoveryTopComponent extends TopComponent {
 
     @Override
     protected void componentClosed() {
-        cancelCurrentSearch();
+        DiscoveryDialog.getDiscoveryDialogInstance().cancelSearch();
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(resultsPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(detailsPanel);
         super.componentClosed();
-    }
-
-    /**
-     * Cancel the in progress search.
-     */
-    private void cancelCurrentSearch() {
-        DiscoveryDialog.getDiscoveryDialogInstance().cancelSearch();
     }
 
     /**
@@ -124,9 +117,9 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         mainSplitPane = new javax.swing.JSplitPane();
         rightSplitPane = new AnimatedSplitPane();
-        jPanel1 = new javax.swing.JPanel();
+        javax.swing.JPanel searchDetailsPanel = new javax.swing.JPanel();
         newSearchButton = new javax.swing.JButton();
-        progressMessageScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JScrollPane progressMessageScrollPane = new javax.swing.JScrollPane();
         progressMessageTextArea = new javax.swing.JTextArea();
 
         setMinimumSize(new java.awt.Dimension(199, 200));
@@ -164,31 +157,31 @@ public final class DiscoveryTopComponent extends TopComponent {
         progressMessageTextArea.setBorder(null);
         progressMessageScrollPane.setViewportView(progressMessageTextArea);
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        javax.swing.GroupLayout searchDetailsPanelLayout = new javax.swing.GroupLayout(searchDetailsPanel);
+        searchDetailsPanel.setLayout(searchDetailsPanelLayout);
+        searchDetailsPanelLayout.setHorizontalGroup(
+            searchDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(searchDetailsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(newSearchButton, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(progressMessageScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 954, Short.MAX_VALUE)
                 .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
+        searchDetailsPanelLayout.setVerticalGroup(
+            searchDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(searchDetailsPanelLayout.createSequentialGroup()
+                .addGroup(searchDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(searchDetailsPanelLayout.createSequentialGroup()
                         .addGap(8, 8, 8)
                         .addComponent(progressMessageScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addGroup(searchDetailsPanelLayout.createSequentialGroup()
                         .addGap(17, 17, 17)
                         .addComponent(newSearchButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
 
-        add(jPanel1, java.awt.BorderLayout.PAGE_START);
+        add(searchDetailsPanel, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
 
     private void newSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newSearchButtonActionPerformed
@@ -322,10 +315,8 @@ public final class DiscoveryTopComponent extends TopComponent {
 
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JSplitPane mainSplitPane;
     private javax.swing.JButton newSearchButton;
-    private javax.swing.JScrollPane progressMessageScrollPane;
     private javax.swing.JTextArea progressMessageTextArea;
     private javax.swing.JSplitPane rightSplitPane;
     // End of variables declaration//GEN-END:variables

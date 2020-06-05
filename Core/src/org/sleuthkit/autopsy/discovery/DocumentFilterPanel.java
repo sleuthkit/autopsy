@@ -59,8 +59,8 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        documentFiltersScrollPane = new javax.swing.JScrollPane();
-        documentFiltersPanel = new javax.swing.JPanel();
+        javax.swing.JScrollPane documentFiltersScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JPanel documentFiltersPanel = new javax.swing.JPanel();
         documentsFiltersSplitPane = new javax.swing.JSplitPane();
 
         setLayout(new java.awt.BorderLayout());
@@ -94,8 +94,6 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
         return FILE_TYPE;
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel documentFiltersPanel;
-    private javax.swing.JScrollPane documentFiltersScrollPane;
     private javax.swing.JSplitPane documentsFiltersSplitPane;
     // End of variables declaration//GEN-END:variables
 

@@ -60,8 +60,8 @@ final class VideoFilterPanel extends AbstractFiltersPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        videoFiltersScrollPane = new javax.swing.JScrollPane();
-        videoFiltersPanel = new javax.swing.JPanel();
+        javax.swing.JScrollPane videoFiltersScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JPanel videoFiltersPanel = new javax.swing.JPanel();
         videoFiltersSplitPane = new javax.swing.JSplitPane();
 
         setLayout(new java.awt.BorderLayout());
@@ -98,8 +98,6 @@ final class VideoFilterPanel extends AbstractFiltersPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel videoFiltersPanel;
-    private javax.swing.JScrollPane videoFiltersScrollPane;
     private javax.swing.JSplitPane videoFiltersSplitPane;
     // End of variables declaration//GEN-END:variables
 

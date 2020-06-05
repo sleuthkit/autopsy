@@ -166,6 +166,10 @@
               <ResourceString bundle="org/sleuthkit/autopsy/discovery/Bundle.properties" key="DiscoveryDialog.step1Label.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
+            <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
+          </AuxValues>
         </Component>
         <Component class="javax.swing.Box$Filler" name="filler1">
           <Properties>
@@ -180,12 +184,18 @@
             </Property>
           </Properties>
           <AuxValues>
+            <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
+            <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
             <AuxValue name="classDetails" type="java.lang.String" value="Box.Filler.HorizontalStrut"/>
           </AuxValues>
         </Component>
       </SubComponents>
     </Container>
-    <Container class="javax.swing.JPanel" name="jPanel1">
+    <Container class="javax.swing.JPanel" name="displaySettingsPanel">
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
+        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
+      </AuxValues>
       <Constraints>
         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
           <BorderConstraints direction="Last"/>

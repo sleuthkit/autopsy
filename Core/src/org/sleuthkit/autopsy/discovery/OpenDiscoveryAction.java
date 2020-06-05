@@ -30,7 +30,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Class to open the Discovery dialog. Allows the user to run searches and see
@@ -44,8 +43,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @ActionRegistration(displayName = "#CTL_OpenDiscoveryAction", lazy = false)
 @NbBundle.Messages({"CTL_OpenDiscoveryAction=Discovery"})
 public final class OpenDiscoveryAction extends CallableSystemAction implements Presenter.Toolbar {
-
-    private static final Logger logger = Logger.getLogger(OpenDiscoveryAction.class.getName());
 
     private static final String DISPLAY_NAME = Bundle.CTL_OpenDiscoveryAction();
     private static final long serialVersionUID = 1L;
@@ -71,7 +68,7 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
         final DiscoveryDialog discDialog = DiscoveryDialog.getDiscoveryDialogInstance();
         discDialog.cancelSearch();
         discDialog.setVisible(true);
-        discDialog.displayErrorMessage();
+        DiscoveryUiUtils.displayErrorMessage(discDialog);
     }
 
     /**

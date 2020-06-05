@@ -87,7 +87,6 @@ final class ResultsPanel extends javax.swing.JPanel {
         imageThumbnailViewer.addListSelectionListener((e) -> {
             if (resultType == FileSearchData.FileType.IMAGE) {
                 if (!e.getValueIsAdjusting()) {
-                    List<AbstractFile> files = getInstancesForSelected();
                     //send populateMesage
                     DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
                 } else {
@@ -291,14 +290,13 @@ final class ResultsPanel extends javax.swing.JPanel {
         });
     }
 
-    @Subscribe
-
     /**
      * Set the page number and retrieve its contents.
      *
      * @param startingEntry The index of the first file in the group to include
      *                      in this page.
      */
+    @Subscribe
     private synchronized void setPage(int startingEntry) {
         int pageSize = pageSizeComboBox.getItemAt(pageSizeComboBox.getSelectedIndex());
         synchronized (this) {

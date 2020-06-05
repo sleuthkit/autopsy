@@ -53,7 +53,7 @@ final class DetailsPanel extends javax.swing.JPanel {
 
     private final DataContentPanel dataContentPanel;
     private final DefaultListModel<AbstractFile> instancesListModel = new DefaultListModel<>();
-    private ListSelectionListener listener = null;
+    private final ListSelectionListener listener;
 
     /**
      * Creates new form DetailsPanel.

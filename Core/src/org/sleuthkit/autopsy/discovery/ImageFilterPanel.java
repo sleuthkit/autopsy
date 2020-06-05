@@ -63,8 +63,8 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        imageFiltersScrollPane = new javax.swing.JScrollPane();
-        imageFiltersPanel = new javax.swing.JPanel();
+        javax.swing.JScrollPane imageFiltersScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JPanel imageFiltersPanel = new javax.swing.JPanel();
         imageFiltersSplitPane = new javax.swing.JSplitPane();
 
         setLayout(new java.awt.BorderLayout());
@@ -101,8 +101,6 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel imageFiltersPanel;
-    private javax.swing.JScrollPane imageFiltersScrollPane;
     private javax.swing.JSplitPane imageFiltersSplitPane;
     // End of variables declaration//GEN-END:variables
 }

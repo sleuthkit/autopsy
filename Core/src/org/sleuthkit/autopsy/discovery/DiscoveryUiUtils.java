@@ -22,14 +22,23 @@ import java.awt.Component;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.IngestJobInfo;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -37,6 +46,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 final class DiscoveryUiUtils {
 
+    private final static Logger logger = Logger.getLogger(DiscoveryUiUtils.class.getName());
     private static final int BYTE_UNIT_CONVERSION = 1000;
     private static final int ICON_SIZE = 16;
     private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
@@ -191,6 +201,35 @@ final class DiscoveryUiUtils {
      */
     static int getIconSize() {
         return ICON_SIZE;
+    }
+
+    /**
+     * Helper method to display an error message when the results of the
+     * Discovery Top component may be incomplete.
+     */
+    static void displayErrorMessage(DiscoveryDialog dialog) {
+        //check if modules run and assemble message
+        try {
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            Map<Long, DataSourceModulesWrapper> dataSourceIngestModules = new HashMap<>();
+            for (DataSource dataSource : skCase.getDataSources()) {
+                dataSourceIngestModules.put(dataSource.getId(), new DataSourceModulesWrapper(dataSource.getName()));
+            }
+
+            for (IngestJobInfo jobInfo : skCase.getIngestJobs()) {
+                dataSourceIngestModules.get(jobInfo.getObjectId()).updateModulesRun(jobInfo);
+            }
+            String message = "";
+            for (DataSourceModulesWrapper dsmodulesWrapper : dataSourceIngestModules.values()) {
+                message += dsmodulesWrapper.getMessage();
+            }
+            if (!message.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, message, Bundle.OpenDiscoveryAction_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.WARNING, "Exception while determining which modules have been run for Discovery", ex);
+        }
+        dialog.validateDialog();
     }
 
     /**
