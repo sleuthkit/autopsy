@@ -129,12 +129,31 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         groupByCombobox.removeAllItems();
         // Set up the grouping attributes
         for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.getOptionsForGrouping()) {
-            if ((type != GroupingAttributeType.FREQUENCY || CentralRepository.isEnabled())
-                    && (type != GroupingAttributeType.OBJECT_DETECTED || imageFilterPanel.isObjectsFilterSupported())
-                    && (type != GroupingAttributeType.INTERESTING_ITEM_SET || imageFilterPanel.isInterestingItemsFilterSupported())
-                    && (type != GroupingAttributeType.HASH_LIST_NAME || imageFilterPanel.isHashSetFilterSupported())) {
-                groupByCombobox.addItem(type);
+            switch (type) {
+                case FREQUENCY:
+                    if (!CentralRepository.isEnabled()) {
+                        continue;
+                    }
+                    break;
+                case OBJECT_DETECTED:
+                    if (!imageFilterPanel.isObjectsFilterSupported()) {
+                        continue;
+                    }
+                    break;
+                case INTERESTING_ITEM_SET:
+                    if (!imageFilterPanel.isInterestingItemsFilterSupported()) {
+                        continue;
+                    }
+                    break;
+                case HASH_LIST_NAME:
+                    if (!imageFilterPanel.isHashSetFilterSupported()) {
+                        continue;
+                    }
+                    break;
+                default:
+                    break;
             }
+            groupByCombobox.addItem(type);
         }
     }
 
