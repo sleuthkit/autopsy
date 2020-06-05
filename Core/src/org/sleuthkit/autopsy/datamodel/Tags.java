@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Observable;
@@ -252,7 +253,12 @@ public class Tags implements AutopsyVisitableItem {
                             ? Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse(filteringDSObjId)
                             : Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
                 }
-                Collections.sort(tagNamesInUse);
+                Collections.sort(tagNamesInUse, new Comparator<TagName>() {
+                    @Override
+                    public int compare(TagName o1, TagName o2) {
+                        return TagUtils.getDecoratedTagDisplayName(o1).compareTo(TagUtils.getDecoratedTagDisplayName(o2));
+                    }
+                });
                 keys.addAll(tagNamesInUse);
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(TagNameNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS

@@ -19,11 +19,13 @@
 package org.sleuthkit.autopsy.centralrepository.persona;
 
 import java.awt.Component;
+import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Configuration dialog for editing or creating a persona
@@ -32,25 +34,40 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 public class PersonaDetailsDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
-    
+
+    private static final Logger logger = Logger.getLogger(PersonaDetailsDialog.class.getName());
+
     private final PersonaDetailsDialogCallback callback;
 
     @NbBundle.Messages({
         "PersonaDetailsDialogCreateTitle=Create Persona",
-        "PersonaDetailsDialogEditTitle=Edit Persona",})
-    PersonaDetailsDialog(Component parent, PersonaDetailsMode mode, Persona persona, PersonaDetailsDialogCallback callback) {
+        "PersonaDetailsDialogEditTitle=Edit Persona",
+        "PersonaDetailsDialogViewTitle=View Persona",})
+    public PersonaDetailsDialog(Component parent, PersonaDetailsMode mode, Persona persona, PersonaDetailsDialogCallback callback) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
-                mode == PersonaDetailsMode.CREATE ? 
-                        Bundle.PersonaDetailsDialogCreateTitle() : 
-                        Bundle.PersonaDetailsDialogEditTitle(),
-                false);
+                getTitle(mode),
+                true);
         this.callback = callback;
 
         initComponents();
-        
+
         pdp.setMode(parent, mode, persona);
-        
+
         display();
+    }
+
+    private static String getTitle(PersonaDetailsMode mode) {
+        switch (mode) {
+            case CREATE:
+                return Bundle.PersonaDetailsDialogCreateTitle();
+            case EDIT:
+                return Bundle.PersonaDetailsDialogEditTitle();
+            case VIEW:
+                return Bundle.PersonaDetailsDialogViewTitle();
+            default:
+                logger.log(Level.WARNING, "Unsupported mode: {0}", mode);
+                return Bundle.PersonaDetailsDialogViewTitle();
+        }
     }
 
     /**
@@ -135,7 +152,7 @@ public class PersonaDetailsDialog extends JDialog {
     private void cancelBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelBtnActionPerformed
         dispose();
     }//GEN-LAST:event_cancelBtnActionPerformed
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelBtn;
     private javax.swing.JButton okBtn;

@@ -46,6 +46,7 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationParseResult;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.autopsy.geolocation.datamodel.Track;
@@ -126,6 +127,8 @@ public final class KMLReport implements GeneralReportModule {
      * @param waypointList
      */
     @Messages({
+        "KMLReport.failedToCompleteReport=Failed to complete report.",
+        "KMLReport.partialFailure=There was an error creating the report.  Some items were not exported.",
         "KMLReport.unableToExtractPhotos=Could not extract photo information.",
         "KMLReport.exifPhotoError=Could not extract photos with EXIF metadata.",
         "KMLReport.bookmarkError=Could not extract Bookmark information.",
@@ -208,10 +211,15 @@ public final class KMLReport implements GeneralReportModule {
 
         try {
             makeRoutes(skCase);
-            makeTracks(skCase);
+            boolean entirelySuccessful = makeTracks(skCase);
+            if (!entirelySuccessful) {
+                result = ReportProgressPanel.ReportStatus.ERROR;
+                errorMessage = Bundle.KMLReport_partialFailure();
+            }
+            
             addLocationsToReport(skCase, baseReportDir);
         } catch (GeoLocationDataException | IOException | TskCoreException ex) {
-            errorMessage = "Failed to complete report.";
+            errorMessage = Bundle.KMLReport_failedToCompleteReport();
             logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
         }
@@ -515,14 +523,18 @@ public final class KMLReport implements GeneralReportModule {
      * Add the track to the track folder in the document.
      *
      * @param skCase Currently open case.
-     *
+     * @return The operation was entirely successful.
+     * 
      * @throws TskCoreException
      */
-    void makeTracks(SleuthkitCase skCase) throws GeoLocationDataException, TskCoreException {
+    boolean makeTracks(SleuthkitCase skCase) throws GeoLocationDataException, TskCoreException {
         List<Track> tracks = null;
-
+        boolean successful = true;
+        
         if (waypointList == null) {
-            tracks = Track.getTracks(skCase, null);
+            GeoLocationParseResult<Track> result = Track.getTracks(skCase, null);
+            tracks = result.getItems();
+            successful = result.isSuccessfullyParsed();
         } else {
             tracks = WaypointBuilder.getTracks(waypointList);
         }
@@ -533,6 +545,8 @@ public final class KMLReport implements GeneralReportModule {
             }
             addTrackToReport(track);
         }
+        
+        return successful;
     }
 
     /**

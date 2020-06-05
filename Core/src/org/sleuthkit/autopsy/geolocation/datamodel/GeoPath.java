@@ -31,7 +31,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Class representing a series of waypoints that form a path.
  */
 public class GeoPath {
-
     private final List<Waypoint> waypointList;
     private final String pathName;
     private final BlackboardArtifact artifact;
@@ -74,21 +73,26 @@ public class GeoPath {
      *
      * @throws GeoLocationDataException
      */
-    static public List<Track> getTracks(SleuthkitCase skCase, List<? extends Content> sourceList) throws GeoLocationDataException {
+    public static GeoLocationParseResult<Track> getTracks(SleuthkitCase skCase, List<? extends Content> sourceList) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
+        boolean allParsedSuccessfully = true;
         List<Track> tracks = new ArrayList<>();
         try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK);
             for (BlackboardArtifact artifact : artifacts) {
                 if (sourceList == null || sourceList.contains(artifact.getDataSource())) {
-                    Track route = new Track(artifact);
-                    tracks.add(route);
+                    try {
+                        tracks.add(new Track(artifact));
+                        
+                    } catch (GeoLocationDataException e) {
+                        allParsedSuccessfully = false;
+                    }
                 }
             }
         } catch (TskCoreException ex) {
             throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_BOOKMARK", ex);
         }
-        return tracks;
+        return new GeoLocationParseResult<Track>(tracks, allParsedSuccessfully);
     }
 
     /**

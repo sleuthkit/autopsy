@@ -42,7 +42,7 @@ public class AddMetadataDialog extends JDialog {
     public AddMetadataDialog(PersonaDetailsPanel pdp) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.AddMetadataDialog_title_text(),
-                false);
+                true);
         this.pdp = pdp;
 
         initComponents();

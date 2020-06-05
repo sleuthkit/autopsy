@@ -18,21 +18,32 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -44,6 +55,12 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
+import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
+import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
+import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialog;
+import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialogCallback;
+import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsMode;
 
 /**
  * This is a viewer for TSK_CALLLOG artifacts.
@@ -69,12 +86,19 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()
     ));
 
+    private static final int THREAD_POOL_SIZE = 5;
+    private final ExecutorService personatasksExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE,
+                new ThreadFactoryBuilder().setNameFormat("Persona-Searcher-%d").build());
+    
+    private final List<PersonaSearcherTask> personaSearchtasks = new ArrayList<>();
+  
+    private static final int TOP_INSET = 4;
+     
     /**
      * Creates new form CalllogArtifactViewer
      */
     public CallLogArtifactViewer() {
         initComponents();
-        customizeComponents();
     }
 
     /**
@@ -107,6 +131,9 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         localAccountLabel = new javax.swing.JLabel();
         localAccountIdLabel = new javax.swing.JLabel();
         sourceSectionLabel = new javax.swing.JLabel();
+        localAccountPersonaLabel = new javax.swing.JLabel();
+        localAccountPersonaNameLabel = new javax.swing.JLabel();
+        localAccountPersonaButton = new javax.swing.JButton();
 
         topPanel.setLayout(new java.awt.BorderLayout());
 
@@ -180,7 +207,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 .addGap(20, 20, 20))
         );
 
-        topPanel.add(callDetailsPanel, java.awt.BorderLayout.PAGE_START);
+        topPanel.add(callDetailsPanel, java.awt.BorderLayout.CENTER);
 
         otherInfoLabel.setFont(otherInfoLabel.getFont().deriveFont(otherInfoLabel.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(otherInfoLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.otherInfoLabel.text")); // NOI18N
@@ -237,6 +264,12 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         sourceSectionLabel.setFont(sourceSectionLabel.getFont().deriveFont(sourceSectionLabel.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(sourceSectionLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.sourceSectionLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(localAccountPersonaLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.localAccountPersonaLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(localAccountPersonaNameLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.localAccountPersonaNameLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(localAccountPersonaButton, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.localAccountPersonaButton.text")); // NOI18N
+
         javax.swing.GroupLayout localAccountInfoPanelLayout = new javax.swing.GroupLayout(localAccountInfoPanel);
         localAccountInfoPanel.setLayout(localAccountInfoPanelLayout);
         localAccountInfoPanelLayout.setHorizontalGroup(
@@ -251,9 +284,19 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                             .addComponent(jLabel4))
                         .addGap(24, 24, 24)
                         .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(localAccountIdLabel)
-                            .addComponent(dataSourceNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(deviceIdLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE)))
+                            .addComponent(deviceIdLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE)
+                            .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
+                                .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(dataSourceNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
+                                        .addComponent(localAccountIdLabel)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(localAccountPersonaLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(localAccountPersonaNameLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(localAccountPersonaButton)))
+                                .addGap(0, 0, Short.MAX_VALUE))))
                     .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
                         .addGap(25, 25, 25)
                         .addComponent(sourceSectionLabel)))
@@ -267,7 +310,10 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(localAccountLabel)
-                    .addComponent(localAccountIdLabel))
+                    .addComponent(localAccountIdLabel)
+                    .addComponent(localAccountPersonaLabel)
+                    .addComponent(localAccountPersonaNameLabel)
+                    .addComponent(localAccountPersonaButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -291,16 +337,19 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(topPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(topPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bottomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void customizeComponents() {
-        // disable the name label for now.
-        // this.toOrFromNameLabel.setVisible(false);
+    
+    
+    private void reset() {
+        // cancel any outstanding persona searching threads.
+        personaSearchtasks.forEach(task -> task.cancel(Boolean.TRUE));
+        personaSearchtasks.clear();
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel bottomPanel;
@@ -317,6 +366,9 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     private javax.swing.JLabel localAccountIdLabel;
     private javax.swing.JPanel localAccountInfoPanel;
     private javax.swing.JLabel localAccountLabel;
+    private javax.swing.JButton localAccountPersonaButton;
+    private javax.swing.JLabel localAccountPersonaLabel;
+    private javax.swing.JLabel localAccountPersonaNameLabel;
     private javax.swing.JLabel onLabel;
     private javax.swing.JPanel otherAttributesListPanel;
     private javax.swing.JPanel otherAttributesPanel;
@@ -331,10 +383,11 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
         this.removeAll();
         this.initComponents();
-        this.customizeComponents();
-
+       
+        // reset artifact specific state.
+        this.reset();
+              
         CallLogViewData callLogViewData = null;
-
         try {
             callLogViewData = getCallLogViewData(artifact);
         } catch (TskCoreException ex) {
@@ -378,17 +431,13 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 this.durationLabel.setVisible(false);
             }
 
-            // Populate other attributs panel
+            // Populate other attributes panel
             updateOtherAttributesPanel(callLogViewData.getOtherAttributes());
 
+            // update local account
+            updateLocalAccount(callLogViewData);
             // populate local account and data source
-            if (callLogViewData.getLocalAccountId() != null) {
-                // Vik-6383 find and display the persona for this account, and a button
-                this.localAccountIdLabel.setText(callLogViewData.getLocalAccountId());
-            } else {
-                this.localAccountLabel.setVisible(false);
-                this.localAccountIdLabel.setVisible(false);
-            }
+            
             if (callLogViewData.getDataSourceName() != null) {
                 this.dataSourceNameLabel.setText(callLogViewData.getDataSourceName());
             }
@@ -397,6 +446,30 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             }
     }
    
+    /**
+     * Displays the information for local account, if known.
+     * 
+     * @param callLogViewData Call log data 
+     */
+    private void updateLocalAccount(CallLogViewData callLogViewData) {
+        if (callLogViewData.getLocalAccountId() != null) {
+            localAccountIdLabel.setText(callLogViewData.getLocalAccountId());
+
+            // kick off a task to find the persona for this account
+            PersonaSearcherTask task = new PersonaSearcherTask(new AccountPersonaSearcherData(callLogViewData.getLocalAccountId(), localAccountPersonaNameLabel, localAccountPersonaButton));
+            personaSearchtasks.add(task);
+            personatasksExecutor.submit(task);
+
+        } else {
+            // no local account info, hide all fields.
+            localAccountLabel.setVisible(false);
+            localAccountIdLabel.setVisible(false);
+            localAccountPersonaLabel.setVisible(false);
+            localAccountPersonaNameLabel.setVisible(false);
+            localAccountPersonaLabel.setVisible(false);
+            localAccountPersonaButton.setVisible(false);
+        }
+    }
 
     /**
      * Updates the Call participants panel.
@@ -410,7 +483,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         constraints.gridy = 0;
-        constraints.insets = new java.awt.Insets(4, 0, 0, 0);
+        constraints.insets = new java.awt.Insets(TOP_INSET, 0, 0, 0);
         
         // show primary sender/receiver
         showParticipant(callLogViewData.getNumberDesignator(), callLogViewData.getNumber(), gridBagLayout, constraints );
@@ -421,6 +494,8 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             constraints.gridy++;
         }
         participantsListPanel.setLayout(gridBagLayout);
+        participantsListPanel.setSize(participantsListPanel.getPreferredSize());
+               
         participantsListPanel.revalidate();
     }
     
@@ -432,6 +507,13 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      * @param gridBagLayout
      * @param constraints 
      */
+    @NbBundle.Messages({
+        "CallLogArtifactViewer_persona_label= Persona: ",
+        "CallLogArtifactViewer_persona_searching= Searching...",
+        "CallLogArtifactViewer_persona_text_none=No Persona",
+        "CallLogArtifactViewer_persona_button_view=View",
+        "CallLogArtifactViewer_persona_button_new=New"
+    })
     private void showParticipant(String participantDesignator, String accountIdentifier, GridBagLayout gridBagLayout, GridBagConstraints constraints) {
 
         constraints.fill = GridBagConstraints.NONE;
@@ -449,35 +531,72 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         participantsListPanel.add(toLabel);
 
         constraints.gridx++;
-
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new Dimension(5, 0), new Dimension(5, 0), new Dimension(5, 0));
         participantsListPanel.add(filler2, constraints);
 
-        // Add attribute name label
+         // Add recipients number/Id
         constraints.gridx++;
 
-        // Add recipients number/Id
         javax.swing.JLabel participantAccountLabel = new javax.swing.JLabel();
         participantAccountLabel.setText(accountIdentifier);
 
         gridBagLayout.setConstraints(participantAccountLabel, constraints);
         participantsListPanel.add(participantAccountLabel);
 
-        // TBD Vik-6383 find and display the persona for this account, and a button
-//            constraints.gridx += 2;
-//            javax.swing.JButton personaButton = new javax.swing.JButton();
-//            personaButton.setText("Persona");
-//            gridBagLayout.setConstraints(personaButton, constraints);
-//            otherParticipantsListPanel.add(personaButton);
+        
+        constraints.gridx++;
+        participantsListPanel.add(createFiller(25, 0), constraints);
+          
+        // Add a "Persona: " label
+        constraints.gridx++;
+        javax.swing.JLabel personaLabel = new javax.swing.JLabel();
+        personaLabel.setText(Bundle.CallLogArtifactViewer_persona_label());
+        gridBagLayout.setConstraints(personaLabel, constraints);
+        participantsListPanel.add(personaLabel);
+        
+         // Add the label for participants persona name, 
+        constraints.gridx++;
+        javax.swing.JLabel participantPersonaNameLabel = new javax.swing.JLabel();
+        participantPersonaNameLabel.setText(Bundle.CallLogArtifactViewer_persona_searching());
+        gridBagLayout.setConstraints(participantPersonaNameLabel, constraints);
+        participantsListPanel.add(participantPersonaNameLabel);
+        
+        
+        constraints.gridx++;
+        participantsListPanel.add(createFiller(5, 0), constraints);
+          
+        
+        constraints.gridx++;
+        javax.swing.JButton personaButton = new javax.swing.JButton();
+        personaButton.setText(Bundle.CallLogArtifactViewer_persona_button_view());
+        personaButton.setEnabled(false);
+        
+        // no top inset of the button, in order to center align with the labels.
+        constraints.insets = new java.awt.Insets(0, 0, 0, 0);
+          
+        gridBagLayout.setConstraints(personaButton, constraints);
+        participantsListPanel.add(personaButton);
 
+        constraints.insets = new java.awt.Insets(TOP_INSET, 0, 0, 0);
+          
 
+        // Kick off a background thread to search for the persona 
+        // for this particpant account.
+        PersonaSearcherTask task = new PersonaSearcherTask(new AccountPersonaSearcherData(accountIdentifier, participantPersonaNameLabel, personaButton ));
+        personaSearchtasks.add(task);
+        personatasksExecutor.submit(task);
+        
         // add a filler to take up rest of the space
         constraints.gridx++;
         constraints.weightx = 1.0;
         constraints.fill = GridBagConstraints.HORIZONTAL;
-        participantsListPanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0)));
-
+        participantsListPanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0)), constraints);
     }
+    
+    private javax.swing.Box.Filler createFiller(int width, int height ) {
+        return new javax.swing.Box.Filler(new Dimension(width, height), new Dimension(width,height), new Dimension(width, height));
+    }
+    
     /**
      * Updates the Other Attributes panel with the given list of attributes.
      * This panel displays any uncommon attributes that might not be shown already.
@@ -721,4 +840,205 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             }
         }
     }
+    
+    
+    /**
+     * A data bag for the persona searching thread.
+     * It wraps the account id to search for, and the UI label and button
+     * to update once the search completes.
+     */
+    private class AccountPersonaSearcherData {
+
+        // Account identifier to search personas for.
+        private final String accountIdentifer;
+        // Persona name label to be updated when the search is complete.
+        private final JLabel personaNameLabel;
+        // Persona action button to be updated when the search is complete
+        private final JButton personaActionButton;
+    
+        AccountPersonaSearcherData(String accountIdentifer, JLabel personaNameLabel, JButton personaActionButton) {
+            this.accountIdentifer = accountIdentifer;
+            this.personaNameLabel = personaNameLabel;
+            this.personaActionButton = personaActionButton;
+        }
+
+        
+        public String getAccountIdentifer() {
+            return accountIdentifer;
+        }
+
+        public JLabel getPersonaNameLabel() {
+            return personaNameLabel;
+        }
+
+        public JButton getPersonaActionButton() {
+            return personaActionButton;
+        }
+    }
+
+    /**
+     * Thread to search for a persona for a given account identifier and update 
+     * the persona name and button.
+     */
+    private class PersonaSearcherTask extends SwingWorker<Collection<Persona>, Void> {
+
+        private final AccountPersonaSearcherData personaSearcherData;
+
+        PersonaSearcherTask(AccountPersonaSearcherData personaSearcherData) {
+            this.personaSearcherData = personaSearcherData;
+        }
+
+        @Override
+        protected Collection<Persona> doInBackground() throws Exception {
+            
+            Collection<Persona> personas = new ArrayList<>();
+            
+            Collection<CentralRepoAccount> accountCandidates = 
+                    CentralRepoAccount.getAccountsWithIdentifier(personaSearcherData.getAccountIdentifer());
+
+            if (accountCandidates.isEmpty() == false) {
+                CentralRepoAccount account = accountCandidates.iterator().next();
+                
+                // get personas for the account
+                Collection<PersonaAccount> personaAccountsList = PersonaAccount.getPersonaAccountsForAccount(account.getId());
+                personas = personaAccountsList.stream().map(PersonaAccount::getPersona)
+                    .collect(Collectors.toList());
+            }
+           
+            return personas;
+        }
+
+
+        @Override
+        protected void done() {
+            Collection<Persona> personas;
+            try {
+                personas = super.get();
+
+                if (this.isCancelled()) {
+                    return;
+                }
+
+                //Update the Persona label and button based on the search result
+                String personaLabelText;
+                String personaButtonText;
+                ActionListener buttonActionListener;
+                
+                if (personas.isEmpty()) {
+                    // No persona found
+                    personaLabelText = Bundle.CallLogArtifactViewer_persona_text_none();
+                    
+                    // show a 'New' button
+                    personaButtonText = Bundle.CallLogArtifactViewer_persona_button_new();
+                    buttonActionListener = new CreatePersonaButtonListener(personaSearcherData);
+                }
+                else {
+                    Persona persona = personas.iterator().next();
+                    personaLabelText = persona.getName();
+                    if (personas.size() > 1) {
+                        personaLabelText += String.format("  (1 of %d)", personas.size());
+                    }
+                    // Show a 'View' button
+                    personaButtonText = Bundle.CallLogArtifactViewer_persona_button_view();
+                    buttonActionListener = new ViewPersonaButtonListener(persona);
+                }
+                
+                personaSearcherData.getPersonaNameLabel().setText(personaLabelText);
+                personaSearcherData.getPersonaActionButton().setText(personaButtonText);
+                personaSearcherData.getPersonaActionButton().setEnabled(true);
+                
+                 // set button action
+                personaSearcherData.getPersonaActionButton().addActionListener(buttonActionListener);
+            } catch (CancellationException ex) {
+                logger.log(Level.INFO, "Persona searching was canceled."); //NON-NLS
+            } catch (InterruptedException ex) {
+                logger.log(Level.INFO, "Persona searching was interrupted."); //NON-NLS
+            } catch (ExecutionException ex) {
+                logger.log(Level.SEVERE, "Fatal error during Persona search.", ex); //NON-NLS
+            }
+        
+        }
+    }
+        
+    /**
+     * Action listener for Create persona button.
+     */
+    private class CreatePersonaButtonListener implements ActionListener {
+
+        private final AccountPersonaSearcherData personaSearcherData;
+
+        CreatePersonaButtonListener(AccountPersonaSearcherData personaSearcherData) {
+            this.personaSearcherData = personaSearcherData;
+        }
+
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            // Launch the Persona Create dialog
+            new PersonaDetailsDialog(CallLogArtifactViewer.this,
+                    PersonaDetailsMode.CREATE, null, new PersonaCreateCallbackImpl(personaSearcherData));
+        }
+    }
+        
+    /**
+     * Action listener for View persona button.
+     */
+    private class ViewPersonaButtonListener implements ActionListener {
+
+        private final Persona persona;
+
+        ViewPersonaButtonListener(Persona persona) {
+            this.persona = persona;
+        }
+
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            new PersonaDetailsDialog(CallLogArtifactViewer.this,
+                    PersonaDetailsMode.VIEW, persona, new PersonaViewCallbackImpl());
+        }
+    }
+       
+        
+    /**
+     * Callback method for the create mode of the PersonaDetailsDialog
+     */
+    class PersonaCreateCallbackImpl implements PersonaDetailsDialogCallback {
+        
+        private final AccountPersonaSearcherData personaSearcherData;
+        PersonaCreateCallbackImpl(AccountPersonaSearcherData personaSearcherData) {
+            this.personaSearcherData = personaSearcherData;
+        }
+        
+        @Override
+        public void callback(Persona persona) {
+            JButton personaButton = personaSearcherData.getPersonaActionButton();
+            if (persona != null) {
+                // update the persona name label with newly created persona, 
+                // and change the button to a "View" button
+                personaSearcherData.getPersonaNameLabel().setText(persona.getName());
+                personaSearcherData.getPersonaActionButton().setText(Bundle.CallLogArtifactViewer_persona_button_view());
+                
+                // replace action listener with a View button listener
+                for (ActionListener act : personaButton.getActionListeners()) {
+                    personaButton.removeActionListener(act);
+                }
+                personaButton.addActionListener(new ViewPersonaButtonListener (persona));
+                
+            }
+           
+            personaButton.getParent().revalidate();
+        }
+    }
+    
+     /**
+     * Callback method for the view mode of the PersonaDetailsDialog
+     */
+    class PersonaViewCallbackImpl implements PersonaDetailsDialogCallback {
+        @Override
+        public void callback(Persona persona) {
+           // nothing to do 
+        }
+    }
+    
+    
+
 }

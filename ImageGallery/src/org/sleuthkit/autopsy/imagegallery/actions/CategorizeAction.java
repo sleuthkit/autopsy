@@ -82,6 +82,12 @@ public class CategorizeAction extends Action {
         this.tagName = tagName;
         setGraphic(getGraphic(tagName));
         setEventHandler(actionEvent -> addCatToFiles(selectedFileIDs));
+        
+        int rank = tagName.getRank();
+        // Only map to a key if the rank is less than 10
+        if(rank < 10) { 
+            setAccelerator(new KeyCodeCombination(KeyCode.getKeyCode(Integer.toString(rank))));
+        }
     }
 
     static public Menu getCategoriesMenu(ImageGalleryController controller) {

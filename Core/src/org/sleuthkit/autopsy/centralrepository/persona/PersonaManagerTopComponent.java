@@ -72,7 +72,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new PersonaDetailsDialog(PersonaManagerTopComponent.this,
-                                PersonaDetailsMode.EDIT, selectedPersona, new EditCallbackImpl());
+                        PersonaDetailsMode.EDIT, selectedPersona, new CreateEditCallbackImpl());
             }
         });
 
@@ -80,7 +80,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new PersonaDetailsDialog(PersonaManagerTopComponent.this,
-                                PersonaDetailsMode.CREATE, selectedPersona, new CreateCallbackImpl());
+                        PersonaDetailsMode.CREATE, selectedPersona, new CreateEditCallbackImpl());
             }
         });
 
@@ -93,30 +93,21 @@ public final class PersonaManagerTopComponent extends TopComponent {
             }
         });
     }
-    
+
     /**
-     * Callback method for the create mode of the PersonaDetailsDialog
+     * Callback method for the create/edit mode of the PersonaDetailsDialog
      */
-    class CreateCallbackImpl implements PersonaDetailsDialogCallback {
+    class CreateEditCallbackImpl implements PersonaDetailsDialogCallback {
+
         @Override
         public void callback(Persona persona) {
             if (persona != null) {
                 searchField.setText("");
                 executeSearch();
-                int newPersonaRow = currentResults.size() - 1;
-                resultsTable.getSelectionModel().setSelectionInterval(newPersonaRow, newPersonaRow);
+                int personaRow = currentResults.indexOf(persona);
+                resultsTable.getSelectionModel().setSelectionInterval(personaRow, personaRow);
                 handleSelectionChange();
             }
-            createBtn.setEnabled(true);
-        }
-    }
-    
-    /**
-     * Callback method for the edit mode of the PersonaDetailsDialog
-     */
-    class EditCallbackImpl implements PersonaDetailsDialogCallback {
-        @Override
-        public void callback(Persona persona) {
             createBtn.setEnabled(true);
         }
     }
@@ -124,7 +115,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
     void setPersona(int index) {
         Persona persona = currentResults.get(index);
         selectedPersona = persona;
-        //editBtn.setEnabled(true); todo uncomment when we add edit support
+        editBtn.setEnabled(true);
     }
 
     /**
@@ -150,7 +141,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
         }
         handleSelectionChange();
     }
-    
+
     private void handleSelectionChange() {
         int selectedRow = resultsTable.getSelectedRow();
         if (selectedRow != -1) {
@@ -234,11 +225,6 @@ public final class PersonaManagerTopComponent extends TopComponent {
         searchButtonGroup.add(searchNameRadio);
         searchNameRadio.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(searchNameRadio, org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.searchNameRadio.text")); // NOI18N
-        searchNameRadio.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                searchNameRadioActionPerformed(evt);
-            }
-        });
 
         searchButtonGroup.add(searchAccountRadio);
         org.openide.awt.Mnemonics.setLocalizedText(searchAccountRadio, org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.searchAccountRadio.text")); // NOI18N
@@ -259,11 +245,6 @@ public final class PersonaManagerTopComponent extends TopComponent {
         editBtn.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(createBtn, org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.createBtn.text")); // NOI18N
-        createBtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                createBtnActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout searchPanelLayout = new javax.swing.GroupLayout(searchPanel);
         searchPanel.setLayout(searchPanelLayout);
@@ -317,17 +298,9 @@ public final class PersonaManagerTopComponent extends TopComponent {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 650, Short.MAX_VALUE)
+            .addComponent(jSplitPane1)
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void searchNameRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchNameRadioActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_searchNameRadioActionPerformed
-
-    private void createBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createBtnActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_createBtnActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton createBtn;

@@ -139,7 +139,7 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
     /**
      * Creates new MessageContentViewer
      */
-    @NbBundle.Messages("MessageContentViewer.AtrachmentsPanel.title=Attachments")
+    @NbBundle.Messages("MessageArtifactViewer.AtrachmentsPanel.title=Attachments")
     public MessageArtifactViewer() {
         initComponents();
         htmlPane.add(htmlPanel);
@@ -147,7 +147,7 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
         drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageContentViewer_AtrachmentsPanel_title(), "", new TableFilterNode(Node.EMPTY, false), 0, null);
         attachmentsScrollPane.setViewportView(drp);
 
-        msgbodyTabbedPane.insertTab(NbBundle.getMessage(MessageArtifactViewer.class, "MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle"),
+        msgbodyTabbedPane.insertTab(NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.textbodyScrollPane.TabConstraints.tabTitle"),
                 null,
                 textPanel,
                 null,
