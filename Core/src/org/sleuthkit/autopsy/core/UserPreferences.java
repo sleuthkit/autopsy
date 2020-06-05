@@ -19,10 +19,6 @@
 package org.sleuthkit.autopsy.core;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
 import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
@@ -387,7 +383,7 @@ public final class UserPreferences {
     }
 
     public static int getMaxNumShards() {
-        return preferences.getInt(INDEXING_MAX_SHARDS, 1);
+        return preferences.getInt(INDEXING_MAX_SHARDS, 0);
     }
 
     public static int getNumThreads() {
