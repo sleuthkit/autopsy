@@ -184,26 +184,27 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         List<BlackboardAttribute> nameList = new ArrayList<>();
         List<BlackboardAttribute> otherList = new ArrayList<>();
 
-        try {
-            // Get all the attributes and group them by the section panels they go in
-            for (BlackboardAttribute bba : artifact.getAttributes()) {
-                if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
-                    phoneNumList.add(bba);
-                } else if (bba.getAttributeType().getTypeName().startsWith("TSK_EMAIL")) {
-                    emailList.add(bba);
-                } else if (bba.getAttributeType().getTypeName().startsWith("TSK_NAME")) {
-                    nameList.add(bba);
-                } else {
-                    otherList.add(bba);
+        if (artifact != null) {
+            try {
+                // Get all the attributes and group them by the section panels they go in
+                for (BlackboardAttribute bba : artifact.getAttributes()) {
+                    if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
+                        phoneNumList.add(bba);
+                    } else if (bba.getAttributeType().getTypeName().startsWith("TSK_EMAIL")) {
+                        emailList.add(bba);
+                    } else if (bba.getAttributeType().getTypeName().startsWith("TSK_NAME")) {
+                        nameList.add(bba);
+                    } else {
+                        otherList.add(bba);
+                    }
                 }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Error getting attributes for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Error getting attributes for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
         }
-
         // update name section
         updateNamePanel(nameList);
-        
+
         // update contact attributes sections
         updateSection(phoneNumList, this.phonesLabel, this.phoneNumbersPanel);
         updateSection(emailList, this.emailsLabel, this.emailsPanel);
@@ -220,10 +221,11 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     }
 
     /**
-     * Checks if the given artifact is supported by this viewer.
-     * This viewer supports TSK_CONTACT artifacts.
-     * 
+     * Checks if the given artifact is supported by this viewer. This viewer
+     * supports TSK_CONTACT artifacts.
+     *
      * @param artifact artifact to check.
+     *
      * @return True if the artifact is supported, false otherwise.
      */
     @Override
@@ -233,8 +235,8 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
     /**
      * Updates the contact name in the view.
-     * 
-     * @param attributesList 
+     *
+     * @param attributesList
      */
     private void updateNamePanel(List<BlackboardAttribute> attributesList) {
         for (BlackboardAttribute bba : attributesList) {
@@ -248,11 +250,12 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     }
 
     /**
-     * Updates the view by displaying the given list of attributes in the given section panel.
-     * 
+     * Updates the view by displaying the given list of attributes in the given
+     * section panel.
+     *
      * @param sectionAttributesList list of attributes to display.
-     * @param sectionLabel section name label.
-     * @param sectionPanel section panel to display the attributes in.
+     * @param sectionLabel          section name label.
+     * @param sectionPanel          section panel to display the attributes in.
      */
     private void updateSection(List<BlackboardAttribute> sectionAttributesList, JLabel sectionLabel, JPanel sectionPanel) {
 
@@ -272,7 +275,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         for (BlackboardAttribute bba : sectionAttributesList) {
             constraints.fill = GridBagConstraints.NONE;
             constraints.weightx = 0;
-            
+
             constraints.gridx = 0;
 
             // Add a label for attribute type
@@ -282,7 +285,6 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
             // make type label bold - uncomment if needed.
             //attrTypeLabel.setFont(attrTypeLabel.getFont().deriveFont(Font.BOLD, attrTypeLabel.getFont().getSize() ));
-
             gridBagLayout.setConstraints(attrTypeLabel, constraints);
             sectionPanel.add(attrTypeLabel);
 
@@ -298,7 +300,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             constraints.weightx = 1.0;
             constraints.fill = GridBagConstraints.HORIZONTAL;
             sectionPanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0)));
-            
+
             constraints.gridy++;
         }
         sectionPanel.setLayout(gridBagLayout);

@@ -53,6 +53,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
     private final ModifiableProxyLookup proxyLookup;
     private final PropertyChangeListener focusPropertyListener;
     private final ContactsChildNodeFactory nodeFactory;
+    private final ContactDataViewer contactPane;
 
     @NbBundle.Messages({
         "ContactsViewer_tabTitle=Contacts",
@@ -67,6 +68,9 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
      */
     public ContactsViewer() {
         initComponents();
+        
+        contactPane = new ContactDataViewer();
+        splitPane.setRightComponent(contactPane);
         
         outlineViewPanel.hideOutlineView(Bundle.ContactsViewer_noContacts_message());
 
@@ -106,7 +110,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
         outlineViewPanel.getExplorerManager().addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 final Node[] nodes = outlineViewPanel.getExplorerManager().getSelectedNodes();
-                contactPane.setNode(nodes);
+                contactPane.setNode(nodes != null && nodes.length > 0 ? nodes[0] : null);
             }
         });
 
@@ -185,13 +189,11 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
         java.awt.GridBagConstraints gridBagConstraints;
 
         splitPane = new javax.swing.JSplitPane();
-        contactPane = new org.sleuthkit.autopsy.communications.relationships.ContactDetailsPane();
         outlineViewPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
 
         setLayout(new java.awt.GridBagLayout());
 
         splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        splitPane.setRightComponent(contactPane);
         splitPane.setLeftComponent(outlineViewPanel);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -206,7 +208,6 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.communications.relationships.ContactDetailsPane contactPane;
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel outlineViewPanel;
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
