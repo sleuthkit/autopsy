@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.Account;
 
 /**
  * A singleton cache of the PersonaAccount information. The list of
@@ -40,7 +41,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 final class CVTPersonaCache {
 
     private static final Logger logger = Logger.getLogger(CVTPersonaCache.class.getName());
-    private final LoadingCache<String, List<PersonaAccount>> accountMap;
+    private final LoadingCache<Account, List<PersonaAccount>> accountMap;
 
     private static CVTPersonaCache instance;
 
@@ -49,13 +50,13 @@ final class CVTPersonaCache {
      */
     private CVTPersonaCache() {
         accountMap = CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.MINUTES).build(
-                new CacheLoader<String, List<PersonaAccount>>() {
+                new CacheLoader<Account, List<PersonaAccount>>() {
             @Override
-            public List<PersonaAccount> load(String key) {
+            public List<PersonaAccount> load(Account key) {
                 List<PersonaAccount> accountList = new ArrayList<>();
                 try {
                     if (CentralRepository.isEnabled()) {
-                        Collection<PersonaAccount> accounts = PersonaAccount.getPersonaAccountsForIdentifierLike(key);
+                        Collection<PersonaAccount> accounts = PersonaAccount.getPersonaAccountsForAccount(key);
                         accountList.addAll(accounts);
                     }
                 } catch (CentralRepoException ex) {
@@ -89,7 +90,7 @@ final class CVTPersonaCache {
      *
      * @throws ExecutionException
      */
-    static synchronized List<PersonaAccount> getPersonaAccounts(String typeSpecificID) throws ExecutionException {
-        return getInstance().accountMap.get(typeSpecificID);
+    static synchronized List<PersonaAccount> getPersonaAccounts(Account account) throws ExecutionException {
+        return getInstance().accountMap.get(account);
     }
 }
