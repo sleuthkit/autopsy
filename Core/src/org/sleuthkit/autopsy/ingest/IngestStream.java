@@ -19,9 +19,6 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.List;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.TskCoreException;
 
 
 /**
@@ -30,22 +27,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public interface IngestStream {
     /**
-     * Call when the data source has been completely added to the case database.
+     * Call when the data source has been added to the case database.
      * 
      * @param dataSourceObjectId  The object ID of the new data source
      * 
      * @throws IngestStreamClosedException 
      */
     void addDataSource(long dataSourceObjectId) throws IngestStreamClosedException;
-
-    /**
-     * Get the data source associated with this ingest stream.
-     * 
-     * @return The data source or null if it has not been added yet.
-     * 
-     * @throws TskCoreException 
-     */
-    DataSource getDataSource() throws TskCoreException;
     
     /**
      * Adds a set of file object IDs that are ready for ingest.
@@ -55,30 +43,13 @@ public interface IngestStream {
      * @throws IngestStreamClosedException 
      */
     void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException;
-    
-    /**
-     * Returns the next set of files that are ready for ingest.
-     * Abstract files will be returned in the order they were added through
-     * addFiles().
-     * 
-     * @param numberOfFiles Maximum number of files to return.
-     * 
-     * @return A list of abstract files for ingest. List may be empty or contain less
-     *         files than requested.
-     * 
-     * @throws TskCoreException 
-     */
-    List<AbstractFile> getNextFiles(int numberOfFiles) throws TskCoreException;
 
     /**
      * Closes the ingest stream.
-     * Adding a data source or a set of files to a closed ingest stream
-     * will generate an error, but getDataSource() and getNextFiles() will work.
-     * 
-     * @param completed True if the data source processing was complete, false 
-     *                  if canceled or an error occurred
+     * Should be called after all files from data source have
+     * been sent to the stream.
      */
-    void close(boolean completed);
+    void close();
     
     /**
      * Check whether the ingest stream is closed.
@@ -86,4 +57,18 @@ public interface IngestStream {
      * @return True if closed, false otherwise.
      */
     boolean isClosed();
+    
+    /**
+     * Stops the ingest stream. The stream will no longer accept new data
+     * and should no longer be used. Will also close the ingest stream.
+     */
+    void stop();
+    
+    /**
+     * Check whether the ingest stream was stopped before completion.
+     * If this returns true, data should not be written to or read from the stream.
+     * 
+     * @return True the ingest stream was stopped, false otherwise.
+     */
+    boolean wasStopped();
 }

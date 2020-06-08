@@ -304,7 +304,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     public void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.runningWithGUI());
+            IngestJob job = new IngestJob(dataSources, settings);
             if (job.hasIngestPipeline()) {
                 long taskId = nextIngestManagerTaskId.incrementAndGet();
                 Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
@@ -323,7 +323,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     public void queueIngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSource, files, settings, RuntimeProperties.runningWithGUI());
+            IngestJob job = new IngestJob(dataSource, files, settings);
             if (job.hasIngestPipeline()) {
                 long taskId = nextIngestManagerTaskId.incrementAndGet();
                 Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
@@ -333,7 +333,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Immdiately starts an ingest job for one or more data sources.
+     * Immediately starts an ingest job for one or more data sources.
      *
      * @param dataSources The data sources to process.
      * @param settings    The settings for the ingest job.
@@ -343,7 +343,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     public IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.runningWithGUI());
+            IngestJob job = new IngestJob(dataSources, settings);
             if (job.hasIngestPipeline()) {
                 return startIngestJob(job);
             }

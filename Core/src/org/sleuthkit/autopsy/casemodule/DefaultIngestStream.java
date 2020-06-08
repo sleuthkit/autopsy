@@ -1,34 +1,39 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.casemodule;
 
 import java.util.List;
 import org.sleuthkit.autopsy.ingest.IngestStream;
 import org.sleuthkit.autopsy.ingest.IngestStreamClosedException;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This is a default ingest stream to use with the data source processors when an IngestStream is not supplied.
- * Adding files/data sources are no-ops but errors will be thrown if there is an attempt
- * to access them through this class.
+ * Adding files/data sources are no-ops.
  */
 class DefaultIngestStream implements IngestStream {
 
-    private volatile boolean isClosed = false;
+    private boolean isClosed = false;
+    private boolean isStopped = false;
 
     @Override
     public void addDataSource(long dataSourceObjectId) throws IngestStreamClosedException {
         // Do nothing
-    }
-
-    @Override
-    public DataSource getDataSource() throws TskCoreException {
-        throw new UnsupportedOperationException("Can not get data source from DefaultAddImageTaskIngestStream");
     }
 
     @Override
@@ -37,17 +42,23 @@ class DefaultIngestStream implements IngestStream {
     }
 
     @Override
-    public List<AbstractFile> getNextFiles(int numberOfFiles) throws TskCoreException {
-        throw new UnsupportedOperationException("Can not get files from DefaultAddImageTaskIngestStream");
-    }
-
-    @Override
-    public void close(boolean completed) {
-        isClosed = true;
-    }
-
-    @Override
-    public boolean isClosed() {
+    public synchronized boolean isClosed() {
         return isClosed;
+    }
+
+    @Override
+    public synchronized void close() {
+	isClosed = true;
+    }
+
+    @Override
+    public synchronized void stop() {
+	isClosed = true;
+	isStopped = true;
+    }
+
+    @Override
+    public synchronized boolean wasStopped() {
+	return isStopped;
     }
 }

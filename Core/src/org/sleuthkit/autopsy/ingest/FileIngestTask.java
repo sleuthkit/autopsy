@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.Objects;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -27,14 +28,29 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 final class FileIngestTask extends IngestTask {
 
-    private final AbstractFile file;
+    private AbstractFile file = null;
+    private final long fileId;
 
-    FileIngestTask(DataSourceIngestJob job, AbstractFile file) {
+    FileIngestTask(IngestJobPipeline job, AbstractFile file) {
         super(job);
         this.file = file;
+	fileId = file.getId();
     }
+    
+    FileIngestTask(IngestJobPipeline job, long fileId) {
+        super(job);
+        this.fileId = fileId;
+    }    
 
-    AbstractFile getFile() {
+    synchronized AbstractFile getFile() {
+	if (file == null) {
+	    try {
+		file = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(fileId);
+	    } catch (Exception ex) {
+		// TODO TODO should propagate exception TODO TODO
+		ex.printStackTrace();
+	    }
+	}
         return file;
     }
 
@@ -53,22 +69,19 @@ final class FileIngestTask extends IngestTask {
             return false;
         }
         FileIngestTask other = (FileIngestTask) obj;
-        DataSourceIngestJob job = getIngestJob();
-        DataSourceIngestJob otherJob = other.getIngestJob();
+        IngestJobPipeline job = getIngestJob();
+        IngestJobPipeline otherJob = other.getIngestJob();
         if (job != otherJob && (job == null || !job.equals(otherJob))) {
             return false;
         }
-        if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
-            return false;
-        }
-        return true;
+	return (this.fileId == other.fileId);
     }
 
     @Override
     public int hashCode() {
         int hash = 5;
         hash = 47 * hash + Objects.hashCode(getIngestJob());
-        hash = 47 * hash + Objects.hashCode(this.file);
+        hash = 47 * hash + Objects.hashCode(this.fileId);
         return hash;
     }
 }

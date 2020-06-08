@@ -23,15 +23,15 @@ import org.sleuthkit.datamodel.Content;
 abstract class IngestTask {
 
     private final static long NOT_SET = Long.MIN_VALUE;
-    private final DataSourceIngestJob job;
+    private final IngestJobPipeline job;
     private long threadId;
 
-    IngestTask(DataSourceIngestJob job) {
+    IngestTask(IngestJobPipeline job) {
         this.job = job;
         threadId = NOT_SET;
     }
 
-    DataSourceIngestJob getIngestJob() {
+    IngestJobPipeline getIngestJob() {
         return job;
     }
 

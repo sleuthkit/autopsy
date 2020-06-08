@@ -27,6 +27,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -58,6 +59,8 @@ final class IngestTasksScheduler {
     private final TreeSet<FileIngestTask> rootFileTaskQueue;
     @GuardedBy("this")
     private final Deque<FileIngestTask> pendingFileTaskQueue;
+    @GuardedBy("this")
+    private final Queue<FileIngestTask> streamedTasksQueue;
     private final IngestTaskTrackingQueue fileIngestThreadsQueue;
 
     /**
@@ -82,6 +85,7 @@ final class IngestTasksScheduler {
         this.rootFileTaskQueue = new TreeSet<>(new RootDirectoryTaskComparator());
         this.pendingFileTaskQueue = new LinkedList<>();
         this.fileIngestThreadsQueue = new IngestTaskTrackingQueue();
+	this.streamedTasksQueue = new LinkedList<>();
     }
 
     /**
@@ -110,7 +114,7 @@ final class IngestTasksScheduler {
      *
      * @param job The data source ingest job.
      */
-    synchronized void scheduleIngestTasks(DataSourceIngestJob job) {
+    synchronized void scheduleIngestTasks(IngestJobPipeline job) {
         if (!job.isCancelled()) {
             /*
              * Scheduling of both the data source ingest task and the initial
@@ -130,7 +134,7 @@ final class IngestTasksScheduler {
      *
      * @param job The data source ingest job.
      */
-    synchronized void scheduleDataSourceIngestTask(DataSourceIngestJob job) {
+    synchronized void scheduleDataSourceIngestTask(IngestJobPipeline job) {
         if (!job.isCancelled()) {
             DataSourceIngestTask task = new DataSourceIngestTask(job);
             try {
@@ -150,7 +154,7 @@ final class IngestTasksScheduler {
      * @param files A subset of the files for the data source; if empty, then
      *              file tasks for all files in the data source are scheduled.
      */
-    synchronized void scheduleFileIngestTasks(DataSourceIngestJob job, Collection<AbstractFile> files) {
+    synchronized void scheduleFileIngestTasks(IngestJobPipeline job, Collection<AbstractFile> files) {
         if (!job.isCancelled()) {
             Collection<AbstractFile> candidateFiles;
             if (files.isEmpty()) {
@@ -167,6 +171,30 @@ final class IngestTasksScheduler {
             shuffleFileTaskQueues();
         }
     }
+    
+    /**
+     * Schedules file tasks for either all the files or a given subset of the
+     * files for a data source source ingest job.
+     *
+     * @param job   The data source ingest job.
+     * @param files A subset of the files for the data source; if empty, then
+     *              file tasks for all files in the data source are scheduled.
+     */
+    synchronized void scheduleStreamedFileIngestTasks(IngestJobPipeline job, List<Long> fileIds) {
+        if (!job.isCancelled()) {
+            for (long id : fileIds) {
+		
+                FileIngestTask task = new FileIngestTask(job, id);
+		// TODO TODO the attempt here is to not make the abstract file before we need it,
+		// but calling that test would negate that. The check gets calls later so this
+		// should be ok.
+                //if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
+                    this.streamedTasksQueue.add(task);
+                //}
+            }
+            shuffleFileTaskQueues();
+        }
+    }    
 
     /**
      * Schedules file level ingest tasks for a given set of files for a data
@@ -176,7 +204,7 @@ final class IngestTasksScheduler {
      * @param job   The data source ingest job.
      * @param files A set of files for the data source.
      */
-    synchronized void fastTrackFileIngestTasks(DataSourceIngestJob job, Collection<AbstractFile> files) {
+    synchronized void fastTrackFileIngestTasks(IngestJobPipeline job, Collection<AbstractFile> files) {
         if (!job.isCancelled()) {
             /*
              * Put the files directly into the queue for the file ingest
@@ -230,8 +258,9 @@ final class IngestTasksScheduler {
      *
      * @return True or false.
      */
-    synchronized boolean tasksForJobAreCompleted(DataSourceIngestJob job) {
+    synchronized boolean currentTasksAreCompleted(IngestJobPipeline job) {
         long jobId = job.getId();
+	
         return !(this.dataSourceIngestThreadQueue.hasTasksForJob(jobId)
                 || hasTasksForJob(this.rootFileTaskQueue, jobId)
                 || hasTasksForJob(this.pendingFileTaskQueue, jobId)
@@ -245,7 +274,7 @@ final class IngestTasksScheduler {
      *
      * @param job The data source ingest job.
      */
-    synchronized void cancelPendingTasksForIngestJob(DataSourceIngestJob job) {
+    synchronized void cancelPendingTasksForIngestJob(IngestJobPipeline job) {
         long jobId = job.getId();
         IngestTasksScheduler.removeTasksForJob(this.rootFileTaskQueue, jobId);
         IngestTasksScheduler.removeTasksForJob(this.pendingFileTaskQueue, jobId);
@@ -323,7 +352,15 @@ final class IngestTasksScheduler {
      * files derived from prioritized files.
      */
     synchronized private void shuffleFileTaskQueues() {
-        while (this.fileIngestThreadsQueue.isEmpty()) {
+	
+	if (fileIngestThreadsQueue.isEmpty()) {
+	    final FileIngestTask streamingTask = streamedTasksQueue.poll();
+	    if (streamingTask != null) {
+		pendingFileTaskQueue.addLast(streamingTask);
+	    }
+	}
+	
+        while (this.fileIngestThreadsQueue.isEmpty()) {	    
             /*
              * If the pending file task queue is empty, move the highest
              * priority root file task, if there is one, into it.

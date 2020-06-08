@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class FileIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private final DataSourceIngestJob job;
+    private final IngestJobPipeline job;
     private final List<PipelineModule> modules = new ArrayList<>();
     private Date startTime;
     private volatile boolean running;
@@ -54,7 +54,7 @@ final class FileIngestPipeline {
      * @param moduleTemplates The ingest module templates that define the
      *                        pipeline.
      */
-    FileIngestPipeline(DataSourceIngestJob job, List<IngestModuleTemplate> moduleTemplates) {
+    FileIngestPipeline(IngestJobPipeline job, List<IngestModuleTemplate> moduleTemplates) {
         this.job = job;
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isFileIngestModuleTemplate()) {

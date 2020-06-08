@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 
 /**
  * Analyzes one or more data sources using a set of ingest modules specified via
@@ -63,8 +64,12 @@ public final class IngestJob {
 
     private final static AtomicLong nextId = new AtomicLong(0L);
     private final long id;
-    private final Map<Long, DataSourceIngestJob> dataSourceJobs;
+    private final List<Content> dataSources = new ArrayList<>();
+    private final List<AbstractFile> files;
+    private final IngestStream ingestStream;
+    private final Map<Long, IngestJobPipeline> ingestJobPipelines;
     private final AtomicInteger incompleteJobsCount;
+    private final IngestJobSettings settings;
     private volatile CancellationReason cancellationReason;
 
     /**
@@ -73,17 +78,15 @@ public final class IngestJob {
      *
      * @param dataSources The data sources to be ingested.
      * @param settings    The ingest job settings.
-     * @param doUI        Whether or not this job should use progress bars,
-     *                    message boxes for errors, etc.
      */
-    IngestJob(Collection<Content> dataSources, IngestJobSettings settings, boolean doUI) {
+    IngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         this.id = IngestJob.nextId.getAndIncrement();
-        this.dataSourceJobs = new ConcurrentHashMap<>();
-        for (Content dataSource : dataSources) {
-            DataSourceIngestJob dataSourceIngestJob = new DataSourceIngestJob(this, dataSource, settings, doUI);
-            this.dataSourceJobs.put(dataSourceIngestJob.getId(), dataSourceIngestJob);
-        }
-        incompleteJobsCount = new AtomicInteger(dataSourceJobs.size());
+	this.settings = settings;
+        this.ingestJobPipelines = new ConcurrentHashMap<>();
+	this.ingestStream = null;
+	this.dataSources.addAll(dataSources);
+	this.files = null;
+        incompleteJobsCount = new AtomicInteger(dataSources.size());
         cancellationReason = CancellationReason.NOT_CANCELLED;
     }
 
@@ -95,15 +98,32 @@ public final class IngestJob {
      * @param dataSource The data source to be analyzed
      * @param files      A subset of the files for the data source.
      * @param settings   The ingest job settings.
-     * @param doUI       Whether or not this job should use progress bars,
-     *                   message boxes for errors, etc.
      */
-    IngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings, boolean doUI) {
+    IngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
         this.id = IngestJob.nextId.getAndIncrement();
-        this.dataSourceJobs = new ConcurrentHashMap<>();
-        DataSourceIngestJob dataSourceIngestJob = new DataSourceIngestJob(this, dataSource, files, settings, doUI);
-        this.dataSourceJobs.put(dataSourceIngestJob.getId(), dataSourceIngestJob);
-        incompleteJobsCount = new AtomicInteger(dataSourceJobs.size());
+        this.ingestJobPipelines = new ConcurrentHashMap<>();
+	this.settings = settings;
+	this.files = files;
+	this.dataSources.add(dataSource);
+	this.ingestStream = null;
+        incompleteJobsCount = new AtomicInteger(1);
+        cancellationReason = CancellationReason.NOT_CANCELLED;
+    }
+    
+    /**
+     * Constructs an ingest job that analyzes one data source using an
+     * ingest stream.
+     *
+     * @param ingestStream The ingest stream.
+     * @param settings   The ingest job settings.
+     */
+    IngestJob(IngestStream ingestStream, IngestJobSettings settings) {
+        this.id = IngestJob.nextId.getAndIncrement();
+        this.ingestJobPipelines = new ConcurrentHashMap<>();
+	this.settings = settings;
+	this.files = null;
+	this.ingestStream = ingestStream;
+        incompleteJobsCount = new AtomicInteger(1);
         cancellationReason = CancellationReason.NOT_CANCELLED;
     }
 
@@ -124,18 +144,7 @@ public final class IngestJob {
      * @return True or false.
      */
     boolean hasIngestPipeline() {
-        /**
-         * TODO: This could actually be done more simply by adding a method to
-         * the IngestJobSettings to check for at least one enabled ingest module
-         * template. The test could then be done in the ingest manager before
-         * even constructing an ingest job.
-         */
-        for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
-            if (dataSourceJob.hasIngestPipeline()) {
-                return true;
-            }
-        }
-        return false;
+	return (!settings.getEnabledIngestModuleTemplates().isEmpty());
     }
 
     /**
@@ -145,6 +154,24 @@ public final class IngestJob {
      * @return A collection of ingest module start up errors, empty on success.
      */
     List<IngestModuleError> start() {
+	
+	/*
+	 * Set up the pipeline(s)
+	 */
+	if (ingestStream != null) {
+	    IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, ingestStream, settings);
+	    this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
+	} else if (files != null && dataSources.size() == 1) {
+	    IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSources.get(0), files, settings);
+	    this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
+	} else {
+	    for (Content dataSource : dataSources) {
+		IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSource, settings);
+		this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
+	    }
+        }
+	incompleteJobsCount.set(ingestJobPipelines.size());
+	
         /*
          * Try to start each data source ingest job. Note that there is a not
          * unwarranted assumption here that if there is going to be a module
@@ -154,8 +181,8 @@ public final class IngestJob {
          * so that no processing is done if this assumption is false.
          */
         List<IngestModuleError> errors = new ArrayList<>();
-        for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
-            errors.addAll(dataSourceJob.start());
+        for (IngestJobPipeline ingestJobPipeline : this.ingestJobPipelines.values()) {
+            errors.addAll(ingestJobPipeline.start());
             if (errors.isEmpty() == false) {
                 break;
             }
@@ -165,7 +192,7 @@ public final class IngestJob {
          * Handle start up success or failure.
          */
         if (errors.isEmpty()) {
-            for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
+            for (IngestJobPipeline dataSourceJob : this.ingestJobPipelines.values()) {
                 IngestManager.getInstance().fireDataSourceAnalysisStarted(id, dataSourceJob.getId(), dataSourceJob.getDataSource());
             }
         } else {
@@ -187,6 +214,8 @@ public final class IngestJob {
     /**
      * Gets a snapshot of the progress of this ingest job.
      *
+     * @param getIngestTasksSnapshot 
+     * 
      * @return The snapshot.
      */
     public ProgressSnapshot getSnapshot(boolean getIngestTasksSnapshot) {
@@ -201,7 +230,7 @@ public final class IngestJob {
      */
     List<Snapshot> getDataSourceIngestJobSnapshots() {
         List<Snapshot> snapshots = new ArrayList<>();
-        this.dataSourceJobs.values().stream().forEach((dataSourceJob) -> {
+        this.ingestJobPipelines.values().stream().forEach((dataSourceJob) -> {
             snapshots.add(dataSourceJob.getSnapshot(true));
         });
         return snapshots;
@@ -230,7 +259,7 @@ public final class IngestJob {
      */
     public void cancel(CancellationReason reason) {
         this.cancellationReason = reason;
-        this.dataSourceJobs.values().stream().forEach((job) -> {
+        this.ingestJobPipelines.values().stream().forEach((job) -> {
             job.cancel(reason);
         });
     }
@@ -260,7 +289,7 @@ public final class IngestJob {
      *
      * @param job A completed data source ingest job.
      */
-    void dataSourceJobFinished(DataSourceIngestJob job) {
+    void dataSourceJobFinished(IngestJobPipeline job) {
         IngestManager ingestManager = IngestManager.getInstance();
         if (!job.isCancelled()) {
             ingestManager.fireDataSourceAnalysisCompleted(id, job.getId(), job.getDataSource());
@@ -346,13 +375,13 @@ public final class IngestJob {
             fileIngestRunning = false;
             fileIngestStartTime = null;
             dataSourceProcessingSnapshots = new ArrayList<>();
-            for (DataSourceIngestJob dataSourceJob : dataSourceJobs.values()) {
+            for (IngestJobPipeline dataSourceJob : ingestJobPipelines.values()) {
                 Snapshot snapshot = dataSourceJob.getSnapshot(getIngestTasksSnapshot);
                 dataSourceProcessingSnapshots.add(new DataSourceProcessingSnapshot(snapshot));
                 if (null == dataSourceModule) {
                     DataSourceIngestPipeline.PipelineModule module = snapshot.getDataSourceLevelIngestModule();
                     if (null != module) {
-                        dataSourceModule = new DataSourceIngestModuleHandle(dataSourceJobs.get(snapshot.getJobId()), module);
+                        dataSourceModule = new DataSourceIngestModuleHandle(ingestJobPipelines.get(snapshot.getJobId()), module);
                     }
                 }
                 if (snapshot.getFileIngestIsRunning()) {
@@ -433,7 +462,7 @@ public final class IngestJob {
      */
     public static class DataSourceIngestModuleHandle {
 
-        private final DataSourceIngestJob job;
+        private final IngestJobPipeline job;
         private final DataSourceIngestPipeline.PipelineModule module;
         private final boolean cancelled;
 
@@ -446,7 +475,7 @@ public final class IngestJob {
          *               level ingest module.
          * @param module The data source level ingest module.
          */
-        private DataSourceIngestModuleHandle(DataSourceIngestJob job, DataSourceIngestPipeline.PipelineModule module) {
+        private DataSourceIngestModuleHandle(IngestJobPipeline job, DataSourceIngestPipeline.PipelineModule module) {
             this.job = job;
             this.module = module;
             this.cancelled = job.currentDataSourceIngestModuleIsCancelled();

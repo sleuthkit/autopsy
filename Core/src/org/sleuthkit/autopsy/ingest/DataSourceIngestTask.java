@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 final class DataSourceIngestTask extends IngestTask {
 
-    DataSourceIngestTask(DataSourceIngestJob job) {
+    DataSourceIngestTask(IngestJobPipeline job) {
         super(job);
     }
 

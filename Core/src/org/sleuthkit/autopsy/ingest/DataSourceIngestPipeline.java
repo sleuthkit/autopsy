@@ -38,7 +38,7 @@ final class DataSourceIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
     private static final Logger logger = Logger.getLogger(DataSourceIngestPipeline.class.getName());
-    private final DataSourceIngestJob job;
+    private final IngestJobPipeline job;
     private final List<PipelineModule> modules = new ArrayList<>();
     private volatile PipelineModule currentModule;
 
@@ -52,7 +52,7 @@ final class DataSourceIngestPipeline {
      * @param moduleTemplates Templates for the creating the ingest modules that
      *                        make up this pipeline.
      */
-    DataSourceIngestPipeline(DataSourceIngestJob job, List<IngestModuleTemplate> moduleTemplates) {
+    DataSourceIngestPipeline(IngestJobPipeline job, List<IngestModuleTemplate> moduleTemplates) {
         this.job = job;
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isDataSourceIngestModuleTemplate()) {
