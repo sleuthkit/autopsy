@@ -182,7 +182,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
             }
         }
         return false;
-    }
+    } 
 
     boolean addAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) {
         if (!accountExists(account)) {
@@ -711,6 +711,10 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 break;
         }
         initializeFields();
+    }
+    
+    public void setName(String name) {
+        nameField.setText(name);
     }
 
     @Messages({
