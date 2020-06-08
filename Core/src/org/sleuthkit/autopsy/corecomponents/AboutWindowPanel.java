@@ -24,7 +24,6 @@ import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
@@ -83,18 +82,20 @@ public final class AboutWindowPanel extends JPanel implements HyperlinkListener 
         description.addHyperlinkListener(hyperlinkListener);
     }
     
+    /**
+     * Listener to display hyperlinks in an external viewer.
+     */
     private class AboutPanelHyperlinkListener implements HyperlinkListener {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
-            if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED
+		    && Desktop.isDesktopSupported()) {
                 // Try to display the URL in the user's browswer. 
-                if(Desktop.isDesktopSupported()) {
-                    try {
-                        Desktop.getDesktop().browse(e.getURL().toURI());
-                    } catch (IOException | URISyntaxException ex) {
-                        logger.log(Level.WARNING, "Failed to display URL in external viewer", ex);
-                    }
-                }
+		try {
+		    Desktop.getDesktop().browse(e.getURL().toURI());
+		} catch (IOException | URISyntaxException ex) {
+		    logger.log(Level.WARNING, "Failed to display URL in external viewer", ex);
+		}
             }
         }
     }
