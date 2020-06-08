@@ -136,6 +136,10 @@ public class PersonaDetailsDialog extends JDialog {
         dispose();
     }//GEN-LAST:event_cancelBtnActionPerformed
     
+    public PersonaDetailsPanel getDetailsPanel() {
+        return this.pdp;
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelBtn;
     private javax.swing.JButton okBtn;

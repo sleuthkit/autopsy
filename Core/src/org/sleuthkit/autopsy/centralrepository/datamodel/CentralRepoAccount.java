@@ -23,7 +23,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.CommunicationsUtils;
+import static org.sleuthkit.datamodel.CommunicationsUtils.normalizeEmailAddress;
+import org.sleuthkit.datamodel.TskCoreException;
 
 
 /**
@@ -71,6 +75,41 @@ public final class CentralRepoAccount {
         public int getAccountTypeId() {
             return this.accountTypeId;
         }
+        
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 29 * hash + this.accountTypeId;
+            hash = 29 * hash + Objects.hashCode(this.acctType);
+            hash = 29 * hash + this.correlationTypeId;
+            return hash;
+        }
+        
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final CentralRepoAccountType other = (CentralRepoAccountType) obj;
+            if (this.accountTypeId != other.getAccountTypeId()) {
+                return false;
+            }
+            if (this.correlationTypeId != other.getCorrelationTypeId()) {
+                return false;
+            }
+            if (!Objects.equals(this.acctType, other.getAcctType())) {
+                return false;
+            }
+            return true;
+        }
+        
     }
     
     public CentralRepoAccount(long accountId, CentralRepoAccountType accountType, String typeSpecificIdentifier) {
@@ -116,27 +155,30 @@ public final class CentralRepoAccount {
 		return hash;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final CentralRepoAccount other = (CentralRepoAccount) obj;
-		if (this.accountId != other.getId()) {
-			return false;
-		}
-		if ((this.typeSpecificIdentifier == null) ? (other.getIdentifier() != null) : !this.typeSpecificIdentifier.equals(other.getIdentifier())) {
-			return false;
-		}
-		return !(this.accountType != other.getAccountType() && (this.accountType == null || !this.accountType.equals(other.getAccountType())));
-	}
-    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CentralRepoAccount other = (CentralRepoAccount) obj;
+        if (this.accountId != other.getId()) {
+            return false;
+        }
+        if (!Objects.equals(this.typeSpecificIdentifier, other.getIdentifier())) {
+            return false;
+        }
+        if (!Objects.equals(this.accountType, other.getAccountType())) {
+            return false;
+        }
+        return true;
+    }
+        
     /**
      * Callback to process a query that gets accounts
      */
@@ -209,9 +251,17 @@ public final class CentralRepoAccount {
      * @throws CentralRepoException If there is an error in getting the accounts.
      */
     public static Collection<CentralRepoAccount> getAccountsWithIdentifier(String accountIdentifier) throws CentralRepoException {
-       
+
+        String normalizedAccountIdentifier;
+
+        try {
+            normalizedAccountIdentifier = normalizeAccountIdentifier(accountIdentifier);
+        } catch (TskCoreException ex) {
+            throw new CentralRepoException("Failed to normalize account identifier.", ex);
+        }
+
         String queryClause = ACCOUNTS_QUERY_CLAUSE
-                + " WHERE LOWER(accounts.account_unique_identifier) = LOWER('" + accountIdentifier + "')";
+                + " WHERE LOWER(accounts.account_unique_identifier) = LOWER('" + normalizedAccountIdentifier + "')";
 
         AccountsQueryCallback queryCallback = new AccountsQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
@@ -237,4 +287,23 @@ public final class CentralRepoAccount {
         return queryCallback.getAccountsList();
     }
     
+    /**
+     * Attempts to normalize an account identifier, after trying to 
+     * guess the account type.
+     * 
+     * @param accountIdentifier Account identifier to be normalized.
+     * @return normalized identifier
+     * 
+     * @throws TskCoreException 
+     */
+    private static String normalizeAccountIdentifier(String accountIdentifier) throws TskCoreException {
+        String normalizedAccountIdentifier = accountIdentifier;
+        if (CommunicationsUtils.isValidPhoneNumber(accountIdentifier)) {
+                normalizedAccountIdentifier = CommunicationsUtils.normalizePhoneNum(accountIdentifier);
+        }
+        else if (CommunicationsUtils.isValidEmailAddress(accountIdentifier)) {
+            normalizedAccountIdentifier = normalizeEmailAddress(accountIdentifier);
+        }
+        return normalizedAccountIdentifier;
+    }
 }
