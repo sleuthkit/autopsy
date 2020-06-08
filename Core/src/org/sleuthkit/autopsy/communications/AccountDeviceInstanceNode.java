@@ -20,12 +20,18 @@ package org.sleuthkit.autopsy.communications;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
@@ -36,6 +42,8 @@ import org.sleuthkit.datamodel.CommunicationsManager;
  * Node to represent an Account Device Instance in the CVT
  */
 final class AccountDeviceInstanceNode extends AbstractNode {
+
+    private static final Logger logger = Logger.getLogger(AccountDeviceInstanceNode.class.getName());
 
     private final AccountDeviceInstanceKey accountDeviceInstanceKey;
     private final CommunicationsManager commsManager;
@@ -102,5 +110,35 @@ final class AccountDeviceInstanceNode extends AbstractNode {
         actions.add(PinAccountsAction.getInstance());
         actions.add(ResetAndPinAccountsAction.getInstance());
         return actions.toArray(new Action[actions.size()]);
+    }
+
+    @Messages({
+        "# {0} - Contact Name",
+        "# {1} - Persona Name",
+        "AccountInstanceNode_Tooltip_Template=Contact: {0} - Persona: {1}",
+        "# {0} - PersonaAccount count",
+        "AccountInstanceNode_Tooltip_suffix=(1 of {0})"
+    })
+    @Override
+    public String getShortDescription() {
+        List<PersonaAccount> personaList;
+        try {
+            personaList = CVTPersonaCache.getPersonaAccounts(getName());
+        } catch (ExecutionException ex) {
+            logger.log(Level.WARNING, "Failed to retrieve Persona details for node.", ex);
+            return getDisplayName();
+        }
+
+        String personaName;
+        if (!personaList.isEmpty()) {
+            personaName = personaList.get(0).getPersona().getName();
+            if (personaList.size() > 1) {
+                personaName += Bundle.AccountInstanceNode_Tooltip_suffix(Integer.toString(personaList.size()));
+            }
+        } else {
+            personaName = "None";
+        }
+
+        return Bundle.AccountInstanceNode_Tooltip_Template(getDisplayName(), personaName);
     }
 }

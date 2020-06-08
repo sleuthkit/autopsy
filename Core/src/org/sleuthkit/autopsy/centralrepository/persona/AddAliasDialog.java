@@ -42,7 +42,7 @@ public class AddAliasDialog extends JDialog {
     public AddAliasDialog(PersonaDetailsPanel pdp) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.AddAliasDialog_title_text(),
-                false);
+                true);
         this.pdp = pdp;
 
         initComponents();
