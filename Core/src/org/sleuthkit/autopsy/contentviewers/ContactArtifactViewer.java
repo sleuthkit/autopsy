@@ -66,7 +66,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     private String contactName;
     
     // A list of unique accounts matching the attributes of the contact artifact.
-    private final ArrayList<CentralRepoAccount> contactUniqueAccountsList = new ArrayList<>();
+    private final List<CentralRepoAccount> contactUniqueAccountsList = new ArrayList<>();
    
     // A list of all unique personas and their account, found by searching on the 
     // account identifier attributes of the Contact artifact.
@@ -588,7 +588,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     private class ContactPersonaSearcherTask extends SwingWorker<Map<Persona, ArrayList<CentralRepoAccount>>, Void> {
 
         private final List<BlackboardAttribute> accountAttributesList;
-        private final ArrayList<CentralRepoAccount> uniqueAccountsList = new ArrayList<>();
+        private final List<CentralRepoAccount> uniqueAccountsList = new ArrayList<>();
        
         
         ContactPersonaSearcherTask(List<BlackboardAttribute> accountAttributesList) {
@@ -703,7 +703,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         CreatePersonaButtonListener(PersonaUIComponents personaUIComponents) {
             this.personaUIComponents = personaUIComponents;
         }
-
+         
         @Override
         public void actionPerformed(java.awt.event.ActionEvent evt) {
             // Launch the Persona Create dialog
@@ -713,16 +713,18 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             // Pre populate the persona name and accounts if we have them.
             PersonaDetailsPanel personaPanel = createPersonaDialog.getDetailsPanel();
             
-            if (contactName != null) {
-                // TBD: set persona name
-                //personaPanel.setPersonaName(contactName);
-            }
+             // TBD: set persona name
+//            if (contactName != null) {
+//                personaPanel.setPersonaName(contactName);
+//            }
+
             // pass the list of accounts to the dialog
             for (CentralRepoAccount account: contactUniqueAccountsList) {
-                boolean result = personaPanel.addAccount(account, "Found in Contact artifact.", Persona.Confidence.UNKNOWN);
+                personaPanel.addAccount(account, "Account found in Contact artifact.", Persona.Confidence.UNKNOWN);
             }
             
             createPersonaDialog.getDetailsPanel().revalidate();
+            createPersonaDialog.revalidate();
         }
     }
         

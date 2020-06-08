@@ -104,10 +104,7 @@ public final class CentralRepoAccount {
             if (this.correlationTypeId != other.getCorrelationTypeId()) {
                 return false;
             }
-            if (!Objects.equals(this.acctType, other.getAcctType())) {
-                return false;
-            }
-            return true;
+            return Objects.equals(this.acctType, other.getAcctType());
         }
         
     }
@@ -173,10 +170,7 @@ public final class CentralRepoAccount {
         if (!Objects.equals(this.typeSpecificIdentifier, other.getIdentifier())) {
             return false;
         }
-        if (!Objects.equals(this.accountType, other.getAccountType())) {
-            return false;
-        }
-        return true;
+        return Objects.equals(this.accountType, other.getAccountType());
     }
         
     /**
