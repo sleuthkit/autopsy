@@ -113,6 +113,14 @@ public final class PersonaManagerTopComponent extends TopComponent {
                 handleSelectionChange(e);
             }
         });
+        
+        searchNameRadio.addActionListener((ActionEvent e) -> {
+            searchField.setText("");
+        });
+        
+        searchAccountRadio.addActionListener((ActionEvent e) -> {
+            searchField.setText("");
+        });
     }
 
     /**
@@ -200,7 +208,11 @@ public final class PersonaManagerTopComponent extends TopComponent {
     private void executeSearch() {
         Collection<Persona> results;
         try {
-            results = Persona.getPersonaByName(searchField.getText());
+            if (searchNameRadio.isSelected()) {
+                results = Persona.getPersonaByName(searchField.getText());
+            } else {
+                results = Persona.getPersonaByAccountIdentifierLike(searchField.getText());
+            }
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Failed to search personas", ex);
             JOptionPane.showMessageDialog(this,
@@ -254,7 +266,6 @@ public final class PersonaManagerTopComponent extends TopComponent {
 
         searchButtonGroup.add(searchAccountRadio);
         org.openide.awt.Mnemonics.setLocalizedText(searchAccountRadio, org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.searchAccountRadio.text")); // NOI18N
-        searchAccountRadio.setEnabled(false);
 
         resultsTable.setToolTipText(org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.resultsTable.toolTipText")); // NOI18N
         resultsTable.getTableHeader().setReorderingAllowed(false);
