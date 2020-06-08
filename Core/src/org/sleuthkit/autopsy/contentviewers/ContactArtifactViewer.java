@@ -706,25 +706,24 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
          
         @Override
         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            // Launch the Persona Create dialog
+            // Launch the Persona Create dialog - do not display immediately
             PersonaDetailsDialog createPersonaDialog = new PersonaDetailsDialog(ContactArtifactViewer.this,
-                    PersonaDetailsMode.CREATE, null, new PersonaCreateCallbackImpl(personaUIComponents));
-            
+                    PersonaDetailsMode.CREATE, null, new PersonaCreateCallbackImpl(personaUIComponents), false);
+
             // Pre populate the persona name and accounts if we have them.
             PersonaDetailsPanel personaPanel = createPersonaDialog.getDetailsPanel();
             
-             // TBD: set persona name
-//            if (contactName != null) {
-//                personaPanel.setPersonaName(contactName);
-//            }
+            if (contactName != null) {
+                personaPanel.setPersonaName(contactName);
+            }
 
             // pass the list of accounts to the dialog
-            for (CentralRepoAccount account: contactUniqueAccountsList) {
+            for (CentralRepoAccount account : contactUniqueAccountsList) {
                 personaPanel.addAccount(account, "Account found in Contact artifact.", Persona.Confidence.UNKNOWN);
             }
-            
-            createPersonaDialog.getDetailsPanel().revalidate();
-            createPersonaDialog.revalidate();
+
+            // display the dialog now
+            createPersonaDialog.display();
         }
     }
         

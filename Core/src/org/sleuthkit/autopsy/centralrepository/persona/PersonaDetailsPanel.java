@@ -803,4 +803,14 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         }
         return ret;
     }
+    
+    /**
+     * Sets the persona name field.
+     * 
+     * @param name Persona name.
+     */
+    public void setPersonaName(String name) {
+        nameField.setText(name);
+    }
+    
 }
