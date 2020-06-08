@@ -18,7 +18,16 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.time.Instant;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Set;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 
 /**
  * Utility class that can be used by UI nodes to reduce the number of
@@ -26,27 +35,55 @@ import java.time.Instant;
  */
 class RefreshThrottler {
 
-    // The last time a refresh was performed.
-    private Instant lastRefreshTime;
+    interface Refresher {
+
+        void refresh(PropertyChangeEvent evt);
+    }
+
+    static ScheduledThreadPoolExecutor refreshExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("Node Refresh Thread").build());
+    private final AtomicReference refreshTaskRef = new AtomicReference<>(null);
+
+    private final Refresher refresher;
+
     private static final long MIN_SECONDS_BETWEEN_RERFESH = 5;
 
-    RefreshThrottler() {
-        // Initialize to EPOCH to guarantee the first refresh
-        lastRefreshTime = Instant.EPOCH;
+    private final class RefreshTask implements Runnable {
+
+        private final PropertyChangeEvent event;
+
+        RefreshTask(PropertyChangeEvent event) {
+            this.event = event;
+        }
+
+        @Override
+        public void run() {
+            refresher.refresh(event);
+            refreshTaskRef.set(null);
+        }
     }
 
-    /**
-     * @return true if a refresh is due, false otherwise
-     */
-    boolean isRefreshDue() {
-        return Instant.now().isAfter(lastRefreshTime.plusSeconds(MIN_SECONDS_BETWEEN_RERFESH));
+    private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+        String eventType = evt.getPropertyName();
+        if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())
+                || eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+            RefreshTask task = new RefreshTask(evt);
+            if (refreshTaskRef.compareAndSet(null, task)) {
+                refreshExecutor.schedule(task, MIN_SECONDS_BETWEEN_RERFESH, TimeUnit.SECONDS);
+            }
+        }
+    };
+
+    RefreshThrottler(Refresher r) {
+        refresher = r;
     }
 
-    /**
-     * Update the last time a refresh was performed.
-     * @param refreshTime The last time a refresh was performed.
-     */
-    void setLastRefreshTime(Instant refreshTime) {
-        lastRefreshTime = refreshTime;
+    void registerForIngestEvents(Set<IngestJobEvent> jobEventsOfInterest, Set<IngestModuleEvent> moduleEventsOfInterest) {
+        IngestManager.getInstance().addIngestJobEventListener(jobEventsOfInterest, pcl);
+        IngestManager.getInstance().addIngestModuleEventListener(moduleEventsOfInterest, pcl);
+    }
+    
+    void unregisterEventListener() {
+        IngestManager.getInstance().removeIngestJobEventListener(pcl);
+        IngestManager.getInstance().removeIngestModuleEventListener(pcl);
     }
 }

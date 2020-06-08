@@ -146,13 +146,13 @@ public class ExtractedContent implements AutopsyVisitableItem {
      * This area has all of the blackboard artifacts that are not displayed in a
      * more specific form elsewhere in the tree.
      */
-    private class TypeFactory extends ChildFactory.Detachable<BlackboardArtifact.Type> {
+    private class TypeFactory extends ChildFactory.Detachable<BlackboardArtifact.Type> implements RefreshThrottler.Refresher {
 
         private final ArrayList<BlackboardArtifact.Type> doNotShow = new ArrayList<>();
         // maps the artifact type to its child node 
         private final HashMap<BlackboardArtifact.Type, TypeNode> typeNodeList = new HashMap<>();
 
-        private final RefreshThrottler refreshThrottler = new RefreshThrottler();
+        private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
 
         @SuppressWarnings("deprecation")
         TypeFactory() {
@@ -176,49 +176,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
             String eventType = evt.getPropertyName();
-            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-                if (!refreshThrottler.isRefreshDue()) {
-                    return;
-                }
-
-                /**
-                 * This is a stop gap measure until a different way of handling
-                 * the closing of cases is worked out. Currently, remote events
-                 * may be received for a case that is already closed.
-                 */
-                try {
-                    Case.getCurrentCaseThrows();
-                    /**
-                     * Due to some unresolved issues with how cases are closed,
-                     * it is possible for the event to have a null oldValue if
-                     * the event is a remote event.
-                     */
-                    final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                    if (null != event && !(this.doNotShow.contains(event.getBlackboardArtifactType()))) {
-                        refresh(false);
-                        refreshThrottler.setLastRefreshTime(Instant.now());
-                    }
-                } catch (NoCurrentCaseException notUsed) {
-                    /**
-                     * Case is closed, do nothing.
-                     */
-                }
-            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                /**
-                 * This is a stop gap measure until a different way of handling
-                 * the closing of cases is worked out. Currently, remote events
-                 * may be received for a case that is already closed.
-                 */
-                try {
-                    Case.getCurrentCaseThrows();
-                    refresh(false);
-                } catch (NoCurrentCaseException notUsed) {
-                    /**
-                     * Case is closed, do nothing.
-                     */
-                }
-            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+            if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                 // case was closed. Remove listeners so that we don't get called with a stale case handle
                 if (evt.getNewValue() == null) {
                     removeNotify();
@@ -229,15 +187,13 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
+            refreshThrottler.registerForIngestEvents(INGEST_JOB_EVENTS_OF_INTEREST, INGEST_MODULE_EVENTS_OF_INTEREST);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
         }
 
         @Override
         protected void removeNotify() {
-            IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+            refreshThrottler.unregisterEventListener();
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
             typeNodeList.clear();
         }
@@ -280,6 +236,49 @@ public class ExtractedContent implements AutopsyVisitableItem {
             TypeNode node = new TypeNode(key);
             typeNodeList.put(key, node);
             return node;
+        }
+
+        @Override
+        public void refresh(PropertyChangeEvent evt) {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                /**
+                 * This is a stop gap measure until a different way of handling
+                 * the closing of cases is worked out. Currently, remote events
+                 * may be received for a case that is already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    /**
+                     * Due to some unresolved issues with how cases are closed,
+                     * it is possible for the event to have a null oldValue if
+                     * the event is a remote event.
+                     */
+                    final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
+                    if (null != event && !(this.doNotShow.contains(event.getBlackboardArtifactType()))) {
+                        refresh(false);
+                    }
+                } catch (NoCurrentCaseException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * This is a stop gap measure until a different way of handling
+                 * the closing of cases is worked out. Currently, remote events
+                 * may be received for a case that is already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    refresh(false);
+                } catch (NoCurrentCaseException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            }         
         }
     }
 
@@ -363,79 +362,24 @@ public class ExtractedContent implements AutopsyVisitableItem {
     /**
      * Creates children for a given artifact type
      */
-    private class ArtifactFactory extends BaseChildFactory<BlackboardArtifact> {
+    private class ArtifactFactory extends BaseChildFactory<BlackboardArtifact> implements RefreshThrottler.Refresher {
 
         private BlackboardArtifact.Type type;
-        private final RefreshThrottler refreshThrottler = new RefreshThrottler();
+        private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
 
         ArtifactFactory(BlackboardArtifact.Type type) {
             super(type.getTypeName());
             this.type = type;
         }
 
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-                    if (!refreshThrottler.isRefreshDue()) {
-                        return;
-                    }
-
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        /**
-                         * Even with the check above, it is still possible that
-                         * the case will be closed in a different thread before
-                         * this code executes. If that happens, it is possible
-                         * for the event to have a null oldValue.
-                         */
-                        final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                        if (null != event && event.getBlackboardArtifactType().equals(type)) {
-                            refresh(false);
-                            refreshThrottler.setLastRefreshTime(Instant.now());
-                        }
-                    } catch (NoCurrentCaseException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
-                    }
-                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        refresh(false);
-                    } catch (NoCurrentCaseException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
-                    }
-                }
-            }
-        };
-
         @Override
         protected void onAdd() {
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
+            refreshThrottler.registerForIngestEvents(INGEST_JOB_EVENTS_OF_INTEREST, INGEST_MODULE_EVENTS_OF_INTEREST);
         }
 
         @Override
         protected void onRemove() {
-            IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+            refreshThrottler.unregisterEventListener();
         }
 
         @Override
@@ -464,6 +408,53 @@ public class ExtractedContent implements AutopsyVisitableItem {
                 }
             }
             return Collections.emptyList();
+        }
+
+        @Override
+        public void refresh(PropertyChangeEvent evt) {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    /**
+                     * Even with the check above, it is still possible that the
+                     * case will be closed in a different thread before this
+                     * code executes. If that happens, it is possible for the
+                     * event to have a null oldValue.
+                     */
+                    final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
+                    if (null != event && event.getBlackboardArtifactType().equals(type)) {
+                        refresh(false);
+                    }
+                } catch (NoCurrentCaseException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    refresh(false);
+                } catch (NoCurrentCaseException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            }
         }
     }
 }
