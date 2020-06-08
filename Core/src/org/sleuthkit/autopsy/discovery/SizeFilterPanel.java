@@ -168,7 +168,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
         if (sizeCheckbox.isSelected() && sizeList.getSelectedValuesList().isEmpty()) {
             return "At least one size must be selected";
         }
-        return null;
+        return "";
 
     }
 

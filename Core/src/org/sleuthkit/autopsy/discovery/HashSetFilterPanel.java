@@ -152,7 +152,7 @@ final class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
         if (hashSetCheckbox.isSelected() && hashSetList.getSelectedValuesList().isEmpty()) {
             return "At least one hash set name must be selected";
         }
-        return null;
+        return "";
     }
 
     @Override

@@ -158,7 +158,7 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
         if (objectsCheckbox.isSelected() && objectsList.getSelectedValuesList().isEmpty()) {
             return "At least one object type name must be selected";
         }
-        return null;
+        return "";
     }
 
     @Override

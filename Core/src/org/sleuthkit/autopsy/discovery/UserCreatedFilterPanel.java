@@ -85,7 +85,7 @@ final class UserCreatedFilterPanel extends AbstractDiscoveryFilterPanel {
     @Override
     String checkForError() {
         //this filter currently has no errors it generates
-        return null;
+        return "";
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -145,7 +145,7 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
         if (pastOccurrencesCheckbox.isSelected() && crFrequencyList.getSelectedValuesList().isEmpty()) {
             return "At least one value in the past occurrence filter must be selected";
         }
-        return null;
+        return "";
     }
 
     @Override

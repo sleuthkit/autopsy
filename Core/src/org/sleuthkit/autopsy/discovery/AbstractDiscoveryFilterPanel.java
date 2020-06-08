@@ -69,8 +69,7 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
     /**
      * Check if this filter is configured to valid settings.
      *
-     * @return True if the filter is configured with valid search settings,
-     *         false otherwise.
+     * @return If the settings are invalid returns the error that has occurred, otherwise returns empty string.
      */
     abstract String checkForError();
 

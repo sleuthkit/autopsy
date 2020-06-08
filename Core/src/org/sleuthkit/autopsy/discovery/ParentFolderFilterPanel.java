@@ -277,7 +277,7 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
         if (parentCheckbox.isSelected() && getParentPaths().isEmpty()) {
             return "At least one parent path must be entered";
         }
-        return null;
+        return "";
     }
 
     /**

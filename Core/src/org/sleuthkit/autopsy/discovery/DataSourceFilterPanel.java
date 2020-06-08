@@ -190,7 +190,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
         if (dataSourceCheckbox.isSelected() && dataSourceList.getSelectedValuesList().isEmpty()) {
             return "At least one size must be selected";
         }
-        return null;
+        return "";
     }
 
     @Override

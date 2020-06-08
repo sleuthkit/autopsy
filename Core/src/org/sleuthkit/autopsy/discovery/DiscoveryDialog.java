@@ -216,7 +216,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         javax.swing.JPanel displaySettingsPanel = new javax.swing.JPanel();
         searchButton = new javax.swing.JButton();
         errorLabel = new javax.swing.JLabel();
-        javax.swing.JButton cancelButton = new javax.swing.JButton();
         javax.swing.JPanel sortingPanel = new javax.swing.JPanel();
         groupByCombobox = new javax.swing.JComboBox<>();
         orderByCombobox = new javax.swing.JComboBox<>();
@@ -316,13 +315,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
 
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(DiscoveryDialog.class, "DiscoveryDialog.cancelButton.text")); // NOI18N
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelButtonActionPerformed(evt);
-            }
-        });
-
         sortingPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(DiscoveryDialog.class, "DiscoveryDialog.sortingPanel.border.title"))); // NOI18N
         sortingPanel.setPreferredSize(new java.awt.Dimension(345, 112));
 
@@ -377,10 +369,8 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                     .addComponent(sortingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 741, Short.MAX_VALUE)
                     .addGroup(displaySettingsPanelLayout.createSequentialGroup()
                         .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 575, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
-                        .addComponent(cancelButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(searchButton)))
+                        .addGap(65, 65, 65)
+                        .addComponent(searchButton, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(8, 8, 8))
         );
         displaySettingsPanelLayout.setVerticalGroup(
@@ -391,9 +381,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 .addGap(8, 8, 8)
                 .addGroup(displaySettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(displaySettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(cancelButton)
-                        .addComponent(searchButton)))
+                    .addComponent(searchButton))
                 .addGap(8, 8, 8))
         );
 
@@ -528,10 +516,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         setVisible(false);
     }
 
-    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        this.setVisible(false);
-    }//GEN-LAST:event_cancelButtonActionPerformed
-
     /**
      * Cancel the searchWorker if it exists.
      */
@@ -545,7 +529,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * The adjust the controls to reflect whether the settings are valid based
      * on the error.
      *
-     * @param error The error message to display, null if there is no error.
+     * @param error The error message to display, empty string if there is no error.
      */
     private void setValid(String error) {
         if (StringUtils.isBlank(error)) {

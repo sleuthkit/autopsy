@@ -147,7 +147,7 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
         if (interestingItemsCheckbox.isSelected() && interestingItemsList.getSelectedValuesList().isEmpty()) {
             return "At least one interesting file set name must be selected";
         }
-        return null;
+        return "";
     }
 
 

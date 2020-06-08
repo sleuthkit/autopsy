@@ -191,6 +191,8 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     @Override
     public void actionPerformed(ActionEvent e) {
         validateFields();
+        validate();
+        repaint();
     }
 
     /**
@@ -258,6 +260,8 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     public void valueChanged(ListSelectionEvent evt) {
         if (!evt.getValueIsAdjusting()) {
             validateFields();
+            validate();
+            repaint();
         }
     }
 
