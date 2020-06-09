@@ -255,7 +255,7 @@ public class AddAccountDialog extends JDialog {
         "AddAccountDialog_search_failure_Title=Account add failure",
         "AddAccountDialog_search_failure_msg=Central Repository account search failed",
         "AddAccountDialog_search_empty_Title=Account not found",
-        "AddAccountDialog_search_empty_msg=Account not found for given identifier and type",})
+        "AddAccountDialog_search_empty_msg=Account not found in the Central Repository for the given identifier and type",})
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
         if (identifierTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this,
