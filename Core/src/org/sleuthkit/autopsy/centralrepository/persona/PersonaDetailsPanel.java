@@ -713,7 +713,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         initializeFields();
     }
     
-    public void setName(String name) {
+    public void setPersonaName(String name) {
         nameField.setText(name);
     }
 
