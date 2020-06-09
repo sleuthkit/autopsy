@@ -255,6 +255,18 @@ public class Persona {
     }
     
     /**
+     * Sets the comment of this persona
+     *
+     * @param name The new comment.
+     * 
+     * @throws CentralRepoException If there is an error.
+     */
+    public void setComment(String comment) throws CentralRepoException {
+        String updateClause = "UPDATE personas SET comment = \"" + comment + "\" WHERE id = " + id;
+        CentralRepository.getInstance().executeUpdateSQL(updateClause);
+    }
+
+    /**
      * Sets the name of this persona
      *
      * @param name The new name.

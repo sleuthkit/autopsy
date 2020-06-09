@@ -20,8 +20,10 @@ package org.sleuthkit.autopsy.centralrepository.persona;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JButton;
@@ -34,7 +36,9 @@ import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoExaminer;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
@@ -282,6 +286,12 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         detailsPanel = new javax.swing.JPanel();
+        examinerLbl = new javax.swing.JLabel();
+        examinerField = new javax.swing.JTextField();
+        creationDateLbl = new javax.swing.JLabel();
+        creationDateField = new javax.swing.JTextField();
+        commentLbl = new javax.swing.JLabel();
+        commentField = new javax.swing.JTextField();
         nameLbl = new javax.swing.JLabel();
         nameField = new javax.swing.JTextField();
         accountsLbl = new javax.swing.JLabel();
@@ -302,18 +312,26 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         casesLbl = new javax.swing.JLabel();
         casesTablePane = new javax.swing.JScrollPane();
         casesTable = new javax.swing.JTable();
-        addCaseBtn = new javax.swing.JButton();
-        deleteCaseBtn = new javax.swing.JButton();
+
+        org.openide.awt.Mnemonics.setLocalizedText(examinerLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.examinerLbl.text")); // NOI18N
+
+        examinerField.setEditable(false);
+        examinerField.setText(org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.examinerField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(creationDateLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.creationDateLbl.text")); // NOI18N
+
+        creationDateField.setEditable(false);
+        creationDateField.setText(org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.creationDateField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(commentLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.commentLbl.text")); // NOI18N
+
+        commentField.setEditable(false);
+        commentField.setText(org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.commentField.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(nameLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.nameLbl.text")); // NOI18N
 
         nameField.setEditable(false);
         nameField.setText(org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.nameField.text")); // NOI18N
-        nameField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                nameFieldActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(accountsLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.accountsLbl.text")); // NOI18N
 
@@ -393,12 +411,6 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         ));
         casesTablePane.setViewportView(casesTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(addCaseBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.addCaseBtn.text")); // NOI18N
-        addCaseBtn.setEnabled(false);
-
-        org.openide.awt.Mnemonics.setLocalizedText(deleteCaseBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.deleteCaseBtn.text")); // NOI18N
-        deleteCaseBtn.setEnabled(false);
-
         javax.swing.GroupLayout detailsPanelLayout = new javax.swing.GroupLayout(detailsPanel);
         detailsPanel.setLayout(detailsPanelLayout);
         detailsPanelLayout.setHorizontalGroup(
@@ -406,11 +418,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
             .addGroup(detailsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(accountsTablePane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 549, Short.MAX_VALUE)
-                    .addGroup(detailsPanelLayout.createSequentialGroup()
-                        .addComponent(nameLbl)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(nameField))
+                    .addComponent(accountsTablePane, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(accountsLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(metadataLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(metadataTablePane, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -419,11 +427,19 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                     .addComponent(casesLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(casesTablePane)
                     .addGroup(detailsPanelLayout.createSequentialGroup()
+                        .addComponent(commentLbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(commentField))
+                    .addGroup(detailsPanelLayout.createSequentialGroup()
+                        .addComponent(examinerLbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(examinerField, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(creationDateLbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(creationDateField, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(detailsPanelLayout.createSequentialGroup()
                         .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(detailsPanelLayout.createSequentialGroup()
-                                .addComponent(addCaseBtn)
-                                .addGap(18, 18, 18)
-                                .addComponent(deleteCaseBtn))
                             .addGroup(detailsPanelLayout.createSequentialGroup()
                                 .addComponent(addAccountBtn)
                                 .addGap(18, 18, 18)
@@ -436,13 +452,27 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                                 .addComponent(addAliasBtn)
                                 .addGap(18, 18, 18)
                                 .addComponent(deleteAliasBtn)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(detailsPanelLayout.createSequentialGroup()
+                        .addComponent(nameLbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(nameField)))
                 .addContainerGap())
         );
         detailsPanelLayout.setVerticalGroup(
             detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(detailsPanelLayout.createSequentialGroup()
-                .addContainerGap()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(examinerLbl)
+                    .addComponent(examinerField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(creationDateLbl)
+                    .addComponent(creationDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(commentField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(commentLbl))
+                .addGap(20, 20, 20)
                 .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(nameLbl)
                     .addComponent(nameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -474,32 +504,20 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 .addComponent(casesLbl)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(casesTablePane, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(addCaseBtn)
-                    .addComponent(deleteCaseBtn))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 561, Short.MAX_VALUE)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(detailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(detailsPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 559, Short.MAX_VALUE)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(detailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(detailsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void nameFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameFieldActionPerformed
-
-    }//GEN-LAST:event_nameFieldActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel accountsLbl;
@@ -507,7 +525,6 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane accountsTablePane;
     private javax.swing.JButton addAccountBtn;
     private javax.swing.JButton addAliasBtn;
-    private javax.swing.JButton addCaseBtn;
     private javax.swing.JButton addMetadataBtn;
     private javax.swing.JLabel aliasesLabel;
     private javax.swing.JTable aliasesTable;
@@ -515,11 +532,16 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel casesLbl;
     private javax.swing.JTable casesTable;
     private javax.swing.JScrollPane casesTablePane;
+    private javax.swing.JTextField commentField;
+    private javax.swing.JLabel commentLbl;
+    private javax.swing.JTextField creationDateField;
+    private javax.swing.JLabel creationDateLbl;
     private javax.swing.JButton deleteAccountBtn;
     private javax.swing.JButton deleteAliasBtn;
-    private javax.swing.JButton deleteCaseBtn;
     private javax.swing.JButton deleteMetadataBtn;
     private javax.swing.JPanel detailsPanel;
+    private javax.swing.JTextField examinerField;
+    private javax.swing.JLabel examinerLbl;
     private javax.swing.JLabel metadataLabel;
     private javax.swing.JTable metadataTable;
     private javax.swing.JScrollPane metadataTablePane;
@@ -531,12 +553,22 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         "PersonaDetailsPanel_load_exception_Title=Initialization failure",
         "PersonaDetailsPanel_load_exception_msg=Failed to load persona",})
     private void loadPersona(Component parent, Persona persona) {
+        String examiner;
+        String creationDate;
+        String comment;
         String name;
         Collection<PersonaAccount> accounts;
         Collection<PersonaMetadata> metadata;
         Collection<PersonaAlias> aliases;
         Collection<CorrelationCase> cases;
         try {
+            examiner = persona.getExaminer().getLoginName();
+            
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+            Date cDate = new Date(persona.getCreatedDate());
+            creationDate = dateFormat.format(cDate);
+            
+            comment = persona.getComment();
             name = persona.getName();
             accounts = persona.getPersonaAccounts();
             metadata = persona.getMetadata();
@@ -551,6 +583,9 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
             return;
         }
         this.currentPersona = persona;
+        this.examinerField.setText(examiner);
+        this.creationDateField.setText(creationDate);
+        this.commentField.setText(comment);
         this.nameField.setText(name);
         this.currentAccounts.addAll(accounts);
         this.currentMetadata.addAll(metadata);
@@ -560,6 +595,9 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
 
     void clear() {
         currentPersona = null;
+        examinerField.setText("");
+        creationDateField.setText("");
+        commentField.setText("");
         nameField.setText(mode == PersonaDetailsMode.CREATE ? Persona.getDefaultName() : "");
         currentAccounts = new ArrayList<>();
         currentMetadata = new ArrayList<>();
@@ -569,17 +607,16 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         metadataToAdd.clear();
         aliasesToAdd.clear();
         nameField.setEditable(false);
+        commentField.setEditable(false);
 
         initializeFields();
 
         addAccountBtn.setEnabled(false);
         addMetadataBtn.setEnabled(false);
         addAliasBtn.setEnabled(false);
-        addCaseBtn.setEnabled(false);
         deleteAccountBtn.setEnabled(false);
         deleteMetadataBtn.setEnabled(false);
         deleteAliasBtn.setEnabled(false);
-        deleteCaseBtn.setEnabled(false);
     }
 
     /**
@@ -678,14 +715,26 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     }
 
     void enableEditUIComponents() {
+        commentField.setEditable(true);
         nameField.setEditable(true);
         addAccountBtn.setEnabled(true);
         addMetadataBtn.setEnabled(true);
         addAliasBtn.setEnabled(true);
-        //addCaseBtn.setEnabled(true); //todo
     }
 
     void initializeFields() {
+        if (mode == PersonaDetailsMode.CREATE) {
+            try {
+                CentralRepoExaminer examiner = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
+                examinerField.setText(examiner.getLoginName());
+            } catch (CentralRepoException e) {
+                logger.log(Level.SEVERE, "Failed to access central repository", e);
+                JOptionPane.showMessageDialog(this,
+                        Bundle.PersonaDetailsPanel_CentralRepoErr_msg(),
+                        Bundle.PersonaDetailsPanel_CentralRepoErr_Title(),
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
         updateAccountsTable();
         updateMetadataTable();
         updateAliasesTable();
@@ -719,7 +768,9 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         "PersonaDetailsPanel_CentralRepoErr_msg=Failure to write to Central Repository",
         "PersonaDetailsPanel_CentralRepoErr_Title=Central Repository failure",
         "PersonaDetailsPanel_EmptyName_msg=Persona name cannot be empty",
-        "PersonaDetailsPanel_EmptyName_Title=Empty persona name",})
+        "PersonaDetailsPanel_EmptyName_Title=Empty persona name",
+        "PersonaDetailsPanel_EmptyComment_msg=Persona comment cannot be empty",
+        "PersonaDetailsPanel_EmptyComment_Title=Empty persona comment",})
     Persona okHandler() {
         if (accountsToAdd.size() + currentAccounts.size() < 1) {
             JOptionPane.showMessageDialog(this,
@@ -728,6 +779,13 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                     JOptionPane.ERROR_MESSAGE);
             return null;
 
+        }
+        if (commentField.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    Bundle.PersonaDetailsPanel_EmptyComment_msg(),
+                    Bundle.PersonaDetailsPanel_EmptyComment_Title(),
+                    JOptionPane.ERROR_MESSAGE);
+            return null;
         }
         if (nameField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this,
@@ -743,7 +801,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 try {
                     PAccount firstAccount = accountsToAdd.get(0);
                     ret = Persona.createPersonaForAccount(nameField.getText(),
-                            "", Persona.PersonaStatus.ACTIVE, firstAccount.account,
+                            commentField.getText(), Persona.PersonaStatus.ACTIVE, firstAccount.account,
                             firstAccount.justification, firstAccount.confidence);
                     for (int i = 1; i < accountsToAdd.size(); i++) {
                         ret.addAccount(accountsToAdd.get(i).account,
@@ -768,6 +826,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
             case EDIT:
                 try {
                     ret = currentPersona;
+                    currentPersona.setComment(commentField.getText());
                     currentPersona.setName(nameField.getText());
                     for (PAccount acc : accountsToAdd) {
                         ret.addAccount(acc.account, acc.justification, acc.confidence);
