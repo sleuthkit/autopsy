@@ -29,9 +29,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Analyzes one or more data sources using a set of ingest modules specified via
@@ -61,12 +64,19 @@ public final class IngestJob {
             return displayName;
         }
     }
+    
+    enum Mode {
+	BATCH,
+	STREAMING
+    }
+    
 
     private final static AtomicLong nextId = new AtomicLong(0L);
     private final long id;
     private final List<Content> dataSources = new ArrayList<>();
     private final List<AbstractFile> files;
-    private final IngestStream ingestStream;
+    private final Mode ingestMode;
+    private DataSource streamingIngestDataSource = null;
     private final Map<Long, IngestJobPipeline> ingestJobPipelines;
     private final AtomicInteger incompleteJobsCount;
     private final IngestJobSettings settings;
@@ -83,7 +93,7 @@ public final class IngestJob {
         this.id = IngestJob.nextId.getAndIncrement();
 	this.settings = settings;
         this.ingestJobPipelines = new ConcurrentHashMap<>();
-	this.ingestStream = null;
+	this.ingestMode = Mode.BATCH;
 	this.dataSources.addAll(dataSources);
 	this.files = null;
         incompleteJobsCount = new AtomicInteger(dataSources.size());
@@ -105,7 +115,7 @@ public final class IngestJob {
 	this.settings = settings;
 	this.files = files;
 	this.dataSources.add(dataSource);
-	this.ingestStream = null;
+	this.ingestMode = Mode.BATCH;
         incompleteJobsCount = new AtomicInteger(1);
         cancellationReason = CancellationReason.NOT_CANCELLED;
     }
@@ -114,15 +124,14 @@ public final class IngestJob {
      * Constructs an ingest job that analyzes one data source using an
      * ingest stream.
      *
-     * @param ingestStream The ingest stream.
      * @param settings   The ingest job settings.
      */
-    IngestJob(IngestStream ingestStream, IngestJobSettings settings) {
+    public IngestJob(IngestJobSettings settings) { // TODO revert public
         this.id = IngestJob.nextId.getAndIncrement();
         this.ingestJobPipelines = new ConcurrentHashMap<>();
 	this.settings = settings;
 	this.files = null;
-	this.ingestStream = ingestStream;
+	this.ingestMode = Mode.STREAMING;
         incompleteJobsCount = new AtomicInteger(1);
         cancellationReason = CancellationReason.NOT_CANCELLED;
     }
@@ -146,6 +155,66 @@ public final class IngestJob {
     boolean hasIngestPipeline() {
 	return (!settings.getEnabledIngestModuleTemplates().isEmpty());
     }
+    
+    /**
+     * Add a set of files (by object ID) to be ingested.
+     * 
+     * @param fileObjIds the list of file IDs
+     */
+    void addStreamingIngestFiles(List<Long> fileObjIds) {
+	// TODO error if using when not streaming or if there are multiple pipelines
+	if (ingestJobPipelines.keySet().size() != 1) {
+	    // TODO fix error handling
+	    System.out.println("\n###addStreamingIngestDataSource() error: pipeline key size = " + ingestJobPipelines.keySet().size());
+	    //throw new RuntimeException("Wrong number of pipelines");
+	}
+	
+	getStreamingIngestPipeline().addStreamingIngestFiles(fileObjIds);
+    }
+    
+    /**
+     * Start data source processing for streaming ingest.
+     */
+    void addStreamingIngestDataSource() {
+	// TODO error if using when not streaming or if there are multiple pipelines
+	if (ingestJobPipelines.keySet().size() != 1) {
+	    // TODO fix error handling
+	    System.out.println("\n###addStreamingIngestDataSource() error: pipeline key size = " + ingestJobPipelines.keySet().size());
+	    //throw new RuntimeException("Wrong number of pipelines");
+	}
+	
+	getStreamingIngestPipeline().addStreamingIngestDataSource();
+    }
+    
+    /**
+     * TODO this is a workaround to get the right pipeline. For streaming ingest
+     * there will only be one. Might be able to pass/store the job ID to avoid this.
+     * 
+     * @return 
+     */
+    private IngestJobPipeline getStreamingIngestPipeline() {
+	return ingestJobPipelines.values().iterator().next();
+    }
+    
+    /**
+     * TODO possibly move setting the data source ID elsewhere so the calls
+     * to start can be the same for batch and streaming. This may not be necessary
+     * if the data source is created earlier. 
+     * 
+     * @param dataSourceObjId
+     * 
+     * @return 
+     */
+    List<IngestModuleError> start(long dataSourceObjId) {
+	try {
+	    streamingIngestDataSource = Case.getCurrentCase().getSleuthkitCase().getDataSource(dataSourceObjId);
+	    return start();
+	} catch (TskCoreException | TskDataException ex) {
+	    // TODO figure out how to handle an error here
+	    ex.printStackTrace();
+	    return new ArrayList<>();
+	}
+    }
 
     /**
      * Starts this ingest job by starting its ingest module pipelines and
@@ -158,8 +227,8 @@ public final class IngestJob {
 	/*
 	 * Set up the pipeline(s)
 	 */
-	if (ingestStream != null) {
-	    IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, ingestStream, settings);
+	if (ingestMode == Mode.STREAMING) {
+	    IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, streamingIngestDataSource, settings);
 	    this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
 	} else if (files != null && dataSources.size() == 1) {
 	    IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSources.get(0), files, settings);
@@ -200,6 +269,15 @@ public final class IngestJob {
         }
 
         return errors;
+    }
+    
+    /**
+     * Get the ingest mode for this job (batch or streaming).
+     * 
+     * @return the ingest mode.
+     */
+    Mode getIngestMode() {
+	return ingestMode;
     }
 
     /**

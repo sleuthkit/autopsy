@@ -189,6 +189,8 @@ final class IngestTasksScheduler {
 		// but calling that test would negate that. The check gets calls later so this
 		// should be ok.
                 //if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
+		System.out.println("### IngestTasksScheduler.scheduleStreamedFileIngestTasks(): Adding fileID " + id + " to streamedTasksQueue");
+
                     this.streamedTasksQueue.add(task);
                 //}
             }
@@ -246,6 +248,8 @@ final class IngestTasksScheduler {
      * @param task The completed task.
      */
     synchronized void notifyTaskCompleted(FileIngestTask task) {
+	System.out.println("### IngestTasksScheduler.notifyTaskCompleted(): Finished task with file id " + task.getFile().getId()
+	    + " and name " + task.getFile().getName());
         this.fileIngestThreadsQueue.taskCompleted(task);
         shuffleFileTaskQueues();
     }
@@ -264,6 +268,7 @@ final class IngestTasksScheduler {
         return !(this.dataSourceIngestThreadQueue.hasTasksForJob(jobId)
                 || hasTasksForJob(this.rootFileTaskQueue, jobId)
                 || hasTasksForJob(this.pendingFileTaskQueue, jobId)
+		|| hasTasksForJob(this.streamedTasksQueue, jobId)
                 || this.fileIngestThreadsQueue.hasTasksForJob(jobId));
     }
 
@@ -353,10 +358,27 @@ final class IngestTasksScheduler {
      */
     synchronized private void shuffleFileTaskQueues() {
 	
-	if (fileIngestThreadsQueue.isEmpty()) {
+	while (fileIngestThreadsQueue.isEmpty()) {
 	    final FileIngestTask streamingTask = streamedTasksQueue.poll();
-	    if (streamingTask != null) {
-		pendingFileTaskQueue.addLast(streamingTask);
+	    if (streamingTask == null) {
+		System.out.println("### IngestTasksScheduler.shuffleFileTaskQueues(): failed to get file from streamedTasksQueue");
+		break; // No streaming tasks right now
+	    }
+	    
+	    System.out.println("### IngestTasksScheduler.shuffleFileTaskQueues(): Testing file ID " + streamingTask.getFile().getId() + " and name " + streamingTask.getFile().getName() + " to pending queue");
+	    try {
+		if (shouldEnqueueFileTask(streamingTask)) {
+		    System.out.println("### IngestTasksScheduler.shuffleFileTaskQueues(): Adding file ID " + streamingTask.getFile().getId()
+			+ " to fileIngestThreadsQueue");
+		    fileIngestThreadsQueue.putLast(streamingTask);
+		} else {
+		    System.out.println("### IngestTasksScheduler.shuffleFileTaskQueues(): File ID " + streamingTask.getFile().getId()
+			+ " is not valid for ingest");
+		}
+	    } catch (InterruptedException ex) {
+		IngestTasksScheduler.logger.log(Level.INFO, "Ingest tasks scheduler interrupted while blocked adding a task to the file level ingest task queue", ex);
+		Thread.currentThread().interrupt();
+		return;
 	    }
 	}
 	

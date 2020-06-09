@@ -69,7 +69,7 @@ final class IngestJobPipeline {
     private final long id;
     private final IngestJobSettings settings;
     private Content dataSource = null;
-    private final IngestStream ingestStream;
+    private final IngestJob.Mode ingestMode;
     private final List<AbstractFile> files = new ArrayList<>();
 
     /**
@@ -94,7 +94,10 @@ final class IngestJobPipeline {
         /**
          * Cleaning up.
          */
-        FINALIZATION
+        FINALIZATION,
+	STREAMING_INITIALIZATION,
+	STREAMING_FILE_INGEST,
+	STREAMING_FIRST_STAGE_DATA_SOURCE_INGEST
     };
     private volatile Stages stage = IngestJobPipeline.Stages.INITIALIZATION;
     private final Object stageCompletionCheckLock = new Object();
@@ -205,32 +208,17 @@ final class IngestJobPipeline {
         this.id = IngestJobPipeline.nextJobId.getAndIncrement();
         this.dataSource = dataSource;
         this.files.addAll(files);
-	this.ingestStream = null;
+	this.ingestMode = parentJob.getIngestMode();
         this.settings = settings;
 	this.doUI = RuntimeProperties.runningWithGUI();
         this.createTime = new Date().getTime();
+	if (ingestMode == IngestJob.Mode.BATCH) {  // TODO check if these need to be separate
+	    this.stage = Stages.INITIALIZATION;
+	} else {
+	    this.stage = Stages.STREAMING_INITIALIZATION;
+	}
         this.createIngestPipelines();
     }
-    
-    /**
-     * Constructs an object that encapsulates a data source and the ingest
-     * module pipelines used to analyze it. Either all of the files in the data
-     * source or a given subset of the files will be analyzed.
-     *
-     * @param parentJob        The ingest job of which this data source ingest
-     *                         job is a part.
-     * @param stream           The ingest stream
-     * @param settings         The settings for the ingest job.
-     */
-    IngestJobPipeline(IngestJob parentJob, IngestStream stream, IngestJobSettings settings) {
-        this.parentJob = parentJob;
-        this.id = IngestJobPipeline.nextJobId.getAndIncrement();
-        this.ingestStream = stream;
-	this.settings = settings;
-	this.doUI = RuntimeProperties.runningWithGUI();
-        this.createTime = new Date().getTime();
-        this.createIngestPipelines();
-    }    
 
     /**
      * Creates the file and data source ingest pipelines.
@@ -434,7 +422,7 @@ final class IngestJobPipeline {
      */
     List<IngestModuleError> start() {
 	if (dataSource == null) {
-	    throw new IllegalStateException("Ingest started before setting data source");
+	    throw new IllegalStateException("Ingest started before setting data source"); // TODO remove?
 	}
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
@@ -443,13 +431,25 @@ final class IngestJobPipeline {
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 logErrorMessage(Level.WARNING, "Failed to add ingest job info to case database", ex); //NON-NLS
             }
-            if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
-                logInfoMessage("Starting first stage analysis"); //NON-NLS
-                this.startFirstStage();
-            } else if (this.hasSecondStageDataSourceIngestPipeline()) {
-                logInfoMessage("Starting second stage analysis"); //NON-NLS
-                this.startSecondStage();
-            }
+	    if (ingestMode == IngestJob.Mode.BATCH) {
+		if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
+		    logInfoMessage("Starting first stage analysis"); //NON-NLS
+		    this.startFirstStage();
+		} else if (this.hasSecondStageDataSourceIngestPipeline()) {
+		    logInfoMessage("Starting second stage analysis"); //NON-NLS
+		    this.startSecondStage();
+		}
+	    } else {
+		// TODO figure out logic when we're starting with second stage
+		if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
+		    logInfoMessage("Preparing for first stage analysis"); //NON-NLS
+		    this.startFileIngestStreaming();
+		} else if (this.hasSecondStageDataSourceIngestPipeline()) {
+		    // TODO Test this part
+		    logInfoMessage("Starting second stage analysis"); //NON-NLS
+		    this.startSecondStage();
+		}
+	    }
         }
         return errors;
     }
@@ -561,6 +561,62 @@ final class IngestJobPipeline {
             this.checkForStageCompleted();
         }
     }
+    
+    /**
+     * Prepares for file ingest.
+     * Used for streaming ingest. Does not schedule any file tasks - those
+     * will come from calls to addStreamingIngestFiles().
+     */
+    private void startFileIngestStreaming() {
+	synchronized (this.stageCompletionCheckLock) {
+	    this.stage = IngestJobPipeline.Stages.STREAMING_FILE_INGEST;
+	}
+
+        if (this.hasFileIngestPipeline()) {
+            synchronized (this.fileIngestProgressLock) {
+                this.estimatedFilesToProcess = 0; // There's no way to estimate file count for a streaming data source
+            }
+        }
+
+        if (this.doUI) {
+            if (this.hasFileIngestPipeline()) {
+                this.startFileIngestProgressBar();
+            }
+        }
+	
+	logInfoMessage("Waiting for streaming files"); //NON-NLS
+    }    
+    
+    /**
+     * Start data source ingest.
+     * Used for streaming ingest when the data source is not ready when
+     * ingest starts.
+     */
+    private void startDataSourceIngestStreaming() {
+	
+	if (this.doUI) {
+            /**
+             * Start the first stage data source ingest progress bar.
+             */
+            if (this.hasFirstStageDataSourceIngestPipeline()) {
+                this.startDataSourceIngestProgressBar();
+            }
+        }
+	
+	/**
+         * Make the first stage data source level ingest pipeline the current
+         * data source level pipeline.
+         */
+        synchronized (this.dataSourceIngestPipelineLock) {
+            this.currentDataSourceIngestPipeline = this.firstStageDataSourceIngestPipeline;
+        }
+	
+	logInfoMessage("Scheduling first stage data source level analysis tasks"); //NON-NLS
+	synchronized (this.stageCompletionCheckLock) {
+	    this.stage = IngestJobPipeline.Stages.STREAMING_FIRST_STAGE_DATA_SOURCE_INGEST;
+	    IngestJobPipeline.taskScheduler.scheduleDataSourceIngestTask(this);
+	}
+    }        
 
     /**
      * Starts the second stage of this ingest job.
@@ -645,16 +701,41 @@ final class IngestJobPipeline {
      */
     private void checkForStageCompleted() {
         synchronized (this.stageCompletionCheckLock) {
-            if (IngestJobPipeline.taskScheduler.currentTasksAreCompleted(this)) {
-                switch (this.stage) {
-                    case FIRST:
-                        this.finishFirstStage();
-                        break;
-                    case SECOND:
-                        this.finish();
-                        break;
-                }
-            }
+	    if (ingestMode == IngestJob.Mode.BATCH) {
+		if (IngestJobPipeline.taskScheduler.currentTasksAreCompleted(this)) {
+		    switch (this.stage) {
+			case FIRST:
+			    this.finishFirstStage();
+			    break;
+			case SECOND:
+			    this.finish();
+			    break;
+		    }
+		}
+	    } else {
+		System.out.println("IngestJobPipeline.checkForStageCompleted() - current stage: " + this.stage.toString());
+
+		if (IngestJobPipeline.taskScheduler.currentTasksAreCompleted(this)) {
+		    System.out.println("IngestJobPipeline.checkForStageCompleted() - current tasks are completed");
+		    switch (this.stage) {
+			case STREAMING_FILE_INGEST:
+			    // Nothing to do here - need to wait for the data source
+			    System.out.println("IngestJobPipeline.checkForStageCompleted() - do nothing");
+			    break;
+			case STREAMING_FIRST_STAGE_DATA_SOURCE_INGEST:
+			    // Finish file and data source ingest, start second stage (if applicable)
+			    System.out.println("IngestJobPipeline.checkForStageCompleted() - finishFirstStage");
+			    this.finishFirstStage();
+			    break;
+			case SECOND:
+			    System.out.println("IngestJobPipeline.checkForStageCompleted() - finish");
+			    this.finish();
+			    break;
+		    }
+		} else {
+		    System.out.println("IngestJobPipeline.checkForStageCompleted() - current tasks are not complete");
+		}
+	    }
         }
     }
 
@@ -800,6 +881,8 @@ final class IngestJobPipeline {
     void process(FileIngestTask task) throws InterruptedException {
         try {
             if (!this.isCancelled()) {
+		System.out.println("### IngestJobPipeline.process(): processing file with ID " + task.getFile().getId() +
+			" and name " + task.getFile().getName());
                 FileIngestPipeline pipeline = this.fileIngestPipelinesQueue.take();
                 if (!pipeline.isEmpty()) {
                     AbstractFile file = task.getFile();
@@ -850,6 +933,28 @@ final class IngestJobPipeline {
             this.checkForStageCompleted();
         }
     }
+    
+    /**
+     * Add a list of files (by object ID) to the ingest queue.
+     * Must call start() prior to adding files.
+     * 
+     * @param fileObjIds List of newly added file IDs
+     */
+    void addStreamingIngestFiles(List<Long> fileObjIds) {
+	// TODO error checking for stage and streaming (should be in streaming files or datasource 1)
+	IngestJobPipeline.taskScheduler.scheduleStreamedFileIngestTasks(this, fileObjIds);
+    }
+    
+    /**
+     * Starts data source ingest.
+     * Should be called after the data source processor has finished (i.e., all files
+     * are in the database)
+     */
+    void addStreamingIngestDataSource() {
+	// TODO error checking for stage and streaming (should be in streaming files stage)
+	startDataSourceIngestStreaming();
+	checkForStageCompleted();
+    }    
 
     /**
      * Adds more files from the data source for this job to the job, e.g., adds

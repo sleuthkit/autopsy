@@ -24,7 +24,8 @@ import java.util.List;
  * Implementation of IngestStream. Will collect data from the data source
  * processor to be sent to the ingest pipeline.
  */
-class IngestJobInputStream implements IngestStream {
+// TODO revert to package private
+public class IngestJobInputStream implements IngestStream {
     private final IngestJob ingestJob;
     private long dataSourceObjectId = -1;
     private boolean isClosed = false;
@@ -35,7 +36,7 @@ class IngestJobInputStream implements IngestStream {
      * 
      * @param ingestJob The IngestJob associated with this stream.
      */
-    IngestJobInputStream(IngestJob ingestJob) {
+    public IngestJobInputStream(IngestJob ingestJob) { // TODO revert public
         this.ingestJob = ingestJob;
     }
     
@@ -45,7 +46,7 @@ class IngestJobInputStream implements IngestStream {
 	   throw new IngestStreamClosedException("Can not add data source - ingest stream is closed");
 	}
 	this.dataSourceObjectId = dataSourceObjectId;
-	ingestJob.start();
+	ingestJob.start(dataSourceObjectId);
     }
 
     @Override
@@ -56,12 +57,13 @@ class IngestJobInputStream implements IngestStream {
 	if (dataSourceObjectId < 0) {
 	    throw new IllegalStateException("Files can not be added before a data source");
 	}
-	
+	ingestJob.addStreamingIngestFiles(fileObjectIds);
     }
 
     @Override
     public synchronized void close() {
 	isClosed = true;
+	ingestJob.addStreamingIngestDataSource();
     }
 
     @Override
