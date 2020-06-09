@@ -24,6 +24,9 @@ import java.awt.Graphics;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JSplitPane;
+import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicSplitPaneDivider;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
@@ -67,6 +70,22 @@ public final class DiscoveryTopComponent extends TopComponent {
         mainSplitPane.setLeftComponent(groupListPanel);
         rightSplitPane.setTopComponent(resultsPanel);
         rightSplitPane.setBottomComponent(detailsPanel);
+        //set color of divider
+        rightSplitPane.setUI(new BasicSplitPaneUI() {
+            @Override
+            public BasicSplitPaneDivider createDefaultDivider() {
+                return new BasicSplitPaneDivider(this) {
+                    private static final long serialVersionUID = 1L;
+
+                    @Override
+                    public void paint(Graphics g) {
+                        g.setColor(Color.YELLOW);
+                        g.fillRect(0, 0, getSize().width, getSize().height);
+                        super.paint(g);
+                    }
+                };
+            }
+        });
     }
 
     /**

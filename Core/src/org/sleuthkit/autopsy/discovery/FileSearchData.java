@@ -126,39 +126,46 @@ final class FileSearchData {
      * Enum representing the file size
      */
     @NbBundle.Messages({
-        "FileSearchData.FileSize.XXLARGE_IMAGE.displayName=XXLarge: 200MB+",
-        "FileSearchData.FileSize.XLARGE_IMAGE.displayName=XLarge: 50-200MB",
-        "FileSearchData.FileSize.LARGE_IMAGE.displayName=Large: 1-50MB",
-        "FileSearchData.FileSize.MEDIUM_IMAGE.displayName=Medium: 100KB-1MB",
-        "FileSearchData.FileSize.SMALL_IMAGE.displayName=Small: 16-100KB",
-        "FileSearchData.FileSize.XSMALL_IMAGE.displayName=XSmall: 0-16KB",
-        "FileSearchData.FileSize.XXLARGE_VIDEO.displayName=XXLarge: 10GB+",
-        "FileSearchData.FileSize.XLARGE_VIDEO.displayName=XLarge: 5-10GB",
-        "FileSearchData.FileSize.LARGE_VIDEO.displayName=Large: 1-5GB",
-        "FileSearchData.FileSize.MEDIUM_VIDEO.displayName=Medium: 100MB-1GB",
-        "FileSearchData.FileSize.SMALL_VIDEO.displayName=Small: 500KB-100MB",
-        "FileSearchData.FileSize.XSMALL_VIDEO.displayName=XSmall: 0-500KB",})
+        "FileSearchData.FileSize.XXLARGE.displayName=XXLarge",
+        "FileSearchData.FileSize.XLARGE.displayName=XLarge",
+        "FileSearchData.FileSize.LARGE.displayName=Large",
+        "FileSearchData.FileSize.MEDIUM.displayName=Medium",
+        "FileSearchData.FileSize.SMALL.displayName=Small",
+        "FileSearchData.FileSize.XSMALL.displayName=XSmall",
+        "FileSearchData.FileSize.10PlusGb=: 10GB+",
+        "FileSearchData.FileSize.5gbto10gb=: 5-10GB",
+        "FileSearchData.FileSize.1gbto5gb=: 1-5GB",
+        "FileSearchData.FileSize.100mbto1gb=: 100MB-1GB",
+        "FileSearchData.FileSize.200PlusMb=: 200MB+",
+        "FileSearchData.FileSize.50mbto200mb=: 50-200MB",
+        "FileSearchData.FileSize.500kbto100mb=: 500KB-100MB",
+        "FileSearchData.FileSize.1mbto50mb=: 1-50MB",
+        "FileSearchData.FileSize.100kbto1mb=: 100KB-1MB",
+        "FileSearchData.FileSize.16kbto100kb=: 16-100KB",
+        "FileSearchData.FileSize.upTo500kb=: 0-500KB",
+        "FileSearchData.FileSize.upTo16kb=: 0-16KB",})
     enum FileSize {
-        XXLARGE_VIDEO(0, 10000 * BYTES_PER_MB, -1, Bundle.FileSearchData_FileSize_XXLARGE_VIDEO_displayName()),
-        XLARGE_VIDEO(1, 5000 * BYTES_PER_MB, 10000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_XLARGE_VIDEO_displayName()),
-        LARGE_VIDEO(2, 1000 * BYTES_PER_MB, 5000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_LARGE_VIDEO_displayName()),
-        MEDIUM_VIDEO(3, 100 * BYTES_PER_MB, 1000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_MEDIUM_VIDEO_displayName()),
-        SMALL_VIDEO(4, 500000, 100 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_SMALL_VIDEO_displayName()),
-        XSMALL_VIDEO(5, 0, 500000, Bundle.FileSearchData_FileSize_XSMALL_VIDEO_displayName()),
-        XXLARGE_IMAGE(6, 200 * BYTES_PER_MB, -1, Bundle.FileSearchData_FileSize_XXLARGE_IMAGE_displayName()),
-        XLARGE_IMAGE(7, 50 * BYTES_PER_MB, 200 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_XLARGE_IMAGE_displayName()),
-        LARGE_IMAGE(8, 1 * BYTES_PER_MB, 50 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_LARGE_IMAGE_displayName()),
-        MEDIUM_IMAGE(9, 100000, 1 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_MEDIUM_IMAGE_displayName()),
-        SMALL_IMAGE(10, 16000, 100000, Bundle.FileSearchData_FileSize_SMALL_IMAGE_displayName()),
-        XSMALL_IMAGE(11, 0, 16000, Bundle.FileSearchData_FileSize_XSMALL_IMAGE_displayName());
+        XXLARGE_VIDEO(0, 10000 * BYTES_PER_MB, -1, Bundle.FileSearchData_FileSize_XXLARGE_displayName(), Bundle.FileSearchData_FileSize_10PlusGb()),
+        XLARGE_VIDEO(1, 5000 * BYTES_PER_MB, 10000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_XLARGE_displayName(), Bundle.FileSearchData_FileSize_5gbto10gb()),
+        LARGE_VIDEO(2, 1000 * BYTES_PER_MB, 5000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_LARGE_displayName(), Bundle.FileSearchData_FileSize_1gbto5gb()),
+        MEDIUM_VIDEO(3, 100 * BYTES_PER_MB, 1000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_MEDIUM_displayName(), Bundle.FileSearchData_FileSize_100mbto1gb()),
+        SMALL_VIDEO(4, 500000, 100 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_SMALL_displayName(), Bundle.FileSearchData_FileSize_500kbto100mb()),
+        XSMALL_VIDEO(5, 0, 500000, Bundle.FileSearchData_FileSize_XSMALL_displayName(), Bundle.FileSearchData_FileSize_upTo500kb()),
+        XXLARGE_IMAGE(6, 200 * BYTES_PER_MB, -1, Bundle.FileSearchData_FileSize_XXLARGE_displayName(), Bundle.FileSearchData_FileSize_200PlusMb()),
+        XLARGE_IMAGE(7, 50 * BYTES_PER_MB, 200 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_XLARGE_displayName(), Bundle.FileSearchData_FileSize_50mbto200mb()),
+        LARGE_IMAGE(8, 1 * BYTES_PER_MB, 50 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_LARGE_displayName(), Bundle.FileSearchData_FileSize_1mbto50mb()),
+        MEDIUM_IMAGE(9, 100000, 1 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_MEDIUM_displayName(), Bundle.FileSearchData_FileSize_100kbto1mb()),
+        SMALL_IMAGE(10, 16000, 100000, Bundle.FileSearchData_FileSize_SMALL_displayName(), Bundle.FileSearchData_FileSize_16kbto100kb()),
+        XSMALL_IMAGE(11, 0, 16000, Bundle.FileSearchData_FileSize_XSMALL_displayName(), Bundle.FileSearchData_FileSize_upTo16kb());
 
         private final int ranking;   // Must be unique for each value
         private final long minBytes; // Note that the size must be strictly greater than this to match
         private final long maxBytes;
-        private final String displayName;
+        private final String sizeGroup;
+        private final String displaySize;
         final static long NO_MAXIMUM = -1;
 
-        FileSize(int ranking, long minB, long maxB, String displayName) {
+        FileSize(int ranking, long minB, long maxB, String displayName, String displaySize) {
             this.ranking = ranking;
             this.minBytes = minB;
             if (maxB >= 0) {
@@ -166,7 +173,8 @@ final class FileSearchData {
             } else {
                 this.maxBytes = NO_MAXIMUM;
             }
-            this.displayName = displayName;
+            this.sizeGroup = displayName;
+            this.displaySize = displaySize;
         }
 
         /**
@@ -246,7 +254,11 @@ final class FileSearchData {
 
         @Override
         public String toString() {
-            return displayName;
+            return sizeGroup + displaySize;
+        }
+        
+        String getSizeGroup(){
+            return sizeGroup;
         }
 
         /**

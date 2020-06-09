@@ -207,11 +207,8 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.SizeFilter.desc=Files with size in range(s): {0}",
-            "FileSearchFiltering.SizeFilter.or= or ",
-            "# {0} - Minimum bytes",
-            "# {1} - Maximum bytes",
-            "FileSearchFiltering.SizeFilter.range=({0} to {1})",})
+            "FileSearchFiltering.SizeFilter.desc=With size(s): {0}",
+            "FileSearchFiltering.SizeFilter.or=, or "})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
@@ -219,7 +216,7 @@ class FileSearchFiltering {
                 if (!desc.isEmpty()) {
                     desc += Bundle.FileSearchFiltering_SizeFilter_or();
                 }
-                desc += Bundle.FileSearchFiltering_SizeFilter_range(size.getMinBytes(), size.getMaxBytes());
+                desc += size.getSizeGroup();
             }
             desc = Bundle.FileSearchFiltering_SizeFilter_desc(desc);
             return desc;
@@ -364,7 +361,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.ParentFilter.desc=Files with paths matching: {0}",
+            "FileSearchFiltering.ParentFilter.desc=With paths matching: {0}",
             "FileSearchFiltering.ParentFilter.or= or ",
             "FileSearchFiltering.ParentFilter.exact=(exact match)",
             "FileSearchFiltering.ParentFilter.substring=(substring)",})
@@ -417,7 +414,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.DataSourceFilter.desc=Files in data source(s): {0}",
+            "FileSearchFiltering.DataSourceFilter.desc=In data source(s): {0}",
             "FileSearchFiltering.DataSourceFilter.or= or ",
             "# {0} - Data source name",
             "# {1} - Data source ID",
@@ -466,7 +463,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.KeywordListFilter.desc=Files with keywords in list(s): {0}",})
+            "FileSearchFiltering.KeywordListFilter.desc=With keywords in list(s): {0}",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_KeywordListFilter_desc(concatenateSetNamesForDisplay(listNames));
@@ -586,7 +583,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.FrequencyFilter.desc=Files with frequency: {0}",
+            "FileSearchFiltering.FrequencyFilter.desc=With frequency: {0}",
             "FileSearchFiltering.FrequencyFilter.or= or ",})
         @Override
         String getDesc() {
@@ -632,7 +629,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.HashSetFilter.desc=Files with hash set hits in set(s): {0}",})
+            "FileSearchFiltering.HashSetFilter.desc=With hash set hits in set(s): {0}",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_HashSetFilter_desc(concatenateSetNamesForDisplay(setNames));
@@ -670,7 +667,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.InterestingItemSetFilter.desc=Files with interesting item hits in set(s): {0}",})
+            "FileSearchFiltering.InterestingItemSetFilter.desc=With interesting item hits in set(s): {0}",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_InterestingItemSetFilter_desc(concatenateSetNamesForDisplay(setNames));
@@ -708,7 +705,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.ObjectDetectionFilter.desc=Files with objects detected in set(s): {0}",})
+            "FileSearchFiltering.ObjectDetectionFilter.desc=With objects detected in set(s): {0}",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_ObjectDetectionFilter_desc(concatenateSetNamesForDisplay(typeNames));
@@ -784,7 +781,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.ScoreFilter.desc=Files with score(s) of : {0}",})
+            "FileSearchFiltering.ScoreFilter.desc=With score(s) of : {0}",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_ScoreFilter_desc(
@@ -826,7 +823,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - tag names",
-            "FileSearchFiltering.TagsFilter.desc=Files that have been tagged {0}",
+            "FileSearchFiltering.TagsFilter.desc=That have been tagged {0}",
             "FileSearchFiltering.TagsFilter.or= or ",})
         @Override
         String getDesc() {
@@ -862,7 +859,7 @@ class FileSearchFiltering {
         }
 
         @NbBundle.Messages({
-            "FileSearchFiltering.UserCreatedFilter.desc=Files that contain EXIF data",})
+            "FileSearchFiltering.UserCreatedFilter.desc=That contain EXIF data",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_UserCreatedFilter_desc();
@@ -931,7 +928,7 @@ class FileSearchFiltering {
         }
 
         @NbBundle.Messages({
-            "FileSearchFiltering.PreviouslyNotableFilter.desc=Files that were previously marked as notable",})
+            "FileSearchFiltering.PreviouslyNotableFilter.desc=That were previously marked as notable",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_PreviouslyNotableFilter_desc();
@@ -949,7 +946,7 @@ class FileSearchFiltering {
         }
 
         @NbBundle.Messages({
-            "FileSearchFiltering.KnownFilter.desc=Files which are not known"})
+            "FileSearchFiltering.KnownFilter.desc=Which are not known"})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_KnownFilter_desc();
