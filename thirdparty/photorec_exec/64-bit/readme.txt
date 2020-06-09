@@ -3,12 +3,9 @@ The Windows version of TestDisk & PhotoRec should work under the following 64 bi
 - Windows Server 2003
 - Windows Server 2008
 - Windows Server 2012
-- Windows Server 2016
-- Windows Server 2019
 - Windows Vista
 - Windows 7
 - Windows 8
-- Windows 10
 
 32-bits version can be downloaded from
 https://www.cgsecurity.org/wiki/TestDisk_Download
