@@ -64,7 +64,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class ExtractedContent implements AutopsyVisitableItem {
 
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
-    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
     public static final String NAME = NbBundle.getMessage(RootNode.class, "ExtractedContentNode.name.text");
     private final long filteringDSObjId; // 0 if not filtering/grouping by data source
     private SleuthkitCase skCase;   // set to null after case has been closed
@@ -187,13 +186,15 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            refreshThrottler.registerForIngestEvents(INGEST_JOB_EVENTS_OF_INTEREST, INGEST_MODULE_EVENTS_OF_INTEREST);
+            refreshThrottler.registerForIngestModuleEvents();
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
         }
 
         @Override
         protected void removeNotify() {
             refreshThrottler.unregisterEventListener();
+            IngestManager.getInstance().removeIngestJobEventListener(pcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
             typeNodeList.clear();
         }
@@ -364,7 +365,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
      */
     private class ArtifactFactory extends BaseChildFactory<BlackboardArtifact> implements RefreshThrottler.Refresher {
 
-        private BlackboardArtifact.Type type;
+        private final BlackboardArtifact.Type type;
         private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
 
         ArtifactFactory(BlackboardArtifact.Type type) {
@@ -374,7 +375,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected void onAdd() {
-            refreshThrottler.registerForIngestEvents(INGEST_JOB_EVENTS_OF_INTEREST, INGEST_MODULE_EVENTS_OF_INTEREST);
+            refreshThrottler.registerForIngestModuleEvents();
         }
 
         @Override

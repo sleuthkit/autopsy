@@ -21,13 +21,12 @@ package org.sleuthkit.autopsy.datamodel;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 
 /**
  * Utility class that can be used by UI nodes to reduce the number of
@@ -35,20 +34,40 @@ import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
  */
 class RefreshThrottler {
 
+    /**
+     * The Refresher interface needs to be implemented by ChildFactory instances
+     * that wish to take advantage of throttled refresh functionality.
+     */
     interface Refresher {
 
+        /**
+         * The RefreshThrottler calls this method when the RefreshTask runs.
+         *
+         * @param evt The event that happened to occur at the time a new refresh
+         *            was due.
+         */
         void refresh(PropertyChangeEvent evt);
     }
 
     static ScheduledThreadPoolExecutor refreshExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("Node Refresh Thread").build());
+
+    // Keep a thread safe reference to the current refresh task (if any)
     private final AtomicReference refreshTaskRef = new AtomicReference<>(null);
 
+    // The factory instance that will be called when a refresh is due.
     private final Refresher refresher;
 
     private static final long MIN_SECONDS_BETWEEN_RERFESH = 5;
 
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
+
+    /**
+     * A RefreshTask is scheduled to run when an event arrives and there isn't
+     * one already scheduled.
+     */
     private final class RefreshTask implements Runnable {
 
+        // The event that happened to occur when this task was scheduled.
         private final PropertyChangeEvent event;
 
         RefreshTask(PropertyChangeEvent event) {
@@ -57,11 +76,17 @@ class RefreshThrottler {
 
         @Override
         public void run() {
+            // Call refresh on the factory
             refresher.refresh(event);
+            // Clear the refresh task reference
             refreshTaskRef.set(null);
         }
     }
 
+    /**
+     * PropertyChangeListener that reacts to DATA_ADDED and CONTENT_CHANGED
+     * events and schedules a refresh task if one is not already scheduled.
+     */
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
         String eventType = evt.getPropertyName();
         if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())
@@ -77,13 +102,17 @@ class RefreshThrottler {
         refresher = r;
     }
 
-    void registerForIngestEvents(Set<IngestJobEvent> jobEventsOfInterest, Set<IngestModuleEvent> moduleEventsOfInterest) {
-        IngestManager.getInstance().addIngestJobEventListener(jobEventsOfInterest, pcl);
-        IngestManager.getInstance().addIngestModuleEventListener(moduleEventsOfInterest, pcl);
+    /**
+     * Set up listener for ingest module events of interest.
+     */
+    void registerForIngestModuleEvents() {
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
     }
-    
+
+    /**
+     * Remove ingest module event listener.
+     */
     void unregisterEventListener() {
-        IngestManager.getInstance().removeIngestJobEventListener(pcl);
         IngestManager.getInstance().removeIngestModuleEventListener(pcl);
     }
 }
