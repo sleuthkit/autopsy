@@ -712,10 +712,6 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         }
         initializeFields();
     }
-    
-    public void setPersonaName(String name) {
-        nameField.setText(name);
-    }
 
     @Messages({
         "PersonaDetailsPanel_NotEnoughAccounts_msg=A persona needs at least one account",
