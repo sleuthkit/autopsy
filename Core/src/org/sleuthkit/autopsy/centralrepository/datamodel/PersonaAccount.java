@@ -282,9 +282,6 @@ public class PersonaAccount {
         CentralRepository cr = CentralRepository.getInstance();
 
         if (cr != null) {
-            String queryClause = PERSONA_ACCOUNTS_QUERY_CALUSE
-                    + " WHERE persona_accounts.account_id = " + accountId;
-
             PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
             cr.executeSelectSQL(queryClause, queryCallback);
 
