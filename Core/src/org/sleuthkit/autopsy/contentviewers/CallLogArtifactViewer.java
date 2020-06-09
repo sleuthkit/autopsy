@@ -506,11 +506,11 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      * @param constraints 
      */
     @NbBundle.Messages({
-        "CallLogArtifactViewer_persona_label= Persona: ",
-        "CallLogArtifactViewer_persona_searching= Searching...",
-        "CallLogArtifactViewer_persona_text_none=No Persona",
+        "CallLogArtifactViewer_persona_label= Persona ",
+        "CallLogArtifactViewer_persona_searching=Searching...",
+        "CallLogArtifactViewer_persona_text_none=None Found.",
         "CallLogArtifactViewer_persona_button_view=View",
-        "CallLogArtifactViewer_persona_button_new=New"
+        "CallLogArtifactViewer_persona_button_new=Create"
     })
     private void showParticipant(String participantDesignator, String accountIdentifier, GridBagLayout gridBagLayout, GridBagConstraints constraints) {
 

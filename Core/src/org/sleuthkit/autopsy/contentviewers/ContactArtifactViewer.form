@@ -155,7 +155,7 @@
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
           <FontInfo relative="true">
-            <Font bold="true" component="personasLabel" italic="true" property="font" relativeSize="true" size="2"/>
+            <Font bold="true" component="personasLabel" property="font" relativeSize="true" size="2"/>
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">

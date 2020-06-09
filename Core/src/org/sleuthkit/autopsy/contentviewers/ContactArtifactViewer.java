@@ -61,18 +61,18 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     private static final long serialVersionUID = 1L;
 
     private static final int TOP_INSET = 4;
-    
+    private static final int LEFT_INSET = 12;
+
     // contact name, if available.
     private String contactName;
-    
+
     // A list of unique accounts matching the attributes of the contact artifact.
     private final List<CentralRepoAccount> contactUniqueAccountsList = new ArrayList<>();
-   
+
     // A list of all unique personas and their account, found by searching on the 
     // account identifier attributes of the Contact artifact.
     private final Map<Persona, ArrayList<CentralRepoAccount>> contactUniquePersonasMap = new HashMap<>();
-     
-    
+
     /**
      * Creates new form for ContactArtifactViewer
      */
@@ -199,7 +199,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         gridBagConstraints.weighty = 0.1;
         add(interPanelfiller, gridBagConstraints);
 
-        personasLabel.setFont(personasLabel.getFont().deriveFont((personasLabel.getFont().getStyle() | java.awt.Font.ITALIC) | java.awt.Font.BOLD, personasLabel.getFont().getSize()+2));
+        personasLabel.setFont(personasLabel.getFont().deriveFont(personasLabel.getFont().getStyle() | java.awt.Font.BOLD, personasLabel.getFont().getSize()+2));
         org.openide.awt.Mnemonics.setLocalizedText(personasLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.personasLabel.text")); // NOI18N
         personasLabel.setMaximumSize(new java.awt.Dimension(60, 19));
         personasLabel.setMinimumSize(new java.awt.Dimension(60, 19));
@@ -241,18 +241,15 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     @Override
     public void setArtifact(BlackboardArtifact artifact) {
 
-        // wipe the panel clean
-        this.removeAll();
-        
-        reset();
-        initComponents();
+        // Reset the panel.
+        resetComponent();
 
         List<BlackboardAttribute> phoneNumList = new ArrayList<>();
         List<BlackboardAttribute> emailList = new ArrayList<>();
         List<BlackboardAttribute> nameList = new ArrayList<>();
         List<BlackboardAttribute> otherList = new ArrayList<>();
         List<BlackboardAttribute> accountAttributesList = new ArrayList<>();
-         
+
         try {
             // Get all the attributes and group them by the section panels they go in
             for (BlackboardAttribute bba : artifact.getAttributes()) {
@@ -267,7 +264,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
                 } else {
                     otherList.add(bba);
                     if (bba.getAttributeType().getTypeName().equalsIgnoreCase("TSK_ID")) {
-                         accountAttributesList.add(bba);
+                        accountAttributesList.add(bba);
                     }
                 }
             }
@@ -277,7 +274,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
         // update name section
         updateNamePanel(nameList);
-        
+
         // update contact attributes sections
         updateSection(phoneNumList, this.phonesLabel, this.phoneNumbersPanel);
         updateSection(emailList, this.emailsLabel, this.emailsPanel);
@@ -288,9 +285,10 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, String.format("Error getting Personas for Contact artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
         }
-        
+
         // repaint
         this.revalidate();
+        this.repaint();
     }
 
     @Override
@@ -300,9 +298,9 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     }
 
     /**
-     * Checks if the given artifact is supported by this viewer.
-     * This viewer supports TSK_CONTACT artifacts.
-     * 
+     * Checks if the given artifact is supported by this viewer. This viewer
+     * supports TSK_CONTACT artifacts.
+     *
      * @param artifact artifact to check.
      * @return True if the artifact is supported, false otherwise.
      */
@@ -312,25 +310,36 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     }
 
     /**
-     * Clear any artifact specific state.
+     * Clears all artifact specific state.
      */
-    private void reset() {
+    private void resetComponent() {
+        contactNameLabel.setVisible(false);
+        emailsLabel.setVisible(false);
+        emailsPanel.removeAll();
+        //namePanel.removeAll();    // this is not dynamically populated, do not remove.
+        otherAttrsPanel.removeAll();
+        othersLabel.setVisible(false);
+        personasLabel.setVisible(false);
+        personasPanel.removeAll();
+        phoneNumbersPanel.removeAll();
+        phonesLabel.setVisible(false);
+
         contactName = null;
         contactUniqueAccountsList.clear();
         contactUniquePersonasMap.clear();
     }
-    
-    
+
     /**
      * Updates the contact name in the view.
-     * 
-     * @param attributesList 
+     *
+     * @param attributesList
      */
     private void updateNamePanel(List<BlackboardAttribute> attributesList) {
         for (BlackboardAttribute bba : attributesList) {
             if (bba.getAttributeType().getTypeName().startsWith("TSK_NAME")) {
                 contactName = bba.getDisplayString();
                 contactNameLabel.setText(contactName);
+                contactNameLabel.setVisible(true);
                 break;
             }
         }
@@ -339,8 +348,9 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     }
 
     /**
-     * Updates the view by displaying the given list of attributes in the given section panel.
-     * 
+     * Updates the view by displaying the given list of attributes in the given
+     * section panel.
+     *
      * @param sectionAttributesList list of attributes to display.
      * @param sectionLabel section name label.
      * @param sectionPanel section panel to display the attributes in.
@@ -359,11 +369,11 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         constraints.gridy = 0;
-        constraints.insets = new java.awt.Insets(4, 12, 0, 0);
+        constraints.insets = new java.awt.Insets(TOP_INSET, LEFT_INSET, 0, 0);
         for (BlackboardAttribute bba : sectionAttributesList) {
             constraints.fill = GridBagConstraints.NONE;
             constraints.weightx = 0;
-            
+
             constraints.gridx = 0;
 
             // Add a label for attribute type
@@ -373,7 +383,6 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
             // make type label bold - uncomment if needed.
             //attrTypeLabel.setFont(attrTypeLabel.getFont().deriveFont(Font.BOLD, attrTypeLabel.getFont().getSize() ));
-
             gridBagLayout.setConstraints(attrTypeLabel, constraints);
             sectionPanel.add(attrTypeLabel);
 
@@ -389,56 +398,63 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             constraints.weightx = 1.0;
             constraints.fill = GridBagConstraints.HORIZONTAL;
             sectionPanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0)));
-            
+
             constraints.gridy++;
         }
+
+        sectionLabel.setVisible(true);
+        sectionPanel.setVisible(true);
+
         sectionPanel.setLayout(gridBagLayout);
         sectionPanel.revalidate();
+        sectionPanel.repaint();
     }
 
     /**
-     * Kicks of a search for personas, based in the list of attributes.
-     * 
+     * Kicks off a search for personas, based in the list of attributes.
+     *
      * @param accountAttributesList a list of account identifying attributes.
-     * 
-     * @throws CentralRepoException 
+     *
+     * @throws CentralRepoException
      */
     @NbBundle.Messages({
         "ContactArtifactViewer_persona_searching= Searching..."
     })
     private void initiatePersonasSearch(List<BlackboardAttribute> accountAttributesList) throws CentralRepoException {
-        
-        // create a Gridbag layout
+
+        personasLabel.setVisible(true);
+
         // create a gridbag layout to show each participant on one line
         GridBagLayout gridBagLayout = new GridBagLayout();
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         constraints.gridx = 0;
         constraints.gridy = 0;
-        constraints.insets = new java.awt.Insets(TOP_INSET, 0, 0, 0);
-        
+        constraints.insets = new java.awt.Insets(TOP_INSET, LEFT_INSET, 0, 0);
+
         // Add a Persona Name label 
         constraints.fill = GridBagConstraints.NONE;
         constraints.weightx = 0;
-        
-        javax.swing.Box.Filler filler1 = this.createFiller(5, 0);
-        personasPanel.add(filler1, constraints);
 
-        constraints.gridx++;
+        //javax.swing.Box.Filler filler1 = this.createFiller(5, 0);
+        //personasPanel.add(filler1, constraints);
+
+        //constraints.gridx++;
         javax.swing.JLabel primaryPersonaNameLabel = new javax.swing.JLabel();
         primaryPersonaNameLabel.setText(Bundle.ContactArtifactViewer_persona_searching());
         gridBagLayout.setConstraints(primaryPersonaNameLabel, constraints);
         personasPanel.add(primaryPersonaNameLabel);
-        
+
         personasPanel.setLayout(gridBagLayout);
         personasPanel.revalidate();
-        
-        // kick off a background task to serach for personas for the contact
+        personasPanel.repaint();
+
+        // Kick off a background task to serach for personas for the contact
         ContactPersonaSearcherTask personaSearchTask = new ContactPersonaSearcherTask(accountAttributesList);
         personaSearchTask.execute();
-     
+
     }
-    
+
     /**
      * Updates the Persona panel with the gathered persona information.
      */
@@ -451,22 +467,22 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         constraints.gridx = 0;
         constraints.gridy = 0;
-        constraints.insets = new java.awt.Insets(TOP_INSET, 0, 0, 0);
+        constraints.insets = new java.awt.Insets(TOP_INSET, LEFT_INSET, 0, 0);
 
         if (contactUniquePersonasMap.isEmpty()) {
             showPersona(null, Collections.emptyList(), gridBagLayout, constraints);
         } else {
-            for (Map.Entry<Persona, ArrayList<CentralRepoAccount> > entry : contactUniquePersonasMap.entrySet()) {
+            for (Map.Entry<Persona, ArrayList<CentralRepoAccount>> entry : contactUniquePersonasMap.entrySet()) {
                 List<CentralRepoAccount> missingAccounts = new ArrayList<>();
                 ArrayList<CentralRepoAccount> personaAccounts = entry.getValue();
-                
+
                 // create a list of accounts missing from this persona
                 for (CentralRepoAccount account : contactUniqueAccountsList) {
                     if (personaAccounts.contains(account) == false) {
                         missingAccounts.add(account);
                     }
                 }
-                 
+
                 showPersona(entry.getKey(), missingAccounts, gridBagLayout, constraints);
                 constraints.gridy += 2;
             }
@@ -475,51 +491,51 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         personasPanel.setLayout(gridBagLayout);
         personasPanel.setSize(personasPanel.getPreferredSize());
         personasPanel.revalidate();
+        personasPanel.repaint();
     }
-    
+
     @NbBundle.Messages({
-        "ContactArtifactViewer_persona_label= Persona: ",
-        "ContactArtifactViewer_persona_text_none=No Persona",
+        "ContactArtifactViewer_persona_label=Persona ",
+        "ContactArtifactViewer_persona_text_none=None found.",
         "ContactArtifactViewer_persona_button_view=View",
-        "ContactArtifactViewer_persona_button_new=New",
+        "ContactArtifactViewer_persona_button_new=Create",
         "ContactArtifactViewer_missing_account_label=Missing Account: "
     })
-    
-    
+
     /**
      * Displays the given persona in the persona panel.
-     * 
+     *
      * @param persona Persona to display.
      * @param missingAccountsList List of accounts this persona may be missing.
      * @param gridBagLayout Layout to use.
      * @param constraints layout constraints.
-     * 
-     * @throws CentralRepoException 
+     *
+     * @throws CentralRepoException
      */
-    private void showPersona(Persona persona, List<CentralRepoAccount> missingAccountsList, GridBagLayout gridBagLayout, GridBagConstraints constraints  ) {
-        
+    private void showPersona(Persona persona, List<CentralRepoAccount> missingAccountsList, GridBagLayout gridBagLayout, GridBagConstraints constraints) {
+
         constraints.fill = GridBagConstraints.NONE;
         constraints.weightx = 0;
         constraints.gridx = 0;
 
-        javax.swing.Box.Filler filler1 = createFiller(5, 0 );
-        gridBagLayout.setConstraints(filler1, constraints);
-        personasPanel.add(filler1);
+        //javax.swing.Box.Filler filler1 = createFiller(5, 0);
+       // gridBagLayout.setConstraints(filler1, constraints);
+        //personasPanel.add(filler1);
 
-         // Add a "Persona: " label
-        constraints.gridx++;
+        // Add a "Persona: " label
+        //constraints.gridx++;
         javax.swing.JLabel personaLabel = new javax.swing.JLabel();
         personaLabel.setText(Bundle.ContactArtifactViewer_persona_label());
         gridBagLayout.setConstraints(personaLabel, constraints);
         personasPanel.add(personaLabel);
-        
+
         javax.swing.JLabel personaNameLabel = new javax.swing.JLabel();
         javax.swing.JButton personaButton = new javax.swing.JButton();
-        
+
         String personaName;
         String personaButtonText;
         ActionListener personaButtonListener;
-        
+
         if (persona != null) {
             personaName = persona.getName();
             personaButtonText = Bundle.ContactArtifactViewer_persona_button_view();
@@ -529,46 +545,43 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             personaButtonText = Bundle.ContactArtifactViewer_persona_button_new();
             personaButtonListener = new CreatePersonaButtonListener(new PersonaUIComponents(personaNameLabel, personaButton));
         }
-        
-         // Add the label for persona name, 
+
+        // Add the label for persona name, 
         constraints.gridx++;
         personaNameLabel.setText(personaName);
         gridBagLayout.setConstraints(personaNameLabel, constraints);
         personasPanel.add(personaNameLabel);
-        
-        constraints.gridx++;
-        personasPanel.add(createFiller(5, 0), constraints);
-          
+
+        //constraints.gridx++;
+        //personasPanel.add(createFiller(5, 0), constraints);
+
         // Add a Persona action button
         constraints.gridx++;
         personaButton.setText(personaButtonText);
         personaButton.addActionListener(personaButtonListener);
-        
- 
+
         // no top inset of the button, in order to center align with the labels.
-        constraints.insets = new java.awt.Insets(0, 0, 0, 0);
-   
+        constraints.insets = new java.awt.Insets(0, LEFT_INSET, 0, 0);
         gridBagLayout.setConstraints(personaButton, constraints);
         personasPanel.add(personaButton);
 
         // restore normal inset
-        constraints.insets = new java.awt.Insets(TOP_INSET, 0, 0, 0);
-          
-       
+        constraints.insets = new java.awt.Insets(TOP_INSET, LEFT_INSET, 0, 0);
+
         // show missing accounts.
-        for (CentralRepoAccount missingAccount: missingAccountsList) {
-             constraints.weightx = 0;
-             constraints.gridx = 0;
-             constraints.gridy++;
-            
+        for (CentralRepoAccount missingAccount : missingAccountsList) {
+            constraints.weightx = 0;
+            constraints.gridx = 0;
+            constraints.gridy++;
+
             // Add a "Missing Account: " label
-            constraints.gridx += 2; // Ident 
+            constraints.gridx ++; // Ident 
             javax.swing.JLabel missingAccountLabel = new javax.swing.JLabel();
             missingAccountLabel.setText(Bundle.ContactArtifactViewer_missing_account_label());
             gridBagLayout.setConstraints(missingAccountLabel, constraints);
             personasPanel.add(missingAccountLabel);
-        
-             // Add the label for account id, 
+
+            // Add the label for account id, 
             constraints.gridx++;
             javax.swing.JLabel missingAccountIdentifierLabel = new javax.swing.JLabel();
             missingAccountIdentifierLabel.setText(missingAccount.getIdentifier());
@@ -576,26 +589,37 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             personasPanel.add(missingAccountIdentifierLabel);
         }
     }
-    
-    
-    private javax.swing.Box.Filler createFiller(int width, int height ) {
-        return new javax.swing.Box.Filler(new Dimension(width, height), new Dimension(width,height), new Dimension(width, height));
+
+    /**
+     * Creates a swing filler.
+     *
+     * @param width Filler width.
+     * @param height Filler height.
+     * @return Filler object.
+     */
+    private javax.swing.Box.Filler createFiller(int width, int height) {
+        return new javax.swing.Box.Filler(new Dimension(width, height), new Dimension(width, height), new Dimension(width, height));
     }
-    
-   /**
-     * Thread to search for a personas for all account identifier attributes for a contact.
+
+    /**
+     * Thread to search for a personas for all account identifier attributes for
+     * a contact.
      */
     private class ContactPersonaSearcherTask extends SwingWorker<Map<Persona, ArrayList<CentralRepoAccount>>, Void> {
 
         private final List<BlackboardAttribute> accountAttributesList;
         private final List<CentralRepoAccount> uniqueAccountsList = new ArrayList<>();
-       
-        
+
+        /**
+         * Creates a persona searcher task.
+         *
+         * @param accountAttributesList List of attributes that may map to
+         * accounts.
+         */
         ContactPersonaSearcherTask(List<BlackboardAttribute> accountAttributesList) {
             this.accountAttributesList = accountAttributesList;
         }
 
-        
         @Override
         protected Map<Persona, ArrayList<CentralRepoAccount>> doInBackground() throws Exception {
 
@@ -640,10 +664,9 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             return uniquePersonas;
         }
 
-
         @Override
         protected void done() {
-           
+
             Map<Persona, ArrayList<CentralRepoAccount>> personasMap;
             try {
                 personasMap = super.get();
@@ -651,14 +674,14 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
                 if (this.isCancelled()) {
                     return;
                 }
-                
+
                 contactUniquePersonasMap.clear();
                 contactUniquePersonasMap.putAll(personasMap);
                 contactUniqueAccountsList.clear();
                 contactUniqueAccountsList.addAll(uniqueAccountsList);
 
                 updatePersonasPanel();
-               
+
             } catch (CancellationException ex) {
                 logger.log(Level.INFO, "Persona searching was canceled."); //NON-NLS
             } catch (InterruptedException ex) {
@@ -666,44 +689,65 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             } catch (ExecutionException ex) {
                 logger.log(Level.SEVERE, "Fatal error during Persona search.", ex); //NON-NLS
             }
-        
+
         }
-    } 
-    
+    }
+
     /**
-     * A wrapper class that bags the UI components that need to be updated when 
+     * A wrapper class that bags the UI components that need to be updated when
      * a persona search task or a create dialog returns.
      */
     private class PersonaUIComponents {
-        
+
         private final JLabel personaNameLabel;
         private final JButton personaActionButton;
-    
+
+        /**
+         * Constructor.
+         *
+         * @param personaNameLabel Persona name label.
+         * @param personaActionButton Persona action button.
+         */
         PersonaUIComponents(JLabel personaNameLabel, JButton personaActionButton) {
             this.personaNameLabel = personaNameLabel;
             this.personaActionButton = personaActionButton;
         }
 
+        /**
+         * Returns persona name label.
+         *
+         * @return Persona name label.
+         */
         public JLabel getPersonaNameLabel() {
             return personaNameLabel;
         }
 
+        /**
+         * Returns persona action button.
+         *
+         * @return Persona action button.
+         */
         public JButton getPersonaActionButton() {
             return personaActionButton;
         }
     }
-    
-     /**
+
+    /**
      * Action listener for Create persona button.
      */
     private class CreatePersonaButtonListener implements ActionListener {
 
         private final PersonaUIComponents personaUIComponents;
 
+        /**
+         * Constructs a listener for Create persona button..
+         *
+         * @param personaUIComponents UI components.
+         */
         CreatePersonaButtonListener(PersonaUIComponents personaUIComponents) {
             this.personaUIComponents = personaUIComponents;
         }
-         
+
         @Override
         public void actionPerformed(java.awt.event.ActionEvent evt) {
             // Launch the Persona Create dialog - do not display immediately
@@ -712,7 +756,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
             // Pre populate the persona name and accounts if we have them.
             PersonaDetailsPanel personaPanel = createPersonaDialog.getDetailsPanel();
-            
+
             if (contactName != null) {
                 personaPanel.setPersonaName(contactName);
             }
@@ -726,7 +770,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             createPersonaDialog.display();
         }
     }
-        
+
     /**
      * Action listener for View persona button.
      */
@@ -734,6 +778,11 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
         private final Persona persona;
 
+        /**
+         * Creates listener for View persona button.
+         *
+         * @param persona
+         */
         ViewPersonaButtonListener(Persona persona) {
             this.persona = persona;
         }
@@ -744,17 +793,23 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
                     PersonaDetailsMode.VIEW, persona, new PersonaViewCallbackImpl());
         }
     }
-    
+
     /**
      * Callback method for the create mode of the PersonaDetailsDialog
      */
     class PersonaCreateCallbackImpl implements PersonaDetailsDialogCallback {
-        
+
         private final PersonaUIComponents personaUIComponents;
+
+        /**
+         * Creates a callback to handle new persona creation.
+         *
+         * @param personaUIComponents UI Components.
+         */
         PersonaCreateCallbackImpl(PersonaUIComponents personaUIComponents) {
             this.personaUIComponents = personaUIComponents;
         }
-        
+
         @Override
         public void callback(Persona persona) {
             JButton personaButton = personaUIComponents.getPersonaActionButton();
@@ -763,30 +818,32 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
                 // and change the button to a "View" button
                 personaUIComponents.getPersonaNameLabel().setText(persona.getName());
                 personaUIComponents.getPersonaActionButton().setText(Bundle.ContactArtifactViewer_persona_button_view());
-                
+
                 // replace action listener with a View button listener
                 for (ActionListener act : personaButton.getActionListeners()) {
                     personaButton.removeActionListener(act);
                 }
-                personaButton.addActionListener(new ViewPersonaButtonListener (persona));
-                
+                personaButton.addActionListener(new ViewPersonaButtonListener(persona));
+
             }
-           
+
             personaButton.getParent().revalidate();
+            personaButton.getParent().repaint();
         }
     }
-    
-     /**
+
+    /**
      * Callback method for the view mode of the PersonaDetailsDialog
      */
     class PersonaViewCallbackImpl implements PersonaDetailsDialogCallback {
+
         @Override
         public void callback(Persona persona) {
-           // nothing to do 
+            // nothing to do 
         }
     }
-    
-    
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.Box.Filler bottomFiller;
     private javax.swing.JLabel contactNameLabel;
