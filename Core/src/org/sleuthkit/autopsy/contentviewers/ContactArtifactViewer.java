@@ -603,16 +603,6 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         }
     }
 
-    /**
-     * Creates a swing filler.
-     *
-     * @param width Filler width.
-     * @param height Filler height.
-     * @return Filler object.
-     */
-    private javax.swing.Box.Filler createFiller(int width, int height) {
-        return new javax.swing.Box.Filler(new Dimension(width, height), new Dimension(width, height), new Dimension(width, height));
-    }
 
     /**
      * Thread to search for a personas for all account identifier attributes for
