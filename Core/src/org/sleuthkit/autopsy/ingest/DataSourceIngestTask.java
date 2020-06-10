@@ -20,8 +20,8 @@ package org.sleuthkit.autopsy.ingest;
 
 final class DataSourceIngestTask extends IngestTask {
 
-    DataSourceIngestTask(IngestJobPipeline job) {
-        super(job);
+    DataSourceIngestTask(IngestJobPipeline ingestJobPipeline) {
+        super(ingestJobPipeline);
     }
 
     @Override

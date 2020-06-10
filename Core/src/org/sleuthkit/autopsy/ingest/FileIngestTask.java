@@ -27,18 +27,18 @@ import org.sleuthkit.datamodel.AbstractFile;
  * and the InjestJob/Pipeline to run it on.
  */
 final class FileIngestTask extends IngestTask {
-
-    private AbstractFile file = null;
+    
     private final long fileId;
+    private AbstractFile file = null;
 
-    FileIngestTask(IngestJobPipeline job, AbstractFile file) {
-        super(job);
+    FileIngestTask(IngestJobPipeline ingestJobPipeline, AbstractFile file) {
+        super(ingestJobPipeline);
         this.file = file;
 	fileId = file.getId();
     }
     
-    FileIngestTask(IngestJobPipeline job, long fileId) {
-        super(job);
+    FileIngestTask(IngestJobPipeline ingestJobPipeline, long fileId) {
+        super(ingestJobPipeline);
         this.fileId = fileId;
     }    
 
@@ -69,9 +69,9 @@ final class FileIngestTask extends IngestTask {
             return false;
         }
         FileIngestTask other = (FileIngestTask) obj;
-        IngestJobPipeline job = getIngestJob();
-        IngestJobPipeline otherJob = other.getIngestJob();
-        if (job != otherJob && (job == null || !job.equals(otherJob))) {
+        IngestJobPipeline thisPipeline = getIngestJob();
+        IngestJobPipeline otherPipeline = other.getIngestJob();
+        if (thisPipeline != otherPipeline && (thisPipeline == null || !thisPipeline.equals(otherPipeline))) {
             return false;
         }
 	return (this.fileId == other.fileId);

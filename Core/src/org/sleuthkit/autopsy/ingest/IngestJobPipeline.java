@@ -347,7 +347,7 @@ final class IngestJobPipeline {
     /**
      * Gets the data source to be ingested by this job.
      *
-     * @return A Content object representing the data source. May return null.
+     * @return A Content object representing the data source.
      */
     Content getDataSource() {
         return this.dataSource;
@@ -642,7 +642,7 @@ final class IngestJobPipeline {
             synchronized (this.dataSourceIngestProgressLock) {
                 String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.dataSourceIngest.initialDisplayName",
-                        getDataSourceId());
+                        this.dataSource.getId());
                 this.dataSourceIngestProgress = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
@@ -677,7 +677,7 @@ final class IngestJobPipeline {
             synchronized (this.fileIngestProgressLock) {
                 String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.fileIngest.displayName",
-                        getDataSourceName());
+                        this.dataSource.getName());
                 this.fileIngestProgress = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
@@ -700,40 +700,50 @@ final class IngestJobPipeline {
      * completed and does a stage transition if they are.
      */
     private void checkForStageCompleted() {
-        synchronized (this.stageCompletionCheckLock) {
-	    if (ingestMode == IngestJob.Mode.BATCH) {
-		if (IngestJobPipeline.taskScheduler.currentTasksAreCompleted(this)) {
-		    switch (this.stage) {
-			case FIRST:
-			    this.finishFirstStage();
-			    break;
-			case SECOND:
-			    this.finish();
-			    break;
-		    }
-		}
-	    } else {
-		System.out.println("IngestJobPipeline.checkForStageCompleted() - current stage: " + this.stage.toString());
+	if (ingestMode == IngestJob.Mode.BATCH) {
+	    checkForStageCompletedBatch();
+	} else {
+	    checkForStageCompletedStreaming();
+	}
+    }
 
-		if (IngestJobPipeline.taskScheduler.currentTasksAreCompleted(this)) {
-		    System.out.println("IngestJobPipeline.checkForStageCompleted() - current tasks are completed");
-		    switch (this.stage) {
-			case STREAMING_FILE_INGEST:
-			    // Nothing to do here - need to wait for the data source
-			    System.out.println("IngestJobPipeline.checkForStageCompleted() - do nothing");
-			    break;
-			case STREAMING_FIRST_STAGE_DATA_SOURCE_INGEST:
-			    // Finish file and data source ingest, start second stage (if applicable)
-			    System.out.println("IngestJobPipeline.checkForStageCompleted() - finishFirstStage");
-			    this.finishFirstStage();
-			    break;
-			case SECOND:
-			    System.out.println("IngestJobPipeline.checkForStageCompleted() - finish");
-			    this.finish();
-			    break;
-		    }
-		} else {
-		    System.out.println("IngestJobPipeline.checkForStageCompleted() - current tasks are not complete");
+    /**
+     * Checks to see if the ingest tasks for the current stage of this job are
+     * completed and does a stage transition if they are.
+     */
+    private void checkForStageCompletedBatch() {    
+        synchronized (this.stageCompletionCheckLock) {
+	    if (IngestJobPipeline.taskScheduler.currentTasksAreCompleted(this)) {
+		switch (this.stage) {
+		    case FIRST:
+			this.finishFirstStage();
+			break;
+		    case SECOND:
+			this.finish();
+			break;
+		}
+	    }
+	}
+    }
+	    
+    /**
+     * Checks to see if the ingest tasks for the current stage of this job are
+     * completed and does a stage transition if they are.
+     */
+    private void checkForStageCompletedStreaming() {    
+        synchronized (this.stageCompletionCheckLock) {
+	    if (IngestJobPipeline.taskScheduler.currentTasksAreCompleted(this)) {	 
+		switch (this.stage) {
+		    case STREAMING_FILE_INGEST:
+			// Nothing to do here - need to wait for the data source
+			break;
+		    case STREAMING_FIRST_STAGE_DATA_SOURCE_INGEST:
+			// Finish file and data source ingest, start second stage (if applicable)
+			this.finishFirstStage();
+			break;
+		    case SECOND:
+			this.finish();
+			break;
 		}
 	    }
         }
@@ -1146,14 +1156,14 @@ final class IngestJobPipeline {
         if (this.doUI) {
             synchronized (this.dataSourceIngestProgressLock) {
                 if (null != dataSourceIngestProgress) {
-                    dataSourceIngestProgress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", getDataSourceName()));
+                    dataSourceIngestProgress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", this.dataSource.getName()));
                     dataSourceIngestProgress.progress(NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling"));
                 }
             }
 
             synchronized (this.fileIngestProgressLock) {
                 if (null != this.fileIngestProgress) {
-                    this.fileIngestProgress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.fileIngest.displayName", getDataSourceName()));
+                    this.fileIngestProgress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.fileIngest.displayName", this.dataSource.getName()));
                     this.fileIngestProgress.progress(NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling"));
                 }
             }
@@ -1198,7 +1208,7 @@ final class IngestJobPipeline {
      * @param message The message.
      */
     private void logInfoMessage(String message) {
-        logger.log(Level.INFO, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, getDataSourceName(), getDataSourceId(), id)); //NON-NLS        
+        logger.log(Level.INFO, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, this.dataSource.getName(), this.dataSource.getId(), id)); //NON-NLS        
     }
 
     /**
@@ -1210,7 +1220,7 @@ final class IngestJobPipeline {
      * @param throwable The throwable associated with the error.
      */
     private void logErrorMessage(Level level, String message, Throwable throwable) {
-        logger.log(level, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, getDataSourceName(), getDataSourceId(), id), throwable); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, this.dataSource.getName(), this.dataSource.getId(), id), throwable); //NON-NLS
     }
 
     /**
@@ -1221,7 +1231,7 @@ final class IngestJobPipeline {
      * @param message The message.
      */
     private void logErrorMessage(Level level, String message) {
-        logger.log(level, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, getDataSourceName(), getDataSourceId(), id)); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, this.dataSource.getName(), this.dataSource.getId(), id)); //NON-NLS
     }
 
     /**
@@ -1234,30 +1244,6 @@ final class IngestJobPipeline {
             logErrorMessage(Level.SEVERE, String.format("%s experienced an error during analysis", error.getModuleDisplayName()), error.getThrowable()); //NON-NLS
         }
     }
-    
-    /**
-     * Returns the name of the datasource.
-     * 
-     * @return the name of the datasource or "Pending data source" if it has not yet been set.
-     */
-    private String getDataSourceName() {
-        if (dataSource != null) {
-            return dataSource.getName();
-        }
-	return "Pending data source"; // NON-NLS
-    }
-    
-    /**
-     * Returns the ID of the datasource.
-     * 
-     * @return the object ID of the datasource or 0 if it has not yet been set.
-     */
-    private long getDataSourceId() {
-        if (dataSource != null) {
-            return dataSource.getId();
-        }
-	return 0;
-    }    
 
     /**
      * Gets a snapshot of this jobs state and performance.
@@ -1298,7 +1284,7 @@ final class IngestJobPipeline {
 
         }
 
-        return new Snapshot(getDataSourceName(), id, createTime,
+        return new Snapshot(this.dataSource.getName(), id, createTime,
                 getCurrentDataSourceIngestModule(), fileIngestRunning, fileIngestStartTime,
                 cancelled, cancellationReason, cancelledDataSourceIngestModules,
                 processedFilesCount, estimatedFilesToProcessCount, snapShotTime, tasksSnapshot);

@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This class manages a sequence of file level ingest modules for a data source
- * ingest job. It starts the modules, runs files through them, and shuts them
+ ingest ingestJobPipeline. It starts the modules, runs files through them, and shuts them
  * down when file level ingest is complete.
  * <p>
  * This class is thread-safe.
@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class FileIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private final IngestJobPipeline job;
+    private final IngestJobPipeline ingestJobPipeline;
     private final List<PipelineModule> modules = new ArrayList<>();
     private Date startTime;
     private volatile boolean running;
@@ -50,12 +50,12 @@ final class FileIngestPipeline {
      * modules. It starts the modules, runs files through them, and shuts them
      * down when file level ingest is complete.
      *
-     * @param job             The data source ingest job that owns the pipeline.
+     * @param ingestJobPipeline  The ingestJobPipeline that owns the pipeline.
      * @param moduleTemplates The ingest module templates that define the
      *                        pipeline.
      */
-    FileIngestPipeline(IngestJobPipeline job, List<IngestModuleTemplate> moduleTemplates) {
-        this.job = job;
+    FileIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+        this.ingestJobPipeline = ingestJobPipeline;
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isFileIngestModuleTemplate()) {
                 PipelineModule module = new PipelineModule(template.createFileIngestModule(), template.getModuleName());
@@ -103,7 +103,7 @@ final class FileIngestPipeline {
         List<IngestModuleError> errors = new ArrayList<>();
         for (PipelineModule module : this.modules) {
             try {
-                module.startUp(new IngestJobContext(this.job));
+                module.startUp(new IngestJobContext(this.ingestJobPipeline));
             } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
@@ -120,22 +120,22 @@ final class FileIngestPipeline {
      */
     synchronized List<IngestModuleError> process(FileIngestTask task) {
         List<IngestModuleError> errors = new ArrayList<>();
-        if (!this.job.isCancelled()) {
+        if (!this.ingestJobPipeline.isCancelled()) {
             AbstractFile file = task.getFile();
             for (PipelineModule module : this.modules) {
                 try {
                     FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
-                    this.job.setCurrentFileIngestModule(module.getDisplayName(), task.getFile().getName());
+                    this.ingestJobPipeline.setCurrentFileIngestModule(module.getDisplayName(), task.getFile().getName());
                     module.process(file);
                 } catch (Throwable ex) { // Catch-all exception firewall
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
                 }
-                if (this.job.isCancelled()) {
+                if (this.ingestJobPipeline.isCancelled()) {
                     break;
                 }
             }
             
-            if (!this.job.isCancelled()) {
+            if (!this.ingestJobPipeline.isCancelled()) {
                 // Save any properties that have not already been saved to the database
                 try{
                     file.save();

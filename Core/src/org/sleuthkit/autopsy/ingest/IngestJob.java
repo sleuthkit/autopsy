@@ -38,12 +38,12 @@ import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Analyzes one or more data sources using a set of ingest modules specified via
- * ingest job settings.
+ ingest ingestJobPipeline settings.
  */
 public final class IngestJob {
 
     /*
-     * An ingest job can be cancelled for various reasons.
+     * An ingest ingestJobPipeline can be cancelled for various reasons.
      */
     public enum CancellationReason {
 
@@ -83,11 +83,11 @@ public final class IngestJob {
     private volatile CancellationReason cancellationReason;
 
     /**
-     * Constructs an ingest job that analyzes one or more data sources using a
-     * set of ingest modules specified via ingest job settings.
+     * Constructs an ingest ingestJobPipeline that analyzes one or more data sources using a
+ set of ingest modules specified via ingest ingestJobPipeline settings.
      *
      * @param dataSources The data sources to be ingested.
-     * @param settings    The ingest job settings.
+     * @param settings    The ingest ingestJobPipeline settings.
      */
     IngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         this.id = IngestJob.nextId.getAndIncrement();
@@ -101,13 +101,13 @@ public final class IngestJob {
     }
 
     /**
-     * Constructs an ingest job that analyzes one data source using a set of
-     * ingest modules specified via ingest job settings. Either all of the files
+     * Constructs an ingest ingestJobPipeline that analyzes one data source using a set of
+ ingest modules specified via ingest ingestJobPipeline settings. Either all of the files
      * in the data source or a given subset of the files will be analyzed.
      *
      * @param dataSource The data source to be analyzed
      * @param files      A subset of the files for the data source.
-     * @param settings   The ingest job settings.
+     * @param settings   The ingest ingestJobPipeline settings.
      */
     IngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
         this.id = IngestJob.nextId.getAndIncrement();
@@ -121,10 +121,10 @@ public final class IngestJob {
     }
     
     /**
-     * Constructs an ingest job that analyzes one data source using an
-     * ingest stream.
+     * Constructs an ingest ingestJobPipeline that analyzes one data source using an
+ ingest stream.
      *
-     * @param settings   The ingest job settings.
+     * @param settings   The ingest ingestJobPipeline settings.
      */
     public IngestJob(IngestJobSettings settings) { // TODO revert public
         this.id = IngestJob.nextId.getAndIncrement();
@@ -137,18 +137,18 @@ public final class IngestJob {
     }
 
     /**
-     * Gets the unique identifier assigned to this ingest job.
+     * Gets the unique identifier assigned to this ingest ingestJobPipeline.
      *
-     * @return The job identifier.
+     * @return The ingestJobPipeline identifier.
      */
     public long getId() {
         return this.id;
     }
 
     /**
-     * Checks to see if this ingest job has at least one non-empty ingest module
-     * pipeline (first or second stage data-source-level pipeline or file-level
-     * pipeline).
+     * Checks to see if this ingest ingestJobPipeline has at least one non-empty ingest module
+ pipeline (first or second stage data-source-level pipeline or file-level
+ pipeline).
      *
      * @return True or false.
      */
@@ -188,7 +188,7 @@ public final class IngestJob {
     
     /**
      * TODO this is a workaround to get the right pipeline. For streaming ingest
-     * there will only be one. Might be able to pass/store the job ID to avoid this.
+ there will only be one. Might be able to pass/store the ingestJobPipeline ID to avoid this.
      * 
      * @return 
      */
@@ -217,8 +217,8 @@ public final class IngestJob {
     }
 
     /**
-     * Starts this ingest job by starting its ingest module pipelines and
-     * scheduling the ingest tasks that make up the job.
+     * Starts this ingest ingestJobPipeline by starting its ingest module pipelines and
+ scheduling the ingest tasks that make up the ingestJobPipeline.
      *
      * @return A collection of ingest module start up errors, empty on success.
      */
@@ -242,9 +242,9 @@ public final class IngestJob {
 	incompleteJobsCount.set(ingestJobPipelines.size());
 	
         /*
-         * Try to start each data source ingest job. Note that there is a not
+         * Try to start each data source ingest ingestJobPipeline. Note that there is a not
          * unwarranted assumption here that if there is going to be a module
-         * startup failure, it will be for the first data source ingest job.
+         * startup failure, it will be for the first data source ingest ingestJobPipeline.
          *
          * TODO (RC): Consider separating module start up from pipeline startup
          * so that no processing is done if this assumption is false.
@@ -272,7 +272,7 @@ public final class IngestJob {
     }
     
     /**
-     * Get the ingest mode for this job (batch or streaming).
+     * Get the ingest mode for this ingestJobPipeline (batch or streaming).
      * 
      * @return the ingest mode.
      */
@@ -281,7 +281,7 @@ public final class IngestJob {
     }
 
     /**
-     * Gets a snapshot of the progress of this ingest job.
+     * Gets a snapshot of the progress of this ingest ingestJobPipeline.
      *
      * @return The snapshot.
      */
@@ -290,7 +290,7 @@ public final class IngestJob {
     }
 
     /**
-     * Gets a snapshot of the progress of this ingest job.
+     * Gets a snapshot of the progress of this ingest ingestJobPipeline.
      *
      * @param getIngestTasksSnapshot 
      * 
@@ -301,10 +301,10 @@ public final class IngestJob {
     }
 
     /**
-     * Gets snapshots of the progress of each of this ingest job's child data
-     * source ingest jobs.
+     * Gets snapshots of the progress of each of this ingest ingestJobPipeline's child data
+ source ingest jobs.
      *
-     * @return A list of data source ingest job progress snapshots.
+     * @return A list of data source ingest ingestJobPipeline progress snapshots.
      */
     List<Snapshot> getDataSourceIngestJobSnapshots() {
         List<Snapshot> snapshots = new ArrayList<>();
@@ -315,8 +315,8 @@ public final class IngestJob {
     }
 
     /**
-     * Requests cancellation of this ingest job, which means discarding
-     * unfinished tasks and stopping the ingest pipelines. Returns immediately,
+     * Requests cancellation of this ingest ingestJobPipeline, which means discarding
+ unfinished tasks and stopping the ingest pipelines. Returns immediately,
      * but there may be a delay before all of the ingest modules in the
      * pipelines respond by stopping processing.
      *
@@ -328,8 +328,8 @@ public final class IngestJob {
     }
 
     /**
-     * Requests cancellation of this ingest job, which means discarding
-     * unfinished tasks and stopping the ingest pipelines. Returns immediately,
+     * Requests cancellation of this ingest ingestJobPipeline, which means discarding
+ unfinished tasks and stopping the ingest pipelines. Returns immediately,
      * but there may be a delay before all of the ingest modules in the
      * pipelines respond by stopping processing.
      *
@@ -343,7 +343,7 @@ public final class IngestJob {
     }
 
     /**
-     * Gets the reason this job was cancelled.
+     * Gets the reason this ingestJobPipeline was cancelled.
      *
      * @return The cancellation reason, may be not cancelled.
      */
@@ -352,8 +352,8 @@ public final class IngestJob {
     }
 
     /**
-     * Queries whether or not cancellation of this ingest job has been
-     * requested.
+     * Queries whether or not cancellation of this ingest ingestJobPipeline has been
+ requested.
      *
      * @return True or false.
      */
@@ -363,16 +363,16 @@ public final class IngestJob {
 
     /**
      * Provides a callback for completed data source ingest jobs, allowing this
-     * ingest job to notify the ingest manager when it is complete.
+ ingest ingestJobPipeline to notify the ingest manager when it is complete.
      *
-     * @param job A completed data source ingest job.
+     * @param ingestJobPipeline A completed data source ingest ingestJobPipeline.
      */
-    void dataSourceJobFinished(IngestJobPipeline job) {
+    void dataSourceJobFinished(IngestJobPipeline ingestJobPipeline) {
         IngestManager ingestManager = IngestManager.getInstance();
-        if (!job.isCancelled()) {
-            ingestManager.fireDataSourceAnalysisCompleted(id, job.getId(), job.getDataSource());
+        if (!ingestJobPipeline.isCancelled()) {
+            ingestManager.fireDataSourceAnalysisCompleted(id, ingestJobPipeline.getId(), ingestJobPipeline.getDataSource());
         } else {
-            IngestManager.getInstance().fireDataSourceAnalysisCancelled(id, job.getId(), job.getDataSource());
+            IngestManager.getInstance().fireDataSourceAnalysisCancelled(id, ingestJobPipeline.getId(), ingestJobPipeline.getDataSource());
         }
         if (incompleteJobsCount.decrementAndGet() == 0) {
             ingestManager.finishIngestJob(this);
@@ -380,7 +380,7 @@ public final class IngestJob {
     }
 
     /**
-     * A snapshot of the progress of an ingest job.
+     * A snapshot of the progress of an ingest ingestJobPipeline.
      */
     public final class ProgressSnapshot {
 
@@ -392,8 +392,8 @@ public final class IngestJob {
         private final IngestJob.CancellationReason jobCancellationReason;
 
         /**
-         * A snapshot of the progress of an ingest job on the processing of a
-         * data source.
+         * A snapshot of the progress of an ingest ingestJobPipeline on the processing of a
+ data source.
          */
         public final class DataSourceProcessingSnapshot {
 
@@ -424,7 +424,7 @@ public final class IngestJob {
             }
 
             /**
-             * Gets the reason this job was cancelled.
+             * Gets the reason this ingestJobPipeline was cancelled.
              *
              * @return The cancellation reason, may be not cancelled.
              */
@@ -446,15 +446,15 @@ public final class IngestJob {
         }
 
         /**
-         * Constructs a snapshot of ingest job progress.
+         * Constructs a snapshot of ingest ingestJobPipeline progress.
          */
         private ProgressSnapshot(boolean getIngestTasksSnapshot) {
             dataSourceModule = null;
             fileIngestRunning = false;
             fileIngestStartTime = null;
             dataSourceProcessingSnapshots = new ArrayList<>();
-            for (IngestJobPipeline dataSourceJob : ingestJobPipelines.values()) {
-                Snapshot snapshot = dataSourceJob.getSnapshot(getIngestTasksSnapshot);
+            for (IngestJobPipeline pipeline : ingestJobPipelines.values()) {
+                Snapshot snapshot = pipeline.getSnapshot(getIngestTasksSnapshot);
                 dataSourceProcessingSnapshots.add(new DataSourceProcessingSnapshot(snapshot));
                 if (null == dataSourceModule) {
                     DataSourceIngestPipeline.PipelineModule module = snapshot.getDataSourceLevelIngestModule();
@@ -504,8 +504,8 @@ public final class IngestJob {
         }
 
         /**
-         * Queries whether or not an ingest job level cancellation request had
-         * been issued at the time the snapshot was taken.
+         * Queries whether or not an ingest ingestJobPipeline level cancellation request had
+ been issued at the time the snapshot was taken.
          *
          * @return True or false.
          */
@@ -514,7 +514,7 @@ public final class IngestJob {
         }
 
         /**
-         * Gets the reason this job was cancelled.
+         * Gets the reason this ingestJobPipeline was cancelled.
          *
          * @return The cancellation reason, may be not cancelled.
          */
@@ -540,7 +540,7 @@ public final class IngestJob {
      */
     public static class DataSourceIngestModuleHandle {
 
-        private final IngestJobPipeline job;
+        private final IngestJobPipeline ingestJobPipeline;
         private final DataSourceIngestPipeline.PipelineModule module;
         private final boolean cancelled;
 
@@ -549,14 +549,14 @@ public final class IngestJob {
          * used to get basic information about the module and to request
          * cancellation of the module.
          *
-         * @param job    The data source ingest job that owns the data source
-         *               level ingest module.
+         * @param ingestJobPipeline    The data source ingest ingestJobPipeline that owns the data source
+               level ingest module.
          * @param module The data source level ingest module.
          */
-        private DataSourceIngestModuleHandle(IngestJobPipeline job, DataSourceIngestPipeline.PipelineModule module) {
-            this.job = job;
+        private DataSourceIngestModuleHandle(IngestJobPipeline ingestJobPipeline, DataSourceIngestPipeline.PipelineModule module) {
+            this.ingestJobPipeline = ingestJobPipeline;
             this.module = module;
-            this.cancelled = job.currentDataSourceIngestModuleIsCancelled();
+            this.cancelled = ingestJobPipeline.currentDataSourceIngestModuleIsCancelled();
         }
 
         /**
@@ -606,8 +606,8 @@ public final class IngestJob {
              * modules participating in this workaround will need to consult the
              * cancelled flag in the adapters.
              */
-            if (this.job.getCurrentDataSourceIngestModule() == this.module) {
-                this.job.cancelCurrentDataSourceIngestModule();
+            if (this.ingestJobPipeline.getCurrentDataSourceIngestModule() == this.module) {
+                this.ingestJobPipeline.cancelCurrentDataSourceIngestModule();
             }
         }
 
