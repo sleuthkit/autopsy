@@ -165,19 +165,22 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                      * If a new file has been added but does not have an
                      * extension there is nothing to do.
                      */
-                    if ((evt.getOldValue() instanceof ModuleContentEvent) == true) {
-                        ModuleContentEvent moduleContentEvent = (ModuleContentEvent) evt.getOldValue();
-                        if ((moduleContentEvent.getSource() instanceof AbstractFile) == true) {
-                            AbstractFile abstractFile = (AbstractFile) moduleContentEvent.getSource();
-                            if (!abstractFile.getNameExtension().isEmpty()) {
-                                return true;
-                            }
-                        }
+                    if ((evt.getOldValue() instanceof ModuleContentEvent) == false) {
+                        return false;
+                    }
+                    ModuleContentEvent moduleContentEvent = (ModuleContentEvent) evt.getOldValue();
+                    if ((moduleContentEvent.getSource() instanceof AbstractFile) == false) {
+                        return false;
+                    }
+                    AbstractFile abstractFile = (AbstractFile) moduleContentEvent.getSource();
+                    if (!abstractFile.getNameExtension().isEmpty()) {
+                        return true;
                     }
                 } catch (NoCurrentCaseException ex) {
                     /**
-                     * Case is closed, do nothing.
+                     * Case is closed, no refresh needed.
                      */
+                    return false;
                 }
             }
             return false;
