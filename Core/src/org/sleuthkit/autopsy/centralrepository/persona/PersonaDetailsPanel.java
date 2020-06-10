@@ -182,7 +182,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
             }
         }
         return false;
-    }
+    } 
 
     boolean addAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) {
         if (!accountExists(account)) {
@@ -560,7 +560,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
 
     void clear() {
         currentPersona = null;
-        nameField.setText(Persona.getDefaultName());
+        nameField.setText(mode == PersonaDetailsMode.CREATE ? Persona.getDefaultName() : "");
         currentAccounts = new ArrayList<>();
         currentMetadata = new ArrayList<>();
         currentAliases = new ArrayList<>();
@@ -714,8 +714,8 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     }
 
     @Messages({
-        "PersonaDetailsPanel_NotEnoughAccounts_msg=A persona needs two or more accounts",
-        "PersonaDetailsPanel_NotEnoughAccounts_Title=Not enough accounts",
+        "PersonaDetailsPanel_NotEnoughAccounts_msg=A persona needs at least one account",
+        "PersonaDetailsPanel_NotEnoughAccounts_Title=Missing account",
         "PersonaDetailsPanel_CentralRepoErr_msg=Failure to write to Central Repository",
         "PersonaDetailsPanel_CentralRepoErr_Title=Central Repository failure",
         "PersonaDetailsPanel_EmptyName_msg=Persona name cannot be empty",
