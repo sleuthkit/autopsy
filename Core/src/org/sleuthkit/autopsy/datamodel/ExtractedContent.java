@@ -150,6 +150,11 @@ public class ExtractedContent implements AutopsyVisitableItem {
         // maps the artifact type to its child node 
         private final HashMap<BlackboardArtifact.Type, TypeNode> typeNodeList = new HashMap<>();
 
+        /**
+         * RefreshThrottler is used to limit the number of refreshes performed
+         * when CONTENT_CHANGED and DATA_ADDED ingest module events are
+         * received.
+         */
         private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
 
         @SuppressWarnings("deprecation")
@@ -179,6 +184,21 @@ public class ExtractedContent implements AutopsyVisitableItem {
                 if (evt.getNewValue() == null) {
                     removeNotify();
                     skCase = null;
+                }
+            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * This is a stop gap measure until a different way of handling
+                 * the closing of cases is worked out. Currently, remote events
+                 * may be received for a case that is already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    refresh(false);
+                } catch (NoCurrentCaseException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
                 }
             }
         };
@@ -239,7 +259,12 @@ public class ExtractedContent implements AutopsyVisitableItem {
         }
 
         @Override
-        public void refresh(PropertyChangeEvent evt) {
+        public void refresh() {
+            refresh(false);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
             if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                 /**
@@ -256,29 +281,15 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      */
                     final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
                     if (null != event && !(this.doNotShow.contains(event.getBlackboardArtifactType()))) {
-                        refresh(false);
+                        return true;
                     }
                 } catch (NoCurrentCaseException notUsed) {
                     /**
                      * Case is closed, do nothing.
                      */
                 }
-            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                /**
-                 * This is a stop gap measure until a different way of handling
-                 * the closing of cases is worked out. Currently, remote events
-                 * may be received for a case that is already closed.
-                 */
-                try {
-                    Case.getCurrentCaseThrows();
-                    refresh(false);
-                } catch (NoCurrentCaseException notUsed) {
-                    /**
-                     * Case is closed, do nothing.
-                     */
-                }
-            }         
+            }
+            return false;
         }
     }
 
@@ -365,6 +376,12 @@ public class ExtractedContent implements AutopsyVisitableItem {
     private class ArtifactFactory extends BaseChildFactory<BlackboardArtifact> implements RefreshThrottler.Refresher {
 
         private final BlackboardArtifact.Type type;
+
+        /**
+         * RefreshThrottler is used to limit the number of refreshes performed
+         * when CONTENT_CHANGED and DATA_ADDED ingest module events are
+         * received.
+         */
         private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
 
         ArtifactFactory(BlackboardArtifact.Type type) {
@@ -372,14 +389,37 @@ public class ExtractedContent implements AutopsyVisitableItem {
             this.type = type;
         }
 
+        private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    refresh(false);
+                } catch (NoCurrentCaseException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            }
+        };
+
         @Override
         protected void onAdd() {
             refreshThrottler.registerForIngestModuleEvents();
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
         }
 
         @Override
         protected void onRemove() {
             refreshThrottler.unregisterEventListener();
+            IngestManager.getInstance().removeIngestJobEventListener(pcl);
         }
 
         @Override
@@ -411,7 +451,12 @@ public class ExtractedContent implements AutopsyVisitableItem {
         }
 
         @Override
-        public void refresh(PropertyChangeEvent evt) {
+        public void refresh() {
+            refresh(false);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
             if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
 
@@ -431,30 +476,16 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      */
                     final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
                     if (null != event && event.getBlackboardArtifactType().equals(type)) {
-                        refresh(false);
+                        return true;
                     }
-                } catch (NoCurrentCaseException notUsed) {
-                    /**
-                     * Case is closed, do nothing.
-                     */
-                }
-            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                /**
-                 * Checking for a current case is a stop gap measure until a
-                 * different way of handling the closing of cases is worked out.
-                 * Currently, remote events may be received for a case that is
-                 * already closed.
-                 */
-                try {
-                    Case.getCurrentCaseThrows();
-                    refresh(false);
+
                 } catch (NoCurrentCaseException notUsed) {
                     /**
                      * Case is closed, do nothing.
                      */
                 }
             }
+            return false;
         }
     }
 }
