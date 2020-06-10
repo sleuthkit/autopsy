@@ -288,9 +288,9 @@ public class ExtractActionHelper {
         @Override
         @Messages({
             "# {0} - outputFolderName",
-            "ExtractActionHelper.progress.extracting=Extracting=Extracting to {0}",
+            "ExtractActionHelper.progress.extracting=Extracting to {0}",
             "# {0} - fileName",
-            "ExtractActionHelper.progress.fileExtracting=Extracting=Extracting file: {0}"
+            "ExtractActionHelper.progress.fileExtracting=Extracting file: {0}"
         })
         protected Object doInBackground() throws Exception {
             if (extractionTasks.isEmpty()) {
