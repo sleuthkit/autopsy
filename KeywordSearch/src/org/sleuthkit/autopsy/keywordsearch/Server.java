@@ -328,8 +328,8 @@ public class Server {
     }
 
     private ConcurrentUpdateSolrClient getSolrClient(String solrUrl) {
-        int numThreads = UserPreferences.getNumThreads();
-        int numDocs = UserPreferences.getDocumentsQueueSize();
+        int numThreads = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getNumThreads();
+        int numDocs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getDocumentsQueueSize();
         logger.log(Level.INFO, "Creating new ConcurrentUpdateSolrClient. Queue size = {0}, Number of threads = {1}", new Object[]{numDocs, numThreads}); //NON-NLS
         ConcurrentUpdateSolrClient client = new ConcurrentUpdateSolrClient.Builder(solrUrl)
                 .withQueueSize(numDocs)
@@ -572,8 +572,8 @@ public class Server {
                     solrUrl = "http://" + properties.getHost() + ":" + properties.getPort() + "/solr";
                 } else {
                     // Solr 4
-                    String solr4ServerHost = UserPreferences.getSolr4ServerHost().trim();
-                    String solr4ServerPort = UserPreferences.getSolr4ServerPort().trim();
+                    String solr4ServerHost = org.sleuthkit.autopsy.userpreferences.UserPreferences.getSolr4ServerHost().trim();
+                    String solr4ServerPort = org.sleuthkit.autopsy.userpreferences.UserPreferences.getSolr4ServerPort().trim();
                     solrUrl = "http://" + solr4ServerHost + ":" + solr4ServerPort + "/solr";
                 }
 
@@ -1052,8 +1052,8 @@ public class Server {
     private int getNumShardsToUse() throws SolrServerException, IOException {
 
         // if we want to use a specific sharding strategy, use that
-        if (UserPreferences.getMaxNumShards() > 0) {
-            return UserPreferences.getMaxNumShards();
+        if (org.sleuthkit.autopsy.keywordsearch.UserPreferences.getMaxNumShards() > 0) {
+            return org.sleuthkit.autopsy.keywordsearch.UserPreferences.getMaxNumShards();
         }
 
         // otherwise get list of all live Solr servers in the cluster
@@ -1226,8 +1226,8 @@ public class Server {
         }
 
         // Default back to the user preferences if the solrserver.txt file was not found or if an error occurred
-        String host = UserPreferences.getIndexingServerHost();
-        String port = UserPreferences.getIndexingServerPort();
+        String host = org.sleuthkit.autopsy.userpreferences.UserPreferences.getIndexingServerHost();
+        String port = org.sleuthkit.autopsy.userpreferences.UserPreferences.getIndexingServerPort();
         return new IndexingServerProperties(host, port);
     }
 
