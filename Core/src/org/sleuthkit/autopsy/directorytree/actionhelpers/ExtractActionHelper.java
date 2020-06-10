@@ -315,8 +315,7 @@ public class ExtractActionHelper {
             progress.switchToIndeterminate();
 
             // Do the extraction tasks.
-            for (int i = 0; i < this.extractionTasks.size(); i++) {
-                FileExtractionTask task = this.extractionTasks.get(i);
+            for (FileExtractionTask task : this.extractionTasks) {
                 progress.progress(Bundle.ExtractActionHelper_progress_fileExtracting(task.destination.getName()));
 
                 ContentUtils.ExtractFscContentVisitor.extract(task.source, task.destination, null, this);
