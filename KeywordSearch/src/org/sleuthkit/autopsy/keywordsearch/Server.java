@@ -250,13 +250,11 @@ public class Server {
     private final ReentrantReadWriteLock currentCoreLock;
 
     private final File solr8Folder;
-    private Path solr8CmdPath;
     private Path solr8Home;
     private final ServerAction serverAction;
     private InputStreamPrinterThread errorRedirectThread;
 
-    private final File solr4Folder;
-    private Path solr4Home;    
+    private final File solr4Folder; 
     /**
      * New instance for the server at the given URL
      *
@@ -264,7 +262,7 @@ public class Server {
     Server() {
         initSettings();
 
-        this.localSolrServer = new ConcurrentUpdateSolrClient.Builder("http://localhost:" + currentSolrServerPort + "/solr").build(); //NON-NLS
+        this.localSolrServer = getSolrClient("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
         serverAction = new ServerAction();
         solr8Folder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
         solr4Folder = InstalledFileLocator.getDefault().locate("solr4", Server.class.getPackage().getName(), false); //NON-NLS
@@ -274,9 +272,6 @@ public class Server {
         // variable to the Solr script but it can be overridden by the user in
         // either autopsy-solr.cmd or autopsy-solr-in.cmd.
         javaPath = PlatformUtil.getJavaPath();
-        
-        // This is our customized version of the Solr batch script to start/stop Solr.
-        solr8CmdPath = Paths.get(solr8Folder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
 
         solr8Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
         if (!solr8Home.toFile().exists()) {
@@ -290,7 +285,7 @@ public class Server {
             }
         }
         
-        solr4Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr4"); //NON-NLS
+        Path solr4Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr4"); //NON-NLS
         if (!solr4Home.toFile().exists()) { 
             try {
                 Files.createDirectory(solr4Home);
@@ -439,6 +434,9 @@ public class Server {
      */
     private Process runSolrCommand(List<String> solrArguments) throws IOException {
         final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + UserPreferences.getMaxSolrVMSize() + "m"; //NON-NLS
+        
+        // This is our customized version of the Solr batch script to start/stop Solr.
+        Path solr8CmdPath = Paths.get(solr8Folder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
 
         List<String> commandLine = new ArrayList<>();
 	commandLine.add(solr8CmdPath.toString());
@@ -1944,13 +1942,6 @@ public class Server {
                 return;
             }
 
-            /* NOTE: there is no way to unload collections. Only cores can be unloaded.
-            Since we set "transient=true" and "loadOnStartup=false" on all cores that 
-            we create, we shouldn't need to explicitly unload cores. Leaving the core below
-            for reference. */
-            
-            // core name is (collectionName + "_shard1_replica_n1")
-            //String coreName = this.name + "_shard1_replica_n1";
             try {
                 CoreAdminRequest.unloadCore(this.name, currentSolrServer);
             } catch (SolrServerException ex) {
