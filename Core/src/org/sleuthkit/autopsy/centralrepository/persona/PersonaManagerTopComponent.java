@@ -54,7 +54,9 @@ public final class PersonaManagerTopComponent extends TopComponent {
     private Persona selectedPersona = null;
 
     @Messages({
-        "PMTopComponent_Name=Persona Manager"
+        "PMTopComponent_Name=Persona Manager",
+        "PMTopComponent_delete_exception_Title=Delete failure",
+        "PMTopComponent_delete_exception_msg=Failed to delete persona",
     })
     public PersonaManagerTopComponent() {
         initComponents();
@@ -81,6 +83,25 @@ public final class PersonaManagerTopComponent extends TopComponent {
             public void actionPerformed(ActionEvent e) {
                 new PersonaDetailsDialog(PersonaManagerTopComponent.this,
                         PersonaDetailsMode.CREATE, selectedPersona, new CreateEditCallbackImpl());
+            }
+        });
+        
+        deleteBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    if (selectedPersona != null) {
+                        selectedPersona.delete();
+                    }
+                } catch (CentralRepoException ex) {
+                    logger.log(Level.SEVERE, "Failed to delete persona: " + selectedPersona.getName(), ex);
+                    JOptionPane.showMessageDialog(PersonaManagerTopComponent.this,
+                    Bundle.PMTopComponent_delete_exception_msg(),
+                    Bundle.PMTopComponent_delete_exception_Title(),
+                    JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                executeSearch();
             }
         });
 
@@ -116,6 +137,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
         Persona persona = currentResults.get(index);
         selectedPersona = persona;
         editBtn.setEnabled(true);
+        deleteBtn.setEnabled(true);
     }
 
     /**
@@ -147,6 +169,8 @@ public final class PersonaManagerTopComponent extends TopComponent {
         if (selectedRow != -1) {
             setPersona(resultsTable.getSelectedRow());
             detailsPanel.setMode(this, PersonaDetailsMode.VIEW, selectedPersona);
+        } else {
+            detailsPanel.clear();
         }
     }
 
@@ -189,6 +213,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
         resultsTable.clearSelection();
         updateResultsTable(results);
         editBtn.setEnabled(false);
+        deleteBtn.setEnabled(false);
     }
 
     @Override
@@ -216,6 +241,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
         searchBtn = new javax.swing.JButton();
         editBtn = new javax.swing.JButton();
         createBtn = new javax.swing.JButton();
+        deleteBtn = new javax.swing.JButton();
         detailsPanel = new org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel();
 
         setMinimumSize(new java.awt.Dimension(400, 400));
@@ -246,6 +272,9 @@ public final class PersonaManagerTopComponent extends TopComponent {
 
         org.openide.awt.Mnemonics.setLocalizedText(createBtn, org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.createBtn.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(deleteBtn, org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.deleteBtn.text")); // NOI18N
+        deleteBtn.setEnabled(false);
+
         javax.swing.GroupLayout searchPanelLayout = new javax.swing.GroupLayout(searchPanel);
         searchPanel.setLayout(searchPanelLayout);
         searchPanelLayout.setHorizontalGroup(
@@ -257,7 +286,8 @@ public final class PersonaManagerTopComponent extends TopComponent {
                         .addComponent(createBtn)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(editBtn)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(deleteBtn))
                     .addComponent(resultsPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addComponent(searchField)
                     .addGroup(searchPanelLayout.createSequentialGroup()
@@ -283,7 +313,8 @@ public final class PersonaManagerTopComponent extends TopComponent {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(editBtn)
-                    .addComponent(createBtn))
+                    .addComponent(createBtn)
+                    .addComponent(deleteBtn))
                 .addContainerGap())
         );
 
@@ -304,6 +335,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton createBtn;
+    private javax.swing.JButton deleteBtn;
     private org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel detailsPanel;
     private javax.swing.JButton editBtn;
     private javax.swing.JSplitPane jSplitPane1;

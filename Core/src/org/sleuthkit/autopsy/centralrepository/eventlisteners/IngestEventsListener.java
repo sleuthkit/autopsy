@@ -343,93 +343,6 @@ public class IngestEventsListener {
             event = evt;
         }
 
-        /**
-         * Automatically creates personas from all the TSK_CONTACT artifacts
-         * found in a data source.
-         *
-         * @param dataSource Data source that was just analyzed.
-         * @throws TskCoreException If there is any error getting contact
-         * artifacts from case database.
-         * @throws CentralRepoException If there is an error in creating
-         * personas in the Central Repo.
-         */
-        private void autoGenerateContactPersonas(Content dataSource) throws TskCoreException, CentralRepoException {
-                
-            Blackboard blackboard;
-            try {
-                blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
-            } catch (NoCurrentCaseException ex) {
-                LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
-                return;
-            }
-            
-             // get all TSK_CONTACT artifacts in this data source.
-            List<BlackboardArtifact> contactArtifacts = blackboard.getArtifacts(TSK_CONTACT.getTypeID(), dataSource.getId());
-            for (BlackboardArtifact artifact : contactArtifacts) {
-
-                BlackboardAttribute nameAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME));
-                String personaName = (nameAttr != null) ? nameAttr.getValueString() : null;
-
-                // Get phone number and email attributes.
-                BlackboardAttribute phoneAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER));
-                BlackboardAttribute homePhoneAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME));
-                BlackboardAttribute mobilePhoneAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE));
-                BlackboardAttribute emailAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL));
-
-                Persona persona = personaFromContactAttribute(null, Account.Type.PHONE, phoneAttr, personaName);
-                persona = personaFromContactAttribute(persona, Account.Type.PHONE, homePhoneAttr, personaName);
-                persona = personaFromContactAttribute(persona, Account.Type.PHONE, mobilePhoneAttr, personaName);
-                personaFromContactAttribute(persona, Account.Type.EMAIL, emailAttr, personaName);
-            }
-        }
-        
-        
-            
-        /**
-         * Gets central repo account for the given attribute for a TSK_CONTACT
-         * artifact. Associates the given persona with that account. Creates a
-         * Persona, if one isn't provided.
-         *
-         * @param persona Persona to associate with the account. May be null, in
-         * which case a persona is created first.
-         * @param accountType Account type of account to be associated.
-         * @param attribute Attribute form which get the account id.
-         * @param personaName Persona name, if a persona needs to be created.
-         * @return Persona created or associated with the account.
-         *
-         * @throws TskCoreException If there is an error in normalizing the
-         * account id.
-         * @throws CentralRepoException If there is an erorr is getting the
-         * account or associating the persona with it.
-         */
-        private Persona personaFromContactAttribute(Persona persona, Account.Type accountType, BlackboardAttribute attribute, String personaName) throws CentralRepoException, TskCoreException {
-
-            Persona personaToReturn = persona;
-            if (attribute != null) {
-
-                String accountId = attribute.getValueString();
-                if (CommunicationsUtils.isValidAccountId(accountType, accountId)) {
-                    if (accountType == Account.Type.PHONE) {
-                        accountId = CommunicationsUtils.normalizePhoneNum(accountId);
-                    } else if (accountType == Account.Type.EMAIL) {
-                        accountId = CommunicationsUtils.normalizeEmailAddress(accountId);
-                    }
-
-                    CentralRepoAccount.CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountType.getTypeName());
-                    CentralRepoAccount crAccount = CentralRepository.getInstance().getOrCreateAccount(crAccountType, accountId);
-
-                    PersonaAccount personaAccount;
-                    // If persona doesnt exist, create one
-                    if (persona == null) {
-                        personaToReturn = Persona.createPersonaForAccount(personaName, "Auto generated contact persona", Persona.PersonaStatus.UNKNOWN, crAccount, "Found in contact book entry", Persona.Confidence.HIGH);
-                    } else {
-                        persona.addAccount(crAccount, "Found in contact book entry", Persona.Confidence.HIGH);
-                    }
-                }
-            }
-            return personaToReturn;
-        }
-            
         @Override
         public void run() {
             // clear the tracker to reduce memory usage
@@ -504,8 +417,6 @@ public class IngestEventsListener {
                             correlationDataSource.setSha256(imageSha256Hash);
                         }
                     }
-                    // automatically generate persona from contact artifacts.
-                    autoGenerateContactPersonas(dataSource);
                 }
             } catch (CentralRepoException ex) {
                 LOGGER.log(Level.SEVERE, String.format(
