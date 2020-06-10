@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionListener;
@@ -98,11 +99,11 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         emailsPanel = new javax.swing.JPanel();
         othersLabel = new javax.swing.JLabel();
         otherAttrsPanel = new javax.swing.JPanel();
-        interPanelfiller = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
+        javax.swing.Box.Filler interPanelfiller = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
         personasLabel = new javax.swing.JLabel();
         personasPanel = new javax.swing.JPanel();
-        bottomFiller = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
-        rightFiller = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+        javax.swing.Box.Filler bottomFiller = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
+        javax.swing.Box.Filler rightFiller = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -201,9 +202,9 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
         personasLabel.setFont(personasLabel.getFont().deriveFont(personasLabel.getFont().getStyle() | java.awt.Font.BOLD, personasLabel.getFont().getSize()+2));
         org.openide.awt.Mnemonics.setLocalizedText(personasLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.personasLabel.text")); // NOI18N
-        personasLabel.setMaximumSize(new java.awt.Dimension(60, 19));
-        personasLabel.setMinimumSize(new java.awt.Dimension(60, 19));
-        personasLabel.setPreferredSize(new java.awt.Dimension(60, 19));
+        personasLabel.setMaximumSize(new java.awt.Dimension(90, 19));
+        personasLabel.setMinimumSize(new java.awt.Dimension(90, 19));
+        personasLabel.setPreferredSize(new java.awt.Dimension(90, 19));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 8;
@@ -438,13 +439,21 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
         //javax.swing.Box.Filler filler1 = this.createFiller(5, 0);
         //personasPanel.add(filler1, constraints);
+        
+        javax.swing.JLabel personaLabel = new javax.swing.JLabel();
+        personaLabel.setText(Bundle.ContactArtifactViewer_persona_label());
+        personaLabel.setFont(personaLabel.getFont().deriveFont(Font.BOLD, personaLabel.getFont().getSize()));
+        gridBagLayout.setConstraints(personaLabel, constraints);
+        personasPanel.add(personaLabel);
+        
 
-        //constraints.gridx++;
+        constraints.gridy++;
         javax.swing.JLabel primaryPersonaNameLabel = new javax.swing.JLabel();
         primaryPersonaNameLabel.setText(Bundle.ContactArtifactViewer_persona_searching());
         gridBagLayout.setConstraints(primaryPersonaNameLabel, constraints);
         personasPanel.add(primaryPersonaNameLabel);
 
+        
         personasPanel.setLayout(gridBagLayout);
         personasPanel.revalidate();
         personasPanel.repaint();
@@ -484,6 +493,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
                 }
 
                 showPersona(entry.getKey(), missingAccounts, gridBagLayout, constraints);
+                
                 constraints.gridy += 2;
             }
         }
@@ -522,13 +532,15 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
        // gridBagLayout.setConstraints(filler1, constraints);
         //personasPanel.add(filler1);
 
-        // Add a "Persona: " label
+        // Add a "Persona" label
         //constraints.gridx++;
         javax.swing.JLabel personaLabel = new javax.swing.JLabel();
         personaLabel.setText(Bundle.ContactArtifactViewer_persona_label());
+        personaLabel.setFont(personaLabel.getFont().deriveFont(Font.BOLD, personaLabel.getFont().getSize()));
         gridBagLayout.setConstraints(personaLabel, constraints);
         personasPanel.add(personaLabel);
 
+        
         javax.swing.JLabel personaNameLabel = new javax.swing.JLabel();
         javax.swing.JButton personaButton = new javax.swing.JButton();
 
@@ -547,7 +559,8 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         }
 
         // Add the label for persona name, 
-        constraints.gridx++;
+        constraints.gridy++;
+        constraints.gridx=0;
         personaNameLabel.setText(personaName);
         gridBagLayout.setConstraints(personaNameLabel, constraints);
         personasPanel.add(personaNameLabel);
@@ -748,6 +761,10 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             this.personaUIComponents = personaUIComponents;
         }
 
+        @NbBundle.Messages({
+        "ContactArtifactViewer_persona_account_justification=Account found in Contact artifact"
+        })
+         
         @Override
         public void actionPerformed(java.awt.event.ActionEvent evt) {
             // Launch the Persona Create dialog - do not display immediately
@@ -763,7 +780,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
             // pass the list of accounts to the dialog
             for (CentralRepoAccount account : contactUniqueAccountsList) {
-                personaPanel.addAccount(account, "Account found in Contact artifact.", Persona.Confidence.UNKNOWN);
+                personaPanel.addAccount(account, Bundle.ContactArtifactViewer_persona_account_justification() , Persona.Confidence.UNKNOWN);
             }
 
             // display the dialog now
@@ -845,11 +862,9 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.Box.Filler bottomFiller;
     private javax.swing.JLabel contactNameLabel;
     private javax.swing.JLabel emailsLabel;
     private javax.swing.JPanel emailsPanel;
-    private javax.swing.Box.Filler interPanelfiller;
     private javax.swing.JPanel namePanel;
     private javax.swing.JPanel otherAttrsPanel;
     private javax.swing.JLabel othersLabel;
@@ -857,6 +872,5 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     private javax.swing.JPanel personasPanel;
     private javax.swing.JPanel phoneNumbersPanel;
     private javax.swing.JLabel phonesLabel;
-    private javax.swing.Box.Filler rightFiller;
     // End of variables declaration//GEN-END:variables
 }

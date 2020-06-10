@@ -143,6 +143,8 @@
         </Property>
       </Properties>
       <AuxValues>
+        <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
+        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
         <AuxValue name="classDetails" type="java.lang.String" value="Box.Filler.VerticalGlue"/>
       </AuxValues>
       <Constraints>
@@ -162,13 +164,13 @@
           <ResourceString bundle="org/sleuthkit/autopsy/contentviewers/Bundle.properties" key="ContactArtifactViewer.personasLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[60, 19]"/>
+          <Dimension value="[90, 19]"/>
         </Property>
         <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[60, 19]"/>
+          <Dimension value="[90, 19]"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[60, 19]"/>
+          <Dimension value="[90, 19]"/>
         </Property>
       </Properties>
       <Constraints>
@@ -193,6 +195,8 @@
         </Property>
       </Properties>
       <AuxValues>
+        <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
+        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
         <AuxValue name="classDetails" type="java.lang.String" value="Box.Filler.VerticalGlue"/>
       </AuxValues>
       <Constraints>
@@ -208,6 +212,8 @@
         </Property>
       </Properties>
       <AuxValues>
+        <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
+        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
         <AuxValue name="classDetails" type="java.lang.String" value="Box.Filler.HorizontalGlue"/>
       </AuxValues>
       <Constraints>
