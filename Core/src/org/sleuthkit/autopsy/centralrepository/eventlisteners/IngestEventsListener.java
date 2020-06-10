@@ -342,7 +342,7 @@ public class IngestEventsListener {
             dbManager = db;
             event = evt;
         }
-        
+           
         @Override
         public void run() {
             // clear the tracker to reduce memory usage
