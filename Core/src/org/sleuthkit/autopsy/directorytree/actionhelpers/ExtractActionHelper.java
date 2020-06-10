@@ -197,7 +197,8 @@ public class ExtractActionHelper {
      * @param event               ActionEvent whose source will be used for
      *                            centering popup dialogs.
      * @param fileExtractionTasks List of file extraction tasks.
-     * @param destName Name of the destination used for progress messages.
+     * @param destName            Name of the destination used for progress
+     *                            messages.
      */
     private void runExtractionTasks(ActionEvent event, List<FileExtractionTask> fileExtractionTasks, String destName) {
 
@@ -278,7 +279,8 @@ public class ExtractActionHelper {
          * Create an instance of the FileExtracter.
          *
          * @param extractionTasks List of file extraction tasks.
-         * @param destName Name of the destination used for progress messages.
+         * @param destName        Name of the destination used for progress
+         *                        messages.
          */
         FileExtracter(List<FileExtractionTask> extractionTasks, String destName) {
             this.extractionTasks = extractionTasks;
@@ -316,10 +318,10 @@ public class ExtractActionHelper {
             for (int i = 0; i < this.extractionTasks.size(); i++) {
                 FileExtractionTask task = this.extractionTasks.get(i);
                 progress.progress(Bundle.ExtractActionHelper_progress_fileExtracting(task.destination.getName()));
-                
+
                 ContentUtils.ExtractFscContentVisitor.extract(task.source, task.destination, null, this);
             }
-        
+
             return null;
         }
 
