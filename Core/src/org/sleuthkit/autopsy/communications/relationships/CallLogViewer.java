@@ -175,8 +175,6 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
             // explaination of focusPropertyListener
             focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
                 if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
-                    final Component newFocusOwner = (Component) focusEvent.getNewValue();
-
                     handleFocusChange((Component) focusEvent.getNewValue());
 
                 }
