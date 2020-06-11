@@ -331,7 +331,9 @@ public class PersonaAccount {
      */
     public static Collection<PersonaAccount> getPersonaAccountsForAccount(Account account) throws CentralRepoException {
         String queryClause = PERSONA_ACCOUNTS_QUERY_CALUSE
-                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + account.getTypeSpecificID() + "%') AND type_name = '" + account.getAccountType().getTypeName() + "' ";
+                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + account.getTypeSpecificID() + "%')"
+                + " AND type_name = '" + account.getAccountType().getTypeName() + "' "
+                + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
         CentralRepository cr = CentralRepository.getInstance();
         if (cr != null) {
