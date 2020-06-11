@@ -3,6 +3,13 @@
     <!-- ADVANCED INSTALLER TARGETS -->
     <target name="build-installer-windows" depends="getProps,init-advanced-installer"
             description="Makes an installer from the opened ZIP file">
+
+        <!-- the path on disk for photorec files -->
+        <var name="photorec-inst-path" value="${inst-path}\${app.name}\photorec_exec"/>
+        <!-- the destination in installer for photorec relative to APPDATA -->
+        <var name="photorec-path" value="${app.name}\photorec_exec"/>
+        
+
         <antcall target="run-advanced-installer-32"  inheritAll="true" />
         <antcall target="run-advanced-installer-64"  inheritAll="true" />
     </target>
@@ -111,6 +118,8 @@
 
         <var name="gstreamer-path-todelete" value="${app.name}\gstreamer\1.0\x86_64"/>
 
+        <var name="photorec-path-toadd" value="${photorec-inst-path}\32-bit"/>
+
         <var name="jvm.max.mem" value="512m" />
         
         <var name="jre-path" value="${env.JRE_HOME_32}"/>
@@ -136,6 +145,8 @@
         <var name="aut-bin-name-todelete" value="${app.name}.exe"/>
 
         <var name="gstreamer-path-todelete" value="${app.name}\gstreamer\1.0\x86"/>
+
+        <var name="photorec-path-toadd" value="${photorec-inst-path}\64-bit"/>
 
         <var name="jvm.max.mem" value="4G"/>
         
@@ -194,6 +205,12 @@
         <echo message="Removing extra Gstreamer binaries..."/>
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /DelFolder APPDIR\${gstreamer-path-todelete}"/>
+        </exec>
+
+        <echo message="Using photorec with correct processor architecture..."/>
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /DelFolder APPDIR\${photorec-path}"/>
+            <arg line="/edit ${aip-path} /AddFolder APPDIR\${photorec-path} ${photorec-path-toadd}"/>
         </exec>
     </target>
 

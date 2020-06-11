@@ -22,21 +22,9 @@
 
     <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
         <!--Copy photorec to release-->
-        <var name="photorec-base-src-path" value="${thirdparty.dir}/photorec_exec"/>
-        <if>
-            <isset property="jre.home.64" />
-            <then>
-                <var name="photorec-src-path" value="${photorec-base-src-path}/64-bit"/>
-            </then>
-            <else>
-                <var name="photorec-src-path" value="${photorec-base-src-path}/32-bit"/>
-            </else>
-        </if>
-
         <copy todir="${basedir}/release/photorec_exec" >
-            <fileset dir="${photorec-src-path}"/>
+            <fileset dir="${thirdparty.dir}/photorec_exec"/>
         </copy>
-        
         <!--Copy ewfexport to release-->
         <copy todir="${basedir}/release/ewfexport_exec" >
             <fileset dir="${thirdparty.dir}/ewfexport_exec"/>
