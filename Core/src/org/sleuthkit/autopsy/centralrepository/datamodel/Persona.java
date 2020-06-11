@@ -417,7 +417,10 @@ public class Persona {
                 + " GROUP BY p.id";
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        CentralRepository cr = CentralRepository.getInstance();
+        if (cr != null) {
+            cr.executeSelectSQL(queryClause, queryCallback);
+        }
 
         return queryCallback.getPersonas();
     }
