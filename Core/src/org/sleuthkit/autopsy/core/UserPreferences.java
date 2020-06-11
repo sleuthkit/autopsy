@@ -54,8 +54,15 @@ public final class UserPreferences {
     public static final String EXTERNAL_DATABASE_USER = "ExternalDatabaseUsername"; //NON-NLS
     public static final String EXTERNAL_DATABASE_PASSWORD = "ExternalDatabasePassword"; //NON-NLS
     public static final String EXTERNAL_DATABASE_TYPE = "ExternalDatabaseType"; //NON-NLS
-    public static final String INDEXING_SERVER_HOST = "IndexingServerHost"; //NON-NLS
-    public static final String INDEXING_SERVER_PORT = "IndexingServerPort"; //NON-NLS
+    private static final String SOLR8_SERVER_HOST = "Solr8ServerHost"; //NON-NLS
+    private static final String SOLR8_SERVER_PORT = "Solr8ServerPort"; //NON-NLS
+    private static final String SOLR4_SERVER_HOST = "Solr4ServerHost"; //NON-NLS
+    private static final String SOLR4_SERVER_PORT = "Solr4ServerPort"; //NON-NLS
+    private static final String INDEXING_MAX_SHARDS = "IndexingMaxShards"; //NON-NLS
+    private static final String INDEXING_DOC_QUEUE_SIZE = "IndexingDocumentQueueSize"; //NON-NLS
+    private static final String INDEXING_NUM_THREADS = "IndexingNumThreads"; //NON-NLS
+    private static final String ZK_SERVER_HOST = "ZookeeperServerHost"; //NON-NLS
+    private static final String ZK_SERVER_PORT = "ZookeeperServerPort"; //NON-NLS
     private static final String MESSAGE_SERVICE_PASSWORD = "MessageServicePassword"; //NON-NLS
     private static final String MESSAGE_SERVICE_USER = "MessageServiceUser"; //NON-NLS
     private static final String MESSAGE_SERVICE_HOST = "MessageServiceHost"; //NON-NLS
@@ -324,21 +331,77 @@ public final class UserPreferences {
     }
 
     public static String getIndexingServerHost() {
-        return preferences.get(INDEXING_SERVER_HOST, "");
+        return preferences.get(SOLR8_SERVER_HOST, "");
     }
 
     public static void setIndexingServerHost(String hostName) {
-        preferences.put(INDEXING_SERVER_HOST, hostName);
+        preferences.put(SOLR8_SERVER_HOST, hostName);
     }
 
     public static String getIndexingServerPort() {
-        return preferences.get(INDEXING_SERVER_PORT, "8983");
+        return preferences.get(SOLR8_SERVER_PORT, "8983");
     }
 
     public static void setIndexingServerPort(int port) {
-        preferences.putInt(INDEXING_SERVER_PORT, port);
+        preferences.putInt(SOLR8_SERVER_PORT, port);
+    }
+    
+    public static String getSolr4ServerHost() {
+        return preferences.get(SOLR4_SERVER_HOST, "");
     }
 
+    public static void setSolr4ServerHost(String hostName) {
+        preferences.put(SOLR4_SERVER_HOST, hostName);
+    }    
+    
+    public static String getSolr4ServerPort() {
+        return preferences.get(SOLR4_SERVER_PORT, "");
+    }
+
+    public static void setSolr4ServerPort(String port) {
+        preferences.put(SOLR4_SERVER_PORT, port);
+    }    
+    
+    public static String getZkServerHost() {
+        return preferences.get(ZK_SERVER_HOST, "");
+    }
+    
+    public static void setZkServerHost(String hostName) {
+        preferences.put(ZK_SERVER_HOST, hostName);
+    }
+
+    public static String getZkServerPort() {
+        return preferences.get(ZK_SERVER_PORT, "");
+    }
+
+    public static void setZkServerPort(String port) {
+        preferences.put(ZK_SERVER_PORT, port);
+    }
+    
+    public static void setMaxNumShards(int maxShards) {
+        preferences.putInt(INDEXING_MAX_SHARDS, maxShards);
+    }
+
+    public static int getMaxNumShards() {
+        return preferences.getInt(INDEXING_MAX_SHARDS, 0);
+    }
+
+    public static int getNumThreads() {
+        return preferences.getInt(INDEXING_NUM_THREADS, 10);
+    }
+
+    public static void setNumThreads(int maxShards) {
+        preferences.putInt(INDEXING_NUM_THREADS, maxShards);
+    }
+    
+    public static void setDocumentsQueueSize(int maxShards) {
+        preferences.putInt(INDEXING_DOC_QUEUE_SIZE, maxShards);
+    }
+
+    public static int getDocumentsQueueSize() {
+        return preferences.getInt(INDEXING_DOC_QUEUE_SIZE, 1000);
+    }
+    
     public static void setTextTranslatorName(String textTranslatorName) {
         preferences.put(TEXT_TRANSLATOR_NAME, textTranslatorName);
     }

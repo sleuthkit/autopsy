@@ -32,10 +32,14 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.awt.Cursor;
+import java.io.IOException;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.coordinationservice.utils.CoordinationServiceUtils;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.events.MessageServiceException;
@@ -60,6 +64,15 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidDatabasePort");
     private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessageServicePort");
     private static final String INVALID_INDEXING_SERVER_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidIndexingServerPort");
+    private static final String INVALID_SOLR4_SERVER_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidSolr4ServerPort");
+    private static final String INVALID_ZK_SERVER_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidZkServerPort");
+    private static final String SOLR8_HOST_NAME_OR_IP_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolr8Hostname.toolTipText");
+    private static final String SOLR8_PORT_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolr8Port.toolTipText");
+    private static final String SOLR4_HOST_NAME_OR_IP_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolr4Hostname.toolTipText");
+    private static final String SOLR4_PORT_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolr4Port.toolTipText");
+    private static final String ZK_HOST_NAME_OR_IP_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbZkHostname.toolTipText");
+    private static final String ZK_PORT_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbZkPort.toolTipText");
+
     private static final long serialVersionUID = 1L;
     private final MultiUserSettingsPanelController controller;
     private final Collection<JTextField> textBoxes = new ArrayList<>();
@@ -91,8 +104,12 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textPrompts.add(new TextPrompt(PORT_PROMPT, tbMsgPort));
         textPrompts.add(new TextPrompt(USER_NAME_PROMPT_OPT, tbMsgUsername));
         textPrompts.add(new TextPrompt(PASSWORD_PROMPT_OPT, tbMsgPassword));
-        textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbSolrHostname));
-        textPrompts.add(new TextPrompt(PORT_PROMPT, tbSolrPort));
+        textPrompts.add(new TextPrompt(SOLR8_HOST_NAME_OR_IP_PROMPT, tbSolr8Hostname));
+        textPrompts.add(new TextPrompt(SOLR8_PORT_PROMPT, tbSolr8Port));
+        textPrompts.add(new TextPrompt(SOLR4_HOST_NAME_OR_IP_PROMPT, tbSolr4Hostname));
+        textPrompts.add(new TextPrompt(SOLR4_PORT_PROMPT, tbSolr4Port));
+        textPrompts.add(new TextPrompt(ZK_HOST_NAME_OR_IP_PROMPT, tbZkHostname));
+        textPrompts.add(new TextPrompt(ZK_PORT_PROMPT, tbZkPort));
         configureTextPrompts(textPrompts);
 
         /*
@@ -104,9 +121,13 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         tbDbUsername.getDocument().putProperty("statusIcon", lbTestDatabase);
         tbDbPassword.getDocument().putProperty("statusIcon", lbTestDatabase);
 
-        tbSolrHostname.getDocument().putProperty("statusIcon", lbTestSolr);
-        tbSolrPort.getDocument().putProperty("statusIcon", lbTestSolr);
-
+        tbSolr8Hostname.getDocument().putProperty("statusIcon", lbTestSolr);
+        tbSolr8Port.getDocument().putProperty("statusIcon", lbTestSolr);
+        tbSolr4Hostname.getDocument().putProperty("statusIcon", lbTestSolr);
+        tbSolr4Port.getDocument().putProperty("statusIcon", lbTestSolr);
+        tbZkHostname.getDocument().putProperty("statusIcon", lbTestSolr);
+        tbZkPort.getDocument().putProperty("statusIcon", lbTestSolr);
+        
         tbMsgHostname.getDocument().putProperty("statusIcon", lbTestMessageService);
         tbMsgPort.getDocument().putProperty("statusIcon", lbTestMessageService);
         tbMsgUsername.getDocument().putProperty("statusIcon", lbTestMessageService);
@@ -122,9 +143,13 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textBoxes.add(tbMsgPort);
         textBoxes.add(tbMsgUsername);
         textBoxes.add(tbMsgPassword);
-        textBoxes.add(tbSolrHostname);
-        textBoxes.add(tbSolrPort);
-
+        textBoxes.add(tbSolr8Hostname);
+        textBoxes.add(tbSolr8Port);
+        textBoxes.add(tbSolr4Hostname);
+        textBoxes.add(tbSolr4Port);
+        textBoxes.add(tbZkHostname);
+        textBoxes.add(tbZkPort);
+        
         addDocumentListeners(textBoxes, textBoxChangedListener);
         goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/good.png", false));
         badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/bad.png", false));
@@ -178,12 +203,18 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         lbTestDatabase = new javax.swing.JLabel();
         lbTestDbWarning = new javax.swing.JLabel();
         pnSolrSettings = new javax.swing.JPanel();
-        lbSolrSettings = new javax.swing.JLabel();
-        tbSolrHostname = new javax.swing.JTextField();
-        tbSolrPort = new javax.swing.JTextField();
+        lbSolr8Settings = new javax.swing.JLabel();
+        tbSolr8Hostname = new javax.swing.JTextField();
+        tbSolr8Port = new javax.swing.JTextField();
         bnTestSolr = new javax.swing.JButton();
         lbTestSolr = new javax.swing.JLabel();
         lbTestSolrWarning = new javax.swing.JLabel();
+        tbSolr4Hostname = new javax.swing.JTextField();
+        tbSolr4Port = new javax.swing.JTextField();
+        lbSolr4Settings = new javax.swing.JLabel();
+        lbZkSettings = new javax.swing.JLabel();
+        tbZkHostname = new javax.swing.JTextField();
+        tbZkPort = new javax.swing.JTextField();
         pnMessagingSettings = new javax.swing.JPanel();
         lbMessageServiceSettings = new javax.swing.JLabel();
         tbMsgHostname = new javax.swing.JTextField();
@@ -260,7 +291,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 .addGroup(pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(bnTestDatabase)
                     .addComponent(lbTestDatabase, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lbDatabaseSettings))
+                    .addComponent(lbDatabaseSettings, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(tbDbHostname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -276,14 +307,14 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         pnSolrSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        lbSolrSettings.setFont(lbSolrSettings.getFont().deriveFont(lbSolrSettings.getFont().getSize()+1f));
-        org.openide.awt.Mnemonics.setLocalizedText(lbSolrSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbSolrSettings.text")); // NOI18N
+        lbSolr8Settings.setFont(lbSolr8Settings.getFont().deriveFont(lbSolr8Settings.getFont().getSize()+1f));
+        org.openide.awt.Mnemonics.setLocalizedText(lbSolr8Settings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbSolr8Settings.text")); // NOI18N
 
-        tbSolrHostname.setFont(tbSolrHostname.getFont().deriveFont(tbSolrHostname.getFont().getSize()+1f));
-        tbSolrHostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolrHostname.toolTipText")); // NOI18N
+        tbSolr8Hostname.setFont(tbSolr8Hostname.getFont().deriveFont(tbSolr8Hostname.getFont().getSize()+1f));
+        tbSolr8Hostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolr8Hostname.toolTipText")); // NOI18N
 
-        tbSolrPort.setFont(tbSolrPort.getFont().deriveFont(tbSolrPort.getFont().getSize()+1f));
-        tbSolrPort.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolrPort.toolTipText")); // NOI18N
+        tbSolr8Port.setFont(tbSolr8Port.getFont().deriveFont(tbSolr8Port.getFont().getSize()+1f));
+        tbSolr8Port.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolr8Port.toolTipText")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(bnTestSolr, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.bnTestSolr.text")); // NOI18N
         bnTestSolr.addActionListener(new java.awt.event.ActionListener() {
@@ -297,6 +328,24 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         lbTestSolrWarning.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(lbTestSolrWarning, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbTestSolrWarning.text")); // NOI18N
 
+        tbSolr4Hostname.setFont(tbSolr4Hostname.getFont().deriveFont(tbSolr4Hostname.getFont().getSize()+1f));
+        tbSolr4Hostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolr4Hostname.toolTipText")); // NOI18N
+
+        tbSolr4Port.setFont(tbSolr4Port.getFont().deriveFont(tbSolr4Port.getFont().getSize()+1f));
+        tbSolr4Port.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolr4Port.toolTipText")); // NOI18N
+
+        lbSolr4Settings.setFont(lbSolr4Settings.getFont().deriveFont(lbSolr4Settings.getFont().getSize()+1f));
+        org.openide.awt.Mnemonics.setLocalizedText(lbSolr4Settings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbSolr4Settings.text")); // NOI18N
+
+        lbZkSettings.setFont(lbZkSettings.getFont().deriveFont(lbZkSettings.getFont().getSize()+1f));
+        org.openide.awt.Mnemonics.setLocalizedText(lbZkSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbZkSettings.text")); // NOI18N
+
+        tbZkHostname.setFont(tbZkHostname.getFont().deriveFont(tbZkHostname.getFont().getSize()+1f));
+        tbZkHostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbZkHostname.toolTipText")); // NOI18N
+
+        tbZkPort.setFont(tbZkPort.getFont().deriveFont(tbZkPort.getFont().getSize()+1f));
+        tbZkPort.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbZkPort.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout pnSolrSettingsLayout = new javax.swing.GroupLayout(pnSolrSettings);
         pnSolrSettings.setLayout(pnSolrSettingsLayout);
         pnSolrSettingsLayout.setHorizontalGroup(
@@ -304,16 +353,23 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             .addGroup(pnSolrSettingsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tbSolrHostname)
+                    .addComponent(tbSolr8Hostname)
                     .addGroup(pnSolrSettingsLayout.createSequentialGroup()
-                        .addComponent(lbSolrSettings)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lbSolr8Settings)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 274, Short.MAX_VALUE)
                         .addComponent(bnTestSolr)
                         .addGap(18, 18, 18)
                         .addComponent(lbTestSolr, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(tbSolrPort)
+                    .addComponent(tbSolr8Port)
+                    .addComponent(tbSolr4Hostname)
+                    .addComponent(tbSolr4Port)
+                    .addComponent(tbZkHostname)
+                    .addComponent(tbZkPort)
                     .addGroup(pnSolrSettingsLayout.createSequentialGroup()
-                        .addComponent(lbTestSolrWarning)
+                        .addGroup(pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lbTestSolrWarning)
+                            .addComponent(lbSolr4Settings)
+                            .addComponent(lbZkSettings))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -322,18 +378,31 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             .addGroup(pnSolrSettingsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(bnTestSolr, javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(lbSolrSettings))
-                    .addComponent(lbTestSolr, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(bnTestSolr)
+                    .addComponent(lbTestSolr, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbSolr8Settings, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbSolrHostname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tbSolr8Hostname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tbSolr8Port, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(lbSolr4Settings)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tbSolr4Hostname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tbSolr4Port, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lbZkSettings)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tbZkHostname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tbZkPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(tbSolrPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lbTestSolrWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
+
+        tbSolr4Port.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbSolr4Port.toolTipText")); // NOI18N
 
         pnMessagingSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -395,8 +464,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             .addGroup(pnMessagingSettingsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(bnTestMessageService, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(bnTestMessageService)
                         .addComponent(lbMessageServiceSettings))
                     .addComponent(lbTestMessageService, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -436,10 +505,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                         .addComponent(cbEnableMultiUser)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(tbOops))
-                    .addComponent(pnSolrSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(pnMessagingSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pnSolrSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(39, 39, 39))
         );
         pnOverallPanelLayout.setVerticalGroup(
             pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -448,12 +518,13 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                     .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cbEnableMultiUser))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnSolrSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnMessagingSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(39, Short.MAX_VALUE))
+                .addGroup(pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(pnOverallPanelLayout.createSequentialGroup()
+                        .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(pnMessagingSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(pnSolrSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(201, Short.MAX_VALUE))
         );
 
         jScrollPane.setViewportView(pnOverallPanel);
@@ -462,13 +533,13 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)
+            .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1191, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 537, Short.MAX_VALUE)
+                .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 695, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -570,8 +641,25 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
         try {
             if (kwsService != null) {
-                int port = Integer.parseInt(tbSolrPort.getText().trim());
-                kwsService.tryConnect(tbSolrHostname.getText().trim(), port);
+                // test Solr 8 connectivity
+                int port = Integer.parseInt(tbSolr8Port.getText().trim());
+                kwsService.tryConnect(tbSolr8Hostname.getText().trim(), port);
+                
+                // test Solr 4 conenctivity                
+                if (!tbSolr4Port.getText().trim().isEmpty() && !tbSolr4Hostname.getText().trim().isEmpty()) {
+                    port = Integer.parseInt(tbSolr4Port.getText().trim());
+                    kwsService.tryConnect(tbSolr4Hostname.getText().trim(), port);
+                }
+                
+                // test ZooKeeper connectivity
+                if (!tbZkPort.getText().trim().isEmpty() && !tbZkHostname.getText().trim().isEmpty()) {
+                    if (false == CoordinationServiceUtils.isZooKeeperAccessible(tbZkHostname.getText().trim(), tbZkPort.getText().trim())) {
+                        lbTestSolr.setIcon(badIcon);
+                        lbTestSolrWarning.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.UnableToConnectToZK"));
+                        return;
+                    }
+                }
+                                
                 lbTestSolr.setIcon(goodIcon);
                 lbTestSolrWarning.setText("");
             } else {
@@ -582,6 +670,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             lbTestSolr.setIcon(badIcon);
             lbTestSolrWarning.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.InvalidPortNumber"));
         } catch (KeywordSearchServiceException ex) {
+            lbTestSolr.setIcon(badIcon);
+            lbTestSolrWarning.setText(ex.getMessage());
+        } catch (InterruptedException | IOException ex) {
+            // ZK exceptions
             lbTestSolr.setIcon(badIcon);
             lbTestSolrWarning.setText(ex.getMessage());
         } finally {
@@ -619,11 +711,29 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         String indexingServerHost = UserPreferences.getIndexingServerHost().trim();
         if (!indexingServerHost.isEmpty()) {
-            tbSolrHostname.setText(indexingServerHost);
+            tbSolr8Hostname.setText(indexingServerHost);
         }
         String indexingServerPort = UserPreferences.getIndexingServerPort().trim();
         if (portNumberIsValid(indexingServerPort)) {
-            tbSolrPort.setText(indexingServerPort);
+            tbSolr8Port.setText(indexingServerPort);
+        }
+        
+        String solr4ServerHost = UserPreferences.getSolr4ServerHost().trim();
+        if (!solr4ServerHost.isEmpty()) {
+            tbSolr4Hostname.setText(solr4ServerHost);
+        }
+        String solr4ServerPort = UserPreferences.getSolr4ServerPort().trim();
+        if (portNumberIsValid(solr4ServerPort)) {
+            tbSolr4Port.setText(solr4ServerPort);
+        }
+        
+        String zkServerHost = UserPreferences.getZkServerHost().trim();
+        if (!zkServerHost.isEmpty()) {
+            tbZkHostname.setText(zkServerHost);
+        }
+        String zkServerPort = UserPreferences.getZkServerPort().trim();
+        if (portNumberIsValid(zkServerPort)) {
+            tbZkPort.setText(zkServerPort);
         }
 
         lbTestDatabase.setIcon(null);
@@ -652,14 +762,28 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Tests whether or not values have been entered in all of the Solr settings
-     * text fields.
+     * Tests whether or not values have been entered in all of the mandatory Solr settings
+     * text fields. Test optional settings for completeness.
      *
      * @return True or false.
      */
     private boolean solrFieldsArePopulated() {
-        return !tbSolrHostname.getText().trim().isEmpty()
-                && !tbSolrPort.getText().trim().isEmpty();
+        
+        // all Solr 8 settings must be specified
+        if (tbSolr8Hostname.getText().trim().isEmpty()
+                || tbSolr8Port.getText().trim().isEmpty()) {
+            return false;
+        }
+        
+        // if either one of Solr 4 settings is set, then both settings must be set (!XOR)
+        if (tbSolr4Hostname.getText().trim().isEmpty()
+                ^ tbSolr4Port.getText().trim().isEmpty()) {
+            return false;
+        }
+        
+        // if either one of ZK settings is set, then both settings must be set (!XOR)        
+        return !(tbZkHostname.getText().trim().isEmpty()
+                ^ tbZkPort.getText().trim().isEmpty());
     }
 
     /**
@@ -698,6 +822,13 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         CaseDbConnectionInfo info = null;
         
         if (multiUserCasesEnabled == true) {
+                                    
+            // Check if aplication restart is required.
+            boolean needsRestart = false;
+            // don't check if entring multi user data for the first time
+            if (prevSelected == true) {
+                needsRestart = isRestartRequired();
+            }
 
             /*
              * Currently only supporting multi-user cases with PostgreSQL case
@@ -733,15 +864,47 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
             } catch (UserPreferencesException ex) {
                 logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
-            }
+            } 
 
-            UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
-            UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
+            UserPreferences.setIndexingServerHost(tbSolr8Hostname.getText().trim());
+            UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolr8Port.getText().trim()));
+            UserPreferences.setSolr4ServerHost(tbSolr4Hostname.getText().trim());
+            UserPreferences.setSolr4ServerPort(tbSolr4Port.getText().trim());
+            UserPreferences.setZkServerHost(tbZkHostname.getText().trim());
+            UserPreferences.setZkServerPort(tbZkPort.getText().trim());
+            
+            if (needsRestart) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this,
+                            NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.MustRestart"),
+                            NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.restartRequiredLabel.text"),
+                            JOptionPane.WARNING_MESSAGE);
+                });
+            }
         }
 
         // trigger changes to whether or not user can use multi user settings for central repository
         if (prevSelected != multiUserCasesEnabled || !areCaseDbConnectionEqual(prevConn, info))
             GlobalSettingsPanel.onMultiUserChange(this, prevSelected, multiUserCasesEnabled);
+    }
+    
+    private boolean isRestartRequired() {
+        // Restart is required any time standalone ZK info has changed. 
+        if (!(tbZkHostname.getText().trim().equalsIgnoreCase(UserPreferences.getZkServerHost()))
+                || !(tbZkPort.getText().trim().equals(UserPreferences.getZkServerPort()))) {
+            return true;
+        }
+        
+        // If standalone ZK info is not set, then restart is required if Solr settings 
+        // have changed, because we are using the embedded ZK of the Solr server.
+        if (tbZkHostname.getText().trim().isEmpty() && tbZkPort.getText().trim().isEmpty()) {
+            if (!(tbSolr8Hostname.getText().trim().equalsIgnoreCase(UserPreferences.getIndexingServerHost()))
+                    || !(tbSolr8Port.getText().trim().equals(UserPreferences.getIndexingServerPort()))) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     private static boolean arePropsEqual(Object a, Object b) {
@@ -849,8 +1012,23 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
      * @return True or false.
      */
     boolean indexingServerSettingsAreValid() {
-        if (!portNumberIsValid(tbSolrPort.getText().trim())) {
+        // Solr 8 port must always be specified
+        if (!portNumberIsValid(tbSolr8Port.getText().trim())) {
             tbOops.setText(INVALID_INDEXING_SERVER_PORT_MSG);
+            return false;
+        }
+
+        String solr4Port = tbSolr4Port.getText().trim();
+        if (!solr4Port.isEmpty() && !portNumberIsValid(solr4Port)) {
+            // if the port is specified, it has to be valid
+            tbOops.setText(INVALID_SOLR4_SERVER_PORT_MSG);
+            return false;
+        }
+
+        String zkPort = tbZkPort.getText().trim();
+        if (!zkPort.isEmpty() && !portNumberIsValid(zkPort)) {
+            // if the port is specified, it has to be valid
+            tbOops.setText(INVALID_ZK_SERVER_PORT_MSG);
             return false;
         }
 
@@ -885,13 +1063,15 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane;
     private javax.swing.JLabel lbDatabaseSettings;
     private javax.swing.JLabel lbMessageServiceSettings;
-    private javax.swing.JLabel lbSolrSettings;
+    private javax.swing.JLabel lbSolr4Settings;
+    private javax.swing.JLabel lbSolr8Settings;
     private javax.swing.JLabel lbTestDatabase;
     private javax.swing.JLabel lbTestDbWarning;
     private javax.swing.JLabel lbTestMessageService;
     private javax.swing.JLabel lbTestMessageWarning;
     private javax.swing.JLabel lbTestSolr;
     private javax.swing.JLabel lbTestSolrWarning;
+    private javax.swing.JLabel lbZkSettings;
     private javax.swing.JPanel pnDatabaseSettings;
     private javax.swing.JPanel pnMessagingSettings;
     private javax.swing.JPanel pnOverallPanel;
@@ -905,8 +1085,12 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JTextField tbMsgPort;
     private javax.swing.JTextField tbMsgUsername;
     private javax.swing.JTextField tbOops;
-    private javax.swing.JTextField tbSolrHostname;
-    private javax.swing.JTextField tbSolrPort;
+    private javax.swing.JTextField tbSolr4Hostname;
+    private javax.swing.JTextField tbSolr4Port;
+    private javax.swing.JTextField tbSolr8Hostname;
+    private javax.swing.JTextField tbSolr8Port;
+    private javax.swing.JTextField tbZkHostname;
+    private javax.swing.JTextField tbZkPort;
     // End of variables declaration//GEN-END:variables
 
     /**

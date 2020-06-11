@@ -472,6 +472,10 @@
                 <binary-origin>release/modules/ext/commons-pool2-2.4.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-4.9.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-4.9.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jxmapviewer2-2.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jxmapviewer2-2.4.jar</binary-origin>
             </class-path-extension>
@@ -638,10 +642,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-validator-1.6.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-validator-1.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-4.9.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-4.9.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/decodetect-core-0.3.jar</runtime-relative-path>
