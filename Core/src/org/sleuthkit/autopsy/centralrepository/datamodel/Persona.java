@@ -255,7 +255,7 @@ public class Persona {
     }
     
     /**
-     * Sets the comment of this persona
+     * Sets the comment of this persona.
      *
      * @param name The new comment.
      * 
@@ -263,7 +263,10 @@ public class Persona {
      */
     public void setComment(String comment) throws CentralRepoException {
         String updateClause = "UPDATE personas SET comment = \"" + comment + "\" WHERE id = " + id;
-        CentralRepository.getInstance().executeUpdateSQL(updateClause);
+        CentralRepository cr = CentralRepository.getInstance();
+        if (cr != null) {
+            cr.executeUpdateSQL(updateClause);
+        }
     }
 
     /**
@@ -275,7 +278,10 @@ public class Persona {
      */
     public void setName(String name) throws CentralRepoException {
         String updateClause = "UPDATE personas SET name = \"" + name + "\" WHERE id = " + id;
-        CentralRepository.getInstance().executeUpdateSQL(updateClause);
+        CentralRepository cr = CentralRepository.getInstance();
+        if (cr != null) {
+            cr.executeUpdateSQL(updateClause);
+        }
     }
 
     /**
@@ -311,7 +317,10 @@ public class Persona {
      */
     public void delete() throws CentralRepoException {
         String deleteSQL = "UPDATE personas SET status_id = " + PersonaStatus.DELETED.status_id + " WHERE id = " + this.id;
-        CentralRepository.getInstance().executeUpdateSQL(deleteSQL);
+        CentralRepository cr = CentralRepository.getInstance();
+        if (cr != null) {
+            cr.executeDeleteSQL(deleteSQL);
+        }
     }
 
     /**
