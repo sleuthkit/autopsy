@@ -112,7 +112,8 @@ import org.sleuthkit.datamodel.TskDataException;
     "Recently_Used_Artifacts_Winrar=Recently opened according to WinRAR MRU",
     "Recently_Used_Artifacts_Officedocs=Recently opened according to Office MRU",
     "Recently_Used_Artifacts_Adobe=Recently opened according to Adobe MRU",
-    "Recently_Used_Artifacts_Mediaplayer=Recently opened according to Media Player MRU"
+    "Recently_Used_Artifacts_Mediaplayer=Recently opened according to Media Player MRU",
+    "Registry_System_Bam=Recently Executed according to Background Activity Moderator (BAM)"
 })
 class ExtractRegistry extends Extract {
 
@@ -336,6 +337,12 @@ class ExtractRegistry extends Extract {
                         createRecentlyUsedArtifacts(regOutputFiles.fullPlugins, regFile);
                     } catch (IOException | TskCoreException ex) {
                         logger.log(Level.WARNING, String.format("Unable to get shell bags from file %s", regOutputFiles.fullPlugins), ex);
+                    }
+                } else if (regFileNameLocal.toLowerCase().contains("system")) {
+                    try {
+                        createSystemArtifacts(regOutputFiles.fullPlugins, regFile);
+                    } catch (IOException ex) {
+                        logger.log(Level.WARNING, String.format("Unable to get artifacts from file %s", regOutputFiles.fullPlugins), ex);
                     }
                 }
                 try {
@@ -1225,6 +1232,87 @@ class ExtractRegistry extends Extract {
                 line = reader.readLine();
             }
         }     
+    }
+    
+    /**
+     * Create artifacts from the System registry Hive
+     * 
+     * @param regFileName name of the regripper output file
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void createSystemArtifacts(String regFileName, AbstractFile regFile) throws FileNotFoundException, IOException {
+        File regfile = new File(regFileName);
+        try (BufferedReader reader = new BufferedReader(new FileReader(regfile))) {
+            String line = reader.readLine();
+            while (line != null) {
+                line = line.trim();
+
+                if (line.matches("^bam v.*")) {
+                    parseBamKey(regFile, reader, Bundle.Registry_System_Bam());
+                } 
+                line = reader.readLine();
+            }
+        }     
+    }
+    
+    /** 
+     * Create artifacts from BAM Regripper Plugin records
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @param comment string that will populate attribute TSK_COMMENT
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseBamKey(AbstractFile regFile, BufferedReader reader, String comment) throws FileNotFoundException, IOException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String line = reader.readLine();
+        // Read thru first bam output to get to second bam output which is the same but delimited
+        while (!line.contains(SECTION_DIVIDER)) {
+            line = reader.readLine();
+            line = line.trim();
+        }
+        line = reader.readLine();
+        line = line.trim();
+        while (!line.contains(SECTION_DIVIDER)) {
+            // Split the line into it parts based on delimiter of "|"
+            // 1570493613|BAM|||\Device\HarddiskVolume3\Program Files\TechSmith\Snagit 2018\Snagit32.exe (S-1-5-21-3042408413-2583535980-1301764466-1001)
+            String tokens[] = line.split("\\|");
+            Long progRunDateTime = Long.valueOf(tokens[0]); 
+            // Split on " (S-" as this signifies a User SID, if S- not used then may have issues becuase of (x86) in path is valid.
+            // We can add the S- back to the string that we split on since S- is a valid beginning of a User SID
+            String fileNameSid[] = tokens[4].split("\\s+\\(S-");
+            String userSid = "S-" + fileNameSid[1].substring(0, fileNameSid[1].length() - 1);
+            String fileName = fileNameSid[0];
+            if (fileName.startsWith("\\Device\\HarddiskVolume")) {
+                // Start at point past the 2nd slash
+                int fileNameStart = fileName.indexOf("\\", 16);
+                fileName = fileName.substring(fileNameStart, fileName.length());
+
+            }
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(), fileName));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME, getName(), userSid));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), progRunDateTime));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, getName(), comment));
+            BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_PROG_RUN, regFile, attributes);
+            if (bba != null) {
+                bbartifacts.add(bba);
+                bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
+                if (bba != null) {
+                    bbartifacts.add(bba);
+                }
+            }
+            line = reader.readLine();
+        }
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
     }
     
     /**
