@@ -49,12 +49,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider {
 
     private static final Logger logger = Logger.getLogger(MediaViewer.class.getName());
+    private static final long serialVersionUID = 1L;
 
     private final ExplorerManager tableEM = new ExplorerManager();
     private PropertyChangeListener focusPropertyListener;
 
     private final ModifiableProxyLookup proxyLookup;
-    
+
     private final MessageDataContent contentViewer;
 
     @Messages({
@@ -63,7 +64,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
     /**
      * Creates new form ThumbnailViewer
      */
-    public MediaViewer() {
+    MediaViewer() {
         initComponents();
 
         splitPane.setResizeWeight(0.5);
@@ -72,7 +73,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
         contentViewer = new MessageDataContent();
         contentViewer.setPreferredSize(new java.awt.Dimension(450, 400));
         splitPane.setRightComponent(contentViewer);
-        
+
         proxyLookup = new ModifiableProxyLookup(createLookup(tableEM, getActionMap()));
 
         tableEM.addPropertyChangeListener((PropertyChangeEvent evt) -> {
@@ -134,19 +135,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
             // explaination of focusPropertyListener
             focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
                 if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
-                    final Component newFocusOwner = (Component) focusEvent.getNewValue();
-
-                    if (newFocusOwner == null) {
-                        return;
-                    }
-                    if (isDescendingFrom(newFocusOwner, contentViewer)) {
-                        //if the focus owner is within the MessageContentViewer (the attachments table)
-                        proxyLookup.setNewLookups(createLookup(contentViewer.getExplorerManager(), getActionMap()));
-                    } else if (isDescendingFrom(newFocusOwner, MediaViewer.this)) {
-                        //... or if it is within the Results table.
-                        proxyLookup.setNewLookups(createLookup(tableEM, getActionMap()));
-
-                    }
+                    handleFocusChange((Component) focusEvent.getNewValue());
                 }
             };
 
@@ -154,6 +143,25 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
         //add listener that maintains correct selection in the Global Actions Context
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .addPropertyChangeListener("focusOwner", focusPropertyListener);
+    }
+
+    /**
+     * Handle the switching of the proxyLookup due to focus change.
+     *
+     * @param newFocusOwner
+     */
+    private void handleFocusChange(Component newFocusOwner) {
+        if (newFocusOwner == null) {
+            return;
+        }
+        if (isDescendingFrom(newFocusOwner, contentViewer)) {
+            //if the focus owner is within the MessageContentViewer (the attachments table)
+            proxyLookup.setNewLookups(createLookup(contentViewer.getExplorerManager(), getActionMap()));
+        } else if (isDescendingFrom(newFocusOwner, this)) {
+            //... or if it is within the Results table.
+            proxyLookup.setNewLookups(createLookup(tableEM, getActionMap()));
+
+        }
     }
 
     @Override

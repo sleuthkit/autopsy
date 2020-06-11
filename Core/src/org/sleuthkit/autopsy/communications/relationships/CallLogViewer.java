@@ -177,17 +177,8 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
                 if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
                     final Component newFocusOwner = (Component) focusEvent.getNewValue();
 
-                    if (newFocusOwner == null) {
-                        return;
-                    }
-                    if (isDescendingFrom(newFocusOwner, callLogDataViewer)) {
-                        //if the focus owner is within the MessageContentViewer (the attachments table)
-                        proxyLookup.setNewLookups(createLookup(callLogDataViewer.getExplorerManager(), getActionMap()));
-                    } else if (isDescendingFrom(newFocusOwner, CallLogViewer.this)) {
-                        //... or if it is within the Results table.
-                        proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
+                    handleFocusChange((Component) focusEvent.getNewValue());
 
-                    }
                 }
             };
         }
@@ -195,6 +186,25 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
         //add listener that maintains correct selection in the Global Actions Context
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .addPropertyChangeListener("focusOwner", focusPropertyListener); //NON-NLS
+    }
+
+    /**
+     * Handle the switching of the proxyLookup due to focus change.
+     *
+     * @param newFocusOwner
+     */
+    private void handleFocusChange(Component newFocusOwner) {
+        if (newFocusOwner == null) {
+            return;
+        }
+        if (isDescendingFrom(newFocusOwner, callLogDataViewer)) {
+            //if the focus owner is within the MessageContentViewer (the attachments table)
+            proxyLookup.setNewLookups(createLookup(callLogDataViewer.getExplorerManager(), getActionMap()));
+        } else if (isDescendingFrom(newFocusOwner, this)) {
+            //... or if it is within the Results table.
+            proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
+
+        }
     }
 
     @Override
