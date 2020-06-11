@@ -54,6 +54,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
@@ -67,6 +68,7 @@ import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsMode;
  *
  *
  */
+@ServiceProvider(service = ArtifactContentViewer.class)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class CallLogArtifactViewer extends javax.swing.JPanel implements ArtifactContentViewer {
 

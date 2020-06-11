@@ -182,7 +182,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
             }
         }
         return false;
-    }
+    } 
 
     boolean addAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) {
         if (!accountExists(account)) {
@@ -302,8 +302,6 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         casesLbl = new javax.swing.JLabel();
         casesTablePane = new javax.swing.JScrollPane();
         casesTable = new javax.swing.JTable();
-        addCaseBtn = new javax.swing.JButton();
-        deleteCaseBtn = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(nameLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.nameLbl.text")); // NOI18N
 
@@ -393,12 +391,6 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         ));
         casesTablePane.setViewportView(casesTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(addCaseBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.addCaseBtn.text")); // NOI18N
-        addCaseBtn.setEnabled(false);
-
-        org.openide.awt.Mnemonics.setLocalizedText(deleteCaseBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.deleteCaseBtn.text")); // NOI18N
-        deleteCaseBtn.setEnabled(false);
-
         javax.swing.GroupLayout detailsPanelLayout = new javax.swing.GroupLayout(detailsPanel);
         detailsPanel.setLayout(detailsPanelLayout);
         detailsPanelLayout.setHorizontalGroup(
@@ -420,10 +412,6 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                     .addComponent(casesTablePane)
                     .addGroup(detailsPanelLayout.createSequentialGroup()
                         .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(detailsPanelLayout.createSequentialGroup()
-                                .addComponent(addCaseBtn)
-                                .addGap(18, 18, 18)
-                                .addComponent(deleteCaseBtn))
                             .addGroup(detailsPanelLayout.createSequentialGroup()
                                 .addComponent(addAccountBtn)
                                 .addGap(18, 18, 18)
@@ -474,10 +462,6 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 .addComponent(casesLbl)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(casesTablePane, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(addCaseBtn)
-                    .addComponent(deleteCaseBtn))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -491,9 +475,11 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 559, Short.MAX_VALUE)
+            .addGap(0, 521, Short.MAX_VALUE)
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(detailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createSequentialGroup()
+                    .addComponent(detailsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(0, 0, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -507,7 +493,6 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane accountsTablePane;
     private javax.swing.JButton addAccountBtn;
     private javax.swing.JButton addAliasBtn;
-    private javax.swing.JButton addCaseBtn;
     private javax.swing.JButton addMetadataBtn;
     private javax.swing.JLabel aliasesLabel;
     private javax.swing.JTable aliasesTable;
@@ -517,7 +502,6 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane casesTablePane;
     private javax.swing.JButton deleteAccountBtn;
     private javax.swing.JButton deleteAliasBtn;
-    private javax.swing.JButton deleteCaseBtn;
     private javax.swing.JButton deleteMetadataBtn;
     private javax.swing.JPanel detailsPanel;
     private javax.swing.JLabel metadataLabel;
@@ -560,7 +544,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
 
     void clear() {
         currentPersona = null;
-        nameField.setText(Persona.getDefaultName());
+        nameField.setText(mode == PersonaDetailsMode.CREATE ? Persona.getDefaultName() : "");
         currentAccounts = new ArrayList<>();
         currentMetadata = new ArrayList<>();
         currentAliases = new ArrayList<>();
@@ -575,11 +559,9 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         addAccountBtn.setEnabled(false);
         addMetadataBtn.setEnabled(false);
         addAliasBtn.setEnabled(false);
-        addCaseBtn.setEnabled(false);
         deleteAccountBtn.setEnabled(false);
         deleteMetadataBtn.setEnabled(false);
         deleteAliasBtn.setEnabled(false);
-        deleteCaseBtn.setEnabled(false);
     }
 
     /**
@@ -677,12 +659,18 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         casesTable.setModel(casesModel);
     }
 
-    void enableEditUIComponents() {
-        nameField.setEditable(true);
-        addAccountBtn.setEnabled(true);
-        addMetadataBtn.setEnabled(true);
-        addAliasBtn.setEnabled(true);
-        //addCaseBtn.setEnabled(true); //todo
+    void configureEditComponents(boolean enabled) {
+        nameField.setEditable(enabled);
+        addAccountBtn.setEnabled(enabled);
+        addMetadataBtn.setEnabled(enabled);
+        addAliasBtn.setEnabled(enabled);
+        
+        addAccountBtn.setVisible(enabled);
+        deleteAccountBtn.setVisible(enabled);
+        addMetadataBtn.setVisible(enabled);
+        deleteMetadataBtn.setVisible(enabled);
+        addAliasBtn.setVisible(enabled);
+        deleteAliasBtn.setVisible(enabled);
     }
 
     void initializeFields() {
@@ -697,14 +685,15 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         this.mode = mode;
         switch (mode) {
             case CREATE:
-                enableEditUIComponents();
+                configureEditComponents(true);
                 break;
             case EDIT:
                 loadPersona(parent, persona);
-                enableEditUIComponents();
+                configureEditComponents(true);
                 break;
             case VIEW:
                 loadPersona(parent, persona);
+                configureEditComponents(false);
                 break;
             default:
                 logger.log(Level.WARNING, "Unsupported mode: {0}", mode);
@@ -714,8 +703,8 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     }
 
     @Messages({
-        "PersonaDetailsPanel_NotEnoughAccounts_msg=A persona needs two or more accounts",
-        "PersonaDetailsPanel_NotEnoughAccounts_Title=Not enough accounts",
+        "PersonaDetailsPanel_NotEnoughAccounts_msg=A persona needs at least one account",
+        "PersonaDetailsPanel_NotEnoughAccounts_Title=Missing account",
         "PersonaDetailsPanel_CentralRepoErr_msg=Failure to write to Central Repository",
         "PersonaDetailsPanel_CentralRepoErr_Title=Central Repository failure",
         "PersonaDetailsPanel_EmptyName_msg=Persona name cannot be empty",

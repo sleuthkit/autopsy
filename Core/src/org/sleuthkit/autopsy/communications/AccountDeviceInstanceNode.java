@@ -123,7 +123,7 @@ final class AccountDeviceInstanceNode extends AbstractNode {
     public String getShortDescription() {
         List<PersonaAccount> personaList;
         try {
-            personaList = CVTPersonaCache.getPersonaAccounts(getName());
+            personaList = CVTPersonaCache.getPersonaAccounts(account);
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING, "Failed to retrieve Persona details for node.", ex);
             return getDisplayName();

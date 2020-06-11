@@ -95,6 +95,12 @@ final public class EventTypeUtils {
             imageFileName = "artifact-icon.png";
         } else if (typeID == TimelineEventType.WEB_FORM_ADDRESSES.getTypeID()) {
             imageFileName = "artifact-icon.png";
+        } else if (typeID == TimelineEventType.METADATA_CREATED.getTypeID()) {
+            imageFileName = "blue-document-attribute-b.png";
+        } else if (typeID == TimelineEventType.METADATA_LAST_SAVED.getTypeID()) {
+            imageFileName = "blue-document-attribute-m.png";
+        } else if (typeID == TimelineEventType.METADATA_LAST_PRINTED.getTypeID()) {
+            imageFileName = "blue-document.png";
         }else {
             imageFileName = "timeline_marker.png";
         }

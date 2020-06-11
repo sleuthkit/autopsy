@@ -42,11 +42,9 @@ public class Persona {
      * Defines level of confidence in assigning a persona to an account.
      */
     public enum Confidence {
-        UNKNOWN(1, "Unknown"),
-        LOW(2, "Low confidence"),
-        MEDIUM(3, "Medium confidence"),
-        HIGH(4, "High confidence"),
-        DERIVED(5, "Derived directly");
+        LOW(1, "Low confidence"),
+        MODERATE(2, "Moderate confidence"),
+        HIGH(3, "High confidence");
 
         private final String name;
         private final int level_id;
@@ -72,7 +70,7 @@ public class Persona {
                     return confidence;
                 }
             }
-            return Confidence.UNKNOWN;
+            return Confidence.LOW;
         }
 
     }
@@ -293,6 +291,14 @@ public class Persona {
     public void removeAccount(PersonaAccount account) throws CentralRepoException {
         PersonaAccount.removePersonaAccount(account.getId());
     }
+    
+    /**
+     * Marks this persona as deleted
+     */
+    public void delete() throws CentralRepoException {
+        String deleteSQL = "UPDATE personas SET status_id = " + PersonaStatus.DELETED.status_id + " WHERE id = " + this.id;
+        CentralRepository.getInstance().executeUpdateSQL(deleteSQL);
+    }
 
     /**
      * Callback to process a Persona query from the persona table.
@@ -364,7 +370,8 @@ public class Persona {
     }
 
     /**
-     * Gets the rows from the Personas table with matching name.
+     * Gets the rows from the Personas table with matching name. 
+     * Persona marked as DELETED are not returned.
      *
      * @param partialName Name substring to match.
      * @return Collection of personas matching the given name substring, may be
@@ -376,7 +383,8 @@ public class Persona {
     public static Collection<Persona> getPersonaByName(String partialName) throws CentralRepoException {
 
         String queryClause = PERSONA_QUERY
-                + "WHERE LOWER(p.name) LIKE " + "LOWER('%" + partialName + "%')" ;
+                + "WHERE p.status_id != " + PersonaStatus.DELETED.status_id + 
+                " AND LOWER(p.name) LIKE " + "LOWER('%" + partialName + "%')" ;
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
@@ -670,7 +678,8 @@ public class Persona {
         for (CentralRepoAccount.CentralRepoAccountType crAccountType : accountTypes) {
 
             String querySql = getPersonaFromInstanceTableQueryTemplate(crAccountType)
-                    + " WHERE case_id = " + correlationCase.getID();
+                    + " WHERE case_id = " + correlationCase.getID()
+                    + "AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
             PersonaFromAccountInstanceQueryCallback queryCallback = new PersonaFromAccountInstanceQueryCallback();
             CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);
@@ -701,7 +710,8 @@ public class Persona {
         for (CentralRepoAccount.CentralRepoAccountType crAccountType : accountTypes) {
 
             String querySql = getPersonaFromInstanceTableQueryTemplate(crAccountType)
-                    + " WHERE data_source_id = " + dataSource.getID();
+                    + " WHERE data_source_id = " + dataSource.getID()
+                    + "AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
             PersonaFromAccountInstanceQueryCallback queryCallback = new PersonaFromAccountInstanceQueryCallback();
             CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);
