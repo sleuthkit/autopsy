@@ -68,7 +68,7 @@ public interface IngestStream {
      * Check whether the ingest stream was stopped before completion.
      * If this returns true, data should not be written to or read from the stream.
      * 
-     * @return True the ingest stream was stopped, false otherwise.
+     * @return True if the ingest stream was stopped, false otherwise.
      */
     boolean wasStopped();
 }

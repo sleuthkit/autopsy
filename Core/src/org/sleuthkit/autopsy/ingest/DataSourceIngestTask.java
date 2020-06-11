@@ -27,6 +27,6 @@ final class DataSourceIngestTask extends IngestTask {
     @Override
     void execute(long threadId) throws InterruptedException {
         super.setThreadId(threadId);
-        getIngestJob().process(this);
+        getIngestJobPipeline().process(this);
     }
 }

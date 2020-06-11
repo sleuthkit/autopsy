@@ -57,7 +57,7 @@ final class FileIngestTask extends IngestTask {
     @Override
     void execute(long threadId) throws InterruptedException {
         super.setThreadId(threadId);
-        getIngestJob().process(this);
+        getIngestJobPipeline().process(this);
     }
 
     @Override
@@ -69,8 +69,8 @@ final class FileIngestTask extends IngestTask {
             return false;
         }
         FileIngestTask other = (FileIngestTask) obj;
-        IngestJobPipeline thisPipeline = getIngestJob();
-        IngestJobPipeline otherPipeline = other.getIngestJob();
+        IngestJobPipeline thisPipeline = getIngestJobPipeline();
+        IngestJobPipeline otherPipeline = other.getIngestJobPipeline();
         if (thisPipeline != otherPipeline && (thisPipeline == null || !thisPipeline.equals(otherPipeline))) {
             return false;
         }
@@ -80,7 +80,7 @@ final class FileIngestTask extends IngestTask {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 47 * hash + Objects.hashCode(getIngestJob());
+        hash = 47 * hash + Objects.hashCode(getIngestJobPipeline());
         hash = 47 * hash + Objects.hashCode(this.fileId);
         return hash;
     }

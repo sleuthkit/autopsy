@@ -63,7 +63,7 @@ public class IngestJobInputStream implements IngestStream {
     @Override
     public synchronized void close() {
 	isClosed = true;
-	ingestJob.addStreamingIngestDataSource();
+	ingestJob.processStreamingIngestDataSource();
     }
 
     @Override

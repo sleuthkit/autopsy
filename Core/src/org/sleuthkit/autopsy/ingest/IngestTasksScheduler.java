@@ -418,7 +418,7 @@ final class IngestTasksScheduler {
                 for (Content child : file.getChildren()) {
                     if (child instanceof AbstractFile) {
                         AbstractFile childFile = (AbstractFile) child;
-                        FileIngestTask childTask = new FileIngestTask(pendingTask.getIngestJob(), childFile);
+                        FileIngestTask childTask = new FileIngestTask(pendingTask.getIngestJobPipeline(), childFile);
                         if (childFile.hasChildren()) {
                             this.pendingFileTaskQueue.add(childTask);
                         } else if (shouldEnqueueFileTask(childTask)) {
@@ -531,7 +531,7 @@ final class IngestTasksScheduler {
      * @return True or false.
      */
     private static boolean shouldBeCarved(final FileIngestTask task) {
-        return task.getIngestJob().shouldProcessUnallocatedSpace() && task.getFile().getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS);
+        return task.getIngestJobPipeline().shouldProcessUnallocatedSpace() && task.getFile().getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS);
     }
 
     /**
@@ -543,7 +543,7 @@ final class IngestTasksScheduler {
      * @return True or false. 
      */
     private static boolean fileAcceptedByFilter(final FileIngestTask task) {
-        return !(task.getIngestJob().getFileIngestFilter().fileIsMemberOf(task.getFile()) == null);
+        return !(task.getIngestJobPipeline().getFileIngestFilter().fileIsMemberOf(task.getFile()) == null);
     }
 
     /**
@@ -557,7 +557,7 @@ final class IngestTasksScheduler {
      */
     synchronized private static boolean hasTasksForJob(Collection<? extends IngestTask> tasks, long jobId) {
         for (IngestTask task : tasks) {
-            if (task.getIngestJob().getId() == jobId) {
+            if (task.getIngestJobPipeline().getId() == jobId) {
                 return true;
             }
         }
@@ -575,7 +575,7 @@ final class IngestTasksScheduler {
         Iterator<? extends IngestTask> iterator = tasks.iterator();
         while (iterator.hasNext()) {
             IngestTask task = iterator.next();
-            if (task.getIngestJob().getId() == jobId) {
+            if (task.getIngestJobPipeline().getId() == jobId) {
                 iterator.remove();
             }
         }
@@ -592,7 +592,7 @@ final class IngestTasksScheduler {
     private static int countTasksForJob(Collection<? extends IngestTask> queue, long jobId) {
         int count = 0;
         for (IngestTask task : queue) {
-            if (task.getIngestJob().getId() == jobId) {
+            if (task.getIngestJobPipeline().getId() == jobId) {
                 count++;
             }
         }

@@ -960,7 +960,7 @@ final class IngestJobPipeline {
      * Should be called after the data source processor has finished (i.e., all files
      * are in the database)
      */
-    void addStreamingIngestDataSource() {
+    void processStreamingIngestDataSource() {
 	// TODO error checking for stage and streaming (should be in streaming files stage)
 	startDataSourceIngestStreaming();
 	checkForStageCompleted();

@@ -31,12 +31,12 @@ abstract class IngestTask {
         threadId = NOT_SET;
     }
 
-    IngestJobPipeline getIngestJob() {
+    IngestJobPipeline getIngestJobPipeline() {
         return ingestJobPipeline;
     }
 
     Content getDataSource() {
-        return getIngestJob().getDataSource();
+        return getIngestJobPipeline().getDataSource();
     }
 
     long getThreadId() {
