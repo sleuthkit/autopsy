@@ -37,6 +37,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import org.openide.util.lookup.ServiceProvider;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
@@ -55,6 +56,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * This class displays the TSK_CONTACT artifact.
  */
+@ServiceProvider(service = ArtifactContentViewer.class)
 public class ContactArtifactViewer extends javax.swing.JPanel implements ArtifactContentViewer {
 
     private final static Logger logger = Logger.getLogger(ContactArtifactViewer.class.getName());

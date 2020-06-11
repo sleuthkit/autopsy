@@ -39,19 +39,26 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 /**
  *
  * General Purpose class for panels that need OutlineView of message nodes at 
- * the top with a MessageContentViewer at the bottom.
+ * the top with a MessageDataContent at the bottom.
  */
 public class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider {
+
+    private static final long serialVersionUID = 1L;
 
     private final Outline outline;
     private final ModifiableProxyLookup proxyLookup;
     private final PropertyChangeListener focusPropertyListener;
+    
+    private final MessageDataContent messageContentViewer;
     
     /**
      * Creates new form MessagesPanel
      */
     public MessagesPanel() {
         initComponents();
+        
+        messageContentViewer = new MessageDataContent();
+        splitPane.setRightComponent(messageContentViewer);
         
         proxyLookup = new ModifiableProxyLookup(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
 
@@ -66,7 +73,7 @@ public class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider
                 }
                 if (isDescendingFrom(newFocusOwner, messageContentViewer)) {
                     //if the focus owner is within the MessageContentViewer (the attachments table)
-                    proxyLookup.setNewLookups(createLookup(((MessageDataContent) messageContentViewer).getExplorerManager(), getActionMap()));
+                    proxyLookup.setNewLookups(createLookup((messageContentViewer).getExplorerManager(), getActionMap()));
                 } else if (isDescendingFrom(newFocusOwner, MessagesPanel.this)) {
                     //... or if it is within the Results table.
                     proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
@@ -149,20 +156,17 @@ public class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider
 
         splitPane = new javax.swing.JSplitPane();
         outlineViewPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
-        messageContentViewer = new MessageDataContent();
 
         setLayout(new java.awt.BorderLayout());
 
         splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         splitPane.setLeftComponent(outlineViewPanel);
-        splitPane.setRightComponent(messageContentViewer);
 
         add(splitPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.contentviewers.MessageContentViewer messageContentViewer;
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel outlineViewPanel;
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
