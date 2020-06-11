@@ -57,9 +57,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  *
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class MessageViewer extends JPanel implements RelationshipsViewer {
+final class MessageViewer extends JPanel implements RelationshipsViewer {
 
     private static final Logger logger = Logger.getLogger(MessageViewer.class.getName());
+    private static final long serialVersionUID = 1L;
 
     private final ModifiableProxyLookup proxyLookup;
     private PropertyChangeListener focusPropertyListener;
@@ -68,7 +69,7 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
 
     private SelectionInfo currentSelectionInfo = null;
 
-    OutlineViewPanel currentPanel;
+    private OutlineViewPanel currentPanel;
 
     @Messages({
         "MessageViewer_tabTitle=Messages",
@@ -87,7 +88,7 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
     /**
      * Creates new form MessageViewer
      */
-    public MessageViewer() {
+    MessageViewer() {
 
         initComponents();
         currentPanel = rootTablePane;
@@ -97,7 +98,7 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
 
         rootTablePane.getExplorerManager().setRootContext(
                 new AbstractNode(Children.create(rootMessageFactory, true)));
-        
+
         rootTablePane.getOutlineView().setPopupAllowed(false);
 
         Outline outline = rootTablePane.getOutlineView().getOutline();
@@ -118,9 +119,9 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
         threadMessagesPanel.setChildFactory(threadMessageNodeFactory);
 
         rootTablePane.setTableColumnsWidth(10, 20, 70);
-        
+
         Image image = getScaledImage((new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/timeline/images/arrow-180.png"))).getImage(), 16, 16);
-        backButton.setIcon(new ImageIcon(image) );
+        backButton.setIcon(new ImageIcon(image));
     }
 
     @Override
@@ -153,29 +154,36 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
     @Override
     public void addNotify() {
         super.addNotify();
-        
-        if(focusPropertyListener == null) {
+
+        if (focusPropertyListener == null) {
             // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
             // explaination of focusPropertyListener
             focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
                 if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
                     final Component newFocusOwner = (Component) focusEvent.getNewValue();
-
-                    if (newFocusOwner == null) {
-                        return;
-                    }
-                    if (isDescendingFrom(newFocusOwner, rootTablePane)) {
-                        proxyLookup.setNewLookups(createLookup(rootTablePane.getExplorerManager(), getActionMap()));
-                    } else if (isDescendingFrom(newFocusOwner, MessageViewer.this)) {
-                        proxyLookup.setNewLookups(createLookup(currentPanel.getExplorerManager(), getActionMap()));
-                    }
+                    handlefocusChanged(newFocusOwner);
                 }
             };
-
         }
         //add listener that maintains correct selection in the Global Actions Context
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .addPropertyChangeListener("focusOwner", focusPropertyListener);
+    }
+
+    /**
+     * Switch the component for the proxy lookup
+     *
+     * @param newFocusOwner
+     */
+    private void handlefocusChanged(Component newFocusOwner) {
+        if (newFocusOwner == null) {
+            return;
+        }
+        if (isDescendingFrom(newFocusOwner, rootTablePane)) {
+            proxyLookup.setNewLookups(createLookup(rootTablePane.getExplorerManager(), getActionMap()));
+        } else if (isDescendingFrom(newFocusOwner, MessageViewer.this)) {
+            proxyLookup.setNewLookups(createLookup(currentPanel.getExplorerManager(), getActionMap()));
+        }
     }
 
     @Override
@@ -233,18 +241,18 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
             } else {
                 threadNameLabel.setText(Bundle.MessageViewer_viewMessage_unthreaded());
             }
-            
-           showMessagesPane();
+
+            showMessagesPane();
         }
     }
-    
+
     /**
      * Make the threads pane visible.
      */
     private void showThreadsPane() {
         switchCard("threads");
     }
-    
+
     /**
      * Make the message pane visible.
      */
@@ -253,32 +261,32 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
         Outline outline = rootTablePane.getOutlineView().getOutline();
         outline.clearSelection();
     }
-    
+
     /**
      * Changes the visible panel (card).
-     * 
+     *
      * @param cardName Name of card to show
      */
     private void switchCard(String cardName) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                CardLayout layout = (CardLayout)getLayout();
+                CardLayout layout = (CardLayout) getLayout();
                 layout.show(MessageViewer.this, cardName);
             }
         });
     }
-    
+
     /**
      * Scales the given image to the given width and height.
-     * 
+     *
      * @param srcImg Image to scale
-     * @param w Image width
-     * @param h Image height
-     * 
+     * @param w      Image width
+     * @param h      Image height
+     *
      * @return Scaled version of srcImg
      */
-    private Image getScaledImage(Image srcImg, int w, int h){
+    private Image getScaledImage(Image srcImg, int w, int h) {
         BufferedImage resizedImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = resizedImg.createGraphics();
 

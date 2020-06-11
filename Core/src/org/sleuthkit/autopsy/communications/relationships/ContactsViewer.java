@@ -35,7 +35,6 @@ import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
@@ -45,10 +44,10 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  * Visualization for contact nodes.
  *
  */
-@ServiceProvider(service = RelationshipsViewer.class)
-public final class ContactsViewer extends JPanel implements RelationshipsViewer {
+final class ContactsViewer extends JPanel implements RelationshipsViewer {
 
-//    private final ExplorerManager tableEM;
+    private static final long serialVersionUID = 1L;
+
     private final Outline outline;
     private final ModifiableProxyLookup proxyLookup;
     private PropertyChangeListener focusPropertyListener;
@@ -66,7 +65,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer 
     /**
      * Visualization for contact nodes.
      */
-    public ContactsViewer() {
+    ContactsViewer() {
         initComponents();
 
         contactPane = new ContactDataViewer();
@@ -143,19 +142,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer 
             // explaination of focusPropertyListener
             focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
                 if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
-                    final Component newFocusOwner = (Component) focusEvent.getNewValue();
-
-                    if (newFocusOwner == null) {
-                        return;
-                    }
-                    if (isDescendingFrom(newFocusOwner, contactPane)) {
-                        //if the focus owner is within the MessageContentViewer (the attachments table)
-                        proxyLookup.setNewLookups(createLookup(contactPane.getExplorerManager(), getActionMap()));
-                    } else if (isDescendingFrom(newFocusOwner, ContactsViewer.this)) {
-                        //... or if it is within the Results table.
-                        proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
-
-                    }
+                    handlefocusChanged((Component) focusEvent.getNewValue());
                 }
             };
         }
@@ -163,6 +150,25 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer 
         //add listener that maintains correct selection in the Global Actions Context
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .addPropertyChangeListener("focusOwner", focusPropertyListener); //NON-NLS
+    }
+
+    /**
+     * Switch the component for the proxy lookup
+     *
+     * @param newFocusOwner
+     */
+    private void handlefocusChanged(Component newFocusOwner) {
+        if (newFocusOwner == null) {
+            return;
+        }
+        if (isDescendingFrom(newFocusOwner, contactPane)) {
+            //if the focus owner is within the MessageContentViewer (the attachments table)
+            proxyLookup.setNewLookups(createLookup(contactPane.getExplorerManager(), getActionMap()));
+        } else if (isDescendingFrom(newFocusOwner, ContactsViewer.this)) {
+            //... or if it is within the Results table.
+            proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
+
+        }
     }
 
     @Override
