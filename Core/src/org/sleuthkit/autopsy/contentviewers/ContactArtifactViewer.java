@@ -771,7 +771,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
             // pass the list of accounts to the dialog
             for (CentralRepoAccount account : contactUniqueAccountsList) {
-                personaPanel.addAccount(account, Bundle.ContactArtifactViewer_persona_account_justification() , Persona.Confidence.UNKNOWN);
+                personaPanel.addAccount(account, Bundle.ContactArtifactViewer_persona_account_justification() , Persona.Confidence.HIGH);
             }
 
             // display the dialog now
