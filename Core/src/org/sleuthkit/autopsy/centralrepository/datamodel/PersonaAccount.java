@@ -153,7 +153,7 @@ public class PersonaAccount {
 
         CentralRepository.getInstance().executeInsertSQL(insertClause);
 
-        String queryClause = PERSONA_ACCOUNTS_QUERY_CALUSE
+        String queryClause = PERSONA_ACCOUNTS_QUERY_CLAUSE
                 + "WHERE persona_id = " + persona.getId()
                 + " AND account_type_id = " + account.getAccountType().getAccountTypeId()
                 + " AND account_unique_identifier = \"" + account.getIdentifier() + "\"";
@@ -226,7 +226,7 @@ public class PersonaAccount {
     };
 
     // Query clause  to select from persona_accounts table to create PersonaAccount(s)
-    private static final String PERSONA_ACCOUNTS_QUERY_CALUSE = "SELECT persona_accounts.id as persona_accounts_id, justification, confidence_id, date_added, persona_accounts.examiner_id as pa_examiner_id, pa_examiner.login_name as pa_examiner_login_name, pa_examiner.display_name as pa_examiner_display_name,"
+    private static final String PERSONA_ACCOUNTS_QUERY_CLAUSE = "SELECT persona_accounts.id as persona_accounts_id, justification, confidence_id, date_added, persona_accounts.examiner_id as pa_examiner_id, pa_examiner.login_name as pa_examiner_login_name, pa_examiner.display_name as pa_examiner_display_name,"
             + " personas.id as persona_id, personas.uuid, personas.name, personas.comment, personas.created_date, personas.modified_date, personas.status_id, "
             + " personas.examiner_id as persona_examiner_id, persona_examiner.login_name as persona_examiner_login_name, persona_examiner.display_name as persona_examiner_display_name, "
             + " accounts.id as account_id, account_type_id, account_unique_identifier,"
@@ -252,7 +252,7 @@ public class PersonaAccount {
         CentralRepository cr = CentralRepository.getInstance();
 
         if (cr != null) {
-            String queryClause = PERSONA_ACCOUNTS_QUERY_CALUSE
+            String queryClause = PERSONA_ACCOUNTS_QUERY_CLAUSE
                     + " WHERE persona_accounts.persona_id = " + personaId;
 
             PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
@@ -275,7 +275,7 @@ public class PersonaAccount {
      *                              persona_account.
      */
     public static Collection<PersonaAccount> getPersonaAccountsForAccount(long accountId) throws CentralRepoException {
-        String queryClause = PERSONA_ACCOUNTS_QUERY_CALUSE
+        String queryClause = PERSONA_ACCOUNTS_QUERY_CLAUSE
                 + " WHERE persona_accounts.account_id = " + accountId
                 + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
@@ -304,7 +304,7 @@ public class PersonaAccount {
      *                              persona_account.
      */
     public static Collection<PersonaAccount> getPersonaAccountsForIdentifierLike(String accountIdentifierSubstring) throws CentralRepoException {
-        String queryClause = PERSONA_ACCOUNTS_QUERY_CALUSE
+        String queryClause = PERSONA_ACCOUNTS_QUERY_CLAUSE
                 + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + accountIdentifierSubstring + "%')"
                 + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
@@ -330,7 +330,7 @@ public class PersonaAccount {
      * @throws CentralRepoException
      */
     public static Collection<PersonaAccount> getPersonaAccountsForAccount(Account account) throws CentralRepoException {
-        String queryClause = PERSONA_ACCOUNTS_QUERY_CALUSE
+        String queryClause = PERSONA_ACCOUNTS_QUERY_CLAUSE
                 + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + account.getTypeSpecificID() + "%')"
                 + " AND type_name = '" + account.getAccountType().getTypeName() + "' "
                 + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
