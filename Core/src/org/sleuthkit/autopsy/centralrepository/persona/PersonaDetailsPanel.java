@@ -418,7 +418,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
             .addGroup(detailsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(accountsTablePane, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(accountsTablePane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 605, Short.MAX_VALUE)
                     .addComponent(accountsLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(metadataLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(metadataTablePane, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -431,13 +431,9 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(commentField))
                     .addGroup(detailsPanelLayout.createSequentialGroup()
-                        .addComponent(examinerLbl)
+                        .addComponent(nameLbl)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(examinerField, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(creationDateLbl)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(creationDateField, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(nameField))
                     .addGroup(detailsPanelLayout.createSequentialGroup()
                         .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(detailsPanelLayout.createSequentialGroup()
@@ -454,9 +450,13 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                                 .addComponent(deleteAliasBtn)))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(detailsPanelLayout.createSequentialGroup()
-                        .addComponent(nameLbl)
+                        .addComponent(examinerLbl)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(nameField)))
+                        .addComponent(examinerField, javax.swing.GroupLayout.PREFERRED_SIZE, 161, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(creationDateLbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(creationDateField)))
                 .addContainerGap())
         );
         detailsPanelLayout.setVerticalGroup(
@@ -512,10 +512,16 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(detailsPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGap(0, 617, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(detailsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(0, 521, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addComponent(detailsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(0, 0, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -714,12 +720,19 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         casesTable.setModel(casesModel);
     }
 
-    void enableEditUIComponents() {
-        commentField.setEditable(true);
-        nameField.setEditable(true);
-        addAccountBtn.setEnabled(true);
-        addMetadataBtn.setEnabled(true);
-        addAliasBtn.setEnabled(true);
+    void configureEditComponents(boolean enabled) {
+        commentField.setEditable(enabled);
+        nameField.setEditable(enabled);
+        addAccountBtn.setEnabled(enabled);
+        addMetadataBtn.setEnabled(enabled);
+        addAliasBtn.setEnabled(enabled);
+        
+        addAccountBtn.setVisible(enabled);
+        deleteAccountBtn.setVisible(enabled);
+        addMetadataBtn.setVisible(enabled);
+        deleteMetadataBtn.setVisible(enabled);
+        addAliasBtn.setVisible(enabled);
+        deleteAliasBtn.setVisible(enabled);
     }
 
     void initializeFields() {
@@ -746,14 +759,15 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         this.mode = mode;
         switch (mode) {
             case CREATE:
-                enableEditUIComponents();
+                configureEditComponents(true);
                 break;
             case EDIT:
                 loadPersona(parent, persona);
-                enableEditUIComponents();
+                configureEditComponents(true);
                 break;
             case VIEW:
                 loadPersona(parent, persona);
+                configureEditComponents(false);
                 break;
             default:
                 logger.log(Level.WARNING, "Unsupported mode: {0}", mode);
