@@ -573,8 +573,8 @@ public class Server {
                     solrUrl = "http://" + properties.getHost() + ":" + properties.getPort() + "/solr";
                 } else {
                     // Solr 4
-                    String solr4ServerHost = org.sleuthkit.autopsy.userpreferences.UserPreferences.getSolr4ServerHost().trim();
-                    String solr4ServerPort = org.sleuthkit.autopsy.userpreferences.UserPreferences.getSolr4ServerPort().trim();
+                    String solr4ServerHost = UserPreferences.getSolr4ServerHost().trim();
+                    String solr4ServerPort = UserPreferences.getSolr4ServerPort().trim();
                     solrUrl = "http://" + solr4ServerHost + ":" + solr4ServerPort + "/solr";
                 }
 
@@ -1234,8 +1234,8 @@ public class Server {
         }
 
         // Default back to the user preferences if the solrserver.txt file was not found or if an error occurred
-        String host = org.sleuthkit.autopsy.userpreferences.UserPreferences.getIndexingServerHost();
-        String port = org.sleuthkit.autopsy.userpreferences.UserPreferences.getIndexingServerPort();
+        String host = UserPreferences.getIndexingServerHost();
+        String port = UserPreferences.getIndexingServerPort();
         return new IndexingServerProperties(host, port);
     }
 

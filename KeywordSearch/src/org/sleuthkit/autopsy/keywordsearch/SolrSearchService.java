@@ -328,24 +328,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     return;
                 }
 
-                // if schema is not compatible, index should be used in read-only mode
-                if (!indexToUse.isCompatible(IndexFinder.getCurrentSchemaVersion()) && RuntimeProperties.runningWithGUI()) {
-                    // pop up a message box to indicate the read-only restrictions.
-                    JOptionPane optionPane = new JOptionPane(
-                            NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.msg"),
-                            JOptionPane.WARNING_MESSAGE,
-                            JOptionPane.DEFAULT_OPTION);
-                    try {
-                        SwingUtilities.invokeAndWait(() -> {
-                            JDialog dialog = optionPane.createDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.title"));
-                            dialog.setVisible(true);
-                        });
-                    } catch (InterruptedException ex) {
-                        // Cancelled
-                        return;
-                    } catch (InvocationTargetException ex) {
-                        throw new AutopsyServiceException("Error displaying limited search features warning dialog", ex);
-                    }
+                // check if schema is compatible
+                if (!indexToUse.isCompatible(IndexFinder.getCurrentSchemaVersion())) {
+                    String msg = "Text index schema version " + indexToUse.getSchemaVersion() + " is not compatible with current schema";
+                    logger.log(Level.WARNING, msg);
+                    throw new AutopsyServiceException(msg);
                 }
                 // proceed with case open
                 currentVersionIndex = indexToUse;

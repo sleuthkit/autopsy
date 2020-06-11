@@ -184,13 +184,17 @@ class DropdownToolbar extends javax.swing.JPanel {
                             else {
                                 Index indexInfo = server.getIndexInfo();
 
-                                // Check the Solr schema version and selectively 
-                                // enable the ad hoc search UI components.
+                                // Check the Solr schema version and enable ad-hoc search UI components.
                                 boolean schemaIsCompatible = indexInfo.isCompatible(IndexFinder.getCurrentSchemaVersion());
-                                listsButton.setEnabled(schemaIsCompatible);
-                                searchDropButton.setEnabled(true);
-                                dropPanel.setRegexSearchEnabled(schemaIsCompatible);
-                                active = true;
+                                if (!schemaIsCompatible) {
+                                    logger.log(Level.WARNING, "Text index schema version {0} is not compatible with current schema", indexInfo.getSchemaVersion()); //NON-NLS
+                                    disableSearch = true;
+                                } else {
+                                    listsButton.setEnabled(true);
+                                    searchDropButton.setEnabled(true);
+                                    dropPanel.setRegexSearchEnabled(true);
+                                    active = true;
+                                }
                             }
                         } catch (NoOpenCoreException ex) {
                             /*
