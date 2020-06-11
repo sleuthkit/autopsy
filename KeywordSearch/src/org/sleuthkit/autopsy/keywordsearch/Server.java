@@ -249,12 +249,9 @@ public class Server {
     private Collection currentCollection;
     private final ReentrantReadWriteLock currentCoreLock;
 
-    private final File solr8Folder;
-    private Path solr8Home;
     private final ServerAction serverAction;
     private InputStreamPrinterThread errorRedirectThread;
 
-    private final File solr4Folder; 
     /**
      * New instance for the server at the given URL
      *
@@ -264,8 +261,8 @@ public class Server {
 
         this.localSolrServer = getSolrClient("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
         serverAction = new ServerAction();
-        solr8Folder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
-        solr4Folder = InstalledFileLocator.getDefault().locate("solr4", Server.class.getPackage().getName(), false); //NON-NLS
+        File solr8Folder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
+        File solr4Folder = InstalledFileLocator.getDefault().locate("solr4", Server.class.getPackage().getName(), false); //NON-NLS
         
         // Figure out where Java is located. The Java home location 
         // will be passed as the SOLR_JAVA_HOME environment
@@ -273,7 +270,7 @@ public class Server {
         // either autopsy-solr.cmd or autopsy-solr-in.cmd.
         javaPath = PlatformUtil.getJavaPath();
 
-        solr8Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
+        Path solr8Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
         if (!solr8Home.toFile().exists()) {
             try {
                 Files.createDirectory(solr8Home);
@@ -432,11 +429,13 @@ public class Server {
      *
      * @throws IOException
      */
-    private Process runSolrCommand(List<String> solrArguments) throws IOException {
+    private Process runLocalSolr8ControlCommand(List<String> solrArguments) throws IOException {
         final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + UserPreferences.getMaxSolrVMSize() + "m"; //NON-NLS
         
         // This is our customized version of the Solr batch script to start/stop Solr.
+        File solr8Folder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
         Path solr8CmdPath = Paths.get(solr8Folder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
+        Path solr8Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
 
         List<String> commandLine = new ArrayList<>();
 	commandLine.add(solr8CmdPath.toString());
@@ -459,7 +458,8 @@ public class Server {
         solrProcessBuilder.environment().put("SOLR_HOME", solr8Home.toString()); // NON-NLS
         solrProcessBuilder.environment().put("STOP_KEY", KEY); // NON-NLS 
         solrProcessBuilder.environment().put("SOLR_JAVA_MEM", MAX_SOLR_MEM_MB_PAR); // NON-NLS 
-        logger.log(Level.INFO, "Running Solr 8 command: {0}", solrProcessBuilder.command()); //NON-NLS
+        logger.log(Level.INFO, "Setting Solr 8 directory: {0}", solr8Folder.toString()); //NON-NLS
+        logger.log(Level.INFO, "Running Solr 8 command: {0} from {1}", new Object[]{solrProcessBuilder.command(), solr8Folder.toString()}); //NON-NLS
         Process process = solrProcessBuilder.start();
         logger.log(Level.INFO, "Finished running Solr 8 command"); //NON-NLS
         return process;
@@ -474,8 +474,9 @@ public class Server {
      *
      * @throws IOException
      */
-    private Process runSolr4Command(List<String> solrArguments) throws IOException {
+    private Process runLocalSolr4ControlCommand(List<String> solrArguments) throws IOException {
         final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + UserPreferences.getMaxSolrVMSize() + "m"; //NON-NLS
+        File solr4Folder = InstalledFileLocator.getDefault().locate("solr4", Server.class.getPackage().getName(), false); //NON-NLS
 
         List<String> commandLine = new ArrayList<>();
         commandLine.add(javaPath);
@@ -538,7 +539,7 @@ public class Server {
     }
     
     void start() throws KeywordSearchModuleException, SolrServerNoPortException {
-        startSolr(SOLR_VERSION.SOLR8);
+        startLocalSolr(SOLR_VERSION.SOLR8);
     }
     
     private ConcurrentUpdateSolrClient configureSolrConnection(Case theCase, Index index) throws KeywordSearchModuleException, SolrServerNoPortException {
@@ -549,9 +550,9 @@ public class Server {
 
                 // makes sure the proper local Solr server is running
                 if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
-                    startSolr(SOLR_VERSION.SOLR8);
+                    startLocalSolr(SOLR_VERSION.SOLR8);
                 } else {
-                    startSolr(SOLR_VERSION.SOLR4);
+                    startLocalSolr(SOLR_VERSION.SOLR4);
                 }
 
                 solrClient = this.localSolrServer;
@@ -597,7 +598,7 @@ public class Server {
      */
     @NbBundle.Messages({
         "Server.status.failed.msg=Local Solr server did not respond to status request. This may be because the server failed to start or is taking too long to initialize.",})
-    void startSolr(SOLR_VERSION version) throws KeywordSearchModuleException, SolrServerNoPortException {
+    void startLocalSolr(SOLR_VERSION version) throws KeywordSearchModuleException, SolrServerNoPortException {
         
         if (isLocalSolrRunning()) {
             if (localServerVersion == version) {
@@ -642,15 +643,15 @@ public class Server {
             logger.log(Level.INFO, "Port [{0}] available, starting Solr", currentSolrServerPort); //NON-NLS
             try {
                 if (version == SOLR_VERSION.SOLR8) {
-                    logger.log(Level.INFO, "Starting Solr 8 server from: {0}", solr8Folder.getAbsolutePath()); //NON-NLS
-                    curSolrProcess = runSolrCommand(new ArrayList<>(Arrays.asList("start", "-p", //NON-NLS
+                    logger.log(Level.INFO, "Starting Solr 8 server"); //NON-NLS
+                    curSolrProcess = runLocalSolr8ControlCommand(new ArrayList<>(Arrays.asList("start", "-p", //NON-NLS
 					Integer.toString(currentSolrServerPort),
                         		"-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
                                         "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
                 } else {
                     // solr4
-                    logger.log(Level.INFO, "Starting Solr 4 server from: {0}", solr4Folder.getAbsolutePath()); //NON-NLS
-                    curSolrProcess = runSolr4Command(new ArrayList<>(
+                    logger.log(Level.INFO, "Starting Solr 4 server"); //NON-NLS
+                    curSolrProcess = runLocalSolr4ControlCommand(new ArrayList<>(
                         Arrays.asList("-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
                                 "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
                 }
@@ -747,7 +748,7 @@ public class Server {
     }
 
     /**
-     * Tries to stop the local Solr instance.
+     * Closes current collection and tries to stop the local Solr instance.
      *
      * Waits for the stop command to finish before returning.
      */
@@ -759,17 +760,24 @@ public class Server {
         } catch (KeywordSearchModuleException e) {
             logger.log(Level.WARNING, "Failed to close core: ", e); //NON-NLS
         }
-
+        
+        stopLocalSolr();
+    }
+    
+    /**
+     * Stops local Solr server instance.
+     */
+    private void stopLocalSolr() {
         try {
             //try graceful shutdown
             Process process;
             if (localServerVersion == SOLR_VERSION.SOLR8) {
-                logger.log(Level.INFO, "Stopping Solr 8 server from: {0}", solr8Folder.getAbsolutePath()); //NON-NLS
-                process = runSolrCommand(new ArrayList<>(Arrays.asList("stop", "-k", KEY, "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
+                logger.log(Level.INFO, "Stopping Solr 8 server"); //NON-NLS
+                process = runLocalSolr8ControlCommand(new ArrayList<>(Arrays.asList("stop", "-k", KEY, "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
             } else {
                 // solr 4
-                logger.log(Level.INFO, "Stopping Solr 4 server from: {0}", solr4Folder.getAbsolutePath()); //NON-NLS
-                process = runSolr4Command(new ArrayList<>(Arrays.asList("--stop"))); //NON-NLS
+                logger.log(Level.INFO, "Stopping Solr 4 server"); //NON-NLS
+                process = runLocalSolr4ControlCommand(new ArrayList<>(Arrays.asList("--stop"))); //NON-NLS
             }
 
             logger.log(Level.INFO, "Waiting for Solr server to stop"); //NON-NLS
@@ -797,7 +805,7 @@ public class Server {
 
             logger.log(Level.INFO, "Finished stopping Solr server"); //NON-NLS
         }
-    } 
+    }
 
     /**
      * Tests if there's a local Solr server running by sending it a core-statusRequest
