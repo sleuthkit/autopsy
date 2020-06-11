@@ -172,10 +172,22 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
 
         if (focusPropertyListener == null) {
             // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
-            // explanation of focusPropertyListener
+            // explaination of focusPropertyListener
             focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
                 if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
-                    handlefocusChanged((Component) focusEvent.getNewValue());
+                    final Component newFocusOwner = (Component) focusEvent.getNewValue();
+
+                    if (newFocusOwner == null) {
+                        return;
+                    }
+                    if (isDescendingFrom(newFocusOwner, callLogDataViewer)) {
+                        //if the focus owner is within the MessageContentViewer (the attachments table)
+                        proxyLookup.setNewLookups(createLookup(callLogDataViewer.getExplorerManager(), getActionMap()));
+                    } else if (isDescendingFrom(newFocusOwner, CallLogViewer.this)) {
+                        //... or if it is within the Results table.
+                        proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
+
+                    }
                 }
             };
         }
@@ -183,25 +195,6 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
         //add listener that maintains correct selection in the Global Actions Context
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .addPropertyChangeListener("focusOwner", focusPropertyListener); //NON-NLS
-    }
-
-    /**
-     * Switch the component for the proxy lookup
-     *
-     * @param newFocusOwner
-     */
-    private void handlefocusChanged(Component newFocusOwner) {
-        if (newFocusOwner == null) {
-            return;
-        }
-        if (isDescendingFrom(newFocusOwner, callLogDataViewer)) {
-            //if the focus owner is within the MessageContentViewer (the attachments table)
-            proxyLookup.setNewLookups(createLookup(callLogDataViewer.getExplorerManager(), getActionMap()));
-        } else if (isDescendingFrom(newFocusOwner, CallLogViewer.this)) {
-            //... or if it is within the Results table.
-            proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
-
-        }
     }
 
     @Override
