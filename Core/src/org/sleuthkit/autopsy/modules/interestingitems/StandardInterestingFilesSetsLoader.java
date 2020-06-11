@@ -18,26 +18,17 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
-import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.OnStart;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 /**
  * When the interesting items module loads, this runnable loads standard
@@ -46,32 +37,20 @@ import org.xml.sax.SAXException;
 @OnStart
 public class StandardInterestingFilesSetsLoader implements Runnable {
 
-    // The list of class resources representing the standard interesting files sets
-    // NOTE: This list must be updated to correspond to the standard interesting files sets in 'InterestingFileSetRules'
-    private final static List<String> INTERESTING_FILESETS_RULES_NAMES = ImmutableList.of(
-            "Cloud Storage.xml",
-            "Cryptocurrency Wallets.xml",
-            "Encryption Programs.xml"
-    );
-    
     private static final Logger LOGGER = Logger.getLogger(StandardInterestingFilesSetsLoader.class.getName());
-    
+
     private static final String CONFIG_DIR = "InterestingFileSetRules";
-    
+
     private static final FilenameFilter DEFAULT_XML_FILTER = new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
             return name.endsWith(".xml");
         }
     };
-    
+
     @Override
     public void run() {
-        File rulesConfigDir = new File(PlatformUtil.getUserConfigDirectory(), CONFIG_DIR);
-        
-        copyRulesDirectory(rulesConfigDir);
-        
-        Map<String, FilesSet> standardInterestingFileSets = readStandardFileXML(rulesConfigDir);
+        Map<String, FilesSet> standardInterestingFileSets = readStandardFileXML();
 
         // Call FilesSetManager.getInterestingFilesSets() to get a Map<String, FilesSet> of the existing rule sets.
         Map<String, FilesSet> userConfiguredSettings = null;
@@ -80,14 +59,14 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
             LOGGER.log(Level.SEVERE, "Unable to properly read user-configured interesting files sets.", ex);
         }
-        
+
         if (userConfiguredSettings == null) {
             userConfiguredSettings = new HashMap<>();
         }
 
         // Add each FilesSet read from the standard rules set XML files that is missing from the Map to the Map.
         copyOnNewer(standardInterestingFileSets, userConfiguredSettings, true);
-        
+
         try {
             // Call FilesSetManager.setInterestingFilesSets with the updated Map.
             FilesSetsManager.getInstance().setInterestingFilesSets(userConfiguredSettings);
@@ -98,59 +77,35 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
 
     /**
      * Reads xml definitions for each file found in the standard interesting
-     * file set config directory and marks the files set as readonly.
-     *
-     * @param rulesConfigDir The user configuration directory for standard
-     *                       interesting file set rules. This is assumed to be
-     *                       non-null.
+     * file set config directory and marks the files set as a standard
+     * interesting file if it isn't already.
      *
      * @return The mapping of files set keys to the file sets.
      */
-    private static Map<String, FilesSet> readStandardFileXML(File rulesConfigDir) {
+    private static Map<String, FilesSet> readStandardFileXML() {
         Map<String, FilesSet> standardInterestingFileSets = new HashMap<>();
-        if (rulesConfigDir.exists()) {
-            for (File standardFileSetsFile : rulesConfigDir.listFiles(DEFAULT_XML_FILTER)) {
-                try {
-                    Map<String, FilesSet> thisFilesSet = InterestingItemsFilesSetSettings.readDefinitionsXML(standardFileSetsFile);
-                    copyOnNewer(thisFilesSet, standardInterestingFileSets);
-                } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                    LOGGER.log(Level.WARNING, String.format("There was a problem importing the standard interesting file set at: %s.",
-                            standardFileSetsFile.getAbsoluteFile()), ex);
-                }
+
+        File[] standardFileSets = InstalledFileLocator.getDefault()
+                .locate(CONFIG_DIR, "org.sleuthkit.autopsy.core", false)
+                .listFiles(DEFAULT_XML_FILTER);
+
+        for (File standardFileSetsFile : standardFileSets) { //NON-NLS
+            try {
+                Map<String, FilesSet> thisFilesSet = InterestingItemsFilesSetSettings.readDefinitionsXML(standardFileSetsFile);
+
+                // ensure that read resources are standard sets
+                thisFilesSet = thisFilesSet.values()
+                        .stream()
+                        .map((filesSet) -> getAsStandardFilesSet(filesSet, true))
+                        .collect(Collectors.toMap(FilesSet::getName, Function.identity()));
+
+                copyOnNewer(thisFilesSet, standardInterestingFileSets);
+            } catch (FilesSetsManager.FilesSetsManagerException ex) {
+                LOGGER.log(Level.WARNING, String.format("There was a problem importing the standard interesting file set at: %s.",
+                        standardFileSetsFile.getAbsoluteFile()), ex);
             }
         }
         return standardInterestingFileSets;
-    }
-
-    /**
-     * Add the InterestingFileSetRules directory to the user’s app data config
-     * directory for Autopsy if not already present.
-     *
-     * @param rulesConfigDir The user configuration directory for standard
-     *                       interesting file set rules. This is assumed to be
-     *                       non-null.
-     */
-    private static void copyRulesDirectory(File rulesConfigDir) {
-        for (String resourceFile : INTERESTING_FILESETS_RULES_NAMES) {
-            String resourcePath = String.join("/", CONFIG_DIR, resourceFile);
-            if (StandardInterestingFilesSetsLoader.class.getResource(resourcePath) == null) {
-                LOGGER.log(Level.SEVERE, String.format("Expected resource: '%s' could not be found at '%s'.", resourceFile, resourcePath));
-            } else {
-                InputStream fileSetStream = null;
-                try {
-                    fileSetStream = StandardInterestingFilesSetsLoader.class.getResourceAsStream(resourcePath);
-                    updateStandardFilesSetConfigFile(rulesConfigDir, fileSetStream, resourceFile);
-                } finally {
-                    if (fileSetStream != null) {
-                        try {
-                            fileSetStream.close();
-                        } catch (IOException ex) {
-                            LOGGER.log(Level.WARNING, "Unable to close resource for " + resourcePath, ex);
-                        }
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -173,62 +128,6 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
                 standardFilesSet,
                 origFilesSet.getVersionNumber()
         );
-    }
-
-    /**
-     * Updates the standard interesting files set config file if there is no
-     * corresponding files set on disk or the files set on disk has an older
-     * version.
-     *
-     * @param rulesConfigDir      The directory for standard interesting files
-     *                            sets.
-     * @param resourceInputStream The standard interesting files set resource
-     *                            file located within the jar.
-     * @param resourceName        The filename of the resource to be copied.
-     */
-    private static void updateStandardFilesSetConfigFile(File rulesConfigDir, InputStream resourceInputStream, String resourceName) {
-        Map<String, FilesSet> resourceFilesSet = null;
-        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-        try {
-            DocumentBuilder builder = builderFactory.newDocumentBuilder();
-            Document xmlDoc = builder.parse(resourceInputStream);
-            resourceFilesSet = InterestingItemsFilesSetSettings.readDefinitionsXML(xmlDoc, resourceName);
-        } catch (ParserConfigurationException | SAXException | IOException | FilesSetsManager.FilesSetsManagerException ex) {
-            LOGGER.log(Level.SEVERE, "Unable to read FilesSet data from resource file: " + resourceName, ex);
-            return;
-        }
-
-        // ensure that read resources are standard sets
-        resourceFilesSet = resourceFilesSet.values()
-                .stream()
-                .map((filesSet) -> getAsStandardFilesSet(filesSet, true))
-                .collect(Collectors.toMap(FilesSet::getName, Function.identity()));
-        
-        File configDirFile = new File(rulesConfigDir, resourceName);
-        if (configDirFile.exists()) {
-            Map<String, FilesSet> configDirFilesSet = null;
-            try {
-                configDirFilesSet = InterestingItemsFilesSetSettings.readDefinitionsXML(configDirFile);
-            } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                LOGGER.log(Level.WARNING, "Unable to read FilesSet data from config file: " + resourceName, ex);
-            }
-            
-            copyOnNewer(configDirFilesSet, resourceFilesSet);
-        }
-        
-        try {
-            rulesConfigDir.mkdirs();
-        } catch (SecurityException ex) {
-            LOGGER.log(Level.WARNING, "Unable to write FilesSet data to disk at: " + configDirFile.getAbsolutePath(), ex);
-            return;
-        }
-        
-        boolean successfulWrite = InterestingItemsFilesSetSettings.exportXmlDefinitionsFile(configDirFile,
-                resourceFilesSet.values().stream().collect(Collectors.toList()));
-        
-        if (!successfulWrite) {
-            LOGGER.log(Level.WARNING, "Unable to write FilesSet data to disk at: " + configDirFile.getAbsolutePath());
-        }
     }
 
     /**
@@ -278,7 +177,7 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
                     continue;
                 }
             }
-            
+
             dest.put(srcEntry.getKey(), srcEntry.getValue());
         }
     }
@@ -296,13 +195,13 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
             LOGGER.log(Level.SEVERE, "An attempt to create a custom file that was a standard set.");
             return;
         }
-        
+
         FilesSet srcToAdd = srcFilesSet;
-        
+
         do {
             srcToAdd = getAsCustomFileSet(srcToAdd);
         } while (dest.containsKey(srcToAdd.getName()));
-        
+
         dest.put(srcToAdd.getName(), srcToAdd);
     }
 
