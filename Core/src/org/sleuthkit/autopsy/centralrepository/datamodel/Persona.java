@@ -393,6 +393,37 @@ public class Persona {
     }
     
     /**
+     * Gets the rows from the Personas table where persona accounts' names are
+     * similar to the given one. Persona marked as DELETED are not returned.
+     *
+     * @param partialName Name substring to match.
+     * @return Collection of personas matching the given name substring, may be
+     * empty if no match is found.
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public static Collection<Persona> getPersonaByAccountIdentifierLike(String partialName) throws CentralRepoException {
+        String queryClause = "SELECT DISTINCT accounts.id as a_id,"
+                + "p.id, p.uuid, p.name, p.comment, p.created_date, p.modified_date, p.status_id, p.examiner_id, e.login_name, e.display_name"
+                + " FROM accounts"
+                + " JOIN persona_accounts as pa ON pa.account_id = accounts.id"
+                + " JOIN personas as p ON p.id = pa.persona_id"
+                + " JOIN examiners as e ON e.id = p.examiner_id"
+                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + partialName + "%')"
+                + " AND p.status_id != " + Persona.PersonaStatus.DELETED.getStatusId()
+                + " GROUP BY p.id";
+
+        PersonaQueryCallback queryCallback = new PersonaQueryCallback();
+        CentralRepository cr = CentralRepository.getInstance();
+        if (cr != null) {
+            cr.executeSelectSQL(queryClause, queryCallback);
+        }
+
+        return queryCallback.getPersonas();
+    }
+    
+    /**
      * Creates an alias for the Persona.
      *
      * @param alias Alias name.
