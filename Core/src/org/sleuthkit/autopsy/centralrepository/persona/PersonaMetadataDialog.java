@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
  * Configuration dialog for adding metadata to a persona.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class AddMetadataDialog extends JDialog {
+public class PersonaMetadataDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
 
@@ -39,7 +39,7 @@ public class AddMetadataDialog extends JDialog {
      * Creates new add metadata dialog
      */
     @Messages({"AddMetadataDialog.title.text=Add Metadata",})
-    public AddMetadataDialog(PersonaDetailsPanel pdp) {
+    public PersonaMetadataDialog(PersonaDetailsPanel pdp) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.AddMetadataDialog_title_text(),
                 true);
@@ -63,10 +63,10 @@ public class AddMetadataDialog extends JDialog {
         nameTextField = new javax.swing.JTextField();
         valueLbl = new javax.swing.JLabel();
         valueTextField = new javax.swing.JTextField();
-        justificationLbl = new javax.swing.JLabel();
-        justificationTextField = new javax.swing.JTextField();
         confidenceLbl = new javax.swing.JLabel();
         confidenceComboBox = new javax.swing.JComboBox<>();
+        justificationLbl = new javax.swing.JLabel();
+        justificationTextField = new javax.swing.JTextField();
         cancelBtn = new javax.swing.JButton();
         okBtn = new javax.swing.JButton();
 
@@ -75,21 +75,21 @@ public class AddMetadataDialog extends JDialog {
 
         settingsPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        org.openide.awt.Mnemonics.setLocalizedText(nameLbl, org.openide.util.NbBundle.getMessage(AddMetadataDialog.class, "AddMetadataDialog.nameLbl.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(nameLbl, org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.nameLbl.text")); // NOI18N
 
-        nameTextField.setText(org.openide.util.NbBundle.getMessage(AddMetadataDialog.class, "AddMetadataDialog.nameTextField.text")); // NOI18N
+        nameTextField.setText(org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.nameTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(valueLbl, org.openide.util.NbBundle.getMessage(AddMetadataDialog.class, "AddMetadataDialog.valueLbl.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(valueLbl, org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.valueLbl.text")); // NOI18N
 
-        valueTextField.setText(org.openide.util.NbBundle.getMessage(AddMetadataDialog.class, "AddMetadataDialog.valueTextField.text")); // NOI18N
+        valueTextField.setText(org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.valueTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(justificationLbl, org.openide.util.NbBundle.getMessage(AddMetadataDialog.class, "AddMetadataDialog.justificationLbl.text")); // NOI18N
-
-        justificationTextField.setText(org.openide.util.NbBundle.getMessage(AddMetadataDialog.class, "AddMetadataDialog.justificationTextField.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(confidenceLbl, org.openide.util.NbBundle.getMessage(AddMetadataDialog.class, "AddMetadataDialog.confidenceLbl.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(confidenceLbl, org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.confidenceLbl.text")); // NOI18N
 
         confidenceComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(org.sleuthkit.autopsy.centralrepository.datamodel.Persona.Confidence.values()));
+
+        org.openide.awt.Mnemonics.setLocalizedText(justificationLbl, org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.justificationLbl.text")); // NOI18N
+
+        justificationTextField.setText(org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.justificationTextField.text")); // NOI18N
 
         javax.swing.GroupLayout settingsPanelLayout = new javax.swing.GroupLayout(settingsPanel);
         settingsPanel.setLayout(settingsPanelLayout);
@@ -129,16 +129,16 @@ public class AddMetadataDialog extends JDialog {
                     .addComponent(valueTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(justificationTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(justificationLbl))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(confidenceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(confidenceLbl))
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(justificationTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(justificationLbl))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelBtn, org.openide.util.NbBundle.getMessage(AddMetadataDialog.class, "AddMetadataDialog.cancelBtn.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelBtn, org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.cancelBtn.text")); // NOI18N
         cancelBtn.setMaximumSize(new java.awt.Dimension(79, 23));
         cancelBtn.setMinimumSize(new java.awt.Dimension(79, 23));
         cancelBtn.setPreferredSize(new java.awt.Dimension(79, 23));
@@ -148,7 +148,7 @@ public class AddMetadataDialog extends JDialog {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(okBtn, org.openide.util.NbBundle.getMessage(AddMetadataDialog.class, "AddMetadataDialog.okBtn.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okBtn, org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.okBtn.text")); // NOI18N
         okBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okBtnActionPerformed(evt);
@@ -193,6 +193,13 @@ public class AddMetadataDialog extends JDialog {
         "AddMetadataDialog_dup_Title=Metadata add failure",
         "AddMetadataDialog_dup_msg=A metadata entry with this name has already been added to this persona",})
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
+        if (justificationTextField.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    Bundle.PersonaDetailsPanel_empty_justification_msg(),
+                    Bundle.PersonaDetailsPanel_empty_justification_Title(),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         if (pdp.addMetadata(
                 nameTextField.getText(),
                 valueTextField.getText(),
