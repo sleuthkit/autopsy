@@ -42,11 +42,9 @@ public class Persona {
      * Defines level of confidence in assigning a persona to an account.
      */
     public enum Confidence {
-        UNKNOWN(1, "Unknown"),
-        LOW(2, "Low confidence"),
-        MEDIUM(3, "Medium confidence"),
-        HIGH(4, "High confidence"),
-        DERIVED(5, "Derived directly");
+        LOW(1, "Low confidence"),
+        MODERATE(2, "Moderate confidence"),
+        HIGH(3, "High confidence");
 
         private final String name;
         private final int level_id;
@@ -72,7 +70,7 @@ public class Persona {
                     return confidence;
                 }
             }
-            return Confidence.UNKNOWN;
+            return Confidence.LOW;
         }
 
     }

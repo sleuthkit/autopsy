@@ -83,7 +83,7 @@ public class PersonaAccountDialog extends JDialog {
     
     @Messages({
         "PersonaAccountDialog_get_types_exception_Title=Central Repository failure",
-        "PersonaAccountDialog_get_types_exception_msg=Failed to access central repository",
+        "PersonaAccountDialog_get_types_exception_msg=Failed to access central repository.",
     })
     private CentralRepoAccountType[] getAllAccountTypes() {
         Collection<CentralRepoAccountType> allAccountTypes;
@@ -248,13 +248,13 @@ public class PersonaAccountDialog extends JDialog {
 
     @Messages({
         "PersonaAccountDialog_dup_Title=Account add failure",
-        "PersonaAccountDialog_dup_msg=This account is already added to the persona",
+        "PersonaAccountDialog_dup_msg=This account is already added to the persona.",
         "PersonaAccountDialog_identifier_empty_Title=Empty identifier",
-        "PersonaAccountDialog_identifier_empty_msg=The identifier field cannot be empty",
+        "PersonaAccountDialog_identifier_empty_msg=The identifier field cannot be empty.",
         "PersonaAccountDialog_search_failure_Title=Account add failure",
-        "PersonaAccountDialog_search_failure_msg=Central Repository account search failed",
+        "PersonaAccountDialog_search_failure_msg=Central Repository account search failed.",
         "PersonaAccountDialog_search_empty_Title=Account not found",
-        "PersonaAccountDialog_search_empty_msg=Account not found for given identifier and type",})
+        "PersonaAccountDialog_search_empty_msg=Account not found for given identifier and type.",})
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
         if (identifierTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this,
