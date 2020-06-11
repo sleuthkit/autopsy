@@ -62,7 +62,7 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
     private static final Logger logger = Logger.getLogger(MessageViewer.class.getName());
 
     private final ModifiableProxyLookup proxyLookup;
-    private final PropertyChangeListener focusPropertyListener;
+    private PropertyChangeListener focusPropertyListener;
     private final ThreadChildNodeFactory rootMessageFactory;
     private final MessagesChildNodeFactory threadMessageNodeFactory;
 
@@ -94,23 +94,6 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
         proxyLookup = new ModifiableProxyLookup(createLookup(rootTablePane.getExplorerManager(), getActionMap()));
         rootMessageFactory = new ThreadChildNodeFactory(new ShowThreadMessagesAction());
         threadMessageNodeFactory = new MessagesChildNodeFactory();
-
-        // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
-        // explaination of focusPropertyListener
-        focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
-            if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
-                final Component newFocusOwner = (Component) focusEvent.getNewValue();
-
-                if (newFocusOwner == null) {
-                    return;
-                }
-                if (isDescendingFrom(newFocusOwner, rootTablePane)) {
-                    proxyLookup.setNewLookups(createLookup(rootTablePane.getExplorerManager(), getActionMap()));
-                } else if (isDescendingFrom(newFocusOwner, MessageViewer.this)) {
-                    proxyLookup.setNewLookups(createLookup(currentPanel.getExplorerManager(), getActionMap()));
-                }
-            }
-        };
 
         rootTablePane.getExplorerManager().setRootContext(
                 new AbstractNode(Children.create(rootMessageFactory, true)));
@@ -170,6 +153,26 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
     @Override
     public void addNotify() {
         super.addNotify();
+        
+        if(focusPropertyListener == null) {
+            // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
+            // explaination of focusPropertyListener
+            focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
+                if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
+                    final Component newFocusOwner = (Component) focusEvent.getNewValue();
+
+                    if (newFocusOwner == null) {
+                        return;
+                    }
+                    if (isDescendingFrom(newFocusOwner, rootTablePane)) {
+                        proxyLookup.setNewLookups(createLookup(rootTablePane.getExplorerManager(), getActionMap()));
+                    } else if (isDescendingFrom(newFocusOwner, MessageViewer.this)) {
+                        proxyLookup.setNewLookups(createLookup(currentPanel.getExplorerManager(), getActionMap()));
+                    }
+                }
+            };
+
+        }
         //add listener that maintains correct selection in the Global Actions Context
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .addPropertyChangeListener("focusOwner", focusPropertyListener);

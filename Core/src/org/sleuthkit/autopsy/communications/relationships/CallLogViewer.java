@@ -54,7 +54,7 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
 
     private final CallLogDataViewer callLogDataViewer;
     private final ModifiableProxyLookup proxyLookup;
-    private final PropertyChangeListener focusPropertyListener;
+    private PropertyChangeListener focusPropertyListener;
 
     @Messages({
         "CallLogViewer_title=Call Logs",
@@ -79,26 +79,6 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
 
         nodeFactory = new CallLogsChildNodeFactory(null);
         proxyLookup = new ModifiableProxyLookup(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
-
-        // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
-        // explaination of focusPropertyListener
-        focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
-            if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
-                final Component newFocusOwner = (Component) focusEvent.getNewValue();
-
-                if (newFocusOwner == null) {
-                    return;
-                }
-                if (isDescendingFrom(newFocusOwner, callLogDataViewer)) {
-                    //if the focus owner is within the MessageContentViewer (the attachments table)
-                    proxyLookup.setNewLookups(createLookup(callLogDataViewer.getExplorerManager(), getActionMap()));
-                } else if (isDescendingFrom(newFocusOwner, CallLogViewer.this)) {
-                    //... or if it is within the Results table.
-                    proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
-
-                }
-            }
-        };
 
         outlineViewPanel.hideOutlineView(Bundle.CallLogViewer_noCallLogs());
 
@@ -189,6 +169,29 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
     @Override
     public void addNotify() {
         super.addNotify();
+
+        if (focusPropertyListener == null) {
+            // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
+            // explaination of focusPropertyListener
+            focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
+                if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
+                    final Component newFocusOwner = (Component) focusEvent.getNewValue();
+
+                    if (newFocusOwner == null) {
+                        return;
+                    }
+                    if (isDescendingFrom(newFocusOwner, callLogDataViewer)) {
+                        //if the focus owner is within the MessageContentViewer (the attachments table)
+                        proxyLookup.setNewLookups(createLookup(callLogDataViewer.getExplorerManager(), getActionMap()));
+                    } else if (isDescendingFrom(newFocusOwner, CallLogViewer.this)) {
+                        //... or if it is within the Results table.
+                        proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
+
+                    }
+                }
+            };
+        }
+
         //add listener that maintains correct selection in the Global Actions Context
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .addPropertyChangeListener("focusOwner", focusPropertyListener); //NON-NLS
@@ -197,8 +200,10 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
     @Override
     public void removeNotify() {
         super.removeNotify();
-        KeyboardFocusManager.getCurrentKeyboardFocusManager()
-                .removePropertyChangeListener("focusOwner", focusPropertyListener); //NON-NLS
+        if (focusPropertyListener != null) {
+            KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                    .removePropertyChangeListener("focusOwner", focusPropertyListener); //NON-NLS
+        }
     }
 
     private void updateOutlineViewPanel() {
