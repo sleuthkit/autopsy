@@ -44,6 +44,10 @@ public class PersonaDetailsDialog extends JDialog {
         "PersonaDetailsDialogEditTitle=Edit Persona",
         "PersonaDetailsDialogViewTitle=View Persona",})
     public PersonaDetailsDialog(Component parent, PersonaDetailsMode mode, Persona persona, PersonaDetailsDialogCallback callback) {
+        // by default, display the dialog right away
+        this(parent, mode, persona, callback, true);
+    }
+    public PersonaDetailsDialog(Component parent, PersonaDetailsMode mode, Persona persona, PersonaDetailsDialogCallback callback, boolean displayDialog) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 getTitle(mode),
                 true);
@@ -53,7 +57,9 @@ public class PersonaDetailsDialog extends JDialog {
 
         pdp.setMode(parent, mode, persona);
 
-        display();
+        if (displayDialog) {
+            display();
+        }
     }
 
     private static String getTitle(PersonaDetailsMode mode) {
@@ -136,7 +142,7 @@ public class PersonaDetailsDialog extends JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void display() {
+    public final void display() {
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setVisible(true);
     }
@@ -153,6 +159,10 @@ public class PersonaDetailsDialog extends JDialog {
         dispose();
     }//GEN-LAST:event_cancelBtnActionPerformed
 
+    public PersonaDetailsPanel getDetailsPanel() {
+        return this.pdp;
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelBtn;
     private javax.swing.JButton okBtn;
