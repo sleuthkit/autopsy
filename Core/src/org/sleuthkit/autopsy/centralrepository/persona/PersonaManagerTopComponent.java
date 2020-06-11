@@ -30,6 +30,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
@@ -57,6 +59,8 @@ public final class PersonaManagerTopComponent extends TopComponent {
         "PMTopComponent_Name=Persona Manager",
         "PMTopComponent_delete_exception_Title=Delete failure",
         "PMTopComponent_delete_exception_msg=Failed to delete persona.",
+        "PMTopComponent_delete_confirmation_Title=Are you sure?",
+        "PMTopComponent_delete_confirmation_msg=Are you sure you want to delete this persona?",
     })
     public PersonaManagerTopComponent() {
         initComponents();
@@ -89,19 +93,26 @@ public final class PersonaManagerTopComponent extends TopComponent {
         deleteBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                try {
-                    if (selectedPersona != null) {
-                        selectedPersona.delete();
+                NotifyDescriptor confirm = new NotifyDescriptor.Confirmation(
+                Bundle.PMTopComponent_delete_confirmation_msg(),
+                Bundle.PMTopComponent_delete_confirmation_Title(),
+                NotifyDescriptor.YES_NO_OPTION);
+                DialogDisplayer.getDefault().notify(confirm);
+                if (confirm.getValue().equals(NotifyDescriptor.YES_OPTION)) {
+                    try {
+                        if (selectedPersona != null) {
+                            selectedPersona.delete();
+                        }
+                    } catch (CentralRepoException ex) {
+                        logger.log(Level.SEVERE, "Failed to delete persona: " + selectedPersona.getName(), ex);
+                        JOptionPane.showMessageDialog(PersonaManagerTopComponent.this,
+                        Bundle.PMTopComponent_delete_exception_msg(),
+                        Bundle.PMTopComponent_delete_exception_Title(),
+                        JOptionPane.ERROR_MESSAGE);
+                        return;
                     }
-                } catch (CentralRepoException ex) {
-                    logger.log(Level.SEVERE, "Failed to delete persona: " + selectedPersona.getName(), ex);
-                    JOptionPane.showMessageDialog(PersonaManagerTopComponent.this,
-                    Bundle.PMTopComponent_delete_exception_msg(),
-                    Bundle.PMTopComponent_delete_exception_Title(),
-                    JOptionPane.ERROR_MESSAGE);
-                    return;
+                    executeSearch();
                 }
-                executeSearch();
             }
         });
 

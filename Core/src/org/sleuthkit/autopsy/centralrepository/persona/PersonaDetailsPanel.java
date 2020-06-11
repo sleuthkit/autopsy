@@ -188,7 +188,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         return false;
     } 
 
-    boolean addAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) {
+    public boolean addAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) {
         if (!accountExists(account)) {
             accountsToAdd.add(new PAccount(account, justification, confidence));
             updateAccountsTable();
@@ -876,4 +876,14 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         }
         return ret;
     }
+    
+    /**
+     * Sets the persona name field.
+     * 
+     * @param name Persona name.
+     */
+    public void setPersonaName(String name) {
+        nameField.setText(name);
+    }
+    
 }
