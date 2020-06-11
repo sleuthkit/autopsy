@@ -80,13 +80,16 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     private PersonaDetailsTableModel aliasesModel;
     private PersonaDetailsTableModel casesModel;
 
+    @Messages({
+        "PersonaDetailsPanel_empty_justification_Title=Empty justification",
+        "PersonaDetailsPanel_empty_justification_msg=The justification field cannot be empty",})
     public PersonaDetailsPanel() {
         initComponents();
         clear();
 
         // Accounts
         addAccountBtn.addActionListener((ActionEvent e) -> {
-            new AddAccountDialog(this);
+            new PersonaAccountDialog(this);
         });
         deleteAccountBtn.addActionListener((ActionEvent e) -> {
             int selectedRow = accountsTable.getSelectedRow();
@@ -108,7 +111,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
 
         // Metadata
         addMetadataBtn.addActionListener((ActionEvent e) -> {
-            new AddMetadataDialog(this);
+            new PersonaMetadataDialog(this);
         });
         deleteMetadataBtn.addActionListener((ActionEvent e) -> {
             int selectedRow = metadataTable.getSelectedRow();
@@ -130,7 +133,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
 
         // Aliases
         addAliasBtn.addActionListener((ActionEvent e) -> {
-            new AddAliasDialog(this);
+            new PersonaAliasDialog(this);
         });
         deleteAliasBtn.addActionListener((ActionEvent e) -> {
             int selectedRow = aliasesTable.getSelectedRow();
