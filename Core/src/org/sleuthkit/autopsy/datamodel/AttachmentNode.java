@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.contentviewers.MessageContentViewer;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.FileNode.getIconForFileType;
@@ -59,7 +58,7 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.URL
  */
 public final class AttachmentNode extends DisplayableItemNode {
 
-    private static final Logger LOGGER = Logger.getLogger(MessageContentViewer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AttachmentNode.class.getName());
      
     private final Attachment attachment;
     private final AbstractFile attachmentFile;
