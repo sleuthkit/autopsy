@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.thunderbirdparser;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,7 +55,9 @@ import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.Relationship;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -76,6 +80,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private Blackboard blackboard;
     private CommunicationArtifactsHelper communicationArtifactsHelper;
     
+    private static final int MBOX_SIZE_TO_SPLIT = 104857600;
+    private static final int TO_FILE_BUFFER_SIZE = 8192;
+//    private static final int MBOX_SIZE_TO_SPLIT = 2099751000;
     private Case currentCase;
 
     /**
@@ -309,12 +316,72 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
+        if (abstractFile.getSize() < MBOX_SIZE_TO_SPLIT) {
+        
+            try {
+                ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS
+                return ProcessResult.OK;
+            }
+
+            processMboxFile(file, abstractFile, emailFolder);
+            
+            if (file.delete() == false) {
+                logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
+            }
+        } else {
+            long startingOffset = 0;
+            List<Long> mboxSplitOffsets = findMboxSplitOffset(abstractFile, file);
+            for (Long mboxSplitOffset : mboxSplitOffsets) {
+                try {
+                     writeToFile(abstractFile, file, context::fileIngestIsCancelled, startingOffset, mboxSplitOffset);
+                     startingOffset = mboxSplitOffset; 
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS
+                    return ProcessResult.OK;
+                }
+            }
+        }                 
+            
+        return ProcessResult.OK;
+    }
+    
+    private List<Long> findMboxSplitOffset(AbstractFile abstractFile, File file) {
+        
+        List<Long> mboxSplitOffset = new ArrayList<>();
+        long currentPos = 0;
+        
+//        try {
+//            ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
+//        } catch (IOException ex) {
+//            logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS
+//            return ProcessResult.OK;
+//        }
         try {
-            ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
+            byte[] buffer = new byte[4];
+            ReadContentInputStream in = new ReadContentInputStream(abstractFile);
+            long newPosition = in.skip(MBOX_SIZE_TO_SPLIT);        
+            int len = in.read(buffer);
+            while (len != -1) {
+                len = in.read(buffer);
+                if (buffer[0] == 13 && buffer[1] == 10 && buffer[2] == 70 && buffer[3] == 114) {
+                        currentPos = in.getCurPosition() -  2;
+                        mboxSplitOffset.add(currentPos);  
+                        newPosition = in.skip(MBOX_SIZE_TO_SPLIT + currentPos);
+                }
+            }
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS
-            return ProcessResult.OK;
+            logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS        
         }
+        return mboxSplitOffset;
+        
+        
+    }
+    
+    
+    private void processMboxFile(File file, AbstractFile abstractFile, String emailFolder) {
+            
 
         MboxParser emailIterator = MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId());
         List<EmailMessage> emails = new ArrayList<>();
@@ -325,7 +392,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                     emails.add(emailMessage);
                 }
             }
-            
+
             String errors = emailIterator.getErrors();
             if (!errors.isEmpty()) {
                 postErrorMessage(
@@ -335,11 +402,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
         processEmails(emails, MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId()), abstractFile);
 
-        if (file.delete() == false) {
-            logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
-        }
-
-        return ProcessResult.OK;
     }
     
     /**
@@ -755,4 +817,55 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     public void shutDown() {
         // nothing to shut down
     }
+    
+    /**
+     * Reads all the data from any content object and writes (extracts) it to a
+     * file, using a cancellation check instead of a Future object method.
+     *
+     * @param content     Any content object.
+     * @param outputFile  Will be created if it doesn't exist, and overwritten
+     *                    if it does
+     * @param cancelCheck A function used to check if the file write process
+     *                    should be terminated.
+     * @param startingOffset the starting offset to start reading the file
+     * @param endingOffset the ending offset to read of the file to write
+     *
+     * @return number of bytes extracted
+     *
+     * @throws IOException if file could not be written
+     */
+    public static long writeToFile(Content content, java.io.File outputFile,
+            Supplier<Boolean> cancelCheck, long startingOffset, long endingOffset) throws IOException {
+        
+        long writeFileLength = endingOffset - startingOffset;
+        InputStream in = new ReadContentInputStream(content);
+        long totalRead = 0;
+        long newPosition = in.skip(startingOffset);        
+        try (FileOutputStream out = new FileOutputStream(outputFile, false)) {
+            byte[] buffer = new byte[TO_FILE_BUFFER_SIZE];
+            int len = in.read(buffer);
+            writeFileLength = writeFileLength - TO_FILE_BUFFER_SIZE;
+            while (len != -1 && writeFileLength == 0) {
+                out.write(buffer, 0, len);
+                totalRead += len;
+                if (cancelCheck.get()) {
+                    break;
+                }
+                if (writeFileLength > TO_FILE_BUFFER_SIZE) {
+                    len = in.read(buffer);
+                    writeFileLength = writeFileLength - TO_FILE_BUFFER_SIZE;
+                } else {
+                    int fileOffset = (int)(endingOffset - writeFileLength);
+                    int writeLength = (int)writeFileLength;
+                    len = in.read(buffer, fileOffset, writeLength);
+                    writeFileLength = 0;
+                }
+            }
+                
+        } finally {
+            in.close();
+        }
+        return totalRead;
+    }
+
 }
