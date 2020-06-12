@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -74,7 +75,7 @@ public final class IngestJob {
     private final static AtomicLong nextId = new AtomicLong(0L);
     private final long id;
     private final List<Content> dataSources = new ArrayList<>();
-    private final List<AbstractFile> files;
+    private final List<AbstractFile> files = new ArrayList<>();
     private final Mode ingestMode;
     private DataSource streamingIngestDataSource = null;
     private final Map<Long, IngestJobPipeline> ingestJobPipelines;
@@ -95,7 +96,6 @@ public final class IngestJob {
         this.ingestJobPipelines = new ConcurrentHashMap<>();
 	this.ingestMode = Mode.BATCH;
 	this.dataSources.addAll(dataSources);
-	this.files = null;
         incompleteJobsCount = new AtomicInteger(dataSources.size());
         cancellationReason = CancellationReason.NOT_CANCELLED;
     }
@@ -110,14 +110,8 @@ public final class IngestJob {
      * @param settings   The ingest job settings.
      */
     IngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
-        this.id = IngestJob.nextId.getAndIncrement();
-        this.ingestJobPipelines = new ConcurrentHashMap<>();
-	this.settings = settings;
-	this.files = files;
-	this.dataSources.add(dataSource);
-	this.ingestMode = Mode.BATCH;
-        incompleteJobsCount = new AtomicInteger(1);
-        cancellationReason = CancellationReason.NOT_CANCELLED;
+	this(Arrays.asList(dataSource), settings);
+	this.files.addAll(files);
     }
     
     /**
@@ -130,7 +124,6 @@ public final class IngestJob {
         this.id = IngestJob.nextId.getAndIncrement();
         this.ingestJobPipelines = new ConcurrentHashMap<>();
 	this.settings = settings;
-	this.files = null;
 	this.ingestMode = Mode.STREAMING;
         incompleteJobsCount = new AtomicInteger(1);
         cancellationReason = CancellationReason.NOT_CANCELLED;
@@ -162,13 +155,6 @@ public final class IngestJob {
      * @param fileObjIds the list of file IDs
      */
     void addStreamingIngestFiles(List<Long> fileObjIds) {
-	// TODO error if using when not streaming or if there are multiple pipelines
-	if (ingestJobPipelines.keySet().size() != 1) {
-	    // TODO fix error handling
-	    System.out.println("\n###addStreamingIngestDataSource() error: pipeline key size = " + ingestJobPipelines.keySet().size());
-	    //throw new RuntimeException("Wrong number of pipelines");
-	}
-	
 	getStreamingIngestPipeline().addStreamingIngestFiles(fileObjIds);
     }
     
@@ -176,13 +162,6 @@ public final class IngestJob {
      * Start data source processing for streaming ingest.
      */
     void processStreamingIngestDataSource() {
-	// TODO error if using when not streaming or if there are multiple pipelines
-	if (ingestJobPipelines.keySet().size() != 1) {
-	    // TODO fix error handling
-	    System.out.println("\n###addStreamingIngestDataSource() error: pipeline key size = " + ingestJobPipelines.keySet().size());
-	    //throw new RuntimeException("Wrong number of pipelines");
-	}
-	
 	getStreamingIngestPipeline().processStreamingIngestDataSource();
     }
     
@@ -197,9 +176,8 @@ public final class IngestJob {
     }
     
     /**
-     * TODO possibly move setting the data source ID elsewhere so the calls
-     * to start can be the same for batch and streaming. This may not be necessary
-     * if the data source is created earlier. 
+     * TODO This will not be necessary
+     * if the data source is has been created when the ingest job is initialized. 
      * 
      * @param dataSourceObjId
      * 
@@ -210,8 +188,6 @@ public final class IngestJob {
 	    streamingIngestDataSource = Case.getCurrentCase().getSleuthkitCase().getDataSource(dataSourceObjId);
 	    return start();
 	} catch (TskCoreException | TskDataException ex) {
-	    // TODO figure out how to handle an error here
-	    ex.printStackTrace();
 	    return new ArrayList<>();
 	}
     }
@@ -230,15 +206,15 @@ public final class IngestJob {
 	if (ingestMode == Mode.STREAMING) {
 	    IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, streamingIngestDataSource, settings);
 	    this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
-	} else if (files != null && dataSources.size() == 1) {
-	    IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSources.get(0), files, settings);
-	    this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
-	} else {
+	} else if (files.isEmpty()) {
 	    for (Content dataSource : dataSources) {
 		IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSource, settings);
 		this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
 	    }
-        }
+        } else {
+	    IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSources.get(0), files, settings);
+	    this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
+	}
 	incompleteJobsCount.set(ingestJobPipelines.size());
 	
         /*
@@ -362,12 +338,12 @@ public final class IngestJob {
     }
 
     /**
-     * Provides a callback for completed data source ingest jobs, allowing this
+     * Provides a callback for completed ingest job pipeline, allowing this
      * ingest job to notify the ingest manager when it is complete.
      *
      * @param ingestJobPipeline A completed ingestJobPipeline.
      */
-    void dataSourceJobFinished(IngestJobPipeline ingestJobPipeline) {
+    void ingestJobPipelineFinished(IngestJobPipeline ingestJobPipeline) {
         IngestManager ingestManager = IngestManager.getInstance();
         if (!ingestJobPipeline.isCancelled()) {
             ingestManager.fireDataSourceAnalysisCompleted(id, ingestJobPipeline.getId(), ingestJobPipeline.getDataSource());

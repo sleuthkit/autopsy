@@ -107,9 +107,9 @@ final class DataSourceIngestPipeline {
                     this.ingestJobPipeline.updateDataSourceIngestProgressBarDisplayName(displayName);
                     this.ingestJobPipeline.switchDataSourceIngestProgressBarToIndeterminate();
                     DataSourceIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
-                    logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) starting", new Object[]{module.getDisplayName(), this.ingestJobPipeline.getDataSource().getName(), this.ingestJobPipeline.getId()}); //NON-NLS
+                    logger.log(Level.INFO, "{0} analysis of {1} (pipeline={2}) starting", new Object[]{module.getDisplayName(), ingestJobPipeline.getDataSource().getName(), ingestJobPipeline.getId()}); //NON-NLS
                     module.process(dataSource, new DataSourceIngestModuleProgress(this.ingestJobPipeline));
-                    logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) finished", new Object[]{module.getDisplayName(), this.ingestJobPipeline.getDataSource().getName(), this.ingestJobPipeline.getId()}); //NON-NLS
+                    logger.log(Level.INFO, "{0} analysis of {1} (pipeline={2}) finished", new Object[]{module.getDisplayName(), ingestJobPipeline.getDataSource().getName(), ingestJobPipeline.getId()}); //NON-NLS
                 } catch (Throwable ex) { // Catch-all exception firewall
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
                 }

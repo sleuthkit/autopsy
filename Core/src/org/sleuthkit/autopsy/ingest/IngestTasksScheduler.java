@@ -241,8 +241,6 @@ final class IngestTasksScheduler {
      * @param task The completed task.
      */
     synchronized void notifyTaskCompleted(FileIngestTask task) {
-	System.out.println("### IngestTasksScheduler.notifyTaskCompleted(): Finished task with file id " + task.getFile().getId()
-	    + " and name " + task.getFile().getName());
         this.fileIngestThreadsQueue.taskCompleted(task);
         shuffleFileTaskQueues();
     }

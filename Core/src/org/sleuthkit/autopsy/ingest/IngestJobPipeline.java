@@ -428,24 +428,18 @@ final class IngestJobPipeline {
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 logErrorMessage(Level.WARNING, "Failed to add ingest job info to case database", ex); //NON-NLS
             }
-	    if (ingestMode == IngestJob.Mode.BATCH) {
-		if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
+	    
+	    if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
+		if (ingestMode == IngestJob.Mode.BATCH) {
 		    logInfoMessage("Starting first stage analysis"); //NON-NLS
 		    this.startFirstStage();
-		} else if (this.hasSecondStageDataSourceIngestPipeline()) {
-		    logInfoMessage("Starting second stage analysis"); //NON-NLS
-		    this.startSecondStage();
-		}
-	    } else {
-		// TODO figure out logic when we're starting with second stage
-		if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
+		} else {
 		    logInfoMessage("Preparing for first stage analysis"); //NON-NLS
 		    this.startFileIngestStreaming();
-		} else if (this.hasSecondStageDataSourceIngestPipeline()) {
-		    // TODO Test this part
-		    logInfoMessage("Starting second stage analysis"); //NON-NLS
-		    this.startSecondStage();
 		}
+	    } else if (this.hasSecondStageDataSourceIngestPipeline()) {
+		logInfoMessage("Starting second stage analysis"); //NON-NLS
+		this.startSecondStage();
 	    }
         }
         return errors;
@@ -834,7 +828,7 @@ final class IngestJobPipeline {
                 logErrorMessage(Level.WARNING, "Failed to set job end date in case database", ex);
             }
         }
-        this.parentJob.dataSourceJobFinished(this);
+        this.parentJob.ingestJobPipelineFinished(this);
     }
 
     /**
@@ -1207,7 +1201,7 @@ final class IngestJobPipeline {
      * @param message The message.
      */
     private void logInfoMessage(String message) {
-        logger.log(Level.INFO, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, this.dataSource.getName(), this.dataSource.getId(), id)); //NON-NLS        
+        logger.log(Level.INFO, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), id, ingestJob.getIngestJobId())); //NON-NLS        
     }
 
     /**
@@ -1219,7 +1213,7 @@ final class IngestJobPipeline {
      * @param throwable The throwable associated with the error.
      */
     private void logErrorMessage(Level level, String message, Throwable throwable) {
-        logger.log(level, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, this.dataSource.getName(), this.dataSource.getId(), id), throwable); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), id, ingestJob.getIngestJobId()), throwable); //NON-NLS
     }
 
     /**
@@ -1230,7 +1224,7 @@ final class IngestJobPipeline {
      * @param message The message.
      */
     private void logErrorMessage(Level level, String message) {
-        logger.log(level, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, this.dataSource.getName(), this.dataSource.getId(), id)); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id %d)", message, this.dataSource.getName(), this.dataSource.getId(), id, ingestJob.getIngestJobId())); //NON-NLS
     }
 
     /**
