@@ -434,7 +434,7 @@ class ExtractRegistry extends Extract {
             String line = reader.readLine();
             while (line != null) {
                 line = line.trim();
-                if (line.contains("Error") || line.contains("@INC")) {
+                if (line.toLowerCase().contains("error") || line.toLowerCase().contains("@inc")) {
                    logger.log(Level.WARNING, "Regripper file {0} contains errors from run", errFilePath); //NON-NLS
                     
                 }
