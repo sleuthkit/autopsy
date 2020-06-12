@@ -111,7 +111,7 @@ final class ExtractPrefetch extends Extract {
         try {
             String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), PREFETCH_DIR_NAME );
             parsePrefetchFiles(prefetchDumper, tempDirPath, modOutFile, modOutPath);
-            createAppExecArtifacts(modOutFile);
+            createAppExecArtifacts(modOutFile, dataSource);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error runing parse_prefetch or creating artifacts.", ex); //NON-NLS             
         }
@@ -143,7 +143,7 @@ final class ExtractPrefetch extends Extract {
                 return;
             }
 
-            String prefetchFile = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "prefetch") + File.separator + pFile.getName();
+            String prefetchFile = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), PREFETCH_DIR_NAME) + File.separator + pFile.getName();
             if (pFile.getParentPath().contains(PREFETCH_FILE_LOCATION)) {
                 try {
                     ContentUtils.writeToFile(pFile, new File(prefetchFile));
@@ -219,10 +219,11 @@ final class ExtractPrefetch extends Extract {
      * Create the artifacts from external run of the parse_prefetch program
      * 
      * @param prefetchDb - Database file to read from running the parse_prefetch program.
+     * @param dataSource - The datasource to search in
      * 
      */
 
-    private void createAppExecArtifacts(String prefetchDb) {
+    private void createAppExecArtifacts(String prefetchDb, Content dataSource) {
         List<BlackboardArtifact> bba = new ArrayList<>();
 
         String sqlStatement = "SELECT prefetch_File_Name, actual_File_Name, file_path, Number_time_file_run, Embeded_date_Time_Unix_1, " +
@@ -254,7 +255,7 @@ final class ExtractPrefetch extends Extract {
                 String timesProgramRun = resultSet.getString("Number_time_file_run"); 
                 String filePath = resultSet.getString("file_path");
 
-                AbstractFile pfAbstractFile = getAbstractFile(prefetchFileName, PREFETCH_FILE_LOCATION);
+                AbstractFile pfAbstractFile = getAbstractFile(prefetchFileName, PREFETCH_FILE_LOCATION, dataSource);
                
                 List<Long> prefetchExecutionTimes = findNonZeroExecutionTimes(executionTimes);
                 
@@ -278,7 +279,7 @@ final class ExtractPrefetch extends Extract {
                                 BlackboardArtifact bbart = pfAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
                                 bbart.addAttributes(bbattributes);
                                 bba.add(bbart);
-                                BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), filePath, bbart);
+                                BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), filePath, bbart, dataSource);
                                 if (associateBbArtifact != null) {
                                     bba.add(associateBbArtifact);
                                 }
@@ -324,13 +325,15 @@ final class ExtractPrefetch extends Extract {
    /**
      * Create associated artifacts using file path name and the artifact it associates with
      * 
+     * @param fileName the filename to search for
      * @param filePathName file and path of object being associated with
      * @param bba blackboard artifact to associate with
+     * @param dataSource - The datasource to search in
      * 
      * @returnv BlackboardArtifact or a null value 
      */  
-    private BlackboardArtifact createAssociatedArtifact(String fileName, String filePathName, BlackboardArtifact bba) {
-        AbstractFile sourceFile = getAbstractFile(fileName, filePathName);
+    private BlackboardArtifact createAssociatedArtifact(String fileName, String filePathName, BlackboardArtifact bba, Content dataSource) {
+        AbstractFile sourceFile = getAbstractFile(fileName, filePathName, dataSource);
         if (sourceFile != null) {
             Collection<BlackboardAttribute> bbattributes2 = new ArrayList<>();
             bbattributes2.addAll(Arrays.asList(
@@ -351,18 +354,19 @@ final class ExtractPrefetch extends Extract {
      * 
      * @param fileName - File name of the prefetch file to find.
      * @param filePath - Path where the prefetch file is located.
+     * @param dataSource - The datasource to search in
      * 
      * @return Abstract file of the prefetch file.
      * 
      */
     
-    AbstractFile getAbstractFile(String fileName, String filePath) {
+    AbstractFile getAbstractFile(String fileName, String filePath, Content dataSource) {
         List<AbstractFile> files;
         
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
         try {
-            files = fileManager.findFiles(fileName, filePath); //NON-NLS            
+            files = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS            
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to find prefetch files.", ex); //NON-NLS
             return null;  // No need to continue
