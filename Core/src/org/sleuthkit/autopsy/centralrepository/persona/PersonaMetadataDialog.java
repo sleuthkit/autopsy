@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.centralrepository.persona;
 
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
@@ -35,17 +35,38 @@ public class PersonaMetadataDialog extends JDialog {
 
     private final PersonaDetailsPanel pdp;
 
+    private PersonaDetailsPanel.PMetadata currentMetadata;
+
     /**
      * Creates new add metadata dialog
      */
     @Messages({"AddMetadataDialog.title.text=Add Metadata",})
     public PersonaMetadataDialog(PersonaDetailsPanel pdp) {
-        super((JFrame) WindowManager.getDefault().getMainWindow(),
+        super(SwingUtilities.windowForComponent(pdp),
                 Bundle.AddMetadataDialog_title_text(),
-                true);
+                ModalityType.APPLICATION_MODAL);
         this.pdp = pdp;
 
         initComponents();
+        display();
+    }
+
+    PersonaMetadataDialog(PersonaDetailsPanel pdp, PersonaDetailsPanel.PMetadata md) {
+        super(SwingUtilities.windowForComponent(pdp),
+                Bundle.AddMetadataDialog_title_text(),
+                ModalityType.APPLICATION_MODAL);
+        this.pdp = pdp;
+
+        initComponents();
+        currentMetadata = md;
+        confidenceComboBox.setSelectedItem(md.confidence);
+        justificationTextField.setText(md.justification);
+        nameTextField.setText(md.name);
+        valueTextField.setText(md.value);
+
+        nameTextField.setEnabled(false);
+        valueTextField.setEnabled(false);
+
         display();
     }
 
@@ -200,17 +221,23 @@ public class PersonaMetadataDialog extends JDialog {
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
-        if (pdp.addMetadata(
-                nameTextField.getText(),
-                valueTextField.getText(),
-                justificationTextField.getText(),
-                (Persona.Confidence) confidenceComboBox.getSelectedItem())) {
+
+        Persona.Confidence confidence = (Persona.Confidence) confidenceComboBox.getSelectedItem();
+        String justification = justificationTextField.getText();
+
+        if (currentMetadata != null) {
+            currentMetadata.confidence = confidence;
+            currentMetadata.justification = justification;
             dispose();
         } else {
-            JOptionPane.showMessageDialog(this,
+            if (pdp.addMetadata(nameTextField.getText(), valueTextField.getText(), justification, confidence)) {
+                dispose();
+            } else {
+                JOptionPane.showMessageDialog(this,
                         Bundle.AddMetadataDialog_dup_msg(),
                         Bundle.AddMetadataDialog_dup_Title(),
                         JOptionPane.ERROR_MESSAGE);
+            }
         }
     }//GEN-LAST:event_okBtnActionPerformed
 

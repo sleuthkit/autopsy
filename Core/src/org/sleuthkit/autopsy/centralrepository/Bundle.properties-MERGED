@@ -5,10 +5,7 @@ CentralRepoCommentDialog.title.addEditCentralRepoComment=Add/Edit Central Reposi
 OpenIDE-Module-Name=Central Repository
 OpenIDE-Module-Display-Category=Ingest Module
 OpenIDE-Module-Short-Description=Correlation Engine Ingest Module
-OpenIDE-Module-Long-Description=\
-    Correlation Engine ingest module and central database.  \n\n\
-    The Correlation Engine ingest module stores attributes of artifacts matching selected correlation types into a central database.\n\
-    Stored attributes are used in future cases to correlate and analyzes files and artifacts during ingest.
+OpenIDE-Module-Long-Description=Correlation Engine ingest module and central database.  \n\nThe Correlation Engine ingest module stores attributes of artifacts matching selected correlation types into a central database.\nStored attributes are used in future cases to correlate and analyzes files and artifacts during ingest.
 CentralRepoCommentDialog.commentLabel.text=Comment:
 CentralRepoCommentDialog.okButton.text=&OK
 CentralRepoCommentDialog.cancelButton.text=C&ancel

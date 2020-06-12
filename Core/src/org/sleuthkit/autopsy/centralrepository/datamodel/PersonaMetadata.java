@@ -156,6 +156,24 @@ public class PersonaMetadata {
     }
     
     /**
+     * Modifies the given PersonaMetadata
+     *
+     * @param metadata Metadata to modify.
+     *
+     * @throws CentralRepoException If there is an error in modifying the metadata.
+     */
+    static void modifyPersonaMetadata(PersonaMetadata metadata, Persona.Confidence confidence, String justification) throws CentralRepoException {
+        CentralRepository cr = CentralRepository.getInstance();
+        
+        if (cr == null) {
+            throw new CentralRepoException("Failed to modify persona metadata, Central Repo is not enabled");
+        }
+        
+        String updateClause = "UPDATE persona_metadata SET confidence_id = " + confidence.getLevelId() + ", justification = \"" + justification + "\" WHERE id = " + metadata.id;
+        cr.executeUpdateSQL(updateClause);
+    }
+    
+    /**
      * Callback to process a Persona metadata query.
      */
     private static class PersonaMetadataQueryCallback implements CentralRepositoryDbQueryCallback {

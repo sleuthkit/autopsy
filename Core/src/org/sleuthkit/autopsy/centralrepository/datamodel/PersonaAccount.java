@@ -363,6 +363,25 @@ public class PersonaAccount {
         String deleteClause = " DELETE FROM persona_accounts WHERE id = " + id;
         cr.executeDeleteSQL(deleteClause);
     }
+    
+    /**
+     * Modifies the PersonaAccount row by the given id
+     *
+     * @param id row id for the account to be removed
+     *
+     * @throws CentralRepoException If there is an error in removing the
+     * account.
+     */
+    static void modifyPersonaAccount(long id, Persona.Confidence confidence, String justification) throws CentralRepoException {
+        CentralRepository cr = CentralRepository.getInstance();
+        
+        if (cr == null) {
+            throw new CentralRepoException("Failed to modify persona account, Central Repo is not enabled");
+        }
+        
+        String updateClause = "UPDATE persona_accounts SET confidence_id = " + confidence.getLevelId() + ", justification = \"" + justification + "\" WHERE id = " + id;
+        cr.executeUpdateSQL(updateClause);
+    }
 
     /**
      * Callback to process a query that gets all accounts belonging to a

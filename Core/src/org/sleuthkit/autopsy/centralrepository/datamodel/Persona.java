@@ -293,6 +293,18 @@ public class Persona {
     }
     
     /**
+     * Modifies the confidence / justification of the given PersonaAccount
+     *
+     * @param account account to modify
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public void modifyAccount(PersonaAccount account, Confidence confidence, String justification) throws CentralRepoException {
+        PersonaAccount.modifyPersonaAccount(account.getId(), confidence, justification);
+    }
+    
+    /**
      * Marks this persona as deleted
      */
     public void delete() throws CentralRepoException {
@@ -448,6 +460,18 @@ public class Persona {
     public void removeAlias(PersonaAlias alias) throws CentralRepoException {
         PersonaAlias.removePersonaAlias(alias);
     }
+    
+    /**
+     * Modifies the given alias
+     *
+     * @param alias alias to modify
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public void modifyAlias(PersonaAlias key, Confidence confidence, String justification) throws CentralRepoException {
+        PersonaAlias.modifyPersonaAlias(key, confidence, justification);
+    }
 
     /**
      * Gets all aliases for the persona.
@@ -485,6 +509,18 @@ public class Persona {
      */
     public void removeMetadata(PersonaMetadata metadata) throws CentralRepoException {
         PersonaMetadata.removePersonaMetadata(metadata);
+    }
+    
+    /**
+     * Modifies the given metadata
+     *
+     * @param metadata metadata to modify
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public void modifyMetadata(PersonaMetadata key, Confidence confidence, String justification) throws CentralRepoException {
+        PersonaMetadata.modifyPersonaMetadata(key, confidence, justification);
     }
 
     /**
