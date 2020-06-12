@@ -92,7 +92,12 @@ final class ExtractPrefetch extends Extract {
         String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + PREFETCH_DIR_NAME;
         File dir = new File(modOutPath);
         if (dir.exists() == false) {
-            dir.mkdirs();
+            boolean dirMade = dir.mkdirs();
+            if (!dirMade) {
+                logger.log(Level.SEVERE, "Error creating directory to store prefetch output database"); //NON-NLS
+                return; //If we cannot create the directory then we need to exit
+                
+            }
         }
         
         extractPrefetchFiles(dataSource);
@@ -224,7 +229,7 @@ final class ExtractPrefetch extends Extract {
      */
 
     private void createAppExecArtifacts(String prefetchDb, Content dataSource) {
-        List<BlackboardArtifact> bba = new ArrayList<>();
+        List<BlackboardArtifact> blkBrdArtList = new ArrayList<>();
 
         String sqlStatement = "SELECT prefetch_File_Name, actual_File_Name, file_path, Number_time_file_run, Embeded_date_Time_Unix_1, " +
                               " Embeded_date_Time_Unix_2, Embeded_date_Time_Unix_3, Embeded_date_Time_Unix_4, Embeded_date_Time_Unix_5," +
@@ -263,7 +268,7 @@ final class ExtractPrefetch extends Extract {
                     for (Long executionTime : prefetchExecutionTimes) {
 
                         // only add prefetch file entries that have an actual date associated with them
-                            Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                            Collection<BlackboardAttribute> blkBrdAttributes = Arrays.asList(
                                 new BlackboardAttribute(
                                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
                                     applicationName),//NON-NLS
@@ -276,12 +281,12 @@ final class ExtractPrefetch extends Extract {
                                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), PREFETCH_TSK_COMMENT));
 
                             try {
-                                BlackboardArtifact bbart = pfAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
-                                bbart.addAttributes(bbattributes);
-                                bba.add(bbart);
-                                BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), filePath, bbart, dataSource);
-                                if (associateBbArtifact != null) {
-                                    bba.add(associateBbArtifact);
+                                BlackboardArtifact blkBrdArt = pfAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
+                                blkBrdArt.addAttributes(blkBrdAttributes);
+                                blkBrdArtList.add(blkBrdArt);
+                                BlackboardArtifact associatedBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), filePath, blkBrdArt, dataSource);
+                                if (associatedBbArtifact != null) {
+                                    blkBrdArtList.add(associatedBbArtifact);
                                 }
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Exception Adding Artifact.", ex);//NON-NLS
@@ -296,9 +301,9 @@ final class ExtractPrefetch extends Extract {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
 
-        if (!bba.isEmpty()) {
+        if (!blkBrdArtList.isEmpty()) {
             try {
-                blackboard.postArtifacts(bba, MODULE_NAME);
+                blackboard.postArtifacts(blkBrdArtList, MODULE_NAME);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
             }
