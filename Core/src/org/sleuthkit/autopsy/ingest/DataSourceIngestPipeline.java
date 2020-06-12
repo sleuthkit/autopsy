@@ -27,8 +27,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * This class manages a sequence of data source level ingest modules for a data
- source ingest ingestJobPipeline. It starts the modules, runs data sources through them, and
+ * This class manages a sequence of data source level ingest modules for an
+ *  ingestJobPipeline. It starts the modules, runs data sources through them, and
  * shuts them down when data source level ingest is complete.
  * <p>
  * This class is thread-safe.
@@ -46,8 +46,7 @@ final class DataSourceIngestPipeline {
      * modules. It starts the modules, runs data sources through them, and shuts
      * them down when data source level ingest is complete.
      *
-     * @param ingestJobPipeline  The data source ingest ingestJobPipeline that owns this
-                        pipeline.
+     * @param ingestJobPipeline  The ingestJobPipeline that owns this pipeline.
      * @param moduleTemplates Templates for the creating the ingest modules that
      *                        make up this pipeline.
      */

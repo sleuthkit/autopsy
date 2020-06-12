@@ -81,23 +81,24 @@ final class IngestJobPipeline {
          * Setting up for processing.
          */
         INITIALIZATION,
+	/**
+	 * Running only file ingest modules (used only for streaming ingest)
+	 */
+	FIRST_STAGE_FILES_ONLY,
         /**
          * Running high priority data source level ingest modules and file level
          * ingest modules.
          */
-        FIRST,
+        FIRST_STAGE_FILES_AND_DATASOURCE,
         /**
          * Running lower priority, usually long-running, data source level
          * ingest modules.
          */
-        SECOND,
+        SECOND_STAGE,
         /**
          * Cleaning up.
          */
-        FINALIZATION,
-	STREAMING_INITIALIZATION,
-	STREAMING_FILE_INGEST,
-	STREAMING_FIRST_STAGE_DATA_SOURCE_INGEST
+        FINALIZATION
     };
     private volatile Stages stage = IngestJobPipeline.Stages.INITIALIZATION;
     private final Object stageCompletionCheckLock = new Object();
@@ -212,11 +213,7 @@ final class IngestJobPipeline {
         this.settings = settings;
 	this.doUI = RuntimeProperties.runningWithGUI();
         this.createTime = new Date().getTime();
-	if (ingestMode == IngestJob.Mode.BATCH) {  // TODO check if these need to be separate
-	    this.stage = Stages.INITIALIZATION;
-	} else {
-	    this.stage = Stages.STREAMING_INITIALIZATION;
-	}
+	this.stage = Stages.INITIALIZATION;
         this.createIngestPipelines();
     }
 
@@ -509,7 +506,7 @@ final class IngestJobPipeline {
      * Starts the first stage of this job.
      */
     private void startFirstStage() {
-        this.stage = IngestJobPipeline.Stages.FIRST;
+        this.stage = IngestJobPipeline.Stages.FIRST_STAGE_FILES_AND_DATASOURCE;
 
         if (this.hasFileIngestPipeline()) {
             synchronized (this.fileIngestProgressLock) {
@@ -569,7 +566,7 @@ final class IngestJobPipeline {
      */
     private void startFileIngestStreaming() {
 	synchronized (this.stageCompletionCheckLock) {
-	    this.stage = IngestJobPipeline.Stages.STREAMING_FILE_INGEST;
+	    this.stage = IngestJobPipeline.Stages.FIRST_STAGE_FILES_ONLY;
 	}
 
         if (this.hasFileIngestPipeline()) {
@@ -613,7 +610,7 @@ final class IngestJobPipeline {
 	
 	logInfoMessage("Scheduling first stage data source level analysis tasks"); //NON-NLS
 	synchronized (this.stageCompletionCheckLock) {
-	    this.stage = IngestJobPipeline.Stages.STREAMING_FIRST_STAGE_DATA_SOURCE_INGEST;
+	    this.stage = IngestJobPipeline.Stages.FIRST_STAGE_FILES_AND_DATASOURCE;
 	    IngestJobPipeline.taskScheduler.scheduleDataSourceIngestTask(this);
 	}
     }        
@@ -623,7 +620,7 @@ final class IngestJobPipeline {
      */
     private void startSecondStage() {
         logInfoMessage("Starting second stage analysis"); //NON-NLS        
-        this.stage = IngestJobPipeline.Stages.SECOND;
+        this.stage = IngestJobPipeline.Stages.SECOND_STAGE;
         if (this.doUI) {
             this.startDataSourceIngestProgressBar();
         }
@@ -715,10 +712,10 @@ final class IngestJobPipeline {
         synchronized (this.stageCompletionCheckLock) {
 	    if (IngestJobPipeline.taskScheduler.currentTasksAreCompleted(this)) {
 		switch (this.stage) {
-		    case FIRST:
+		    case FIRST_STAGE_FILES_AND_DATASOURCE:
 			this.finishFirstStage();
 			break;
-		    case SECOND:
+		    case SECOND_STAGE:
 			this.finish();
 			break;
 		}
@@ -734,14 +731,14 @@ final class IngestJobPipeline {
         synchronized (this.stageCompletionCheckLock) {
 	    if (IngestJobPipeline.taskScheduler.currentTasksAreCompleted(this)) {	 
 		switch (this.stage) {
-		    case STREAMING_FILE_INGEST:
+		    case FIRST_STAGE_FILES_ONLY:
 			// Nothing to do here - need to wait for the data source
 			break;
-		    case STREAMING_FIRST_STAGE_DATA_SOURCE_INGEST:
+		    case FIRST_STAGE_FILES_AND_DATASOURCE:
 			// Finish file and data source ingest, start second stage (if applicable)
 			this.finishFirstStage();
 			break;
-		    case SECOND:
+		    case SECOND_STAGE:
 			this.finish();
 			break;
 		}
@@ -891,8 +888,6 @@ final class IngestJobPipeline {
     void process(FileIngestTask task) throws InterruptedException {
         try {
             if (!this.isCancelled()) {
-		System.out.println("### IngestJobPipeline.process(): processing file with ID " + task.getFile().getId() +
-			" and name " + task.getFile().getName());
                 FileIngestPipeline pipeline = this.fileIngestPipelinesQueue.take();
                 if (!pipeline.isEmpty()) {
                     AbstractFile file = task.getFile();
@@ -951,8 +946,12 @@ final class IngestJobPipeline {
      * @param fileObjIds List of newly added file IDs
      */
     void addStreamingIngestFiles(List<Long> fileObjIds) {
-	// TODO error checking for stage and streaming (should be in streaming files or datasource 1)
-	IngestJobPipeline.taskScheduler.scheduleStreamedFileIngestTasks(this, fileObjIds);
+	if (stage.equals(Stages.FIRST_STAGE_FILES_ONLY)
+		|| stage.equals(Stages.FIRST_STAGE_FILES_AND_DATASOURCE)) {
+	    IngestJobPipeline.taskScheduler.scheduleStreamedFileIngestTasks(this, fileObjIds);
+	} else {
+            logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
+	}
     }
     
     /**
@@ -961,7 +960,6 @@ final class IngestJobPipeline {
      * are in the database)
      */
     void processStreamingIngestDataSource() {
-	// TODO error checking for stage and streaming (should be in streaming files stage)
 	startDataSourceIngestStreaming();
 	checkForStageCompleted();
     }    
@@ -974,7 +972,8 @@ final class IngestJobPipeline {
      * @param files A list of the files to add.
      */
     void addFiles(List<AbstractFile> files) {
-        if (IngestJobPipeline.Stages.FIRST == this.stage) {
+	if (stage.equals(Stages.FIRST_STAGE_FILES_ONLY)
+		|| stage.equals(Stages.FIRST_STAGE_FILES_AND_DATASOURCE)) {
             IngestJobPipeline.taskScheduler.fastTrackFileIngestTasks(this, files);
         } else {
             logErrorMessage(Level.SEVERE, "Adding files to job during second stage analysis not supported");

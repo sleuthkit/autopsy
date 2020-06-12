@@ -318,6 +318,47 @@ final class IngestTasksScheduler {
         }
         return topLevelFiles;
     }
+    
+    /**
+     * Schedules file ingest tasks for the ingest manager's file ingest threads.
+     * Files from streaming ingest will be prioritized.
+     */
+    synchronized private void shuffleFileTaskQueues() {
+	try {
+	    shuffleStreamingFileTaskQueues();
+	    shuffleRootFileTaskQueues();
+	} catch (InterruptedException ex) {
+	    IngestTasksScheduler.logger.log(Level.INFO, "Ingest tasks scheduler interrupted while blocked adding a task to the file level ingest task queue", ex);
+	    Thread.currentThread().interrupt();
+	}
+    }
+    
+    /**
+     * Move tasks from the streamedTasksQueue into the fileIngestThreadsQueue.
+     * Will attempt to move as many tasks as there are ingest threads.
+     */
+    synchronized private void shuffleStreamingFileTaskQueues() throws InterruptedException {
+	/*
+	 * Schedule files from the streamedTasksQueue
+	 */
+	while (fileIngestThreadsQueue.isEmpty()) {
+	    /*
+	     * We will attempt to schedule as many tasks as there are ingest queues. 
+	     */
+	    int taskCount = 0;
+	    while (taskCount < IngestManager.getInstance().getNumberOfFileIngestThreads()) {
+		final FileIngestTask streamingTask = streamedTasksQueue.poll();
+		if (streamingTask == null) {
+		    return; // No streaming tasks are queued right now
+		}
+
+		if (shouldEnqueueFileTask(streamingTask)) {
+		    fileIngestThreadsQueue.putLast(streamingTask);
+		    taskCount++;
+		}
+	    }
+	}
+    }
 
     /**
      * Schedules file ingest tasks for the ingest manager's file ingest threads
@@ -349,27 +390,7 @@ final class IngestTasksScheduler {
      * during ingest. The reason for the LIFO additions is to give priority to
      * files derived from prioritized files.
      */
-    synchronized private void shuffleFileTaskQueues() {
-	
-	/*
-	 * Schedule any files from the streaming queue first.
-	 */
-	while (fileIngestThreadsQueue.isEmpty()) {
-	    final FileIngestTask streamingTask = streamedTasksQueue.poll();
-	    if (streamingTask == null) {
-		break; // No streaming tasks right now
-	    }
-
-	    try {
-		if (shouldEnqueueFileTask(streamingTask)) {
-		    fileIngestThreadsQueue.putLast(streamingTask);
-		}
-	    } catch (InterruptedException ex) {
-		IngestTasksScheduler.logger.log(Level.INFO, "Ingest tasks scheduler interrupted while blocked adding a task to the file level ingest task queue", ex);
-		Thread.currentThread().interrupt();
-		return;
-	    }
-	}
+    synchronized private void shuffleRootFileTaskQueues() throws InterruptedException {
 	
         while (this.fileIngestThreadsQueue.isEmpty()) {	    
             /*
@@ -393,17 +414,11 @@ final class IngestTasksScheduler {
                 return;
             }
             if (shouldEnqueueFileTask(pendingTask)) {
-                try {
-                    /*
-                     * The task is added to the queue for the ingest threads
-                     * AFTER the higher priority tasks that preceded it.
-                     */
-                    this.fileIngestThreadsQueue.putLast(pendingTask);
-                } catch (InterruptedException ex) {
-                    IngestTasksScheduler.logger.log(Level.INFO, "Ingest tasks scheduler interrupted while blocked adding a task to the file level ingest task queue", ex);
-                    Thread.currentThread().interrupt();
-                    return;
-                }
+		/*
+		 * The task is added to the queue for the ingest threads
+		 * AFTER the higher priority tasks that preceded it.
+		 */
+		this.fileIngestThreadsQueue.putLast(pendingTask);
             }
 
             /*
@@ -422,13 +437,7 @@ final class IngestTasksScheduler {
                         if (childFile.hasChildren()) {
                             this.pendingFileTaskQueue.add(childTask);
                         } else if (shouldEnqueueFileTask(childTask)) {
-                            try {
-                                this.fileIngestThreadsQueue.putLast(childTask);
-                            } catch (InterruptedException ex) {
-                                IngestTasksScheduler.logger.log(Level.INFO, "Ingest tasks scheduler interrupted while blocked adding a task to the file level ingest task queue", ex);
-                                Thread.currentThread().interrupt();
-                                return;
-                            }
+                            this.fileIngestThreadsQueue.putLast(childTask);
                         }
                     }
                 }

@@ -38,12 +38,12 @@ import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Analyzes one or more data sources using a set of ingest modules specified via
- ingest ingestJobPipeline settings.
+ * ingest job settings.
  */
 public final class IngestJob {
 
     /*
-     * An ingest ingestJobPipeline can be cancelled for various reasons.
+     * An ingest job can be cancelled for various reasons.
      */
     public enum CancellationReason {
 
