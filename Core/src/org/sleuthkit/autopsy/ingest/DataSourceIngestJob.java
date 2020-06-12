@@ -404,9 +404,9 @@ public final class DataSourceIngestJob {
             Map<String, IngestModuleTemplate> ingestModuleTemplates, Map<String, IngestModuleTemplate> jythonIngestModuleTemplates, List<String> pipelineConfig) {
         List<IngestModuleTemplate> templates = new ArrayList<>();
         for (String moduleClassName : pipelineConfig) {
-            if (ingestModuleTemplates.containsKey(moduleClassName)) {
+            if (ingestModuleTemplates != null && ingestModuleTemplates.containsKey(moduleClassName)) {
                 templates.add(ingestModuleTemplates.remove(moduleClassName));
-            } else if (jythonIngestModuleTemplates.containsKey(moduleClassName)) {
+            } else if (jythonIngestModuleTemplates != null && jythonIngestModuleTemplates.containsKey(moduleClassName)) {
                 templates.add(jythonIngestModuleTemplates.remove(moduleClassName));
             }
         }
