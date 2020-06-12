@@ -215,7 +215,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
 
     @Messages({
         "PMTopComponent_search_exception_Title=Search failure",
-        "PMTopComponent_search_exception_msg=Failed to search personas",})
+        "PMTopComponent_search_exception_msg=Failed to search personas.",})
     private void executeSearch() {
         Collection<Persona> results;
         try {
