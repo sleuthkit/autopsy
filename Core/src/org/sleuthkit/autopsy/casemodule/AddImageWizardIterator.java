@@ -177,8 +177,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
         // Start processing the data source by handing it off to the selected DSP, 
         // so it gets going in the background while the user is still picking the Ingest modules    
         // This will occur when the next button is clicked on the panel where you have chosen your data to process
-        //if (index == dsPanelIndex) {
-	if (index == 2) { // TODO test for straming ingest TODO do this correctly
+        if (index == dsPanelIndex) {
             ((AddImageWizardAddingProgressPanel) panels.get(progressPanelIndex)).
                     startDataSourceProcessing(((AddImageWizardDataSourceSettingsPanel) panels.get(dsPanelIndex)).getComponent().getCurrentDSProcessor());
         }

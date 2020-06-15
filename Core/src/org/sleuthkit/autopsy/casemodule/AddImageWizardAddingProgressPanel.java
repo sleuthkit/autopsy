@@ -45,9 +45,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestJob;
-import org.sleuthkit.autopsy.ingest.IngestStream;
-import org.sleuthkit.autopsy.ingest.IngestJobInputStream;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -256,7 +253,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
     @Override
     public void readSettings(WizardDescriptor settings) {
         // Start ingest if it hasn't already been started 
-        //startIngest(); // TODO currently disabled for streaming ingest testing TODO
+        startIngest();
         settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, WizardDescriptor.CANCEL_OPTION});
         if (imgAdded) {
             getComponent().setStateFinished();
@@ -363,12 +360,8 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
 
             setStateStarted();
 
-            // Kick off the DSProcessor 
-	    // TODO test code to start streaming ingest TODO remove
-            IngestJob job = new IngestJob(this.ingestJobSettings);
-	    IngestJobInputStream stream = new IngestJobInputStream(job);
-            dsProcessor.run(dspProgressMonitorImpl, cbObj, stream);
-            //dsProcessor.run(getDSPProgressMonitorImpl(), cbObj); // TODO restore or change
+            // Kick off the DSProcessor
+            dsProcessor.run(getDSPProgressMonitorImpl(), cbObj);
         }
     }
 
@@ -438,7 +431,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
             newContents.clear();
             newContents.addAll(contents);
             setStateStarted();
-            //startIngest(); // TODO currently disabled for streaming ingest testing TODO
+            startIngest();
         } else {
             cancelled = false;
         }

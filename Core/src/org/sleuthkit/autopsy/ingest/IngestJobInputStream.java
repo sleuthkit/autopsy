@@ -24,8 +24,7 @@ import java.util.List;
  * Implementation of IngestStream. Will collect data from the data source
  * processor to be sent to the ingest pipeline.
  */
-// TODO revert to package private
-public class IngestJobInputStream implements IngestStream {
+class IngestJobInputStream implements IngestStream {
     private final IngestJob ingestJob;
     private long dataSourceObjectId = -1;
     private boolean isClosed = false;
@@ -36,7 +35,7 @@ public class IngestJobInputStream implements IngestStream {
      * 
      * @param ingestJob The IngestJob associated with this stream.
      */
-    public IngestJobInputStream(IngestJob ingestJob) { // TODO revert public
+    IngestJobInputStream(IngestJob ingestJob) {
         this.ingestJob = ingestJob;
     }
     

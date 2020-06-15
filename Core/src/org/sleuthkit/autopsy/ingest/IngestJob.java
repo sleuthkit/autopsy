@@ -120,7 +120,7 @@ public final class IngestJob {
      *
      * @param settings   The ingest job settings.
      */
-    public IngestJob(IngestJobSettings settings) { // TODO revert public
+    IngestJob(IngestJobSettings settings) {
         this.id = IngestJob.nextId.getAndIncrement();
         this.ingestJobPipelines = new ConcurrentHashMap<>();
 	this.settings = settings;
