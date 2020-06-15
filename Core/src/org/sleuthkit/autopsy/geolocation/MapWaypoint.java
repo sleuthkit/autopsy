@@ -62,6 +62,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Waypoint interface.
  *
  */
+@SuppressWarnings("deprecation")
 final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewer.Waypoint {
 
     private static final Logger logger = Logger.getLogger(MapWaypoint.class.getName());
