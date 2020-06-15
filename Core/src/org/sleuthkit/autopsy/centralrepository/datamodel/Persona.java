@@ -471,7 +471,7 @@ public class Persona {
     }
     
     /**
-     * Removes the given alias
+     * Removes the given alias.
      *
      * @param alias alias to remove
      *
@@ -483,7 +483,7 @@ public class Persona {
     }
     
     /**
-     * Modifies the given alias
+     * Modifies the given alias.
      *
      * @param alias alias to modify
      *
@@ -521,7 +521,7 @@ public class Persona {
     }
     
     /**
-     * Removes the given metadata from this persona
+     * Removes the given metadata from this persona.
      *
      * @param metadata metadata to remove
      *
@@ -533,7 +533,7 @@ public class Persona {
     }
     
     /**
-     * Modifies the given metadata
+     * Modifies the given metadata.
      *
      * @param metadata metadata to modify
      *
