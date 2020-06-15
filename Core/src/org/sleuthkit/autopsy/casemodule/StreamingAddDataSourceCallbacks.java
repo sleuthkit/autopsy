@@ -48,20 +48,37 @@ class StreamingAddDataSourceCallbacks implements AddDataSourceCallbacks {
 
     @Override
     public void onDataSourceAdded(long dataSourceObjectId) {
+	if (ingestStream.wasStopped()) {
+	    return;
+	}
+	
         try {
             ingestStream.addDataSource(dataSourceObjectId);
         } catch (IngestStreamClosedException ex) {
-            logger.log(Level.SEVERE, "Error adding data source with ID {0} to ingest stream - ingest stream is closed", dataSourceObjectId);
+	    if (! ingestStream.wasStopped()) {
+		// If the ingest stream is closed but not stopped log the error.
+		// This state should only happen once the data source is completely
+		// added which means it's a severe error that a data source is being added.
+		logger.log(Level.SEVERE, "Error adding data source with ID {0} to ingest stream - ingest stream is closed", dataSourceObjectId);
+	    }
         }
     }
 
     @Override
     public void onFilesAdded(List<Long> fileObjectIds) {
+	if (ingestStream.wasStopped()) {
+	    return;
+	}
+	
         try {
             ingestStream.addFiles(fileObjectIds);
         } catch (IngestStreamClosedException ex) {
-            logger.log(Level.SEVERE, "Error adding {0} files to ingest stream - ingest stream is closed", fileObjectIds.size());
+	    if (! ingestStream.wasStopped()) {
+		// If the ingest stream is closed but not stopped log the error.
+		// This state should only happen once the data source is completely
+		// added which means it's a severe error that files are still being added.
+		logger.log(Level.SEVERE, "Error adding files to ingest stream - ingest stream is closed");
+	    }
         }
     }
-    
 }

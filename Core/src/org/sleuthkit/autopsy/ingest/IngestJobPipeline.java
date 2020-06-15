@@ -35,6 +35,7 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.ingest.IngestTasksScheduler.IngestJobTasksSnapshot;
@@ -53,9 +54,9 @@ import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
  * Encapsulates a data source and the ingest module pipelines used to process
  * it.
  */
-final class DataSourceIngestJob {
+final class IngestJobPipeline {
 
-    private static final Logger logger = Logger.getLogger(DataSourceIngestJob.class.getName());
+    private static final Logger logger = Logger.getLogger(IngestJobPipeline.class.getName());
 
     /**
      * These fields define a data source ingest job: the parent ingest job, an
@@ -67,7 +68,8 @@ final class DataSourceIngestJob {
     private static final AtomicLong nextJobId = new AtomicLong(0L);
     private final long id;
     private final IngestJobSettings settings;
-    private final Content dataSource;
+    private Content dataSource = null;
+    private final IngestJob.Mode ingestMode;
     private final List<AbstractFile> files = new ArrayList<>();
 
     /**
@@ -79,22 +81,26 @@ final class DataSourceIngestJob {
          * Setting up for processing.
          */
         INITIALIZATION,
+	/**
+	 * Running only file ingest modules (used only for streaming ingest)
+	 */
+	FIRST_STAGE_FILES_ONLY,
         /**
          * Running high priority data source level ingest modules and file level
          * ingest modules.
          */
-        FIRST,
+        FIRST_STAGE_FILES_AND_DATASOURCE,
         /**
          * Running lower priority, usually long-running, data source level
          * ingest modules.
          */
-        SECOND,
+        SECOND_STAGE,
         /**
          * Cleaning up.
          */
         FINALIZATION
     };
-    private volatile Stages stage = DataSourceIngestJob.Stages.INITIALIZATION;
+    private volatile Stages stage = IngestJobPipeline.Stages.INITIALIZATION;
     private final Object stageCompletionCheckLock = new Object();
 
     /**
@@ -182,11 +188,9 @@ final class DataSourceIngestJob {
      *                         job is a part.
      * @param dataSource       The data source to be ingested.
      * @param settings         The settings for the ingest job.
-     * @param runInteractively Whether or not this job should use NetBeans
-     *                         progress handles.
      */
-    DataSourceIngestJob(IngestJob parentJob, Content dataSource, IngestJobSettings settings, boolean runInteractively) {
-        this(parentJob, dataSource, Collections.emptyList(), settings, runInteractively);
+    IngestJobPipeline(IngestJob parentJob, Content dataSource, IngestJobSettings settings) {
+        this(parentJob, dataSource, Collections.emptyList(), settings);
     }
 
     /**
@@ -199,17 +203,17 @@ final class DataSourceIngestJob {
      * @param dataSource       The data source to be ingested.
      * @param files            A subset of the files for the data source.
      * @param settings         The settings for the ingest job.
-     * @param runInteractively Whether or not this job should use NetBeans
-     *                         progress handles.
      */
-    DataSourceIngestJob(IngestJob parentJob, Content dataSource, List<AbstractFile> files, IngestJobSettings settings, boolean runInteractively) {
+    IngestJobPipeline(IngestJob parentJob, Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
         this.parentJob = parentJob;
-        this.id = DataSourceIngestJob.nextJobId.getAndIncrement();
+        this.id = IngestJobPipeline.nextJobId.getAndIncrement();
         this.dataSource = dataSource;
         this.files.addAll(files);
+	this.ingestMode = parentJob.getIngestMode();
         this.settings = settings;
-        this.doUI = runInteractively;
+	this.doUI = RuntimeProperties.runningWithGUI();
         this.createTime = new Date().getTime();
+	this.stage = Stages.INITIALIZATION;
         this.createIngestPipelines();
     }
 
@@ -238,9 +242,9 @@ final class DataSourceIngestJob {
          * ordered lists of ingest module templates for each ingest pipeline.
          */
         IngestPipelinesConfiguration pipelineConfigs = IngestPipelinesConfiguration.getInstance();
-        List<IngestModuleTemplate> firstStageDataSourceModuleTemplates = DataSourceIngestJob.getConfiguredIngestModuleTemplates(dataSourceModuleTemplates, pipelineConfigs.getStageOneDataSourceIngestPipelineConfig());
-        List<IngestModuleTemplate> fileIngestModuleTemplates = DataSourceIngestJob.getConfiguredIngestModuleTemplates(fileModuleTemplates, pipelineConfigs.getFileIngestPipelineConfig());
-        List<IngestModuleTemplate> secondStageDataSourceModuleTemplates = DataSourceIngestJob.getConfiguredIngestModuleTemplates(dataSourceModuleTemplates, pipelineConfigs.getStageTwoDataSourceIngestPipelineConfig());
+        List<IngestModuleTemplate> firstStageDataSourceModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(dataSourceModuleTemplates, pipelineConfigs.getStageOneDataSourceIngestPipelineConfig());
+        List<IngestModuleTemplate> fileIngestModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(fileModuleTemplates, pipelineConfigs.getFileIngestPipelineConfig());
+        List<IngestModuleTemplate> secondStageDataSourceModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(dataSourceModuleTemplates, pipelineConfigs.getStageTwoDataSourceIngestPipelineConfig());
 
         /**
          * Add any module templates that were not specified in the pipelines
@@ -414,6 +418,9 @@ final class DataSourceIngestJob {
      * @return A collection of ingest module startup errors, empty on success.
      */
     List<IngestModuleError> start() {
+	if (dataSource == null) {
+	    throw new IllegalStateException("Ingest started before setting data source"); // TODO remove?
+	}
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
             try {
@@ -421,13 +428,19 @@ final class DataSourceIngestJob {
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 logErrorMessage(Level.WARNING, "Failed to add ingest job info to case database", ex); //NON-NLS
             }
-            if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
-                logInfoMessage("Starting first stage analysis"); //NON-NLS
-                this.startFirstStage();
-            } else if (this.hasSecondStageDataSourceIngestPipeline()) {
-                logInfoMessage("Starting second stage analysis"); //NON-NLS
-                this.startSecondStage();
-            }
+	    
+	    if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
+		if (ingestMode == IngestJob.Mode.BATCH) {
+		    logInfoMessage("Starting first stage analysis"); //NON-NLS
+		    this.startFirstStage();
+		} else {
+		    logInfoMessage("Preparing for first stage analysis"); //NON-NLS
+		    this.startFileIngestStreaming();
+		}
+	    } else if (this.hasSecondStageDataSourceIngestPipeline()) {
+		logInfoMessage("Starting second stage analysis"); //NON-NLS
+		this.startSecondStage();
+	    }
         }
         return errors;
     }
@@ -487,7 +500,7 @@ final class DataSourceIngestJob {
      * Starts the first stage of this job.
      */
     private void startFirstStage() {
-        this.stage = DataSourceIngestJob.Stages.FIRST;
+        this.stage = IngestJobPipeline.Stages.FIRST_STAGE_FILES_AND_DATASOURCE;
 
         if (this.hasFileIngestPipeline()) {
             synchronized (this.fileIngestProgressLock) {
@@ -520,13 +533,13 @@ final class DataSourceIngestJob {
          */
         if (this.hasFirstStageDataSourceIngestPipeline() && this.hasFileIngestPipeline()) {
             logInfoMessage("Scheduling first stage data source and file level analysis tasks"); //NON-NLS
-            DataSourceIngestJob.taskScheduler.scheduleIngestTasks(this);
+            IngestJobPipeline.taskScheduler.scheduleIngestTasks(this);
         } else if (this.hasFirstStageDataSourceIngestPipeline()) {
             logInfoMessage("Scheduling first stage data source level analysis tasks"); //NON-NLS
-            DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
+            IngestJobPipeline.taskScheduler.scheduleDataSourceIngestTask(this);
         } else {
             logInfoMessage("Scheduling file level analysis tasks, no first stage data source level analysis configured"); //NON-NLS
-            DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this, this.files);
+            IngestJobPipeline.taskScheduler.scheduleFileIngestTasks(this, this.files);
 
             /**
              * No data source ingest task has been scheduled for this stage, and
@@ -539,13 +552,69 @@ final class DataSourceIngestJob {
             this.checkForStageCompleted();
         }
     }
+    
+    /**
+     * Prepares for file ingest.
+     * Used for streaming ingest. Does not schedule any file tasks - those
+     * will come from calls to addStreamingIngestFiles().
+     */
+    private void startFileIngestStreaming() {
+	synchronized (this.stageCompletionCheckLock) {
+	    this.stage = IngestJobPipeline.Stages.FIRST_STAGE_FILES_ONLY;
+	}
+
+        if (this.hasFileIngestPipeline()) {
+            synchronized (this.fileIngestProgressLock) {
+                this.estimatedFilesToProcess = 0; // There's no way to estimate file count for a streaming data source
+            }
+        }
+
+        if (this.doUI) {
+            if (this.hasFileIngestPipeline()) {
+                this.startFileIngestProgressBar();
+            }
+        }
+	
+	logInfoMessage("Waiting for streaming files"); //NON-NLS
+    }    
+    
+    /**
+     * Start data source ingest.
+     * Used for streaming ingest when the data source is not ready when
+     * ingest starts.
+     */
+    private void startDataSourceIngestStreaming() {
+	
+	if (this.doUI) {
+            /**
+             * Start the first stage data source ingest progress bar.
+             */
+            if (this.hasFirstStageDataSourceIngestPipeline()) {
+                this.startDataSourceIngestProgressBar();
+            }
+        }
+	
+	/**
+         * Make the first stage data source level ingest pipeline the current
+         * data source level pipeline.
+         */
+        synchronized (this.dataSourceIngestPipelineLock) {
+            this.currentDataSourceIngestPipeline = this.firstStageDataSourceIngestPipeline;
+        }
+	
+	logInfoMessage("Scheduling first stage data source level analysis tasks"); //NON-NLS
+	synchronized (this.stageCompletionCheckLock) {
+	    this.stage = IngestJobPipeline.Stages.FIRST_STAGE_FILES_AND_DATASOURCE;
+	    IngestJobPipeline.taskScheduler.scheduleDataSourceIngestTask(this);
+	}
+    }        
 
     /**
      * Starts the second stage of this ingest job.
      */
     private void startSecondStage() {
         logInfoMessage("Starting second stage analysis"); //NON-NLS        
-        this.stage = DataSourceIngestJob.Stages.SECOND;
+        this.stage = IngestJobPipeline.Stages.SECOND_STAGE;
         if (this.doUI) {
             this.startDataSourceIngestProgressBar();
         }
@@ -553,7 +622,7 @@ final class DataSourceIngestJob {
             this.currentDataSourceIngestPipeline = this.secondStageDataSourceIngestPipeline;
         }
         logInfoMessage("Scheduling second stage data source level analysis tasks"); //NON-NLS        
-        DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
+        IngestJobPipeline.taskScheduler.scheduleDataSourceIngestTask(this);
     }
 
     /**
@@ -564,7 +633,7 @@ final class DataSourceIngestJob {
             synchronized (this.dataSourceIngestProgressLock) {
                 String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.dataSourceIngest.initialDisplayName",
-                        this.dataSource.getName());
+                        this.dataSource.getId());
                 this.dataSourceIngestProgress = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
@@ -575,12 +644,12 @@ final class DataSourceIngestJob {
                         // the user wants to cancel only the currently executing
                         // data source ingest module or the entire ingest job.
                         DataSourceIngestCancellationPanel panel = new DataSourceIngestCancellationPanel();
-                        String dialogTitle = NbBundle.getMessage(DataSourceIngestJob.this.getClass(), "IngestJob.cancellationDialog.title");
+                        String dialogTitle = NbBundle.getMessage(IngestJobPipeline.this.getClass(), "IngestJob.cancellationDialog.title");
                         JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), panel, dialogTitle, JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE);
                         if (panel.cancelAllDataSourceIngestModules()) {
-                            DataSourceIngestJob.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
+                            IngestJobPipeline.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         } else {
-                            DataSourceIngestJob.this.cancelCurrentDataSourceIngestModule();
+                            IngestJobPipeline.this.cancelCurrentDataSourceIngestModule();
                         }
                         return true;
                     }
@@ -607,7 +676,7 @@ final class DataSourceIngestJob {
                         // the cancel button on the progress bar and the OK button
                         // of a cancelation confirmation dialog supplied by 
                         // NetBeans. 
-                        DataSourceIngestJob.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
+                        IngestJobPipeline.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         return true;
                     }
                 });
@@ -622,17 +691,52 @@ final class DataSourceIngestJob {
      * completed and does a stage transition if they are.
      */
     private void checkForStageCompleted() {
+	if (ingestMode == IngestJob.Mode.BATCH) {
+	    checkForStageCompletedBatch();
+	} else {
+	    checkForStageCompletedStreaming();
+	}
+    }
+
+    /**
+     * Checks to see if the ingest tasks for the current stage of this job are
+     * completed and does a stage transition if they are.
+     */
+    private void checkForStageCompletedBatch() {    
         synchronized (this.stageCompletionCheckLock) {
-            if (DataSourceIngestJob.taskScheduler.tasksForJobAreCompleted(this)) {
-                switch (this.stage) {
-                    case FIRST:
-                        this.finishFirstStage();
-                        break;
-                    case SECOND:
-                        this.finish();
-                        break;
-                }
-            }
+	    if (IngestJobPipeline.taskScheduler.currentTasksAreCompleted(this)) {
+		switch (this.stage) {
+		    case FIRST_STAGE_FILES_AND_DATASOURCE:
+			this.finishFirstStage();
+			break;
+		    case SECOND_STAGE:
+			this.finish();
+			break;
+		}
+	    }
+	}
+    }
+	    
+    /**
+     * Checks to see if the ingest tasks for the current stage of this job are
+     * completed and does a stage transition if they are.
+     */
+    private void checkForStageCompletedStreaming() {    
+        synchronized (this.stageCompletionCheckLock) {
+	    if (IngestJobPipeline.taskScheduler.currentTasksAreCompleted(this)) {	 
+		switch (this.stage) {
+		    case FIRST_STAGE_FILES_ONLY:
+			// Nothing to do here - need to wait for the data source
+			break;
+		    case FIRST_STAGE_FILES_AND_DATASOURCE:
+			// Finish file and data source ingest, start second stage (if applicable)
+			this.finishFirstStage();
+			break;
+		    case SECOND_STAGE:
+			this.finish();
+			break;
+		}
+	    }
         }
     }
 
@@ -692,7 +796,7 @@ final class DataSourceIngestJob {
      */
     private void finish() {
         logInfoMessage("Finished analysis"); //NON-NLS        
-        this.stage = DataSourceIngestJob.Stages.FINALIZATION;
+        this.stage = IngestJobPipeline.Stages.FINALIZATION;
 
         if (this.doUI) {
             // Finish the second stage data source ingest progress bar, if it hasn't 
@@ -724,7 +828,7 @@ final class DataSourceIngestJob {
                 logErrorMessage(Level.WARNING, "Failed to set job end date in case database", ex);
             }
         }
-        this.parentJob.dataSourceJobFinished(this);
+        this.parentJob.ingestJobPipelineFinished(this);
     }
 
     /**
@@ -759,7 +863,7 @@ final class DataSourceIngestJob {
             }
 
         } finally {
-            DataSourceIngestJob.taskScheduler.notifyTaskCompleted(task);
+            IngestJobPipeline.taskScheduler.notifyTaskCompleted(task);
             this.checkForStageCompleted();
         }
     }
@@ -824,10 +928,34 @@ final class DataSourceIngestJob {
                 this.fileIngestPipelinesQueue.put(pipeline);
             }
         } finally {
-            DataSourceIngestJob.taskScheduler.notifyTaskCompleted(task);
+            IngestJobPipeline.taskScheduler.notifyTaskCompleted(task);
             this.checkForStageCompleted();
         }
     }
+    
+    /**
+     * Add a list of files (by object ID) to the ingest queue.
+     * Must call start() prior to adding files.
+     * 
+     * @param fileObjIds List of newly added file IDs
+     */
+    void addStreamingIngestFiles(List<Long> fileObjIds) {
+	if (stage.equals(Stages.FIRST_STAGE_FILES_ONLY)) {
+	    IngestJobPipeline.taskScheduler.scheduleStreamedFileIngestTasks(this, fileObjIds);
+	} else {
+            logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
+	}
+    }
+    
+    /**
+     * Starts data source ingest.
+     * Should be called after the data source processor has finished (i.e., all files
+     * are in the database)
+     */
+    void processStreamingIngestDataSource() {
+	startDataSourceIngestStreaming();
+	checkForStageCompleted();
+    }    
 
     /**
      * Adds more files from the data source for this job to the job, e.g., adds
@@ -837,8 +965,9 @@ final class DataSourceIngestJob {
      * @param files A list of the files to add.
      */
     void addFiles(List<AbstractFile> files) {
-        if (DataSourceIngestJob.Stages.FIRST == this.stage) {
-            DataSourceIngestJob.taskScheduler.fastTrackFileIngestTasks(this, files);
+	if (stage.equals(Stages.FIRST_STAGE_FILES_ONLY)
+		|| stage.equals(Stages.FIRST_STAGE_FILES_AND_DATASOURCE)) {
+            IngestJobPipeline.taskScheduler.fastTrackFileIngestTasks(this, files);
         } else {
             logErrorMessage(Level.SEVERE, "Adding files to job during second stage analysis not supported");
         }
@@ -1014,12 +1143,12 @@ final class DataSourceIngestJob {
     void cancel(IngestJob.CancellationReason reason) {
         this.cancelled = true;
         this.cancellationReason = reason;
-        DataSourceIngestJob.taskScheduler.cancelPendingTasksForIngestJob(this);
+        IngestJobPipeline.taskScheduler.cancelPendingTasksForIngestJob(this);
 
         if (this.doUI) {
             synchronized (this.dataSourceIngestProgressLock) {
                 if (null != dataSourceIngestProgress) {
-                    dataSourceIngestProgress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", dataSource.getName()));
+                    dataSourceIngestProgress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", this.dataSource.getName()));
                     dataSourceIngestProgress.progress(NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling"));
                 }
             }
@@ -1071,7 +1200,7 @@ final class DataSourceIngestJob {
      * @param message The message.
      */
     private void logInfoMessage(String message) {
-        logger.log(Level.INFO, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, dataSource.getName(), dataSource.getId(), id)); //NON-NLS        
+        logger.log(Level.INFO, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), id, ingestJob.getIngestJobId())); //NON-NLS        
     }
 
     /**
@@ -1083,7 +1212,7 @@ final class DataSourceIngestJob {
      * @param throwable The throwable associated with the error.
      */
     private void logErrorMessage(Level level, String message, Throwable throwable) {
-        logger.log(level, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, dataSource.getName(), dataSource.getId(), id), throwable); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), id, ingestJob.getIngestJobId()), throwable); //NON-NLS
     }
 
     /**
@@ -1094,7 +1223,7 @@ final class DataSourceIngestJob {
      * @param message The message.
      */
     private void logErrorMessage(Level level, String message) {
-        logger.log(level, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, dataSource.getName(), dataSource.getId(), id)); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id %d)", message, this.dataSource.getName(), this.dataSource.getId(), id, ingestJob.getIngestJobId())); //NON-NLS
     }
 
     /**
@@ -1143,7 +1272,7 @@ final class DataSourceIngestJob {
                 estimatedFilesToProcessCount = this.estimatedFilesToProcess;
                 snapShotTime = new Date().getTime();
             }
-            tasksSnapshot = DataSourceIngestJob.taskScheduler.getTasksSnapshotForJob(id);
+            tasksSnapshot = IngestJobPipeline.taskScheduler.getTasksSnapshotForJob(id);
 
         }
 

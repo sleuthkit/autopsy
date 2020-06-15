@@ -303,7 +303,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             addImageTask.cancelTask();
         }
         if (ingestStream != null) {
-            ingestStream.close(false);
+            ingestStream.stop();
         }
     }
 

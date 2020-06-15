@@ -59,12 +59,7 @@ class StreamingAddImageTaskCallback implements AddImageTaskCallback {
      */
     @Override
     public void onCompleted(DataSourceProcessorResult result, List<String> errList, List<Content> newDataSources) {
-        if (result.equals(DataSourceProcessorResult.CRITICAL_ERRORS)) {
-            ingestStream.close(false);
-        } else {
-            ingestStream.close(true);
-        }
+        ingestStream.close();
         dspCallback.done(result, errList, newDataSources);
     }
-    
 }

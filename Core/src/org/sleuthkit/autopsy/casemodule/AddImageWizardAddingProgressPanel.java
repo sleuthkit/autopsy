@@ -360,7 +360,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
 
             setStateStarted();
 
-            // Kick off the DSProcessor 
+            // Kick off the DSProcessor
             dsProcessor.run(getDSPProgressMonitorImpl(), cbObj);
         }
     }
