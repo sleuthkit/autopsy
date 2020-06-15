@@ -212,8 +212,17 @@ public class PersonaMetadataDialog extends JDialog {
 
     @Messages({
         "AddMetadataDialog_dup_Title=Metadata add failure",
-        "AddMetadataDialog_dup_msg=A metadata entry with this name has already been added to this persona",})
+        "AddMetadataDialog_dup_msg=A metadata entry with this name has already been added to this persona.",
+        "AddMetadataDialog_empty_name_Title=Missing field(s)",
+        "AddMetadataDialog_empty_name_msg=A metadata entry cannot have an empty name or value.",})
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
+        if (nameTextField.getText().isEmpty() || valueTextField.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    Bundle.AddMetadataDialog_empty_name_msg(),
+                    Bundle.AddMetadataDialog_empty_name_Title(),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         if (justificationTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaDetailsPanel_empty_justification_msg(),

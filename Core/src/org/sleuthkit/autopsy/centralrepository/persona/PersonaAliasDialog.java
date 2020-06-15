@@ -198,7 +198,7 @@ public class PersonaAliasDialog extends JDialog {
         "PersonaAliasDialog_empty_Title=Empty alias",
         "PersonaAliasDialog_empty_msg=An alias cannot be empty.",
         "PersonaAliasDialog_dup_Title=Alias add failure",
-        "PersonaAliasDialog_dup_msg=This alias has already been added to this persona",})
+        "PersonaAliasDialog_dup_msg=This alias has already been added to this persona.",})
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
         if (aliasTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this,
