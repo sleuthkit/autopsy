@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -331,49 +332,52 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
             }
         } else {
-            long startingOffset = 0;
-            List<Long> mboxSplitOffsets = findMboxSplitOffset(abstractFile, file);
+
+            List<Long> mboxSplitOffsets = new ArrayList<>(); 
+            try{
+                mboxSplitOffsets = findMboxSplitOffset(abstractFile, file);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, String.format("Failed finding split offsets for mbox file {0}.", fileName), ex); //NON-NLS
+                return ProcessResult.OK;
+            }
+
+            long startingOffset = 0;            
             for (Long mboxSplitOffset : mboxSplitOffsets) {
+                File splitFile = new File(fileName + "-" + String.valueOf(mboxSplitOffset));
                 try {
-                     writeToFile(abstractFile, file, context::fileIngestIsCancelled, startingOffset, mboxSplitOffset);
-                     startingOffset = mboxSplitOffset; 
+                    writeToFile(abstractFile, splitFile, context::fileIngestIsCancelled, startingOffset, mboxSplitOffset);
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS
+                    logger.log(Level.WARNING, "Failed writing split mbox file to disk.", ex); //NON-NLS
                     return ProcessResult.OK;
                 }
+                processMboxFile(splitFile, abstractFile, emailFolder);
+                startingOffset = mboxSplitOffset; 
+                if (file.delete() == false) {
+                    logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
+                }
+
             }
         }                 
             
         return ProcessResult.OK;
     }
     
-    private List<Long> findMboxSplitOffset(AbstractFile abstractFile, File file) {
+    private List<Long> findMboxSplitOffset(AbstractFile abstractFile, File file) throws IOException {
         
         List<Long> mboxSplitOffset = new ArrayList<>();
-        long currentPos = 0;
         
-//        try {
-//            ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
-//        } catch (IOException ex) {
-//            logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS
-//            return ProcessResult.OK;
-//        }
-        try {
-            byte[] buffer = new byte[4];
-            ReadContentInputStream in = new ReadContentInputStream(abstractFile);
-            long newPosition = in.skip(MBOX_SIZE_TO_SPLIT);        
-            int len = in.read(buffer);
-            while (len != -1) {
-                len = in.read(buffer);
-                if (buffer[0] == 13 && buffer[1] == 10 && buffer[2] == 70 && buffer[3] == 114) {
-                        currentPos = in.getCurPosition() -  2;
-                        mboxSplitOffset.add(currentPos);  
-                        newPosition = in.skip(MBOX_SIZE_TO_SPLIT + currentPos);
-                }
+        byte[] buffer = new byte[4];
+        ReadContentInputStream in = new ReadContentInputStream(abstractFile);
+        long newPosition = in.skip(MBOX_SIZE_TO_SPLIT);        
+        int len = in.read(buffer);
+        while (len != -1) {
+            len = in.read(buffer);
+            if (buffer[0] == 13 && buffer[1] == 10 && buffer[2] == 70 && buffer[3] == 114) {
+                    mboxSplitOffset.add(in.getCurPosition() -  2);  
+                    newPosition = in.skip(MBOX_SIZE_TO_SPLIT);
             }
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS        
         }
+           
         return mboxSplitOffset;
         
         
@@ -845,7 +849,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             byte[] buffer = new byte[TO_FILE_BUFFER_SIZE];
             int len = in.read(buffer);
             writeFileLength = writeFileLength - TO_FILE_BUFFER_SIZE;
-            while (len != -1 && writeFileLength == 0) {
+            while (len != -1 && writeFileLength != 0) {
                 out.write(buffer, 0, len);
                 totalRead += len;
                 if (cancelCheck.get()) {
@@ -855,9 +859,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                     len = in.read(buffer);
                     writeFileLength = writeFileLength - TO_FILE_BUFFER_SIZE;
                 } else {
-                    int fileOffset = (int)(endingOffset - writeFileLength);
                     int writeLength = (int)writeFileLength;
-                    len = in.read(buffer, fileOffset, writeLength);
+                    byte[] lastBuffer = new byte[writeLength];
+                    len = in.read(lastBuffer);
+                    out.write(lastBuffer, 0, len);
+                    totalRead += len;
                     writeFileLength = 0;
                 }
             }
