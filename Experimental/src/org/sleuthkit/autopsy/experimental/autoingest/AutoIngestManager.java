@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2014-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,7 +89,6 @@ import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreference
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.SharedConfigurationException;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
-import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSource;
 import org.sleuthkit.autopsy.datasourceprocessors.AddDataSourceCallback;
 import org.sleuthkit.autopsy.datasourceprocessors.DataSourceProcessorUtility;
@@ -171,7 +170,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private Path rootInputDirectory;
     private Path rootOutputDirectory;
     private volatile State state;
-    private volatile ErrorState errorState;
 
     private volatile AutoIngestNodeStateEvent lastPublishedStateEvent;
 
@@ -256,7 +254,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         state = State.RUNNING;
 
         eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.RUNNING, LOCAL_HOST_NAME));
-        errorState = ErrorState.NONE;
     }
 
     /**
@@ -266,15 +263,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      */
     State getState() {
         return state;
-    }
-
-    /**
-     * Gets the error state of the autop ingest manager.
-     *
-     * @return The error state, may be NONE.
-     */
-    ErrorState getErrorState() {
-        return errorState;
     }
 
     /**
@@ -1542,37 +1530,21 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
     /**
      * A single instance of this job processing task is used by the auto ingest
-     * manager to process auto ingest jobs. The task does a blocking take from a
-     * completion service for the input directory scan tasks that refresh the
-     * pending jobs queue.
-     * <p>
-     * The job processing task can be paused between jobs (it waits on the
-     * monitor of its pause lock object) and resumed (by notifying the monitor
-     * of its pause lock object). This supports doing things that should be done
-     * between jobs: orderly shutdown of auto ingest and changes to the ingest
-     * configuration (settings). Note that the ingest configuration may be
-     * specific to the host machine or shared between multiple nodes, in which
-     * case it is downloaded from a specified location before each job.
-     * <p>
-     * The task pauses itself if system errors occur, e.g., problems with the
-     * coordination service, database server, Solr server, etc. The idea behind
-     * this is to avoid attempts to process jobs when the auto ingest system is
-     * not in a state to produce consistent and correct results. It is up to a
-     * system administrator to examine the auto ingest system logs, etc., to
-     * find a remedy for the problem and then resume the task.
-     * <p>
-     * Note that the task also waits on the monitor of its ingest lock object
-     * both when the data source processor and the analysis modules are running
-     * in other threads. Notifies are done via a data source processor callback
-     * and an ingest job event handler, respectively.
+     * manager to process auto ingest jobs. The task runs until it is cancelled
+     * or otherwise interrupted while blocked. The task routinely blocks waiting
+     * for input directory scans when the auto ingest jobs queue is empty and
+     * while waiting for data source processing and analysis by ingest modules
+     * to complete for the current auto ingest job. It will also block between
+     * auto ingest jobs until resumed if a pause request is received.
      */
     private final class JobProcessingTask implements Runnable {
 
-        private final Object ingestLock;
-        private final Object pauseLock;
-        @GuardedBy("pauseLock")
+        
+        private final Object ingestTaskMonitor;
+        private final Object pauseMonitor;
+        @GuardedBy("pauseMonitor")
         private boolean pauseRequested;
-        @GuardedBy("pauseLock")
+        @GuardedBy("pauseMonitor")
         private boolean waitingForInputScan;
 
         /**
@@ -1580,17 +1552,15 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * process auto ingest jobs.
          */
         private JobProcessingTask() {
-            ingestLock = new Object();
-            pauseLock = new Object();
-            errorState = ErrorState.NONE;
+            ingestTaskMonitor = new Object();
+            pauseMonitor = new Object();
         }
 
         /**
          * Processes auto ingest jobs, blocking on a completion service for
          * input directory scan tasks and waiting on a pause lock object when
-         * paused by a client or because of a system error. The task is also in
-         * a wait state when the data source processor or the analysis modules
-         * for a job are running.
+         * paused by a client. The task is also in a wait state when the data
+         * source processor or the analysis modules for a job are running.
          */
         @Override
         public void run() {
@@ -1607,40 +1577,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     try {
                         processJobs();
                     } catch (Exception ex) { // Exception firewall
-                        if (jobProcessingTaskFuture.isCancelled()) {
-                            break;
-                        }
-                        if (ex instanceof CoordinationServiceException || ex instanceof AutoIngestJobNodeData.InvalidDataException) {
-                            errorState = ErrorState.COORDINATION_SERVICE_ERROR;
-                        } else if (ex instanceof SharedConfigurationException) {
-                            errorState = ErrorState.SHARED_CONFIGURATION_DOWNLOAD_ERROR;
-                        } else if (ex instanceof ServicesMonitorException) {
-                            errorState = ErrorState.SERVICES_MONITOR_COMMUNICATION_ERROR;
-                        } else if (ex instanceof DatabaseServerDownException) {
-                            errorState = ErrorState.DATABASE_SERVER_ERROR;
-                        } else if (ex instanceof KeywordSearchServerDownException) {
-                            errorState = ErrorState.KEYWORD_SEARCH_SERVER_ERROR;
-                        } else if (ex instanceof CaseManagementException) {
-                            errorState = ErrorState.CASE_MANAGEMENT_ERROR;
-                        } else if (ex instanceof AnalysisStartupException) {
-                            errorState = ErrorState.ANALYSIS_STARTUP_ERROR;
-                        } else if (ex instanceof FileExportException) {
-                            errorState = ErrorState.FILE_EXPORT_ERROR;
-                        } else if (ex instanceof AutoIngestJobLoggerException) {
-                            errorState = ErrorState.JOB_LOGGER_ERROR;
-                        } else if (ex instanceof AutoIngestDataSourceProcessorException) {
-                            errorState = ErrorState.DATA_SOURCE_PROCESSOR_ERROR;
-                        } else if (ex instanceof JobMetricsCollectionException) {
-                            errorState = ErrorState.JOB_METRICS_COLLECTION_ERROR;
-                        } else if (ex instanceof InterruptedException) {
-                            throw (InterruptedException) ex;
-                        } else {
-                            errorState = ErrorState.UNEXPECTED_EXCEPTION;
-                        }
-                        sysLogger.log(Level.SEVERE, "Auto ingest system error", ex);
-                        pauseForSystemError();
+                        sysLogger.log(Level.SEVERE, "An auto ingest job processing error ocurred", ex);
                     }
                 } catch (InterruptedException ex) {
+                    sysLogger.log(Level.INFO, "Auto ingest job processing cancelled", ex);
                     break;
                 }
             }
@@ -1652,7 +1592,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * serviced immediately if the task is doing a job.
          */
         private void requestPause() {
-            synchronized (pauseLock) {
+            synchronized (pauseMonitor) {
                 sysLogger.log(Level.INFO, "Job processing pause requested");
                 pauseRequested = true;
                 if (waitingForInputScan) {
@@ -1680,7 +1620,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * Makes a request to resume job processing.
          */
         private void requestResume() {
-            synchronized (pauseLock) {
+            synchronized (pauseMonitor) {
                 sysLogger.log(Level.INFO, "Job processing resume requested");
                 pauseRequested = false;
                 if (waitingForInputScan) {
@@ -1702,7 +1642,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                  */
                 eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.RESUMED, AutoIngestManager.LOCAL_HOST_NAME));
 
-                pauseLock.notifyAll();
+                pauseMonitor.notifyAll();
             }
         }
 
@@ -1719,7 +1659,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 return;
             }
 
-            synchronized (pauseLock) {
+            synchronized (pauseMonitor) {
                 if (pauseRequested) {
                     sysLogger.log(Level.INFO, "Job processing paused by request");
                     pauseRequested = false;
@@ -1732,7 +1672,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                      */
                     eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.PAUSED_BY_USER_REQUEST, AutoIngestManager.LOCAL_HOST_NAME));
 
-                    pauseLock.wait();
+                    pauseMonitor.wait();
                     sysLogger.log(Level.INFO, "Job processing resumed after pause request");
                     setChanged();
                     notifyObservers(Event.RESUMED);
@@ -1747,43 +1687,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
         /**
-         * Pauses auto ingest to allow a sys admin to address a system error.
-         *
-         * @throws InterruptedException if the thread running the job processing
-         *                              task is interrupted while blocked, i.e.,
-         *                              if auto ingest is shutting down.
-         */
-        private void pauseForSystemError() throws InterruptedException {
-            if (State.SHUTTING_DOWN == state) {
-                return;
-            }
-
-            synchronized (pauseLock) {
-                sysLogger.log(Level.SEVERE, "Job processing paused for system error");
-                setChanged();
-                notifyObservers(Event.PAUSED_FOR_SYSTEM_ERROR);
-
-                /**
-                 * Publish an event to let remote listeners know that the node
-                 * has been paused.
-                 */
-                eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.PAUSED_FOR_SYSTEM_ERROR, AutoIngestManager.LOCAL_HOST_NAME));
-
-                pauseLock.wait();
-                errorState = ErrorState.NONE;
-                sysLogger.log(Level.INFO, "Job processing resumed after system error");
-                setChanged();
-                notifyObservers(Event.RESUMED);
-
-                /**
-                 * Publish an event to let remote listeners know that the node
-                 * has been resumed.
-                 */
-                eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.RESUMED, AutoIngestManager.LOCAL_HOST_NAME));
-            }
-        }
-
-        /**
          * Waits until an input directory scan has completed, with pause request
          * checks before and after the wait.
          *
@@ -1792,7 +1695,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                              if auto ingest is shutting down.
          */
         private void waitForInputDirScan() throws InterruptedException {
-            synchronized (pauseLock) {
+            synchronized (pauseMonitor) {
                 pauseIfRequested();
                 /*
                  * The waiting for scan flag is needed for the special case of a
@@ -1812,7 +1715,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 scanMonitor.wait();
             }
             sysLogger.log(Level.INFO, "Job processing finished wait for input scan completion");
-            synchronized (pauseLock) {
+            synchronized (pauseMonitor) {
                 waitingForInputScan = false;
                 pauseIfRequested();
             }
@@ -2549,17 +2452,17 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     return;
                 }
 
-                synchronized (ingestLock) {
+                synchronized (ingestTaskMonitor) {
                     // Try each DSP in decreasing order of confidence
                     for (AutoIngestDataSourceProcessor selectedProcessor : validDataSourceProcessors) {
                         UUID taskId = UUID.randomUUID();
                         caseForJob.notifyAddingDataSource(taskId);
-                        DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId, ingestLock);
+                        DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId, ingestTaskMonitor);
                         caseForJob.notifyAddingDataSource(taskId);
                         jobLogger.logDataSourceProcessorSelected(selectedProcessor.getDataSourceType());
                         sysLogger.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
                         selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
-                        ingestLock.wait();
+                        ingestTaskMonitor.wait();
 
                         // at this point we got the content object(s) from the current DSP.
                         // check whether the data source was processed successfully
@@ -2673,7 +2576,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             IngestJobEventListener ingestJobEventListener = new IngestJobEventListener();
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobEventListener);
             try {
-                synchronized (ingestLock) {
+                synchronized (ingestTaskMonitor) {
                     IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
                     List<String> settingsWarnings = ingestJobSettings.getWarnings();
                     if (settingsWarnings.isEmpty()) {
@@ -2686,7 +2589,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                              * listener or until interrupted because auto ingest
                              * is shutting down.
                              */
-                            ingestLock.wait();
+                            ingestTaskMonitor.wait();
                             sysLogger.log(Level.INFO, "Finished ingest modules analysis for {0} ", manifestPath);
                             IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
                             for (IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot : jobSnapshot.getDataSourceSnapshots()) {
@@ -2881,8 +2784,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 if (AutopsyEvent.SourceType.LOCAL == ((AutopsyEvent) event).getSourceType()) {
                     String eventType = event.getPropertyName();
                     if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                        synchronized (ingestLock) {
-                            ingestLock.notify();
+                        synchronized (ingestTaskMonitor) {
+                            ingestTaskMonitor.notify();
                         }
                     }
                 }
@@ -3078,36 +2981,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         REPORT_STATE,
         CANCEL_JOB,
         REPROCESS_JOB
-    }
-
-    /**
-     * The current auto ingest error state.
-     */
-    private enum ErrorState {
-        NONE("None"),
-        COORDINATION_SERVICE_ERROR("Coordination service error"),
-        SHARED_CONFIGURATION_DOWNLOAD_ERROR("Shared configuration download error"),
-        SERVICES_MONITOR_COMMUNICATION_ERROR("Services monitor communication error"),
-        DATABASE_SERVER_ERROR("Database server error"),
-        KEYWORD_SEARCH_SERVER_ERROR("Keyword search server error"),
-        CASE_MANAGEMENT_ERROR("Case management error"),
-        ANALYSIS_STARTUP_ERROR("Analysis startup error"),
-        FILE_EXPORT_ERROR("File export error"),
-        JOB_LOGGER_ERROR("Job logger error"),
-        DATA_SOURCE_PROCESSOR_ERROR("Data source processor error"),
-        UNEXPECTED_EXCEPTION("Unknown error"),
-        JOB_METRICS_COLLECTION_ERROR("Job metrics collection error");
-
-        private final String desc;
-
-        private ErrorState(String desc) {
-            this.desc = desc;
-        }
-
-        @Override
-        public String toString() {
-            return desc;
-        }
     }
 
     /**
