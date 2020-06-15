@@ -196,14 +196,23 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      */
     @Override
     public void runWithIngestStream(IngestJobSettings settings, DataSourceProcessorProgressMonitor progress, 
-        DataSourceProcessorCallback callBack) {
+            DataSourceProcessorCallback callBack) {
         run(progress, callBack, IngestManager.getInstance().openIngestStream(settings));
     }
     
+    /**
+     * Internal method to run the data source processor. 
+     * 
+     * @param progress        Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callBack        Callback that will be used by the background task
+     *                        to return results.
+     * @param ingestStream    The ingest stream to use.
+     */
     private void run(DataSourceProcessorProgressMonitor progress, 
-        DataSourceProcessorCallback callBack, IngestStream ingestStream) {
-    this.ingestStream = ingestStream;
-    if (!setDataSourceOptionsCalled) {
+           DataSourceProcessorCallback callBack, IngestStream ingestStream) {
+        this.ingestStream = ingestStream;
+        if (!setDataSourceOptionsCalled) {
             configPanel.storeSettings();
             deviceId = UUID.randomUUID().toString();
             imagePath = configPanel.getContentPaths();
@@ -223,7 +232,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
                 sha256 = null;
             }
         }
-    run(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progress, callBack);
+        run(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progress, callBack);
     }
     
     /**

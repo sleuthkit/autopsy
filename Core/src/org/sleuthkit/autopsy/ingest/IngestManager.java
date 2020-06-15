@@ -294,8 +294,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @return The newly created ingest stream
      */
     public IngestStream openIngestStream(IngestJobSettings settings) {
-    IngestJob job = new IngestJob(settings);
-    return new IngestJobInputStream(job);
+        IngestJob job = new IngestJob(settings);
+        return new IngestJobInputStream(job);
     }
 
 
