@@ -162,7 +162,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         }
 
         // if direction isn't known, check all the usual attributes that may have the number/address
-        // in the absence of sufficent data, any number availabel will be displayed as a From address.
+        // in the absence of sufficent data, any number available will be displayed as a From address.
         if (fromAccountAttr == null) {
             fromAccountAttr = ObjectUtils.firstNonNull(
                     artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)),
@@ -172,6 +172,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             );
         }
 
+        // get the from account address
         if (fromAccountAttr != null) {
             String fromAccountAttrValue = fromAccountAttr.getValueString();
             if (fromAccountAttrValue.equalsIgnoreCase(deviceId) == false) {
@@ -187,7 +188,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 toAccountIdentifier = toAccountAttrValue;
             }
 
-            // if more than one To address, then stcik the rest of them in the 
+            // if more than one To address, then stick the rest of them in the 
             // "Other parties" list.
             if (numbers.length > 1) {
                 otherParties = new ArrayList<>();
@@ -401,10 +402,13 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      *
      * @return Account string to display.
      */
+     @NbBundle.Messages({
+        "CallLogArtifactViewer_suffix_local=(Local)",
+        })
     private String getAccountDisplayString(String accountIdentifier, CallLogViewData callLogViewDataNew) {
         String accountDisplayValue = accountIdentifier;
         if (callLogViewDataNew.getLocalAccountId() != null && callLogViewDataNew.getLocalAccountId().equalsIgnoreCase(accountIdentifier)) {
-            accountDisplayValue += " (Local)";
+            accountDisplayValue += " " + Bundle.CallLogArtifactViewer_suffix_local() ;
         }
         return accountDisplayValue;
     }

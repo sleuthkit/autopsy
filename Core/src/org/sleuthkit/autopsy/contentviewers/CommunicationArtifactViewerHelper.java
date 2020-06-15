@@ -47,6 +47,14 @@ public class CommunicationArtifactViewerHelper {
     private final static int MAX_COLS = 4;
 
     private final static int LEFT_INDENT = 12;
+    
+    /**
+     * Empty private constructor
+     */
+    private CommunicationArtifactViewerHelper() {
+
+    }
+    
     /**
      * Adds a new heading to the panel.
      *
