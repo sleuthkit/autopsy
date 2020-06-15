@@ -71,16 +71,26 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
             Date dateFileCreated = new Date(attrs.creationTime().toMillis());
             Document doc = this.createManifestDOM(filePath);
             XPath xpath = XPathFactory.newInstance().newXPath();
+            
             XPathExpression expr = xpath.compile(CASE_NAME_XPATH);
             String caseName = (String) expr.evaluate(doc, XPathConstants.STRING);
+            if (caseName.isEmpty()) {
+                throw new ManifestFileParserException("CaseName element is missing or empty, manifest is invalid");
+            }
+            
             expr = xpath.compile(DEVICE_ID_XPATH);
             String deviceId = (String) expr.evaluate(doc, XPathConstants.STRING);
             if (deviceId.isEmpty()) {
                 deviceId = UUID.randomUUID().toString();
             }
+            
             expr = xpath.compile(DATA_SOURCE_NAME_XPATH);
             String dataSourceName = (String) expr.evaluate(doc, XPathConstants.STRING);
+            if (dataSourceName.isEmpty()) {
+                throw new ManifestFileParserException("DataSource element is missing or empty, manifest is invalid");                
+            }
             Path dataSourcePath = filePath.getParent().resolve(dataSourceName);
+            
             return new Manifest(filePath, dateFileCreated, caseName, deviceId, dataSourcePath, new HashMap<>());
         } catch (Exception ex) {
             throw new ManifestFileParserException(String.format("Error parsing manifest %s", filePath), ex);
