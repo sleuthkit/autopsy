@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.centralrepository.persona;
 
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
@@ -35,17 +35,36 @@ public class PersonaAliasDialog extends JDialog {
 
     private final PersonaDetailsPanel pdp;
 
+    private PersonaDetailsPanel.PAlias currentAlias = null;
+
     /**
      * Creates new add alias dialog
      */
     @Messages({"PersonaAliasDialog.title.text=Add Alias",})
     public PersonaAliasDialog(PersonaDetailsPanel pdp) {
-        super((JFrame) WindowManager.getDefault().getMainWindow(),
+        super(SwingUtilities.windowForComponent(pdp),
                 Bundle.PersonaAliasDialog_title_text(),
-                true);
+                ModalityType.APPLICATION_MODAL);
         this.pdp = pdp;
 
         initComponents();
+        display();
+    }
+
+    PersonaAliasDialog(PersonaDetailsPanel pdp, PersonaDetailsPanel.PAlias pa) {
+        super(SwingUtilities.windowForComponent(pdp),
+                Bundle.PersonaAliasDialog_title_text(),
+                ModalityType.APPLICATION_MODAL);
+        this.pdp = pdp;
+
+        initComponents();
+        currentAlias = pa;
+        confidenceComboBox.setSelectedItem(pa.confidence);
+        justificationTextField.setText(pa.justification);
+        aliasTextField.setText(pa.alias);
+
+        aliasTextField.setEnabled(false);
+
         display();
     }
 
@@ -176,9 +195,18 @@ public class PersonaAliasDialog extends JDialog {
     }
 
     @Messages({
+        "PersonaAliasDialog_empty_Title=Empty alias",
+        "PersonaAliasDialog_empty_msg=An alias cannot be empty.",
         "PersonaAliasDialog_dup_Title=Alias add failure",
         "PersonaAliasDialog_dup_msg=This alias has already been added to this persona",})
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
+        if (aliasTextField.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    Bundle.PersonaAliasDialog_empty_msg(),
+                    Bundle.PersonaAliasDialog_empty_Title(),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         if (justificationTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaDetailsPanel_empty_justification_msg(),
@@ -186,16 +214,23 @@ public class PersonaAliasDialog extends JDialog {
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
-        if (pdp.addAlias(
-                aliasTextField.getText(),
-                justificationTextField.getText(),
-                (Persona.Confidence) confidenceComboBox.getSelectedItem())) {
+
+        Persona.Confidence confidence = (Persona.Confidence) confidenceComboBox.getSelectedItem();
+        String justification = justificationTextField.getText();
+
+        if (currentAlias != null) {
+            currentAlias.confidence = confidence;
+            currentAlias.justification = justification;
             dispose();
         } else {
-            JOptionPane.showMessageDialog(this,
+            if (pdp.addAlias(aliasTextField.getText(), justification, confidence)) {
+                dispose();
+            } else {
+                JOptionPane.showMessageDialog(this,
                         Bundle.PersonaAliasDialog_dup_msg(),
                         Bundle.PersonaAliasDialog_dup_Title(),
                         JOptionPane.ERROR_MESSAGE);
+            }
         }
     }//GEN-LAST:event_okBtnActionPerformed
 
