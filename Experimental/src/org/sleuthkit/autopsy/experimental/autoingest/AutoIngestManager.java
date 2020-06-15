@@ -1539,7 +1539,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      */
     private final class JobProcessingTask implements Runnable {
 
-        
         private final Object ingestTaskMonitor;
         private final Object pauseMonitor;
         @GuardedBy("pauseMonitor")
@@ -1557,10 +1556,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
         /**
-         * Processes auto ingest jobs, blocking on a completion service for
-         * input directory scan tasks and waiting on a pause lock object when
-         * paused by a client. The task is also in a wait state when the data
-         * source processor or the analysis modules for a job are running.
+         * Processes auto ingest jobs. The task runs until it is cancelled or
+         * otherwise interrupted while blocked. The task routinely blocks
+         * waiting for input directory scans when the auto ingest jobs queue is
+         * empty and while waiting for data source processing and analysis by
+         * ingest modules to complete for the current auto ingest job. It will
+         * also block between auto ingest jobs until resumed if a pause request
+         * is received.
          */
         @Override
         public void run() {
