@@ -193,7 +193,7 @@ class PersonaSearchAndDisplayTask extends SwingWorker<Collection<Persona>, Void>
                 // update the persona name label with newly created persona, 
                 // and change the button to a "View" button
                 personaSearcherData.getPersonaNameLabel().setText(Bundle.CommunicationArtifactViewerHelper_persona_label() + persona.getName());
-                personaSearcherData.getPersonaActionButton().setText(Bundle.CallLogArtifactViewer_persona_button_view());
+                personaSearcherData.getPersonaActionButton().setText(Bundle.CommunicationArtifactViewerHelper_persona_button_view());
 
                 // replace action listener with a View button listener
                 for (ActionListener act : personaButton.getActionListeners()) {

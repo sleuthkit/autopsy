@@ -18,61 +18,37 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.event.ActionListener;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JScrollPane;
-import javax.swing.SwingWorker;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.openide.util.NbBundle;
-import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
-import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
-import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialog;
-import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialogCallback;
-import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsMode;
 
 /**
- * This is a viewer for TSK_CALLLOG artifacts.
+ * Artifact viewer for Call log artifacts.
  *
- *
+ * Displays the To/From and other parties, and metadata for a call.
  */
-//@ServiceProvider(service = ArtifactContentViewer.class)
-@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
+@ServiceProvider(service = ArtifactContentViewer.class)
 public class CallLogArtifactViewer extends javax.swing.JPanel implements ArtifactContentViewer {
-
-    private final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
 
     private final static Logger logger = Logger.getLogger(CallLogArtifactViewer.class.getName());
     private static final long serialVersionUID = 1L;
@@ -81,22 +57,20 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()
     ));
 
-    private static final int THREAD_POOL_SIZE = 5;
-    private final ExecutorService personatasksExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE,
-            new ThreadFactoryBuilder().setNameFormat("Persona-Searcher-%d").build());
+    private GridBagLayout m_gridBagLayout = new GridBagLayout();
+    private GridBagConstraints m_constraints = new GridBagConstraints();
 
-    private final List<PersonaSearcherTask> personaSearchtasks = new ArrayList<>();
-
-    private static final int TOP_INSET = 4;
+    private final List<PersonaSearchAndDisplayTask> personaSearchtasks = new ArrayList<>();
 
     /**
-     * Creates new form CalllogArtifactViewer
+     * Creates new form CallLogArtifactViewerNew
      */
     public CallLogArtifactViewer() {
         initComponents();
@@ -111,280 +85,12 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        topPanel = new javax.swing.JPanel();
-        callDetailsPanel = new javax.swing.JPanel();
-        directionLabel = new javax.swing.JLabel();
-        dateTimeLabel = new javax.swing.JLabel();
-        durationLabel = new javax.swing.JLabel();
-        callDetailsLabel = new javax.swing.JLabel();
-        onLabel = new javax.swing.JLabel();
-        callLabel = new javax.swing.JLabel();
-        participantsListPanel = new javax.swing.JPanel();
-        otherAttributesPanel = new javax.swing.JPanel();
-        otherInfoLabel = new javax.swing.JLabel();
-        otherAttributesListPanel = new javax.swing.JPanel();
-        bottomPanel = new javax.swing.JPanel();
-        localAccountInfoPanel = new javax.swing.JPanel();
-        jLabel4 = new javax.swing.JLabel();
-        dataSourceNameLabel = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        deviceIdLabel = new javax.swing.JLabel();
-        localAccountLabel = new javax.swing.JLabel();
-        localAccountIdLabel = new javax.swing.JLabel();
-        sourceSectionLabel = new javax.swing.JLabel();
-        localAccountPersonaLabel = new javax.swing.JLabel();
-        localAccountPersonaNameLabel = new javax.swing.JLabel();
-        localAccountPersonaButton = new javax.swing.JButton();
-
-        topPanel.setLayout(new java.awt.BorderLayout());
-
-        callDetailsPanel.setPreferredSize(new java.awt.Dimension(400, 150));
-
-        directionLabel.setFont(directionLabel.getFont());
-        org.openide.awt.Mnemonics.setLocalizedText(directionLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.directionLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(dateTimeLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.dateTimeLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(durationLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.durationLabel.text")); // NOI18N
-
-        callDetailsLabel.setFont(callDetailsLabel.getFont().deriveFont(callDetailsLabel.getFont().getStyle() | java.awt.Font.BOLD));
-        org.openide.awt.Mnemonics.setLocalizedText(callDetailsLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.callDetailsLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(onLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.onLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(callLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.callLabel.text")); // NOI18N
-
-        javax.swing.GroupLayout participantsListPanelLayout = new javax.swing.GroupLayout(participantsListPanel);
-        participantsListPanel.setLayout(participantsListPanelLayout);
-        participantsListPanelLayout.setHorizontalGroup(
-            participantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 350, Short.MAX_VALUE)
-        );
-        participantsListPanelLayout.setVerticalGroup(
-            participantsListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 58, Short.MAX_VALUE)
-        );
-
-        javax.swing.GroupLayout callDetailsPanelLayout = new javax.swing.GroupLayout(callDetailsPanel);
-        callDetailsPanel.setLayout(callDetailsPanelLayout);
-        callDetailsPanelLayout.setHorizontalGroup(
-            callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(callDetailsPanelLayout.createSequentialGroup()
-                .addGap(25, 25, 25)
-                .addGroup(callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(callDetailsLabel)
-                    .addGroup(callDetailsPanelLayout.createSequentialGroup()
-                        .addGap(25, 25, 25)
-                        .addGroup(callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(callDetailsPanelLayout.createSequentialGroup()
-                                .addComponent(directionLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(callLabel))
-                            .addGroup(callDetailsPanelLayout.createSequentialGroup()
-                                .addComponent(onLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(dateTimeLabel)
-                                .addGap(18, 18, 18)
-                                .addComponent(durationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addComponent(participantsListPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(485, Short.MAX_VALUE))
-        );
-        callDetailsPanelLayout.setVerticalGroup(
-            callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(callDetailsPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(callDetailsLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(participantsListPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(directionLabel)
-                    .addComponent(callLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(callDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(onLabel)
-                    .addComponent(dateTimeLabel)
-                    .addComponent(durationLabel))
-                .addGap(20, 20, 20))
-        );
-
-        topPanel.add(callDetailsPanel, java.awt.BorderLayout.CENTER);
-
-        otherInfoLabel.setFont(otherInfoLabel.getFont().deriveFont(otherInfoLabel.getFont().getStyle() | java.awt.Font.BOLD));
-        org.openide.awt.Mnemonics.setLocalizedText(otherInfoLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.otherInfoLabel.text")); // NOI18N
-
-        javax.swing.GroupLayout otherAttributesListPanelLayout = new javax.swing.GroupLayout(otherAttributesListPanel);
-        otherAttributesListPanel.setLayout(otherAttributesListPanelLayout);
-        otherAttributesListPanelLayout.setHorizontalGroup(
-            otherAttributesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 413, Short.MAX_VALUE)
-        );
-        otherAttributesListPanelLayout.setVerticalGroup(
-            otherAttributesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 88, Short.MAX_VALUE)
-        );
-
-        javax.swing.GroupLayout otherAttributesPanelLayout = new javax.swing.GroupLayout(otherAttributesPanel);
-        otherAttributesPanel.setLayout(otherAttributesPanelLayout);
-        otherAttributesPanelLayout.setHorizontalGroup(
-            otherAttributesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(otherAttributesPanelLayout.createSequentialGroup()
-                .addGroup(otherAttributesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(otherAttributesListPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(otherAttributesPanelLayout.createSequentialGroup()
-                        .addGap(25, 25, 25)
-                        .addComponent(otherInfoLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 372, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(24, 24, 24))
-        );
-        otherAttributesPanelLayout.setVerticalGroup(
-            otherAttributesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(otherAttributesPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(otherInfoLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(otherAttributesListPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-
-        topPanel.add(otherAttributesPanel, java.awt.BorderLayout.PAGE_END);
-
-        bottomPanel.setLayout(new java.awt.BorderLayout());
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.jLabel4.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(dataSourceNameLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.dataSourceNameLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.jLabel2.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(deviceIdLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.deviceIdLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(localAccountLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.localAccountLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(localAccountIdLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.localAccountIdLabel.text")); // NOI18N
-
-        sourceSectionLabel.setFont(sourceSectionLabel.getFont().deriveFont(sourceSectionLabel.getFont().getStyle() | java.awt.Font.BOLD));
-        org.openide.awt.Mnemonics.setLocalizedText(sourceSectionLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.sourceSectionLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(localAccountPersonaLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.localAccountPersonaLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(localAccountPersonaNameLabel, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.localAccountPersonaNameLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(localAccountPersonaButton, org.openide.util.NbBundle.getMessage(CallLogArtifactViewer.class, "CallLogArtifactViewer.localAccountPersonaButton.text")); // NOI18N
-
-        javax.swing.GroupLayout localAccountInfoPanelLayout = new javax.swing.GroupLayout(localAccountInfoPanel);
-        localAccountInfoPanel.setLayout(localAccountInfoPanelLayout);
-        localAccountInfoPanelLayout.setHorizontalGroup(
-            localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
-                .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
-                        .addGap(50, 50, 50)
-                        .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(localAccountLabel)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel4))
-                        .addGap(24, 24, 24)
-                        .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(deviceIdLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE)
-                            .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
-                                .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(dataSourceNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
-                                        .addComponent(localAccountIdLabel)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(localAccountPersonaLabel)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(localAccountPersonaNameLabel)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(localAccountPersonaButton)))
-                                .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
-                        .addGap(25, 25, 25)
-                        .addComponent(sourceSectionLabel)))
-                .addContainerGap(243, Short.MAX_VALUE))
-        );
-        localAccountInfoPanelLayout.setVerticalGroup(
-            localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(localAccountInfoPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(sourceSectionLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(localAccountLabel)
-                    .addComponent(localAccountIdLabel)
-                    .addComponent(localAccountPersonaLabel)
-                    .addComponent(localAccountPersonaNameLabel)
-                    .addComponent(localAccountPersonaButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(dataSourceNameLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(localAccountInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(deviceIdLabel))
-                .addContainerGap(22, Short.MAX_VALUE))
-        );
-
-        bottomPanel.add(localAccountInfoPanel, java.awt.BorderLayout.NORTH);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(topPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 860, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addComponent(bottomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(topPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(bottomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
+        setLayout(new java.awt.GridBagLayout());
     }// </editor-fold>//GEN-END:initComponents
-
-    private void reset() {
-        // cancel any outstanding persona searching threads.
-        personaSearchtasks.forEach(task -> task.cancel(Boolean.TRUE));
-        personaSearchtasks.clear();
-    }
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel bottomPanel;
-    private javax.swing.JLabel callDetailsLabel;
-    private javax.swing.JPanel callDetailsPanel;
-    private javax.swing.JLabel callLabel;
-    private javax.swing.JLabel dataSourceNameLabel;
-    private javax.swing.JLabel dateTimeLabel;
-    private javax.swing.JLabel deviceIdLabel;
-    private javax.swing.JLabel directionLabel;
-    private javax.swing.JLabel durationLabel;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel localAccountIdLabel;
-    private javax.swing.JPanel localAccountInfoPanel;
-    private javax.swing.JLabel localAccountLabel;
-    private javax.swing.JButton localAccountPersonaButton;
-    private javax.swing.JLabel localAccountPersonaLabel;
-    private javax.swing.JLabel localAccountPersonaNameLabel;
-    private javax.swing.JLabel onLabel;
-    private javax.swing.JPanel otherAttributesListPanel;
-    private javax.swing.JPanel otherAttributesPanel;
-    private javax.swing.JLabel otherInfoLabel;
-    private javax.swing.JPanel participantsListPanel;
-    private javax.swing.JLabel sourceSectionLabel;
-    private javax.swing.JPanel topPanel;
-    // End of variables declaration//GEN-END:variables
 
     @Override
     public void setArtifact(BlackboardArtifact artifact) {
-
-        this.removeAll();
-        this.initComponents();
-
-        // reset artifact specific state.
-        this.reset();
+        resetComponent();
 
         CallLogViewData callLogViewData = null;
         try {
@@ -399,263 +105,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         }
         // repaint
         this.revalidate();
-    }
 
-    /**
-     * Updates the call log viewer UI components from the given data.
-     *
-     * @param callLogViewData Call log data to display.
-     */
-    private void updateView(CallLogViewData callLogViewData) {
-
-        // populate call partcipants list.
-        updateParticipantsPanel(callLogViewData);
-
-        if (callLogViewData.getDirection() != null) {
-            this.directionLabel.setText(callLogViewData.getDirection());
-        } else {
-            this.directionLabel.setVisible(false);
-            this.callLabel.setVisible(false);
-        }
-
-        if (callLogViewData.getDateTimeStr() != null) {
-            this.dateTimeLabel.setText(callLogViewData.getDateTimeStr());
-            if (callLogViewData.getDuration() != null) {
-                this.durationLabel.setText(callLogViewData.getDuration());
-            } else {
-                this.durationLabel.setVisible(false);
-            }
-        } else {
-            this.dateTimeLabel.setVisible(false);
-            this.durationLabel.setVisible(false);
-        }
-
-        // Populate other attributes panel
-        updateOtherAttributesPanel(callLogViewData.getOtherAttributes());
-
-        // update local account
-        updateLocalAccount(callLogViewData);
-        // populate local account and data source
-
-        if (callLogViewData.getDataSourceName() != null) {
-            this.dataSourceNameLabel.setText(callLogViewData.getDataSourceName());
-        }
-        if (callLogViewData.getDataSourceDeviceId() != null) {
-            this.deviceIdLabel.setText(callLogViewData.getDataSourceDeviceId());
-        }
-    }
-
-    /**
-     * Displays the information for local account, if known.
-     *
-     * @param callLogViewData Call log data
-     */
-    private void updateLocalAccount(CallLogViewData callLogViewData) {
-        if (callLogViewData.getLocalAccountId() != null) {
-            localAccountIdLabel.setText(callLogViewData.getLocalAccountId());
-
-            // kick off a task to find the persona for this account
-            PersonaSearcherTask task = new PersonaSearcherTask(new AccountPersonaSearcherData(callLogViewData.getLocalAccountId(), localAccountPersonaNameLabel, localAccountPersonaButton));
-            personaSearchtasks.add(task);
-            personatasksExecutor.submit(task);
-
-        } else {
-            // no local account info, hide all fields.
-            localAccountLabel.setVisible(false);
-            localAccountIdLabel.setVisible(false);
-            localAccountPersonaLabel.setVisible(false);
-            localAccountPersonaNameLabel.setVisible(false);
-            localAccountPersonaLabel.setVisible(false);
-            localAccountPersonaButton.setVisible(false);
-        }
-    }
-
-    /**
-     * Updates the Call participants panel.
-     *
-     * @param callLogViewData Call log data to display.
-     */
-    private void updateParticipantsPanel(CallLogViewData callLogViewData) {
-
-        // create a gridbag layout to show each participant on one line
-        GridBagLayout gridBagLayout = new GridBagLayout();
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        constraints.gridy = 0;
-        constraints.insets = new java.awt.Insets(TOP_INSET, 0, 0, 0);
-
-        // show primary sender/receiver
-        showParticipant(callLogViewData.getNumberDesignator(), callLogViewData.getNumber(), gridBagLayout, constraints);
-        constraints.gridy++;
-
-        for (String recipient : callLogViewData.getOtherRecipients()) {
-            showParticipant(Bundle.CallLogArtifactViewer_number_to(), recipient, gridBagLayout, constraints);
-            constraints.gridy++;
-        }
-        participantsListPanel.setLayout(gridBagLayout);
-        participantsListPanel.setSize(participantsListPanel.getPreferredSize());
-
-        participantsListPanel.revalidate();
-    }
-
-    /**
-     * Display a call participant in the view.
-     *
-     * @param participantDesignator Label to show - To/From.
-     * @param accountIdentifier     account identifier for the participant.
-     * @param gridBagLayout
-     * @param constraints
-     */
-    @NbBundle.Messages({
-        "CallLogArtifactViewer_persona_label= Persona ",
-        "CallLogArtifactViewer_persona_searching=Searching...",
-        "CallLogArtifactViewer_persona_text_none=None Found",
-        "CallLogArtifactViewer_persona_button_view=View",
-        "CallLogArtifactViewer_persona_button_new=Create"
-    })
-    private void showParticipant(String participantDesignator, String accountIdentifier, GridBagLayout gridBagLayout, GridBagConstraints constraints) {
-
-        constraints.fill = GridBagConstraints.NONE;
-        constraints.weightx = 0;
-        constraints.gridx = 0;
-
-        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new Dimension(25, 0), new Dimension(25, 0), new Dimension(25, 0));
-        participantsListPanel.add(filler1, constraints);
-
-        constraints.gridx++;
-        javax.swing.JLabel toLabel = new javax.swing.JLabel();
-        toLabel.setText(participantDesignator);
-
-        gridBagLayout.setConstraints(toLabel, constraints);
-        participantsListPanel.add(toLabel);
-
-        constraints.gridx++;
-        javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new Dimension(5, 0), new Dimension(5, 0), new Dimension(5, 0));
-        participantsListPanel.add(filler2, constraints);
-
-        // Add recipients number/Id
-        constraints.gridx++;
-
-        javax.swing.JLabel participantAccountLabel = new javax.swing.JLabel();
-        participantAccountLabel.setText(accountIdentifier);
-
-        gridBagLayout.setConstraints(participantAccountLabel, constraints);
-        participantsListPanel.add(participantAccountLabel);
-
-        constraints.gridx++;
-        participantsListPanel.add(createFiller(25, 0), constraints);
-
-        // Add a "Persona: " label
-        constraints.gridx++;
-        javax.swing.JLabel personaLabel = new javax.swing.JLabel();
-        personaLabel.setText(Bundle.CallLogArtifactViewer_persona_label());
-        gridBagLayout.setConstraints(personaLabel, constraints);
-        participantsListPanel.add(personaLabel);
-
-        // Add the label for participants persona name, 
-        constraints.gridx++;
-        javax.swing.JLabel participantPersonaNameLabel = new javax.swing.JLabel();
-        participantPersonaNameLabel.setText(Bundle.CallLogArtifactViewer_persona_searching());
-        gridBagLayout.setConstraints(participantPersonaNameLabel, constraints);
-        participantsListPanel.add(participantPersonaNameLabel);
-
-        constraints.gridx++;
-        participantsListPanel.add(createFiller(5, 0), constraints);
-
-        constraints.gridx++;
-        javax.swing.JButton personaButton = new javax.swing.JButton();
-        personaButton.setText(Bundle.CallLogArtifactViewer_persona_button_view());
-        personaButton.setEnabled(false);
-
-        // no top inset of the button, in order to center align with the labels.
-        constraints.insets = new java.awt.Insets(0, 0, 0, 0);
-
-        gridBagLayout.setConstraints(personaButton, constraints);
-        participantsListPanel.add(personaButton);
-
-        constraints.insets = new java.awt.Insets(TOP_INSET, 0, 0, 0);
-
-        // Kick off a background thread to search for the persona 
-        // for this particpant account.
-        PersonaSearcherTask task = new PersonaSearcherTask(new AccountPersonaSearcherData(accountIdentifier, participantPersonaNameLabel, personaButton));
-        personaSearchtasks.add(task);
-        personatasksExecutor.submit(task);
-
-        // add a filler to take up rest of the space
-        constraints.gridx++;
-        constraints.weightx = 1.0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        participantsListPanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0)), constraints);
-    }
-
-    private javax.swing.Box.Filler createFiller(int width, int height) {
-        return new javax.swing.Box.Filler(new Dimension(width, height), new Dimension(width, height), new Dimension(width, height));
-    }
-
-    /**
-     * Updates the Other Attributes panel with the given list of attributes.
-     * This panel displays any uncommon attributes that might not be shown
-     * already.
-     *
-     * @param otherAttributes List of attributes to display.
-     */
-    private void updateOtherAttributesPanel(Map<String, String> otherAttributes) {
-        if (otherAttributes == null || otherAttributes.isEmpty()) {
-            this.otherAttributesPanel.setVisible(false);
-            return;
-        }
-
-        // create a gridbag layout to show attribute on one line
-        GridBagLayout gridBagLayout = new GridBagLayout();
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        constraints.gridy = 0;
-        constraints.insets = new java.awt.Insets(4, 12, 0, 0);
-        for (Map.Entry<String, String> attribute : otherAttributes.entrySet()) {
-            constraints.fill = GridBagConstraints.NONE;
-            constraints.weightx = 0;
-            constraints.gridx = 0;
-
-            // Add a small horizontal filler at the beginning
-            javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new Dimension(25, 0), new Dimension(25, 0), new Dimension(25, 0));
-            otherAttributesListPanel.add(filler1, constraints);
-
-            // Add attribute name label
-            constraints.gridx++;
-            javax.swing.JLabel attrNameLabel = new javax.swing.JLabel();
-            attrNameLabel.setText(attribute.getKey());
-
-            gridBagLayout.setConstraints(attrNameLabel, constraints);
-            this.otherAttributesListPanel.add(attrNameLabel);
-
-            // Add value
-            constraints.gridx += 2;
-            javax.swing.JLabel attrValueLabel = new javax.swing.JLabel();
-            attrValueLabel.setText(attribute.getValue());
-
-            gridBagLayout.setConstraints(attrValueLabel, constraints);
-            this.otherAttributesListPanel.add(attrValueLabel);
-
-            // add a filler to take up rest of the horizontal space
-            constraints.gridx++;
-            constraints.weightx = 1.0;
-            constraints.fill = GridBagConstraints.HORIZONTAL;
-            otherAttributesListPanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0)));
-
-            constraints.gridy++;
-        }
-        otherAttributesListPanel.setLayout(gridBagLayout);
-        otherAttributesListPanel.revalidate();
-    }
-
-    @Override
-    public Component getComponent() {
-        return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-    }
-
-    @Override
-    public boolean isSupported(BlackboardArtifact artifact) {
-        return artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID();
     }
 
     /**
@@ -667,9 +117,6 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      *
      * @throws TskCoreException
      */
-    @NbBundle.Messages({
-        "CallLogArtifactViewer_number_from=From",
-        "CallLogArtifactViewer_number_to=To"})
     private CallLogViewData getCallLogViewData(BlackboardArtifact artifact) throws TskCoreException {
 
         if (artifact == null) {
@@ -677,34 +124,47 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         }
 
         BlackboardAttribute directionAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION));
-        BlackboardAttribute recipientsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO));
-        BlackboardAttribute numberAttr = null;
+        BlackboardAttribute toAccountAttr = null;
+        BlackboardAttribute fromAccountAttr = null;
         BlackboardAttribute localAccountAttr = null;
 
         CallLogViewData callLogViewData = null;
+
         String direction = null;
-        String numberDesignator = null;
+        String fromAccountIdentifier = null;
+        String toAccountIdentifier = null;
+        List<String> otherParties = null;
+
+        Content dataSource = artifact.getDataSource();
+        String deviceId = ((DataSource) dataSource).getDeviceId();
 
         if (directionAttr != null) {
-            // if direction is known,  depending on the direction,
-            // the TO or the FROM attribute is the primary number of interest.
-            // and the other, if available, is possibly the local account of device owner.
             direction = directionAttr.getValueString();
-
             if (direction.equalsIgnoreCase("Incoming")) {
-                numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
-                localAccountAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO));
-                numberDesignator = Bundle.CallLogArtifactViewer_number_from();
-            } else if (direction.equalsIgnoreCase("Outgoing")) {
-                numberAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO));
-                localAccountAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
-                numberDesignator = Bundle.CallLogArtifactViewer_number_to();
-            }
+                fromAccountAttr = ObjectUtils.firstNonNull(
+                        artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)),
+                        artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)),
+                        artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID))
+                );
 
+                toAccountAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO));
+                localAccountAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO));
+            } else if (direction.equalsIgnoreCase("Outgoing")) {
+                toAccountAttr = ObjectUtils.firstNonNull(
+                        artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)),
+                        artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)),
+                        artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID))
+                );
+
+                fromAccountAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
+                localAccountAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
+            }
         }
+
         // if direction isn't known, check all the usual attributes that may have the number/address
-        if (numberAttr == null) {
-            numberAttr = ObjectUtils.firstNonNull(
+        // in the absence of sufficent data, any number availabel will be displayed as a From address.
+        if (fromAccountAttr == null) {
+            fromAccountAttr = ObjectUtils.firstNonNull(
                     artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)),
                     artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)),
                     artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)),
@@ -712,41 +172,51 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             );
         }
 
-        if (numberAttr != null) {
+        if (fromAccountAttr != null) {
+            String fromAccountAttrValue = fromAccountAttr.getValueString();
+            if (fromAccountAttrValue.equalsIgnoreCase(deviceId) == false) {
+                fromAccountIdentifier = fromAccountAttrValue;
+            }
+        }
 
-            // check if it's a list of numbers and if so,
-            // split it, take the first one.
-            String[] numbers = numberAttr.getValueString().split(",");
+        if (toAccountAttr != null) {
+            // TO may be a list of comma separated values.
+            String[] numbers = toAccountAttr.getValueString().split(",");
+            String toAccountAttrValue = StringUtils.trim(numbers[0]);
+            if (toAccountAttrValue.equalsIgnoreCase(deviceId) == false) {
+                toAccountIdentifier = toAccountAttrValue;
+            }
 
-            // create a CallLogViewData with the primary number/id.
-            callLogViewData = new CallLogViewData(StringUtils.trim(numbers[0]));
+            // if more than one To address, then stcik the rest of them in the 
+            // "Other parties" list.
+            if (numbers.length > 1) {
+                otherParties = new ArrayList<>();
+                for (int i = 1; i < numbers.length; i++) {
+                    otherParties.add(StringUtils.trim(numbers[i]));
+                }
+            }
+        }
 
-            // set direction
+        // if we have at least one address attribute
+        if (null != fromAccountAttr || null != toAccountAttr) {
+            callLogViewData = new CallLogViewData(fromAccountIdentifier, toAccountIdentifier);
             callLogViewData.setDirection(direction);
-            callLogViewData.setNumberDesignator(numberDesignator);
 
-            // get other recipients
-            extractOtherRecipeints(recipientsAttr, directionAttr, callLogViewData);
+            callLogViewData.setOtherParties(otherParties);
 
-            // get date, duration,
             extractTimeAndDuration(artifact, callLogViewData);
 
-            // get the data source name and device id
-            Content dataSource = artifact.getDataSource();
-
             callLogViewData.setDataSourceName(dataSource.getName());
-            String deviceId = ((DataSource) dataSource).getDeviceId();
-            callLogViewData.setDataSourceDeviceId(deviceId);
 
-            // set the local account, if it can be deduced
+            // set local account, if it can be deduced.
             if (localAccountAttr != null) {
                 String attrValue = localAccountAttr.getValueString();
+                // value must be a singular address and not a deviceId to be the local account id
                 if (attrValue.equalsIgnoreCase(deviceId) == false && attrValue.contains(",") == false) {
                     callLogViewData.setLocalAccountId(attrValue);
                 }
             }
 
-            // set any other additional attriubutes.
             callLogViewData.setOtherAttributes(extractOtherAttributes(artifact));
         }
 
@@ -754,36 +224,33 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     }
 
     /**
-     * Extracts the other recipients numbers from the given attribute. Updates
-     * the given CallLogViewData with the other recipients list.
+     * Extract the call time and duration from the artifact and saves in the
+     * CallLogViewData.
      *
-     * @param recipientsAttr  TO attribute, must not be null.
-     * @param directionAttr   Direction attribute.
-     * @param callLogViewData CallLogViewData object to update.
+     * @param artifact Call log artifact.
+     * @param callLogViewData CallLogViewData object to save the time & duration
+     * in.
      *
+     * @throws TskCoreException
      */
-    private void extractOtherRecipeints(BlackboardAttribute recipientsAttr, BlackboardAttribute directionAttr, CallLogViewData callLogViewData) {
-        if (recipientsAttr == null) {
-            return;
+    private void extractTimeAndDuration(BlackboardArtifact artifact, CallLogViewData callLogViewData) throws TskCoreException {
+
+        BlackboardAttribute startTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
+        if (startTimeAttr == null) {
+            startTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
         }
-        // check if it's a list of numbers and and if so,
-        // split it,
-        String[] numbers = recipientsAttr.getValueString().split(",");
-        List<String> otherNumbers = null;
-        int startIdx = 0;
-        // for an outgoing call, the first number has already been plucked as the primary recipient.
-        // for an incoming call with multiple recipeints, we can't distinguish the local account number, so everyone is "other"
-        if (directionAttr != null && directionAttr.getValueString().equalsIgnoreCase("Outgoing")) {
-            startIdx = 1;
-        }
-        if (numbers.length > 1) {
-            otherNumbers = new ArrayList<>();
-            for (int i = startIdx; i < numbers.length; i++) {
-                otherNumbers.add(StringUtils.trim(numbers[i]));
+        if (startTimeAttr != null) {
+            long startTime = startTimeAttr.getValueLong();
+            callLogViewData.setDateTimeStr(startTimeAttr.getDisplayString());
+
+            BlackboardAttribute endTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END));
+            if (endTimeAttr != null) {
+                long endTime = endTimeAttr.getValueLong();
+                if (endTime > 0 && (endTime - startTime) > 0) {
+                    callLogViewData.setDuration(String.format("%d seconds", (endTime - startTime)));
+                }
             }
         }
-
-        callLogViewData.setOtherRecipients(otherNumbers);
     }
 
     /**
@@ -810,233 +277,175 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     }
 
     /**
-     * Extract the call time and duration from the artifact and saves in the
-     * CallLogViewData.
+     * Update the viewer with the call log data.
      *
-     * @param artifact        Call log artifact.
-     * @param callLogViewData CallLogViewData object to save the time & duration
-     *                        in.
+     * @param callLogViewData Call log data to update the view with.
+     */
+    @NbBundle.Messages({
+        "CallLogArtifactViewer_heading_parties=Parties",
+        "CallLogArtifactViewer_value_unknown=Unknown",
+        "CallLogArtifactViewer_label_from=From",
+        "CallLogArtifactViewer_label_to=To"
+    })
+    private void updateView(CallLogViewData callLogViewData) {
+
+        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_heading_parties());
+
+        // Display From address
+        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_from());
+
+        if (callLogViewData.getFromAccount() != null) {
+            // check if this is local account
+            String accountDisplayString = getAccountDisplayString(callLogViewData.getFromAccount(), callLogViewData);
+            CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, accountDisplayString);
+
+            // show persona
+            Optional<PersonaSearchAndDisplayTask> task = CommunicationArtifactViewerHelper.addPersonaRow(this, m_gridBagLayout, this.m_constraints, callLogViewData.getFromAccount());
+            if (task.isPresent()) {
+                personaSearchtasks.add(task.get());
+            }
+        } else {
+            CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_value_unknown());
+        }
+
+        // Display To:
+        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_to());
+        if (callLogViewData.getToAccount() != null) {
+            String accountDisplayString = getAccountDisplayString(callLogViewData.getToAccount(), callLogViewData);
+            CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, accountDisplayString);
+
+            Optional<PersonaSearchAndDisplayTask> task = CommunicationArtifactViewerHelper.addPersonaRow(this, m_gridBagLayout, this.m_constraints, callLogViewData.getToAccount());
+            if (task.isPresent()) {
+                personaSearchtasks.add(task.get());
+            }
+        } else {
+            CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_value_unknown());
+        }
+
+        // Display other parties
+        for (String otherParty : callLogViewData.getOtherParties()) {
+            CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_to());
+            CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, otherParty);
+
+            Optional<PersonaSearchAndDisplayTask> task = CommunicationArtifactViewerHelper.addPersonaRow(this, m_gridBagLayout, this.m_constraints, otherParty);
+            if (task.isPresent()) {
+                personaSearchtasks.add(task.get());
+            }
+        }
+
+        updateMetadataView(callLogViewData);
+        updateSourceView(callLogViewData);
+
+        CommunicationArtifactViewerHelper.addPageEndGlue(this, m_gridBagLayout, this.m_constraints);
+
+        this.setLayout(m_gridBagLayout);
+        this.revalidate();
+        this.repaint();
+    }
+
+    /**
+     * Update the call log meta data section.
      *
-     * @throws TskCoreException
+     * @param callLogViewData Call log data.
      */
-    private void extractTimeAndDuration(BlackboardArtifact artifact, CallLogViewData callLogViewData) throws TskCoreException {
+    @NbBundle.Messages({
+        "CallLogArtifactViewer_heading_metadata=Metadata",
+        "CallLogArtifactViewer_label_direction=Direction",
+        "CallLogArtifactViewer_label_date=Date",
+        "CallLogArtifactViewer_label_duration=Duration"
+    })
+    private void updateMetadataView(CallLogViewData callLogViewData) {
 
-        BlackboardAttribute startTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
-        if (startTimeAttr == null) {
-            startTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
-        }
-        if (startTimeAttr != null) {
-            long startTime = startTimeAttr.getValueLong();
-            Content content = artifact.getDataSource();
-            if (null != content && 0 != startTime) {
-                dateFormatter.setTimeZone(ContentUtils.getTimeZone(content));
-                callLogViewData.setDateTimeStr(dateFormatter.format(new java.util.Date(startTime * 1000)));
-            }
+        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_heading_metadata());
 
-            BlackboardAttribute endTimeAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END));
-            if (endTimeAttr != null) {
-                long endTime = endTimeAttr.getValueLong();
-                if (endTime > 0 && (endTime - startTime) > 0) {
-                    callLogViewData.setDuration(String.format("%d seconds", (endTime - startTime)));
-                }
-            }
+        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_direction());
+        if (callLogViewData.getDirection() != null) {
+            CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, callLogViewData.getDirection());
+        } else {
+            CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_value_unknown());
         }
+
+        if (callLogViewData.getDateTimeStr() != null) {
+            CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_date());
+            CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, callLogViewData.getDateTimeStr());
+        }
+
+        if (callLogViewData.getDuration() != null) {
+            CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_duration());
+            CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, callLogViewData.getDuration());
+        }
+
     }
 
     /**
-     * A data bag for the persona searching thread. It wraps the account id to
-     * search for, and the UI label and button to update once the search
-     * completes.
+     * Update the call log source section.
+     *
+     * @param callLogViewData
      */
-    private class AccountPersonaSearcherData {
-
-        // Account identifier to search personas for.
-        private final String accountIdentifer;
-        // Persona name label to be updated when the search is complete.
-        private final JLabel personaNameLabel;
-        // Persona action button to be updated when the search is complete
-        private final JButton personaActionButton;
-
-        AccountPersonaSearcherData(String accountIdentifer, JLabel personaNameLabel, JButton personaActionButton) {
-            this.accountIdentifer = accountIdentifer;
-            this.personaNameLabel = personaNameLabel;
-            this.personaActionButton = personaActionButton;
-        }
-
-        public String getAccountIdentifer() {
-            return accountIdentifer;
-        }
-
-        public JLabel getPersonaNameLabel() {
-            return personaNameLabel;
-        }
-
-        public JButton getPersonaActionButton() {
-            return personaActionButton;
-        }
+    @NbBundle.Messages({
+        "CallLogArtifactViewer_heading_Source=Source",
+        "CallLogArtifactViewer_label_datasource=Data Source",})
+    private void updateSourceView(CallLogViewData callLogViewData) {
+        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_heading_Source());
+        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_datasource());
+        CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, callLogViewData.getDataSourceName());
     }
 
     /**
-     * Thread to search for a persona for a given account identifier and update
-     * the persona name and button.
+     * Returns display string for a account. Checks if the given account is the
+     * local account, if it is known. If it is, it appends a "(Local)" suffix to
+     * account display string.
+     *
+     * @param accountIdentifier Account identifier to check.
+     * @param callLogViewDataNew Call log data which may have the lock account.
+     *
+     * @return Account string to display.
      */
-    private class PersonaSearcherTask extends SwingWorker<Collection<Persona>, Void> {
-
-        private final AccountPersonaSearcherData personaSearcherData;
-
-        PersonaSearcherTask(AccountPersonaSearcherData personaSearcherData) {
-            this.personaSearcherData = personaSearcherData;
+    private String getAccountDisplayString(String accountIdentifier, CallLogViewData callLogViewDataNew) {
+        String accountDisplayValue = accountIdentifier;
+        if (callLogViewDataNew.getLocalAccountId() != null && callLogViewDataNew.getLocalAccountId().equalsIgnoreCase(accountIdentifier)) {
+            accountDisplayValue += " (Local)";
         }
+        return accountDisplayValue;
+    }
 
-        @Override
-        protected Collection<Persona> doInBackground() throws Exception {
+    @Override
+    public Component getComponent() {
+        return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    }
 
-            Collection<Persona> personas = new ArrayList<>();
-
-            if (CentralRepository.isEnabled()) {
-                Collection<CentralRepoAccount> accountCandidates
-                        = CentralRepoAccount.getAccountsWithIdentifier(personaSearcherData.getAccountIdentifer());
-
-                if (accountCandidates.isEmpty() == false) {
-                    CentralRepoAccount account = accountCandidates.iterator().next();
-
-                    // get personas for the account
-                    Collection<PersonaAccount> personaAccountsList = PersonaAccount.getPersonaAccountsForAccount(account.getId());
-                    personas = personaAccountsList.stream().map(PersonaAccount::getPersona)
-                            .collect(Collectors.toList());
-                }
-            }
-            return personas;
-        }
-
-        @Override
-        protected void done() {
-            Collection<Persona> personas;
-            try {
-                personas = super.get();
-
-                if (this.isCancelled()) {
-                    return;
-                }
-
-                //Update the Persona label and button based on the search result
-                String personaLabelText;
-                String personaButtonText;
-                ActionListener buttonActionListener;
-
-                if (personas.isEmpty()) {
-                    // No persona found
-                    personaLabelText = Bundle.CallLogArtifactViewer_persona_text_none();
-
-                    // show a 'New' button
-                    personaButtonText = Bundle.CallLogArtifactViewer_persona_button_new();
-                    buttonActionListener = new CreatePersonaButtonListener(personaSearcherData);
-                } else {
-                    Persona persona = personas.iterator().next();
-                    personaLabelText = persona.getName();
-                    if (personas.size() > 1) {
-                        personaLabelText += String.format("  (1 of %d)", personas.size());
-                    }
-                    // Show a 'View' button
-                    personaButtonText = Bundle.CallLogArtifactViewer_persona_button_view();
-                    buttonActionListener = new ViewPersonaButtonListener(persona);
-                }
-
-                personaSearcherData.getPersonaNameLabel().setText(personaLabelText);
-                personaSearcherData.getPersonaActionButton().setText(personaButtonText);
-                personaSearcherData.getPersonaActionButton().setEnabled(true);
-
-                // set button action
-                personaSearcherData.getPersonaActionButton().addActionListener(buttonActionListener);
-            } catch (CancellationException ex) {
-                logger.log(Level.INFO, "Persona searching was canceled."); //NON-NLS
-            } catch (InterruptedException ex) {
-                logger.log(Level.INFO, "Persona searching was interrupted."); //NON-NLS
-            } catch (ExecutionException ex) {
-                logger.log(Level.SEVERE, "Fatal error during Persona search.", ex); //NON-NLS
-            }
-
-        }
+    @Override
+    public boolean isSupported(BlackboardArtifact artifact) {
+        return artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID();
     }
 
     /**
-     * Action listener for Create persona button.
+     * Resets all artifact specific state.
      */
-    private class CreatePersonaButtonListener implements ActionListener {
+    private void resetComponent() {
 
-        private final AccountPersonaSearcherData personaSearcherData;
+        // cancel any outstanding persona searching threads.
+        personaSearchtasks.forEach(task -> task.cancel(Boolean.TRUE));
+        personaSearchtasks.clear();
 
-        CreatePersonaButtonListener(AccountPersonaSearcherData personaSearcherData) {
-            this.personaSearcherData = personaSearcherData;
-        }
+        // clear the panel 
+        this.removeAll();
+        this.setLayout(null);
 
-        @Override
-        public void actionPerformed(java.awt.event.ActionEvent evt) {
-            // Launch the Persona Create dialog
-            new PersonaDetailsDialog(CallLogArtifactViewer.this,
-                    PersonaDetailsMode.CREATE, null, new PersonaCreateCallbackImpl(personaSearcherData));
-        }
+        m_gridBagLayout = new GridBagLayout();
+        m_constraints = new GridBagConstraints();
+
+        m_constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        m_constraints.gridy = 0;
+        m_constraints.gridx = 0;
+        m_constraints.weighty = 0.05;
+        m_constraints.weightx = 0.05;
+        m_constraints.insets = new java.awt.Insets(0, 0, 0, 0);
+        m_constraints.fill = GridBagConstraints.NONE;
+
     }
 
-    /**
-     * Action listener for View persona button.
-     */
-    private class ViewPersonaButtonListener implements ActionListener {
 
-        private final Persona persona;
-
-        ViewPersonaButtonListener(Persona persona) {
-            this.persona = persona;
-        }
-
-        @Override
-        public void actionPerformed(java.awt.event.ActionEvent evt) {
-            new PersonaDetailsDialog(CallLogArtifactViewer.this,
-                    PersonaDetailsMode.VIEW, persona, new PersonaViewCallbackImpl());
-        }
-    }
-
-    /**
-     * Callback method for the create mode of the PersonaDetailsDialog
-     */
-    class PersonaCreateCallbackImpl implements PersonaDetailsDialogCallback {
-
-        private final AccountPersonaSearcherData personaSearcherData;
-
-        PersonaCreateCallbackImpl(AccountPersonaSearcherData personaSearcherData) {
-            this.personaSearcherData = personaSearcherData;
-        }
-
-        @Override
-        public void callback(Persona persona) {
-            JButton personaButton = personaSearcherData.getPersonaActionButton();
-            if (persona != null) {
-                // update the persona name label with newly created persona, 
-                // and change the button to a "View" button
-                personaSearcherData.getPersonaNameLabel().setText(persona.getName());
-                personaSearcherData.getPersonaActionButton().setText(Bundle.CallLogArtifactViewer_persona_button_view());
-
-                // replace action listener with a View button listener
-                for (ActionListener act : personaButton.getActionListeners()) {
-                    personaButton.removeActionListener(act);
-                }
-                personaButton.addActionListener(new ViewPersonaButtonListener(persona));
-
-            }
-
-            personaButton.getParent().revalidate();
-        }
-    }
-
-    /**
-     * Callback method for the view mode of the PersonaDetailsDialog
-     */
-    class PersonaViewCallbackImpl implements PersonaDetailsDialogCallback {
-
-        @Override
-        public void callback(Persona persona) {
-            // nothing to do 
-        }
-    }
-
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // End of variables declaration//GEN-END:variables
 }
