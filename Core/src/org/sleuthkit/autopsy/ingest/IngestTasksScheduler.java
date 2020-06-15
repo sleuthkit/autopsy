@@ -110,15 +110,15 @@ final class IngestTasksScheduler {
 
     /**
      * Schedules a data source level ingest task and zero to many file level 
-     * ingest tasks for a data source ingest ingestJobPipeline.
+     * ingest tasks for an ingest job pipeline.
      *
-     * @param ingestJobPipeline The data source ingest ingestJobPipeline.
+     * @param ingestJobPipeline The ingest job pipeline.
      */
     synchronized void scheduleIngestTasks(IngestJobPipeline ingestJobPipeline) {
         if (!ingestJobPipeline.isCancelled()) {
             /*
              * Scheduling of both the data source ingest task and the initial
-             * file ingest tasks for a ingestJobPipeline must be an atomic operation.
+             * file ingest tasks for an ingestJobPipeline must be an atomic operation.
              * Otherwise, the data source task might be completed before the
              * file tasks are scheduled, resulting in a potential false positive
              * when another thread checks whether or not all the tasks for the
@@ -130,9 +130,9 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * Schedules a data source level ingest task for a data source ingest ingestJobPipeline.
+     * Schedules a data source level ingest task for an ingest job pipeline.
      *
-     * @param ingestJobPipeline The data source ingest ingestJobPipeline.
+     * @param ingestJobPipeline The ingest job pipeline.
      */
     synchronized void scheduleDataSourceIngestTask(IngestJobPipeline ingestJobPipeline) {
         if (!ingestJobPipeline.isCancelled()) {
@@ -148,9 +148,9 @@ final class IngestTasksScheduler {
 
     /**
      * Schedules file tasks for either all the files or a given subset of the
- files for a data source source ingest ingestJobPipeline.
+     * files for an ingest job pipeline.
      *
-     * @param ingestJobPipeline   The data source ingest ingestJobPipeline.
+     * @param ingestJobPipeline   The ingest job pipeline.
      * @param files A subset of the files for the data source; if empty, then
      *              file tasks for all files in the data source are scheduled.
      */
@@ -168,14 +168,14 @@ final class IngestTasksScheduler {
                     this.rootFileTaskQueue.add(task);
                 }
             }
-            shuffleFileTaskQueues();
+            refillIngestThreadQueue();
         }
     }
     
     /**
      * Schedules file tasks for the given list of file IDs.
      *
-     * @param ingestJobPipeline   The data source ingest ingestJobPipeline.
+     * @param ingestJobPipeline   The ingest job pipeline.
      * @param files A subset of the files for the data source; if empty, then
      *              file tasks for all files in the data source are scheduled.
      */
@@ -187,14 +187,14 @@ final class IngestTasksScheduler {
                 FileIngestTask task = new FileIngestTask(ingestJobPipeline, id);
                 this.streamedTasksQueue.add(task);
             }
-            shuffleFileTaskQueues();
+            refillIngestThreadQueue();
         }
     }    
 
     /**
-     * Schedules file level ingest tasks for a given set of files for a data
- source ingest ingestJobPipeline by adding them directly to the front of the file tasks
- queue for the ingest manager's file ingest threads.
+     * Schedules file level ingest tasks for a given set of files for an ingest
+     * job pipeline by adding them directly to the front of the file tasks
+     * queue for the ingest manager's file ingest threads.
      *
      * @param ingestJobPipeline   The ingestJobPipeline.
      * @param files A set of files for the data source.
@@ -203,7 +203,7 @@ final class IngestTasksScheduler {
         if (!ingestJobPipeline.isCancelled()) {
             /*
              * Put the files directly into the queue for the file ingest
-             * threads, if they pass the file filter for the ingestJobPipeline. The files are
+             * threads, if they pass the file filter for the job. The files are
              * added to the queue for the ingest threads BEFORE the other queued
              * tasks because the use case for this method is scheduling new
              * carved or derived files from a higher priority task that is
@@ -242,7 +242,7 @@ final class IngestTasksScheduler {
      */
     synchronized void notifyTaskCompleted(FileIngestTask task) {
         this.fileIngestThreadsQueue.taskCompleted(task);
-        shuffleFileTaskQueues();
+        refillIngestThreadQueue();
     }
 
     /**
@@ -321,10 +321,10 @@ final class IngestTasksScheduler {
      * Schedules file ingest tasks for the ingest manager's file ingest threads.
      * Files from streaming ingest will be prioritized.
      */
-    synchronized private void shuffleFileTaskQueues() {
+    synchronized private void refillIngestThreadQueue() {
 	try {
-	    shuffleStreamingFileTaskQueues();
-	    shuffleRootFileTaskQueues();
+	    takeFromStreamingTaskQueue();
+	    takeFromBatchTasksQueues();
 	} catch (InterruptedException ex) {
 	    IngestTasksScheduler.logger.log(Level.INFO, "Ingest tasks scheduler interrupted while blocked adding a task to the file level ingest task queue", ex);
 	    Thread.currentThread().interrupt();
@@ -335,7 +335,7 @@ final class IngestTasksScheduler {
      * Move tasks from the streamedTasksQueue into the fileIngestThreadsQueue.
      * Will attempt to move as many tasks as there are ingest threads.
      */
-    synchronized private void shuffleStreamingFileTaskQueues() throws InterruptedException {
+    synchronized private void takeFromStreamingTaskQueue() throws InterruptedException {
 	/*
 	 * Schedule files from the streamedTasksQueue
 	 */
@@ -388,7 +388,7 @@ final class IngestTasksScheduler {
      * during ingest. The reason for the LIFO additions is to give priority to
      * files derived from prioritized files.
      */
-    synchronized private void shuffleRootFileTaskQueues() throws InterruptedException {
+    synchronized private void takeFromBatchTasksQueues() throws InterruptedException {
 	
         while (this.fileIngestThreadsQueue.isEmpty()) {	    
             /*

@@ -220,7 +220,7 @@ public final class IngestJob {
         /*
          * Try to start each data source ingest job. Note that there is an
          * assumption here that if there is going to be a module
-         * startup failure, it will be for the first data source ingest ingestJobPipeline.
+         * startup failure, it will be for the first ingest job pipeline.
          *
          * TODO (RC): Consider separating module start up from pipeline startup
          * so that no processing is done if this assumption is false.

@@ -24,15 +24,14 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * This class manages a sequence of file level ingest modules for a data source
- ingest ingestJobPipeline. It starts the modules, runs files through them, and shuts them
+ * This class manages a sequence of file level ingest modules for an
+ * ingest job pipeline. It starts the modules, runs files through them, and shuts them
  * down when file level ingest is complete.
  * <p>
  * This class is thread-safe.
