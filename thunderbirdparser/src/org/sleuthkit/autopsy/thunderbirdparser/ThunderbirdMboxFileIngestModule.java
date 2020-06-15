@@ -81,7 +81,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private Blackboard blackboard;
     private CommunicationArtifactsHelper communicationArtifactsHelper;
     
-    private static final int MBOX_SIZE_TO_SPLIT = 104857600;
+    private static final int MBOX_SIZE_TO_SPLIT = 1048576000;
     private static final int TO_FILE_BUFFER_SIZE = 8192;
 //    private static final int MBOX_SIZE_TO_SPLIT = 2099751000;
     private Case currentCase;
@@ -379,8 +379,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
            
         return mboxSplitOffset;
-        
-        
+               
     }
     
     
