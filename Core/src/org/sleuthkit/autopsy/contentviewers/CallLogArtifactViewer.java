@@ -68,7 +68,7 @@ import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsMode;
  *
  *
  */
-@ServiceProvider(service = ArtifactContentViewer.class)
+//@ServiceProvider(service = ArtifactContentViewer.class)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class CallLogArtifactViewer extends javax.swing.JPanel implements ArtifactContentViewer {
 
