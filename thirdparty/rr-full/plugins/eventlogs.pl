@@ -57,9 +57,11 @@ sub pluginmain {
 			::rptMsg($win_path);
 			::rptMsg("LastWrite Time ".gmtime($win->get_timestamp())." (UTC)");
 			my $cn;
-			if ($cn = $win->get_value("ComputerName")->get_data()) {
-				::rptMsg("ComputerName = ".$cn);				
-			}
+            if (defined($win->get_value("ComputerName"))) {
+			    if ($cn = $win->get_value("ComputerName")->get_data()) {
+				    ::rptMsg("ComputerName = ".$cn);				
+			    }
+            }
 			else {
 				::rptMsg("ComputerName value not found.");
 			}
@@ -81,9 +83,15 @@ sub pluginmain {
 				::rptMsg("	".$evpath);
 				::rptMsg("	LastWrite Time ".gmtime($evlog->get_timestamp())." (UTC)");
 				::rptMsg("	Configuration Settings");
-				::rptMsg("		Log location: ".$evlog->get_value('File')->get_data());
-				::rptMsg("		Log Size: ".$evlog->get_value('MaxSize')->get_data()." Bytes");
-				($evlog->get_value('AutoBackupLogFiles') == 0x0) ? ::rptMsg("		AutoBackupLogFiles is Disabled") : ::rptMsg("		AutoBackupLogFiles is Enabled")
+                if (defined($evlog->get_value('File'))) {
+                    ::rptMsg("		Log location: ".$evlog->get_value('File')->get_data());
+                }
+                if (defined($evlog->get_value('MaxSize'))) {
+				    ::rptMsg("		Log Size: ".$evlog->get_value('MaxSize')->get_data()." Bytes");
+                }
+                if (defined($evlog->get_value('AutoBackupLogFiles'))) {
+				    ($evlog->get_value('AutoBackupLogFiles') == 0x0) ? ::rptMsg("		AutoBackupLogFiles is Disabled") : ::rptMsg("		AutoBackupLogFiles is Enabled")
+                }
 			}
 			else {
 				::rptMsg($logname->get_name()." Event Log not found.");
