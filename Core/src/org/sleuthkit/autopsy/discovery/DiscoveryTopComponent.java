@@ -21,17 +21,10 @@ package org.sleuthkit.autopsy.discovery;
 import com.google.common.eventbus.Subscribe;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JSplitPane;
-import javax.swing.SwingConstants;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import org.openide.util.NbBundle;
@@ -92,7 +85,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         BasicSplitPaneDividerImpl(BasicSplitPaneUI ui) {
             super(ui);
             this.setLayout(new BorderLayout());
-            this.add(new LabeledSplitPaneDivider());
+            this.add(new ResultsSplitPaneDivider());
         }
 
         private static final long serialVersionUID = 1L;
@@ -107,7 +100,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         return (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
     }
 
-    /**
+/**
      * Reset the top component so it isn't displaying any results.
      */
     public void resetTopComponent() {
