@@ -47,6 +47,7 @@ import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialog;
@@ -444,12 +445,17 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      * @throws CentralRepoException
      */
     @NbBundle.Messages({
-        "ContactArtifactViewer_persona_searching= Searching..."
+        "ContactArtifactViewer_persona_searching= Searching...",
+        "ContactArtifactViewer_persona_unknown=Unknown"
     })
     private void initiatePersonasSearch(List<BlackboardAttribute> accountAttributesList) throws CentralRepoException {
 
         personasLabel.setVisible(true);
 
+        String personaStatusLabelText = CentralRepository.isEnabled() 
+                                    ? Bundle.ContactArtifactViewer_persona_searching()
+                : Bundle.ContactArtifactViewer_persona_unknown();
+        
         // create a gridbag layout to show each participant on one line
         GridBagLayout gridBagLayout = new GridBagLayout();
         GridBagConstraints constraints = new GridBagConstraints();
@@ -471,19 +477,27 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         personasPanel.add(personaLabel);
 
         constraints.gridy++;
-        javax.swing.JLabel primaryPersonaNameLabel = new javax.swing.JLabel();
-        primaryPersonaNameLabel.setText(Bundle.ContactArtifactViewer_persona_searching());
-        gridBagLayout.setConstraints(primaryPersonaNameLabel, constraints);
-        personasPanel.add(primaryPersonaNameLabel);
+        javax.swing.JLabel personaStatusLabel = new javax.swing.JLabel();
+        personaStatusLabel.setText(personaStatusLabelText);
+        gridBagLayout.setConstraints(personaStatusLabel, constraints);
+        personasPanel.add(personaStatusLabel);
+
+    
+        if (CentralRepository.isEnabled() ) {
+            personasLabel.setEnabled(true);
+            
+            // Kick off a background task to serach for personas for the contact
+            ContactPersonaSearcherTask personaSearchTask = new ContactPersonaSearcherTask(accountAttributesList);
+            personaSearchTask.execute();
+        } else {
+            personasLabel.setEnabled(false);
+            personaLabel.setEnabled(false);
+            personaStatusLabel.setEnabled(false);
+        }
 
         personasPanel.setLayout(gridBagLayout);
         personasPanel.revalidate();
         personasPanel.repaint();
-
-        // Kick off a background task to serach for personas for the contact
-        ContactPersonaSearcherTask personaSearchTask = new ContactPersonaSearcherTask(accountAttributesList);
-        personaSearchTask.execute();
-
     }
 
     /**
