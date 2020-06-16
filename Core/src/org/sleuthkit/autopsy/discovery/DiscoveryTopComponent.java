@@ -19,17 +19,19 @@
 package org.sleuthkit.autopsy.discovery;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
+import java.awt.Cursor;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.swing.Box.Filler;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+import javax.swing.SwingConstants;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import org.openide.util.NbBundle;
@@ -79,48 +81,21 @@ public final class DiscoveryTopComponent extends TopComponent {
         rightSplitPane.setUI(new BasicSplitPaneUI() {
             @Override
             public BasicSplitPaneDivider createDefaultDivider() {
-                return new LabeledSplitPaneDivider(this);
+                return new BasicSplitPaneDividerImpl(this);
+
             }
         });
     }
 
-    private final class LabeledSplitPaneDivider extends BasicSplitPaneDivider {
+    final class BasicSplitPaneDividerImpl extends BasicSplitPaneDivider {
+
+        BasicSplitPaneDividerImpl(BasicSplitPaneUI ui) {
+            super(ui);
+            this.setLayout(new BorderLayout());
+            this.add(new LabeledSplitPaneDivider());
+        }
 
         private static final long serialVersionUID = 1L;
-
-        LabeledSplitPaneDivider(BasicSplitPaneUI ui) {
-            super(ui);
-            this.add(new JLabel("Details Area"));
-            this.add(new Filler(new Dimension(0, 0), new Dimension(0, 0), new Dimension(32000, 0)));
-            JButton upButton = new JButton(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/discovery/arrow-up.png")));
-            upButton.setBorder(null);
-            upButton.addActionListener(new java.awt.event.ActionListener() {
-                @Override
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    handleDetailsVisibleEvent(new DiscoveryEventUtils.DetailsVisibleEvent(true));
-                }
-            });
-            this.add(upButton);
-            JButton downButton = new JButton(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/discovery/arrow-down.png")));
-            downButton.setBorder(null);
-            downButton.addActionListener(new java.awt.event.ActionListener() {
-                @Override
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    handleDetailsVisibleEvent(new DiscoveryEventUtils.DetailsVisibleEvent(false));
-                }
-            });
-            this.add(downButton);
-            this.setLayout(new FlowLayout(FlowLayout.LEFT));
-        }
-
-        @Override
-        public void paint(Graphics g) {
-
-            this.setLayout(new FlowLayout(FlowLayout.LEFT));
-            g.setColor(new Color(170, 170, 170));
-            g.fillRect(0, 0, getSize().width, getSize().height);
-            super.paint(g);
-        }
     }
 
     /**
@@ -183,7 +158,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         mainSplitPane.setDividerLocation(250);
         mainSplitPane.setPreferredSize(new java.awt.Dimension(1100, 700));
 
-        rightSplitPane.setDividerSize(25);
+        rightSplitPane.setDividerSize(35);
         rightSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         rightSplitPane.setResizeWeight(1.0);
         rightSplitPane.setPreferredSize(new java.awt.Dimension(800, 700));
