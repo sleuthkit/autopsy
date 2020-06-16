@@ -33,8 +33,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -42,21 +40,23 @@ import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *  A Panel that shows the media (thumbnails) for the selected account.
+ * A Panel that shows the media (thumbnails) for the selected account.
  */
 final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider {
 
     private static final Logger logger = Logger.getLogger(MediaViewer.class.getName());
+    private static final long serialVersionUID = 1L;
 
     private final ExplorerManager tableEM = new ExplorerManager();
-    private final PropertyChangeListener focusPropertyListener;
+    private PropertyChangeListener focusPropertyListener;
 
     private final ModifiableProxyLookup proxyLookup;
+
+    private final MessageDataContent contentViewer;
 
     @Messages({
         "MediaViewer_Name=Media Attachments"
@@ -64,33 +64,17 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
     /**
      * Creates new form ThumbnailViewer
      */
-    public MediaViewer() {
+    MediaViewer() {
         initComponents();
-        
+
         splitPane.setResizeWeight(0.5);
         splitPane.setDividerLocation(0.5);
-        
+
+        contentViewer = new MessageDataContent();
+        contentViewer.setPreferredSize(new java.awt.Dimension(450, 400));
+        splitPane.setRightComponent(contentViewer);
+
         proxyLookup = new ModifiableProxyLookup(createLookup(tableEM, getActionMap()));
-
-        // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
-        // explaination of focusPropertyListener
-        focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
-            if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
-                final Component newFocusOwner = (Component) focusEvent.getNewValue();
-
-                if (newFocusOwner == null) {
-                    return;
-                }
-                if (isDescendingFrom(newFocusOwner, contentViewer)) {
-                    //if the focus owner is within the MessageContentViewer (the attachments table)
-                    proxyLookup.setNewLookups(createLookup(((MessageDataContent) contentViewer).getExplorerManager(), getActionMap()));
-                } else if (isDescendingFrom(newFocusOwner, MediaViewer.this)) {
-                    //... or if it is within the Results table.
-                    proxyLookup.setNewLookups(createLookup(tableEM, getActionMap()));
-
-                }
-            }
-        };
 
         tableEM.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
@@ -124,7 +108,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
             });
 
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Unable to update selection." , ex);
+            logger.log(Level.WARNING, "Unable to update selection.", ex);
         }
 
         thumbnailViewer.resetComponent();
@@ -145,16 +129,49 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
     @Override
     public void addNotify() {
         super.addNotify();
+
+        if (focusPropertyListener == null) {
+            // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
+            // explaination of focusPropertyListener
+            focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
+                if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
+                    handleFocusChange((Component) focusEvent.getNewValue());
+                }
+            };
+
+        }
         //add listener that maintains correct selection in the Global Actions Context
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .addPropertyChangeListener("focusOwner", focusPropertyListener);
     }
 
+    /**
+     * Handle the switching of the proxyLookup due to focus change.
+     *
+     * @param newFocusOwner
+     */
+    private void handleFocusChange(Component newFocusOwner) {
+        if (newFocusOwner == null) {
+            return;
+        }
+        if (isDescendingFrom(newFocusOwner, contentViewer)) {
+            //if the focus owner is within the MessageContentViewer (the attachments table)
+            proxyLookup.setNewLookups(createLookup(contentViewer.getExplorerManager(), getActionMap()));
+        } else if (isDescendingFrom(newFocusOwner, this)) {
+            //... or if it is within the Results table.
+            proxyLookup.setNewLookups(createLookup(tableEM, getActionMap()));
+
+        }
+    }
+
     @Override
     public void removeNotify() {
         super.removeNotify();
-        KeyboardFocusManager.getCurrentKeyboardFocusManager()
-                .removePropertyChangeListener("focusOwner", focusPropertyListener);
+
+        if (focusPropertyListener != null) {
+            KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                    .removePropertyChangeListener("focusOwner", focusPropertyListener);
+        }
     }
 
     /**
@@ -192,7 +209,6 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
 
         splitPane = new javax.swing.JSplitPane();
         thumbnailViewer = new org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail(tableEM);
-        contentViewer = new MessageDataContent();
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -201,9 +217,6 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
         thumbnailViewer.setMinimumSize(new java.awt.Dimension(350, 102));
         thumbnailViewer.setPreferredSize(new java.awt.Dimension(450, 400));
         splitPane.setLeftComponent(thumbnailViewer);
-
-        contentViewer.setPreferredSize(new java.awt.Dimension(450, 400));
-        splitPane.setRightComponent(contentViewer);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -217,7 +230,6 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.contentviewers.MessageContentViewer contentViewer;
     private javax.swing.JSplitPane splitPane;
     private org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail thumbnailViewer;
     // End of variables declaration//GEN-END:variables
