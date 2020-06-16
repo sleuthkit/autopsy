@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -345,7 +344,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             for (Long mboxSplitOffset : mboxSplitOffsets) {
                 File splitFile = new File(fileName + "-" + String.valueOf(mboxSplitOffset));
                 try {
-                    writeToFile(abstractFile, splitFile, context::fileIngestIsCancelled, startingOffset, mboxSplitOffset);
+                    ContentUtils.writeToFile(abstractFile, splitFile, context::fileIngestIsCancelled, startingOffset, mboxSplitOffset);
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Failed writing split mbox file to disk.", ex); //NON-NLS
                     return ProcessResult.OK;
@@ -365,17 +364,22 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private List<Long> findMboxSplitOffset(AbstractFile abstractFile, File file) throws IOException {
         
         List<Long> mboxSplitOffset = new ArrayList<>();
+        logger.log(Level.WARNING, String.format("starting find split")); //NON-NLS
         
-        byte[] buffer = new byte[4];
+        byte[] buffer = new byte[7];
         ReadContentInputStream in = new ReadContentInputStream(abstractFile);
         long newPosition = in.skip(MBOX_SIZE_TO_SPLIT);        
         int len = in.read(buffer);
         while (len != -1) {
             len = in.read(buffer);
-            if (buffer[0] == 13 && buffer[1] == 10 && buffer[2] == 70 && buffer[3] == 114) {
-                    mboxSplitOffset.add(in.getCurPosition() -  2);  
+            if (buffer[0] == 13 && buffer[1] == 10 && buffer[2] == 70 && buffer[3] == 114 &&
+                buffer[4] == 111 && buffer[5] == 109 && buffer[6] == 32) {
+                    logger.log(Level.WARNING, String.format("found Offset")); //NON-NLS
+
+                    mboxSplitOffset.add(in.getCurPosition() - 5 );  
                     newPosition = in.skip(MBOX_SIZE_TO_SPLIT);
             }
+//            in.skip(-5);
         }
            
         return mboxSplitOffset;
@@ -821,56 +825,4 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         // nothing to shut down
     }
     
-    /**
-     * Reads all the data from any content object and writes (extracts) it to a
-     * file, using a cancellation check instead of a Future object method.
-     *
-     * @param content     Any content object.
-     * @param outputFile  Will be created if it doesn't exist, and overwritten
-     *                    if it does
-     * @param cancelCheck A function used to check if the file write process
-     *                    should be terminated.
-     * @param startingOffset the starting offset to start reading the file
-     * @param endingOffset the ending offset to read of the file to write
-     *
-     * @return number of bytes extracted
-     *
-     * @throws IOException if file could not be written
-     */
-    public static long writeToFile(Content content, java.io.File outputFile,
-            Supplier<Boolean> cancelCheck, long startingOffset, long endingOffset) throws IOException {
-        
-        long writeFileLength = endingOffset - startingOffset;
-        InputStream in = new ReadContentInputStream(content);
-        long totalRead = 0;
-        long newPosition = in.skip(startingOffset);        
-        try (FileOutputStream out = new FileOutputStream(outputFile, false)) {
-            byte[] buffer = new byte[TO_FILE_BUFFER_SIZE];
-            int len = in.read(buffer);
-            writeFileLength = writeFileLength - TO_FILE_BUFFER_SIZE;
-            while (len != -1 && writeFileLength != 0) {
-                out.write(buffer, 0, len);
-                totalRead += len;
-                if (cancelCheck.get()) {
-                    break;
-                }
-                if (writeFileLength > TO_FILE_BUFFER_SIZE) {
-                    len = in.read(buffer);
-                    writeFileLength = writeFileLength - TO_FILE_BUFFER_SIZE;
-                } else {
-                    int writeLength = (int)writeFileLength;
-                    byte[] lastBuffer = new byte[writeLength];
-                    len = in.read(lastBuffer);
-                    out.write(lastBuffer, 0, len);
-                    totalRead += len;
-                    writeFileLength = 0;
-                }
-            }
-                
-        } finally {
-            in.close();
-        }
-        return totalRead;
-    }
-
 }
