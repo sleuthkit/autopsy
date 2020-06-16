@@ -44,7 +44,7 @@
         <!-- Where photo rec is installed within installer -->
         <var name="photorec-rel-path" value="${app.name}\photorec_exec"/>
         <!-- Where the photo rec build folder is placed in the dist folder currently -->
-        <var name="photorec-inst-path" value="${inst-path}\photorec_exec"/>    
+        <var name="photorec-inst-path" value="${inst-path}\${app.name}\photorec_exec"/>    
     </target>
     
     <target name="autoAIPath" description="Attempt to find the AI path based on standard installation location">
