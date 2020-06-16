@@ -80,8 +80,17 @@ public final class DiscoveryTopComponent extends TopComponent {
         });
     }
 
-    final class BasicSplitPaneDividerImpl extends BasicSplitPaneDivider {
+    /**
+     * Private class for replacing the divider for the results split pane.
+     */
+    private final class BasicSplitPaneDividerImpl extends BasicSplitPaneDivider {
 
+        /**
+         * Construct a new BasicSplitPaneDividerImpl.
+         *
+         * @param ui The component which contains the split pane this divider is
+         *           in.
+         */
         BasicSplitPaneDividerImpl(BasicSplitPaneUI ui) {
             super(ui);
             this.setLayout(new BorderLayout());
@@ -100,7 +109,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         return (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
     }
 
-/**
+    /**
      * Reset the top component so it isn't displaying any results.
      */
     public void resetTopComponent() {
