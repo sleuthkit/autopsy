@@ -28,19 +28,19 @@ import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * This class abstracts metadata associated with a Persona.
- * Metadata is in the form of a name/value pair.
- * 
+ * This class abstracts metadata associated with a Persona. Metadata is in the
+ * form of a name/value pair.
+ *
  * A Persona may have zero or more metadata.
- * 
+ *
  */
 public class PersonaMetadata {
-    
-    private static final String SELECT_QUERY_BASE = 
-            "SELECT pmd.id, pmd.persona_id, pmd.name, pmd.value, pmd.justification, pmd.confidence_id, pmd.date_added, pmd.examiner_id, e.login_name, e.display_name "
-                + "FROM persona_metadata as pmd "
-                + "INNER JOIN examiners as e ON e.id = pmd.examiner_id ";
-    
+
+    private static final String SELECT_QUERY_BASE
+            = "SELECT pmd.id, pmd.persona_id, pmd.name, pmd.value, pmd.justification, pmd.confidence_id, pmd.date_added, pmd.examiner_id, e.login_name, e.display_name "
+            + "FROM persona_metadata as pmd "
+            + "INNER JOIN examiners as e ON e.id = pmd.examiner_id ";
+
     private final long id;
     private final long personaId;
     private final String name;
@@ -49,7 +49,7 @@ public class PersonaMetadata {
     private final Persona.Confidence confidence;
     private final long dateAdded;
     private final CentralRepoExaminer examiner;
-    
+
     public long getId() {
         return id;
     }
@@ -81,7 +81,7 @@ public class PersonaMetadata {
     public CentralRepoExaminer getExaminer() {
         return examiner;
     }
-    
+
     public PersonaMetadata(long id, long personaId, String name, String value, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
         this.id = id;
         this.personaId = personaId;
@@ -92,8 +92,8 @@ public class PersonaMetadata {
         this.dateAdded = dateAdded;
         this.examiner = examiner;
     }
-    
-     /**
+
+    /**
      * Adds specified metadata to the given persona.
      *
      * @param personaId Id of persona to add metadata for.
@@ -104,8 +104,13 @@ public class PersonaMetadata {
      *
      * @return PersonaMetadata
      * @throws CentralRepoException If there is an error in adding metadata.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    static PersonaMetadata addPersonaMetadata(long personaId, String name, String value, String justification, Persona.Confidence confidence) throws CentralRepoException {
+    static PersonaMetadata addPersonaMetadata(long personaId, String name, String value, String justification, Persona.Confidence confidence) throws CentralRepoException, IllegalStateException {
+
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
 
         CentralRepoExaminer examiner = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
 
@@ -124,55 +129,63 @@ public class PersonaMetadata {
                 + ")";
 
         CentralRepository.getInstance().executeInsertSQL(insertClause);
-        
+
         String queryClause = SELECT_QUERY_BASE
                 + "WHERE pmd.persona_id = " + personaId
                 + " AND pmd.name = \"" + name + "\""
                 + " AND pmd.value = \"" + value + "\""
                 + " AND pmd.date_added = " + timeStampMillis
                 + " AND pmd.examiner_id = " + examiner.getId();
-        
+
         PersonaMetadataQueryCallback queryCallback = new PersonaMetadataQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
-        
+
         Collection<PersonaMetadata> metadata = queryCallback.getMetadataList();
         if (metadata.size() != 1) {
             throw new CentralRepoException("Metadata add query failed");
         }
-        
+
         return metadata.iterator().next();
     }
-    
+
     /**
-     * Removes the given PersonaMetadata
+     * Removes the given PersonaMetadata.
      *
      * @param metadata Metadata to remove.
      *
-     * @throws CentralRepoException If there is an error in removing the metadata.
+     * @throws CentralRepoException If there is an error in removing the
+     * metadata.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    static void removePersonaMetadata(PersonaMetadata metadata) throws CentralRepoException {
+    static void removePersonaMetadata(PersonaMetadata metadata) throws CentralRepoException, IllegalStateException {
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
+
         String deleteClause = " DELETE FROM persona_metadata WHERE id = " + metadata.getId();
         CentralRepository.getInstance().executeDeleteSQL(deleteClause);
     }
-    
+
     /**
-     * Modifies the given PersonaMetadata
+     * Modifies the given PersonaMetadata.
      *
      * @param metadata Metadata to modify.
      *
-     * @throws CentralRepoException If there is an error in modifying the metadata.
+     * @throws CentralRepoException If there is an error in modifying the
+     * metadata.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    static void modifyPersonaMetadata(PersonaMetadata metadata, Persona.Confidence confidence, String justification) throws CentralRepoException {
-        CentralRepository cr = CentralRepository.getInstance();
-        
-        if (cr == null) {
-            throw new CentralRepoException("Failed to modify persona metadata, Central Repo is not enabled");
+    static void modifyPersonaMetadata(PersonaMetadata metadata, Persona.Confidence confidence, String justification) throws CentralRepoException, IllegalStateException {
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
         }
-        
+
+        CentralRepository cr = CentralRepository.getInstance();
+
         String updateClause = "UPDATE persona_metadata SET confidence_id = " + confidence.getLevelId() + ", justification = \"" + justification + "\" WHERE id = " + metadata.id;
         cr.executeUpdateSQL(updateClause);
     }
-    
+
     /**
      * Callback to process a Persona metadata query.
      */
@@ -206,23 +219,28 @@ public class PersonaMetadata {
             return Collections.unmodifiableCollection(personaMetadataList);
         }
     };
-    
-     /**
+
+    /**
      * Gets all metadata for the persona with specified id.
      *
      * @param personaId Id of the persona for which to get the metadata.
      * @return A collection of metadata, may be empty.
      *
      * @throws CentralRepoException If there is an error in retrieving aliases.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    static Collection<PersonaMetadata> getPersonaMetadata(long personaId) throws CentralRepoException {
+    static Collection<PersonaMetadata> getPersonaMetadata(long personaId) throws CentralRepoException, IllegalStateException {
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
+
         String queryClause = SELECT_QUERY_BASE + "WHERE pmd.persona_id = " + personaId;
-        
+
         PersonaMetadataQueryCallback queryCallback = new PersonaMetadataQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
 
         return queryCallback.getMetadataList();
 
     }
-    
+
 }

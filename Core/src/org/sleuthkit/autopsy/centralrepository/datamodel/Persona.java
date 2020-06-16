@@ -122,7 +122,7 @@ public class Persona {
     private final long modifiedDate;
     private final PersonaStatus status;
     private final CentralRepoExaminer examiner;
-    
+
     @NbBundle.Messages("Persona.defaultName=Unnamed")
     public static String getDefaultName() {
         return Bundle.Persona_defaultName();
@@ -230,8 +230,14 @@ public class Persona {
      *
      * @throws CentralRepoException If there is an error in adding a row to
      * personas table.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    private static Persona createPersona(String name, String comment, PersonaStatus status) throws CentralRepoException {
+    private static Persona createPersona(String name, String comment, PersonaStatus status) throws CentralRepoException, IllegalStateException {
+
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
+
         // generate a UUID for the persona
         String uuidStr = UUID.randomUUID().toString();
         CentralRepoExaminer examiner = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
@@ -251,15 +257,20 @@ public class Persona {
         CentralRepository.getInstance().executeInsertSQL(insertClause);
         return getPersonaByUUID(uuidStr);
     }
-    
+
     /**
      * Sets the comment of this persona.
      *
      * @param name The new comment.
-     * 
+     *
      * @throws CentralRepoException If there is an error.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public void setComment(String comment) throws CentralRepoException {
+    public void setComment(String comment) throws CentralRepoException, IllegalStateException {
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
+
         String updateClause = "UPDATE personas SET comment = \"" + comment + "\" WHERE id = " + id;
         CentralRepository cr = CentralRepository.getInstance();
         if (cr != null) {
@@ -271,10 +282,15 @@ public class Persona {
      * Sets the name of this persona
      *
      * @param name The new name.
-     * 
+     *
      * @throws CentralRepoException If there is an error.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public void setName(String name) throws CentralRepoException {
+    public void setName(String name) throws CentralRepoException, IllegalStateException {
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
+
         String updateClause = "UPDATE personas SET name = \"" + name + "\" WHERE id = " + id;
         CentralRepository cr = CentralRepository.getInstance();
         if (cr != null) {
@@ -293,11 +309,12 @@ public class Persona {
      *
      * @return PersonaAccount
      * @throws CentralRepoException If there is an error.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public PersonaAccount addAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
+    public PersonaAccount addAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException, IllegalStateException {
         return PersonaAccount.addPersonaAccount(this, account, justification, confidence);
     }
-    
+
     /**
      * Removes the given PersonaAccount (persona/account association)
      *
@@ -305,11 +322,12 @@ public class Persona {
      *
      * @throws CentralRepoException If there is an error in querying the
      * Personas table.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public void removeAccount(PersonaAccount account) throws CentralRepoException {
+    public void removeAccount(PersonaAccount account) throws CentralRepoException, IllegalStateException {
         PersonaAccount.removePersonaAccount(account.getId());
     }
-    
+
     /**
      * Modifies the confidence / justification of the given PersonaAccount
      *
@@ -317,15 +335,21 @@ public class Persona {
      *
      * @throws CentralRepoException If there is an error in querying the
      * Personas table.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public void modifyAccount(PersonaAccount account, Confidence confidence, String justification) throws CentralRepoException {
+    public void modifyAccount(PersonaAccount account, Confidence confidence, String justification) throws CentralRepoException, IllegalStateException {
         PersonaAccount.modifyPersonaAccount(account.getId(), confidence, justification);
     }
-    
+
     /**
-     * Marks this persona as deleted
+     * Marks this persona as deleted.
+     *
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public void delete() throws CentralRepoException {
+    public void delete() throws CentralRepoException, IllegalStateException {
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
         String deleteSQL = "UPDATE personas SET status_id = " + PersonaStatus.DELETED.status_id + " WHERE id = " + this.id;
         CentralRepository cr = CentralRepository.getInstance();
         if (cr != null) {
@@ -338,7 +362,7 @@ public class Persona {
      */
     private static class PersonaQueryCallback implements CentralRepositoryDbQueryCallback {
 
-        private final Collection<Persona> personaList =  new ArrayList<>();
+        private final Collection<Persona> personaList = new ArrayList<>();
 
         @Override
         public void process(ResultSet rs) throws SQLException {
@@ -359,7 +383,7 @@ public class Persona {
                         status,
                         examiner
                 );
-                
+
                 personaList.add(persona);
             }
         }
@@ -371,12 +395,11 @@ public class Persona {
 
     // Partial query string to select from personas table, 
     // just supply the where clause.
-    private static final String PERSONA_QUERY = 
-                  "SELECT p.id, p.uuid, p.name, p.comment, p.created_date, p.modified_date, p.status_id, p.examiner_id, e.login_name, e.display_name "
-                + "FROM personas as p "
-                + "INNER JOIN examiners as e ON e.id = p.examiner_id ";
-              
-     
+    private static final String PERSONA_QUERY
+            = "SELECT p.id, p.uuid, p.name, p.comment, p.created_date, p.modified_date, p.status_id, p.examiner_id, e.login_name, e.display_name "
+            + "FROM personas as p "
+            + "INNER JOIN examiners as e ON e.id = p.examiner_id ";
+
     /**
      * Gets the row from the Personas table with the given UUID, creates and
      * returns the Persona from that data.
@@ -387,24 +410,29 @@ public class Persona {
      *
      * @throws CentralRepoException If there is an error in querying the
      * Personas table.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    private static Persona getPersonaByUUID(String uuid) throws CentralRepoException {
+    private static Persona getPersonaByUUID(String uuid) throws CentralRepoException, IllegalStateException {
 
-        String queryClause = 
-                PERSONA_QUERY
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
+
+        String queryClause
+                = PERSONA_QUERY
                 + "WHERE p.uuid = '" + uuid + "'";
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
 
         Collection<Persona> personas = queryCallback.getPersonas();
-        
+
         return personas.isEmpty() ? null : personas.iterator().next();
     }
 
     /**
-     * Gets the rows from the Personas table with matching name. 
-     * Persona marked as DELETED are not returned.
+     * Gets the rows from the Personas table with matching name. Persona marked
+     * as DELETED are not returned.
      *
      * @param partialName Name substring to match.
      * @return Collection of personas matching the given name substring, may be
@@ -412,19 +440,24 @@ public class Persona {
      *
      * @throws CentralRepoException If there is an error in querying the
      * Personas table.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public static Collection<Persona> getPersonaByName(String partialName) throws CentralRepoException {
+    public static Collection<Persona> getPersonaByName(String partialName) throws CentralRepoException, IllegalStateException {
+
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
 
         String queryClause = PERSONA_QUERY
-                + "WHERE p.status_id != " + PersonaStatus.DELETED.status_id + 
-                " AND LOWER(p.name) LIKE " + "LOWER('%" + partialName + "%')" ;
+                + "WHERE p.status_id != " + PersonaStatus.DELETED.status_id
+                + " AND LOWER(p.name) LIKE " + "LOWER('%" + partialName + "%')";
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
 
         return queryCallback.getPersonas();
     }
-    
+
     /**
      * Gets the rows from the Personas table where persona accounts' names are
      * similar to the given one. Persona marked as DELETED are not returned.
@@ -435,8 +468,14 @@ public class Persona {
      *
      * @throws CentralRepoException If there is an error in querying the
      * Personas table.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public static Collection<Persona> getPersonaByAccountIdentifierLike(String partialName) throws CentralRepoException {
+    public static Collection<Persona> getPersonaByAccountIdentifierLike(String partialName) throws CentralRepoException, IllegalStateException {
+
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
+
         String queryClause = "SELECT DISTINCT accounts.id as a_id,"
                 + "p.id, p.uuid, p.name, p.comment, p.created_date, p.modified_date, p.status_id, p.examiner_id, e.login_name, e.display_name"
                 + " FROM accounts"
@@ -455,7 +494,7 @@ public class Persona {
 
         return queryCallback.getPersonas();
     }
-    
+
     /**
      * Creates an alias for the Persona.
      *
@@ -465,11 +504,12 @@ public class Persona {
      *
      * @return PersonaAlias
      * @throws CentralRepoException If there is an error in creating the alias.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public PersonaAlias addAlias(String alias, String justification, Persona.Confidence confidence) throws CentralRepoException {
+    public PersonaAlias addAlias(String alias, String justification, Persona.Confidence confidence) throws CentralRepoException, IllegalStateException {
         return PersonaAlias.addPersonaAlias(this, alias, justification, confidence);
     }
-    
+
     /**
      * Removes the given alias.
      *
@@ -477,11 +517,12 @@ public class Persona {
      *
      * @throws CentralRepoException If there is an error in querying the
      * Personas table.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public void removeAlias(PersonaAlias alias) throws CentralRepoException {
+    public void removeAlias(PersonaAlias alias) throws CentralRepoException, IllegalStateException {
         PersonaAlias.removePersonaAlias(alias);
     }
-    
+
     /**
      * Modifies the given alias.
      *
@@ -489,8 +530,9 @@ public class Persona {
      *
      * @throws CentralRepoException If there is an error in querying the
      * Personas table.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public void modifyAlias(PersonaAlias key, Confidence confidence, String justification) throws CentralRepoException {
+    public void modifyAlias(PersonaAlias key, Confidence confidence, String justification) throws CentralRepoException, IllegalStateException {
         PersonaAlias.modifyPersonaAlias(key, confidence, justification);
     }
 
@@ -500,8 +542,9 @@ public class Persona {
      * @return A collection of aliases, may be empty.
      *
      * @throws CentralRepoException If there is an error in retrieving aliases.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public Collection<PersonaAlias> getAliases() throws CentralRepoException {
+    public Collection<PersonaAlias> getAliases() throws CentralRepoException, IllegalStateException {
         return PersonaAlias.getPersonaAliases(this.getId());
     }
 
@@ -515,11 +558,12 @@ public class Persona {
      *
      * @return PersonaMetadata
      * @throws CentralRepoException If there is an error in adding metadata.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public PersonaMetadata addMetadata(String name, String value, String justification, Persona.Confidence confidence) throws CentralRepoException {
+    public PersonaMetadata addMetadata(String name, String value, String justification, Persona.Confidence confidence) throws CentralRepoException, IllegalStateException {
         return PersonaMetadata.addPersonaMetadata(this.getId(), name, value, justification, confidence);
     }
-    
+
     /**
      * Removes the given metadata from this persona.
      *
@@ -527,11 +571,12 @@ public class Persona {
      *
      * @throws CentralRepoException If there is an error in querying the
      * Personas table.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public void removeMetadata(PersonaMetadata metadata) throws CentralRepoException {
+    public void removeMetadata(PersonaMetadata metadata) throws CentralRepoException, IllegalStateException {
         PersonaMetadata.removePersonaMetadata(metadata);
     }
-    
+
     /**
      * Modifies the given metadata.
      *
@@ -539,8 +584,9 @@ public class Persona {
      *
      * @throws CentralRepoException If there is an error in querying the
      * Personas table.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public void modifyMetadata(PersonaMetadata key, Confidence confidence, String justification) throws CentralRepoException {
+    public void modifyMetadata(PersonaMetadata key, Confidence confidence, String justification) throws CentralRepoException, IllegalStateException {
         PersonaMetadata.modifyPersonaMetadata(key, confidence, justification);
     }
 
@@ -550,8 +596,9 @@ public class Persona {
      * @return A collection of metadata, may be empty.
      *
      * @throws CentralRepoException If there is an error in retrieving aliases.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public Collection<PersonaMetadata> getMetadata() throws CentralRepoException {
+    public Collection<PersonaMetadata> getMetadata() throws CentralRepoException, IllegalStateException {
         return PersonaMetadata.getPersonaMetadata(this.getId());
     }
 
@@ -562,11 +609,12 @@ public class Persona {
      *
      * @throws CentralRepoException If there is an error in getting the
      * persona_account.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public Collection<PersonaAccount> getPersonaAccounts() throws CentralRepoException {
+    public Collection<PersonaAccount> getPersonaAccounts() throws CentralRepoException, IllegalStateException {
         return PersonaAccount.getPersonaAccountsForPersona(this.getId());
     }
- 
+
     /**
      * Callback to process a query that gets cases for account instances of an
      * account
@@ -596,8 +644,13 @@ public class Persona {
      * @return Collection of cases that the persona appears in, may be empty.
      * @throws CentralRepoException If there is an error in getting the cases
      * from the database.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public Collection<CorrelationCase> getCases() throws CentralRepoException {
+    public Collection<CorrelationCase> getCases() throws CentralRepoException, IllegalStateException {
+
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
 
         Collection<CorrelationCase> casesForPersona = new ArrayList<>();
 
@@ -661,8 +714,12 @@ public class Persona {
      * empty.
      *
      * @throws CentralRepoException
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public Collection<CorrelationDataSource> getDataSources() throws CentralRepoException {
+    public Collection<CorrelationDataSource> getDataSources() throws CentralRepoException, IllegalStateException {
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
         Collection<CorrelationDataSource> correlationDataSources = new ArrayList<>();
 
         Collection<CentralRepoAccount> accounts = PersonaAccount.getAccountsForPersona(this.getId());
@@ -734,8 +791,13 @@ public class Persona {
      * @param crAccountType Account type to generate the query string for.
      * @return Query substring.
      * @throws CentralRepoException
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    private static String getPersonaFromInstanceTableQueryTemplate(CentralRepoAccount.CentralRepoAccountType crAccountType) throws CentralRepoException {
+    private static String getPersonaFromInstanceTableQueryTemplate(CentralRepoAccount.CentralRepoAccountType crAccountType) throws CentralRepoException, IllegalStateException {
+
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
 
         int corrTypeId = crAccountType.getCorrelationTypeId();
         CorrelationAttributeInstance.Type correlationType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
@@ -758,8 +820,13 @@ public class Persona {
      *
      * @return Collection of personas, may be empty.
      * @throws CentralRepoException
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public static Collection<Persona> getPersonasForCase(CorrelationCase correlationCase) throws CentralRepoException {
+    public static Collection<Persona> getPersonasForCase(CorrelationCase correlationCase) throws CentralRepoException, IllegalStateException {
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
+
         Collection<Persona> personaList = new ArrayList<>();
 
         Collection<CentralRepoAccount.CentralRepoAccountType> accountTypes = CentralRepository.getInstance().getAllAccountTypes();
@@ -767,7 +834,7 @@ public class Persona {
 
             String querySql = getPersonaFromInstanceTableQueryTemplate(crAccountType)
                     + " WHERE case_id = " + correlationCase.getID()
-                    + "AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
+                    + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
             PersonaFromAccountInstanceQueryCallback queryCallback = new PersonaFromAccountInstanceQueryCallback();
             CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);
@@ -790,8 +857,13 @@ public class Persona {
      *
      * @return Collection of personas, may be empty.
      * @throws CentralRepoException
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public static Collection<Persona> getPersonasForDataSource(CorrelationDataSource dataSource) throws CentralRepoException {
+    public static Collection<Persona> getPersonasForDataSource(CorrelationDataSource dataSource) throws CentralRepoException, IllegalStateException {
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
+
         Collection<Persona> personaList = new ArrayList<>();
 
         Collection<CentralRepoAccount.CentralRepoAccountType> accountTypes = CentralRepository.getInstance().getAllAccountTypes();
@@ -799,7 +871,7 @@ public class Persona {
 
             String querySql = getPersonaFromInstanceTableQueryTemplate(crAccountType)
                     + " WHERE data_source_id = " + dataSource.getID()
-                    + "AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
+                    + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
             PersonaFromAccountInstanceQueryCallback queryCallback = new PersonaFromAccountInstanceQueryCallback();
             CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);

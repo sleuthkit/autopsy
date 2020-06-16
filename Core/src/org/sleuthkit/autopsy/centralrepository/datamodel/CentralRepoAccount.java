@@ -219,8 +219,14 @@ public final class CentralRepoAccount {
      *
      * @throws CentralRepoException If there is an error in getting the
      * accounts.
+     * @throws IllegalStateException If central repository is not enabled.
+     *
      */
-    public static Collection<CentralRepoAccount> getAccountsWithIdentifierLike(String accountIdentifierSubstring) throws CentralRepoException {
+    public static Collection<CentralRepoAccount> getAccountsWithIdentifierLike(String accountIdentifierSubstring) throws CentralRepoException, IllegalStateException {
+
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
 
         String queryClause = ACCOUNTS_QUERY_CLAUSE
                 + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + accountIdentifierSubstring + "%')";
@@ -241,11 +247,15 @@ public final class CentralRepoAccount {
      *
      * @throws CentralRepoException If there is an error in getting the
      * accounts.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public static Collection<CentralRepoAccount> getAccountsWithIdentifier(String accountIdentifier) throws CentralRepoException {
+    public static Collection<CentralRepoAccount> getAccountsWithIdentifier(String accountIdentifier) throws CentralRepoException, IllegalStateException {
+
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
 
         String normalizedAccountIdentifier;
-
         try {
             normalizedAccountIdentifier = normalizeAccountIdentifier(accountIdentifier);
         } catch (TskCoreException ex) {
@@ -269,8 +279,13 @@ public final class CentralRepoAccount {
      *
      * @throws CentralRepoException If there is an error in getting the
      * accounts.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public static Collection<CentralRepoAccount> getAllAccounts() throws CentralRepoException {
+    public static Collection<CentralRepoAccount> getAllAccounts() throws CentralRepoException, IllegalStateException {
+
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
 
         String queryClause = ACCOUNTS_QUERY_CLAUSE;
 

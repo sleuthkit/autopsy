@@ -28,16 +28,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * This class abstracts an alias assigned to a Persona.
- * A Persona may have multiple aliases.
- * 
+ * This class abstracts an alias assigned to a Persona. A Persona may have
+ * multiple aliases.
+ *
  */
 public class PersonaAlias {
-    
-    private static final String SELECT_QUERY_BASE = 
-            "SELECT pa.id, pa.persona_id, pa.alias, pa.justification, pa.confidence_id, pa.date_added, pa.examiner_id, e.login_name, e.display_name "
-                + "FROM persona_alias as pa "
-                + "INNER JOIN examiners as e ON e.id = pa.examiner_id ";
+
+    private static final String SELECT_QUERY_BASE
+            = "SELECT pa.id, pa.persona_id, pa.alias, pa.justification, pa.confidence_id, pa.date_added, pa.examiner_id, e.login_name, e.display_name "
+            + "FROM persona_alias as pa "
+            + "INNER JOIN examiners as e ON e.id = pa.examiner_id ";
 
     private final long id;
     private final long personaId;
@@ -46,7 +46,7 @@ public class PersonaAlias {
     private final Persona.Confidence confidence;
     private final long dateAdded;
     private final CentralRepoExaminer examiner;
-    
+
     public long getId() {
         return id;
     }
@@ -74,7 +74,7 @@ public class PersonaAlias {
     public CentralRepoExaminer getExaminer() {
         return examiner;
     }
-    
+
     public PersonaAlias(long id, long personaId, String alias, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
         this.id = id;
         this.personaId = personaId;
@@ -84,8 +84,8 @@ public class PersonaAlias {
         this.dateAdded = dateAdded;
         this.examiner = examiner;
     }
-    
-     /**
+
+    /**
      * Creates an alias for the specified Persona.
      *
      * @param persona Persona for which the alias is being added.
@@ -95,8 +95,13 @@ public class PersonaAlias {
      *
      * @return PersonaAlias
      * @throws CentralRepoException If there is an error in creating the alias.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    static PersonaAlias addPersonaAlias(Persona persona, String alias, String justification, Persona.Confidence confidence) throws CentralRepoException {
+    static PersonaAlias addPersonaAlias(Persona persona, String alias, String justification, Persona.Confidence confidence) throws CentralRepoException, IllegalStateException {
+
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
 
         CentralRepoExaminer examiner = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
 
@@ -114,56 +119,60 @@ public class PersonaAlias {
                 + ")";
 
         CentralRepository.getInstance().executeInsertSQL(insertClause);
-        
+
         String queryClause = SELECT_QUERY_BASE
                 + "WHERE pa.persona_id = " + persona.getId()
                 + " AND pa.alias = \"" + alias + "\""
                 + " AND pa.date_added = " + timeStampMillis
                 + " AND pa.examiner_id = " + examiner.getId();
-        
+
         PersonaAliasesQueryCallback queryCallback = new PersonaAliasesQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
-        
+
         Collection<PersonaAlias> aliases = queryCallback.getAliases();
         if (aliases.size() != 1) {
             throw new CentralRepoException("Alias add query failed");
         }
-        
+
         return aliases.iterator().next();
     }
-    
+
     /**
      * Removes a PersonaAlias.
      *
      * @param alias Alias to remove.
      *
      * @throws CentralRepoException If there is an error in removing the alias.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    static void removePersonaAlias(PersonaAlias alias) throws CentralRepoException {
+    static void removePersonaAlias(PersonaAlias alias) throws CentralRepoException, IllegalStateException {
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
+
         String deleteClause = " DELETE FROM persona_alias WHERE id = " + alias.getId();
         CentralRepository.getInstance().executeDeleteSQL(deleteClause);
     }
-    
+
     /**
      * Modifies a PesronaAlias.
      *
      * @param alias Alias to modify.
      *
      * @throws CentralRepoException If there is an error in modifying the alias.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    static void modifyPersonaAlias(PersonaAlias alias, Persona.Confidence confidence, String justification) throws CentralRepoException {
-        CentralRepository cr = CentralRepository.getInstance();
-        
-        if (cr == null) {
-            throw new CentralRepoException("Failed to modify persona alias, Central Repo is not enabled");
+    static void modifyPersonaAlias(PersonaAlias alias, Persona.Confidence confidence, String justification) throws CentralRepoException, IllegalStateException {
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
         }
-        
+
+        CentralRepository cr = CentralRepository.getInstance();
         String updateClause = "UPDATE persona_alias SET confidence_id = " + confidence.getLevelId() + ", justification = \"" + justification + "\" WHERE id = " + alias.id;
         cr.executeUpdateSQL(updateClause);
     }
-    
-    
-     /**
+
+    /**
      * Callback to process a Persona aliases query.
      */
     static class PersonaAliasesQueryCallback implements CentralRepositoryDbQueryCallback {
@@ -195,7 +204,7 @@ public class PersonaAlias {
             return Collections.unmodifiableCollection(personaAliases);
         }
     };
-    
+
     /**
      * Gets all aliases for the persona with specified id.
      *
@@ -203,8 +212,13 @@ public class PersonaAlias {
      * @return A collection of aliases, may be empty.
      *
      * @throws CentralRepoException If there is an error in retrieving aliases.
+     * @throws IllegalStateException If central repository is not enabled.
      */
-    public static Collection<PersonaAlias> getPersonaAliases(long personaId) throws CentralRepoException {
+    public static Collection<PersonaAlias> getPersonaAliases(long personaId) throws CentralRepoException, IllegalStateException {
+        if (!CentralRepository.isEnabled()) {
+            throw new IllegalStateException("Central Repository is not enabled.");
+        }
+
         String queryClause = SELECT_QUERY_BASE + "WHERE pa.persona_id = " + personaId;
 
         PersonaAliasesQueryCallback queryCallback = new PersonaAliasesQueryCallback();
@@ -212,5 +226,5 @@ public class PersonaAlias {
 
         return queryCallback.getAliases();
     }
-    
+
 }
