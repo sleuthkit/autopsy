@@ -23,6 +23,9 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,6 +36,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -50,8 +55,10 @@ import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialogCallb
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsMode;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -76,11 +83,16 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     // account identifier attributes of the Contact artifact.
     private final Map<Persona, ArrayList<CentralRepoAccount>> contactUniquePersonasMap = new HashMap<>();
 
+    private final static String DEFAULT_IMAGE_PATH = "/org/sleuthkit/autopsy/images/defaultContact.png";
+    private final ImageIcon defaultImage;
+
     /**
      * Creates new form for ContactArtifactViewer
      */
     public ContactArtifactViewer() {
         initComponents();
+
+        defaultImage = new ImageIcon(ContactArtifactViewer.class.getResource(DEFAULT_IMAGE_PATH));
     }
 
     /**
@@ -106,41 +118,38 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         personasPanel = new javax.swing.JPanel();
         javax.swing.Box.Filler bottomFiller = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
         javax.swing.Box.Filler rightFiller = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+        contactImage = new javax.swing.JLabel();
 
         setLayout(new java.awt.GridBagLayout());
 
+        namePanel.setLayout(new java.awt.GridBagLayout());
+
         contactNameLabel.setFont(contactNameLabel.getFont().deriveFont((contactNameLabel.getFont().getStyle() | java.awt.Font.ITALIC) | java.awt.Font.BOLD, contactNameLabel.getFont().getSize()+6));
         org.openide.awt.Mnemonics.setLocalizedText(contactNameLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.contactNameLabel.text")); // NOI18N
-
-        javax.swing.GroupLayout namePanelLayout = new javax.swing.GroupLayout(namePanel);
-        namePanel.setLayout(namePanelLayout);
-        namePanelLayout.setHorizontalGroup(
-            namePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(namePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(contactNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 240, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        namePanelLayout.setVerticalGroup(
-            namePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(namePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(contactNameLabel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.ipadx = 111;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        namePanel.add(contactNameLabel, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 5;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(6, 19, 0, 0);
         add(namePanel, gridBagConstraints);
 
         phonesLabel.setFont(phonesLabel.getFont().deriveFont(phonesLabel.getFont().getStyle() | java.awt.Font.BOLD, phonesLabel.getFont().getSize()+2));
         org.openide.awt.Mnemonics.setLocalizedText(phonesLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.phonesLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         gridBagConstraints.gridwidth = 3;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(6, 19, 0, 0);
@@ -149,7 +158,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         phoneNumbersPanel.setLayout(new java.awt.GridBagLayout());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridy = 3;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -160,7 +169,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         org.openide.awt.Mnemonics.setLocalizedText(emailsLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.emailsLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(6, 19, 0, 0);
@@ -169,7 +178,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         emailsPanel.setLayout(new java.awt.GridBagLayout());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridy = 5;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -180,7 +189,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         org.openide.awt.Mnemonics.setLocalizedText(othersLabel, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.othersLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridy = 6;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(6, 19, 0, 0);
         add(othersLabel, gridBagConstraints);
@@ -188,7 +197,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         otherAttrsPanel.setLayout(new java.awt.GridBagLayout());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 7;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -196,7 +205,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         add(otherAttrsPanel, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 7;
+        gridBagConstraints.gridy = 8;
         gridBagConstraints.gridheight = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
         gridBagConstraints.weighty = 0.1;
@@ -209,7 +218,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         personasLabel.setPreferredSize(new java.awt.Dimension(90, 19));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridy = 9;
         gridBagConstraints.gridwidth = 3;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(6, 19, 0, 0);
@@ -218,7 +227,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         personasPanel.setLayout(new java.awt.GridBagLayout());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 9;
+        gridBagConstraints.gridy = 10;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -226,19 +235,27 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         add(personasPanel, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridy = 11;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.weighty = 1.0;
         add(bottomFiller, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridy = 3;
         gridBagConstraints.gridheight = 8;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.ipadx = 2;
         gridBagConstraints.weightx = 1.0;
         add(rightFiller, gridBagConstraints);
+
+        contactImage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/defaultContact.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(contactImage, org.openide.util.NbBundle.getMessage(ContactArtifactViewer.class, "ContactArtifactViewer.contactImage.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.insets = new java.awt.Insets(6, 19, 0, 0);
+        add(contactImage, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     @Override
@@ -292,6 +309,8 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             logger.log(Level.SEVERE, String.format("Error getting Personas for Contact artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
         }
 
+        contactImage.setIcon(getImageFromArtifact(artifact));
+
         // repaint
         this.revalidate();
         this.repaint();
@@ -334,6 +353,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         contactName = null;
         contactUniqueAccountsList.clear();
         contactUniquePersonasMap.clear();
+        contactImage.setIcon(defaultImage);
     }
 
     /**
@@ -617,6 +637,49 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     }
 
     /**
+     * Gets an image from a TSK_CONTACT artifact.
+     *
+     * @param artifact
+     *
+     * @return Image from a TSK_CONTACT artifact or default image if none was
+     *         found or the artifact is not a TSK_CONTACT
+     */
+    private ImageIcon getImageFromArtifact(BlackboardArtifact artifact) {
+        ImageIcon imageIcon = defaultImage;
+
+        if (artifact == null) {
+            return imageIcon;
+        }
+
+        BlackboardArtifact.ARTIFACT_TYPE artifactType = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
+        if (artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT) {
+            return imageIcon;
+        }
+
+        try {
+            for (Content content : artifact.getChildren()) {
+                if (content instanceof AbstractFile) {
+                    AbstractFile file = (AbstractFile) content;
+
+                    try {
+                        BufferedImage image = ImageIO.read(new File(file.getLocalAbsPath()));
+                        imageIcon = new ImageIcon(image);
+                        break;
+                    } catch (IOException ex) {
+                        // ImageIO.read will through an IOException if file is not an image
+                        // therefore we don't need to report this exception just try
+                        // the next file.
+                    }
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, String.format("Unable to load image for contact: %d", artifact.getId()), ex);
+        }
+
+        return imageIcon;
+    }
+
+    /**
      * Thread to search for a personas for all account identifier attributes for
      * a contact.
      */
@@ -864,6 +927,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel contactImage;
     private javax.swing.JLabel contactNameLabel;
     private javax.swing.JLabel emailsLabel;
     private javax.swing.JPanel emailsPanel;
