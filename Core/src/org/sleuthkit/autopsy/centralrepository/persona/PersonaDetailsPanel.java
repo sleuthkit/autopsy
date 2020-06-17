@@ -976,6 +976,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 }
                 break;
             case VIEW:
+                ret = currentPersona;
                 break;
             default:
                 logger.log(Level.SEVERE, "Unsupported mode: {0}", mode);
