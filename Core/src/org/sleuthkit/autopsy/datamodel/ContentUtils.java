@@ -309,16 +309,16 @@ public final class ContentUtils {
     public static long writeToFile(Content content, java.io.File outputFile,
             Supplier<Boolean> cancelCheck, long startingOffset, long endingOffset) throws IOException {
         
-        long writeFileLength = endingOffset - startingOffset;
         InputStream in = new ReadContentInputStream(content);
-        long totalRead = 0;
         long offsetSkipped = in.skip(startingOffset); 
         if (offsetSkipped != startingOffset) {
             throw new IOException(String.format("Skipping file to starting offset {0} was not successful only skipped to offset {1}.", startingOffset, offsetSkipped));            
         }
+        long totalRead = 0;
         try (FileOutputStream out = new FileOutputStream(outputFile, false)) {
             byte[] buffer = new byte[TO_FILE_BUFFER_SIZE];
             int len = in.read(buffer);
+            long writeFileLength = endingOffset - startingOffset;
             writeFileLength = writeFileLength - TO_FILE_BUFFER_SIZE;
             while (len != -1 && writeFileLength != 0) {
                 out.write(buffer, 0, len);
