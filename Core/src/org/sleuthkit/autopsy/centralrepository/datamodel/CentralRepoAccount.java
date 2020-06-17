@@ -285,17 +285,45 @@ public final class CentralRepoAccount {
      * account type.
      *
      * @param accountIdentifier Account identifier to be normalized.
-     * @return normalized identifier
+     * @return Normalized identifier.
      *
      * @throws TskCoreException
      */
     private static String normalizeAccountIdentifier(String accountIdentifier) throws TskCoreException {
-        String normalizedAccountIdentifier = accountIdentifier;
+        String normalizedAccountIdentifier;
         if (CommunicationsUtils.isValidPhoneNumber(accountIdentifier)) {
             normalizedAccountIdentifier = CommunicationsUtils.normalizePhoneNum(accountIdentifier);
         } else if (CommunicationsUtils.isValidEmailAddress(accountIdentifier)) {
             normalizedAccountIdentifier = normalizeEmailAddress(accountIdentifier);
+        } else {
+            // account type unknown, just remove blanks and convert to lowercase
+            normalizedAccountIdentifier = accountIdentifier.toLowerCase().replaceAll("\\s","");
         }
         return normalizedAccountIdentifier;
     }
+    
+    /**
+     * Normalizes an account identifier, based on the given
+     * account type.
+     *
+     * @param crAccountType Account type.
+     * @param accountIdentifier Account identifier to be normalized.
+     * @return Normalized identifier.
+     *
+     * @throws TskCoreException
+     */
+    public static String normalizeAccountIdentifier(CentralRepoAccountType crAccountType, String accountIdentifier) throws TskCoreException {
+        String normalizedAccountIdentifier;
+        if (crAccountType.getAcctType().equals(Account.Type.PHONE)) {
+            normalizedAccountIdentifier = CommunicationsUtils.normalizePhoneNum(accountIdentifier);
+        } else if (crAccountType.getAcctType().equals(Account.Type.EMAIL)) {
+            normalizedAccountIdentifier = CommunicationsUtils.normalizeEmailAddress(accountIdentifier);
+        } else {
+             // remove blanks and convert to lowercase
+            normalizedAccountIdentifier = accountIdentifier.toLowerCase().replaceAll("\\s","");
+        }
+
+        return normalizedAccountIdentifier;
+    }
+    
 }

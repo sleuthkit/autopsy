@@ -767,7 +767,7 @@ public class Persona {
 
             String querySql = getPersonaFromInstanceTableQueryTemplate(crAccountType)
                     + " WHERE case_id = " + correlationCase.getID()
-                    + "AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
+                    + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
             PersonaFromAccountInstanceQueryCallback queryCallback = new PersonaFromAccountInstanceQueryCallback();
             CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);
@@ -799,7 +799,7 @@ public class Persona {
 
             String querySql = getPersonaFromInstanceTableQueryTemplate(crAccountType)
                     + " WHERE data_source_id = " + dataSource.getID()
-                    + "AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
+                    + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
             PersonaFromAccountInstanceQueryCallback queryCallback = new PersonaFromAccountInstanceQueryCallback();
             CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);

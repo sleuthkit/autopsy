@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
@@ -54,6 +55,7 @@ import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.HashHitInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -1072,35 +1074,37 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      * Gets the Central Repo account for the given account type and account ID.
      * Create a new account first, if one doesn't exist
      *
-     * @param accountType     account type
-     * @param accountUniqueID unique account identifier
+     * @param accountType     Account type.
+     * @param accountUniqueID Unique account identifier.
      *
      * @return A matching account, either existing or newly created.
      *
-     * @throws TskCoreException exception thrown if a critical error occurs
-     *                          within TSK core
+     * @throws CentralRepoException
      */
     @Override
     public CentralRepoAccount getOrCreateAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
         // Get the account fom the accounts table
-        CentralRepoAccount account = getAccount(crAccountType, accountUniqueID);
+        CentralRepoAccount account = null;
+        try {
+            String normalizedAccountIdentifier = CentralRepoAccount.normalizeAccountIdentifier(crAccountType, accountUniqueID);
+            account = getAccount(crAccountType, normalizedAccountIdentifier);
+            // account not found in the table, create it
+            if (null == account) {
+                String query = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
+                        + "VALUES ( " + crAccountType.getAccountTypeId() + ", '"
+                        + normalizedAccountIdentifier + "' )";
 
-        // account not found in the table, create it
-        if (null == account) {
-
-            String query = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
-                    + "VALUES ( " + crAccountType.getAccountTypeId() + ", '"
-                    + accountUniqueID + "' )";
-
-            try (Connection connection = connect();
-                    Statement s = connection.createStatement();) {
-
-                s.execute(query);
-                // get the account from the db - should exist now.
-                account = getAccount(crAccountType, accountUniqueID);
-            } catch (SQLException ex) {
-                throw new CentralRepoException("Error adding an account to CR database.", ex);
+                try (Connection connection = connect();
+                        Statement s = connection.createStatement();) {
+                    s.execute(query);
+                    // get the account from the db - should exist now.
+                    account = getAccount(crAccountType, normalizedAccountIdentifier);
+                } catch (SQLException ex) {
+                    throw new CentralRepoException(String.format("Error adding an account to CR database. Account type = %d, accountUniqueID = %s, normalizedAccountIdentifier = %s" , crAccountType.getAccountTypeId(), accountUniqueID, normalizedAccountIdentifier), ex);
+                }
             }
+        } catch (TskCoreException ex) {
+            throw new CentralRepoException("Failed to normalize account identifier.", ex);
         }
 
         return account;
