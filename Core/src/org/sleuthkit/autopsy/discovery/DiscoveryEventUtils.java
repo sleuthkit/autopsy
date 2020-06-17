@@ -100,7 +100,6 @@ final class DiscoveryEventUtils {
          */
         PopulateInstancesListEvent(List<AbstractFile> files) {
             instances = files;
-            //no arg constructor
         }
 
         /**
@@ -389,7 +388,6 @@ final class DiscoveryEventUtils {
          */
         DetailsVisibleEvent(boolean isVisible) {
             showDetailsArea = isVisible;
-            //no arg constructor
         }
 
         /**

@@ -250,11 +250,12 @@ final class FileSearchData {
         }
 
         /**
-         * Get the list of enums that are valid for image sizes.
+         * Get the list of enums that are valid for most file sizes.
          *
-         * @return enums that can be used to filter images by size.
+         * @return Enums that can be used to filter most file including images
+         *         by size.
          */
-        static List<FileSize> getOptionsForImages() {
+        static List<FileSize> getDefaultSizeOptions() {
             return Arrays.asList(XXLARGE_IMAGE, XLARGE_IMAGE, LARGE_IMAGE, MEDIUM_IMAGE, SMALL_IMAGE, XSMALL_IMAGE);
         }
 
