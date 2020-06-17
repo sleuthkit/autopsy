@@ -38,8 +38,10 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.contentviewers.TranslatablePanel.TranslatablePanelException;
 import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
@@ -125,6 +127,7 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
     private static final int HTML_TAB_INDEX = 2;
     private static final int RTF_TAB_INDEX = 3;
     private static final int ATTM_TAB_INDEX = 4;
+    private static final int ACCT_TAB_INDEX = 5;
 
     private final List<JTextComponent> textAreas;
     private final org.sleuthkit.autopsy.contentviewers.HtmlPanel htmlPanel = new org.sleuthkit.autopsy.contentviewers.HtmlPanel();
@@ -135,6 +138,13 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
     private BlackboardArtifact artifact;
     private final DataResultPanel drp;
     private ExplorerManager drpExplorerManager;
+    
+    private MessageAccountPanel accountsPanel;
+
+    public MessageArtifactViewer(List<JTextComponent> textAreas, DataResultPanel drp) {
+        this.textAreas = textAreas;
+        this.drp = drp;
+    }
 
     /**
      * Creates new MessageContentViewer
@@ -142,6 +152,8 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
     @NbBundle.Messages("MessageArtifactViewer.AttachmentPanel.title=Attachments")
     public MessageArtifactViewer() {
         initComponents();
+        accountsPanel = new MessageAccountPanel();
+        
         htmlPane.add(htmlPanel);
         envelopePanel.setBackground(new Color(0, 0, 0, 38));
         drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageArtifactViewer_AttachmentPanel_title(), "", new TableFilterNode(Node.EMPTY, false), 0, null);
@@ -154,6 +166,7 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
                 TEXT_TAB_INDEX);
 
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, true);
+        accountScrollPane.setViewportView(accountsPanel);
 
         /*
          * HTML tab uses the HtmlPanel instead of an internal text pane, so we
@@ -205,6 +218,8 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
         attachmentsPanel = new javax.swing.JPanel();
         viewInNewWindowButton = new javax.swing.JButton();
         attachmentsScrollPane = new javax.swing.JScrollPane();
+        accountsTab = new javax.swing.JPanel();
+        accountScrollPane = new javax.swing.JScrollPane();
 
         envelopePanel.setBackground(new java.awt.Color(204, 204, 204));
 
@@ -342,6 +357,11 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
 
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.attachmentsPanel.TabConstraints.tabTitle"), attachmentsPanel); // NOI18N
 
+        accountsTab.setLayout(new java.awt.BorderLayout());
+        accountsTab.add(accountScrollPane, java.awt.BorderLayout.CENTER);
+
+        msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageArtifactViewer.class, "MessageArtifactViewer.accountsTab.TabConstraints.tabTitle"), accountsTab); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -370,6 +390,8 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane accountScrollPane;
+    private javax.swing.JPanel accountsTab;
     private javax.swing.JPanel attachmentsPanel;
     private javax.swing.JScrollPane attachmentsScrollPane;
     private javax.swing.JLabel ccLabel;
@@ -421,6 +443,8 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
         } else {
             resetComponent();
         }
+        
+        accountsPanel.setArtifact(artifact);
     }
 
     /**
@@ -655,7 +679,7 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
 
         return doc.html();
     }
-
+    
     /**
      * Creates child nodes for message attachments.
      */
