@@ -359,7 +359,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private List<Long> findMboxSplitOffset(AbstractFile abstractFile, File file) throws IOException {
         
         List<Long> mboxSplitOffset = new ArrayList<>();
-        logger.log(Level.WARNING, String.format("starting find split")); //NON-NLS
         
         byte[] buffer = new byte[7];
         ReadContentInputStream in = new ReadContentInputStream(abstractFile);

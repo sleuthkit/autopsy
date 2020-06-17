@@ -312,7 +312,10 @@ public final class ContentUtils {
         long writeFileLength = endingOffset - startingOffset;
         InputStream in = new ReadContentInputStream(content);
         long totalRead = 0;
-        in.skip(startingOffset);        
+        long offsetSkipped = in.skip(startingOffset); 
+        if (offsetSkipped != startingOffset) {
+            throw new IOException(String.format("Skipping file to starting offset {0} was not successful only skipped to offset {1}.", startingOffset, offsetSkipped));            
+        }
         try (FileOutputStream out = new FileOutputStream(outputFile, false)) {
             byte[] buffer = new byte[TO_FILE_BUFFER_SIZE];
             int len = in.read(buffer);
