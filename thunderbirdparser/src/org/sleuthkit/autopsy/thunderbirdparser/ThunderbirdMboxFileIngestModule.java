@@ -352,7 +352,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 processMboxFile(splitFile, abstractFile, emailFolder);
                 startingOffset = mboxSplitOffset; 
                 if (splitFile.delete() == false) {
-                    logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
+                    logger.log(Level.INFO, "Failed to delete temp file: {0}", splitFile); //NON-NLS
                 }
 
             }
@@ -374,7 +374,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             len = in.read(buffer);
             if (buffer[0] == 13 && buffer[1] == 10 && buffer[2] == 70 && buffer[3] == 114 &&
                 buffer[4] == 111 && buffer[5] == 109 && buffer[6] == 32) {
-                    logger.log(Level.WARNING, String.format("found Offset %d", in.getCurPosition())); //NON-NLS
                     mboxSplitOffset.add(in.getCurPosition() - 5 );  
                     newPosition = in.skip(MBOX_SIZE_TO_SPLIT);
             }
