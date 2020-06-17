@@ -179,7 +179,7 @@ def write_diff_to_csv(repo_path: str, output_path: str, commit_1_id: str, commit
     commit_2 = repo.commit(commit_2_id)
 
     diffs = commit_1.diff(commit_2)
-    with open(output_path, 'w',) as csvfile:
+    with open(output_path, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(ItemChange.get_headers())
 
