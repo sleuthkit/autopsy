@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.GroupLayout.ParallelGroup;
@@ -131,10 +132,10 @@ final class MessageAccountPanel extends JPanel {
                 layout.setVerticalGroup(getMainVerticalGroup(layout, dataList));
                 setLayout(layout);
                 repaint();
-            } catch (CancellationException e) {
-
+            } catch (CancellationException ex) {
+                logger.log(Level.INFO, "MessageAccoutPanel thread cancelled", ex);
             } catch (InterruptedException | ExecutionException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "Failed to get account list for MessageAccountPanel", ex);
             }
         }
 

@@ -38,7 +38,6 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
@@ -166,7 +165,9 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
                 TEXT_TAB_INDEX);
 
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, true);
+        
         accountScrollPane.setViewportView(accountsPanel);
+        msgbodyTabbedPane.setEnabledAt(ACCT_TAB_INDEX, CentralRepository.isEnabled());
 
         /*
          * HTML tab uses the HtmlPanel instead of an internal text pane, so we
@@ -444,7 +445,10 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
             resetComponent();
         }
         
-        accountsPanel.setArtifact(artifact);
+        msgbodyTabbedPane.setEnabledAt(ACCT_TAB_INDEX, CentralRepository.isEnabled());
+        if(CentralRepository.isEnabled()) {
+            accountsPanel.setArtifact(artifact);
+        }
     }
 
     /**
