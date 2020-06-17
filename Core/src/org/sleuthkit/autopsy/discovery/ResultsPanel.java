@@ -325,6 +325,10 @@ final class ResultsPanel extends javax.swing.JPanel {
             if (groupSize != 0) {
                 pageWorker = new PageWorker(searchFilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, startingEntry, pageSize, resultType, centralRepo);
                 pageWorker.execute();
+            } else {
+                SwingUtilities.invokeLater(() -> {
+                    pageSizeComboBox.setEnabled(true);
+                });
             }
         }
     }
