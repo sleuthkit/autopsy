@@ -70,7 +70,8 @@ final class MessageAccountPanel extends JPanel {
      * @throws TskCoreException
      */
     void setArtifact(BlackboardArtifact artifact) {
-        this.removeAll();
+        removeAll();
+        setLayout(null);
         repaint();
 
         if (artifact == null) {
