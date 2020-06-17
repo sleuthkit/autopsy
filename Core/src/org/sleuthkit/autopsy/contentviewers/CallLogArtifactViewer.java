@@ -70,7 +70,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     private final List<PersonaSearchAndDisplayTask> personaSearchtasks = new ArrayList<>();
 
     /**
-     * Creates new form CallLogArtifactViewerNew
+     * Creates new form CallLogArtifactViewer.
      */
     public CallLogArtifactViewer() {
         initComponents();
@@ -402,13 +402,12 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      *
      * @return Account string to display.
      */
-     @NbBundle.Messages({
-        "CallLogArtifactViewer_suffix_local=(Local)",
-        })
+    @NbBundle.Messages({
+        "CallLogArtifactViewer_suffix_local=(Local)",})
     private String getAccountDisplayString(String accountIdentifier, CallLogViewData callLogViewDataNew) {
         String accountDisplayValue = accountIdentifier;
         if (callLogViewDataNew.getLocalAccountId() != null && callLogViewDataNew.getLocalAccountId().equalsIgnoreCase(accountIdentifier)) {
-            accountDisplayValue += " " + Bundle.CallLogArtifactViewer_suffix_local() ;
+            accountDisplayValue += " " + Bundle.CallLogArtifactViewer_suffix_local();
         }
         return accountDisplayValue;
     }
