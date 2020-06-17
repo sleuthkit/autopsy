@@ -156,6 +156,13 @@
                 <include name="libpq.dll"/>
             </fileset>
         </delete>
+
+        <!-- Just keep 64-bit photorec version -->
+        <var name="photorec-zip-path" value="${zip-tmp}/${app.name}/autopsy/photorec_exec"/>
+        <delete dir="${photorec-zip-path}/bin"/>
+        <move todir="${photorec-zip-path}">
+            <fileset dir="${photorec-zip-path}/64-bit/bin"/>
+        </move>
         
         <!-- step (4) zip again, but with the version numbers in the name & root folder -->
         <zip destfile="${nbdist.dir}/${app.name}-${app.version}.zip">
