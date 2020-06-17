@@ -204,7 +204,6 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
         if (index >= 0) {
             parentListModel.remove(index);
         }
-//        validateFields();
     }//GEN-LAST:event_deleteButtonActionPerformed
 
     private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
@@ -212,7 +211,6 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
             ParentSearchTerm searchTerm;
             searchTerm = new ParentSearchTerm(parentTextField.getText(), fullRadioButton.isSelected(), includeRadioButton.isSelected());
             parentListModel.add(parentListModel.size(), searchTerm);
-//            validateFields();
             parentTextField.setText("");
         }
     }//GEN-LAST:event_addButtonActionPerformed

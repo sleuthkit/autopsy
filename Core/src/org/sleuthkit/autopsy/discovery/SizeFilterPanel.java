@@ -34,7 +34,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Creates new form SizeFilterPanel=
+     * Creates new form SizeFilterPanel.
      *
      * @param type The type of result being searched for.
      */
@@ -148,10 +148,10 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
                     sizes = FileSize.getOptionsForVideos();
                     break;
                 case IMAGE:
-                    sizes = FileSize.getOptionsForImages();
+                    sizes = FileSize.getDefaultSizeOptions();
                     break;
                 case DOCUMENTS:
-                    sizes = FileSize.getOptionsForImages();
+                    sizes = FileSize.getDefaultSizeOptions();
                     break;
                 default:
                     sizes = new ArrayList<>();

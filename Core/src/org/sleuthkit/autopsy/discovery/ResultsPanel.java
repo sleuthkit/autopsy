@@ -152,7 +152,6 @@ final class ResultsPanel extends javax.swing.JPanel {
     @Subscribe
     void handlePageRetrievedEvent(DiscoveryEventUtils.PageRetrievedEvent pageRetrievedEvent) {
         SwingUtilities.invokeLater(() -> {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             //send populateMesage
             DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
 
@@ -277,7 +276,6 @@ final class ResultsPanel extends javax.swing.JPanel {
     @Subscribe
     void handleNoResultsEvent(DiscoveryEventUtils.NoResultsEvent noResultsEvent) {
         SwingUtilities.invokeLater(() -> {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             groupSize = 0;
             currentPage = 0;
             updateControls();
@@ -290,13 +288,26 @@ final class ResultsPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Subscribe to and update cursor in response to SearchCompleteEvents.
+     *
+     * @param searchCompleteEvent The SearchCompleteEvent which was received.
+     */
+    @Subscribe
+    void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
+        SwingUtilities.invokeLater(() -> {
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
+    }
+
+    /**
      * Set the page number and retrieve its contents.
      *
      * @param startingEntry The index of the first file in the group to include
      *                      in this page.
      */
     @Subscribe
-    private synchronized void setPage(int startingEntry) {
+    private synchronized void setPage(int startingEntry
+    ) {
         int pageSize = pageSizeComboBox.getItemAt(pageSizeComboBox.getSelectedIndex());
         synchronized (this) {
             if (pageWorker != null && !pageWorker.isDone()) {
