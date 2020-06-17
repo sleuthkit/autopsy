@@ -37,6 +37,11 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestStream;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.SleuthkitJNI;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * A image file data source processor that implements the DataSourceProcessor
@@ -296,14 +301,32 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      * @param callback             Callback to call when processing is done.
      */
     private void run(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        if (ingestStream == null) {
+        // First add the data source to the database and get the DataSource object
+	AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null);
+        DataSource dataSource = loadDataSource(imageDetails);
+	
+	if (ingestStream == null) {
             ingestStream = new DefaultIngestStream();
         }
-        addImageTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null), 
+        addImageTask = new AddImageTask(imageDetails, 
                 progressMonitor, 
                 new StreamingAddDataSourceCallbacks(ingestStream), 
                 new StreamingAddImageTaskCallback(ingestStream, callback));
         new Thread(addImageTask).start();
+    }
+    
+    DataSource loadDataSource(AddImageTask.ImageDetails imageDetails) {
+
+	// Save the image to the database
+	try{
+	    Image img = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
+		imageDetails.imagePath, imageDetails.sectorSize,
+		imageDetails.timeZone, imageDetails.md5, imageDetails.sha1, imageDetails.sha256, deviceId);
+	} catch (Exception ex) { 
+	    ex.printStackTrace();
+	}
+	
+	return null;
     }
 
     /**
