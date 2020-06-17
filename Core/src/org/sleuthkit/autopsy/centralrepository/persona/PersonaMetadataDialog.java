@@ -19,33 +19,54 @@
 package org.sleuthkit.autopsy.centralrepository.persona;
 
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 
 /**
- * Configuration dialog for adding aliases to a persona.
+ * Configuration dialog for adding metadata to a persona.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class AddAliasDialog extends JDialog {
+public class PersonaMetadataDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
 
     private final PersonaDetailsPanel pdp;
 
+    private PersonaDetailsPanel.PMetadata currentMetadata;
+
     /**
-     * Creates new add alias dialog
+     * Creates new add metadata dialog
      */
-    @Messages({"AddAliasDialog.title.text=Add Alias",})
-    public AddAliasDialog(PersonaDetailsPanel pdp) {
-        super((JFrame) WindowManager.getDefault().getMainWindow(),
-                Bundle.AddAliasDialog_title_text(),
-                true);
+    @Messages({"AddMetadataDialog.title.text=Add Metadata",})
+    public PersonaMetadataDialog(PersonaDetailsPanel pdp) {
+        super(SwingUtilities.windowForComponent(pdp),
+                Bundle.AddMetadataDialog_title_text(),
+                ModalityType.APPLICATION_MODAL);
         this.pdp = pdp;
 
         initComponents();
+        display();
+    }
+
+    PersonaMetadataDialog(PersonaDetailsPanel pdp, PersonaDetailsPanel.PMetadata md) {
+        super(SwingUtilities.windowForComponent(pdp),
+                Bundle.AddMetadataDialog_title_text(),
+                ModalityType.APPLICATION_MODAL);
+        this.pdp = pdp;
+
+        initComponents();
+        currentMetadata = md;
+        confidenceComboBox.setSelectedItem(md.confidence);
+        justificationTextField.setText(md.justification);
+        nameTextField.setText(md.name);
+        valueTextField.setText(md.value);
+
+        nameTextField.setEnabled(false);
+        valueTextField.setEnabled(false);
+
         display();
     }
 
@@ -59,12 +80,14 @@ public class AddAliasDialog extends JDialog {
     private void initComponents() {
 
         settingsPanel = new javax.swing.JPanel();
-        aliasLbl = new javax.swing.JLabel();
-        aliasTextField = new javax.swing.JTextField();
-        justificationLbl = new javax.swing.JLabel();
-        justificationTextField = new javax.swing.JTextField();
+        nameLbl = new javax.swing.JLabel();
+        nameTextField = new javax.swing.JTextField();
+        valueLbl = new javax.swing.JLabel();
+        valueTextField = new javax.swing.JTextField();
         confidenceLbl = new javax.swing.JLabel();
         confidenceComboBox = new javax.swing.JComboBox<>();
+        justificationLbl = new javax.swing.JLabel();
+        justificationTextField = new javax.swing.JTextField();
         cancelBtn = new javax.swing.JButton();
         okBtn = new javax.swing.JButton();
 
@@ -73,17 +96,21 @@ public class AddAliasDialog extends JDialog {
 
         settingsPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        org.openide.awt.Mnemonics.setLocalizedText(aliasLbl, org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.aliasLbl.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(nameLbl, org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.nameLbl.text")); // NOI18N
 
-        aliasTextField.setText(org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.aliasTextField.text")); // NOI18N
+        nameTextField.setText(org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.nameTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(justificationLbl, org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.justificationLbl.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(valueLbl, org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.valueLbl.text")); // NOI18N
 
-        justificationTextField.setText(org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.justificationTextField.text")); // NOI18N
+        valueTextField.setText(org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.valueTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(confidenceLbl, org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.confidenceLbl.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(confidenceLbl, org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.confidenceLbl.text")); // NOI18N
 
         confidenceComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(org.sleuthkit.autopsy.centralrepository.datamodel.Persona.Confidence.values()));
+
+        org.openide.awt.Mnemonics.setLocalizedText(justificationLbl, org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.justificationLbl.text")); // NOI18N
+
+        justificationTextField.setText(org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.justificationTextField.text")); // NOI18N
 
         javax.swing.GroupLayout settingsPanelLayout = new javax.swing.GroupLayout(settingsPanel);
         settingsPanel.setLayout(settingsPanelLayout);
@@ -93,9 +120,13 @@ public class AddAliasDialog extends JDialog {
                 .addContainerGap()
                 .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(settingsPanelLayout.createSequentialGroup()
-                        .addComponent(aliasLbl)
+                        .addComponent(nameLbl)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(aliasTextField))
+                        .addComponent(nameTextField))
+                    .addGroup(settingsPanelLayout.createSequentialGroup()
+                        .addComponent(valueLbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(valueTextField))
                     .addGroup(settingsPanelLayout.createSequentialGroup()
                         .addComponent(justificationLbl)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -111,20 +142,24 @@ public class AddAliasDialog extends JDialog {
             .addGroup(settingsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(aliasLbl)
-                    .addComponent(aliasTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(nameLbl)
+                    .addComponent(nameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(valueLbl)
+                    .addComponent(valueTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(confidenceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(confidenceLbl))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(justificationTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(justificationLbl))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(confidenceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(confidenceLbl))
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelBtn, org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.cancelBtn.text_1")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelBtn, org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.cancelBtn.text")); // NOI18N
         cancelBtn.setMaximumSize(new java.awt.Dimension(79, 23));
         cancelBtn.setMinimumSize(new java.awt.Dimension(79, 23));
         cancelBtn.setPreferredSize(new java.awt.Dimension(79, 23));
@@ -134,7 +169,7 @@ public class AddAliasDialog extends JDialog {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(okBtn, org.openide.util.NbBundle.getMessage(AddAliasDialog.class, "AddAliasDialog.okBtn.text_1")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okBtn, org.openide.util.NbBundle.getMessage(PersonaMetadataDialog.class, "PersonaMetadataDialog.okBtn.text")); // NOI18N
         okBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okBtnActionPerformed(evt);
@@ -176,19 +211,42 @@ public class AddAliasDialog extends JDialog {
     }
 
     @Messages({
-        "AddAliasDialog_dup_Title=Alias add failure",
-        "AddAliasDialog_dup_msg=This alias has already been added to this persona",})
+        "AddMetadataDialog_dup_Title=Metadata add failure",
+        "AddMetadataDialog_dup_msg=A metadata entry with this name has already been added to this persona.",
+        "AddMetadataDialog_empty_name_Title=Missing field(s)",
+        "AddMetadataDialog_empty_name_msg=A metadata entry cannot have an empty name or value.",})
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
-        if (pdp.addAlias(
-                aliasTextField.getText(),
-                justificationTextField.getText(),
-                (Persona.Confidence) confidenceComboBox.getSelectedItem())) {
+        if (nameTextField.getText().isEmpty() || valueTextField.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    Bundle.AddMetadataDialog_empty_name_msg(),
+                    Bundle.AddMetadataDialog_empty_name_Title(),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (justificationTextField.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    Bundle.PersonaDetailsPanel_empty_justification_msg(),
+                    Bundle.PersonaDetailsPanel_empty_justification_Title(),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Persona.Confidence confidence = (Persona.Confidence) confidenceComboBox.getSelectedItem();
+        String justification = justificationTextField.getText();
+
+        if (currentMetadata != null) {
+            currentMetadata.confidence = confidence;
+            currentMetadata.justification = justification;
             dispose();
         } else {
-            JOptionPane.showMessageDialog(this,
-                        Bundle.AddAliasDialog_dup_msg(),
-                        Bundle.AddAliasDialog_dup_Title(),
+            if (pdp.addMetadata(nameTextField.getText(), valueTextField.getText(), justification, confidence)) {
+                dispose();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        Bundle.AddMetadataDialog_dup_msg(),
+                        Bundle.AddMetadataDialog_dup_Title(),
                         JOptionPane.ERROR_MESSAGE);
+            }
         }
     }//GEN-LAST:event_okBtnActionPerformed
 
@@ -197,14 +255,16 @@ public class AddAliasDialog extends JDialog {
     }//GEN-LAST:event_cancelBtnActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel aliasLbl;
-    private javax.swing.JTextField aliasTextField;
     private javax.swing.JButton cancelBtn;
     private javax.swing.JComboBox<org.sleuthkit.autopsy.centralrepository.datamodel.Persona.Confidence> confidenceComboBox;
     private javax.swing.JLabel confidenceLbl;
     private javax.swing.JLabel justificationLbl;
     private javax.swing.JTextField justificationTextField;
+    private javax.swing.JLabel nameLbl;
+    private javax.swing.JTextField nameTextField;
     private javax.swing.JButton okBtn;
     private javax.swing.JPanel settingsPanel;
+    private javax.swing.JLabel valueLbl;
+    private javax.swing.JTextField valueTextField;
     // End of variables declaration//GEN-END:variables
 }

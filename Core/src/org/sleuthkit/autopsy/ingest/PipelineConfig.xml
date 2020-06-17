@@ -4,7 +4,7 @@ Contains only the core ingest modules that ship with Autopsy -->
 <PIPELINE_CONFIG>
     <PIPELINE type="ImageAnalysisStageOne">
         <MODULE>org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory</MODULE>
-        <MODULE>org.sleuthkit.autopsy.modules.android.AndroidModuleFactory</MODULE>
+        <MODULE>module.AndroidModuleFactory</MODULE>
     </PIPELINE>
 
     <PIPELINE type="FileAnalysis">
@@ -16,9 +16,10 @@ Contains only the core ingest modules that ship with Autopsy -->
         <MODULE>org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory</MODULE>
         <MODULE>org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory</MODULE>
         <MODULE>org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory</MODULE>
-	<MODULE>org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory</MODULE>
+	    <MODULE>org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory</MODULE>
+        <MODULE>GPX_Parser_Module.GPXParserFileIngestModuleFactory</MODULE>
     </PIPELINE>
-    
+
     <PIPELINE type="ImageAnalysisStageTwo">
         <MODULE>org.sleuthkit.autopsy.modules.dataSourceIntegrity.DataSourceIntegrityModuleFactory</MODULE>
     </PIPELINE>

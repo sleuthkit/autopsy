@@ -454,11 +454,8 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         if (callLogViewData.getLocalAccountId() != null) {
             localAccountIdLabel.setText(callLogViewData.getLocalAccountId());
 
-            // kick off a task to find the persona for this account
-            PersonaSearcherTask task = new PersonaSearcherTask(new AccountPersonaSearcherData(callLogViewData.getLocalAccountId(), localAccountPersonaNameLabel, localAccountPersonaButton));
-            personaSearchtasks.add(task);
-            personatasksExecutor.submit(task);
-
+            // Get the persona for the local account.
+            getPersona(new AccountPersonaSearcherData(callLogViewData.getLocalAccountId(), localAccountPersonaNameLabel, localAccountPersonaButton));
         } else {
             // no local account info, hide all fields.
             localAccountLabel.setVisible(false);
@@ -467,6 +464,35 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             localAccountPersonaNameLabel.setVisible(false);
             localAccountPersonaLabel.setVisible(false);
             localAccountPersonaButton.setVisible(false);
+        }
+    }
+
+    @NbBundle.Messages({
+        "CallLogArtifactViewer_crdisbaled_persona_label=Unknown",
+        "CallLogArtifactViewer_crdisbaled_persona_button_text=Create"
+    })
+
+    /**
+     * Gets the persona for the account specified. The persona name and button are
+     * updated when the persona is retrieved.
+     *
+     * If CentralRepo is disabled, it disables the persona name & button.
+     *
+     * @param personaSearcherData Persona search data.
+     *
+     */
+    private void getPersona(AccountPersonaSearcherData personaSearcherData) {
+
+        if (CentralRepository.isEnabled()) {
+            PersonaSearcherTask task = new PersonaSearcherTask(personaSearcherData);
+            personaSearchtasks.add(task);
+            personatasksExecutor.submit(task);
+        } else {
+            personaSearcherData.getPersonaNameLabel().setText(Bundle.CallLogArtifactViewer_crdisbaled_persona_label());
+            personaSearcherData.getPersonaNameLabel().setEnabled(false);
+
+            personaSearcherData.getPersonaActionButton().setText(Bundle.CallLogArtifactViewer_crdisbaled_persona_button_text());
+            personaSearcherData.getPersonaActionButton().setEnabled(false);
         }
     }
 
@@ -502,7 +528,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      * Display a call participant in the view.
      *
      * @param participantDesignator Label to show - To/From.
-     * @param accountIdentifier     account identifier for the participant.
+     * @param accountIdentifier account identifier for the participant.
      * @param gridBagLayout
      * @param constraints
      */
@@ -575,13 +601,10 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
         constraints.insets = new java.awt.Insets(TOP_INSET, 0, 0, 0);
 
-        // Kick off a background thread to search for the persona 
-        // for this particpant account.
-        PersonaSearcherTask task = new PersonaSearcherTask(new AccountPersonaSearcherData(accountIdentifier, participantPersonaNameLabel, personaButton));
-        personaSearchtasks.add(task);
-        personatasksExecutor.submit(task);
+        // Get the persona for this party, and update the persona name & button.
+        getPersona(new AccountPersonaSearcherData(accountIdentifier, participantPersonaNameLabel, personaButton));
 
-        // add a filler to take up rest of the space
+        // Add a filler to take up rest of the space
         constraints.gridx++;
         constraints.weightx = 1.0;
         constraints.fill = GridBagConstraints.HORIZONTAL;
@@ -757,8 +780,8 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      * Extracts the other recipients numbers from the given attribute. Updates
      * the given CallLogViewData with the other recipients list.
      *
-     * @param recipientsAttr  TO attribute, must not be null.
-     * @param directionAttr   Direction attribute.
+     * @param recipientsAttr TO attribute, must not be null.
+     * @param directionAttr Direction attribute.
      * @param callLogViewData CallLogViewData object to update.
      *
      */
@@ -813,9 +836,9 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      * Extract the call time and duration from the artifact and saves in the
      * CallLogViewData.
      *
-     * @param artifact        Call log artifact.
+     * @param artifact Call log artifact.
      * @param callLogViewData CallLogViewData object to save the time & duration
-     *                        in.
+     * in.
      *
      * @throws TskCoreException
      */
