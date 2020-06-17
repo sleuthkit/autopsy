@@ -38,7 +38,7 @@ public class PersonaAlias {
             "SELECT pa.id, pa.persona_id, pa.alias, pa.justification, pa.confidence_id, pa.date_added, pa.examiner_id, e.login_name, e.display_name "
                 + "FROM persona_alias as pa "
                 + "INNER JOIN examiners as e ON e.id = pa.examiner_id ";
-    
+
     private final long id;
     private final long personaId;
     private final String alias;
@@ -143,6 +143,25 @@ public class PersonaAlias {
         String deleteClause = " DELETE FROM persona_alias WHERE id = " + alias.getId();
         CentralRepository.getInstance().executeDeleteSQL(deleteClause);
     }
+    
+    /**
+     * Modifies a PesronaAlias.
+     *
+     * @param alias Alias to modify.
+     *
+     * @throws CentralRepoException If there is an error in modifying the alias.
+     */
+    static void modifyPersonaAlias(PersonaAlias alias, Persona.Confidence confidence, String justification) throws CentralRepoException {
+        CentralRepository cr = CentralRepository.getInstance();
+        
+        if (cr == null) {
+            throw new CentralRepoException("Failed to modify persona alias, Central Repo is not enabled");
+        }
+        
+        String updateClause = "UPDATE persona_alias SET confidence_id = " + confidence.getLevelId() + ", justification = \"" + justification + "\" WHERE id = " + alias.id;
+        cr.executeUpdateSQL(updateClause);
+    }
+    
     
      /**
      * Callback to process a Persona aliases query.

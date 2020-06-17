@@ -47,8 +47,10 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("SearchScopes");
 		::rptMsg($key_path);
-		::rptMsg("DefaultScope: ".$key->get_value("DefaultScope")->get_data());
-		::rptMsg("");
+        if (defined($key->get_value("DefaultScope"))) {
+            ::rptMsg("DefaultScope: ".$key->get_value("DefaultScope")->get_data());
+            ::rptMsg("");
+        }
 #		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {

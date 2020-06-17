@@ -81,6 +81,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 /**
  * The map panel. This panel contains the jxmapviewer MapViewer
  */
+@SuppressWarnings("deprecation")
 final public class MapPanel extends javax.swing.JPanel {
 
     static final String CURRENT_MOUSE_GEOPOSITION = "CURRENT_MOUSE_GEOPOSITION";
@@ -399,7 +400,7 @@ final public class MapPanel extends javax.swing.JPanel {
      * Show the popup menu for the given waypoint and location.
      *
      * @param waypoint Selected waypoint
-     * @param point Current mouse click location
+     * @param point    Current mouse click location
      */
     private void showPopupMenu(MapWaypoint waypoint, Point point) throws TskCoreException {
         if (waypoint == null) {
@@ -478,7 +479,7 @@ final public class MapPanel extends javax.swing.JPanel {
      * @param clickPoint The mouse click point
      *
      * @return A waypoint that is within 10 pixels of the given point, or null
-     * if none was found.
+     *         if none was found.
      */
     private List<MapWaypoint> findClosestWaypoint(Point clickPoint) {
         if (waypointTree == null) {
@@ -759,6 +760,7 @@ final public class MapPanel extends javax.swing.JPanel {
         /**
          *
          * @param waypoint the waypoint for which to get the color selected
+         *
          * @return the color that this waypoint should be rendered
          */
         private Color getColor(MapWaypoint waypoint) {
@@ -776,6 +778,7 @@ final public class MapPanel extends javax.swing.JPanel {
          * Creates a dot image with the specified color
          *
          * @param color the color of the new image
+         *
          * @return the new dot image
          */
         private BufferedImage createTrackDotImage(Color color) {
@@ -797,6 +800,7 @@ final public class MapPanel extends javax.swing.JPanel {
          * Creates a waypoint image with the specified color
          *
          * @param color the color of the new image
+         *
          * @return the new waypoint image
          */
         private BufferedImage createWaypointImage(Color color) {
