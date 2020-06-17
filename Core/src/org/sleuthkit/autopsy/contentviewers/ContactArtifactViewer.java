@@ -64,7 +64,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * This class displays the TSK_CONTACT artifact.
  */
-@ServiceProvider(service = ArtifactContentViewer.class)
+//@ServiceProvider(service = ArtifactContentViewer.class)
 public class ContactArtifactViewer extends javax.swing.JPanel implements ArtifactContentViewer {
 
     private final static Logger logger = Logger.getLogger(ContactArtifactViewer.class.getName());

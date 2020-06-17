@@ -29,6 +29,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
@@ -94,6 +95,26 @@ public final class CommunicationArtifactViewerHelper {
         addLineEndGlue(panel, gridbagLayout, constraints);
     }
 
+    /**
+     * Adds the given component to the panel.
+     * 
+     * Caller must know what it's doing and set up all the constraints properly.
+     *
+     * @param panel Panel to update.
+     * @param gridbagLayout Layout to use.
+     * @param constraints Constrains to use.
+     * @param component Component to add.
+     */
+    static void addComponent(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, JComponent component) {
+        
+        // add to panel
+        gridbagLayout.setConstraints(component, constraints);
+        panel.add(component);
+
+        // add line end glue
+        addLineEndGlue(panel, gridbagLayout, constraints);
+    }
+    
     /**
      * Adds a filler/glue at the end of the line to keep the other columns
      * aligned, in case the panel is resized.
