@@ -940,11 +940,17 @@ final class IngestJobPipeline {
      * @param fileObjIds List of newly added file IDs
      */
     void addStreamingIngestFiles(List<Long> fileObjIds) {
-	if (stage.equals(Stages.FIRST_STAGE_FILES_ONLY)) {
-	    IngestJobPipeline.taskScheduler.scheduleStreamedFileIngestTasks(this, fileObjIds);
-	} else {
+	
+        // Return if there are no file ingest modules enabled.
+        if (! hasFileIngestPipeline()) {
+            return;
+        }
+
+        if (stage.equals(Stages.FIRST_STAGE_FILES_ONLY)) {
+            IngestJobPipeline.taskScheduler.scheduleStreamedFileIngestTasks(this, fileObjIds);
+        } else {
             logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
-	}
+        }
     }
     
     /**
