@@ -322,8 +322,10 @@ final class ResultsPanel extends javax.swing.JPanel {
                     logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for Discovery", ex);
                 }
             }
-            pageWorker = new PageWorker(searchFilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, startingEntry, pageSize, resultType, centralRepo);
-            pageWorker.execute();
+            if (groupSize != 0) {
+                pageWorker = new PageWorker(searchFilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, startingEntry, pageSize, resultType, centralRepo);
+                pageWorker.execute();
+            }
         }
     }
 
