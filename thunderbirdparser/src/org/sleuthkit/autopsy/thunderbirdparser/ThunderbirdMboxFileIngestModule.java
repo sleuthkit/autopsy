@@ -19,9 +19,7 @@
 package org.sleuthkit.autopsy.thunderbirdparser;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -55,7 +53,6 @@ import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.Relationship;
@@ -81,8 +78,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private CommunicationArtifactsHelper communicationArtifactsHelper;
     
     private static final int MBOX_SIZE_TO_SPLIT = 1048576000;
-    private static final int TO_FILE_BUFFER_SIZE = 8192;
-//    private static final int MBOX_SIZE_TO_SPLIT = 2099751000;
     private Case currentCase;
 
     /**
@@ -342,7 +337,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
             long startingOffset = 0;            
             for (Long mboxSplitOffset : mboxSplitOffsets) {
-                File splitFile = new File(fileName + "-" + String.valueOf(mboxSplitOffset));
+                File splitFile = new File(fileName + "-" + mboxSplitOffset);
                 try {
                     ContentUtils.writeToFile(abstractFile, splitFile, context::fileIngestIsCancelled, startingOffset, mboxSplitOffset);
                 } catch (IOException ex) {
@@ -368,14 +363,14 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         
         byte[] buffer = new byte[7];
         ReadContentInputStream in = new ReadContentInputStream(abstractFile);
-        long newPosition = in.skip(MBOX_SIZE_TO_SPLIT);        
+        in.skip(MBOX_SIZE_TO_SPLIT);        
         int len = in.read(buffer);
         while (len != -1) {
             len = in.read(buffer);
             if (buffer[0] == 13 && buffer[1] == 10 && buffer[2] == 70 && buffer[3] == 114 &&
                 buffer[4] == 111 && buffer[5] == 109 && buffer[6] == 32) {
                     mboxSplitOffset.add(in.getCurPosition() - 5 );  
-                    newPosition = in.skip(MBOX_SIZE_TO_SPLIT);
+                    in.skip(MBOX_SIZE_TO_SPLIT);
             }
         }
            

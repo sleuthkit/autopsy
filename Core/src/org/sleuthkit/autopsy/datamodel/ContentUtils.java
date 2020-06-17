@@ -312,7 +312,7 @@ public final class ContentUtils {
         long writeFileLength = endingOffset - startingOffset;
         InputStream in = new ReadContentInputStream(content);
         long totalRead = 0;
-        long newPosition = in.skip(startingOffset);        
+        in.skip(startingOffset);        
         try (FileOutputStream out = new FileOutputStream(outputFile, false)) {
             byte[] buffer = new byte[TO_FILE_BUFFER_SIZE];
             int len = in.read(buffer);
