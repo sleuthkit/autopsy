@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import javax.swing.JPanel;
-import org.sleuthkit.autopsy.ingest.IngestStream;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 
 /**
  * Interface implemented by classes that add data sources of a particular type
@@ -122,16 +122,18 @@ public interface DataSourceProcessor {
      * return results.
      *
      * This method should not be called unless isPanelValid returns true, and 
-     * should only be called for DSPs that support ingest streams.
+     * should only be called for DSPs that support ingest streams. The ingest settings
+     * must be complete before calling this method.
      * 
+     * @param settings        The ingest job settings
      * @param progress        Progress monitor that will be used by the
      *                        background task to report progress.
      * @param callBack        Callback that will be used by the background task
      *                        to return results.
-     * @param ingestStream    The ingest stream to send data to
      */
-    default void run(DataSourceProcessorProgressMonitor progress, DataSourceProcessorCallback callBack, IngestStream ingestStream) {
-        throw new UnsupportedOperationException("Ingest stream not supported for this data source processor");
+    default void runWithIngestStream(IngestJobSettings settings, DataSourceProcessorProgressMonitor progress, 
+        DataSourceProcessorCallback callBack) {
+        throw new UnsupportedOperationException("Streaming ingest not supported for this data source processor");
     }
     
     /**

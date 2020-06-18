@@ -285,6 +285,19 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         caseIsOpen = false;
         clearIngestMessageBox();
     }
+    
+    /**
+     * Creates an ingest stream from the given ingest settings.
+     * 
+     * @param settings The ingest job settings.
+     * 
+     * @return The newly created ingest stream
+     */
+    public IngestStream openIngestStream(IngestJobSettings settings) {
+        IngestJob job = new IngestJob(settings);
+        return new IngestJobInputStream(job);
+    }
+
 
     /**
      * Gets the number of file ingest threads the ingest manager is using to do

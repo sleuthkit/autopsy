@@ -34,6 +34,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.DataSourceUtils;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestStream;
 
 /**
@@ -172,7 +174,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-	run (progressMonitor, callback, new DefaultIngestStream());
+    run(progressMonitor, callback, new DefaultIngestStream());
     }
     
     /**
@@ -186,14 +188,29 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      * This method should not be called unless isPanelValid returns true, and 
      * should only be called for DSPs that support ingest streams.
      * 
+     * @param settings        The ingest job settings.
      * @param progress        Progress monitor that will be used by the
      *                        background task to report progress.
      * @param callBack        Callback that will be used by the background task
      *                        to return results.
-     * @param ingestStream    The ingest stream to send data to
      */
     @Override
-    public void run(DataSourceProcessorProgressMonitor progress, DataSourceProcessorCallback callBack, IngestStream ingestStream) {
+    public void runWithIngestStream(IngestJobSettings settings, DataSourceProcessorProgressMonitor progress, 
+            DataSourceProcessorCallback callBack) {
+        run(progress, callBack, IngestManager.getInstance().openIngestStream(settings));
+    }
+    
+    /**
+     * Internal method to run the data source processor. 
+     * 
+     * @param progress        Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callBack        Callback that will be used by the background task
+     *                        to return results.
+     * @param ingestStream    The ingest stream to use.
+     */
+    private void run(DataSourceProcessorProgressMonitor progress, 
+           DataSourceProcessorCallback callBack, IngestStream ingestStream) {
         this.ingestStream = ingestStream;
         if (!setDataSourceOptionsCalled) {
             configPanel.storeSettings();
@@ -215,7 +232,6 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
                 sha256 = null;
             }
         }
-                
         run(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progress, callBack);
     }
     
