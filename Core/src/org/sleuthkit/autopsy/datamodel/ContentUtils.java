@@ -310,13 +310,13 @@ public final class ContentUtils {
             Supplier<Boolean> cancelCheck, long startingOffset, long endingOffset) throws IOException {
         
         InputStream in = new ReadContentInputStream(content);
-        long offsetSkipped = in.skip(startingOffset); 
-        if (offsetSkipped != startingOffset) {
-            in.close();
-            throw new IOException(String.format("Skipping file to starting offset {0} was not successful only skipped to offset {1}.", startingOffset, offsetSkipped));            
-        }
         long totalRead = 0;
         try (FileOutputStream out = new FileOutputStream(outputFile, false)) {
+            long offsetSkipped = in.skip(startingOffset); 
+            if (offsetSkipped != startingOffset) {
+                in.close();
+                throw new IOException(String.format("Skipping file to starting offset {0} was not successful only skipped to offset {1}.", startingOffset, offsetSkipped));            
+            }
             byte[] buffer = new byte[TO_FILE_BUFFER_SIZE];
             int len = in.read(buffer);
             long writeFileLength = endingOffset - startingOffset;
