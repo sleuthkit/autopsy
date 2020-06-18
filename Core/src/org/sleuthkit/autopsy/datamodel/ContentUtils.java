@@ -312,6 +312,7 @@ public final class ContentUtils {
         InputStream in = new ReadContentInputStream(content);
         long offsetSkipped = in.skip(startingOffset); 
         if (offsetSkipped != startingOffset) {
+            in.close();
             throw new IOException(String.format("Skipping file to starting offset {0} was not successful only skipped to offset {1}.", startingOffset, offsetSkipped));            
         }
         long totalRead = 0;
