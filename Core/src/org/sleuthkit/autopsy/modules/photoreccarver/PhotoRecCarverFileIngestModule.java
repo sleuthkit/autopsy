@@ -473,7 +473,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_SUBDIRECTORY, PHOTOREC_EXECUTABLE);
             exeFile = InstalledFileLocator.getDefault().locate(execName.toString(), PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
         } else {
-            File usrBin = new File("/usr/bin/photorec");
+            File usrBin = new File("/usr/local/bin/photorec");
             File usrLocalBin = new File("/usr/bin/photorec");
             if (usrBin.canExecute() && usrBin.exists() && !usrBin.isDirectory()) {
                 photorec_linux_directory = "/usr/bin";
