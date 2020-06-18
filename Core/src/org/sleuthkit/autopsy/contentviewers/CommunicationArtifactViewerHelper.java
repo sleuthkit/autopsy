@@ -27,6 +27,8 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -260,9 +262,9 @@ public final class CommunicationArtifactViewerHelper {
         "CommunicationArtifactViewerHelper_persona_button_view=View",
         "CommunicationArtifactViewerHelper_persona_button_create=Create"
     })
-    static Optional<PersonaSearchAndDisplayTask> addPersonaRow(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String accountIdentifier) {
-
-        PersonaSearchAndDisplayTask personaTask = null;
+    
+    static List<AccountPersonaSearcherData> addPersonaRow(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String accountIdentifier) {
+        List<AccountPersonaSearcherData> dataList = new ArrayList<>();
 
         constraints.gridy++;
         constraints.gridx = 1;
@@ -301,15 +303,14 @@ public final class CommunicationArtifactViewerHelper {
 
         if (CentralRepository.isEnabled()) {
             // kick off a task to find the persona for this account
-            personaTask = new PersonaSearchAndDisplayTask(panel, new AccountPersonaSearcherData(accountIdentifier, personaLabel, personaButton));
-            personaTask.execute();
+            dataList.add(new AccountPersonaSearcherData(accountIdentifier, personaLabel, personaButton));
         } else {
             personaLabel.setEnabled(false);
         }
 
         addLineEndGlue(panel, gridbagLayout, constraints);
 
-        return Optional.ofNullable(personaTask);
+        return dataList; ///Optional.ofNullable(personaTask);
     }
 
     /**
