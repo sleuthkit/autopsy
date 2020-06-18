@@ -12,19 +12,29 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingWorker;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
+import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -60,6 +70,7 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
     // account identifier attributes of the Contact artifact.
     private final Map<Persona, ArrayList<CentralRepoAccount>> contactUniquePersonasMap = new HashMap<>();
 
+    privbate ContactPersonaSearcherTask personaSearchTask;
    
     /**
      * Creates new form ContactArtifactViewerNew
@@ -79,7 +90,7 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        setToolTipText("RAMAN RAMAN RAMAN RAMAN RAMAN "); // NOI18N
+        setToolTipText(""); // NOI18N
         setLayout(new java.awt.GridBagLayout());
     }// </editor-fold>//GEN-END:initComponents
 
@@ -97,6 +108,7 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
         List<BlackboardAttribute> nameList = new ArrayList<>();
         List<BlackboardAttribute> otherList = new ArrayList<>();
         List<BlackboardAttribute> accountAttributesList = new ArrayList<>();
+        String datasourceName;
 
         try {
             // Get all the attributes and group them by the section panels they go in
@@ -116,8 +128,11 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
                     }
                 }
             }
+            
+            datasourceName = artifact.getDataSource().getName();
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Error getting attributes for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
+            return;
         }
         
         
@@ -126,8 +141,17 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
         // update name section
         updateContactName(nameList);
 
+        // update contact attributes sections
+        updateSection(phoneNumList, "Phones");
+        updateSection(emailList, "Emails");
+        updateSection(otherList, "Others");
         
+        updateSource(datasourceName);
+        
+        CommunicationArtifactViewerHelper.addPageEndGlue(this, m_gridBagLayout, this.m_constraints);
+         
         // repaint
+        this.setLayout(m_gridBagLayout);
         this.revalidate();
         this.repaint();
     }
@@ -135,8 +159,7 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
     @Override
     public Component getComponent() {
         // Slap a vertical scrollbar on the panel.
-        return this;
-        //return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     }
 
     @Override
@@ -146,12 +169,12 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
 
     
     /**
-     * Updates the contact name in the view.
+     * Updates the contact image in the view.
      *
-     * @param attributesList
+     * @param artifact
      */
     @NbBundle.Messages({
-        "ContactArtifactViewer.contactImage.text=RAMAN",
+        "ContactArtifactViewer.contactImage.text=",
     })
     private void updateContactImage(BlackboardArtifact artifact) {
         
@@ -161,9 +184,10 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
         
         contactImage.setText(Bundle.ContactArtifactViewer_contactImage_text());
         
+        // add image to top left corner of the page.
         CommunicationArtifactViewerHelper.addComponent(this, m_gridBagLayout, this.m_constraints, contactImage);
         m_constraints.gridy++;
-        
+
     }
     
     /**
@@ -171,15 +195,139 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
      *
      * @param attributesList List of attributes that might have the contact name.
      */
+    @NbBundle.Messages({
+        "ContactArtifactViewer_contactname_unknown=Unknown",
+    })
     private void updateContactName(List<BlackboardAttribute> nameAttributesList) {
+        boolean foundName = false;
         for (BlackboardAttribute bba : nameAttributesList) {
             if (StringUtils.isEmpty(bba.getValueString()) == false) {
                 contactName = bba.getDisplayString();
                 
+                // TBD: need to increase the font size of the page header by 2
                 CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, contactName);
+                foundName = true; 
                 break;
             }
         }
+        if (foundName== false) {
+             CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, Bundle.ContactArtifactViewer_contactname_unknown());
+        }
+    }
+    
+     /**
+     * Updates the view by displaying the given list of attributes in the given
+     * section panel.
+     *
+     * @param sectionAttributesList list of attributes to display.
+     * @param sectionLabel          section name label.
+     */
+    private void updateSection(List<BlackboardAttribute> sectionAttributesList, String sectionHeader) {
+
+        // If there are no attributes for this section, do nothing
+        if (sectionAttributesList.isEmpty()) {
+            return;
+        }
+
+        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, sectionHeader);
+        for (BlackboardAttribute bba : sectionAttributesList) {
+            CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, m_constraints, bba.getAttributeType().getDisplayName());
+            CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, m_constraints, bba.getDisplayString());
+        }
+    }
+    
+    @NbBundle.Messages({
+        "ContactArtifactViewer_heading_Source=Source",
+        "ContactArtifactViewer_label_datasource=Data Source",})
+    private void updateSource(String datasourceName) {
+        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, Bundle.ContactArtifactViewer_heading_Source());
+        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.ContactArtifactViewer_label_datasource());
+        CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, datasourceName);
+    }
+    
+     /**
+     * Kicks off a search for personas, based in the given list of attributes.
+     *
+     * @param accountAttributesList a list of account identifying attributes.
+     *
+     * @throws CentralRepoException
+     */
+    @NbBundle.Messages({
+        "ContactArtifactViewer_persona_searching= Persona",
+        "ContactArtifactViewer_persona_searching= Searching...",
+        "ContactArtifactViewer_persona_unknown=Unknown"
+    })
+    private void initiatePersonasSearch(List<BlackboardAttribute> accountAttributesList) throws CentralRepoException {
+
+        JLabel personaHeader = CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, Bundle.ContactArtifactViewer_persona_searching());
+        
+        //CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.ContactArtifactViewer_label_datasource());
+        
+        
+        personasLabel.setVisible(true);
+
+        String personaStatusLabelText = CentralRepository.isEnabled() 
+                                    ? Bundle.ContactArtifactViewer_persona_searching()
+                : Bundle.ContactArtifactViewer_persona_unknown();
+        
+       
+
+      
+
+    
+        if (CentralRepository.isEnabled() ) {
+           
+            
+            // Kick off a background task to serach for personas for the contact
+            ContactPersonaSearcherTask personaSearchTask = new ContactPersonaSearcherTask(accountAttributesList);
+            personaSearchTask.execute();
+        } else {
+            personaHeader.setEnabled(false);
+            
+            // RAMAN TBD: add a Unknown diabled label at gridx=1;
+        }
+
+       
+    }
+    
+    /**
+     * Updates the Persona panel with the gathered persona information.
+     */
+    private void updatePersonasPanel() {
+        // Clear out the panel
+        personasPanel.removeAll();
+
+        GridBagLayout gridBagLayout = new GridBagLayout();
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.insets = new java.awt.Insets(TOP_INSET, LEFT_INSET, 0, 0);
+
+        if (contactUniquePersonasMap.isEmpty()) {
+            showPersona(null, Collections.emptyList(), gridBagLayout, constraints);
+        } else {
+            for (Map.Entry<Persona, ArrayList<CentralRepoAccount>> entry : contactUniquePersonasMap.entrySet()) {
+                List<CentralRepoAccount> missingAccounts = new ArrayList<>();
+                ArrayList<CentralRepoAccount> personaAccounts = entry.getValue();
+
+                // create a list of accounts missing from this persona
+                for (CentralRepoAccount account : contactUniqueAccountsList) {
+                    if (personaAccounts.contains(account) == false) {
+                        missingAccounts.add(account);
+                    }
+                }
+
+                showPersona(entry.getKey(), missingAccounts, gridBagLayout, constraints);
+
+                constraints.gridy += 2;
+            }
+        }
+
+        personasPanel.setLayout(gridBagLayout);
+        personasPanel.setSize(personasPanel.getPreferredSize());
+        personasPanel.revalidate();
+        personasPanel.repaint();
     }
     
     /**
@@ -191,8 +339,11 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
         contactUniqueAccountsList.clear();
         contactUniquePersonasMap.clear();
         
-        //contactImage.setIcon(defaultImage);
+        if (personaSearchTask != null) {
+            personaSearchTask.cancel();
+        }
         
+        personaSearchTask - mull;
         
         // clear the panel 
         this.removeAll();
@@ -208,7 +359,6 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
         m_constraints.weightx = 0.05;
         m_constraints.insets = new java.awt.Insets(0, 0, 0, 0);
         m_constraints.fill = GridBagConstraints.NONE;
-
     }
     
     /**
@@ -241,7 +391,7 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
                         imageIcon = new ImageIcon(image);
                         break;
                     } catch (IOException ex) {
-                        // ImageIO.read will through an IOException if file is not an image
+                        // ImageIO.read will throw an IOException if file is not an image
                         // therefore we don't need to report this exception just try
                         // the next file.
                     }
@@ -254,6 +404,102 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
         return imageIcon;
     }
 
+    
+    /**
+     * Thread to search for a personas for all account identifier attributes for
+     * a contact.
+     */
+    private class ContactPersonaSearcherTask extends SwingWorker<Map<Persona, ArrayList<CentralRepoAccount>>, Void> {
+
+        private final List<BlackboardAttribute> accountAttributesList;
+        private final List<CentralRepoAccount> uniqueAccountsList = new ArrayList<>();
+
+        /**
+         * Creates a persona searcher task.
+         *
+         * @param accountAttributesList List of attributes that may map to
+         *                              accounts.
+         */
+        ContactPersonaSearcherTask(List<BlackboardAttribute> accountAttributesList) {
+            this.accountAttributesList = accountAttributesList;
+        }
+
+        @Override
+        protected Map<Persona, ArrayList<CentralRepoAccount>> doInBackground() throws Exception {
+
+            Map<Persona, ArrayList<CentralRepoAccount>> uniquePersonas = new HashMap<>();
+
+            for (BlackboardAttribute bba : accountAttributesList) {
+
+                // Get account, add to accounts list
+                Collection<Persona> personas;
+
+                Collection<CentralRepoAccount> accountCandidates
+                        = CentralRepoAccount.getAccountsWithIdentifier(bba.getValueString());
+
+                if (accountCandidates.isEmpty() == false) {
+                    CentralRepoAccount account = accountCandidates.iterator().next();
+                    if (uniqueAccountsList.contains(account) == false) {
+                        uniqueAccountsList.add(account);
+                    }
+
+                    // get personas for the account
+                    personas = PersonaAccount.getPersonaAccountsForAccount(account.getId())
+                            .stream()
+                            .map(PersonaAccount::getPersona)
+                            .collect(Collectors.toList());
+
+                    // make a list of unique personas, along with all their accounts
+                    for (Persona persona : personas) {
+                        if (uniquePersonas.containsKey(persona) == false) {
+                            Collection<CentralRepoAccount> accounts = persona.getPersonaAccounts()
+                                    .stream()
+                                    .map(PersonaAccount::getAccount)
+                                    .collect(Collectors.toList());
+
+                            ArrayList<CentralRepoAccount> personaAccountsList = new ArrayList<>(accounts);
+                            uniquePersonas.put(persona, personaAccountsList);
+                        }
+                    }
+                }
+
+            }
+
+            return uniquePersonas;
+        }
+
+        @Override
+        protected void done() {
+
+            Map<Persona, ArrayList<CentralRepoAccount>> personasMap;
+            try {
+                personasMap = super.get();
+
+                if (this.isCancelled()) {
+                    return;
+                }
+
+                contactUniquePersonasMap.clear();
+                contactUniquePersonasMap.putAll(personasMap);
+                contactUniqueAccountsList.clear();
+                contactUniqueAccountsList.addAll(uniqueAccountsList);
+
+                updatePersonasSection();
+                
+                // also update the source section now
+                
+
+            } catch (CancellationException ex) {
+                logger.log(Level.INFO, "Persona searching was canceled."); //NON-NLS
+            } catch (InterruptedException ex) {
+                logger.log(Level.INFO, "Persona searching was interrupted."); //NON-NLS
+            } catch (ExecutionException ex) {
+                logger.log(Level.SEVERE, "Fatal error during Persona search.", ex); //NON-NLS
+            }
+
+        }
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
 }

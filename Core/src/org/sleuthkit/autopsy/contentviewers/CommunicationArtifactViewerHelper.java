@@ -63,9 +63,14 @@ public final class CommunicationArtifactViewerHelper {
      * @param gridbagLayout Layout to use.
      * @param constraints Constrains to use.
      * @param headerString Heading string to display.
+     * 
+     * @return JLabel Heading label added.
      */
-    static void addHeader(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String headerString) {
+    static JLabel addHeader(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String headerString) {
 
+        // create label for heading
+        javax.swing.JLabel headingLabel = new javax.swing.JLabel();
+        
         // add a blank line before the start of new section, unless it's 
         // the first section
         if (constraints.gridy != 0) {
@@ -77,8 +82,7 @@ public final class CommunicationArtifactViewerHelper {
         // let the header span all of the row
         constraints.gridwidth = MAX_COLS;
 
-        // create label for heading
-        javax.swing.JLabel headingLabel = new javax.swing.JLabel();
+        // set text
         headingLabel.setText(headerString);
 
         // make it large and bold
@@ -93,6 +97,8 @@ public final class CommunicationArtifactViewerHelper {
 
         // add line end glue
         addLineEndGlue(panel, gridbagLayout, constraints);
+        
+        return headingLabel;
     }
 
     /**
