@@ -23,8 +23,10 @@ import java.awt.event.ActionEvent;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -69,6 +71,10 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     private final List<PersonaMetadata> metadataToRemove = new ArrayList<>();
     private final List<PersonaAlias> aliasesToRemove = new ArrayList<>();
 
+    private final Map<PersonaAccount, PAccount> accountsToEdit = new HashMap<>();
+    private final Map<PersonaMetadata, PMetadata> metadataToEdit = new HashMap<>();
+    private final Map<PersonaAlias, PAlias> aliasesToEdit = new HashMap<>();
+
     private Persona currentPersona;
     private List<PersonaAccount> currentAccounts = new ArrayList<>();
     private List<PersonaMetadata> currentMetadata = new ArrayList<>();
@@ -91,6 +97,19 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         addAccountBtn.addActionListener((ActionEvent e) -> {
             new PersonaAccountDialog(this);
         });
+        editAccountBtn.addActionListener((ActionEvent e) -> {
+            int selectedRow = accountsTable.getSelectedRow();
+            if (selectedRow != -1) {
+                if (selectedRow >= currentAccounts.size()) {
+                    PAccount acc = accountsToAdd.get(selectedRow - currentAccounts.size());
+                    new PersonaAccountDialog(this, acc);
+                } else {
+                    PersonaAccount personaAccount = currentAccounts.get(selectedRow);
+                    accountsToEdit.putIfAbsent(personaAccount, new PAccount(personaAccount.getAccount(), personaAccount.getJustification(), personaAccount.getConfidence()));
+                    new PersonaAccountDialog(this, accountsToEdit.get(personaAccount));
+                }
+            }
+        });
         deleteAccountBtn.addActionListener((ActionEvent e) -> {
             int selectedRow = accountsTable.getSelectedRow();
             if (selectedRow != -1) {
@@ -98,20 +117,35 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 if (selectedRow >= currentAccounts.size()) {
                     accountsToAdd.remove(selectedRow - currentAccounts.size());
                 } else {
-                    accountsToRemove.add(currentAccounts.get(selectedRow));
-                    currentAccounts.remove(selectedRow);
+                    PersonaAccount toRemove = currentAccounts.get(selectedRow);
+                    accountsToEdit.remove(toRemove);
+                    accountsToRemove.add(toRemove);
+                    currentAccounts.remove(toRemove);
                 }
                 updateAccountsTable();
             }
         });
         accountsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         accountsTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
-            handleSelectionChange(e, deleteAccountBtn, accountsTable);
+            handleSelectionChange(e, editAccountBtn, deleteAccountBtn, accountsTable);
         });
 
         // Metadata
         addMetadataBtn.addActionListener((ActionEvent e) -> {
             new PersonaMetadataDialog(this);
+        });
+        editMetadataBtn.addActionListener((ActionEvent e) -> {
+            int selectedRow = metadataTable.getSelectedRow();
+            if (selectedRow != -1) {
+                if (selectedRow >= currentMetadata.size()) {
+                    PMetadata md = metadataToAdd.get(selectedRow - currentMetadata.size());
+                    new PersonaMetadataDialog(this, md);
+                } else {
+                    PersonaMetadata personaMetadata = currentMetadata.get(selectedRow);
+                    metadataToEdit.putIfAbsent(personaMetadata, new PMetadata(personaMetadata.getName(), personaMetadata.getValue(), personaMetadata.getJustification(), personaMetadata.getConfidence()));
+                    new PersonaMetadataDialog(this, metadataToEdit.get(personaMetadata));
+                }
+            }
         });
         deleteMetadataBtn.addActionListener((ActionEvent e) -> {
             int selectedRow = metadataTable.getSelectedRow();
@@ -120,20 +154,35 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 if (selectedRow >= currentMetadata.size()) {
                     metadataToAdd.remove(selectedRow - currentMetadata.size());
                 } else {
-                    metadataToRemove.add(currentMetadata.get(selectedRow));
-                    currentMetadata.remove(selectedRow);
+                    PersonaMetadata toRemove = currentMetadata.get(selectedRow);
+                    metadataToEdit.remove(toRemove);
+                    metadataToRemove.add(toRemove);
+                    currentMetadata.remove(toRemove);
                 }
                 updateMetadataTable();
             }
         });
         metadataTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         metadataTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
-            handleSelectionChange(e, deleteMetadataBtn, metadataTable);
+            handleSelectionChange(e, editMetadataBtn, deleteMetadataBtn, metadataTable);
         });
 
         // Aliases
         addAliasBtn.addActionListener((ActionEvent e) -> {
             new PersonaAliasDialog(this);
+        });
+        editAliasBtn.addActionListener((ActionEvent e) -> {
+            int selectedRow = aliasesTable.getSelectedRow();
+            if (selectedRow != -1) {
+                if (selectedRow >= currentAliases.size()) {
+                    PAlias pa = aliasesToAdd.get(selectedRow - currentAliases.size());
+                    new PersonaAliasDialog(this, pa);
+                } else {
+                    PersonaAlias personaAlias = currentAliases.get(selectedRow);
+                    aliasesToEdit.putIfAbsent(personaAlias, new PAlias(personaAlias.getAlias(), personaAlias.getJustification(), personaAlias.getConfidence()));
+                    new PersonaAliasDialog(this, aliasesToEdit.get(personaAlias));
+                }
+            }
         });
         deleteAliasBtn.addActionListener((ActionEvent e) -> {
             int selectedRow = aliasesTable.getSelectedRow();
@@ -142,33 +191,48 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 if (selectedRow >= currentAliases.size()) {
                     aliasesToAdd.remove(selectedRow - currentAliases.size());
                 } else {
-                    aliasesToRemove.add(currentAliases.get(selectedRow));
-                    currentAliases.remove(selectedRow);
+                    PersonaAlias toRemove = currentAliases.get(selectedRow);
+                    aliasesToEdit.remove(toRemove);
+                    aliasesToRemove.add(toRemove);
+                    currentAliases.remove(toRemove);
                 }
                 updateAliasesTable();
             }
         });
         aliasesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         aliasesTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
-            handleSelectionChange(e, deleteAliasBtn, aliasesTable);
+            handleSelectionChange(e, editAliasBtn, deleteAliasBtn, aliasesTable);
         });
     }
 
-    private void handleSelectionChange(ListSelectionEvent e, JButton btn, JTable table) {
+    private void handleSelectionChange(ListSelectionEvent e, JButton editBtn, JButton deleteBtn, JTable table) {
         if (e.getValueIsAdjusting()) {
             return;
         }
-        btn.setEnabled(mode != PersonaDetailsMode.VIEW && table.getSelectedRow() != -1);
+        editBtn.setEnabled(mode != PersonaDetailsMode.VIEW && table.getSelectedRow() != -1);
+        deleteBtn.setEnabled(mode != PersonaDetailsMode.VIEW && table.getSelectedRow() != -1);
+    }
+
+    void addEditExistingAccount(PersonaAccount account, String justification, Persona.Confidence confidence) {
+        accountsToEdit.put(account, new PAccount(account.getAccount(), justification, confidence));
+    }
+
+    void addEditExistingMetadata(PersonaMetadata metadata, String justification, Persona.Confidence confidence) {
+        metadataToEdit.put(metadata, new PMetadata(metadata.getName(), metadata.getValue(), justification, confidence));
+    }
+
+    void addEditExistingAlias(PersonaAlias alias, String justification, Persona.Confidence confidence) {
+        aliasesToEdit.put(alias, new PAlias(alias.getAlias(), justification, confidence));
     }
 
     /**
      * A data bucket class for yet-to-be-created PersonaAccount
      */
-    private class PAccount {
+    class PAccount {
 
-        private final CentralRepoAccount account;
-        private final String justification;
-        private final Persona.Confidence confidence;
+        CentralRepoAccount account;
+        String justification;
+        Persona.Confidence confidence;
 
         PAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) {
             this.account = account;
@@ -189,7 +253,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
             }
         }
         return false;
-    } 
+    }
 
     public boolean addAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) {
         if (!accountExists(account)) {
@@ -203,12 +267,12 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     /**
      * A data bucket class for yet-to-be-created PersonaMetadata
      */
-    private class PMetadata {
+    class PMetadata {
 
-        private final String name;
-        private final String value;
-        private final String justification;
-        private final Persona.Confidence confidence;
+        String name;
+        String value;
+        String justification;
+        Persona.Confidence confidence;
 
         PMetadata(String name, String value, String justification, Persona.Confidence confidence) {
             this.name = name;
@@ -244,11 +308,11 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     /**
      * A data bucket class for yet-to-be-created PersonaAlias
      */
-    private class PAlias {
+    class PAlias {
 
-        private final String alias;
-        private final String justification;
-        private final Persona.Confidence confidence;
+        String alias;
+        String justification;
+        Persona.Confidence confidence;
 
         PAlias(String alias, String justification, Persona.Confidence confidence) {
             this.alias = alias;
@@ -301,16 +365,19 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         accountsTablePane = new javax.swing.JScrollPane();
         accountsTable = new javax.swing.JTable();
         addAccountBtn = new javax.swing.JButton();
+        editAccountBtn = new javax.swing.JButton();
         deleteAccountBtn = new javax.swing.JButton();
         metadataLabel = new javax.swing.JLabel();
         metadataTablePane = new javax.swing.JScrollPane();
         metadataTable = new javax.swing.JTable();
         addMetadataBtn = new javax.swing.JButton();
+        editMetadataBtn = new javax.swing.JButton();
         deleteMetadataBtn = new javax.swing.JButton();
         aliasesLabel = new javax.swing.JLabel();
         aliasesTablePane = new javax.swing.JScrollPane();
         aliasesTable = new javax.swing.JTable();
         addAliasBtn = new javax.swing.JButton();
+        editAliasBtn = new javax.swing.JButton();
         deleteAliasBtn = new javax.swing.JButton();
         casesLbl = new javax.swing.JLabel();
         casesTablePane = new javax.swing.JScrollPane();
@@ -354,6 +421,9 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(addAccountBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.addAccountBtn.text")); // NOI18N
         addAccountBtn.setEnabled(false);
 
+        org.openide.awt.Mnemonics.setLocalizedText(editAccountBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.editAccountBtn.text")); // NOI18N
+        editAccountBtn.setEnabled(false);
+
         org.openide.awt.Mnemonics.setLocalizedText(deleteAccountBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.deleteAccountBtn.text")); // NOI18N
         deleteAccountBtn.setEnabled(false);
 
@@ -375,6 +445,9 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(addMetadataBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.addMetadataBtn.text")); // NOI18N
         addMetadataBtn.setEnabled(false);
 
+        org.openide.awt.Mnemonics.setLocalizedText(editMetadataBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.editMetadataBtn.text")); // NOI18N
+        editMetadataBtn.setEnabled(false);
+
         org.openide.awt.Mnemonics.setLocalizedText(deleteMetadataBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.deleteMetadataBtn.text")); // NOI18N
         deleteMetadataBtn.setEnabled(false);
 
@@ -395,6 +468,9 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(addAliasBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.addAliasBtn.text")); // NOI18N
         addAliasBtn.setEnabled(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(editAliasBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.editAliasBtn.text")); // NOI18N
+        editAliasBtn.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteAliasBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.deleteAliasBtn.text")); // NOI18N
         deleteAliasBtn.setEnabled(false);
@@ -442,13 +518,19 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                             .addGroup(detailsPanelLayout.createSequentialGroup()
                                 .addComponent(addAccountBtn)
                                 .addGap(18, 18, 18)
+                                .addComponent(editAccountBtn)
+                                .addGap(18, 18, 18)
                                 .addComponent(deleteAccountBtn))
                             .addGroup(detailsPanelLayout.createSequentialGroup()
                                 .addComponent(addMetadataBtn)
                                 .addGap(18, 18, 18)
+                                .addComponent(editMetadataBtn)
+                                .addGap(18, 18, 18)
                                 .addComponent(deleteMetadataBtn))
                             .addGroup(detailsPanelLayout.createSequentialGroup()
                                 .addComponent(addAliasBtn)
+                                .addGap(18, 18, 18)
+                                .addComponent(editAliasBtn)
                                 .addGap(18, 18, 18)
                                 .addComponent(deleteAliasBtn)))
                         .addGap(0, 0, Short.MAX_VALUE))
@@ -486,23 +568,26 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(addAccountBtn)
-                    .addComponent(deleteAccountBtn))
+                    .addComponent(deleteAccountBtn)
+                    .addComponent(editAccountBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(metadataLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(metadataTablePane, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(addMetadataBtn)
                     .addComponent(deleteMetadataBtn)
-                    .addComponent(addMetadataBtn))
+                    .addComponent(editMetadataBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(aliasesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(aliasesTablePane, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(addAliasBtn)
                     .addComponent(deleteAliasBtn)
-                    .addComponent(addAliasBtn))
+                    .addComponent(editAliasBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(casesLbl)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -549,6 +634,9 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     private javax.swing.JButton deleteAliasBtn;
     private javax.swing.JButton deleteMetadataBtn;
     private javax.swing.JPanel detailsPanel;
+    private javax.swing.JButton editAccountBtn;
+    private javax.swing.JButton editAliasBtn;
+    private javax.swing.JButton editMetadataBtn;
     private javax.swing.JTextField examinerField;
     private javax.swing.JLabel examinerLbl;
     private javax.swing.JLabel metadataLabel;
@@ -560,7 +648,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
 
     @Messages({
         "PersonaDetailsPanel_load_exception_Title=Initialization failure",
-        "PersonaDetailsPanel_load_exception_msg=Failed to load persona",})
+        "PersonaDetailsPanel_load_exception_msg=Failed to load persona.",})
     private void loadPersona(Component parent, Persona persona) {
         String examiner;
         String creationDate;
@@ -626,6 +714,9 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         deleteAccountBtn.setEnabled(false);
         deleteMetadataBtn.setEnabled(false);
         deleteAliasBtn.setEnabled(false);
+        editAccountBtn.setEnabled(false);
+        editMetadataBtn.setEnabled(false);
+        editAliasBtn.setEnabled(false);
     }
 
     /**
@@ -729,12 +820,15 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         addAccountBtn.setEnabled(enabled);
         addMetadataBtn.setEnabled(enabled);
         addAliasBtn.setEnabled(enabled);
-        
+
         addAccountBtn.setVisible(enabled);
+        editAccountBtn.setVisible(enabled);
         deleteAccountBtn.setVisible(enabled);
         addMetadataBtn.setVisible(enabled);
+        editMetadataBtn.setVisible(enabled);
         deleteMetadataBtn.setVisible(enabled);
         addAliasBtn.setVisible(enabled);
+        editAliasBtn.setVisible(enabled);
         deleteAliasBtn.setVisible(enabled);
     }
 
@@ -780,13 +874,13 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     }
 
     @Messages({
-        "PersonaDetailsPanel_NotEnoughAccounts_msg=A persona needs at least one account",
+        "PersonaDetailsPanel_NotEnoughAccounts_msg=A persona needs at least one account.",
         "PersonaDetailsPanel_NotEnoughAccounts_Title=Missing account",
-        "PersonaDetailsPanel_CentralRepoErr_msg=Failure to write to Central Repository",
+        "PersonaDetailsPanel_CentralRepoErr_msg=Failure to write to Central Repository.",
         "PersonaDetailsPanel_CentralRepoErr_Title=Central Repository failure",
-        "PersonaDetailsPanel_EmptyName_msg=Persona name cannot be empty",
+        "PersonaDetailsPanel_EmptyName_msg=Persona name cannot be empty.",
         "PersonaDetailsPanel_EmptyName_Title=Empty persona name",
-        "PersonaDetailsPanel_EmptyComment_msg=Persona comment cannot be empty",
+        "PersonaDetailsPanel_EmptyComment_msg=Persona comment cannot be empty.",
         "PersonaDetailsPanel_EmptyComment_Title=Empty persona comment",})
     Persona okHandler() {
         if (accountsToAdd.size() + currentAccounts.size() < 1) {
@@ -851,17 +945,26 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                     for (PersonaAccount acc : accountsToRemove) {
                         ret.removeAccount(acc);
                     }
+                    for (HashMap.Entry<PersonaAccount, PAccount> entry : accountsToEdit.entrySet()) {
+                        ret.modifyAccount(entry.getKey(), entry.getValue().confidence, entry.getValue().justification);
+                    }
                     for (PMetadata md : metadataToAdd) {
                         ret.addMetadata(md.name, md.value, md.justification, md.confidence);
                     }
                     for (PersonaMetadata md : metadataToRemove) {
                         ret.removeMetadata(md);
                     }
+                    for (HashMap.Entry<PersonaMetadata, PMetadata> entry : metadataToEdit.entrySet()) {
+                        ret.modifyMetadata(entry.getKey(), entry.getValue().confidence, entry.getValue().justification);
+                    }
                     for (PAlias pa : aliasesToAdd) {
                         ret.addAlias(pa.alias, pa.justification, pa.confidence);
                     }
                     for (PersonaAlias pa : aliasesToRemove) {
                         ret.removeAlias(pa);
+                    }
+                    for (HashMap.Entry<PersonaAlias, PAlias> entry : aliasesToEdit.entrySet()) {
+                        ret.modifyAlias(entry.getKey(), entry.getValue().confidence, entry.getValue().justification);
                     }
                 } catch (CentralRepoException e) {
                     logger.log(Level.SEVERE, "Failed to access central repository", e);
@@ -873,20 +976,21 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 }
                 break;
             case VIEW:
+                ret = currentPersona;
                 break;
             default:
                 logger.log(Level.SEVERE, "Unsupported mode: {0}", mode);
         }
         return ret;
     }
-    
+
     /**
      * Sets the persona name field.
-     * 
+     *
      * @param name Persona name.
      */
     public void setPersonaName(String name) {
         nameField.setText(name);
     }
-    
+
 }

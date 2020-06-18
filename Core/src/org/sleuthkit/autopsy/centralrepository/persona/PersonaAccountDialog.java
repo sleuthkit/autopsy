@@ -23,11 +23,11 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
@@ -46,27 +46,50 @@ public class PersonaAccountDialog extends JDialog {
     private static final Logger logger = Logger.getLogger(PersonaAccountDialog.class.getName());
 
     private static final long serialVersionUID = 1L;
-    
+
     private final TypeChoiceRenderer TYPE_CHOICE_RENDERER = new TypeChoiceRenderer();
     private final PersonaDetailsPanel pdp;
-    
+
+    private PersonaDetailsPanel.PAccount currentAccount = null;
+
     /**
      * Creates new add account dialog
      */
     @Messages({"PersonaAccountDialog.title.text=Add Account",})
     public PersonaAccountDialog(PersonaDetailsPanel pdp) {
-        super((JFrame) WindowManager.getDefault().getMainWindow(),
+        super(SwingUtilities.windowForComponent(pdp),
                 Bundle.PersonaAccountDialog_title_text(),
-                true);
+                ModalityType.APPLICATION_MODAL);
         this.pdp = pdp;
 
         initComponents();
         typeComboBox.setRenderer(TYPE_CHOICE_RENDERER);
         display();
     }
-    
+
+    PersonaAccountDialog(PersonaDetailsPanel pdp, PersonaDetailsPanel.PAccount acc) {
+        super(SwingUtilities.windowForComponent(pdp),
+                Bundle.PersonaAccountDialog_title_text(),
+                ModalityType.APPLICATION_MODAL);
+        this.pdp = pdp;
+
+        initComponents();
+        currentAccount = acc;
+        confidenceComboBox.setSelectedItem(acc.confidence);
+        justificationTextField.setText(acc.justification);
+        typeComboBox.setSelectedItem(acc.account.getAccountType());
+        identifierTextField.setText(acc.account.getIdentifier());
+
+        typeComboBox.setEnabled(false);
+        identifierTextField.setEnabled(false);
+
+        typeComboBox.setRenderer(TYPE_CHOICE_RENDERER);
+        display();
+    }
+
     /**
-     * This class handles displaying and rendering drop down menu for account choices
+     * This class handles displaying and rendering drop down menu for account
+     * choices
      */
     private class TypeChoiceRenderer extends JLabel implements ListCellRenderer<CentralRepoAccountType>, Serializable {
 
@@ -80,11 +103,10 @@ public class PersonaAccountDialog extends JDialog {
             return this;
         }
     }
-    
+
     @Messages({
         "PersonaAccountDialog_get_types_exception_Title=Central Repository failure",
-        "PersonaAccountDialog_get_types_exception_msg=Failed to access central repository.",
-    })
+        "PersonaAccountDialog_get_types_exception_msg=Failed to access central repository.",})
     private CentralRepoAccountType[] getAllAccountTypes() {
         Collection<CentralRepoAccountType> allAccountTypes;
         try {
@@ -92,9 +114,9 @@ public class PersonaAccountDialog extends JDialog {
         } catch (CentralRepoException e) {
             logger.log(Level.SEVERE, "Failed to access central repository", e);
             JOptionPane.showMessageDialog(this,
-                                    Bundle.PersonaAccountDialog_get_types_exception_Title(),
-                                    Bundle.PersonaAccountDialog_get_types_exception_msg(),
-                                    JOptionPane.ERROR_MESSAGE);
+                    Bundle.PersonaAccountDialog_get_types_exception_Title(),
+                    Bundle.PersonaAccountDialog_get_types_exception_msg(),
+                    JOptionPane.ERROR_MESSAGE);
             return new CentralRepoAccountType[0];
         }
         return allAccountTypes.toArray(new CentralRepoAccountType[0]);
@@ -303,17 +325,23 @@ public class PersonaAccountDialog extends JDialog {
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
-        if (pdp.addAccount(
-                result,
-                justificationTextField.getText(),
-                (Persona.Confidence) confidenceComboBox.getSelectedItem())) {
+
+        Persona.Confidence confidence = (Persona.Confidence) confidenceComboBox.getSelectedItem();
+        String justification = justificationTextField.getText();
+
+        if (currentAccount != null) {
+            currentAccount.confidence = confidence;
+            currentAccount.justification = justification;
             dispose();
         } else {
-            JOptionPane.showMessageDialog(this,
-                    Bundle.PersonaAccountDialog_dup_msg(),
-                    Bundle.PersonaAccountDialog_dup_Title(),
-                    JOptionPane.ERROR_MESSAGE);
+            if (pdp.addAccount(result, justification, confidence)) {
+                dispose();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        Bundle.PersonaAccountDialog_dup_msg(),
+                        Bundle.PersonaAccountDialog_dup_Title(),
+                        JOptionPane.ERROR_MESSAGE);
+            }
         }
     }//GEN-LAST:event_okBtnActionPerformed
 
@@ -324,7 +352,7 @@ public class PersonaAccountDialog extends JDialog {
     private void identifierTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_identifierTextFieldActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_identifierTextFieldActionPerformed
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelBtn;
     private javax.swing.JComboBox<org.sleuthkit.autopsy.centralrepository.datamodel.Persona.Confidence> confidenceComboBox;
