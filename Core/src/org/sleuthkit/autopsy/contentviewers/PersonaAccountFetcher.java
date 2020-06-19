@@ -102,7 +102,7 @@ class PersonaAccountFetcher extends SwingWorker<Map<String, Collection<Persona>>
 
             for (AccountPersonaSearcherData searcherData : personaSearchDataList) {
                 Collection<Persona> persona = accountMap.get(searcherData.getAccountIdentifer());
-                updateDataObject(searcherData, persona);
+                updatePersonaControls(searcherData, persona);
             }
 
         } catch (CancellationException ex) {
@@ -122,7 +122,7 @@ class PersonaAccountFetcher extends SwingWorker<Map<String, Collection<Persona>>
      * @param personaSearcherData The data objects with persona controls
      * @param personas            Collection of persona objects
      */
-    private void updateDataObject(AccountPersonaSearcherData personaSearcherData, Collection<Persona> personas) {
+    private void updatePersonaControls(AccountPersonaSearcherData personaSearcherData, Collection<Persona> personas) {
         //Update the Persona label and button based on the search result
         String personaLabelText = Bundle.CommunicationArtifactViewerHelper_persona_label();
         String personaButtonText;

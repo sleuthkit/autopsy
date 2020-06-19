@@ -34,7 +34,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
-import java.util.Optional;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
@@ -252,8 +251,7 @@ public final class CommunicationArtifactViewerHelper {
      * @param constraints Constrains to use.
      * @param accountIdentifier Account identifier to search the persona.
      *
-     * @return Optional PersonaSearchAndDisplayTask started to search for
-     * persona.
+     * @return  List of AccountPersonaSearcherData objects.
      */
     @NbBundle.Messages({
         "CommunicationArtifactViewerHelper_persona_label=Persona: ",
@@ -310,7 +308,7 @@ public final class CommunicationArtifactViewerHelper {
 
         addLineEndGlue(panel, gridbagLayout, constraints);
 
-        return dataList; ///Optional.ofNullable(personaTask);
+        return dataList;
     }
 
     /**

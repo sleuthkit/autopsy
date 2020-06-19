@@ -286,6 +286,8 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      * Update the viewer with the call log data.
      *
      * @param callLogViewData Call log data to update the view with.
+     * 
+     * @return List of AccountPersonaSearcherData objects.
      */
     @NbBundle.Messages({
         "CallLogArtifactViewer_heading_parties=Parties",
