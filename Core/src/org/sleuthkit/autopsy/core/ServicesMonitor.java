@@ -43,18 +43,80 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Monitors the status of services and publishes events and user notifications
- * when the status of a service changes. The database server, keyword search
- * server, and messaging service are considered to be core services in a
- * collaborative, multi-user case environment. Additional services can provide
- * current status by calling the setServiceStatus() method.
+ * when the status of a service changes.
+ *
+ * A service that wants to have its current status periodically polled by the
+ * services monitor should implement the MonitoredService interface.
+ *
+ * A service mnonitor that wants to push its current status to the services
+ * monitor should call the setServiceStatus() method when it starts up and
+ * whenever its status changes.
+ *
+ * Services may choose to both implement MonitoredService and call
+ * setServiceStatus().
  */
 public class ServicesMonitor {
 
     /**
+     * A service status report.
+     */
+    public class ServiceStatusReport {
+
+        private final String status;
+        private final String details;
+
+        /**
+         * Constructs an instance of a service status report.
+         *
+         * @param status  The service status.
+         * @param details Additional details regarding the service status, may
+         *                be empty.
+         */
+        ServiceStatusReport(String status, String details) {
+            this.status = status;
+            this.details = details;
+        }
+
+        /**
+         * Gets the status of the service.
+         */
+        String getStatus() {
+            return status;
+        }
+
+        /**
+         * Gets any additional details regarding the status of a service.
+         *
+         * @return The additional details, may be empty.
+         */
+        String getDetails() {
+            return details;
+        }
+
+    }
+
+    /**
+     * A service that wants to have its current status periodically polled by
+     * the services monitor should implement the MonitoredService interface
+     */
+    public interface MonitoredService {
+
+        /**
+         * Gets the current status of the service.
+         *
+         * @return The status of the service.
+         */
+        ServiceStatusReport getStatus();
+
+    }
+
+    /**
      * An enumeration of the core services in a collaborative, multi-user case
-     * environment. The display names provided here can be used to identify the
-     * service status events published for these services and to directly query
-     * the ServicesMonitor for the current status of these services.
+     * environment.
+     *
+     * The display names provided here can be used to identify the service
+     * status events published for these services and to directly query the
+     * ServicesMonitor for the current status of these services.
      */
     public enum Service {
         REMOTE_CASE_DATABASE(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.remoteCaseDatabase.displayName.text")),
@@ -63,7 +125,7 @@ public class ServicesMonitor {
 
         private final String displayName;
 
-        private Service(String displayName) {
+        Service(String displayName) {
             this.displayName = displayName;
         }
 
@@ -75,9 +137,24 @@ public class ServicesMonitor {
     /**
      * An enumeration of the standard service statuses.
      */
+    @NbBundle.Messages({
+        "serviceStatus.up=Up",
+        "serviceStatus.down=Down"
+    })
     public enum ServiceStatus {
-        UP,
-        DOWN
+        UP(serviceStatus_up()),
+        DOWN(serviceStatus_up());
+
+        private final String displayName;
+
+        ServiceStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
     };
 
     private static final Logger logger = Logger.getLogger(ServicesMonitor.class.getName());

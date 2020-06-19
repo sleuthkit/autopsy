@@ -189,7 +189,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                 try {
                     ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
                     serviceStatus = servicesMonitor.getServiceStatus(service.toString());
-                    if (serviceStatus.compareTo(ServicesMonitor.ServiceStatus.UP.toString()) == 0) {
+                    if (serviceStatus.compareTo(ServicesMonitor.ServiceStatusReport.UP.toString()) == 0) {
                         serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
                     } else {
                         serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
@@ -220,10 +220,10 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).toString();
             String status = evt.getNewValue().toString();
 
-            if (status.equals(ServicesMonitor.ServiceStatus.UP.toString())) {
+            if (status.equals(ServicesMonitor.ServiceStatusReport.UP.toString())) {
                 status = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
                 LOGGER.log(Level.INFO, "Connection to {0} is up", serviceDisplayName); //NON-NLS
-            } else if (status.equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
+            } else if (status.equals(ServicesMonitor.ServiceStatusReport.DOWN.toString())) {
                 status = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
                 LOGGER.log(Level.SEVERE, "Connection to {0} is down", serviceDisplayName); //NON-NLS
             } else {

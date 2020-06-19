@@ -330,7 +330,7 @@ public class SharedConfiguration {
      */
     private boolean isServiceUp(String serviceName) {
         try {
-            return (ServicesMonitor.getInstance().getServiceStatus(serviceName).equals(ServicesMonitor.ServiceStatus.UP.toString()));
+            return (ServicesMonitor.getInstance().getServiceStatus(serviceName).equals(ServicesMonitor.ServiceStatusReport.UP.toString()));
         } catch (ServicesMonitor.ServicesMonitorException ex) {
             logger.log(Level.SEVERE, String.format("Problem checking service status for %s", serviceName), ex);
             return false;

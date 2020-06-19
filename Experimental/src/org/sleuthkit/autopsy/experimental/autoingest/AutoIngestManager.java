@@ -2269,7 +2269,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                  services monitor.
          */
         private boolean isServiceUp(String serviceName) throws ServicesMonitorException {
-            return (ServicesMonitor.getInstance().getServiceStatus(serviceName).equals(ServicesMonitor.ServiceStatus.UP.toString()));
+            return (ServicesMonitor.getInstance().getServiceStatus(serviceName).equals(ServicesMonitor.ServiceStatusReport.UP.toString()));
         }
 
         /**
