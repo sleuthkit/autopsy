@@ -106,7 +106,7 @@ public final class IngestJob {
      * ingest modules specified via ingest job settings. Either all of the files
      * in the data source or a given subset of the files will be analyzed.
      *
-     * @param dataSource The data source to be analyzed
+     * @param dataSource The data source to be analyzed.
      * @param files      A subset of the files for the data source.
      * @param settings   The ingest job settings.
      */
