@@ -68,8 +68,8 @@ final class ExtractPrefetch extends Extract {
     private static final String PREFETCH_TSK_COMMENT = "Prefetch File";
     private static final String PREFETCH_FILE_LOCATION = "/Windows/Prefetch";
     private static final String PREFETCH_TOOL_FOLDER = "markmckinnon"; //NON-NLS
-    private static final String PREFETCH_TOOL_NAME_WINDOWS_64 = "parse_prefetch_64.exe"; //NON-NLS
-    private static final String PREFETCH_TOOL_NAME_WINDOWS_32 = "parse_prefetch_32.exe"; //NON-NLS
+    private static final String PREFETCH_TOOL_NAME_WINDOWS_64 = "parse_prefetch_x64.exe"; //NON-NLS
+    private static final String PREFETCH_TOOL_NAME_WINDOWS_32 = "parse_prefetch_x32.exe"; //NON-NLS
     private static final String PREFETCH_TOOL_NAME_MACOS = "parse_prefetch_macos"; //NON-NLS
     private static final String PREFETCH_TOOL_NAME_LINUX = "parse_prefetch_linux"; //NON-NLS
     private static final String PREFETCH_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
