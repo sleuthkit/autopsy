@@ -37,10 +37,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
  *
  * Data source processors should perform all processing in a background task in
  * a separate thread, reporting results using a callback object.
- *
- * It is recommended that implementers provide an overload of the run method
- * that allows the data source processor to be run independently of the
- * selection and configuration panel.
  */
 public interface DataSourceProcessor {
 
@@ -125,7 +121,7 @@ public interface DataSourceProcessor {
      * should only be called for DSPs that support ingest streams. The ingest settings
      * must be complete before calling this method.
      * 
-     * @param settings        The ingest job settings
+     * @param settings        The ingest job settings.
      * @param progress        Progress monitor that will be used by the
      *                        background task to report progress.
      * @param callBack        Callback that will be used by the background task

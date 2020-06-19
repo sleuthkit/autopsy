@@ -379,7 +379,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         "IngestManager.startupErr.dlgSolution=Please disable the failed modules or fix the errors before restarting ingest.",
         "IngestManager.startupErr.dlgErrorList=Errors:"
     })
-    private IngestJobStartResult startIngestJob(IngestJob job) {
+    IngestJobStartResult startIngestJob(IngestJob job) {
         List<IngestModuleError> errors = null;
         Case openCase;
         try {
