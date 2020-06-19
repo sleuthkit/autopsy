@@ -565,7 +565,7 @@ final class IngestJobPipeline {
 
         if (this.hasFileIngestPipeline()) {
             synchronized (this.fileIngestProgressLock) {
-                this.estimatedFilesToProcess = 0; // There's no way to estimate file count for a streaming data source
+                this.estimatedFilesToProcess = 0; // Set to indeterminate until the data source is complete
             }
         }
 
@@ -584,6 +584,15 @@ final class IngestJobPipeline {
      * ingest starts.
      */
     private void startDataSourceIngestStreaming() {
+	
+        // Now that the data source is complete, we can get the estimated number of
+        // files and switch to a determinate progress bar.
+        synchronized (fileIngestProgressLock) {
+            if (null != this.fileIngestProgress) {
+                estimatedFilesToProcess = dataSource.accept(new GetFilesCountVisitor());
+                fileIngestProgress.switchToDeterminate((int)estimatedFilesToProcess);
+            }
+        }
 	
 	if (this.doUI) {
             /**
