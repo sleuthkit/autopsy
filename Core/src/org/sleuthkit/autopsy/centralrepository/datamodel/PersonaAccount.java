@@ -156,7 +156,7 @@ public class PersonaAccount {
         String queryClause = PERSONA_ACCOUNTS_QUERY_CLAUSE
                 + "WHERE persona_id = " + persona.getId()
                 + " AND account_type_id = " + account.getAccountType().getAccountTypeId()
-                + " AND account_unique_identifier = \"" + account.getIdentifier() + "\"";
+                + " AND account_unique_identifier = '" + account.getIdentifier() + "'";
         PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
 
@@ -379,7 +379,7 @@ public class PersonaAccount {
             throw new CentralRepoException("Failed to modify persona account, Central Repo is not enabled");
         }
         
-        String updateClause = "UPDATE persona_accounts SET confidence_id = " + confidence.getLevelId() + ", justification = \"" + justification + "\" WHERE id = " + id;
+        String updateClause = "UPDATE persona_accounts SET confidence_id = " + confidence.getLevelId() + ", justification = '" + justification + "' WHERE id = " + id;
         cr.executeUpdateSQL(updateClause);
     }
 
