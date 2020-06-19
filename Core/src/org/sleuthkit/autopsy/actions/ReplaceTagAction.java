@@ -199,6 +199,8 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
      * Build a JMenu for the given TagSet.
      *
      * @param tagSet
+     * @param tagNamesToDisable
+     * @param selectedTags
      *
      * @return JMenu for the given TagSet
      */
@@ -217,6 +219,8 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
      * Create a menu item for the given TagName.
      *
      * @param tagName TagName from which to create the menu item.
+     * @param tagNamesToDisable
+     * @param selectedTags
      *
      * @return Menu item for given TagName.
      */

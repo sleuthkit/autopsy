@@ -4,6 +4,9 @@ ExtractActionHelper.confDlg.destFileExist.title=File Exists
 ExtractActionHelper.msgDlg.cantOverwriteFile.msg=Could not overwrite existing file {0}
 ExtractActionHelper.noOpenCase.errMsg=No open case available.
 ExtractActionHelper.notifyDlg.noFileToExtr.msg=No file(s) to extract.
-ExtractActionHelper.progress.extracting=Extracting
 ExtractActionHelper.progress.cancellingExtraction={0} (Cancelling...)
 ExtractActionHelper.done.notifyMsg.fileExtr.text=File(s) extracted.
+# {0} - outputFolderName
+ExtractActionHelper.progress.extracting=Extracting to {0}
+# {0} - fileName
+ExtractActionHelper.progress.fileExtracting=Extracting file: {0}

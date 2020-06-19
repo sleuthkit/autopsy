@@ -937,7 +937,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             Object aValue = value;
             if (value instanceof Date) {
                 Date date = (Date) value;
-                DateFormat df = new SimpleDateFormat("HH:mm:ss");
+                DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                 aValue = df.format(date);
             } else {
                 throw new RuntimeException(NbBundle.getMessage(this.getClass(),

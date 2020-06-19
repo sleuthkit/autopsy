@@ -109,7 +109,7 @@ public final class CaseUcoReportModule implements GeneralReportModule {
     /**
      * Generates a CASE-UCO format report for all files in the Case.
      *
-     * @param baseReportDir caseDirPath to save the report
+     * @param settings      Report settings.
      * @param progressPanel panel to update the report's progress
      */
     @NbBundle.Messages({
