@@ -41,11 +41,12 @@ class IngestJobInputStream implements IngestStream {
     
     @Override
     public synchronized void addDataSource(long dataSourceObjectId) throws IngestStreamClosedException {
-	if (isClosed) {
-	   throw new IngestStreamClosedException("Can not add data source - ingest stream is closed");
-	}
-	this.dataSourceObjectId = dataSourceObjectId;
-	ingestJob.start(dataSourceObjectId);
+        if (isClosed) {
+           throw new IngestStreamClosedException("Can not add data source - ingest stream is closed");
+        }
+        this.dataSourceObjectId = dataSourceObjectId;
+        ingestJob.setStreamingIngestDataSource(dataSourceObjectId);
+        IngestManager.getInstance().startIngestJob(ingestJob);
     }
 
     @Override

@@ -28,9 +28,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
@@ -71,7 +72,7 @@ public final class IngestJob {
 	STREAMING
     }
     
-
+    private static final Logger logger = Logger.getLogger(IngestJob.class.getName());
     private final static AtomicLong nextId = new AtomicLong(0L);
     private final long id;
     private final List<Content> dataSources = new ArrayList<>();
@@ -180,16 +181,14 @@ public final class IngestJob {
      * if the data source is has been created when the ingest job is initialized. 
      * 
      * @param dataSourceObjId
-     * 
-     * @return 
      */
-    List<IngestModuleError> start(long dataSourceObjId) {
-	try {
-	    streamingIngestDataSource = Case.getCurrentCase().getSleuthkitCase().getDataSource(dataSourceObjId);
-	    return start();
-	} catch (TskCoreException | TskDataException ex) {
-	    return new ArrayList<>();
-	}
+    void setStreamingIngestDataSource(long dataSourceObjId) {
+        try {
+            streamingIngestDataSource = Case.getCurrentCase().getSleuthkitCase().getDataSource(dataSourceObjId);
+        } catch (TskCoreException | TskDataException ex) {
+            // Log the error. The start() method will fail later if this occurs.
+            logger.log(Level.SEVERE, "Error loading data source with ID " + dataSourceObjId, ex);
+        }
     }
 
     /**
@@ -204,8 +203,13 @@ public final class IngestJob {
 	 * Set up the pipeline(s)
 	 */
 	if (ingestMode == Mode.STREAMING) {
-	    IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, streamingIngestDataSource, settings);
-	    this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
+            if (streamingIngestDataSource == null) {
+                logger.log(Level.SEVERE, "Error starting streaming ingest - data source not set");
+                return new ArrayList<>();
+            }
+	    
+            IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, streamingIngestDataSource, settings);
+            this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
 	} else if (files.isEmpty()) {
 	    for (Content dataSource : dataSources) {
 		IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSource, settings);
