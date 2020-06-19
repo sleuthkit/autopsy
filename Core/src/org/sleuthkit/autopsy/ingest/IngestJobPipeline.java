@@ -642,7 +642,7 @@ final class IngestJobPipeline {
             synchronized (this.dataSourceIngestProgressLock) {
                 String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.dataSourceIngest.initialDisplayName",
-                        this.dataSource.getId());
+                        this.dataSource.getName());
                 this.dataSourceIngestProgress = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
