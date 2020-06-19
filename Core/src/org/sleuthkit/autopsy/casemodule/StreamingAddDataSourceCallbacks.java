@@ -48,7 +48,7 @@ class StreamingAddDataSourceCallbacks implements AddDataSourceCallbacks {
 
     @Override
     public void onDataSourceAdded(long dataSourceObjectId) {
-	if (ingestStream.wasStopped()) {
+	/*if (ingestStream.wasStopped()) {
 	    return;
 	}
 	
@@ -61,7 +61,7 @@ class StreamingAddDataSourceCallbacks implements AddDataSourceCallbacks {
 		// added which means it's a severe error that a data source is being added.
 		logger.log(Level.SEVERE, "Error adding data source with ID {0} to ingest stream - ingest stream is closed", dataSourceObjectId);
 	    }
-        }
+        }*/
     }
 
     @Override

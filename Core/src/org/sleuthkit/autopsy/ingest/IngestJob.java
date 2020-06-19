@@ -77,7 +77,6 @@ public final class IngestJob {
     private final List<Content> dataSources = new ArrayList<>();
     private final List<AbstractFile> files = new ArrayList<>();
     private final Mode ingestMode;
-    private DataSource streamingIngestDataSource = null;
     private final Map<Long, IngestJobPipeline> ingestJobPipelines;
     private final AtomicInteger incompleteJobsCount;
     private final IngestJobSettings settings;
@@ -115,16 +114,17 @@ public final class IngestJob {
     }
     
     /**
-     * Constructs an ingest job that analyzes one data source using an
-     * ingest stream.
+     * Constructs an ingest job that analyzes one data source, possibly using
+     * an ingest stream
      *
      * @param settings   The ingest job settings.
      */
-    IngestJob(IngestJobSettings settings) {
+    IngestJob(DataSource dataSource, Mode ingestMode, IngestJobSettings settings) {
         this.id = IngestJob.nextId.getAndIncrement();
         this.ingestJobPipelines = new ConcurrentHashMap<>();
+	this.dataSources.add(dataSource);
 	this.settings = settings;
-	this.ingestMode = Mode.STREAMING;
+	this.ingestMode = ingestMode;
         incompleteJobsCount = new AtomicInteger(1);
         cancellationReason = CancellationReason.NOT_CANCELLED;
     }
@@ -166,7 +166,7 @@ public final class IngestJob {
     }
     
     /**
-     * TODO this is a workaround to get the right pipeline. For streaming ingest
+     * This is a workaround to get the right pipeline. For streaming ingest
      * there will only be one. Might be able to pass/store the ID to avoid this.
      * 
      * @return 
@@ -175,21 +175,14 @@ public final class IngestJob {
 	return ingestJobPipelines.values().iterator().next();
     }
     
+    
     /**
-     * TODO This will not be necessary
-     * if the data source is has been created when the ingest job is initialized. 
-     * 
-     * @param dataSourceObjId
+     * If we're in streaming ingest mode we will have one data source.
      * 
      * @return 
      */
-    List<IngestModuleError> start(long dataSourceObjId) {
-	try {
-	    streamingIngestDataSource = Case.getCurrentCase().getSleuthkitCase().getDataSource(dataSourceObjId);
-	    return start();
-	} catch (TskCoreException | TskDataException ex) {
-	    return new ArrayList<>();
-	}
+    private Content getStreamingIngestDataSource() {
+	return this.dataSources.get(0);
     }
 
     /**
@@ -204,7 +197,7 @@ public final class IngestJob {
 	 * Set up the pipeline(s)
 	 */
 	if (ingestMode == Mode.STREAMING) {
-	    IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, streamingIngestDataSource, settings);
+	    IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, getStreamingIngestDataSource(), settings);
 	    this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
 	} else if (files.isEmpty()) {
 	    for (Content dataSource : dataSources) {

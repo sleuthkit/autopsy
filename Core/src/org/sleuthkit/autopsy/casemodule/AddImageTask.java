@@ -92,7 +92,7 @@ class AddImageTask implements Runnable {
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to add image data source at %s, no current case", imageDetails.imagePath), ex);
+            logger.log(Level.SEVERE, String.format("Failed to start AddImageTask, no current case"), ex);
             return;
         }
         progressMonitor.setIndeterminate(true);
@@ -149,7 +149,7 @@ class AddImageTask implements Runnable {
                     tskAddImageProcess.stop();
 
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error cancelling adding image %s to the case database", imageDetails.imagePath), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Error cancelling adding image %s to the case database", imageDetails.getImageName()), ex); //NON-NLS
                 }
             }
         }
@@ -163,13 +163,13 @@ class AddImageTask implements Runnable {
      */
     private void runAddImageProcess(List<String> errorMessages) {
         try {
-            tskAddImageProcess.run(imageDetails.deviceId, new String[]{imageDetails.imagePath}, imageDetails.sectorSize, this.addDataSourceCallbacks);
+            tskAddImageProcess.run(imageDetails.deviceId, imageDetails.image, imageDetails.sectorSize, this.addDataSourceCallbacks);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Critical error occurred adding image %s", imageDetails.imagePath), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Critical error occurred adding image %s", imageDetails.getImageName()), ex); //NON-NLS
             criticalErrorOccurred = true;
             errorMessages.add(ex.getMessage());
         } catch (TskDataException ex) {
-            logger.log(Level.WARNING, String.format("Non-critical error occurred adding image %s", imageDetails.imagePath), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Non-critical error occurred adding image %s", imageDetails.getImageName()), ex); //NON-NLS
             errorMessages.add(ex.getMessage());
         }
     }
@@ -194,7 +194,7 @@ class AddImageTask implements Runnable {
                 try {
                     tskAddImageProcess.revert();
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error reverting after adding image %s to the case database", imageDetails.imagePath), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Error reverting after adding image %s to the case database", imageDetails.getImageName()), ex); //NON-NLS
                     errorMessages.add(ex.getMessage());
                     criticalErrorOccurred = true;
                 }
@@ -257,13 +257,13 @@ class AddImageTask implements Runnable {
                             }
                         }
                     } else {
-                        String errorMessage = String.format("Error commiting after adding image %s to the case database, no object id returned", imageDetails.imagePath); //NON-NLS
+                        String errorMessage = String.format("Error commiting after adding image %s to the case database, no object id returned", imageDetails.getImageName()); //NON-NLS
                         logger.log(Level.SEVERE, errorMessage);
                         errorMessages.add(errorMessage);
                         criticalErrorOccurred = true;
                     }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error committing adding image %s to the case database", imageDetails.imagePath), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Error committing adding image %s to the case database", imageDetails.getImageName()), ex); //NON-NLS
                     errorMessages.add(ex.getMessage());
                     criticalErrorOccurred = true;
                 }
@@ -329,7 +329,7 @@ class AddImageTask implements Runnable {
      */
     static class ImageDetails {
         String deviceId;
-        String imagePath;
+        Image image;
         int sectorSize;
         String timeZone;
         boolean ignoreFatOrphanFiles;
@@ -338,9 +338,9 @@ class AddImageTask implements Runnable {
         String sha256; 
         ImageWriterSettings imageWriterSettings;
         
-        ImageDetails(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, ImageWriterSettings imageWriterSettings) {
+        ImageDetails(String deviceId, Image image, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, ImageWriterSettings imageWriterSettings) {
             this.deviceId = deviceId;
-            this.imagePath = imagePath;
+            this.image = image;
             this.sectorSize = sectorSize;
             this.timeZone = timeZone;
             this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
@@ -349,5 +349,12 @@ class AddImageTask implements Runnable {
             this.sha256 = sha256; 
             this.imageWriterSettings = imageWriterSettings;
         }
+	
+	String getImageName() {
+	    if (image.getPaths().length > 0) {
+		return image.getPaths()[0];
+	    }
+	    return "Unknown data source path";
+	}
     }
 }

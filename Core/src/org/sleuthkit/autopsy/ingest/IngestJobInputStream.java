@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.List;
+import org.sleuthkit.datamodel.DataSource;
 
 /**
  * Implementation of IngestStream. Will collect data from the data source
@@ -26,7 +27,7 @@ import java.util.List;
  */
 class IngestJobInputStream implements IngestStream {
     private final IngestJob ingestJob;
-    private long dataSourceObjectId = -1;
+    private final DataSource dataSource;
     private boolean isClosed = false;
     private boolean isStopped = false;
 
@@ -35,26 +36,16 @@ class IngestJobInputStream implements IngestStream {
      * 
      * @param ingestJob The IngestJob associated with this stream.
      */
-    IngestJobInputStream(IngestJob ingestJob) {
+    IngestJobInputStream(DataSource dataSource, IngestJob ingestJob) {
+	this.dataSource = dataSource;
         this.ingestJob = ingestJob;
-    }
-    
-    @Override
-    public synchronized void addDataSource(long dataSourceObjectId) throws IngestStreamClosedException {
-	if (isClosed) {
-	   throw new IngestStreamClosedException("Can not add data source - ingest stream is closed");
-	}
-	this.dataSourceObjectId = dataSourceObjectId;
-	ingestJob.start(dataSourceObjectId);
+	ingestJob.start();
     }
 
     @Override
     public synchronized void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException {
 	if (isClosed) {
 	    throw new IngestStreamClosedException("Can not add files - ingest stream is closed");
-	}
-	if (dataSourceObjectId < 0) {
-	    throw new IllegalStateException("Files can not be added before a data source");
 	}
 	ingestJob.addStreamingIngestFiles(fileObjectIds);
     }

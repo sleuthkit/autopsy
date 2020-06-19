@@ -25,16 +25,7 @@ import java.util.List;
  * Interface for classes that handle adding files from a data source processor
  * to the ingest pipeline.
  */
-public interface IngestStream {
-    /**
-     * Call when the data source has been added to the case database.
-     * 
-     * @param dataSourceObjectId  The object ID of the new data source
-     * 
-     * @throws IngestStreamClosedException 
-     */
-    void addDataSource(long dataSourceObjectId) throws IngestStreamClosedException;
-    
+public interface IngestStream {   
     /**
      * Adds a set of file object IDs that are ready for ingest.
      * 
