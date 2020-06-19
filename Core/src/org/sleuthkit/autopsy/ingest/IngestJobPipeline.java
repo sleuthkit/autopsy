@@ -61,7 +61,7 @@ final class IngestJobPipeline {
 
     private static String AUTOPSY_MODULE_PREFIX = "org.sleuthkit.autopsy";
 
-    private static final Logger logger = Logger.getLogger(DataSourceIngestJob.class.getName());
+    private static final Logger logger = Logger.getLogger(IngestJobPipeline.class.getName());
 
     // to match something like: "org.python.proxies.GPX_Parser_Module$GPXParserFileIngestModuleFactory$14"
     private static final Pattern JYTHON_REGEX = Pattern.compile("org\\.python\\.proxies\\.(.+?)\\$(.+?)(\\$[0-9]*)?$");
@@ -324,13 +324,13 @@ final class IngestJobPipeline {
          * ordered lists of ingest module templates for each ingest pipeline.
          */
         IngestPipelinesConfiguration pipelineConfigs = IngestPipelinesConfiguration.getInstance();
-        List<IngestModuleTemplate> firstStageDataSourceModuleTemplates = DataSourceIngestJob.getConfiguredIngestModuleTemplates(
+        List<IngestModuleTemplate> firstStageDataSourceModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(
                 dataSourceModuleTemplates, jythonDataSourceModuleTemplates, pipelineConfigs.getStageOneDataSourceIngestPipelineConfig());
 
-        List<IngestModuleTemplate> fileIngestModuleTemplates = DataSourceIngestJob.getConfiguredIngestModuleTemplates(
+        List<IngestModuleTemplate> fileIngestModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(
                 fileModuleTemplates, jythonFileModuleTemplates, pipelineConfigs.getFileIngestPipelineConfig());
 
-        List<IngestModuleTemplate> secondStageDataSourceModuleTemplates = DataSourceIngestJob.getConfiguredIngestModuleTemplates(
+        List<IngestModuleTemplate> secondStageDataSourceModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(
                 dataSourceModuleTemplates, null, pipelineConfigs.getStageTwoDataSourceIngestPipelineConfig());
 
         /**
