@@ -86,7 +86,7 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
         Map<String, FilesSet> standardInterestingFileSets = new HashMap<>();
 
         File[] standardFileSets = InstalledFileLocator.getDefault()
-                .locate(CONFIG_DIR, "org.sleuthkit.autopsy.core", false)
+                .locate(CONFIG_DIR, StandardInterestingFilesSetsLoader.class.getPackage().getName(), false)
                 .listFiles(DEFAULT_XML_FILTER);
 
         for (File standardFileSetsFile : standardFileSets) { //NON-NLS
