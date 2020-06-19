@@ -541,11 +541,11 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     }
 
     @NbBundle.Messages({
-        "ContactArtifactViewer_persona_label=Persona ",
-        "ContactArtifactViewer_persona_text_none=None found",
-        "ContactArtifactViewer_persona_button_view=View",
-        "ContactArtifactViewer_persona_button_new=Create",
-        "ContactArtifactViewer_missing_account_label=Missing Account: "
+        //"ContactArtifactViewer_persona_label=Persona ",
+        //"ContactArtifactViewer_persona_text_none=None found",
+        //"ContactArtifactViewer_persona_button_view=View",
+        //"ContactArtifactViewer_persona_button_new=Create",
+        //"ContactArtifactViewer_missing_account_label=Missing Account: "
     })
 
     /**
@@ -827,7 +827,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         }
 
         @NbBundle.Messages({
-            "ContactArtifactViewer_persona_account_justification=Account found in Contact artifact"
+        //    "ContactArtifactViewer_persona_account_justification=Account found in Contact artifact"
         })
 
         @Override

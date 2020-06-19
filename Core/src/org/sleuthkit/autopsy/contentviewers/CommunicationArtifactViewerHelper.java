@@ -182,7 +182,7 @@ public final class CommunicationArtifactViewerHelper {
      * @param gridbagLayout Layout to use.
      * @param constraints Constrains to use.
      */
-    private static void addBlankLine(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints) {
+    static void addBlankLine(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints) {
         constraints.gridy++;
         constraints.gridx = 0;
 
@@ -194,25 +194,44 @@ public final class CommunicationArtifactViewerHelper {
     }
 
     /**
-     * Adds a label/key to the panel.
+     * Adds a label/key to the panel at col 0.
      *
      * @param panel Panel to update.
      * @param gridbagLayout Layout to use.
      * @param constraints Constrains to use.
      * @param keyString Key name to display.
+     * 
+     * @return Label added.
      */
-    static void addKey(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String keyString) {
-
+     static JLabel addKey(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String keyString) {
+        return addKeyAtCol(panel, gridbagLayout, constraints,  keyString, 0 );
+     }
+     
+    /**
+     * Adds a label/key to the panel at specified column.
+     *
+     * @param panel Panel to update.
+     * @param gridbagLayout Layout to use.
+     * @param constraints Constrains to use.
+     * @param keyString Key name to display.
+     * @param gridx column index, must be less than MAX_COLS - 1.
+     * 
+     * @return Label added.
+     */
+    static JLabel addKeyAtCol(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String keyString, int gridx ) {
+   
+        // create label
+        javax.swing.JLabel keyLabel = new javax.swing.JLabel();
+        
         constraints.gridy++;
-        constraints.gridx = 0;
+        constraints.gridx = gridx < MAX_COLS - 1? gridx : MAX_COLS - 2;
 
         Insets savedInsets = constraints.insets;
 
         // Set inset to indent in
         constraints.insets = new java.awt.Insets(0, LEFT_INDENT, 0, 0);
 
-        // create label,
-        javax.swing.JLabel keyLabel = new javax.swing.JLabel();
+        // set text
         keyLabel.setText(keyString + ": ");
 
         // add to panel
@@ -221,27 +240,47 @@ public final class CommunicationArtifactViewerHelper {
 
         // restore inset
         constraints.insets = savedInsets;
+        
+        return keyLabel;
     }
 
     /**
-     * Adds a value string to the panel.
+     * Adds a value string to the panel at col 1.
      *
      * @param panel Panel to update.
      * @param gridbagLayout Layout to use.
      * @param constraints Constrains to use.
      * @param keyString Value string to display.
+     * 
+     * @return Label added.
      */
-    static void addValue(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String valueString) {
-
-        constraints.gridx = 1;
+    static JLabel addValue(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String valueString) {
+         return addValueAtCol(panel, gridbagLayout, constraints,  valueString, 1);
+    }
+    
+    /**
+     * Adds a value string to the panel at col 1.
+     *
+     * @param panel Panel to update.
+     * @param gridbagLayout Layout to use.
+     * @param constraints Constrains to use.
+     * @param keyString Value string to display.
+     * @param gridx Column index, must be less than MAX_COLS;
+     * 
+     * @return Label added.
+     */
+    static JLabel addValueAtCol(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String valueString, int gridx) {
+         // create label,
+        javax.swing.JLabel valueField = new javax.swing.JLabel();
+        
+        constraints.gridx = gridx < MAX_COLS ? gridx : MAX_COLS - 1 ;
 
         int savedGridwidth = constraints.gridwidth;
 
         // let the value span 2 cols
         constraints.gridwidth = 2;
 
-        // create label,
-        javax.swing.JLabel valueField = new javax.swing.JLabel();
+       // set text
         valueField.setText(valueString);
 
         // attach a right click menu with Copy option
@@ -261,6 +300,8 @@ public final class CommunicationArtifactViewerHelper {
 
         // end the line
         addLineEndGlue(panel, gridbagLayout, constraints);
+        
+        return valueField;
     }
 
     /**
