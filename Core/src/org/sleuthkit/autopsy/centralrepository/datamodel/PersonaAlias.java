@@ -34,12 +34,22 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class PersonaAlias {
     
+    private static final String SELECT_QUERY_BASE = 
+            "SELECT pa.id, pa.persona_id, pa.alias, pa.justification, pa.confidence_id, pa.date_added, pa.examiner_id, e.login_name, e.display_name "
+                + "FROM persona_alias as pa "
+                + "INNER JOIN examiners as e ON e.id = pa.examiner_id ";
+
+    private final long id;
     private final long personaId;
     private final String alias;
     private final String justification;
     private final Persona.Confidence confidence;
     private final long dateAdded;
     private final CentralRepoExaminer examiner;
+    
+    public long getId() {
+        return id;
+    }
 
     public long getPersonaId() {
         return personaId;
@@ -65,7 +75,8 @@ public class PersonaAlias {
         return examiner;
     }
     
-    public PersonaAlias(long personaId, String alias, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
+    public PersonaAlias(long id, long personaId, String alias, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
+        this.id = id;
         this.personaId = personaId;
         this.alias = alias;
         this.justification = justification;
@@ -103,8 +114,54 @@ public class PersonaAlias {
                 + ")";
 
         CentralRepository.getInstance().executeInsertSQL(insertClause);
-        return new PersonaAlias(persona.getId(), alias, justification, confidence, timeStampMillis, examiner);
+        
+        String queryClause = SELECT_QUERY_BASE
+                + "WHERE pa.persona_id = " + persona.getId()
+                + " AND pa.alias = \"" + alias + "\""
+                + " AND pa.date_added = " + timeStampMillis
+                + " AND pa.examiner_id = " + examiner.getId();
+        
+        PersonaAliasesQueryCallback queryCallback = new PersonaAliasesQueryCallback();
+        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        
+        Collection<PersonaAlias> aliases = queryCallback.getAliases();
+        if (aliases.size() != 1) {
+            throw new CentralRepoException("Alias add query failed");
+        }
+        
+        return aliases.iterator().next();
     }
+    
+    /**
+     * Removes a PersonaAlias.
+     *
+     * @param alias Alias to remove.
+     *
+     * @throws CentralRepoException If there is an error in removing the alias.
+     */
+    static void removePersonaAlias(PersonaAlias alias) throws CentralRepoException {
+        String deleteClause = " DELETE FROM persona_alias WHERE id = " + alias.getId();
+        CentralRepository.getInstance().executeDeleteSQL(deleteClause);
+    }
+    
+    /**
+     * Modifies a PesronaAlias.
+     *
+     * @param alias Alias to modify.
+     *
+     * @throws CentralRepoException If there is an error in modifying the alias.
+     */
+    static void modifyPersonaAlias(PersonaAlias alias, Persona.Confidence confidence, String justification) throws CentralRepoException {
+        CentralRepository cr = CentralRepository.getInstance();
+        
+        if (cr == null) {
+            throw new CentralRepoException("Failed to modify persona alias, Central Repo is not enabled");
+        }
+        
+        String updateClause = "UPDATE persona_alias SET confidence_id = " + confidence.getLevelId() + ", justification = \"" + justification + "\" WHERE id = " + alias.id;
+        cr.executeUpdateSQL(updateClause);
+    }
+    
     
      /**
      * Callback to process a Persona aliases query.
@@ -122,6 +179,7 @@ public class PersonaAlias {
                         rs.getString("login_name"));
 
                 PersonaAlias alias = new PersonaAlias(
+                        rs.getLong("id"),
                         rs.getLong("persona_id"),
                         rs.getString("alias"),
                         rs.getString("justification"),
@@ -147,10 +205,7 @@ public class PersonaAlias {
      * @throws CentralRepoException If there is an error in retrieving aliases.
      */
     public static Collection<PersonaAlias> getPersonaAliases(long personaId) throws CentralRepoException {
-        String queryClause = "SELECT pa.id, pa.persona_id, pa.alias, pa.justification, pa.confidence_id, pa.date_added, pa.examiner_id, e.login_name, e.display_name "
-                + "FROM persona_alias as pa "
-                + "INNER JOIN examiners as e ON e.id = pa.examiner_id "
-                + "WHERE pa.persona_id = " + personaId;
+        String queryClause = SELECT_QUERY_BASE + "WHERE pa.persona_id = " + personaId;
 
         PersonaAliasesQueryCallback queryCallback = new PersonaAliasesQueryCallback();
         CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);

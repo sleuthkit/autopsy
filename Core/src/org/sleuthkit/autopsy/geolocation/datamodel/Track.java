@@ -22,18 +22,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
 import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil.InvalidJsonException;
 import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A GPS track with which wraps the TSK_GPS_TRACK artifact.
  */
 public final class Track extends GeoPath {
-
+    private static final Logger LOGGER = Logger.getLogger(Track.class.getName());
+    
     private final Long startTimestamp;
     private final Long endTimeStamp;
 
@@ -130,14 +133,17 @@ public final class Track extends GeoPath {
      */
     private GeoTrackPoints getPointsList(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_TRACKPOINTS);
-        if (attribute != null) {
-            try {
-                return BlackboardJsonAttrUtil.fromAttribute(attribute, GeoTrackPoints.class);
-            } catch (InvalidJsonException ex) {
-                throw new GeoLocationDataException("Unable to parse track points in TSK_GEO_TRACKPOINTS attribute", ex);
-            }
+        if (attribute == null) {
+            LOGGER.log(Level.SEVERE, "No TSK_GEO_TRACKPOINTS attribute was present on the artifact.");
+            throw new GeoLocationDataException("No TSK_GEO_TRACKPOINTS attribute present in attribute map to parse.");
         }
-        return null;
+
+        try {
+            return BlackboardJsonAttrUtil.fromAttribute(attribute, GeoTrackPoints.class);
+        } catch (InvalidJsonException ex) {
+            LOGGER.log(Level.SEVERE, "TSK_GEO_TRACKPOINTS could not be properly parsed from TSK_GEO_TRACKPOINTS attribute.");
+            throw new GeoLocationDataException("Unable to parse track points in TSK_GEO_TRACKPOINTS attribute", ex);
+        }
     }
 
     /**

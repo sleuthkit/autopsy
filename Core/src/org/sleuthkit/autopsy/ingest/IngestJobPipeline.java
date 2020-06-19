@@ -28,6 +28,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
@@ -56,7 +59,12 @@ import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
  */
 final class IngestJobPipeline {
 
-    private static final Logger logger = Logger.getLogger(IngestJobPipeline.class.getName());
+    private static String AUTOPSY_MODULE_PREFIX = "org.sleuthkit.autopsy";
+
+    private static final Logger logger = Logger.getLogger(DataSourceIngestJob.class.getName());
+
+    // to match something like: "org.python.proxies.GPX_Parser_Module$GPXParserFileIngestModuleFactory$14"
+    private static final Pattern JYTHON_REGEX = Pattern.compile("org\\.python\\.proxies\\.(.+?)\\$(.+?)(\\$[0-9]*)?$");
 
     /**
      * These fields define a data source ingest job: the parent ingest job, an
@@ -218,6 +226,74 @@ final class IngestJobPipeline {
     }
 
     /**
+     * Adds ingest modules to a list with autopsy modules first and third party
+     * modules next.
+     *
+     * @param dest      The destination for the modules to be added.
+     * @param src       A map of fully qualified class name mapped to the
+     *                  IngestModuleTemplate.
+     * @param jythonSrc A map of fully qualified class name mapped to the
+     *                  IngestModuleTemplate for jython modules.
+     */
+    private static void addOrdered(final List<IngestModuleTemplate> dest,
+            final Map<String, IngestModuleTemplate> src, final Map<String, IngestModuleTemplate> jythonSrc) {
+
+        final List<IngestModuleTemplate> autopsyModules = new ArrayList<>();
+        final List<IngestModuleTemplate> thirdPartyModules = new ArrayList<>();
+
+        Stream.concat(src.entrySet().stream(), jythonSrc.entrySet().stream()).forEach((templateEntry) -> {
+            if (templateEntry.getKey().startsWith(AUTOPSY_MODULE_PREFIX)) {
+                autopsyModules.add(templateEntry.getValue());
+            } else {
+                thirdPartyModules.add(templateEntry.getValue());
+            }
+        });
+
+        dest.addAll(autopsyModules);
+        dest.addAll(thirdPartyModules);
+    }
+
+    /**
+     * Takes a classname like
+     * "org.python.proxies.GPX_Parser_Module$GPXParserFileIngestModuleFactory$14"
+     * and provides "GPX_Parser_Module.GPXParserFileIngestModuleFactory" or null
+     * if not in jython package.
+     *
+     * @param canonicalName The canonical name.
+     *
+     * @return The jython name or null if not in jython package.
+     */
+    private static String getJythonName(String canonicalName) {
+        Matcher m = JYTHON_REGEX.matcher(canonicalName);
+        if (m.find()) {
+            return String.format("%s.%s", m.group(1), m.group(2));
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Adds a template to the appropriate map. If the class is a jython class,
+     * then it is added to the jython map. Otherwise, it is added to the
+     * mapping.
+     *
+     * @param mapping       Mapping for non-jython objects.
+     * @param jythonMapping Mapping for jython objects.
+     * @param template      The template to add.
+     */
+    private static void addModule(Map<String, IngestModuleTemplate> mapping,
+            Map<String, IngestModuleTemplate> jythonMapping, IngestModuleTemplate template) {
+
+        String className = template.getModuleFactory().getClass().getCanonicalName();
+        String jythonName = getJythonName(className);
+        if (jythonName != null) {
+            jythonMapping.put(jythonName, template);
+        } else {
+            mapping.put(className, template);
+        }
+    }
+
+    /**
      * Creates the file and data source ingest pipelines.
      */
     private void createIngestPipelines() {
@@ -228,12 +304,18 @@ final class IngestJobPipeline {
          */
         Map<String, IngestModuleTemplate> dataSourceModuleTemplates = new LinkedHashMap<>();
         Map<String, IngestModuleTemplate> fileModuleTemplates = new LinkedHashMap<>();
+
+        // mappings for jython modules.  These mappings are only used to determine modules in the pipelineconfig.xml.
+
+        Map<String, IngestModuleTemplate> jythonDataSourceModuleTemplates = new LinkedHashMap<>();
+        Map<String, IngestModuleTemplate> jythonFileModuleTemplates = new LinkedHashMap<>();
+
         for (IngestModuleTemplate template : ingestModuleTemplates) {
             if (template.isDataSourceIngestModuleTemplate()) {
-                dataSourceModuleTemplates.put(template.getModuleFactory().getClass().getCanonicalName(), template);
+                addModule(dataSourceModuleTemplates, jythonDataSourceModuleTemplates, template);
             }
             if (template.isFileIngestModuleTemplate()) {
-                fileModuleTemplates.put(template.getModuleFactory().getClass().getCanonicalName(), template);
+                addModule(fileModuleTemplates, jythonFileModuleTemplates, template);
             }
         }
 
@@ -242,21 +324,22 @@ final class IngestJobPipeline {
          * ordered lists of ingest module templates for each ingest pipeline.
          */
         IngestPipelinesConfiguration pipelineConfigs = IngestPipelinesConfiguration.getInstance();
-        List<IngestModuleTemplate> firstStageDataSourceModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(dataSourceModuleTemplates, pipelineConfigs.getStageOneDataSourceIngestPipelineConfig());
-        List<IngestModuleTemplate> fileIngestModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(fileModuleTemplates, pipelineConfigs.getFileIngestPipelineConfig());
-        List<IngestModuleTemplate> secondStageDataSourceModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(dataSourceModuleTemplates, pipelineConfigs.getStageTwoDataSourceIngestPipelineConfig());
+        List<IngestModuleTemplate> firstStageDataSourceModuleTemplates = DataSourceIngestJob.getConfiguredIngestModuleTemplates(
+                dataSourceModuleTemplates, jythonDataSourceModuleTemplates, pipelineConfigs.getStageOneDataSourceIngestPipelineConfig());
+
+        List<IngestModuleTemplate> fileIngestModuleTemplates = DataSourceIngestJob.getConfiguredIngestModuleTemplates(
+                fileModuleTemplates, jythonFileModuleTemplates, pipelineConfigs.getFileIngestPipelineConfig());
+
+        List<IngestModuleTemplate> secondStageDataSourceModuleTemplates = DataSourceIngestJob.getConfiguredIngestModuleTemplates(
+                dataSourceModuleTemplates, null, pipelineConfigs.getStageTwoDataSourceIngestPipelineConfig());
 
         /**
          * Add any module templates that were not specified in the pipelines
          * configuration to an appropriate pipeline - either the first stage
          * data source ingest pipeline or the file ingest pipeline.
          */
-        for (IngestModuleTemplate template : dataSourceModuleTemplates.values()) {
-            firstStageDataSourceModuleTemplates.add(template);
-        }
-        for (IngestModuleTemplate template : fileModuleTemplates.values()) {
-            fileIngestModuleTemplates.add(template);
-        }
+        addOrdered(firstStageDataSourceModuleTemplates, dataSourceModuleTemplates, jythonDataSourceModuleTemplates);
+        addOrdered(fileIngestModuleTemplates, fileModuleTemplates, jythonFileModuleTemplates);
 
         /**
          * Construct the data source ingest pipelines.
@@ -305,19 +388,27 @@ final class IngestJobPipeline {
      * ingest pipeline. The ingest module templates are removed from the input
      * collection as they are added to the output collection.
      *
-     * @param ingestModuleTemplates A mapping of ingest module factory class
-     *                              names to ingest module templates.
-     * @param pipelineConfig        An ordered list of ingest module factory
-     *                              class names representing an ingest pipeline.
+     * @param ingestModuleTemplates       A mapping of ingest module factory
+     *                                    class names to ingest module
+     *                                    templates.
+     * @param jythonIngestModuleTemplates A mapping of jython processed class
+     *                                    names to jython ingest module
+     *                                    templates.
+     * @param pipelineConfig              An ordered list of ingest module
+     *                                    factory class names representing an
+     *                                    ingest pipeline.
      *
      * @return An ordered list of ingest module templates, i.e., an
      *         uninstantiated pipeline.
      */
-    private static List<IngestModuleTemplate> getConfiguredIngestModuleTemplates(Map<String, IngestModuleTemplate> ingestModuleTemplates, List<String> pipelineConfig) {
+    private static List<IngestModuleTemplate> getConfiguredIngestModuleTemplates(
+            Map<String, IngestModuleTemplate> ingestModuleTemplates, Map<String, IngestModuleTemplate> jythonIngestModuleTemplates, List<String> pipelineConfig) {
         List<IngestModuleTemplate> templates = new ArrayList<>();
         for (String moduleClassName : pipelineConfig) {
-            if (ingestModuleTemplates.containsKey(moduleClassName)) {
+            if (ingestModuleTemplates != null && ingestModuleTemplates.containsKey(moduleClassName)) {
                 templates.add(ingestModuleTemplates.remove(moduleClassName));
+            } else if (jythonIngestModuleTemplates != null && jythonIngestModuleTemplates.containsKey(moduleClassName)) {
+                templates.add(jythonIngestModuleTemplates.remove(moduleClassName));
             }
         }
         return templates;
