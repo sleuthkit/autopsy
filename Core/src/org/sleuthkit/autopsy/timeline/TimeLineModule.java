@@ -87,7 +87,6 @@ public class TimeLineModule {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             if (Case.Events.valueOf(evt.getPropertyName()).equals(CURRENT_CASE)) {
-                // we care only about case closing here
                 if (evt.getNewValue() == null) {
                     /*
                      * Current case is closing, shut down the timeline top
