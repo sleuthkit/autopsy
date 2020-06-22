@@ -79,6 +79,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
@@ -86,6 +87,8 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DAT
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.Report;
@@ -161,6 +164,7 @@ class ExtractRegistry extends Extract {
     private final Path rrFullHome; // Path to the full version of RegRipper
     private Content dataSource;
     private IngestJobContext context;
+    private Map<String, String> userNameMap;
     
     private static final String SHELLBAG_ARTIFACT_NAME = "RA_SHELL_BAG"; //NON-NLS
     private static final String SHELLBAG_ATTRIBUTE_LAST_WRITE = "RA_SHELL_BAG_LAST_WRITE"; //NON-NLS
@@ -230,6 +234,17 @@ class ExtractRegistry extends Extract {
         List<AbstractFile> allRegistryFiles = new ArrayList<>();
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
 
+        // find the sam hives', process this first so we can map the user id's and sids for later use
+        try {
+            allRegistryFiles.addAll(fileManager.findFiles(dataSource, "sam", "/system32/config")); //NON-NLS
+        } catch (TskCoreException ex) {
+            String msg = NbBundle.getMessage(this.getClass(),
+                    "ExtractRegistry.findRegFiles.errMsg.errReadingFile", "sam");
+            logger.log(Level.WARNING, msg, ex);
+            this.addErrorMessage(this.getName() + ": " + msg);
+        }
+        
+        
         // find the user-specific ntuser-dat files
         try {
             allRegistryFiles.addAll(fileManager.findFiles(dataSource, "ntuser.dat")); //NON-NLS
@@ -245,7 +260,7 @@ class ExtractRegistry extends Extract {
         }
 
         // find the system hives'
-        String[] regFileNames = new String[]{"system", "software", "security", "sam"}; //NON-NLS
+        String[] regFileNames = new String[]{"system", "software", "security"}; //NON-NLS
         for (String regFileName : regFileNames) {
             try {
                 allRegistryFiles.addAll(fileManager.findFiles(dataSource, regFileName, "/system32/config")); //NON-NLS
@@ -976,6 +991,16 @@ class ExtractRegistry extends Extract {
                 // index the artifact for keyword search
                 newArtifacts.add(bbart);
             }
+            // Get a mapping of user sids to user names and save globally so it can be used for other areas
+            // of the registry, ie: BAM key
+            try {
+                userNameMap = makeUserNameMap(dataSource);
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to create OS Account user name map", ex);
+                // This is not the end of the world we will just continue without 
+                // user names
+                userNameMap = new HashMap<>();
+            }
             return true;
         } catch (FileNotFoundException ex) {
             logger.log(Level.WARNING, "Error finding the registry file.", ex); //NON-NLS
@@ -1288,6 +1313,10 @@ class ExtractRegistry extends Extract {
             // We can add the S- back to the string that we split on since S- is a valid beginning of a User SID
             String fileNameSid[] = tokens[4].split("\\s+\\(S-");
             String userSid = "S-" + fileNameSid[1].substring(0, fileNameSid[1].length() - 1);
+            String userName = userNameMap.get(userSid);
+            if (userName == null) {
+                userName = userSid;
+            }
             String fileName = fileNameSid[0];
             if (fileName.startsWith("\\Device\\HarddiskVolume")) {
                 // Start at point past the 2nd slash
@@ -1297,7 +1326,7 @@ class ExtractRegistry extends Extract {
             }
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(), fileName));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME, getName(), userSid));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME, getName(), userName));
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), progRunDateTime));
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, getName(), comment));
             BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_PROG_RUN, regFile, attributes);
@@ -1717,6 +1746,49 @@ class ExtractRegistry extends Extract {
         return null;
     }
     
+    /**
+     * Create a map of userids to usernames from the OS Accounts.
+     *
+     * @param dataSource
+     *
+     * @return A Map of userIDs and userNames 
+     *
+     * @throws TskCoreException
+     */
+    private Map<String, String> makeUserNameMap(Content dataSource) throws TskCoreException {
+        Map<String, String> userNameMap = new HashMap<>();
+
+        List<BlackboardArtifact> accounts = blackboard.getArtifacts(TSK_OS_ACCOUNT.getTypeID(), dataSource.getId());
+
+        for (BlackboardArtifact account : accounts) {
+            BlackboardAttribute nameAttribute = getAttributeForArtifact(account, TSK_USER_NAME);
+            BlackboardAttribute idAttribute = getAttributeForArtifact(account, TSK_USER_ID);
+
+            String userName = nameAttribute != null ? nameAttribute.getDisplayString() : "";
+            String userID = idAttribute != null ? idAttribute.getDisplayString() : "";
+
+            if (!userID.isEmpty()) {
+                userNameMap.put(userID, userName);
+            }
+        }
+        
+        return userNameMap;
+    }
+    
+    /**
+     * Gets the attribute for the given type from the given artifact.
+     *
+     * @param artifact BlackboardArtifact to get the attribute from
+     * @param type     The BlackboardAttribute Type to get
+     *
+     * @return BlackboardAttribute for given artifact and type
+     *
+     * @throws TskCoreException
+     */
+    private BlackboardAttribute getAttributeForArtifact(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) throws TskCoreException {
+        return artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(type.getTypeID())));
+    }
+
     /**
      * Create the shellbag artifacts from the list of ShellBag objects.
      *
