@@ -263,10 +263,6 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         }
         return false;
     }
-    
-    public void createAccount() {
-        
-    }
 
     /**
      * A data bucket class for yet-to-be-created PersonaMetadata
