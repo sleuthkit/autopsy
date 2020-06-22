@@ -35,18 +35,18 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
  * An Action that opens the Persona Search window.
  */
 
-@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.centralrepository.persona.OpenPersonaManagerAction")
-@ActionRegistration(displayName = "#CTL_OpenPersonaManager", lazy = false)
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.centralrepository.persona.OpenPersonasAction")
+@ActionRegistration(displayName = "#CTL_OpenPersonas", lazy = false)
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 105)
 })
-public final class OpenPersonaManagerAction extends CallableSystemAction {
+public final class OpenPersonasAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
 
     private final JMenuItem menuItem;
 
-    public OpenPersonaManagerAction() {
+    public OpenPersonasAction() {
         menuItem = super.getMenuPresenter();
         this.setEnabled(CentralRepository.isEnabled());
     }
@@ -54,7 +54,7 @@ public final class OpenPersonaManagerAction extends CallableSystemAction {
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void performAction() {
-        final TopComponent topComponent = WindowManager.getDefault().findTopComponent("PersonaManagerTopComponent");
+        final TopComponent topComponent = WindowManager.getDefault().findTopComponent("PersonasTopComponent");
         if (topComponent != null) {
             if (topComponent.isOpened() == false) {
                 topComponent.open();
@@ -65,7 +65,7 @@ public final class OpenPersonaManagerAction extends CallableSystemAction {
     }
 
     @Override
-    @NbBundle.Messages("OpenPersonasAction.displayName=Persona Manager")
+    @NbBundle.Messages("OpenPersonasAction.displayName=Personas")
     public String getName() {
         return Bundle.OpenPersonasAction_displayName();
     }
