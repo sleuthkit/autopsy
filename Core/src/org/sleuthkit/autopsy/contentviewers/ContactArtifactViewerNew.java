@@ -65,15 +65,18 @@ import org.sleuthkit.datamodel.TskCoreException;
  * This class displays the TSK_CONTACT artifact.
  */
 @ServiceProvider(service = ArtifactContentViewer.class)
-public class ContactArtifactViewerNew extends javax.swing.JPanel implements ArtifactContentViewer {
+public class ContactArtifactViewerNew extends AbstractCommunicationArtifactViewer {
 
     private final static Logger logger = Logger.getLogger(ContactArtifactViewer.class.getName());
     private static final long serialVersionUID = 1L;
 
     private final static int LEFT_INSET = 12;
 
-    //private GridBagLayout m_gridBagLayout = new GridBagLayout();
-    //private GridBagConstraints m_constraints = new GridBagConstraints();
+    private GridBagLayout m_gridBagLayout = new GridBagLayout();
+    private GridBagConstraints m_constraints = new GridBagConstraints();
+
+    private JLabel personaSearchStatusLabel;
+
     private BlackboardArtifact contactArtifact;
     private String contactName;
     private String datasourceName;
@@ -113,45 +116,9 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
-
-        contactDetailsPanel = new javax.swing.JPanel();
-        personasPanel = new javax.swing.JPanel();
-        sourcePanel = new javax.swing.JPanel();
-        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
         setToolTipText(""); // NOI18N
         setLayout(new java.awt.GridBagLayout());
-
-        contactDetailsPanel.setLayout(new java.awt.GridBagLayout());
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        add(contactDetailsPanel, gridBagConstraints);
-
-        personasPanel.setLayout(new java.awt.GridBagLayout());
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        add(personasPanel, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        add(sourcePanel, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        add(filler1, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     @Override
@@ -170,8 +137,13 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
             return;
         }
 
+        if (CentralRepository.isEnabled() == false) {
+            showCentralRepoDisabledDialog();
+        }
+
         updateView();
 
+        this.setLayout(this.m_gridBagLayout);
         this.revalidate();
         this.repaint();
     }
@@ -232,11 +204,12 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
         // Update contact name, image, phone numbers
         updateContactDetails();
 
+        // update artifact source panel
+        updateSource();
+
         // show a empty Personas panel and kick off a serch for personas
         initiatePersonasSearch();
 
-        // update artifact source panel
-        updateSource();
     }
 
     /**
@@ -244,66 +217,49 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
      */
     @NbBundle.Messages({
         "ContactArtifactViewer_phones_header=Phone",
-        "ContactArtifactViewer_eamils_header=Email",
+        "ContactArtifactViewer_emails_header=Email",
         "ContactArtifactViewer_others_header=Other",})
     private void updateContactDetails() {
-        GridBagLayout contactPanelLayout = new GridBagLayout();
-        GridBagConstraints contactPanelConstraints = new GridBagConstraints();
 
-        contactPanelConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        contactPanelConstraints.gridy = 0;
-        contactPanelConstraints.gridx = 0;
-        contactPanelConstraints.weighty = 0.05;
-        contactPanelConstraints.weightx = 0.05;
-        contactPanelConstraints.insets = new java.awt.Insets(0, 0, 0, 0);
-        contactPanelConstraints.fill = GridBagConstraints.NONE;
-
-        updateContactImage(contactPanelLayout, contactPanelConstraints);
-
-        // update name section
-        updateContactName(contactPanelLayout, contactPanelConstraints);
+        // update image and name.
+        updateContactImage(m_gridBagLayout, m_constraints);
+        updateContactName(m_gridBagLayout, m_constraints);
 
         // update contact attributes sections
-        updateContactMethodSection(phoneNumList, Bundle.ContactArtifactViewer_phones_header(), contactPanelLayout, contactPanelConstraints);
-        updateContactMethodSection(emailList, Bundle.ContactArtifactViewer_eamils_header(), contactPanelLayout, contactPanelConstraints);
-        updateContactMethodSection(otherList, Bundle.ContactArtifactViewer_others_header(), contactPanelLayout, contactPanelConstraints);
-
-        CommunicationArtifactViewerHelper.addBlankLine(this.contactDetailsPanel, contactPanelLayout, contactPanelConstraints);
-
-        contactDetailsPanel.setLayout(contactPanelLayout);
-        contactDetailsPanel.revalidate();
-        contactDetailsPanel.repaint();
+        updateContactMethodSection(phoneNumList, Bundle.ContactArtifactViewer_phones_header(), m_gridBagLayout, m_constraints);
+        updateContactMethodSection(emailList, Bundle.ContactArtifactViewer_emails_header(), m_gridBagLayout, m_constraints);
+        updateContactMethodSection(otherList, Bundle.ContactArtifactViewer_others_header(), m_gridBagLayout, m_constraints);
     }
 
     /**
      * Updates the contact image in the view.
      *
-     * @param artifact
+     * @param contactPanelLayout Panel layout.
+     * @param contactPanelConstraints Layout constraints.
+     *
      */
     @NbBundle.Messages({
         "ContactArtifactViewer.contactImage.text=",})
     private void updateContactImage(GridBagLayout contactPanelLayout, GridBagConstraints contactPanelConstraints) {
-
         contactPanelConstraints.gridy = 0;
         contactPanelConstraints.gridx = 0;
 
         javax.swing.JLabel contactImage = new javax.swing.JLabel();
-
         contactImage.setIcon(getImageFromArtifact(contactArtifact));
-
         contactImage.setText(Bundle.ContactArtifactViewer_contactImage_text());
 
         // add image to top left corner of the page.
-        CommunicationArtifactViewerHelper.addComponent(this.contactDetailsPanel, contactPanelLayout, contactPanelConstraints, contactImage);
+        CommunicationArtifactViewerHelper.addComponent(this, contactPanelLayout, contactPanelConstraints, contactImage);
+        CommunicationArtifactViewerHelper.addLineEndGlue(this, contactPanelLayout, contactPanelConstraints);
         contactPanelConstraints.gridy++;
-
     }
 
     /**
-     * Updates the contact name in the view from the list of attributes.
+     * Updates the contact name in the view.
      *
-     * @param attributesList List of attributes that might have the contact
-     * name.
+     * @param contactPanelLayout Panel layout.
+     * @param contactPanelConstraints Layout constraints.
+     *
      */
     @NbBundle.Messages({
         "ContactArtifactViewer_contactname_unknown=Unknown",})
@@ -314,13 +270,13 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
             if (StringUtils.isEmpty(bba.getValueString()) == false) {
                 contactName = bba.getDisplayString();
 
-                CommunicationArtifactViewerHelper.addHeader(this.contactDetailsPanel, contactPanelLayout, contactPanelConstraints, contactName);
+                CommunicationArtifactViewerHelper.addHeader(this, contactPanelLayout, contactPanelConstraints, contactName);
                 foundName = true;
                 break;
             }
         }
         if (foundName == false) {
-            CommunicationArtifactViewerHelper.addHeader(this.contactDetailsPanel, contactPanelLayout, contactPanelConstraints, Bundle.ContactArtifactViewer_contactname_unknown());
+            CommunicationArtifactViewerHelper.addHeader(this, contactPanelLayout, contactPanelConstraints, Bundle.ContactArtifactViewer_contactname_unknown());
         }
     }
 
@@ -328,8 +284,11 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
      * Updates the view by displaying the given list of attributes in the given
      * section panel.
      *
-     * @param sectionAttributesList list of attributes to display.
-     * @param sectionLabel section name label.
+     * @param sectionAttributesList List of attributes to display.
+     * @param sectionLabel Section name label.
+     * @param contactPanelLayout Panel layout.
+     * @param contactPanelConstraints Layout constraints.
+     *
      */
     @NbBundle.Messages({
         "ContactArtifactViewer_plural_suffix=s",})
@@ -344,10 +303,10 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
         if (sectionAttributesList.size() > 1) {
             sectionHeaderString = sectionHeaderString.concat(Bundle.ContactArtifactViewer_plural_suffix());
         }
-        CommunicationArtifactViewerHelper.addHeader(this.contactDetailsPanel, contactPanelLayout, contactPanelConstraints, sectionHeaderString);
+        CommunicationArtifactViewerHelper.addHeader(this, contactPanelLayout, contactPanelConstraints, sectionHeaderString);
         for (BlackboardAttribute bba : sectionAttributesList) {
-            CommunicationArtifactViewerHelper.addKey(this.contactDetailsPanel, contactPanelLayout, contactPanelConstraints, bba.getAttributeType().getDisplayName());
-            CommunicationArtifactViewerHelper.addValue(this.contactDetailsPanel, contactPanelLayout, contactPanelConstraints, bba.getDisplayString());
+            CommunicationArtifactViewerHelper.addKey(this, contactPanelLayout, contactPanelConstraints, bba.getAttributeType().getDisplayName());
+            CommunicationArtifactViewerHelper.addValue(this, contactPanelLayout, contactPanelConstraints, bba.getDisplayString());
         }
     }
 
@@ -358,25 +317,9 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
         "ContactArtifactViewer_heading_Source=Source",
         "ContactArtifactViewer_label_datasource=Data Source",})
     private void updateSource() {
-
-        GridBagLayout sourcePanelLayout = new GridBagLayout();
-        GridBagConstraints sourcePanelConstraints = new GridBagConstraints();
-
-        sourcePanelConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        sourcePanelConstraints.gridy = 0;
-        sourcePanelConstraints.gridx = 0;
-        sourcePanelConstraints.weighty = 0.05;
-        sourcePanelConstraints.weightx = 0.05;
-        sourcePanelConstraints.insets = new java.awt.Insets(0, 0, 0, 0);
-        sourcePanelConstraints.fill = GridBagConstraints.NONE;
-
-        CommunicationArtifactViewerHelper.addHeader(this.sourcePanel, sourcePanelLayout, sourcePanelConstraints, Bundle.ContactArtifactViewer_heading_Source());
-        CommunicationArtifactViewerHelper.addKey(this.sourcePanel, sourcePanelLayout, sourcePanelConstraints, Bundle.ContactArtifactViewer_label_datasource());
-        CommunicationArtifactViewerHelper.addValue(this.sourcePanel, sourcePanelLayout, sourcePanelConstraints, datasourceName);
-
-        sourcePanel.setLayout(sourcePanelLayout);
-        sourcePanel.revalidate();
-        sourcePanel.repaint();
+        CommunicationArtifactViewerHelper.addHeader(this, this.m_gridBagLayout, m_constraints, Bundle.ContactArtifactViewer_heading_Source());
+        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, m_constraints, Bundle.ContactArtifactViewer_label_datasource());
+        CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, m_constraints, datasourceName);
     }
 
     /**
@@ -391,36 +334,33 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
     //"ContactArtifactViewer_persona_unknown=Unknown"
     })
 
+    /**
+     * Initiates a search for Personas for the accounts associated with the
+     * Contact.
+     *
+     */
     private void initiatePersonasSearch() {
 
-        GridBagLayout personasPanelLayout = new GridBagLayout();
-        GridBagConstraints personasPanelConstraints = new GridBagConstraints();
-
-        personasPanelConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        personasPanelConstraints.gridy = 0;
-        personasPanelConstraints.gridx = 0;
-        personasPanelConstraints.weighty = 0.05;
-        personasPanelConstraints.weightx = 0.05;
-        personasPanelConstraints.insets = new java.awt.Insets(0, 0, 0, 0);
-        personasPanelConstraints.fill = GridBagConstraints.NONE;
-
         // add a section header 
-        JLabel personaHeader = CommunicationArtifactViewerHelper.addHeader(this.personasPanel, personasPanelLayout, personasPanelConstraints, Bundle.ContactArtifactViewer_persona_header());
+        JLabel personaHeader = CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, m_constraints, Bundle.ContactArtifactViewer_persona_header());
 
-        personasPanelConstraints.gridy++;
+        m_constraints.gridy++;
+
+        Insets savedInsets = m_constraints.insets;
 
         // add a status label
         String personaStatusLabelText = CentralRepository.isEnabled()
                 ? Bundle.ContactArtifactViewer_persona_searching()
                 : Bundle.ContactArtifactViewer_persona_unknown();
 
-        javax.swing.JLabel statusLabel = new javax.swing.JLabel();
-        statusLabel.setText(personaStatusLabelText);
+        this.personaSearchStatusLabel = new javax.swing.JLabel();
+        personaSearchStatusLabel.setText(personaStatusLabelText);
 
-        CommunicationArtifactViewerHelper.addComponent(this.personasPanel, personasPanelLayout, personasPanelConstraints, statusLabel);
+        m_constraints.gridx = 0;
+        Insets labelInsets = new java.awt.Insets(0, LEFT_INSET, 0, 0);
+        m_constraints.insets = labelInsets;
 
-        // End of panel, add a blank line
-        CommunicationArtifactViewerHelper.addBlankLine(this.personasPanel, personasPanelLayout, personasPanelConstraints);
+        CommunicationArtifactViewerHelper.addComponent(this, m_gridBagLayout, m_constraints, personaSearchStatusLabel);
 
         if (CentralRepository.isEnabled()) {
             // Kick off a background task to serach for personas for the contact
@@ -428,40 +368,30 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
             personaSearchTask.execute();
         } else {
             personaHeader.setEnabled(false);
-            statusLabel.setEnabled(false);
+            personaSearchStatusLabel.setEnabled(false);
         }
 
-        personasPanel.setLayout(personasPanelLayout);
-        personasPanel.revalidate();
-        personasPanel.repaint();
-
+        m_constraints.insets = savedInsets;
     }
 
     /**
      * Updates the Persona panel with the gathered persona information.
      */
     private void updatePersonas() {
-        // Clear out the panel
-        personasPanel.removeAll();
 
-        GridBagLayout personasPanelLayout = new GridBagLayout();
-        GridBagConstraints personasPanelConstraints = new GridBagConstraints();
-        personasPanelConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        personasPanelConstraints.gridx = 0;
-        personasPanelConstraints.gridy = 0;
-        personasPanelConstraints.insets = new java.awt.Insets(0, 0, 0, 0);
+        // Remove the "Searching....." label
+        this.remove(personaSearchStatusLabel);
 
-        // add a section header 
-        CommunicationArtifactViewerHelper.addHeader(this.personasPanel, personasPanelLayout, personasPanelConstraints, Bundle.ContactArtifactViewer_persona_header());
-
-        personasPanelConstraints.gridy++;
-
+        m_constraints.gridx = 0;
         if (contactUniquePersonasMap.isEmpty()) {
-            showPersona(null, Collections.emptyList(), personasPanelLayout, personasPanelConstraints);
+            // No persona found - show a button to create one.
+            showPersona(null, 0, Collections.emptyList(), this.m_gridBagLayout, this.m_constraints);
         } else {
+            int matchCounter = 0;
             for (Map.Entry<Persona, ArrayList<CentralRepoAccount>> entry : contactUniquePersonasMap.entrySet()) {
                 List<CentralRepoAccount> missingAccounts = new ArrayList<>();
                 ArrayList<CentralRepoAccount> personaAccounts = entry.getValue();
+                matchCounter++;
 
                 // create a list of accounts missing from this persona
                 for (CentralRepoAccount account : contactUniqueAccountsList) {
@@ -470,17 +400,18 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
                     }
                 }
 
-                showPersona(entry.getKey(), missingAccounts, personasPanelLayout, personasPanelConstraints);
-                personasPanelConstraints.gridy += 2;
+                showPersona(entry.getKey(), matchCounter, missingAccounts, m_gridBagLayout, m_constraints);
+                m_constraints.gridy += 2;
             }
         }
 
-        CommunicationArtifactViewerHelper.addBlankLine(this.personasPanel, personasPanelLayout, personasPanelConstraints);
+        // add veritcal glue at the end
+        CommunicationArtifactViewerHelper.addPageEndGlue(this, m_gridBagLayout, this.m_constraints);
 
-        personasPanel.setLayout(personasPanelLayout);
-        personasPanel.setSize(personasPanel.getPreferredSize());
-        personasPanel.revalidate();
-        personasPanel.repaint();
+        // redraw the panel
+        this.setLayout(this.m_gridBagLayout);
+        this.revalidate();
+        this.repaint();
     }
 
     /**
@@ -496,82 +427,82 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
      */
     @NbBundle.Messages({
         "ContactArtifactViewer_persona_label=Persona ",
-        "ContactArtifactViewer_persona_name_unknown=Unknown",
+        "ContactArtifactViewer_persona_no_match=No matches found",
         "ContactArtifactViewer_persona_button_view=View",
         "ContactArtifactViewer_persona_button_new=Create",
-        "ContactArtifactViewer_missing_account_label=Contact account not in persona",
-        "ContactArtifactViewer_found_all_accounts_label=All contact accounts are in persona"
+        "ContactArtifactViewer_persona_match_num=Match ",
+        "ContactArtifactViewer_missing_account_label=Missing contact account",
+        "ContactArtifactViewer_found_all_accounts_label=All accounts found."
     })
-    private void showPersona(Persona persona, List<CentralRepoAccount> missingAccountsList, GridBagLayout gridBagLayout, GridBagConstraints constraints) {
+    private void showPersona(Persona persona, int matchNumber, List<CentralRepoAccount> missingAccountsList, GridBagLayout gridBagLayout, GridBagConstraints constraints) {
 
+        // save the original insets
         Insets savedInsets = constraints.insets;
 
+        // keys are inset with an indent.
         Insets labelInsets = new java.awt.Insets(0, LEFT_INSET, 0, 0);
 
-        //constraints.fill = GridBagConstraints.NONE;
-        //constraints.weightx = 0;
-        //constraints.gridx = 0;
-        //javax.swing.Box.Filler filler1 = createFiller(5, 0);
-        // gridBagLayout.setConstraints(filler1, constraints);
-        //personasPanel.add(filler1);
-        // Add a "Persona" label
-        //constraints.gridx++;
-//        javax.swing.JLabel personaLabel = new javax.swing.JLabel();
-//        personaLabel.setText(Bundle.ContactArtifactViewer_persona_label());
-//        personaLabel.setFont(personaLabel.getFont().deriveFont(Font.BOLD, personaLabel.getFont().getSize()));
-//        gridBagLayout.setConstraints(personaLabel, constraints);
-//        personasPanel.add(personaLabel);
+        // Add a Match X label in col 0.
+        constraints.gridx = 0;
+        javax.swing.JLabel matchNumberLabel = CommunicationArtifactViewerHelper.addKey(this, gridBagLayout, constraints, String.format("%s %d", Bundle.ContactArtifactViewer_persona_match_num(), matchNumber));
+
         javax.swing.JLabel personaNameLabel = new javax.swing.JLabel();
         javax.swing.JButton personaButton = new javax.swing.JButton();
 
         String personaName;
         String personaButtonText;
         ActionListener personaButtonListener;
-
         if (persona != null) {
             personaName = persona.getName();
             personaButtonText = Bundle.ContactArtifactViewer_persona_button_view();
             personaButtonListener = new ViewPersonaButtonListener(this, persona);
         } else {
-            personaName = Bundle.ContactArtifactViewer_persona_name_unknown();
+            matchNumberLabel.setVisible(false);
+            personaName = Bundle.ContactArtifactViewer_persona_no_match();
             personaButtonText = Bundle.ContactArtifactViewer_persona_button_new();
             personaButtonListener = new CreatePersonaButtonListener(this, new PersonaUIComponents(personaNameLabel, personaButton));
         }
 
-        // Add the label for persona name, 
-        constraints.insets = labelInsets;
-        constraints.gridx = 0;
-        constraints.gridwidth = 2;  // TBD: this may not be needed if we use single panel
+        //constraints.gridwidth = 1;  // TBD: this may not be needed if we use single panel
+        constraints.gridx++;
         personaNameLabel.setText(personaName);
         gridBagLayout.setConstraints(personaNameLabel, constraints);
-        personasPanel.add(personaNameLabel);
+        CommunicationArtifactViewerHelper.addComponent(this, gridBagLayout, constraints, personaNameLabel);
+        //personasPanel.add(personaNameLabel);
 
         // Add a Persona action button
-        constraints.gridx += 2;
-        constraints.gridwidth = 1;
+        constraints.gridx++;
+        //constraints.gridwidth = 1;
         personaButton.setText(personaButtonText);
         personaButton.addActionListener(personaButtonListener);
 
-        constraints.insets = new java.awt.Insets(0, LEFT_INSET, 0, 0);
+        // Shirnk the button height.
+        personaButton.setMargin(new Insets(0, 5, 0, 5));
         gridBagLayout.setConstraints(personaButton, constraints);
-        personasPanel.add(personaButton);
+        CommunicationArtifactViewerHelper.addComponent(this, gridBagLayout, constraints, personaButton);
+        CommunicationArtifactViewerHelper.addLineEndGlue(this, gridBagLayout, constraints);
 
-        constraints.insets = labelInsets;
+        constraints.insets = savedInsets;
 
         // if we have a persona, indicate if any of the contact's accounts  are missing from it.
         if (persona != null) {
             if (missingAccountsList.isEmpty()) {
                 constraints.gridy++;
-                CommunicationArtifactViewerHelper.addKeyAtCol(personasPanel, gridBagLayout, constraints, Bundle.ContactArtifactViewer_found_all_accounts_label(), 2);
+                constraints.gridx = 1;
+                constraints.insets = labelInsets;
+
+                javax.swing.JLabel accountsStatus = new javax.swing.JLabel(Bundle.ContactArtifactViewer_found_all_accounts_label());
+                CommunicationArtifactViewerHelper.addComponent(this, gridBagLayout, constraints, accountsStatus);
+                CommunicationArtifactViewerHelper.addLineEndGlue(this, gridBagLayout, constraints);
             } else {
                 // show missing accounts.
                 for (CentralRepoAccount missingAccount : missingAccountsList) {
-                    constraints.weightx = 0;
+                    //constraints.weightx = 0;
                     constraints.gridx = 0;
                     constraints.gridy++;
 
-                    CommunicationArtifactViewerHelper.addKeyAtCol(personasPanel, gridBagLayout, constraints, Bundle.ContactArtifactViewer_missing_account_label(), 2);
-                    CommunicationArtifactViewerHelper.addValueAtCol(personasPanel, gridBagLayout, constraints, missingAccount.getIdentifier(), 3);
+                    CommunicationArtifactViewerHelper.addKeyAtCol(this, gridBagLayout, constraints, Bundle.ContactArtifactViewer_missing_account_label(), 1);
+                    CommunicationArtifactViewerHelper.addValueAtCol(this, gridBagLayout, constraints, missingAccount.getIdentifier(), 2);
                 }
             }
         }
@@ -603,9 +534,21 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
             personaSearchTask = null;
         }
 
-        this.contactDetailsPanel.removeAll();
-        this.personasPanel.removeAll();
-        this.sourcePanel.removeAll();
+        // clear the panel 
+        this.removeAll();
+        this.setLayout(null);
+
+        m_gridBagLayout = new GridBagLayout();
+        m_constraints = new GridBagConstraints();
+
+        m_constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        m_constraints.gridy = 0;
+        m_constraints.gridx = 0;
+        m_constraints.weighty = 0.05;
+        m_constraints.weightx = 0.05;
+        m_constraints.insets = new java.awt.Insets(0, 0, 0, 0);
+        m_constraints.fill = GridBagConstraints.NONE;
+
     }
 
     /**
@@ -904,9 +847,5 @@ public class ContactArtifactViewerNew extends javax.swing.JPanel implements Arti
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel contactDetailsPanel;
-    private javax.swing.Box.Filler filler1;
-    private javax.swing.JPanel personasPanel;
-    private javax.swing.JPanel sourcePanel;
     // End of variables declaration//GEN-END:variables
 }

@@ -35,6 +35,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -48,7 +49,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Displays the To/From and other parties, and metadata for a call.
  */
 @ServiceProvider(service = ArtifactContentViewer.class)
-public class CallLogArtifactViewer extends javax.swing.JPanel implements ArtifactContentViewer {
+public class CallLogArtifactViewer extends AbstractCommunicationArtifactViewer {
 
     private final static Logger logger = Logger.getLogger(CallLogArtifactViewer.class.getName());
     private static final long serialVersionUID = 1L;
@@ -91,6 +92,10 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     @Override
     public void setArtifact(BlackboardArtifact artifact) {
         resetComponent();
+
+        if (CentralRepository.isEnabled() == false) {
+            this.showCentralRepoDisabledDialog();
+        }
 
         CallLogViewData callLogViewData = null;
         try {
