@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.Objects;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Represents a single file analysis task, which is defined by a file to analyze
@@ -34,23 +35,22 @@ final class FileIngestTask extends IngestTask {
     FileIngestTask(IngestJobPipeline ingestJobPipeline, AbstractFile file) {
         super(ingestJobPipeline);
         this.file = file;
-	fileId = file.getId();
+	    fileId = file.getId();
     }
     
     FileIngestTask(IngestJobPipeline ingestJobPipeline, long fileId) {
         super(ingestJobPipeline);
         this.fileId = fileId;
     }    
+    
+    long getFileId() {
+        return fileId;
+    }
 
-    synchronized AbstractFile getFile() {
-	if (file == null) {
-	    try {
-		file = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(fileId);
-	    } catch (Exception ex) {
-		// TODO TODO should propagate exception TODO TODO
-		ex.printStackTrace();
+    synchronized AbstractFile getFile() throws TskCoreException {
+        if (file == null) {
+            file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(fileId);
 	    }
-	}
         return file;
     }
 
@@ -74,7 +74,7 @@ final class FileIngestTask extends IngestTask {
         if (thisPipeline != otherPipeline && (thisPipeline == null || !thisPipeline.equals(otherPipeline))) {
             return false;
         }
-	return (this.fileId == other.fileId);
+	    return (this.fileId == other.fileId);
     }
 
     @Override

@@ -509,9 +509,10 @@ final class IngestJobPipeline {
      * @return A collection of ingest module startup errors, empty on success.
      */
     List<IngestModuleError> start() {
-	if (dataSource == null) {
-	    throw new IllegalStateException("Ingest started before setting data source"); // TODO remove?
-	}
+	    if (dataSource == null) {
+            // TODO - Remove once data source is always present during initialization
+	        throw new IllegalStateException("Ingest started before setting data source");
+	    }
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
             try {
@@ -975,7 +976,18 @@ final class IngestJobPipeline {
             if (!this.isCancelled()) {
                 FileIngestPipeline pipeline = this.fileIngestPipelinesQueue.take();
                 if (!pipeline.isEmpty()) {
-                    AbstractFile file = task.getFile();
+                    AbstractFile file;
+                    try {
+                        file = task.getFile();
+                    } catch (TskCoreException ex) {
+                        // In practice, this task would never have been enqueued since the file
+                        // lookup would have failed there.
+                        List<IngestModuleError> errors = new ArrayList<>();
+                        errors.add(new IngestModuleError("Ingest Job Pipeline", ex));
+                        logIngestModuleErrors(errors);
+                        this.fileIngestPipelinesQueue.put(pipeline);
+                        return;
+                    }
 
                     synchronized (this.fileIngestProgressLock) {
                         ++this.processedFiles;

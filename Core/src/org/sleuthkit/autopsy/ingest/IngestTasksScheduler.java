@@ -426,8 +426,9 @@ final class IngestTasksScheduler {
              * own, or into the queue for the file ingest threads, if it passes
              * the filter for the job.
              */
-            final AbstractFile file = pendingTask.getFile();
+            AbstractFile file = null;
             try {
+                file = pendingTask.getFile();
                 for (Content child : file.getChildren()) {
                     if (child instanceof AbstractFile) {
                         AbstractFile childFile = (AbstractFile) child;
@@ -440,7 +441,12 @@ final class IngestTasksScheduler {
                     }
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Error getting the children of %s (objId=%d)", file.getName(), file.getId()), ex);  //NON-NLS
+                if (file != null) {
+                    logger.log(Level.SEVERE, String.format("Error getting the children of %s (objId=%d)", file.getName(), file.getId()), ex);  //NON-NLS
+                } else {
+                    // In practice, the task would have already returned false from the call to shouldEnqueueFileTask()
+                    logger.log(Level.SEVERE, "Error loading file with object ID {0}", pendingTask.getFileId());
+                }
             }
         }
     }
@@ -455,7 +461,13 @@ final class IngestTasksScheduler {
      * @return True or false.
      */
     private static boolean shouldEnqueueFileTask(final FileIngestTask task) {
-        final AbstractFile file = task.getFile();
+        AbstractFile file;
+        try {
+            file = task.getFile();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error loading file with ID {0}", task.getFileId());
+            return false;
+        }
 
         // Skip the task if the file is actually the pseudo-file for the parent
         // or current directory.
@@ -538,7 +550,12 @@ final class IngestTasksScheduler {
      * @return True or false.
      */
     private static boolean shouldBeCarved(final FileIngestTask task) {
-        return task.getIngestJobPipeline().shouldProcessUnallocatedSpace() && task.getFile().getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS);
+        try {
+            AbstractFile file = task.getFile();
+            return task.getIngestJobPipeline().shouldProcessUnallocatedSpace() && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS);
+        } catch (TskCoreException ex) {
+            return false;
+        }
     }
 
     /**
@@ -550,7 +567,12 @@ final class IngestTasksScheduler {
      * @return True or false. 
      */
     private static boolean fileAcceptedByFilter(final FileIngestTask task) {
-        return !(task.getIngestJobPipeline().getFileIngestFilter().fileIsMemberOf(task.getFile()) == null);
+        try {
+            AbstractFile file = task.getFile();
+            return !(task.getIngestJobPipeline().getFileIngestFilter().fileIsMemberOf(file) == null);
+        } catch (TskCoreException ex) {
+            return false;
+        }
     }
 
     /**
@@ -630,10 +652,36 @@ final class IngestTasksScheduler {
 
         @Override
         public int compare(FileIngestTask q1, FileIngestTask q2) {
-            AbstractFilePriority.Priority p1 = AbstractFilePriority.getPriority(q1.getFile());
-            AbstractFilePriority.Priority p2 = AbstractFilePriority.getPriority(q2.getFile());
+            // In practice the case where one or both calls to getFile() fails
+            // should never occur since such tasks would not be added to the queue.
+            AbstractFile file1 = null;
+            AbstractFile file2 = null;
+            try {
+                file1 = q1.getFile();
+            } catch (TskCoreException ex) {
+                // Do nothing - the exception has been logged elsewhere
+            }
+            
+            try {
+                file2 = q2.getFile();
+            } catch (TskCoreException ex) {
+                // Do nothing - the exception has been logged elsewhere
+            }
+            
+            if (file1 == null) {
+                if (file2 == null) {
+                    return (int) (q2.getFileId() - q1.getFileId());
+                } else {
+                    return 1;
+                }
+            } else  if (file2 == null) {
+                return -1;
+            }
+            
+            AbstractFilePriority.Priority p1 = AbstractFilePriority.getPriority(file1);
+            AbstractFilePriority.Priority p2 = AbstractFilePriority.getPriority(file2);
             if (p1 == p2) {
-                return (int) (q2.getFile().getId() - q1.getFile().getId());
+                return (int) (file2.getId() - file1.getId());
             } else {
                 return p2.ordinal() - p1.ordinal();
             }
