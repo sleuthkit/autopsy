@@ -1082,28 +1082,20 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      */
     @Override
     public CentralRepoAccount getOrCreateAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
-        // Get the account fom the accounts table
-        CentralRepoAccount account = getAccount(crAccountType, accountUniqueID);
+        String query = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
+                + "VALUES ( " + crAccountType.getAccountTypeId() + ", '"
+                + accountUniqueID + "' ) ON CONFLICT DO NOTHING";
 
-        // account not found in the table, create it
-        if (null == account) {
+        try (Connection connection = connect();
+                Statement s = connection.createStatement();) {
 
-            String query = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
-                    + "VALUES ( " + crAccountType.getAccountTypeId() + ", '"
-                    + accountUniqueID + "' )";
-
-            try (Connection connection = connect();
-                    Statement s = connection.createStatement();) {
-
-                s.execute(query);
-                // get the account from the db - should exist now.
-                account = getAccount(crAccountType, accountUniqueID);
-            } catch (SQLException ex) {
-                throw new CentralRepoException("Error adding an account to CR database.", ex);
-            }
+            s.execute(query);
+            // get the account from the db - should exist now.
+            return getAccount(crAccountType, accountUniqueID);
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error adding an account to CR database.", ex);
         }
 
-        return account;
     }
 
     @Override
