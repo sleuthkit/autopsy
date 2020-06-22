@@ -27,12 +27,14 @@ import org.openide.util.NbPreferences;
  * Provides convenient access to a Preferences node for user preferences with
  * default values. 
  */
-public final class UserPreferences {
+final class UserPreferences {
 
     private static final Preferences preferences = NbPreferences.forModule(UserPreferences.class);
     private static final String INDEXING_MAX_SHARDS = "IndexingMaxShards"; //NON-NLS
     private static final String INDEXING_DOC_QUEUE_SIZE = "IndexingDocumentQueueSize"; //NON-NLS
     private static final String INDEXING_NUM_THREADS = "IndexingNumThreads"; //NON-NLS
+    private static final String SOLR_CONNECTION_TIMEOUT_MS = "SolrConnectionTimeoutMs"; //NON-NLS
+    private static final int DEFAULT_CONNECTION_TIMEOUT_MS = 120000; // 2 minutes
 
     // Prevent instantiation.
     private UserPreferences() {
@@ -89,5 +91,13 @@ public final class UserPreferences {
 
     public static int getDocumentsQueueSize() {
         return preferences.getInt(INDEXING_DOC_QUEUE_SIZE, 1000);
+    }
+    
+    public static void setConnectionTimeout(int connectionTimeoutMs) {
+        preferences.putInt(SOLR_CONNECTION_TIMEOUT_MS, connectionTimeoutMs);
+    }
+
+    public static int getConnectionTimeout() {
+        return preferences.getInt(SOLR_CONNECTION_TIMEOUT_MS, DEFAULT_CONNECTION_TIMEOUT_MS);
     }
 }

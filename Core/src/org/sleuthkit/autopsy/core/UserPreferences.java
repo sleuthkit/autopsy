@@ -56,11 +56,8 @@ public final class UserPreferences {
     public static final String EXTERNAL_DATABASE_TYPE = "ExternalDatabaseType"; //NON-NLS
     private static final String SOLR8_SERVER_HOST = "Solr8ServerHost"; //NON-NLS
     private static final String SOLR8_SERVER_PORT = "Solr8ServerPort"; //NON-NLS
-    private static final String SOLR4_SERVER_HOST = "Solr4ServerHost"; //NON-NLS
-    private static final String SOLR4_SERVER_PORT = "Solr4ServerPort"; //NON-NLS
-    private static final String INDEXING_MAX_SHARDS = "IndexingMaxShards"; //NON-NLS
-    private static final String INDEXING_DOC_QUEUE_SIZE = "IndexingDocumentQueueSize"; //NON-NLS
-    private static final String INDEXING_NUM_THREADS = "IndexingNumThreads"; //NON-NLS
+    private static final String SOLR4_SERVER_HOST = "IndexingServerHost"; //NON-NLS
+    private static final String SOLR4_SERVER_PORT = "IndexingServerPort"; //NON-NLS
     private static final String ZK_SERVER_HOST = "ZookeeperServerHost"; //NON-NLS
     private static final String ZK_SERVER_PORT = "ZookeeperServerPort"; //NON-NLS
     private static final String MESSAGE_SERVICE_PASSWORD = "MessageServicePassword"; //NON-NLS
@@ -371,35 +368,11 @@ public final class UserPreferences {
     }
 
     public static String getZkServerPort() {
-        return preferences.get(ZK_SERVER_PORT, "");
+        return preferences.get(ZK_SERVER_PORT, "9983");
     }
 
     public static void setZkServerPort(String port) {
         preferences.put(ZK_SERVER_PORT, port);
-    }
-    
-    public static void setMaxNumShards(int maxShards) {
-        preferences.putInt(INDEXING_MAX_SHARDS, maxShards);
-    }
-
-    public static int getMaxNumShards() {
-        return preferences.getInt(INDEXING_MAX_SHARDS, 0);
-    }
-
-    public static int getNumThreads() {
-        return preferences.getInt(INDEXING_NUM_THREADS, 10);
-    }
-
-    public static void setNumThreads(int maxShards) {
-        preferences.putInt(INDEXING_NUM_THREADS, maxShards);
-    }
-    
-    public static void setDocumentsQueueSize(int maxShards) {
-        preferences.putInt(INDEXING_DOC_QUEUE_SIZE, maxShards);
-    }
-
-    public static int getDocumentsQueueSize() {
-        return preferences.getInt(INDEXING_DOC_QUEUE_SIZE, 1000);
     }
     
     public static void setTextTranslatorName(String textTranslatorName) {

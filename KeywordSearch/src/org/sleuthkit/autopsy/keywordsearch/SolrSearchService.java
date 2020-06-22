@@ -154,12 +154,15 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         if (host == null || host.isEmpty()) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingHostname")); //NON-NLS
         }
+        String solrUrl = "http://" + host + ":" + Integer.toString(port) + "/solr";
         try {
-            solrServer = new ConcurrentUpdateSolrClient.Builder("http://" + host + ":" + Integer.toString(port) + "/solr").build(); //NON-NLS            
+            solrServer = new ConcurrentUpdateSolrClient.Builder(solrUrl).build(); //NON-NLS            
             KeywordSearch.getServer().connectToSolrServer(solrServer);
         } catch (SolrServerException ex) {
+            logger.log(Level.SEVERE, "Uanble to connect to Solr server: " + solrUrl, ex);
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort")); //NON-NLS*/
         } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Uanble to connect to Solr server: " + solrUrl, ex);
             String result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
             String message = ex.getCause().getMessage().toLowerCase();
             if (message.startsWith(SERVER_REFUSED_CONNECTION)) {
@@ -179,8 +182,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             }
             throw new KeywordSearchServiceException(result);
         } catch (NumberFormatException ex) {
+            logger.log(Level.SEVERE, "Uanble to connect to Solr server: " + solrUrl, ex);
             throw new KeywordSearchServiceException(Bundle.SolrConnectionCheck_Port());
         } catch (IllegalArgumentException ex) {
+            logger.log(Level.SEVERE, "Uanble to connect to Solr server: " + solrUrl, ex);
             throw new KeywordSearchServiceException(ex.getMessage());
         } finally {
             if (null != solrServer) {

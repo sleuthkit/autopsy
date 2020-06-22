@@ -327,11 +327,13 @@ public class Server {
     private ConcurrentUpdateSolrClient getSolrClient(String solrUrl) {
         int numThreads = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getNumThreads();
         int numDocs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getDocumentsQueueSize();
-        logger.log(Level.INFO, "Creating new ConcurrentUpdateSolrClient. Queue size = {0}, Number of threads = {1}", new Object[]{numDocs, numThreads}); //NON-NLS
+        int connectionTimeoutMs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getConnectionTimeout();
+        logger.log(Level.INFO, "Creating new ConcurrentUpdateSolrClient: {0}", solrUrl); //NON-NLS
+        logger.log(Level.INFO, "Queue size = {0}, Number of threads = {1}, Connection Timeout (ms) = {2}", new Object[]{numDocs, numThreads, connectionTimeoutMs}); //NON-NLS
         ConcurrentUpdateSolrClient client = new ConcurrentUpdateSolrClient.Builder(solrUrl)
                 .withQueueSize(numDocs)
                 .withThreadCount(numThreads)
-                .withConnectionTimeout(1000)
+                .withConnectionTimeout(connectionTimeoutMs)
                 .withResponseParser(new XMLResponseParser())
                 .build();
 

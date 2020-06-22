@@ -23,10 +23,14 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineIngestManager;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineOptionProcessor;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineStartupWindow;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * Provides the start up window to rest of the application. It may return the
@@ -68,6 +72,10 @@ public class StartupWindowProvider implements StartupWindowInterface {
                 return;
             }
 
+            if (RuntimeProperties.runningWithGUI()) {
+                checkSolr();
+            }
+
             //discover the registered windows
             Collection<? extends StartupWindowInterface> startupWindows
                     = Lookup.getDefault().lookupAll(StartupWindowInterface.class);
@@ -104,6 +112,21 @@ public class StartupWindowProvider implements StartupWindowInterface {
                 logger.log(Level.SEVERE, "Unexpected error, no startup window chosen, using the default"); //NON-NLS
                 startupWindowToUse = new org.sleuthkit.autopsy.casemodule.StartupWindow();
             }
+        }
+    }
+
+    private void checkSolr() {
+
+        // if Multi-User settings are enabled and Solr8 server is not configured,
+        // display an error message and a dialog
+        if (UserPreferences.getIsMultiUserModeEnabled() && UserPreferences.getIndexingServerHost().isEmpty()) {
+            // Solr 8 host name is not configured. This could be the first time user 
+            // runs Autopsy with Solr 8. Display a message.
+            MessageNotifyUtil.Notify.error(NbBundle.getMessage(CueBannerPanel.class, "SolrNotConfiguredDialog.title"),
+                    NbBundle.getMessage(SolrNotConfiguredDialog.class, "SolrNotConfiguredDialog.EmptyKeywordSearchHostName"));
+
+            SolrNotConfiguredDialog dialog = new SolrNotConfiguredDialog();
+            dialog.setVisible(true);
         }
     }
 
