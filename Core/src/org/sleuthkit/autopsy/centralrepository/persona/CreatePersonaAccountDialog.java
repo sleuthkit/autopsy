@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.centralrepository.persona;
 import java.awt.Component;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -35,7 +34,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -49,8 +47,6 @@ public class CreatePersonaAccountDialog extends JDialog {
     private static final long serialVersionUID = 1L;
 
     private final TypeChoiceRenderer TYPE_CHOICE_RENDERER = new TypeChoiceRenderer();
-    private final CaseChoiceRenderer CASE_CHOICE_RENDERER = new CaseChoiceRenderer();
-    private final PersonaDetailsPanel pdp;
 
     /**
      * Creates new create account dialog.
@@ -60,7 +56,6 @@ public class CreatePersonaAccountDialog extends JDialog {
         super(SwingUtilities.windowForComponent(pdp),
                 Bundle.PersonaAccountDialog_title_text(),
                 ModalityType.APPLICATION_MODAL);
-        this.pdp = pdp;
 
         initComponents();
         typeComboBox.setRenderer(TYPE_CHOICE_RENDERER);
@@ -83,23 +78,6 @@ public class CreatePersonaAccountDialog extends JDialog {
             return this;
         }
     }
-    
-    /**
-     * This class handles displaying and rendering drop down menu for case
-     * choices.
-     */
-    private class CaseChoiceRenderer extends JLabel implements ListCellRenderer<CorrelationCase>, Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public Component getListCellRendererComponent(
-                JList<? extends CorrelationCase> list, CorrelationCase value,
-                int index, boolean isSelected, boolean cellHasFocus) {
-            setText(value.getDisplayName());
-            return this;
-        }
-    }
 
     private CentralRepoAccountType[] getAllAccountTypes() {
         Collection<CentralRepoAccountType> allAccountTypes;
@@ -114,26 +92,6 @@ public class CreatePersonaAccountDialog extends JDialog {
             return new CentralRepoAccountType[0];
         }
         return allAccountTypes.toArray(new CentralRepoAccountType[0]);
-    }
-    
-    private CorrelationCase[] getAllCases() {
-        List<CorrelationCase> allCases;
-        try {
-            CentralRepository cr = CentralRepository.getInstance();
-            if (cr != null) {
-                allCases = cr.getCases();
-            } else {
-                throw new CentralRepoException("Failed to access central repository");
-            }
-        } catch (CentralRepoException e) {
-            logger.log(Level.SEVERE, "Failed to access central repository", e);
-            JOptionPane.showMessageDialog(this,
-                    Bundle.PersonaAccountDialog_get_types_exception_Title(),
-                    Bundle.PersonaAccountDialog_get_types_exception_msg(),
-                    JOptionPane.ERROR_MESSAGE);
-            return new CorrelationCase[0];
-        }
-        return allCases.toArray(new CorrelationCase[0]);
     }
 
     /**
@@ -150,8 +108,6 @@ public class CreatePersonaAccountDialog extends JDialog {
         identifierTextField = new javax.swing.JTextField();
         typeLbl = new javax.swing.JLabel();
         typeComboBox = new javax.swing.JComboBox<>();
-        caseLbl = new javax.swing.JLabel();
-        caseComboBox = new javax.swing.JComboBox<>();
         cancelBtn = new javax.swing.JButton();
         okBtn = new javax.swing.JButton();
 
@@ -173,10 +129,6 @@ public class CreatePersonaAccountDialog extends JDialog {
 
         typeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(getAllAccountTypes()));
 
-        org.openide.awt.Mnemonics.setLocalizedText(caseLbl, org.openide.util.NbBundle.getMessage(CreatePersonaAccountDialog.class, "CreatePersonaAccountDialog.caseLbl.text")); // NOI18N
-
-        caseComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(getAllCases()));
-
         javax.swing.GroupLayout settingsPanelLayout = new javax.swing.GroupLayout(settingsPanel);
         settingsPanel.setLayout(settingsPanelLayout);
         settingsPanelLayout.setHorizontalGroup(
@@ -191,11 +143,7 @@ public class CreatePersonaAccountDialog extends JDialog {
                     .addGroup(settingsPanelLayout.createSequentialGroup()
                         .addComponent(identiferLbl)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(identifierTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE))
-                    .addGroup(settingsPanelLayout.createSequentialGroup()
-                        .addComponent(caseLbl)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(caseComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(identifierTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         settingsPanelLayout.setVerticalGroup(
@@ -209,10 +157,6 @@ public class CreatePersonaAccountDialog extends JDialog {
                 .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(typeLbl, javax.swing.GroupLayout.PREFERRED_SIZE, 9, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(settingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(caseLbl)
-                    .addComponent(caseComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -268,11 +212,12 @@ public class CreatePersonaAccountDialog extends JDialog {
         setVisible(true);
     }
     
-    private void createAccount(CentralRepoAccount.CentralRepoAccountType type, String identifier, CorrelationCase crCase) {
+    private CentralRepoAccount createAccount(CentralRepoAccount.CentralRepoAccountType type, String identifier) {
+        CentralRepoAccount ret = null;
         try {
             CentralRepository cr = CentralRepository.getInstance();
             if (cr != null) {
-                CentralRepoAccount crAccount = cr.getOrCreateAccount(type, identifier);
+                ret = cr.getOrCreateAccount(type, identifier);
             }
         } catch (CentralRepoException e) {
             logger.log(Level.SEVERE, "Failed to access central repository", e);
@@ -281,6 +226,7 @@ public class CreatePersonaAccountDialog extends JDialog {
                     Bundle.PersonaAccountDialog_get_types_exception_msg(),
                     JOptionPane.ERROR_MESSAGE);
         }
+        return ret;
     }
 
     @Messages({
@@ -298,10 +244,10 @@ public class CreatePersonaAccountDialog extends JDialog {
         CentralRepoAccount.CentralRepoAccountType type = 
                 (CentralRepoAccount.CentralRepoAccountType) typeComboBox.getSelectedItem();
         String identifier = identifierTextField.getText();
-        CorrelationCase crCase = (CorrelationCase) caseComboBox.getSelectedItem();
 
-        createAccount(type, identifier, crCase);
-        dispose();
+        if (createAccount(type, identifier) != null) {
+            dispose();
+        }
     }//GEN-LAST:event_okBtnActionPerformed
 
     private void cancelBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelBtnActionPerformed
@@ -314,8 +260,6 @@ public class CreatePersonaAccountDialog extends JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelBtn;
-    private javax.swing.JComboBox<org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase> caseComboBox;
-    private javax.swing.JLabel caseLbl;
     private javax.swing.JLabel identiferLbl;
     private javax.swing.JTextField identifierTextField;
     private javax.swing.JButton okBtn;
