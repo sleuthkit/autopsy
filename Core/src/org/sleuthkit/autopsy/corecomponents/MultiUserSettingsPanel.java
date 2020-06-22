@@ -772,11 +772,13 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         }
         
         // if there are existing valid ZK settings, use those
-        String zkServerHost = UserPreferences.getZkServerHost().trim();
         String zkServerPort = UserPreferences.getZkServerPort().trim();
-        if (!zkServerHost.isEmpty() && portNumberIsValid(zkServerPort)) {
+        if (portNumberIsValid(zkServerPort)) {
+            tbZkPort.setText(zkServerPort); // gets default ZK port, which is Solr port number + 1000
+        }
+        String zkServerHost = UserPreferences.getZkServerHost().trim();
+        if (!zkServerHost.isEmpty()) {
             tbZkHostname.setText(zkServerHost);
-            tbZkPort.setText(zkServerPort);
             return;
         }
         
