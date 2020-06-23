@@ -657,7 +657,7 @@ final class IngestJobPipeline {
 
         if (this.hasFileIngestPipeline()) {
             synchronized (this.fileIngestProgressLock) {
-                this.estimatedFilesToProcess = 0; // There's no way to estimate file count for a streaming data source
+                this.estimatedFilesToProcess = 0; // Set to indeterminate until the data source is complete
             }
         }
 
@@ -676,6 +676,15 @@ final class IngestJobPipeline {
      * ingest starts.
      */
     private void startDataSourceIngestStreaming() {
+	
+        // Now that the data source is complete, we can get the estimated number of
+        // files and switch to a determinate progress bar.
+        synchronized (fileIngestProgressLock) {
+            if (null != this.fileIngestProgress) {
+                estimatedFilesToProcess = dataSource.accept(new GetFilesCountVisitor());
+                fileIngestProgress.switchToDeterminate((int)estimatedFilesToProcess);
+            }
+        }
 	
 	if (this.doUI) {
             /**
@@ -725,7 +734,7 @@ final class IngestJobPipeline {
             synchronized (this.dataSourceIngestProgressLock) {
                 String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.dataSourceIngest.initialDisplayName",
-                        this.dataSource.getId());
+                        this.dataSource.getName());
                 this.dataSourceIngestProgress = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
