@@ -93,6 +93,10 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     public void setArtifact(BlackboardArtifact artifact) {
         resetComponent();
 
+        if (artifact == null) {
+            return;
+        }
+        
         CallLogViewData callLogViewData = null;
         try {
             callLogViewData = getCallLogViewData(artifact);
@@ -458,7 +462,9 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
     @Override
     public boolean isSupported(BlackboardArtifact artifact) {
-        return artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID();
+        
+        return (artifact != null)
+                && (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID());
     }
 
     /**
