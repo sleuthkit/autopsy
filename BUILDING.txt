@@ -54,6 +54,9 @@ to the root 64-bit JRE directory.
 from the TSK root directory to install the libraries and such in
 the needed places (i.e. '/usr/local').
 
+2e) Build the TSK CaseUco jar file by running 'mvn clean install' in
+    the case-uco/java folder of the TSK source folder. You can also add the
+    code to a NetBeans project and build using the regular 'build' action.
 
 3) For Windows builds, GStreamer must be setup. GStreamer is used to view video
 files. You can either download it and install it, or you can copy it from the
