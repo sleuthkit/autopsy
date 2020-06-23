@@ -45,6 +45,7 @@ import javax.swing.SwingWorker;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
@@ -56,8 +57,10 @@ import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsMode;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -362,7 +365,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
         if (CentralRepository.isEnabled()) {
             // Kick off a background task to serach for personas for the contact
-            personaSearchTask = new ContactPersonaSearcherTask(accountAttributesList);
+            personaSearchTask = new ContactPersonaSearcherTask(contactArtifact);
             personaSearchTask.execute();
         } else {
             personaHeader.setEnabled(false);
@@ -611,7 +614,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      */
     private class ContactPersonaSearcherTask extends SwingWorker<Map<Persona, ArrayList<CentralRepoAccount>>, Void> {
 
-        private final List<BlackboardAttribute> accountAttributesList;
+        private final BlackboardArtifact artifact;
         private final List<CentralRepoAccount> uniqueAccountsList = new ArrayList<>();
 
         /**
@@ -620,8 +623,8 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
          * @param accountAttributesList List of attributes that may map to
          * accounts.
          */
-        ContactPersonaSearcherTask(List<BlackboardAttribute> accountAttributesList) {
-            this.accountAttributesList = accountAttributesList;
+        ContactPersonaSearcherTask(BlackboardArtifact artifact) {
+            this.artifact = artifact;
         }
 
         @Override
@@ -629,26 +632,35 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
             Map<Persona, ArrayList<CentralRepoAccount>> uniquePersonas = new HashMap<>();
 
-            // TBD:  this search needs to change to use the new method CommunicationsManager.getAccountsRelatedToArtifact
-            for (BlackboardAttribute bba : accountAttributesList) {
+            CommunicationsManager commManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            List<Account> contactAccountsList = commManager.getAccountsRelatedToArtifact(artifact);
 
-                // Get account, add to accounts list
-                Collection<Persona> personas;
+            for (Account account : contactAccountsList) {
+                if (isCancelled()) {
+                    return new HashMap<>();
+                }
 
-                Collection<CentralRepoAccount> accountCandidates
-                        = CentralRepoAccount.getAccountsWithIdentifier(bba.getValueString());
+                Collection<PersonaAccount> personaAccounts = PersonaAccount.getPersonaAccountsForAccount(account);
+                if (personaAccounts != null && !personaAccounts.isEmpty()) {
 
-                if (accountCandidates.isEmpty() == false) {
-                    CentralRepoAccount account = accountCandidates.iterator().next();
-                    if (uniqueAccountsList.contains(account) == false) {
-                        uniqueAccountsList.add(account);
+                    // look for unique accounts 
+                    Collection<CentralRepoAccount> accountCandidates
+                            = personaAccounts
+                                    .stream()
+                                    .map(PersonaAccount::getAccount)
+                                    .collect(Collectors.toList());
+                    for (CentralRepoAccount crAccount : accountCandidates) {
+                        if (uniqueAccountsList.contains(crAccount) == false) {
+                            uniqueAccountsList.add(crAccount);
+                        }
                     }
 
                     // get personas for the account
-                    personas = PersonaAccount.getPersonaAccountsForAccount(account.getId())
-                            .stream()
-                            .map(PersonaAccount::getPersona)
-                            .collect(Collectors.toList());
+                    Collection<Persona> personas
+                            = personaAccounts
+                                    .stream()
+                                    .map(PersonaAccount::getPersona)
+                                    .collect(Collectors.toList());
 
                     // make a list of unique personas, along with all their accounts
                     for (Persona persona : personas) {
