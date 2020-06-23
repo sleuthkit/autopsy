@@ -84,47 +84,12 @@ class MessageNode extends BlackboardArtifactNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-
-        sheetSet.put(new NodeProperty<>("Type", Bundle.MessageNode_Node_Property_Type(), "", getDisplayName())); //NON-NLS
-
-        final BlackboardArtifact artifact = getArtifact();
-        BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         
-        if(fromID == null ||
-                (fromID != TSK_EMAIL_MSG &&
-                fromID != TSK_MESSAGE)) {
-            return sheet;
+        // This property is needed to make the threading code work property in the UI.
+        if(threadID != null) {
+            sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","", threadID)); //NON-NLS
         }
         
-        sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","",threadID == null ? UNTHREADED_ID : threadID)); //NON-NLS
-        sheetSet.put(new NodeProperty<>("Subject", Bundle.MessageNode_Node_Property_Subject(), "",
-            getAttributeDisplayString(artifact, TSK_SUBJECT))); //NON-NLS
-        try {
-            sheetSet.put(new NodeProperty<>("Attms", Bundle.MessageNode_Node_Property_Attms(), "", getAttachmentsCount())); //NON-NLS
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex); //NON-NLS
-        }
-            
-        switch (fromID) {
-            case TSK_EMAIL_MSG:
-                sheetSet.put(new NodeProperty<>("From", Bundle.MessageNode_Node_Property_From(), "",
-                        StringUtils.strip(getAttributeDisplayString(artifact, TSK_EMAIL_FROM), " \t\n;"))); //NON-NLS
-                sheetSet.put(new NodeProperty<>("To", Bundle.MessageNode_Node_Property_To(), "",
-                        StringUtils.strip(getAttributeDisplayString(artifact, TSK_EMAIL_TO), " \t\n;"))); //NON-NLS
-                sheetSet.put(new NodeProperty<>("Date", Bundle.MessageNode_Node_Property_Date(), "",
-                        getAttributeDisplayString(artifact, TSK_DATETIME_SENT))); //NON-NLS
-                break;
-            case TSK_MESSAGE:
-                sheetSet.put(new NodeProperty<>("From", Bundle.MessageNode_Node_Property_From(), "",
-                        getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_FROM))); //NON-NLS
-                sheetSet.put(new NodeProperty<>("To", Bundle.MessageNode_Node_Property_To(), "",
-                        getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO))); //NON-NLS
-                sheetSet.put(new NodeProperty<>("Date", Bundle.MessageNode_Node_Property_Date(), "",
-                        getAttributeDisplayString(artifact, TSK_DATETIME))); //NON-NLS
-                break;
-            default:
-                break;
-        }
         return sheet;
     }
 
