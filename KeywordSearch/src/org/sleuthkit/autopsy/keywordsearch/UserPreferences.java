@@ -78,7 +78,7 @@ final class UserPreferences {
     }
 
     public static int getNumThreads() {
-        return preferences.getInt(INDEXING_NUM_THREADS, 10);
+        return preferences.getInt(INDEXING_NUM_THREADS, 5);
     }
 
     public static void setNumThreads(int maxShards) {
@@ -90,7 +90,7 @@ final class UserPreferences {
     }
 
     public static int getDocumentsQueueSize() {
-        return preferences.getInt(INDEXING_DOC_QUEUE_SIZE, 1000);
+        return preferences.getInt(INDEXING_DOC_QUEUE_SIZE, 100);
     }
     
     public static void setConnectionTimeout(int connectionTimeoutMs) {

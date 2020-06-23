@@ -42,11 +42,9 @@ public class Persona {
      * Defines level of confidence in assigning a persona to an account.
      */
     public enum Confidence {
-        UNKNOWN(1, "Unknown"),
-        LOW(2, "Low confidence"),
-        MEDIUM(3, "Medium confidence"),
-        HIGH(4, "High confidence"),
-        DERIVED(5, "Derived directly");
+        LOW(1, "Low confidence"),
+        MODERATE(2, "Moderate confidence"),
+        HIGH(3, "High confidence");
 
         private final String name;
         private final int level_id;
@@ -72,7 +70,7 @@ public class Persona {
                     return confidence;
                 }
             }
-            return Confidence.UNKNOWN;
+            return Confidence.LOW;
         }
 
     }
@@ -255,6 +253,21 @@ public class Persona {
     }
     
     /**
+     * Sets the comment of this persona.
+     *
+     * @param name The new comment.
+     * 
+     * @throws CentralRepoException If there is an error.
+     */
+    public void setComment(String comment) throws CentralRepoException {
+        String updateClause = "UPDATE personas SET comment = \"" + comment + "\" WHERE id = " + id;
+        CentralRepository cr = CentralRepository.getInstance();
+        if (cr != null) {
+            cr.executeUpdateSQL(updateClause);
+        }
+    }
+
+    /**
      * Sets the name of this persona
      *
      * @param name The new name.
@@ -263,7 +276,10 @@ public class Persona {
      */
     public void setName(String name) throws CentralRepoException {
         String updateClause = "UPDATE personas SET name = \"" + name + "\" WHERE id = " + id;
-        CentralRepository.getInstance().executeUpdateSQL(updateClause);
+        CentralRepository cr = CentralRepository.getInstance();
+        if (cr != null) {
+            cr.executeUpdateSQL(updateClause);
+        }
     }
 
     /**
@@ -295,11 +311,26 @@ public class Persona {
     }
     
     /**
+     * Modifies the confidence / justification of the given PersonaAccount
+     *
+     * @param account account to modify
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public void modifyAccount(PersonaAccount account, Confidence confidence, String justification) throws CentralRepoException {
+        PersonaAccount.modifyPersonaAccount(account.getId(), confidence, justification);
+    }
+    
+    /**
      * Marks this persona as deleted
      */
     public void delete() throws CentralRepoException {
         String deleteSQL = "UPDATE personas SET status_id = " + PersonaStatus.DELETED.status_id + " WHERE id = " + this.id;
-        CentralRepository.getInstance().executeUpdateSQL(deleteSQL);
+        CentralRepository cr = CentralRepository.getInstance();
+        if (cr != null) {
+            cr.executeUpdateSQL(deleteSQL);
+        }
     }
 
     /**
@@ -395,6 +426,37 @@ public class Persona {
     }
     
     /**
+     * Gets the rows from the Personas table where persona accounts' names are
+     * similar to the given one. Persona marked as DELETED are not returned.
+     *
+     * @param partialName Name substring to match.
+     * @return Collection of personas matching the given name substring, may be
+     * empty if no match is found.
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public static Collection<Persona> getPersonaByAccountIdentifierLike(String partialName) throws CentralRepoException {
+        String queryClause = "SELECT DISTINCT accounts.id as a_id,"
+                + "p.id, p.uuid, p.name, p.comment, p.created_date, p.modified_date, p.status_id, p.examiner_id, e.login_name, e.display_name"
+                + " FROM accounts"
+                + " JOIN persona_accounts as pa ON pa.account_id = accounts.id"
+                + " JOIN personas as p ON p.id = pa.persona_id"
+                + " JOIN examiners as e ON e.id = p.examiner_id"
+                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + partialName + "%')"
+                + " AND p.status_id != " + Persona.PersonaStatus.DELETED.getStatusId()
+                + " GROUP BY p.id";
+
+        PersonaQueryCallback queryCallback = new PersonaQueryCallback();
+        CentralRepository cr = CentralRepository.getInstance();
+        if (cr != null) {
+            cr.executeSelectSQL(queryClause, queryCallback);
+        }
+
+        return queryCallback.getPersonas();
+    }
+    
+    /**
      * Creates an alias for the Persona.
      *
      * @param alias Alias name.
@@ -409,7 +471,7 @@ public class Persona {
     }
     
     /**
-     * Removes the given alias
+     * Removes the given alias.
      *
      * @param alias alias to remove
      *
@@ -418,6 +480,18 @@ public class Persona {
      */
     public void removeAlias(PersonaAlias alias) throws CentralRepoException {
         PersonaAlias.removePersonaAlias(alias);
+    }
+    
+    /**
+     * Modifies the given alias.
+     *
+     * @param alias alias to modify
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public void modifyAlias(PersonaAlias key, Confidence confidence, String justification) throws CentralRepoException {
+        PersonaAlias.modifyPersonaAlias(key, confidence, justification);
     }
 
     /**
@@ -447,7 +521,7 @@ public class Persona {
     }
     
     /**
-     * Removes the given metadata from this persona
+     * Removes the given metadata from this persona.
      *
      * @param metadata metadata to remove
      *
@@ -456,6 +530,18 @@ public class Persona {
      */
     public void removeMetadata(PersonaMetadata metadata) throws CentralRepoException {
         PersonaMetadata.removePersonaMetadata(metadata);
+    }
+    
+    /**
+     * Modifies the given metadata.
+     *
+     * @param metadata metadata to modify
+     *
+     * @throws CentralRepoException If there is an error in querying the
+     * Personas table.
+     */
+    public void modifyMetadata(PersonaMetadata key, Confidence confidence, String justification) throws CentralRepoException {
+        PersonaMetadata.modifyPersonaMetadata(key, confidence, justification);
     }
 
     /**

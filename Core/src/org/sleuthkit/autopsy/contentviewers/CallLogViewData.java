@@ -29,50 +29,61 @@ import java.util.Map;
  */
 final class CallLogViewData {
 
-    // primary to/from number/adddress/accountId
-    private String number;
-    private String numberTypeDesignator;  // to for from designator
-    private String name = null;
+    private String fromAccount = null;
+    private String toAccount = null;
+
+    // account identifier of the device owner, if known.
+    // will be one of the to or from account.
+    private String localAccountId = null;
+
     private String direction;
     private String dateTimeStr = null;
     private String duration = null;
-    private Collection<String> otherRecipients = new ArrayList<>();
-    private String dataSourceName = null;
-    private String dataSourceDeviceId = null;
-    private String localAccountId = null; // number/accountId of device owner, may not be always known
+
+    // Account identifers of other parties in the call.
+    private Collection<String> otherParties = new ArrayList<>();
+
     private Map<String, String> otherAttributes = new HashMap<>();
 
-    CallLogViewData(String number) {
-        this(number, null);
+    private String dataSourceName = null;
+
+    /**
+     * Constructor.
+     *
+     * @param fromAccount From account identifier, may be null;
+     * @param toAccount To account identifier, may be null;
+     */
+    CallLogViewData(String fromAccount, String toAccount) {
+        this(fromAccount, toAccount, null);
     }
 
-    CallLogViewData(String number, String direction) {
-        this.number = number;
+    /**
+     * Constructor.
+     *
+     * @param fromAccount From account identifier, may be null;
+     * @param toAccount To account identifier, may be null;
+     * @param direction Direction, may be null.
+     */
+    CallLogViewData(String fromAccount, String toAccount, String direction) {
+        this.fromAccount = fromAccount;
+        this.toAccount = toAccount;
         this.direction = direction;
     }
 
-    String getNumber() {
-        return number;
+    String getFromAccount() {
+        return fromAccount;
     }
 
-    void setNumber(String number) {
-        this.number = number;
+    void setFromAccount(String fromAccount) {
+        this.fromAccount = fromAccount;
     }
 
-    public String getNumberDesignator() {
-        return numberTypeDesignator;
+    String getToAccount() {
+        return toAccount;
     }
 
-    public void setNumberDesignator(String numberDesignator) {
-        this.numberTypeDesignator = numberDesignator;
-    }
-
-    String getName() {
-        return name;
-    }
-
-    void setName(String name) {
-        this.name = name;
+    void setToAccount(String toAccount) {
+        this.toAccount = toAccount;
     }
 
     String getDirection() {
@@ -91,14 +102,6 @@ final class CallLogViewData {
         this.dataSourceName = dataSourceName;
     }
 
-    String getDataSourceDeviceId() {
-        return dataSourceDeviceId;
-    }
-
-    void setDataSourceDeviceId(String dataSourceDeviceId) {
-        this.dataSourceDeviceId = dataSourceDeviceId;
-    }
-
     String getDateTimeStr() {
         return dateTimeStr;
     }
@@ -115,13 +118,13 @@ final class CallLogViewData {
         this.duration = duration;
     }
 
-    Collection<String> getOtherRecipients() {
-        return Collections.unmodifiableCollection(otherRecipients);
+    Collection<String> getOtherParties() {
+        return Collections.unmodifiableCollection(otherParties);
     }
 
-    void setOtherRecipients(Collection<String> otherParticipants) {
+    void setOtherParties(Collection<String> otherParticipants) {
         if (otherParticipants != null) {
-            this.otherRecipients = new ArrayList<>(otherParticipants);
+            this.otherParties = new ArrayList<>(otherParticipants);
         }
     }
 
@@ -130,7 +133,7 @@ final class CallLogViewData {
     }
 
     public void setOtherAttributes(Map<String, String> otherAttributes) {
-        if (otherRecipients != null) {
+        if (otherAttributes != null) {
             this.otherAttributes = new HashMap<>(otherAttributes);
         }
     }
