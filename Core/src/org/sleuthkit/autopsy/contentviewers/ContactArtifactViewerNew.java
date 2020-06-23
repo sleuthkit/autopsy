@@ -65,13 +65,12 @@ import org.sleuthkit.datamodel.TskCoreException;
  * This class displays the TSK_CONTACT artifact.
  */
 @ServiceProvider(service = ArtifactContentViewer.class)
-public class ContactArtifactViewerNew extends AbstractCommunicationArtifactViewer {
+public class ContactArtifactViewerNew extends javax.swing.JPanel implements ArtifactContentViewer {
 
     private final static Logger logger = Logger.getLogger(ContactArtifactViewer.class.getName());
     private static final long serialVersionUID = 1L;
 
-    private final static int LEFT_INSET = 12;
-
+    //private final static int LEFT_INSET = 12;
     private GridBagLayout m_gridBagLayout = new GridBagLayout();
     private GridBagConstraints m_constraints = new GridBagConstraints();
 
@@ -135,10 +134,6 @@ public class ContactArtifactViewerNew extends AbstractCommunicationArtifactViewe
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Error getting attributes for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
             return;
-        }
-
-        if (CentralRepository.isEnabled() == false) {
-            showCentralRepoDisabledDialog();
         }
 
         updateView();
@@ -241,8 +236,11 @@ public class ContactArtifactViewerNew extends AbstractCommunicationArtifactViewe
     @NbBundle.Messages({
         "ContactArtifactViewer.contactImage.text=",})
     private void updateContactImage(GridBagLayout contactPanelLayout, GridBagConstraints contactPanelConstraints) {
+        // place the image on the top right corner
+        Insets savedInsets = contactPanelConstraints.insets;
         contactPanelConstraints.gridy = 0;
         contactPanelConstraints.gridx = 0;
+        contactPanelConstraints.insets = new Insets(0, 0, 0, 0);
 
         javax.swing.JLabel contactImage = new javax.swing.JLabel();
         contactImage.setIcon(getImageFromArtifact(contactArtifact));
@@ -252,6 +250,8 @@ public class ContactArtifactViewerNew extends AbstractCommunicationArtifactViewe
         CommunicationArtifactViewerHelper.addComponent(this, contactPanelLayout, contactPanelConstraints, contactImage);
         CommunicationArtifactViewerHelper.addLineEndGlue(this, contactPanelLayout, contactPanelConstraints);
         contactPanelConstraints.gridy++;
+
+        contactPanelConstraints.insets = savedInsets;
     }
 
     /**
@@ -330,8 +330,10 @@ public class ContactArtifactViewerNew extends AbstractCommunicationArtifactViewe
      * @throws CentralRepoException
      */
     @NbBundle.Messages({
-        "ContactArtifactViewer_persona_header=Persona", //"ContactArtifactViewer_persona_searching = Searching...",
-    //"ContactArtifactViewer_persona_unknown=Unknown"
+        "ContactArtifactViewer_persona_header=Persona",
+        "ContactArtifactViewer_persona_searching=Searching...",
+        "ContactArtifactViewer_cr_disabled_message=Enable Central Repository to view, create and edit personas.",
+        "ContactArtifactViewer_persona_unknown=Unknown"
     })
 
     /**
@@ -346,8 +348,6 @@ public class ContactArtifactViewerNew extends AbstractCommunicationArtifactViewe
 
         m_constraints.gridy++;
 
-        Insets savedInsets = m_constraints.insets;
-
         // add a status label
         String personaStatusLabelText = CentralRepository.isEnabled()
                 ? Bundle.ContactArtifactViewer_persona_searching()
@@ -357,8 +357,6 @@ public class ContactArtifactViewerNew extends AbstractCommunicationArtifactViewe
         personaSearchStatusLabel.setText(personaStatusLabelText);
 
         m_constraints.gridx = 0;
-        Insets labelInsets = new java.awt.Insets(0, LEFT_INSET, 0, 0);
-        m_constraints.insets = labelInsets;
 
         CommunicationArtifactViewerHelper.addComponent(this, m_gridBagLayout, m_constraints, personaSearchStatusLabel);
 
@@ -369,9 +367,16 @@ public class ContactArtifactViewerNew extends AbstractCommunicationArtifactViewe
         } else {
             personaHeader.setEnabled(false);
             personaSearchStatusLabel.setEnabled(false);
+
+            CommunicationArtifactViewerHelper.addBlankLine(this, m_gridBagLayout, m_constraints);
+            m_constraints.gridy++;
+            CommunicationArtifactViewerHelper.addMessageRow(this, m_gridBagLayout, m_constraints, Bundle.ContactArtifactViewer_cr_disabled_message());
+            m_constraints.gridy++;
+
+            CommunicationArtifactViewerHelper.addPageEndGlue(this, m_gridBagLayout, this.m_constraints);
         }
 
-        m_constraints.insets = savedInsets;
+        //m_constraints.insets = savedInsets;
     }
 
     /**
@@ -439,8 +444,8 @@ public class ContactArtifactViewerNew extends AbstractCommunicationArtifactViewe
         // save the original insets
         Insets savedInsets = constraints.insets;
 
-        // keys are inset with an indent.
-        Insets labelInsets = new java.awt.Insets(0, LEFT_INSET, 0, 0);
+        // some label are indented 2x to appear indented w.r.t column above
+        Insets extraIndentInsets = new java.awt.Insets(0, 2 * CommunicationArtifactViewerHelper.LEFT_INSET, 0, 0);
 
         // Add a Match X label in col 0.
         constraints.gridx = 0;
@@ -489,10 +494,13 @@ public class ContactArtifactViewerNew extends AbstractCommunicationArtifactViewe
             if (missingAccountsList.isEmpty()) {
                 constraints.gridy++;
                 constraints.gridx = 1;
-                constraints.insets = labelInsets;
+                //constraints.insets = labelInsets;
 
                 javax.swing.JLabel accountsStatus = new javax.swing.JLabel(Bundle.ContactArtifactViewer_found_all_accounts_label());
+                constraints.insets = extraIndentInsets;
                 CommunicationArtifactViewerHelper.addComponent(this, gridBagLayout, constraints, accountsStatus);
+                constraints.insets = savedInsets;
+
                 CommunicationArtifactViewerHelper.addLineEndGlue(this, gridBagLayout, constraints);
             } else {
                 // show missing accounts.
@@ -501,7 +509,11 @@ public class ContactArtifactViewerNew extends AbstractCommunicationArtifactViewe
                     constraints.gridx = 0;
                     constraints.gridy++;
 
+                    // this needs an extra indent
+                    constraints.insets = extraIndentInsets;
                     CommunicationArtifactViewerHelper.addKeyAtCol(this, gridBagLayout, constraints, Bundle.ContactArtifactViewer_missing_account_label(), 1);
+                    constraints.insets = savedInsets;
+
                     CommunicationArtifactViewerHelper.addValueAtCol(this, gridBagLayout, constraints, missingAccount.getIdentifier(), 2);
                 }
             }
@@ -544,9 +556,9 @@ public class ContactArtifactViewerNew extends AbstractCommunicationArtifactViewe
         m_constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         m_constraints.gridy = 0;
         m_constraints.gridx = 0;
-        m_constraints.weighty = 0.05;
-        m_constraints.weightx = 0.05;
-        m_constraints.insets = new java.awt.Insets(0, 0, 0, 0);
+        m_constraints.weighty = 0.0;
+        m_constraints.weightx = 0.0;    // keep components fixed horizontally.
+        m_constraints.insets = new java.awt.Insets(0, CommunicationArtifactViewerHelper.LEFT_INSET, 0, 0);
         m_constraints.fill = GridBagConstraints.NONE;
 
     }

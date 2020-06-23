@@ -444,10 +444,6 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      *
      * @throws CentralRepoException
      */
-    @NbBundle.Messages({
-        "ContactArtifactViewer_persona_searching= Searching...",
-        "ContactArtifactViewer_persona_unknown=Unknown"
-    })
     private void initiatePersonasSearch(List<BlackboardAttribute> accountAttributesList) throws CentralRepoException {
 
         personasLabel.setVisible(true);

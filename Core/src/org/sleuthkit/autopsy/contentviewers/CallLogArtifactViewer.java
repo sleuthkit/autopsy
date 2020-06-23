@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Displays the To/From and other parties, and metadata for a call.
  */
 @ServiceProvider(service = ArtifactContentViewer.class)
-public class CallLogArtifactViewer extends AbstractCommunicationArtifactViewer {
+public class CallLogArtifactViewer extends javax.swing.JPanel implements ArtifactContentViewer {
 
     private final static Logger logger = Logger.getLogger(CallLogArtifactViewer.class.getName());
     private static final long serialVersionUID = 1L;
@@ -92,10 +92,6 @@ public class CallLogArtifactViewer extends AbstractCommunicationArtifactViewer {
     @Override
     public void setArtifact(BlackboardArtifact artifact) {
         resetComponent();
-
-        if (CentralRepository.isEnabled() == false) {
-            this.showCentralRepoDisabledDialog();
-        }
 
         CallLogViewData callLogViewData = null;
         try {
@@ -340,7 +336,14 @@ public class CallLogArtifactViewer extends AbstractCommunicationArtifactViewer {
         }
 
         updateMetadataView(callLogViewData);
+
+        updateOtherAttributesView(callLogViewData);
+
         updateSourceView(callLogViewData);
+
+        if (CentralRepository.isEnabled() == false) {
+            showCRDisabledMessage();
+        }
 
         CommunicationArtifactViewerHelper.addPageEndGlue(this, m_gridBagLayout, this.m_constraints);
 
@@ -398,6 +401,37 @@ public class CallLogArtifactViewer extends AbstractCommunicationArtifactViewer {
     }
 
     /**
+     * Update the other attributes section.
+     *
+     * @param callLogViewData
+     */
+    @NbBundle.Messages({
+        "CallLogArtifactViewer_heading_others=Other Attributes"
+    })
+    private void updateOtherAttributesView(CallLogViewData callLogViewData) {
+
+        if (callLogViewData.getOtherAttributes().isEmpty()) {
+            return;
+        }
+        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_heading_others());
+
+        for (Map.Entry<String, String> entry : callLogViewData.getOtherAttributes().entrySet()) {
+            CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, entry.getKey());
+            CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, entry.getValue());
+        }
+    }
+
+    @NbBundle.Messages({
+        "CalllogArtifactViewer_cr_disabled_message=Enable Central Repository to view, create and edit personas."
+    })
+    private void showCRDisabledMessage() {
+        CommunicationArtifactViewerHelper.addBlankLine(this, m_gridBagLayout, m_constraints);
+        m_constraints.gridy++;
+        CommunicationArtifactViewerHelper.addMessageRow(this, m_gridBagLayout, m_constraints, Bundle.ContactArtifactViewer_cr_disabled_message());
+        m_constraints.gridy++;
+    }
+
+    /**
      * Returns display string for a account. Checks if the given account is the
      * local account, if it is known. If it is, it appends a "(Local)" suffix to
      * account display string.
@@ -446,9 +480,9 @@ public class CallLogArtifactViewer extends AbstractCommunicationArtifactViewer {
         m_constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         m_constraints.gridy = 0;
         m_constraints.gridx = 0;
-        m_constraints.weighty = 0.05;
-        m_constraints.weightx = 0.05;
-        m_constraints.insets = new java.awt.Insets(0, 0, 0, 0);
+        m_constraints.weighty = 0.0;
+        m_constraints.weightx = 0.0; // keep components fixed horizontally.
+        m_constraints.insets = new java.awt.Insets(0, CommunicationArtifactViewerHelper.LEFT_INSET, 0, 0);
         m_constraints.fill = GridBagConstraints.NONE;
 
     }
