@@ -42,7 +42,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
  * A class to help display a communication artifact in a panel using a
  * gridbaglayout.
  */
-public final class CommunicationArtifactViewerHelper {
+final class CommunicationArtifactViewerHelper {
 
     // Number of columns in the gridbag layout.
     private final static int MAX_COLS = 4;
