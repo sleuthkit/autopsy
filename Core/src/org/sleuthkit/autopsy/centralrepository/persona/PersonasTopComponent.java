@@ -264,6 +264,7 @@ public final class PersonasTopComponent extends TopComponent {
 
         searchButtonGroup = new javax.swing.ButtonGroup();
         jSplitPane1 = new javax.swing.JSplitPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
         searchPanel = new javax.swing.JPanel();
         searchField = new javax.swing.JTextField();
         searchNameRadio = new javax.swing.JRadioButton();
@@ -276,6 +277,7 @@ public final class PersonasTopComponent extends TopComponent {
         editBtn = new javax.swing.JButton();
         deleteBtn = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
+        jScrollPane2 = new javax.swing.JScrollPane();
         detailsPanel = new org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel();
 
         setName(""); // NOI18N
@@ -348,7 +350,7 @@ public final class PersonasTopComponent extends TopComponent {
                     .addComponent(searchAccountRadio)
                     .addComponent(searchBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(resultsPane, javax.swing.GroupLayout.DEFAULT_SIZE, 457, Short.MAX_VALUE)
+                .addComponent(resultsPane, javax.swing.GroupLayout.DEFAULT_SIZE, 21, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(editBtn)
@@ -361,8 +363,13 @@ public final class PersonasTopComponent extends TopComponent {
                 .addContainerGap())
         );
 
-        jSplitPane1.setLeftComponent(searchPanel);
-        jSplitPane1.setRightComponent(detailsPanel);
+        jScrollPane1.setViewportView(searchPanel);
+
+        jSplitPane1.setLeftComponent(jScrollPane1);
+
+        jScrollPane2.setViewportView(detailsPanel);
+
+        jSplitPane1.setRightComponent(jScrollPane2);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -382,6 +389,8 @@ public final class PersonasTopComponent extends TopComponent {
     private javax.swing.JButton deleteBtn;
     private org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel detailsPanel;
     private javax.swing.JButton editBtn;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JScrollPane resultsPane;
