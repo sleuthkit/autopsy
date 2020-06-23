@@ -39,11 +39,9 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestStream;
-import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * A image file data source processor that implements the DataSourceProcessor
@@ -319,20 +317,20 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     private void run(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
 
 	// If the data source or ingest stream haven't been initialized yet, do it now.
-        if (ingestStream == null) {
-            ingestStream = new DefaultIngestStream();
-        }
-	if (image == null) {
+    if (ingestStream == null) {
+        ingestStream = new DefaultIngestStream();
+    }
+    if (image == null) {
 	    try {
-		image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-		    new String[]{imagePath}, sectorSize,
-		    timeZone, md5, sha1, sha256, deviceId);
-	    } catch (TskCoreException ex) {
-		logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
-		final List<String> errors = new ArrayList<>();
-		errors.add(ex.getMessage());
-		callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
-		return;
+            image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
+                new String[]{imagePath}, sectorSize,
+                timeZone, md5, sha1, sha256, deviceId);
+            } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
+            final List<String> errors = new ArrayList<>();
+            errors.add(ex.getMessage());
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+            return;
 	    }
 	}
 
