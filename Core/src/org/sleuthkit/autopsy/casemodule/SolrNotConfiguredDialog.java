@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2020 Basis Technology Corp.
+ * Copyright 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,17 +54,13 @@ class SolrNotConfiguredDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        messageLabel = new javax.swing.JLabel();
         okButton = new javax.swing.JButton();
-        messageLabel2 = new javax.swing.JLabel();
+        messageLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(org.openide.util.NbBundle.getMessage(SolrNotConfiguredDialog.class, "SolrNotConfiguredDialog.title")); // NOI18N
         setModal(true);
         setName("toolsNotFound"); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(messageLabel, org.openide.util.NbBundle.getMessage(SolrNotConfiguredDialog.class, "SolrNotConfiguredDialog.messageLabel.text")); // NOI18N
-        messageLabel.setMaximumSize(new java.awt.Dimension(200, 16));
 
         org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(SolrNotConfiguredDialog.class, "SolrNotConfiguredDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
@@ -73,7 +69,7 @@ class SolrNotConfiguredDialog extends javax.swing.JDialog {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(messageLabel2, org.openide.util.NbBundle.getMessage(SolrNotConfiguredDialog.class, "SolrNotConfiguredDialog.messageLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(messageLabel, org.openide.util.NbBundle.getMessage(SolrNotConfiguredDialog.class, "SolrNotConfiguredDialog.messageLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -83,16 +79,11 @@ class SolrNotConfiguredDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(0, 15, Short.MAX_VALUE)
-                        .addComponent(messageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 420, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(messageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 420, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(188, 188, 188)
-                                .addComponent(messageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(189, 189, 189)
-                                .addComponent(okButton)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(189, 189, 189)
+                        .addComponent(okButton)
+                        .addGap(0, 193, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -100,8 +91,6 @@ class SolrNotConfiguredDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(messageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(messageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(okButton)
                 .addContainerGap())
@@ -116,7 +105,6 @@ class SolrNotConfiguredDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel messageLabel;
-    private javax.swing.JLabel messageLabel2;
     private javax.swing.JButton okButton;
     // End of variables declaration//GEN-END:variables
 }
