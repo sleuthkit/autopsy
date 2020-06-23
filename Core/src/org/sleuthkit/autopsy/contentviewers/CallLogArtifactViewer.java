@@ -407,7 +407,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     /**
      * Update the other attributes section.
      *
-     * @param callLogViewData
+     * @param callLogViewData Call log data.
      */
     @NbBundle.Messages({
         "CallLogArtifactViewer_heading_others=Other Attributes"

@@ -122,9 +122,6 @@ public final class CommunicationArtifactViewerHelper {
         // add to panel
         gridbagLayout.setConstraints(component, constraints);
         panel.add(component);
-
-        // add line end glue
-        //addLineEndGlue(panel, gridbagLayout, constraints);
     }
 
     /**
@@ -257,7 +254,7 @@ public final class CommunicationArtifactViewerHelper {
     }
 
     /**
-     * Adds a value string to the panel at col 1.
+     * Adds a value string to the panel at specified column.
      *
      * @param panel Panel to update.
      * @param gridbagLayout Layout to use.
@@ -303,7 +300,8 @@ public final class CommunicationArtifactViewerHelper {
     }
 
     /**
-     * Displays a message string spanning the entire row.
+     * Displays a message string, starting at column 0, and spanning the entire
+     * row.
      *
      * @param panel Panel to show.
      * @param gridbagLayout Layout to use.
@@ -317,6 +315,18 @@ public final class CommunicationArtifactViewerHelper {
         return addMessageRow(panel, gridbagLayout, constraints, messageString, 0);
     }
 
+    /**
+     * Displays a message string, starting at specified column, and spanning the
+     * entire row.
+     *
+     * @param panel Panel to show.
+     * @param gridbagLayout Layout to use.
+     * @param constraints Constraints to use.
+     *
+     * @param messageString Message to display.
+     *
+     * @return Label for message added.
+     */
     static JLabel addMessageRow(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String messageString, int gridx) {
 
         // create label

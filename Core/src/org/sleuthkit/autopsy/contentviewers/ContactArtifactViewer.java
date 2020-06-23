@@ -376,7 +376,6 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             CommunicationArtifactViewerHelper.addPageEndGlue(this, m_gridBagLayout, this.m_constraints);
         }
 
-        //m_constraints.insets = savedInsets;
     }
 
     /**
