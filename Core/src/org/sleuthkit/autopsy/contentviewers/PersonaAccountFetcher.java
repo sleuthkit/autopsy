@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JButton;
 import javax.swing.SwingWorker;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
@@ -115,6 +116,11 @@ class PersonaAccountFetcher extends SwingWorker<Map<String, Collection<Persona>>
 
         parentComponent.repaint();
     }
+    
+    @Messages({
+        "# {0} - Persona count",
+        "PersonaDisplayTask_persona_count_suffix=(1 of {0})"
+    })
 
     /**
      * Update the Persona gui controls.
