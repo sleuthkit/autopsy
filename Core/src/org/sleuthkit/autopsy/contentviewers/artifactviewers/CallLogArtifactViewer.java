@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers;
+package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 
 import java.awt.Component;
 import java.awt.GridBagConstraints;
@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JScrollPane;

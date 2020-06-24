@@ -16,8 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers;
+package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.CommunicationArtifactViewerHelper;
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -55,6 +57,7 @@ import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialog;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialogCallback;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsMode;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel;
+//import org.sleuthkit.autopsy.contentviewers.Bundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;

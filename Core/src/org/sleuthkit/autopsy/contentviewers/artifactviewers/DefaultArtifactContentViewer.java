@@ -16,8 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers;
+package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Toolkit;
@@ -54,6 +55,7 @@ import com.google.gson.JsonArray;
 import java.util.Locale;
 import java.util.Map;
 import javax.swing.SwingUtilities;
+//import org.sleuthkit.autopsy.contentviewers.Bundle;
 
 /**
  * This class displays a Blackboard artifact as a table listing all it's 

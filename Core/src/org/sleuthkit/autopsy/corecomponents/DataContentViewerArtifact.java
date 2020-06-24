@@ -40,8 +40,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import java.util.Collections;
 import java.util.HashSet;
-import org.sleuthkit.autopsy.contentviewers.ArtifactContentViewer;
-import org.sleuthkit.autopsy.contentviewers.DefaultArtifactContentViewer;
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultArtifactContentViewer;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the

@@ -42,7 +42,7 @@ import org.w3c.dom.events.EventTarget;
  * A file content viewer for HTML files.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-final class HtmlPanel extends javax.swing.JPanel {
+public final class HtmlPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(HtmlPanel.class.getName());
     private static final long serialVersionUID = 1L;
@@ -54,7 +54,7 @@ final class HtmlPanel extends javax.swing.JPanel {
     /**
      * Creates new form HtmlViewerPanel
      */
-    HtmlPanel() {
+    public HtmlPanel() {
         initComponents();
         Platform.runLater(() -> {
             webView = new WebView();
@@ -83,7 +83,7 @@ final class HtmlPanel extends javax.swing.JPanel {
      *
      * @param htmlText The HTML text to be applied to the text pane.
      */
-    void setHtmlText(String htmlText) {
+    public void setHtmlText(String htmlText) {
         this.htmlText = htmlText;
         refresh();
     }
@@ -91,7 +91,7 @@ final class HtmlPanel extends javax.swing.JPanel {
     /**
      * Clear the HTML in the text pane and disable the show/hide button.
      */
-    void reset() {
+    public void reset() {
         Platform.runLater(() -> {
             webView.getEngine().loadContent("", TEXT_TYPE);
         });
