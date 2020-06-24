@@ -44,27 +44,29 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Top component for the Personas tool
  *
  */
-@TopComponent.Description(preferredID = "PersonaManagerTopComponent", persistenceType = TopComponent.PERSISTENCE_NEVER)
-@TopComponent.Registration(mode = "personamanager", openAtStartup = false)
-@RetainLocation("personamanager")
+@TopComponent.Description(preferredID = "PersonasTopComponent", persistenceType = TopComponent.PERSISTENCE_NEVER)
+@TopComponent.Registration(mode = "personas", openAtStartup = false)
+@RetainLocation("personas")
 @SuppressWarnings("PMD.SingularField")
-public final class PersonaManagerTopComponent extends TopComponent {
+public final class PersonasTopComponent extends TopComponent {
+    
+    private static final long serialVersionUID = 1L;
 
-    private static final Logger logger = Logger.getLogger(PersonaManagerTopComponent.class.getName());
+    private static final Logger logger = Logger.getLogger(PersonasTopComponent.class.getName());
 
     private List<Persona> currentResults = null;
     private Persona selectedPersona = null;
 
     @Messages({
-        "PMTopComponent_Name=Persona Manager",
-        "PMTopComponent_delete_exception_Title=Delete failure",
-        "PMTopComponent_delete_exception_msg=Failed to delete persona.",
-        "PMTopComponent_delete_confirmation_Title=Are you sure?",
-        "PMTopComponent_delete_confirmation_msg=Are you sure you want to delete this persona?",
+        "PersonasTopComponent_Name=Personas",
+        "PersonasTopComponent_delete_exception_Title=Delete failure",
+        "PersonasTopComponent_delete_exception_msg=Failed to delete persona.",
+        "PersonasTopComponent_delete_confirmation_Title=Are you sure?",
+        "PersonasTopComponent_delete_confirmation_msg=Are you sure you want to delete this persona?",
     })
-    public PersonaManagerTopComponent() {
+    public PersonasTopComponent() {
         initComponents();
-        setName(Bundle.PMTopComponent_Name());
+        setName(Bundle.PersonasTopComponent_Name());
         executeSearch();
 
         searchBtn.addActionListener(new ActionListener() {
@@ -77,7 +79,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
         editBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new PersonaDetailsDialog(PersonaManagerTopComponent.this,
+                new PersonaDetailsDialog(PersonasTopComponent.this,
                         PersonaDetailsMode.EDIT, selectedPersona, new CreateEditCallbackImpl());
             }
         });
@@ -85,7 +87,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
         createBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new PersonaDetailsDialog(PersonaManagerTopComponent.this,
+                new PersonaDetailsDialog(PersonasTopComponent.this,
                         PersonaDetailsMode.CREATE, selectedPersona, new CreateEditCallbackImpl());
             }
         });
@@ -94,8 +96,8 @@ public final class PersonaManagerTopComponent extends TopComponent {
             @Override
             public void actionPerformed(ActionEvent e) {
                 NotifyDescriptor confirm = new NotifyDescriptor.Confirmation(
-                Bundle.PMTopComponent_delete_confirmation_msg(),
-                Bundle.PMTopComponent_delete_confirmation_Title(),
+                Bundle.PersonasTopComponent_delete_confirmation_msg(),
+                Bundle.PersonasTopComponent_delete_confirmation_Title(),
                 NotifyDescriptor.YES_NO_OPTION);
                 DialogDisplayer.getDefault().notify(confirm);
                 if (confirm.getValue().equals(NotifyDescriptor.YES_OPTION)) {
@@ -105,9 +107,9 @@ public final class PersonaManagerTopComponent extends TopComponent {
                         }
                     } catch (CentralRepoException ex) {
                         logger.log(Level.SEVERE, "Failed to delete persona: " + selectedPersona.getName(), ex);
-                        JOptionPane.showMessageDialog(PersonaManagerTopComponent.this,
-                        Bundle.PMTopComponent_delete_exception_msg(),
-                        Bundle.PMTopComponent_delete_exception_Title(),
+                        JOptionPane.showMessageDialog(PersonasTopComponent.this,
+                        Bundle.PersonasTopComponent_delete_exception_msg(),
+                        Bundle.PersonasTopComponent_delete_exception_Title(),
                         JOptionPane.ERROR_MESSAGE);
                         return;
                     }
@@ -131,6 +133,13 @@ public final class PersonaManagerTopComponent extends TopComponent {
         
         searchAccountRadio.addActionListener((ActionEvent e) -> {
             searchField.setText("");
+        });
+        
+        createAccountBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new CreatePersonaAccountDialog(detailsPanel);
+            }
         });
     }
 
@@ -214,8 +223,8 @@ public final class PersonaManagerTopComponent extends TopComponent {
     }
 
     @Messages({
-        "PMTopComponent_search_exception_Title=Search failure",
-        "PMTopComponent_search_exception_msg=Failed to search personas.",})
+        "PersonasTopComponent_search_exception_Title=Search failure",
+        "PersonasTopComponent_search_exception_msg=Failed to search personas.",})
     private void executeSearch() {
         Collection<Persona> results;
         try {
@@ -227,8 +236,8 @@ public final class PersonaManagerTopComponent extends TopComponent {
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Failed to search personas", ex);
             JOptionPane.showMessageDialog(this,
-                    Bundle.PMTopComponent_search_exception_Title(),
-                    Bundle.PMTopComponent_search_exception_msg(),
+                    Bundle.PersonasTopComponent_search_exception_Title(),
+                    Bundle.PersonasTopComponent_search_exception_msg(),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -262,39 +271,43 @@ public final class PersonaManagerTopComponent extends TopComponent {
         resultsPane = new javax.swing.JScrollPane();
         resultsTable = new javax.swing.JTable();
         searchBtn = new javax.swing.JButton();
-        editBtn = new javax.swing.JButton();
+        createAccountBtn = new javax.swing.JButton();
         createBtn = new javax.swing.JButton();
+        editBtn = new javax.swing.JButton();
         deleteBtn = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JSeparator();
         detailsPanel = new org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel();
 
-        setMinimumSize(new java.awt.Dimension(400, 400));
+        setName(""); // NOI18N
 
-        searchField.setText(org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.searchField.text")); // NOI18N
+        searchField.setText(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchField.text")); // NOI18N
 
         searchButtonGroup.add(searchNameRadio);
         searchNameRadio.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(searchNameRadio, org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.searchNameRadio.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(searchNameRadio, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchNameRadio.text")); // NOI18N
 
         searchButtonGroup.add(searchAccountRadio);
-        org.openide.awt.Mnemonics.setLocalizedText(searchAccountRadio, org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.searchAccountRadio.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(searchAccountRadio, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchAccountRadio.text")); // NOI18N
 
-        resultsTable.setToolTipText(org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.resultsTable.toolTipText")); // NOI18N
+        resultsTable.setToolTipText(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultsTable.toolTipText")); // NOI18N
         resultsTable.getTableHeader().setReorderingAllowed(false);
         resultsPane.setViewportView(resultsTable);
         if (resultsTable.getColumnModel().getColumnCount() > 0) {
             resultsTable.getColumnModel().getColumn(0).setMaxWidth(25);
-            resultsTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.resultsTable.columnModel.title0")); // NOI18N
-            resultsTable.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.resultsTable.columnModel.title1")); // NOI18N
+            resultsTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultsTable.columnModel.title0")); // NOI18N
+            resultsTable.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultsTable.columnModel.title1")); // NOI18N
         }
 
-        org.openide.awt.Mnemonics.setLocalizedText(searchBtn, org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.searchBtn.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(searchBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchBtn.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(editBtn, org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.editBtn.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(createAccountBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.createAccountBtn.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(createBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.createBtn.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(editBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.editBtn.text")); // NOI18N
         editBtn.setEnabled(false);
 
-        org.openide.awt.Mnemonics.setLocalizedText(createBtn, org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.createBtn.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(deleteBtn, org.openide.util.NbBundle.getMessage(PersonaManagerTopComponent.class, "PersonaManagerTopComponent.deleteBtn.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(deleteBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.deleteBtn.text")); // NOI18N
         deleteBtn.setEnabled(false);
 
         javax.swing.GroupLayout searchPanelLayout = new javax.swing.GroupLayout(searchPanel);
@@ -304,6 +317,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
             .addGroup(searchPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jSeparator1)
                     .addGroup(searchPanelLayout.createSequentialGroup()
                         .addComponent(createBtn)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -317,7 +331,10 @@ public final class PersonaManagerTopComponent extends TopComponent {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(searchAccountRadio)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(searchBtn)))
+                        .addComponent(searchBtn))
+                    .addGroup(searchPanelLayout.createSequentialGroup()
+                        .addComponent(createAccountBtn)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         searchPanelLayout.setVerticalGroup(
@@ -331,12 +348,16 @@ public final class PersonaManagerTopComponent extends TopComponent {
                     .addComponent(searchAccountRadio)
                     .addComponent(searchBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(resultsPane, javax.swing.GroupLayout.DEFAULT_SIZE, 528, Short.MAX_VALUE)
+                .addComponent(resultsPane, javax.swing.GroupLayout.DEFAULT_SIZE, 457, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(editBtn)
                     .addComponent(createBtn)
                     .addComponent(deleteBtn))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 4, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(createAccountBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -347,7 +368,7 @@ public final class PersonaManagerTopComponent extends TopComponent {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 692, Short.MAX_VALUE)
+            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 794, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -356,10 +377,12 @@ public final class PersonaManagerTopComponent extends TopComponent {
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton createAccountBtn;
     private javax.swing.JButton createBtn;
     private javax.swing.JButton deleteBtn;
     private org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel detailsPanel;
     private javax.swing.JButton editBtn;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JScrollPane resultsPane;
     private javax.swing.JTable resultsTable;
