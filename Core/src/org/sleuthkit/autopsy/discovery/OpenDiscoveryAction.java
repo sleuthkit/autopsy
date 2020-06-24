@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.discovery;
 import java.awt.Component;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.SwingUtilities;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -65,10 +66,12 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
 
     @Override
     public void performAction() {
-        final DiscoveryDialog discDialog = DiscoveryDialog.getDiscoveryDialogInstance();
-        discDialog.cancelSearch();
-        discDialog.setVisible(true);
-        DiscoveryUiUtils.displayErrorMessage(discDialog);
+        SwingUtilities.invokeLater(() -> {
+            final DiscoveryDialog discDialog = DiscoveryDialog.getDiscoveryDialogInstance();
+            discDialog.cancelSearch();
+            DiscoveryUiUtils.displayErrorMessage(discDialog);
+            discDialog.setVisible(true);           
+        });
     }
 
     /**

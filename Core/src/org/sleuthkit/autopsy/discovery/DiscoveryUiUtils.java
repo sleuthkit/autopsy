@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Point;
 import java.util.ArrayList;
@@ -29,6 +30,8 @@ import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -224,7 +227,14 @@ final class DiscoveryUiUtils {
                 message += dsmodulesWrapper.getMessage();
             }
             if (!message.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, message, Bundle.OpenDiscoveryAction_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
+                JScrollPane messageScrollPane = new JScrollPane();
+                JTextPane messageTextPane = new JTextPane();
+                messageTextPane.setText(message);
+                messageTextPane.setVisible(true);
+                messageTextPane.setEditable(false);
+                messageTextPane.setCaretPosition(0);
+                messageScrollPane.setViewportView(messageTextPane);
+                JOptionPane.showMessageDialog(dialog, messageScrollPane, Bundle.OpenDiscoveryAction_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
             }
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "Exception while determining which modules have been run for Discovery", ex);
