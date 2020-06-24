@@ -64,7 +64,7 @@ class RefreshThrottler {
     // The factory instance that will be called when a refresh is due.
     private final Refresher refresher;
 
-    private static final long MIN_SECONDS_BETWEEN_RERFESH = 5;
+    private static final long MIN_SECONDS_BETWEEN_REFRESH = 5;
 
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED, IngestManager.IngestModuleEvent.CONTENT_CHANGED);
 
@@ -103,7 +103,7 @@ class RefreshThrottler {
 
                 RefreshTask task = new RefreshTask();
                 if (refreshTaskRef.compareAndSet(null, task)) {
-                    refreshExecutor.schedule(task, MIN_SECONDS_BETWEEN_RERFESH, TimeUnit.SECONDS);
+                    refreshExecutor.schedule(task, MIN_SECONDS_BETWEEN_REFRESH, TimeUnit.SECONDS);
                 }
             }
         };
