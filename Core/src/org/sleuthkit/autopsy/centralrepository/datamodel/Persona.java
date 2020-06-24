@@ -329,7 +329,7 @@ public class Persona {
         String deleteSQL = "UPDATE personas SET status_id = " + PersonaStatus.DELETED.status_id + " WHERE id = " + this.id;
         CentralRepository cr = CentralRepository.getInstance();
         if (cr != null) {
-            cr.executeDeleteSQL(deleteSQL);
+            cr.executeUpdateSQL(deleteSQL);
         }
     }
 
