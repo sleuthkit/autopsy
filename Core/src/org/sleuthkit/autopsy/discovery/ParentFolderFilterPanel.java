@@ -66,6 +66,8 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
 
         parentCheckbox = new javax.swing.JCheckBox();
         parentLabel = new javax.swing.JLabel();
+        includeButtonGroup = new javax.swing.ButtonGroup();
+        pathTypeButtonGroup = new javax.swing.ButtonGroup();
         parentScrollPane = new javax.swing.JScrollPane();
         parentList = new javax.swing.JList<>();
         fullRadioButton = new javax.swing.JRadioButton();
@@ -106,17 +108,21 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
         });
         parentScrollPane.setViewportView(parentList);
 
+        pathTypeButtonGroup.add(fullRadioButton);
         fullRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(fullRadioButton, org.openide.util.NbBundle.getMessage(ParentFolderFilterPanel.class, "ParentFolderFilterPanel.fullRadioButton.text_1")); // NOI18N
         fullRadioButton.setEnabled(false);
 
+        includeButtonGroup.add(includeRadioButton);
         includeRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(includeRadioButton, org.openide.util.NbBundle.getMessage(ParentFolderFilterPanel.class, "ParentFolderFilterPanel.includeRadioButton.text_1")); // NOI18N
         includeRadioButton.setEnabled(false);
 
+        pathTypeButtonGroup.add(substringRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(substringRadioButton, org.openide.util.NbBundle.getMessage(ParentFolderFilterPanel.class, "ParentFolderFilterPanel.substringRadioButton.text_1")); // NOI18N
         substringRadioButton.setEnabled(false);
 
+        includeButtonGroup.add(excludeRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(excludeRadioButton, org.openide.util.NbBundle.getMessage(ParentFolderFilterPanel.class, "ParentFolderFilterPanel.excludeRadioButton.text_1")); // NOI18N
         excludeRadioButton.setEnabled(false);
 
@@ -221,12 +227,14 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
     private javax.swing.JButton deleteButton;
     private javax.swing.JRadioButton excludeRadioButton;
     private javax.swing.JRadioButton fullRadioButton;
+    private javax.swing.ButtonGroup includeButtonGroup;
     private javax.swing.JRadioButton includeRadioButton;
     private javax.swing.JCheckBox parentCheckbox;
     private javax.swing.JLabel parentLabel;
     private javax.swing.JList<ParentSearchTerm> parentList;
     private javax.swing.JScrollPane parentScrollPane;
     private javax.swing.JTextField parentTextField;
+    private javax.swing.ButtonGroup pathTypeButtonGroup;
     private javax.swing.JRadioButton substringRadioButton;
     // End of variables declaration//GEN-END:variables
 
