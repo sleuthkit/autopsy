@@ -263,8 +263,8 @@ public final class PersonasTopComponent extends TopComponent {
     private void initComponents() {
 
         searchButtonGroup = new javax.swing.ButtonGroup();
-        jSplitPane1 = new javax.swing.JSplitPane();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        mainSplitPane = new javax.swing.JSplitPane();
+        searchScrollPane = new javax.swing.JScrollPane();
         searchPanel = new javax.swing.JPanel();
         searchField = new javax.swing.JTextField();
         searchNameRadio = new javax.swing.JRadioButton();
@@ -276,8 +276,8 @@ public final class PersonasTopComponent extends TopComponent {
         createBtn = new javax.swing.JButton();
         editBtn = new javax.swing.JButton();
         deleteBtn = new javax.swing.JButton();
-        jSeparator1 = new javax.swing.JSeparator();
-        jScrollPane2 = new javax.swing.JScrollPane();
+        createButtonSeparator = new javax.swing.JSeparator();
+        detailsScrollPane = new javax.swing.JScrollPane();
         detailsPanel = new org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel();
 
         setName(""); // NOI18N
@@ -319,7 +319,7 @@ public final class PersonasTopComponent extends TopComponent {
             .addGroup(searchPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSeparator1)
+                    .addComponent(createButtonSeparator)
                     .addGroup(searchPanelLayout.createSequentialGroup()
                         .addComponent(createBtn)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -350,49 +350,48 @@ public final class PersonasTopComponent extends TopComponent {
                     .addComponent(searchAccountRadio)
                     .addComponent(searchBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(resultsPane, javax.swing.GroupLayout.DEFAULT_SIZE, 21, Short.MAX_VALUE)
+                .addComponent(resultsPane, javax.swing.GroupLayout.PREFERRED_SIZE, 21, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(editBtn)
                     .addComponent(createBtn)
                     .addComponent(deleteBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 4, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(createButtonSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 4, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(createAccountBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
-        jScrollPane1.setViewportView(searchPanel);
+        searchScrollPane.setViewportView(searchPanel);
 
-        jSplitPane1.setLeftComponent(jScrollPane1);
+        mainSplitPane.setLeftComponent(searchScrollPane);
 
-        jScrollPane2.setViewportView(detailsPanel);
+        detailsScrollPane.setViewportView(detailsPanel);
 
-        jSplitPane1.setRightComponent(jScrollPane2);
+        mainSplitPane.setRightComponent(detailsScrollPane);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 794, Short.MAX_VALUE)
+            .addComponent(mainSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 794, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1)
+            .addComponent(mainSplitPane)
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton createAccountBtn;
     private javax.swing.JButton createBtn;
+    private javax.swing.JSeparator createButtonSeparator;
     private javax.swing.JButton deleteBtn;
     private org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel detailsPanel;
+    private javax.swing.JScrollPane detailsScrollPane;
     private javax.swing.JButton editBtn;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JSplitPane mainSplitPane;
     private javax.swing.JScrollPane resultsPane;
     private javax.swing.JTable resultsTable;
     private javax.swing.JRadioButton searchAccountRadio;
@@ -401,6 +400,7 @@ public final class PersonasTopComponent extends TopComponent {
     private javax.swing.JTextField searchField;
     private javax.swing.JRadioButton searchNameRadio;
     private javax.swing.JPanel searchPanel;
+    private javax.swing.JScrollPane searchScrollPane;
     // End of variables declaration//GEN-END:variables
 
 }
