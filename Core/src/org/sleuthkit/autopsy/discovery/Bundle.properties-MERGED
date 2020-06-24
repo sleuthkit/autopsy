@@ -112,25 +112,25 @@ FileSearchFiltering.concatenateSetNamesForDisplay.comma=,
 # {1} - Data source ID
 FileSearchFiltering.DataSourceFilter.datasource={0}({1})
 # {0} - filters
-FileSearchFiltering.DataSourceFilter.desc=data source(s): {0}
+FileSearchFiltering.DataSourceFilter.desc=Data source(s): {0}
 FileSearchFiltering.DataSourceFilter.or=, 
 # {0} - filters
-FileSearchFiltering.FileTypeFilter.desc=type: {0}
+FileSearchFiltering.FileTypeFilter.desc=Type: {0}
 FileSearchFiltering.FileTypeFilter.or=, 
 # {0} - filters
-FileSearchFiltering.FrequencyFilter.desc=past occurrences: {0}
+FileSearchFiltering.FrequencyFilter.desc=Past occurrences: {0}
 FileSearchFiltering.FrequencyFilter.or=, 
 # {0} - filters
-FileSearchFiltering.HashSetFilter.desc=With hash set hits in set(s): {0}
+FileSearchFiltering.HashSetFilter.desc=Hash set hits in set(s): {0}
 # {0} - filters
-FileSearchFiltering.InterestingItemSetFilter.desc=With interesting item hits in set(s): {0}
+FileSearchFiltering.InterestingItemSetFilter.desc=Interesting item hits in set(s): {0}
 # {0} - filters
-FileSearchFiltering.KeywordListFilter.desc=keywords in list(s): {0}
-FileSearchFiltering.KnownFilter.desc=Which are not known
+FileSearchFiltering.KeywordListFilter.desc=Keywords in list(s): {0}
+FileSearchFiltering.KnownFilter.desc=which are not known
 # {0} - filters
-FileSearchFiltering.ObjectDetectionFilter.desc=With objects detected in set(s): {0}
+FileSearchFiltering.ObjectDetectionFilter.desc=Objects detected in set(s): {0}
 # {0} - filters
-FileSearchFiltering.ParentFilter.desc=paths matching: {0}
+FileSearchFiltering.ParentFilter.desc=Paths matching: {0}
 FileSearchFiltering.ParentFilter.exact=(exact match)
 FileSearchFiltering.ParentFilter.or=, 
 FileSearchFiltering.ParentFilter.substring=(substring)
@@ -138,16 +138,16 @@ FileSearchFiltering.ParentSearchTerm.excludeString=\ (exclude)
 FileSearchFiltering.ParentSearchTerm.fullString=\ (exact)
 FileSearchFiltering.ParentSearchTerm.includeString=\ (include)
 FileSearchFiltering.ParentSearchTerm.subString=\ (substring)
-FileSearchFiltering.PreviouslyNotableFilter.desc=That were previously marked as notable
+FileSearchFiltering.PreviouslyNotableFilter.desc=that were previously marked as notable
 # {0} - filters
-FileSearchFiltering.ScoreFilter.desc=With score(s) of : {0}
+FileSearchFiltering.ScoreFilter.desc=Score(s) of : {0}
 # {0} - filters
-FileSearchFiltering.SizeFilter.desc=size(s): {0}
+FileSearchFiltering.SizeFilter.desc=Size(s): {0}
 FileSearchFiltering.SizeFilter.or=, 
 # {0} - tag names
-FileSearchFiltering.TagsFilter.desc=That have been tagged {0}
+FileSearchFiltering.TagsFilter.desc=Tagged {0}
 FileSearchFiltering.TagsFilter.or=, 
-FileSearchFiltering.UserCreatedFilter.desc=That contain EXIF data
+FileSearchFiltering.UserCreatedFilter.desc=that contain EXIF data
 FileSearchPanel.sortingPanel.border.title=Grouping
 FileSearchPanel.addButton.text=Add
 FileSearchPanel.substringRadioButton.text=Substring
