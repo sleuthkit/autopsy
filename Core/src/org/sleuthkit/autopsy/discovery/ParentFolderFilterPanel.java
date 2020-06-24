@@ -66,8 +66,8 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
 
         parentCheckbox = new javax.swing.JCheckBox();
         parentLabel = new javax.swing.JLabel();
-        includeButtonGroup = new javax.swing.ButtonGroup();
-        pathTypeButtonGroup = new javax.swing.ButtonGroup();
+        javax.swing.ButtonGroup includeButtonGroup = new javax.swing.ButtonGroup();
+        javax.swing.ButtonGroup pathTypeButtonGroup = new javax.swing.ButtonGroup();
         parentScrollPane = new javax.swing.JScrollPane();
         parentList = new javax.swing.JList<>();
         fullRadioButton = new javax.swing.JRadioButton();
@@ -227,14 +227,12 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
     private javax.swing.JButton deleteButton;
     private javax.swing.JRadioButton excludeRadioButton;
     private javax.swing.JRadioButton fullRadioButton;
-    private javax.swing.ButtonGroup includeButtonGroup;
     private javax.swing.JRadioButton includeRadioButton;
     private javax.swing.JCheckBox parentCheckbox;
     private javax.swing.JLabel parentLabel;
     private javax.swing.JList<ParentSearchTerm> parentList;
     private javax.swing.JScrollPane parentScrollPane;
     private javax.swing.JTextField parentTextField;
-    private javax.swing.ButtonGroup pathTypeButtonGroup;
     private javax.swing.JRadioButton substringRadioButton;
     // End of variables declaration//GEN-END:variables
 
