@@ -1259,7 +1259,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "FilesSetDefsPanel.noSkipMsg=No, skip",
         "FilesSetDefsPanel.cancelImportMsg=Cancel import",
         "# {0} - FilesSet name",
-        "FilesSetDefsPanel.interesting.overwriteSetPrompt=Interesting files set <{0}> already exists locally, overwrite?",
+        "FilesSetDefsPanel.interesting.overwriteSetPrompt=Interesting files set \"{0}\" already exists locally, overwrite?",
         "FilesSetDefsPanel.interesting.importOwConflict=Import Interesting files set conflict",})
     private Pair<FilesSet, Integer> onImportConflict(FilesSet set) {
         // if there is a conflict, see if it is okay to overwrite.
@@ -1298,7 +1298,8 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     @Messages({
         "FilesSetDefsPanel.yesStandardFileConflictCreate=Yes, create",
         "# {0} - FilesSet name",
-        "FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name <{0}>.  Would you like to create a custom version of this file set?",})
+        "# {1} - New FilesSet name",
+        "FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name \"{0}.\"  Would you like to rename the set to \"{1}?\"",})
     private Pair<FilesSet, Integer> onImportStandardSetConflict(FilesSet set) {
         // if there is a conflict and the conflicting files set is a standard files set,
         // see if allowing a custom files set is okay.
@@ -1307,8 +1308,12 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             Bundle.FilesSetDefsPanel_noSkipMsg(),
             Bundle.FilesSetDefsPanel_cancelImportMsg()
         };
+        
+        String setName = set.getName();
+        String customSetName = Bundle.StandardInterestingFileSetsLoader_customSuffixed(set.getName());
+        
         int conflictChoice = JOptionPane.showOptionDialog(this,
-                Bundle.FilesSetDefsPanel_interesting_standardFileConflict(set.getName()),
+                Bundle.FilesSetDefsPanel_interesting_standardFileConflict(setName, customSetName),
                 Bundle.FilesSetDefsPanel_interesting_importOwConflict(),
                 JOptionPane.YES_NO_CANCEL_OPTION,
                 JOptionPane.QUESTION_MESSAGE,
@@ -1377,8 +1382,12 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             Bundle.FilesSetDefsPanel_yesStandardFileConflictCreate(),
             Bundle.FilesSetDefsPanel_cancelNewSetMsg()
         };
+        
+        String setName = set.getName();
+        String customSetName = Bundle.StandardInterestingFileSetsLoader_customSuffixed(set.getName());
+        
         int conflictChoice = JOptionPane.showOptionDialog(this,
-                Bundle.FilesSetDefsPanel_interesting_standardFileConflict(set.getName()),
+                Bundle.FilesSetDefsPanel_interesting_standardFileConflict(setName, customSetName),
                 Bundle.FilesSetDefsPanel_interesting_newOwConflict(),
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.QUESTION_MESSAGE,
