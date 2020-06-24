@@ -11,7 +11,7 @@ DiscoveryTopComponent.name=\ Discovery
 DiscoveryTopComponent.newSearch.text=New Search
 DiscoveryTopComponent.searchCancelled.text=Search has been cancelled.
 # {0} - search
-DiscoveryTopComponent.searchComplete.text=Results for {0}
+DiscoveryTopComponent.searchComplete.text=Results with {0}
 # {0} - searchType
 DiscoveryTopComponent.searchInProgress.text=Performing search for results of type {0}. Please wait.
 DiscoveryUiUtility.bytes.text=bytes
@@ -112,27 +112,27 @@ FileSearchFiltering.concatenateSetNamesForDisplay.comma=,
 # {1} - Data source ID
 FileSearchFiltering.DataSourceFilter.datasource={0}({1})
 # {0} - filters
-FileSearchFiltering.DataSourceFilter.desc=In data source(s): {0}
-FileSearchFiltering.DataSourceFilter.or=\ or 
+FileSearchFiltering.DataSourceFilter.desc=data source(s): {0}
+FileSearchFiltering.DataSourceFilter.or=, 
 # {0} - filters
-FileSearchFiltering.FileTypeFilter.desc=Files with type: {0}
-FileSearchFiltering.FileTypeFilter.or=\ or 
+FileSearchFiltering.FileTypeFilter.desc=type: {0}
+FileSearchFiltering.FileTypeFilter.or=, 
 # {0} - filters
-FileSearchFiltering.FrequencyFilter.desc=With frequency: {0}
-FileSearchFiltering.FrequencyFilter.or=\ or 
+FileSearchFiltering.FrequencyFilter.desc=past occurrences: {0}
+FileSearchFiltering.FrequencyFilter.or=, 
 # {0} - filters
 FileSearchFiltering.HashSetFilter.desc=With hash set hits in set(s): {0}
 # {0} - filters
 FileSearchFiltering.InterestingItemSetFilter.desc=With interesting item hits in set(s): {0}
 # {0} - filters
-FileSearchFiltering.KeywordListFilter.desc=With keywords in list(s): {0}
+FileSearchFiltering.KeywordListFilter.desc=keywords in list(s): {0}
 FileSearchFiltering.KnownFilter.desc=Which are not known
 # {0} - filters
 FileSearchFiltering.ObjectDetectionFilter.desc=With objects detected in set(s): {0}
 # {0} - filters
-FileSearchFiltering.ParentFilter.desc=With paths matching: {0}
+FileSearchFiltering.ParentFilter.desc=paths matching: {0}
 FileSearchFiltering.ParentFilter.exact=(exact match)
-FileSearchFiltering.ParentFilter.or=\ or 
+FileSearchFiltering.ParentFilter.or=, 
 FileSearchFiltering.ParentFilter.substring=(substring)
 FileSearchFiltering.ParentSearchTerm.excludeString=\ (exclude)
 FileSearchFiltering.ParentSearchTerm.fullString=\ (exact)
@@ -142,11 +142,11 @@ FileSearchFiltering.PreviouslyNotableFilter.desc=That were previously marked as 
 # {0} - filters
 FileSearchFiltering.ScoreFilter.desc=With score(s) of : {0}
 # {0} - filters
-FileSearchFiltering.SizeFilter.desc=With size(s): {0}
-FileSearchFiltering.SizeFilter.or=, or 
+FileSearchFiltering.SizeFilter.desc=size(s): {0}
+FileSearchFiltering.SizeFilter.or=, 
 # {0} - tag names
 FileSearchFiltering.TagsFilter.desc=That have been tagged {0}
-FileSearchFiltering.TagsFilter.or=\ or 
+FileSearchFiltering.TagsFilter.or=, 
 FileSearchFiltering.UserCreatedFilter.desc=That contain EXIF data
 FileSearchPanel.sortingPanel.border.title=Grouping
 FileSearchPanel.addButton.text=Add

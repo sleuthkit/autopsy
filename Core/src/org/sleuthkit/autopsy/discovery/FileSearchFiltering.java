@@ -207,8 +207,8 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.SizeFilter.desc=With size(s): {0}",
-            "FileSearchFiltering.SizeFilter.or=, or "})
+            "FileSearchFiltering.SizeFilter.desc=size(s): {0}",
+            "FileSearchFiltering.SizeFilter.or=, "})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
@@ -361,8 +361,8 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.ParentFilter.desc=With paths matching: {0}",
-            "FileSearchFiltering.ParentFilter.or= or ",
+            "FileSearchFiltering.ParentFilter.desc=paths matching: {0}",
+            "FileSearchFiltering.ParentFilter.or=, ",
             "FileSearchFiltering.ParentFilter.exact=(exact match)",
             "FileSearchFiltering.ParentFilter.substring=(substring)",})
         @Override
@@ -414,8 +414,8 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.DataSourceFilter.desc=In data source(s): {0}",
-            "FileSearchFiltering.DataSourceFilter.or= or ",
+            "FileSearchFiltering.DataSourceFilter.desc=data source(s): {0}",
+            "FileSearchFiltering.DataSourceFilter.or=, ",
             "# {0} - Data source name",
             "# {1} - Data source ID",
             "FileSearchFiltering.DataSourceFilter.datasource={0}({1})",})
@@ -463,7 +463,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.KeywordListFilter.desc=With keywords in list(s): {0}",})
+            "FileSearchFiltering.KeywordListFilter.desc=keywords in list(s): {0}",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_KeywordListFilter_desc(concatenateSetNamesForDisplay(listNames));
@@ -513,8 +513,8 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.FileTypeFilter.desc=Files with type: {0}",
-            "FileSearchFiltering.FileTypeFilter.or= or ",})
+            "FileSearchFiltering.FileTypeFilter.desc=type: {0}",
+            "FileSearchFiltering.FileTypeFilter.or=, ",})
         @Override
         String getDesc() {
             String desc = "";
@@ -583,8 +583,8 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.FrequencyFilter.desc=With frequency: {0}",
-            "FileSearchFiltering.FrequencyFilter.or= or ",})
+            "FileSearchFiltering.FrequencyFilter.desc=past occurrences: {0}",
+            "FileSearchFiltering.FrequencyFilter.or=, ",})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
@@ -592,7 +592,7 @@ class FileSearchFiltering {
                 if (!desc.isEmpty()) {
                     desc += Bundle.FileSearchFiltering_FrequencyFilter_or();
                 }
-                desc += freq.name();
+                desc += freq.toString();
             }
             return Bundle.FileSearchFiltering_FrequencyFilter_desc(desc);
         }
@@ -824,7 +824,7 @@ class FileSearchFiltering {
         @NbBundle.Messages({
             "# {0} - tag names",
             "FileSearchFiltering.TagsFilter.desc=That have been tagged {0}",
-            "FileSearchFiltering.TagsFilter.or= or ",})
+            "FileSearchFiltering.TagsFilter.or=, ",})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS

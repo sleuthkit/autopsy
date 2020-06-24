@@ -280,11 +280,11 @@ public final class DiscoveryTopComponent extends TopComponent {
     @Subscribe
     @Messages({"DiscoveryTopComponent.newSearch.text=New Search",
         "# {0} - search",
-        "DiscoveryTopComponent.searchComplete.text=Results for {0}"})
+        "DiscoveryTopComponent.searchComplete.text=Results with {0}"})
     void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
         progressMessageTextArea.setForeground(Color.black);
-        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(searchCompleteEvent.getFilters().stream().map(FileFilter::getDesc).collect(Collectors.joining(", "))));
+        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(searchCompleteEvent.getFilters().stream().map(FileFilter::getDesc).collect(Collectors.joining("; "))));
         progressMessageTextArea.setCaretPosition(0);
     }
 
