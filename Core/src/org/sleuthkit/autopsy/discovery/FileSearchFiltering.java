@@ -364,7 +364,9 @@ class FileSearchFiltering {
             "FileSearchFiltering.ParentFilter.desc=Paths matching: {0}",
             "FileSearchFiltering.ParentFilter.or=, ",
             "FileSearchFiltering.ParentFilter.exact=(exact match)",
-            "FileSearchFiltering.ParentFilter.substring=(substring)",})
+            "FileSearchFiltering.ParentFilter.substring=(substring)",
+            "FileSearchFiltering.ParentFilter.included=(included)",
+            "FileSearchFiltering.ParentFilter.excluded=(excluded)"})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
@@ -376,6 +378,11 @@ class FileSearchFiltering {
                     desc += searchTerm.getSearchStr() + Bundle.FileSearchFiltering_ParentFilter_exact();
                 } else {
                     desc += searchTerm.getSearchStr() + Bundle.FileSearchFiltering_ParentFilter_substring();
+                }
+                if (searchTerm.isIncluded()) {
+                    desc += Bundle.FileSearchFiltering_ParentFilter_included();                           
+                } else {
+                    desc += Bundle.FileSearchFiltering_ParentFilter_excluded();
                 }
             }
             desc = Bundle.FileSearchFiltering_ParentFilter_desc(desc);

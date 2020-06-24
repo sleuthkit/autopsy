@@ -132,6 +132,8 @@ FileSearchFiltering.ObjectDetectionFilter.desc=Objects detected in set(s): {0}
 # {0} - filters
 FileSearchFiltering.ParentFilter.desc=Paths matching: {0}
 FileSearchFiltering.ParentFilter.exact=(exact match)
+FileSearchFiltering.ParentFilter.excluded=(excluded)
+FileSearchFiltering.ParentFilter.included=(included)
 FileSearchFiltering.ParentFilter.or=, 
 FileSearchFiltering.ParentFilter.substring=(substring)
 FileSearchFiltering.ParentSearchTerm.excludeString=\ (exclude)

@@ -188,7 +188,7 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void parentCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parentCheckboxActionPerformed
-//        parentFilterSettings(true, true, parentCheckbox.isSelected(), null);
+        configurePanel(parentCheckbox.isSelected(), null);
     }//GEN-LAST:event_parentCheckboxActionPerformed
 
     private void parentListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_parentListValueChanged
@@ -235,6 +235,7 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
         parentCheckbox.setSelected(selected);
         if (parentCheckbox.isEnabled() && parentCheckbox.isSelected()) {
             parentScrollPane.setEnabled(true);
+            parentLabel.setEnabled(true);
             includeRadioButton.setEnabled(true);
             excludeRadioButton.setEnabled(true);
             fullRadioButton.setEnabled(true);
@@ -248,6 +249,7 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
             }
         } else {
             parentScrollPane.setEnabled(false);
+            parentLabel.setEnabled(false);
             parentList.setEnabled(false);
             includeRadioButton.setEnabled(false);
             excludeRadioButton.setEnabled(false);
