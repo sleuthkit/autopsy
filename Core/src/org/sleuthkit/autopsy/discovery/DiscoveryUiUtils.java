@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Point;
 import java.util.ArrayList;
