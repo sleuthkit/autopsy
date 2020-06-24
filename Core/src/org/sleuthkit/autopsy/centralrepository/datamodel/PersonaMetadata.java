@@ -127,8 +127,8 @@ public class PersonaMetadata {
         
         String queryClause = SELECT_QUERY_BASE
                 + "WHERE pmd.persona_id = " + personaId
-                + " AND pmd.name = \"" + name + "\""
-                + " AND pmd.value = \"" + value + "\""
+                + " AND pmd.name = '" + name + "'"
+                + " AND pmd.value = '" + value + "'"
                 + " AND pmd.date_added = " + timeStampMillis
                 + " AND pmd.examiner_id = " + examiner.getId();
         
@@ -169,7 +169,7 @@ public class PersonaMetadata {
             throw new CentralRepoException("Failed to modify persona metadata, Central Repo is not enabled");
         }
         
-        String updateClause = "UPDATE persona_metadata SET confidence_id = " + confidence.getLevelId() + ", justification = \"" + justification + "\" WHERE id = " + metadata.id;
+        String updateClause = "UPDATE persona_metadata SET confidence_id = " + confidence.getLevelId() + ", justification = '" + justification + "' WHERE id = " + metadata.id;
         cr.executeUpdateSQL(updateClause);
     }
     

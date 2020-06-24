@@ -260,7 +260,7 @@ public class Persona {
      * @throws CentralRepoException If there is an error.
      */
     public void setComment(String comment) throws CentralRepoException {
-        String updateClause = "UPDATE personas SET comment = \"" + comment + "\" WHERE id = " + id;
+        String updateClause = "UPDATE personas SET comment = '" + comment + "' WHERE id = " + id;
         CentralRepository cr = CentralRepository.getInstance();
         if (cr != null) {
             cr.executeUpdateSQL(updateClause);
@@ -275,7 +275,7 @@ public class Persona {
      * @throws CentralRepoException If there is an error.
      */
     public void setName(String name) throws CentralRepoException {
-        String updateClause = "UPDATE personas SET name = \"" + name + "\" WHERE id = " + id;
+        String updateClause = "UPDATE personas SET name = '" + name + "' WHERE id = " + id;
         CentralRepository cr = CentralRepository.getInstance();
         if (cr != null) {
             cr.executeUpdateSQL(updateClause);
