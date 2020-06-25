@@ -1299,7 +1299,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "FilesSetDefsPanel.yesStandardFileConflictCreate=Yes, create",
         "# {0} - FilesSet name",
         "# {1} - New FilesSet name",
-        "FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name \"{0}.\"  Would you like to rename the set to \"{1}?\"",})
+        "FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name \"{0}.\"  Would you like to rename your set to \"{1}?\"",})
     private Pair<FilesSet, Integer> onImportStandardSetConflict(FilesSet set) {
         // if there is a conflict and the conflicting files set is a standard files set,
         // see if allowing a custom files set is okay.
