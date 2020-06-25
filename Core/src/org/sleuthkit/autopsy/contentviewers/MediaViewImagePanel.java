@@ -131,7 +131,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private double zoomRatio;
     private double rotation; // Can be 0, 90, 180, and 270.
 
-    boolean autoResize = true; // Auto resize when the user changes the size
+    private boolean autoResize = true; // Auto resize when the user changes the size
     // of the content viewer unless the user has used the zoom buttons.
     private static final double[] ZOOM_STEPS = {
         0.0625, 0.125, 0.25, 0.375, 0.5, 0.75,
