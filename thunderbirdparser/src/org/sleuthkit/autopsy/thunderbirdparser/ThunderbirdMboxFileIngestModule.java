@@ -54,6 +54,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.Relationship;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -76,6 +77,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private Blackboard blackboard;
     private CommunicationArtifactsHelper communicationArtifactsHelper;
     
+    private static final int MBOX_SIZE_TO_SPLIT = 1048576000;
     private Case currentCase;
 
     /**
@@ -309,12 +311,75 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        try {
-            ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS
-            return ProcessResult.OK;
+        if (abstractFile.getSize() < MBOX_SIZE_TO_SPLIT) {
+        
+            try {
+                ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS
+                return ProcessResult.OK;
+            }
+
+            processMboxFile(file, abstractFile, emailFolder);
+            
+            if (file.delete() == false) {
+                logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
+            }
+        } else {
+
+            List<Long> mboxSplitOffsets = new ArrayList<>(); 
+            try{
+                mboxSplitOffsets = findMboxSplitOffset(abstractFile, file);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, String.format("Failed finding split offsets for mbox file {0}.", fileName), ex); //NON-NLS
+                return ProcessResult.OK;
+            }
+
+            long startingOffset = 0;            
+            for (Long mboxSplitOffset : mboxSplitOffsets) {
+                File splitFile = new File(fileName + "-" + mboxSplitOffset);
+                try {
+                    ContentUtils.writeToFile(abstractFile, splitFile, context::fileIngestIsCancelled, startingOffset, mboxSplitOffset);
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Failed writing split mbox file to disk.", ex); //NON-NLS
+                    return ProcessResult.OK;
+                }
+                processMboxFile(splitFile, abstractFile, emailFolder);
+                startingOffset = mboxSplitOffset; 
+                if (splitFile.delete() == false) {
+                    logger.log(Level.INFO, "Failed to delete temp file: {0}", splitFile); //NON-NLS
+                }
+
+            }
+        }                 
+            
+        return ProcessResult.OK;
+    }
+    
+    private List<Long> findMboxSplitOffset(AbstractFile abstractFile, File file) throws IOException {
+        
+        List<Long> mboxSplitOffset = new ArrayList<>();
+        
+        byte[] buffer = new byte[7];
+        ReadContentInputStream in = new ReadContentInputStream(abstractFile);
+        in.skip(MBOX_SIZE_TO_SPLIT);        
+        int len = in.read(buffer);
+        while (len != -1) {
+            len = in.read(buffer);
+            if (buffer[0] == 13 && buffer[1] == 10 && buffer[2] == 70 && buffer[3] == 114 &&
+                buffer[4] == 111 && buffer[5] == 109 && buffer[6] == 32) {
+                    mboxSplitOffset.add(in.getCurPosition() - 5 );  
+                    in.skip(MBOX_SIZE_TO_SPLIT);
+            }
         }
+           
+        return mboxSplitOffset;
+               
+    }
+    
+    
+    private void processMboxFile(File file, AbstractFile abstractFile, String emailFolder) {
+            
 
         MboxParser emailIterator = MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId());
         List<EmailMessage> emails = new ArrayList<>();
@@ -325,7 +390,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                     emails.add(emailMessage);
                 }
             }
-            
+
             String errors = emailIterator.getErrors();
             if (!errors.isEmpty()) {
                 postErrorMessage(
@@ -335,11 +400,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
         processEmails(emails, MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId()), abstractFile);
 
-        if (file.delete() == false) {
-            logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
-        }
-
-        return ProcessResult.OK;
     }
     
     /**
@@ -755,4 +815,5 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     public void shutDown() {
         // nothing to shut down
     }
+    
 }

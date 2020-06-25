@@ -440,10 +440,31 @@ class ExtractRegistry extends Extract {
             String errFilePath = outFilePathBase + "-full.err.txt"; //NON-NLS
             logger.log(Level.INFO, "Writing Full RegRipper results to: {0}", regOutputFiles.fullPlugins); //NON-NLS
             executeRegRipper(rrFullCmd, rrFullHome, regFilePath, fullType, regOutputFiles.fullPlugins, errFilePath);
+            try {
+                scanErrorLogs(errFilePath);
+            } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unable to run RegRipper", ex); //NON-NLS
+            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getName()));
+        } 
         }
         return regOutputFiles;
     }
 
+    private void scanErrorLogs(String errFilePath) throws IOException {
+        File regfile = new File(errFilePath);
+        try (BufferedReader reader = new BufferedReader(new FileReader(regfile))) {
+            String line = reader.readLine();
+            while (line != null) {
+                line = line.trim();
+                if (line.toLowerCase().contains("error") || line.toLowerCase().contains("@inc")) {
+                   logger.log(Level.WARNING, "Regripper file {0} contains errors from run", errFilePath); //NON-NLS
+                    
+                }
+                line = reader.readLine();
+            }
+        }
+    }
+    
     private void executeRegRipper(List<String> regRipperPath, Path regRipperHomeDir, String hiveFilePath, String hiveFileType, String outputFile, String errFile) {
         try {
             List<String> commandLine = new ArrayList<>();
@@ -1484,7 +1505,8 @@ class ExtractRegistry extends Extract {
                 line = reader.readLine();
                 // Columns are
                 // FileX -> <file>
-                while (!line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("Applets")) {
+                while (!line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("Applets")
+                        && !line.contains(("Recent File List"))) {
                     // Split line on "> " which is the record delimiter between position and file
                     String tokens[] = line.split("> ");
                     String fileName = tokens[1];
@@ -1614,11 +1636,11 @@ class ExtractRegistry extends Extract {
         line = line.trim();
         // Reading to the SECTION DIVIDER to get next section of records to process.  Dates appear to have
         // multiple spaces in them that makes it harder to parse so next section will be easier to parse 
-        while (!line.contains(SECTION_DIVIDER) && !line.contains("MSOffice version not found.")) {
+        while (!line.contains(SECTION_DIVIDER)) {
             line = reader.readLine();
         }
         line = reader.readLine();
-        while (!line.contains(SECTION_DIVIDER) && !line.contains("MSOffice version not found.")) {
+        while (!line.contains(SECTION_DIVIDER)) {
             // record has the following format
             // 1294283922|REG|||OfficeDocs2010 - F:\Windows_time_Rules_xp.doc
             String tokens[] = line.split("\\|");

@@ -41,32 +41,35 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	#::logMsg("Launching shellfolders v.".$VERSION);
-	my $reg = Parse::Win32Registry->new($hive);
-	my $root_key = $reg->get_root_key;
+    if (defined(Parse::Win32Registry->new($hive))) {
+    	my $reg = Parse::Win32Registry->new($hive);
 
-	my $key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
-	my $key;
-	if ($key = $root_key->get_subkey($key_path)) {
-		::rptMsg("<shellfolders>");
-		::rptMsg("<mtime>".gmtime($key->get_timestamp())."</mtime>");
-		
-		my @vals = $key->get_list_of_values();
-		::rptMsg("<artifacts>");
-		if (scalar(@vals) > 0) {
-			foreach my $v (@vals) {
-				my $str = sprintf "%-20s %-40s","<shell name=\"".$v->get_name()."\">",$v->get_data()."</shell>";
-				::rptMsg($str);
-			}
-			::rptMsg("");
-		}
-		else {
-			#::rptMsg($key_path." has no values.");
-		}
-		::rptMsg("</artifacts></shellfolders>");
-	}
-	else {
-		#::rptMsg($key_path." not found.");
-		#::logMsg($key_path." not found.");
-	}
+        my $root_key = $reg->get_root_key;
+
+        my $key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
+        my $key;
+        if ($key = $root_key->get_subkey($key_path)) {
+            ::rptMsg("<shellfolders>");
+            ::rptMsg("<mtime>".gmtime($key->get_timestamp())."</mtime>");
+            
+            my @vals = $key->get_list_of_values();
+            ::rptMsg("<artifacts>");
+            if (scalar(@vals) > 0) {
+                foreach my $v (@vals) {
+                    my $str = sprintf "%-20s %-40s","<shell name=\"".$v->get_name()."\">",$v->get_data()."</shell>";
+                    ::rptMsg($str);
+                }
+                ::rptMsg("");
+            }
+            else {
+                #::rptMsg($key_path." has no values.");
+            }
+            ::rptMsg("</artifacts></shellfolders>");
+        }
+        else {
+            #::rptMsg($key_path." not found.");
+            #::logMsg($key_path." not found.");
+        }
+    }
 }
 1;

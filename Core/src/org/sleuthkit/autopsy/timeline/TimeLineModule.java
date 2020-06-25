@@ -86,25 +86,26 @@ public class TimeLineModule {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            try {
-                getController().handleCaseEvent(evt);
-            } catch (NoCurrentCaseException ex) {
-                // ignore
-                return;
-            } catch (TskCoreException ex) {
-                MessageNotifyUtil.Message.error("Error creating timeline controller.");
-                logger.log(Level.SEVERE, "Error creating timeline controller", ex);
-            }
-
             if (Case.Events.valueOf(evt.getPropertyName()).equals(CURRENT_CASE)) {
-                // we care only about case closing here
                 if (evt.getNewValue() == null) {
+                    /*
+                     * Current case is closing, shut down the timeline top
+                     * component and set the pre case singleton controller
+                     * reference to null.
+                     */
                     synchronized (controllerLock) {
                         if (controller != null) {
                             SwingUtilities.invokeLater(controller::shutDownTimeLine);
                         }
                         controller = null;
                     }
+                }
+            } else {
+                try {
+                    getController().handleCaseEvent(evt);
+                } catch (NoCurrentCaseException ignored) {
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error handling application event", ex);
                 }
             }
         }
