@@ -53,7 +53,7 @@ public interface CentralRepository {
             case SQLITE:
                 return SqliteCentralRepo.getInstance();
             default:
-                throw new CentralRepoException("Failed to get CentralRepository instance, Central Repositiory is not enabled.");
+                return null;
         }
     }
 
