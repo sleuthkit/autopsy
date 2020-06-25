@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.discovery;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -232,6 +233,8 @@ final class DiscoveryUiUtils {
                 messageTextPane.setVisible(true);
                 messageTextPane.setEditable(false);
                 messageTextPane.setCaretPosition(0);
+                messageScrollPane.setMaximumSize(new Dimension(600, 100));
+                messageScrollPane.setPreferredSize(new Dimension(600, 100));
                 messageScrollPane.setViewportView(messageTextPane);
                 JOptionPane.showMessageDialog(dialog, messageScrollPane, Bundle.OpenDiscoveryAction_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
             }
