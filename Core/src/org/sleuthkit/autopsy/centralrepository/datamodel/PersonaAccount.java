@@ -132,7 +132,7 @@ public class PersonaAccount {
      *                              account.
      */
     static PersonaAccount addPersonaAccount(Persona persona, CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
-        CentralRepository cr = CentralRepository.getInstance();
+        CentralRepository cr = getCRInstance();
         CentralRepoExaminer currentExaminer = cr.getOrInsertExaminer(System.getProperty("user.name"));
 
         Instant instant = Instant.now();
@@ -154,7 +154,7 @@ public class PersonaAccount {
                 + " AND account_type_id = " + account.getAccountType().getAccountTypeId()
                 + " AND account_unique_identifier = \"" + account.getIdentifier() + "\"";
         PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeSelectSQL(queryClause, queryCallback);
 
         Collection<PersonaAccount> accounts = queryCallback.getPersonaAccountsList();
         if (accounts.size() != 1) {
@@ -199,7 +199,7 @@ public class PersonaAccount {
                 );
 
                 // create account
-                CentralRepoAccount.CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(rs.getString("type_name"));
+                CentralRepoAccount.CentralRepoAccountType crAccountType = getCRInstance().getAccountTypeByName(rs.getString("type_name"));
                 CentralRepoAccount account = new CentralRepoAccount(
                         rs.getInt("account_id"),
                         crAccountType,
@@ -249,7 +249,7 @@ public class PersonaAccount {
                 + " WHERE persona_accounts.persona_id = " + personaId;
 
         PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeSelectSQL(queryClause, queryCallback);
 
         return queryCallback.getPersonaAccountsList();
     }
@@ -270,7 +270,7 @@ public class PersonaAccount {
                 + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
         PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeSelectSQL(queryClause, queryCallback);
 
         return queryCallback.getPersonaAccountsList();
     }
@@ -293,7 +293,7 @@ public class PersonaAccount {
                 + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
         PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeSelectSQL(queryClause, queryCallback);
 
         return queryCallback.getPersonaAccountsList();
     }
@@ -315,7 +315,7 @@ public class PersonaAccount {
                 + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
         PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeSelectSQL(queryClause, queryCallback);
         return queryCallback.getPersonaAccountsList();
 
     }
@@ -330,7 +330,7 @@ public class PersonaAccount {
      */
     static void removePersonaAccount(long id) throws CentralRepoException {
         String deleteClause = " DELETE FROM persona_accounts WHERE id = " + id;
-        CentralRepository.getInstance().executeDeleteSQL(deleteClause);
+        getCRInstance().executeDeleteSQL(deleteClause);
     }
 
     /**
@@ -343,7 +343,7 @@ public class PersonaAccount {
      */
     static void modifyPersonaAccount(long id, Persona.Confidence confidence, String justification) throws CentralRepoException {
         String updateClause = "UPDATE persona_accounts SET confidence_id = " + confidence.getLevelId() + ", justification = \"" + justification + "\" WHERE id = " + id;
-        CentralRepository.getInstance().executeUpdateSQL(updateClause);
+        getCRInstance().executeUpdateSQL(updateClause);
     }
 
     /**
@@ -360,7 +360,7 @@ public class PersonaAccount {
             while (rs.next()) {
 
                 // create account
-                CentralRepoAccount.CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(rs.getString("type_name"));
+                CentralRepoAccount.CentralRepoAccountType crAccountType = getCRInstance().getAccountTypeByName(rs.getString("type_name"));
                 CentralRepoAccount account = new CentralRepoAccount(
                         rs.getInt("account_id"),
                         crAccountType,
@@ -397,9 +397,27 @@ public class PersonaAccount {
                 + " WHERE persona_accounts.persona_id = " + personaId;
 
         AccountsForPersonaQueryCallback queryCallback = new AccountsForPersonaQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeSelectSQL(queryClause, queryCallback);
 
         return queryCallback.getAccountsList();
 
+    }
+    
+    /**
+     * Wraps the call to CentralRepository.getInstance() throwing an 
+     * exception if instance is null;
+     * 
+     * @return Instance of CentralRepository
+     * 
+     * @throws CentralRepoException 
+     */
+    private static CentralRepository getCRInstance()  throws CentralRepoException {
+        CentralRepository instance = CentralRepository.getInstance();
+        
+        if(instance == null) {
+            throw new CentralRepoException("Failed to get instance of CentralRespository, CR was null");
+        }
+        
+        return instance;
     }
 }
