@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 
-import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Toolkit;

@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 
-import org.sleuthkit.autopsy.contentviewers.artifactviewers.CommunicationArtifactViewerHelper;
-import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
