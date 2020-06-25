@@ -101,7 +101,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         constraints.weightx = LABEL_WEIGHT;
         constraints.weighty = LABEL_WEIGHT;
         constraints.gridwidth = LABEL_WIDTH;
-        addToGridBagLayout(filterPanel.getCheckbox(), null, column);
+        addToGridBagLayout(filterPanel.getCheckbox(), filterPanel.getAdditionalLabel(), column);
         if (filterPanel.hasPanel()) {
             constraints.gridx += constraints.gridwidth;
             constraints.fill = GridBagConstraints.BOTH;

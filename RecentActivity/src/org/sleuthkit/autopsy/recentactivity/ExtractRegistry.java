@@ -1501,7 +1501,8 @@ class ExtractRegistry extends Extract {
                 line = reader.readLine();
                 // Columns are
                 // FileX -> <file>
-                while (!line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("Applets")) {
+                while (!line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("Applets")
+                        && !line.contains(("Recent File List"))) {
                     // Split line on "> " which is the record delimiter between position and file
                     String tokens[] = line.split("> ");
                     String fileName = tokens[1];
