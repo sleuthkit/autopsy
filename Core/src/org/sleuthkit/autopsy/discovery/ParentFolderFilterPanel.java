@@ -66,6 +66,8 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
 
         parentCheckbox = new javax.swing.JCheckBox();
         parentLabel = new javax.swing.JLabel();
+        javax.swing.ButtonGroup includeButtonGroup = new javax.swing.ButtonGroup();
+        javax.swing.ButtonGroup pathTypeButtonGroup = new javax.swing.ButtonGroup();
         parentScrollPane = new javax.swing.JScrollPane();
         parentList = new javax.swing.JList<>();
         fullRadioButton = new javax.swing.JRadioButton();
@@ -106,17 +108,21 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
         });
         parentScrollPane.setViewportView(parentList);
 
+        pathTypeButtonGroup.add(fullRadioButton);
         fullRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(fullRadioButton, org.openide.util.NbBundle.getMessage(ParentFolderFilterPanel.class, "ParentFolderFilterPanel.fullRadioButton.text_1")); // NOI18N
         fullRadioButton.setEnabled(false);
 
+        includeButtonGroup.add(includeRadioButton);
         includeRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(includeRadioButton, org.openide.util.NbBundle.getMessage(ParentFolderFilterPanel.class, "ParentFolderFilterPanel.includeRadioButton.text_1")); // NOI18N
         includeRadioButton.setEnabled(false);
 
+        pathTypeButtonGroup.add(substringRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(substringRadioButton, org.openide.util.NbBundle.getMessage(ParentFolderFilterPanel.class, "ParentFolderFilterPanel.substringRadioButton.text_1")); // NOI18N
         substringRadioButton.setEnabled(false);
 
+        includeButtonGroup.add(excludeRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(excludeRadioButton, org.openide.util.NbBundle.getMessage(ParentFolderFilterPanel.class, "ParentFolderFilterPanel.excludeRadioButton.text_1")); // NOI18N
         excludeRadioButton.setEnabled(false);
 
@@ -188,7 +194,7 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void parentCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parentCheckboxActionPerformed
-//        parentFilterSettings(true, true, parentCheckbox.isSelected(), null);
+        configurePanel(parentCheckbox.isSelected(), null);
     }//GEN-LAST:event_parentCheckboxActionPerformed
 
     private void parentListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_parentListValueChanged
@@ -235,6 +241,7 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
         parentCheckbox.setSelected(selected);
         if (parentCheckbox.isEnabled() && parentCheckbox.isSelected()) {
             parentScrollPane.setEnabled(true);
+            parentLabel.setEnabled(true);
             includeRadioButton.setEnabled(true);
             excludeRadioButton.setEnabled(true);
             fullRadioButton.setEnabled(true);
@@ -248,6 +255,7 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
             }
         } else {
             parentScrollPane.setEnabled(false);
+            parentLabel.setEnabled(false);
             parentList.setEnabled(false);
             includeRadioButton.setEnabled(false);
             excludeRadioButton.setEnabled(false);
