@@ -3,7 +3,7 @@
     <name unique="discovery"/>
     <kind type="editor"/>
     <state type="separated"/>
-    <bounds x="76" y="68" width="1400" height="900"/>
+    <bounds x="76" y="68" width="1100" height="700"/>
     <frame state="0"/>
     
     <empty-behavior permanent="false"/>

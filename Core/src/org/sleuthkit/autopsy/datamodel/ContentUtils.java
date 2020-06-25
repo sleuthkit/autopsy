@@ -291,6 +291,62 @@ public final class ContentUtils {
     }
 
     /**
+     * Reads all the data from any content object and writes (extracts) it to a
+     * file, using a cancellation check instead of a Future object method.
+     *
+     * @param content     Any content object.
+     * @param outputFile  Will be created if it doesn't exist, and overwritten
+     *                    if it does
+     * @param cancelCheck A function used to check if the file write process
+     *                    should be terminated.
+     * @param startingOffset the starting offset to start reading the file
+     * @param endingOffset the ending offset to read of the file to write
+     *
+     * @return number of bytes extracted
+     *
+     * @throws IOException if file could not be written
+     */
+    public static long writeToFile(Content content, java.io.File outputFile,
+            Supplier<Boolean> cancelCheck, long startingOffset, long endingOffset) throws IOException {
+        
+        InputStream in = new ReadContentInputStream(content);
+        long totalRead = 0;
+        try (FileOutputStream out = new FileOutputStream(outputFile, false)) {
+            long offsetSkipped = in.skip(startingOffset); 
+            if (offsetSkipped != startingOffset) {
+                in.close();
+                throw new IOException(String.format("Skipping file to starting offset {0} was not successful only skipped to offset {1}.", startingOffset, offsetSkipped));            
+            }
+            byte[] buffer = new byte[TO_FILE_BUFFER_SIZE];
+            int len = in.read(buffer);
+            long writeFileLength = endingOffset - startingOffset;
+            writeFileLength = writeFileLength - TO_FILE_BUFFER_SIZE;
+            while (len != -1 && writeFileLength != 0) {
+                out.write(buffer, 0, len);
+                totalRead += len;
+                if (cancelCheck.get()) {
+                    break;
+                }
+                if (writeFileLength > TO_FILE_BUFFER_SIZE) {
+                    len = in.read(buffer);
+                    writeFileLength = writeFileLength - TO_FILE_BUFFER_SIZE;
+                } else {
+                    int writeLength = (int)writeFileLength;
+                    byte[] lastBuffer = new byte[writeLength];
+                    len = in.read(lastBuffer);
+                    out.write(lastBuffer, 0, len);
+                    totalRead += len;
+                    writeFileLength = 0;
+                }
+            }
+                
+        } finally {
+            in.close();
+        }
+        return totalRead;
+    }
+
+    /**
      * Helper to ignore the '.' and '..' directories
      *
      * @param dir the directory to check
