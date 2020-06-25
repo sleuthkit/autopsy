@@ -57,7 +57,6 @@ import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialog;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialogCallback;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsMode;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel;
-//import org.sleuthkit.autopsy.contentviewers.Bundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
