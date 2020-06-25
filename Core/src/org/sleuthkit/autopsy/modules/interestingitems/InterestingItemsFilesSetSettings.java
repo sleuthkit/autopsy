@@ -121,7 +121,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
      */
     @Messages({
         "# {0} - filePathStr",
-        "InterestingItemsFilesSetSettings.readSerializedDefinitions.failedReadSettings=Failed to read settings from \"{0}.\""
+        "InterestingItemsFilesSetSettings.readSerializedDefinitions.failedReadSettings=Failed to read settings from ''{0}''"
     })
     private static Map<String, FilesSet> readSerializedDefinitions(String serialFileName) throws FilesSetsManager.FilesSetsManagerException {
         Path filePath = Paths.get(PlatformUtil.getUserConfigDirectory(), serialFileName);
@@ -157,9 +157,9 @@ class InterestingItemsFilesSetSettings implements Serializable {
      */
     @Messages({
         "# {0} - regex",
-        "InterestingItemsFilesSetSettings.readPathCondition.failedCompiledRegex=Error compiling \"{0}\" regex.",
+        "InterestingItemsFilesSetSettings.readPathCondition.failedCompiledRegex=Error compiling ''{0}'' regex",
         "# {0} - ruleName",
-        "InterestingItemsFilesSetSettings.readPathCondition.pathConditionCreationError=Error creating path condition for rule \"{0}.\""
+        "InterestingItemsFilesSetSettings.readPathCondition.pathConditionCreationError=Error creating path condition for rule ''{0}''"
     })
     private static ParentPathCondition readPathCondition(Element ruleElement) throws FilesSetsManager.FilesSetsManagerException {
         // Read in the optional path condition. Null is o.k., but if the attribute
@@ -203,7 +203,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
      */
     @Messages({
         "# {0} - regex",
-        "InterestingItemsFilesSetSettings.readDateCondition.failedCompiledRegex=Error detmining \"{0}\" number.",})
+        "InterestingItemsFilesSetSettings.readDateCondition.failedCompiledRegex=Error detmining ''{0}'' number",})
     private static DateCondition readDateCondition(Element ruleElement) throws FilesSetsManager.FilesSetsManagerException {
         // Read in the optional path condition. Null is o.k., but if the attribute
         // is there, be sure it is not malformed.
@@ -255,7 +255,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
      */
     @Messages({
         "# {0} - ruleName",
-        "InterestingItemsFilesSetSettings.readRule.missingNecessary=Invalid Rule in FilesSet xml, missing necessary conditions for \"{0}.\"",})
+        "InterestingItemsFilesSetSettings.readRule.missingNecessary=Invalid Rule in FilesSet xml, missing necessary conditions for ''{0}''",})
     private static FilesSet.Rule readRule(Element elem) throws FilesSetsManager.FilesSetsManagerException {
         String ruleName = readRuleName(elem);
         FileNameCondition nameCondition = readNameCondition(elem);
@@ -287,13 +287,13 @@ class InterestingItemsFilesSetSettings implements Serializable {
     @Messages({
         "# {0} - tagName",
         "# {1} - ruleName",
-        "InterestingItemsFilesSetSettings.readNameCondition.invalidTag=Name condition has invalid tag name of \"{0}\" for rule \"{1}.\"",
+        "InterestingItemsFilesSetSettings.readNameCondition.invalidTag=Name condition has invalid tag name of ''{0}'' for rule ''{1}''",
         "# {0} - regex",
         "# {1} - rule",
-        "InterestingItemsFilesSetSettings.readNameCondition.errorCompilingRegex=Error compiling \"{0}\" regex in rule \"{1}.\"",
+        "InterestingItemsFilesSetSettings.readNameCondition.errorCompilingRegex=Error compiling ''{0}'' regex in rule ''{1}''",
         "# {0} - character",
         "# {1} - rule",
-        "InterestingItemsFilesSetSettings.readNameCondition.illegalChar=File name has illegal character of \"{0}\" in rule \"{1}.\"",})
+        "InterestingItemsFilesSetSettings.readNameCondition.illegalChar=File name has illegal character of ''{0}'' in rule ''{1}''",})
     private static FileNameCondition readNameCondition(Element elem) throws FilesSetsManager.FilesSetsManagerException {
         FileNameCondition nameCondition = null;
         String content = elem.getTextContent();
@@ -311,14 +311,14 @@ class InterestingItemsFilesSetSettings implements Serializable {
                                 Bundle.InterestingItemsFilesSetSettings_readNameCondition_invalidTag(elem.getTagName(), readRuleName(elem)));
                     }
                 } else {
-                    logger.log(Level.SEVERE, "Error compiling " + elem.getTagName() + " regex, ignoring malformed '{0}' rule definition", readRuleName(elem)); // NON-NLS
+                    logger.log(Level.SEVERE, "Error compiling " + elem.getTagName() + " regex, ignoring malformed ''{0}'' rule definition", readRuleName(elem)); // NON-NLS
                     throw new FilesSetsManager.FilesSetsManagerException(
                             Bundle.InterestingItemsFilesSetSettings_readNameCondition_errorCompilingRegex(REGEX_ATTR, readRuleName(elem)));
                 }
             } else {
                 for (String illegalChar : illegalFileNameChars) {
                     if (content.contains(illegalChar)) {
-                        logger.log(Level.SEVERE, elem.getTagName() + " content has illegal chars, ignoring malformed '{0}' rule definition", new Object[]{elem.getTagName(), readRuleName(elem)}); // NON-NLS
+                        logger.log(Level.SEVERE, elem.getTagName() + " content has illegal chars, ignoring malformed ''{0}'' rule definition", new Object[]{elem.getTagName(), readRuleName(elem)}); // NON-NLS
 
                         throw new FilesSetsManager.FilesSetsManagerException(
                                 Bundle.InterestingItemsFilesSetSettings_readNameCondition_illegalChar(illegalChar, readRuleName(elem)));
@@ -366,11 +366,11 @@ class InterestingItemsFilesSetSettings implements Serializable {
      */
     @Messages({
         "# {0} - rule",
-        "InterestingItemsFilesSetSettings.readSizeCondition.notIntegerValue=Non integer size in FilesSet XML for rule \"{0}.\"",
+        "InterestingItemsFilesSetSettings.readSizeCondition.notIntegerValue=Non integer size in FilesSet XML for rule ''{0}''",
         "# {0} - rule",
-        "InterestingItemsFilesSetSettings.readSizeCondition.invalidComparator=Invalid comparator or size unit in FilesSet XML for rule \"{0}.\"",
+        "InterestingItemsFilesSetSettings.readSizeCondition.invalidComparator=Invalid comparator or size unit in FilesSet XML for rule ''{0}''",
         "# {0} - rule",
-        "InterestingItemsFilesSetSettings.readSizeCondition.malformedXml=XML malformed missing at least one \"fileSize\" attribute for rule \"{0}.\"",})
+        "InterestingItemsFilesSetSettings.readSizeCondition.malformedXml=XML malformed missing at least one 'fileSize' attribute for rule ''{0}''",})
     private static FileSizeCondition readSizeCondition(Element elem) throws FilesSetsManager.FilesSetsManagerException {
         FileSizeCondition sizeCondition = null;
         if (!elem.getAttribute(FS_COMPARATOR_ATTR).isEmpty() && !elem.getAttribute(FS_SIZE_ATTR).isEmpty() && !elem.getAttribute(FS_UNITS_ATTR).isEmpty()) {
@@ -710,7 +710,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
     @Messages({
         "# {0} - condition",
         "# {1} - rule",
-        "InterestingItemsFilesSetSettings.readMetaTypeCondition.malformedXml=Malformed XML for Metatype condition, \"{0},\" in rule \"{1}.\""
+        "InterestingItemsFilesSetSettings.readMetaTypeCondition.malformedXml=Malformed XML for Metatype condition, ''{0}'', in rule ''{1}''"
     })
     private static MetaTypeCondition readMetaTypeCondition(Element ruleElement) throws FilesSetsManager.FilesSetsManagerException {
         MetaTypeCondition metaCondition = null;

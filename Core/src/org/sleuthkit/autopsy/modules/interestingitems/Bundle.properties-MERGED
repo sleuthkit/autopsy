@@ -9,6 +9,11 @@ FilesSetDefsPanel.cancelImportMsg=Cancel import
 # {0} - file name
 FilesSetDefsPanel.exportButtonActionPerformed.fileExistPrompt=File {0} exists, overwrite?
 FilesSetDefsPanel.gigaBytes=Gigabytes
+# {0} - fileName
+# {1} - errorMessage
+FilesSetDefsPanel.importSetButtonActionPerformed.importError=The xml file "{0}" could not be properly parsed due to the following error: "{1}."
+FilesSetDefsPanel.importSetButtonActionPerformed.noFiles=No Files Sets were found in the selected xml files.
+FilesSetDefsPanel.importSetButtonActionPerformed.noFilesSelected=No Files Sets were selected.
 # {0} - filter name
 # {1} - profile name
 FilesSetDefsPanel.ingest.fileFilterInUseError=The selected file filter, {0}, is being used by a profile, {1}, and cannot be deleted while any profile uses it.
@@ -18,7 +23,6 @@ FilesSetDefsPanel.interesting.exportButtonAction.featureName=Interesting Files S
 FilesSetDefsPanel.interesting.ExportedMsg=Interesting files set exported
 FilesSetDefsPanel.interesting.exportSetButton.text=Export Set
 FilesSetDefsPanel.interesting.failExportMsg=Export of interesting files set failed
-FilesSetDefsPanel.interesting.failImportMsg=Interesting files set not imported
 FilesSetDefsPanel.interesting.fileExtensionFilterLbl=Autopsy Interesting File Set File (xml)
 FilesSetDefsPanel.interesting.importButtonAction.featureName=Interesting Files Set Import
 FilesSetDefsPanel.interesting.importOwConflict=Import Interesting files set conflict
@@ -56,6 +60,34 @@ FilesSetRulePanel.NoPathError=Path cannot be empty
 FilesSetRulePanel.ZeroFileSizeError=File size condition value must not be 0 (Unless = is selected).
 FilesSetsManager.allFilesAndDirectories=All Files and Directories (Not Unallocated Space)
 FilesSetsManager.allFilesDirectoriesAndUnallocated=All Files, Directories, and Unallocated Space
+# {0} - regex
+InterestingItemsFilesSetSettings.readDateCondition.failedCompiledRegex=Error detmining ''{0}'' number
+# {0} - condition
+# {1} - rule
+InterestingItemsFilesSetSettings.readMetaTypeCondition.malformedXml=Malformed XML for Metatype condition, ''{0}'', in rule ''{1}''
+# {0} - regex
+# {1} - rule
+InterestingItemsFilesSetSettings.readNameCondition.errorCompilingRegex=Error compiling ''{0}'' regex in rule ''{1}''
+# {0} - character
+# {1} - rule
+InterestingItemsFilesSetSettings.readNameCondition.illegalChar=File name has illegal character of ''{0}'' in rule ''{1}''
+# {0} - tagName
+# {1} - ruleName
+InterestingItemsFilesSetSettings.readNameCondition.invalidTag=Name condition has invalid tag name of ''{0}'' for rule ''{1}''
+# {0} - regex
+InterestingItemsFilesSetSettings.readPathCondition.failedCompiledRegex=Error compiling ''{0}'' regex
+# {0} - ruleName
+InterestingItemsFilesSetSettings.readPathCondition.pathConditionCreationError=Error creating path condition for rule ''{0}''
+# {0} - ruleName
+InterestingItemsFilesSetSettings.readRule.missingNecessary=Invalid Rule in FilesSet xml, missing necessary conditions for ''{0}''
+# {0} - filePathStr
+InterestingItemsFilesSetSettings.readSerializedDefinitions.failedReadSettings=Failed to read settings from ''{0}''
+# {0} - rule
+InterestingItemsFilesSetSettings.readSizeCondition.invalidComparator=Invalid comparator or size unit in FilesSet XML for rule ''{0}''
+# {0} - rule
+InterestingItemsFilesSetSettings.readSizeCondition.malformedXml=XML malformed missing at least one 'fileSize' attribute for rule ''{0}''
+# {0} - rule
+InterestingItemsFilesSetSettings.readSizeCondition.notIntegerValue=Non integer size in FilesSet XML for rule ''{0}''
 InterestingItemsIngestModuleFactory.defaultSettingsError=Error getting default interesting files settings from file.
 OpenIDE-Module-Display-Category=Ingest Module
 OpenIDE-Module-Long-Description=Interesting Files Identifier ingest module. \n\n Identifies interesting files as defined by interesting files rule sets.

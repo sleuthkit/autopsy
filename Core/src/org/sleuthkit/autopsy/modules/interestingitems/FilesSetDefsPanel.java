@@ -1133,9 +1133,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "FilesSetDefsPanel.interesting.fileExtensionFilterLbl=Autopsy Interesting File Set File (xml)",
         "FilesSetDefsPanel.interesting.importButtonAction.featureName=Interesting Files Set Import",
         "FilesSetDefsPanel.importSetButtonActionPerformed.noFilesSelected=No Files Sets were selected.",
-        "FilesSetDefsPanel.importSetButtonActionPerformed.noFiles=No Files Sets were read from the selected xml files.",
-        "# {0} - errorMessage",
-        "FilesSetDefsPanel.importSetButtonActionPerformed.importError=There was an error while importing the Files Sets: {0}",})
+        "FilesSetDefsPanel.importSetButtonActionPerformed.noFiles=No Files Sets were found in the selected xml files.",
+        "# {0} - fileName",
+        "# {1} - errorMessage",
+        "FilesSetDefsPanel.importSetButtonActionPerformed.importError=The xml file \"{0}\" could not be properly parsed due to the following error: \"{1}.\"",})
     private void importSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importSetButtonActionPerformed
         //save currently selected value as default value to select
         FilesSet selectedSet = this.setsList.getSelectedValue();
@@ -1170,7 +1171,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 }
             } catch (FilesSetsManager.FilesSetsManagerException ex) {
                 JOptionPane.showMessageDialog(this,
-                        Bundle.FilesSetDefsPanel_importSetButtonActionPerformed_importError(ex.getMessage()),
+                        Bundle.FilesSetDefsPanel_importSetButtonActionPerformed_importError(selFile.getName(), ex.getMessage()),
                         Bundle.FilesSetDefsPanel_interesting_importButtonAction_featureName(),
                         JOptionPane.WARNING_MESSAGE);
                 logger.log(Level.WARNING, "No Interesting files set definitions were read from the selected file, exception", ex);
