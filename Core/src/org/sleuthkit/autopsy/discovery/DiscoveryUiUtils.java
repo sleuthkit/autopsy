@@ -236,7 +236,7 @@ final class DiscoveryUiUtils {
                 messageScrollPane.setMaximumSize(new Dimension(600, 100));
                 messageScrollPane.setPreferredSize(new Dimension(600, 100));
                 messageScrollPane.setViewportView(messageTextPane);
-                JOptionPane.showMessageDialog(dialog, messageScrollPane, Bundle.OpenDiscoveryAction_resultsIncomplete_text(), JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, messageScrollPane, Bundle.OpenDiscoveryAction_resultsIncomplete_text(), JOptionPane.PLAIN_MESSAGE);
             }
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "Exception while determining which modules have been run for Discovery", ex);
