@@ -82,9 +82,12 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOC
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
@@ -337,6 +340,10 @@ class ExtractRegistry extends Extract {
                     } catch (IOException | TskCoreException ex) {
                         logger.log(Level.WARNING, String.format("Unable to get shell bags from file %s", regOutputFiles.fullPlugins), ex);
                     }
+                } else if (regFileNameLocal.toLowerCase().contains("system") && parseSystemPluginOutput(regOutputFiles.fullPlugins, regFile) == false) {
+                    this.addErrorMessage(
+                            NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
+                                    this.getName(), regFileName));
                 }
                 try {
                     Report report = currentCase.addReport(regOutputFiles.fullPlugins,
@@ -928,6 +935,112 @@ class ExtractRegistry extends Extract {
             postArtifacts(newArtifacts);
         }
         return false;
+    }
+
+    
+    private boolean parseSystemPluginOutput(String regfilePath, AbstractFile regAbstractFile) {
+        File regfile = new File(regfilePath);
+        try (BufferedReader reader = new BufferedReader(new FileReader(regfile))) {
+            String line = reader.readLine();
+            while (line != null) {
+                line = line.trim();
+
+                if (line.matches("^network v.*")) {
+ //                   parseNetworkInterfaces(regfile, reader);
+                } else if (line.matches("^bthport v..*")) {
+                    parseBlueToothDevices(regAbstractFile, reader)  ;
+                }  
+                line = reader.readLine();
+            }
+            return true;
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.WARNING, "Error finding the registry file.", ex); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Error reading the system hive: {0}", ex); //NON-NLS
+        }
+        
+        return false;
+        
+    }
+    
+    /**
+     * Create recently used artifacts to parse the regripper plugin output, this format is used in several diffent plugins
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @param comment string that will populate attribute TSK_COMMENT
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseBlueToothDevices(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String line = reader.readLine();
+        // date format for plugin Tue Jun 23 10:27:54 2020 Z
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", US);
+        Long bthLastSeen = Long.valueOf(0);
+        Long bthLastConnected = Long.valueOf(0);
+        while (!line.contains(SECTION_DIVIDER)) {
+            line = reader.readLine();
+            line = line.trim();
+            if (line.contains("Device Unique ID")) {
+                // Columns are seperated by colons :
+                // Data : Values
+                // Record is 4 lines in length (Device Unique Id, Name, Last Seen,  LastConnected
+                while (!line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("Radio Support not found")) {
+                    // Split line on "> " which is the record delimiter between position and file
+                    String deviceTokens[] = line.split(": ");
+                    String deviceUniqueId = deviceTokens[1];
+                    line = reader.readLine();
+                    // Default device name to unknown as a device name may not exist.
+                    String deviceName = "Unknown";
+                    if (line.contains("Name")) {
+                        String nameTokens[] = line.split(": ");
+                        deviceName = nameTokens[1];
+                        line = reader.readLine();
+                    }
+                    String lastSeenTokens[] = line.split(": ");
+                    String lastSeen = lastSeenTokens[1].replace(" Z", "");;
+                    line = reader.readLine();
+                    String lastConnectedTokens[] = line.split(": ");
+                    String lastConnected = lastConnectedTokens[1].replace(" Z", "");;
+                    try {
+                        Date usedSeenDate = dateFormat.parse(lastSeen);
+                        bthLastSeen = usedSeenDate.getTime()/1000;
+                    } catch (ParseException ex) {
+                        // catching error and displaying date that could not be parsed
+                        // we set the timestamp to 0 and continue on processing
+                        logger.log(Level.WARNING, String.format("Failed to parse date/time %s for Bluetooth Last Seen attribute.", lastSeen), ex); //NON-NLS
+                    }
+                    try {
+                        Date usedConnectedDate = dateFormat.parse(lastConnected);
+                        bthLastConnected = usedConnectedDate.getTime()/1000;
+                    } catch (ParseException ex) {
+                        // catching error and displaying date that could not be parsed
+                        // we set the timestamp to 0 and continue on processing
+                        logger.log(Level.WARNING, String.format("Failed to parse date/time %s for Bluetooth Last connected attribute.", lastSeen), ex); //NON-NLS
+                    }
+
+                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                    attributes.add(new BlackboardAttribute(TSK_DEVICE_ID, getName(), deviceUniqueId));
+                    attributes.add(new BlackboardAttribute(TSK_NAME, getName(), deviceName));
+                    attributes.add(new BlackboardAttribute(TSK_DATETIME, getName(), bthLastSeen));
+                    attributes.add(new BlackboardAttribute(TSK_DATETIME_ACCESSED, getName(), bthLastConnected));
+                    BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING, regFile, attributes);
+                    if(bba != null) {
+                         bbartifacts.add(bba);
+                    }  
+                    // Read blank line between records then next read line is start of next block
+                    line = reader.readLine();
+                    line = reader.readLine();
+                }
+                line = line.trim();
+            }
+        }
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     /**
