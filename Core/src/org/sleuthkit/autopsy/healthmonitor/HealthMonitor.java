@@ -993,7 +993,7 @@ public final class HealthMonitor implements PropertyChangeListener {
         }
 
         String[] metricNames = {"Disk Reads: Hash calculation", "Database: getImages query", "Solr: Index chunk", "Solr: Connectivity check",
-            "Correlation Engine: Notable artifact query", "Correlation Engine: Bulk insert"}; // NON-NLS 
+            "Central Repository: Notable artifact query", "Central Repository: Bulk insert"}; // NON-NLS 
 
         Random rand = new Random();
 
