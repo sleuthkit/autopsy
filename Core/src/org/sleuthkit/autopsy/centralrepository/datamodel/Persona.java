@@ -234,7 +234,7 @@ public class Persona {
     private static Persona createPersona(String name, String comment, PersonaStatus status) throws CentralRepoException {
         // generate a UUID for the persona
         String uuidStr = UUID.randomUUID().toString();
-        CentralRepoExaminer examiner = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
+        CentralRepoExaminer examiner = getCRInstance().getOrInsertExaminer(System.getProperty("user.name"));
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();
@@ -248,7 +248,7 @@ public class Persona {
                 + examiner.getId()
                 + ")";
 
-        CentralRepository.getInstance().executeInsertSQL(insertClause);
+        getCRInstance().executeInsertSQL(insertClause);
         return getPersonaByUUID(uuidStr);
     }
     
@@ -263,7 +263,7 @@ public class Persona {
         String updateClause = "UPDATE personas SET comment = '" + comment + "' WHERE id = " + id;
         CentralRepository cr = CentralRepository.getInstance();
         if (cr != null) {
-            cr.executeUpdateSQL(updateClause);
+            getCRInstance().executeUpdateSQL(updateClause);
         }
     }
 
@@ -395,7 +395,7 @@ public class Persona {
                 + "WHERE p.uuid = '" + uuid + "'";
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeSelectSQL(queryClause, queryCallback);
 
         Collection<Persona> personas = queryCallback.getPersonas();
         
@@ -420,7 +420,7 @@ public class Persona {
                 " AND LOWER(p.name) LIKE " + "LOWER('%" + partialName + "%')" ;
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeSelectSQL(queryClause, queryCallback);
 
         return queryCallback.getPersonas();
     }
@@ -580,7 +580,7 @@ public class Persona {
 
             while (resultSet.next()) {
                 // get Case for case_id
-                CorrelationCase correlationCase = CentralRepository.getInstance().getCaseById(resultSet.getInt("case_id"));
+                CorrelationCase correlationCase = getCRInstance().getCaseById(resultSet.getInt("case_id"));
                 correlationCases.add(correlationCase);
             }
         }
@@ -605,14 +605,14 @@ public class Persona {
         Collection<CentralRepoAccount> accounts = PersonaAccount.getAccountsForPersona(this.getId());
         for (CentralRepoAccount account : accounts) {
             int corrTypeId = account.getAccountType().getCorrelationTypeId();
-            CorrelationAttributeInstance.Type correlationType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
+            CorrelationAttributeInstance.Type correlationType = getCRInstance().getCorrelationTypeById(corrTypeId);
 
             String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(correlationType);
             String querySql = "SELECT DISTINCT case_id FROM " + tableName
                     + " WHERE account_id = " + account.getId();
 
             CaseForAccountInstanceQueryCallback queryCallback = new CaseForAccountInstanceQueryCallback();
-            CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);
+            getCRInstance().executeSelectSQL(querySql, queryCallback);
 
             // Add any cases that aren't already on the list.
             for (CorrelationCase corrCase : queryCallback.getCases()) {
@@ -639,8 +639,8 @@ public class Persona {
             while (resultSet.next()) {
                 // get Case for case_id
 
-                CorrelationCase correlationCase = CentralRepository.getInstance().getCaseById(resultSet.getInt("case_id"));
-                CorrelationDataSource correlationDatasource = CentralRepository.getInstance().getDataSourceById(correlationCase, resultSet.getInt("data_source_id"));
+                CorrelationCase correlationCase = getCRInstance().getCaseById(resultSet.getInt("case_id"));
+                CorrelationDataSource correlationDatasource = getCRInstance().getDataSourceById(correlationCase, resultSet.getInt("data_source_id"));
 
                 // Add data source to list if not already on it.
                 if (!correlationDataSources.stream().anyMatch(p -> Objects.equals(p.getDataSourceObjectID(), correlationDatasource.getDataSourceObjectID()))) {
@@ -668,14 +668,14 @@ public class Persona {
         Collection<CentralRepoAccount> accounts = PersonaAccount.getAccountsForPersona(this.getId());
         for (CentralRepoAccount account : accounts) {
             int corrTypeId = account.getAccountType().getCorrelationTypeId();
-            CorrelationAttributeInstance.Type correlationType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
+            CorrelationAttributeInstance.Type correlationType = getCRInstance().getCorrelationTypeById(corrTypeId);
 
             String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(correlationType);
             String querySql = "SELECT case_id, data_source_id FROM " + tableName
                     + " WHERE account_id = " + account.getId();
 
             DatasourceForAccountInstanceQueryCallback queryCallback = new DatasourceForAccountInstanceQueryCallback();
-            CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);
+            getCRInstance().executeSelectSQL(querySql, queryCallback);
 
             // Add any data sources that aren't already on the list.
             for (CorrelationDataSource correlationDatasource : queryCallback.getDataSources()) {
@@ -738,7 +738,7 @@ public class Persona {
     private static String getPersonaFromInstanceTableQueryTemplate(CentralRepoAccount.CentralRepoAccountType crAccountType) throws CentralRepoException {
 
         int corrTypeId = crAccountType.getCorrelationTypeId();
-        CorrelationAttributeInstance.Type correlationType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
+        CorrelationAttributeInstance.Type correlationType = getCRInstance().getCorrelationTypeById(corrTypeId);
 
         String instanceTableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(correlationType);
         return "SELECT " + instanceTableName + ".account_id, case_id, data_source_id, "
@@ -762,7 +762,7 @@ public class Persona {
     public static Collection<Persona> getPersonasForCase(CorrelationCase correlationCase) throws CentralRepoException {
         Collection<Persona> personaList = new ArrayList<>();
 
-        Collection<CentralRepoAccount.CentralRepoAccountType> accountTypes = CentralRepository.getInstance().getAllAccountTypes();
+        Collection<CentralRepoAccount.CentralRepoAccountType> accountTypes = getCRInstance().getAllAccountTypes();
         for (CentralRepoAccount.CentralRepoAccountType crAccountType : accountTypes) {
 
             String querySql = getPersonaFromInstanceTableQueryTemplate(crAccountType)
@@ -770,7 +770,7 @@ public class Persona {
                     + "AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
             PersonaFromAccountInstanceQueryCallback queryCallback = new PersonaFromAccountInstanceQueryCallback();
-            CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);
+            getCRInstance().executeSelectSQL(querySql, queryCallback);
 
             // Add persona that aren't already on the list.
             for (Persona persona : queryCallback.getPersonasList()) {
@@ -794,7 +794,7 @@ public class Persona {
     public static Collection<Persona> getPersonasForDataSource(CorrelationDataSource dataSource) throws CentralRepoException {
         Collection<Persona> personaList = new ArrayList<>();
 
-        Collection<CentralRepoAccount.CentralRepoAccountType> accountTypes = CentralRepository.getInstance().getAllAccountTypes();
+        Collection<CentralRepoAccount.CentralRepoAccountType> accountTypes = getCRInstance().getAllAccountTypes();
         for (CentralRepoAccount.CentralRepoAccountType crAccountType : accountTypes) {
 
             String querySql = getPersonaFromInstanceTableQueryTemplate(crAccountType)
@@ -802,7 +802,7 @@ public class Persona {
                     + "AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
 
             PersonaFromAccountInstanceQueryCallback queryCallback = new PersonaFromAccountInstanceQueryCallback();
-            CentralRepository.getInstance().executeSelectSQL(querySql, queryCallback);
+            getCRInstance().executeSelectSQL(querySql, queryCallback);
 
             // Add persona that aren't already on the list.
             for (Persona persona : queryCallback.getPersonasList()) {
@@ -813,5 +813,24 @@ public class Persona {
 
         }
         return personaList;
+    }
+    
+        
+    /**
+     * Wraps the call to CentralRepository.getInstance() throwing an 
+     * exception if instance is null;
+     * 
+     * @return Instance of CentralRepository
+     * 
+     * @throws CentralRepoException 
+     */
+    private static CentralRepository getCRInstance()  throws CentralRepoException {
+        CentralRepository instance = CentralRepository.getInstance();
+        
+        if(instance == null) {
+            throw new CentralRepoException("Failed to get instance of CentralRespository, CR was null");
+        }
+        
+        return instance;
     }
 }

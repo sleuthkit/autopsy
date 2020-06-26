@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.centralrepository.ingestmodule;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
- * Ingest job settings for the Correlation Engine module.
+ * Ingest job settings for the Central Repository module.
  */
 final class IngestSettings implements IngestModuleIngestJobSettings {
 
