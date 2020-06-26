@@ -212,6 +212,10 @@ public class CreatePersonaAccountDialog extends JDialog {
         setVisible(true);
     }
     
+    @Messages({
+        "CreatePersonaAccountDialog_error_title=Account failure",
+        "CreatePersonaAccountDialog_error_msg=Failed to create account.",
+    })
     private CentralRepoAccount createAccount(CentralRepoAccount.CentralRepoAccountType type, String identifier) {
         CentralRepoAccount ret = null;
         try {
@@ -220,18 +224,19 @@ public class CreatePersonaAccountDialog extends JDialog {
                 ret = cr.getOrCreateAccount(type, identifier);
             }
         } catch (CentralRepoException e) {
-            logger.log(Level.SEVERE, "Failed to access central repository", e);
+            logger.log(Level.SEVERE, "Failed to create account", e);
             JOptionPane.showMessageDialog(this,
-                    Bundle.PersonaAccountDialog_get_types_exception_Title(),
-                    Bundle.PersonaAccountDialog_get_types_exception_msg(),
+                    Bundle.CreatePersonaAccountDialog_error_title(),
+                    Bundle.CreatePersonaAccountDialog_error_msg(),
                     JOptionPane.ERROR_MESSAGE);
         }
         return ret;
     }
 
     @Messages({
-        "CreatePersonaAccountDialog_dup_Title=Account creation failure",
-        "CreatePersonaAccountDialog_dup_msg=An account with this identifier and type already exists.",})
+        "CreatePersonaAccountDialog_success_title=Account added",
+        "CreatePersonaAccountDialog_success_msg=Account added.",
+    })
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
         if (identifierTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this,
@@ -246,6 +251,12 @@ public class CreatePersonaAccountDialog extends JDialog {
         String identifier = identifierTextField.getText();
 
         if (createAccount(type, identifier) != null) {
+            // show account created message
+            JOptionPane.showMessageDialog(this,
+                    Bundle.CreatePersonaAccountDialog_success_msg(),
+                    Bundle.CreatePersonaAccountDialog_success_title(),
+                    JOptionPane.INFORMATION_MESSAGE);
+
             dispose();
         }
     }//GEN-LAST:event_okBtnActionPerformed
