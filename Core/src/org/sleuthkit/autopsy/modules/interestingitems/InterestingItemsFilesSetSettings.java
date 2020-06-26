@@ -255,7 +255,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
      */
     @Messages({
         "# {0} - ruleName",
-        "InterestingItemsFilesSetSettings.readRule.missingNecessary=Invalid Rule in FilesSet xml, missing necessary conditions for ''{0}''",})
+        "InterestingItemsFilesSetSettings.readRule.missingNecessary=Invalid rule in files set, missing necessary conditions for ''{0}''",})
     private static FilesSet.Rule readRule(Element elem) throws FilesSetsManager.FilesSetsManagerException {
         String ruleName = readRuleName(elem);
         FileNameCondition nameCondition = readNameCondition(elem);
@@ -366,11 +366,11 @@ class InterestingItemsFilesSetSettings implements Serializable {
      */
     @Messages({
         "# {0} - rule",
-        "InterestingItemsFilesSetSettings.readSizeCondition.notIntegerValue=Non integer size in FilesSet XML for rule ''{0}''",
+        "InterestingItemsFilesSetSettings.readSizeCondition.notIntegerValue=Non integer size in files set for rule ''{0}''",
         "# {0} - rule",
-        "InterestingItemsFilesSetSettings.readSizeCondition.invalidComparator=Invalid comparator or size unit in FilesSet XML for rule ''{0}''",
+        "InterestingItemsFilesSetSettings.readSizeCondition.invalidComparator=Invalid comparator or size unit in files set for rule ''{0}''",
         "# {0} - rule",
-        "InterestingItemsFilesSetSettings.readSizeCondition.malformedXml=XML malformed missing at least one 'fileSize' attribute for rule ''{0}''",})
+        "InterestingItemsFilesSetSettings.readSizeCondition.malformedXml=Files set is malformed missing at least one 'fileSize' attribute for rule ''{0}''",})
     private static FileSizeCondition readSizeCondition(Element elem) throws FilesSetsManager.FilesSetsManagerException {
         FileSizeCondition sizeCondition = null;
         if (!elem.getAttribute(FS_COMPARATOR_ATTR).isEmpty() && !elem.getAttribute(FS_SIZE_ATTR).isEmpty() && !elem.getAttribute(FS_UNITS_ATTR).isEmpty()) {
@@ -710,7 +710,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
     @Messages({
         "# {0} - condition",
         "# {1} - rule",
-        "InterestingItemsFilesSetSettings.readMetaTypeCondition.malformedXml=Malformed XML for Metatype condition, ''{0}'', in rule ''{1}''"
+        "InterestingItemsFilesSetSettings.readMetaTypeCondition.malformedXml=Files set is malformed for metatype condition, ''{0}'', in rule ''{1}''"
     })
     private static MetaTypeCondition readMetaTypeCondition(Element ruleElement) throws FilesSetsManager.FilesSetsManagerException {
         MetaTypeCondition metaCondition = null;

@@ -1132,11 +1132,11 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "FilesSetDefsPanel.interesting.importOwConflict=Import Interesting files set conflict",
         "FilesSetDefsPanel.interesting.fileExtensionFilterLbl=Autopsy Interesting File Set File (xml)",
         "FilesSetDefsPanel.interesting.importButtonAction.featureName=Interesting Files Set Import",
-        "FilesSetDefsPanel.importSetButtonActionPerformed.noFilesSelected=No Files Sets were selected.",
-        "FilesSetDefsPanel.importSetButtonActionPerformed.noFiles=No Files Sets were found in the selected xml files.",
+        "FilesSetDefsPanel.importSetButtonActionPerformed.noFilesSelected=No files sets were selected.",
+        "FilesSetDefsPanel.importSetButtonActionPerformed.noFiles=No files sets were found in the selected files.",
         "# {0} - fileName",
         "# {1} - errorMessage",
-        "FilesSetDefsPanel.importSetButtonActionPerformed.importError=The xml file \"{0}\" could not be properly parsed due to the following error: \"{1}.\"",})
+        "FilesSetDefsPanel.importSetButtonActionPerformed.importError=The rules file \"{0}\" could not be read:\n\"{1}.\"",})
     private void importSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importSetButtonActionPerformed
         //save currently selected value as default value to select
         FilesSet selectedSet = this.setsList.getSelectedValue();
