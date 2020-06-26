@@ -151,7 +151,7 @@ public class PersonaAccount {
         String queryClause = PERSONA_ACCOUNTS_QUERY_CLAUSE
                 + "WHERE persona_id = " + persona.getId()
                 + " AND account_type_id = " + account.getAccountType().getAccountTypeId()
-                + " AND account_unique_identifier = \"" + account.getIdentifier() + "\"";
+                + " AND account_unique_identifier = '" + account.getIdentifier() + "'";
         PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
         getCRInstance().executeSelectSQL(queryClause, queryCallback);
 
@@ -339,7 +339,7 @@ public class PersonaAccount {
      *                              account.
      */
     static void modifyPersonaAccount(long id, Persona.Confidence confidence, String justification) throws CentralRepoException {
-        String updateClause = "UPDATE persona_accounts SET confidence_id = " + confidence.getLevelId() + ", justification = \"" + justification + "\" WHERE id = " + id;
+        String updateClause = "UPDATE persona_accounts SET confidence_id = " + confidence.getLevelId() + ", justification = '" + justification + "' WHERE id = " + id;
         getCRInstance().executeUpdateSQL(updateClause);
     }
 

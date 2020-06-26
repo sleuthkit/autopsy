@@ -117,7 +117,7 @@ public class PersonaAlias {
         
         String queryClause = SELECT_QUERY_BASE
                 + "WHERE pa.persona_id = " + persona.getId()
-                + " AND pa.alias = \"" + alias + "\""
+                + " AND pa.alias = '" + alias + "'"
                 + " AND pa.date_added = " + timeStampMillis
                 + " AND pa.examiner_id = " + examiner.getId();
         
@@ -158,7 +158,7 @@ public class PersonaAlias {
             throw new CentralRepoException("Failed to modify persona alias, Central Repo is not enabled");
         }
         
-        String updateClause = "UPDATE persona_alias SET confidence_id = " + confidence.getLevelId() + ", justification = \"" + justification + "\" WHERE id = " + alias.id;
+        String updateClause = "UPDATE persona_alias SET confidence_id = " + confidence.getLevelId() + ", justification = '" + justification + "' WHERE id = " + alias.id;
         cr.executeUpdateSQL(updateClause);
     }
     
