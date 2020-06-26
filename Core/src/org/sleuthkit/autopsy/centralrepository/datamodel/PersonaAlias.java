@@ -98,7 +98,7 @@ public class PersonaAlias {
      */
     static PersonaAlias addPersonaAlias(Persona persona, String alias, String justification, Persona.Confidence confidence) throws CentralRepoException {
 
-        CentralRepoExaminer examiner = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
+        CentralRepoExaminer examiner = getCRInstance().getOrInsertExaminer(System.getProperty("user.name"));
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();
@@ -113,7 +113,7 @@ public class PersonaAlias {
                 + examiner.getId()
                 + ")";
 
-        CentralRepository.getInstance().executeInsertSQL(insertClause);
+        getCRInstance().executeInsertSQL(insertClause);
         
         String queryClause = SELECT_QUERY_BASE
                 + "WHERE pa.persona_id = " + persona.getId()
@@ -122,7 +122,7 @@ public class PersonaAlias {
                 + " AND pa.examiner_id = " + examiner.getId();
         
         PersonaAliasesQueryCallback queryCallback = new PersonaAliasesQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeSelectSQL(queryClause, queryCallback);
         
         Collection<PersonaAlias> aliases = queryCallback.getAliases();
         if (aliases.size() != 1) {
@@ -141,7 +141,7 @@ public class PersonaAlias {
      */
     static void removePersonaAlias(PersonaAlias alias) throws CentralRepoException {
         String deleteClause = " DELETE FROM persona_alias WHERE id = " + alias.getId();
-        CentralRepository.getInstance().executeDeleteSQL(deleteClause);
+        getCRInstance().executeDeleteSQL(deleteClause);
     }
     
     /**
@@ -208,9 +208,26 @@ public class PersonaAlias {
         String queryClause = SELECT_QUERY_BASE + "WHERE pa.persona_id = " + personaId;
 
         PersonaAliasesQueryCallback queryCallback = new PersonaAliasesQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeSelectSQL(queryClause, queryCallback);
 
         return queryCallback.getAliases();
     }
     
+    /**
+     * Wraps the call to CentralRepository.getInstance() throwing an 
+     * exception if instance is null;
+     * 
+     * @return Instance of CentralRepository
+     * 
+     * @throws CentralRepoException 
+     */
+    private static CentralRepository getCRInstance()  throws CentralRepoException {
+        CentralRepository instance = CentralRepository.getInstance();
+        
+        if(instance == null) {
+            throw new CentralRepoException("Failed to get instance of CentralRespository, CR was null");
+        }
+        
+        return instance;
+    }
 }

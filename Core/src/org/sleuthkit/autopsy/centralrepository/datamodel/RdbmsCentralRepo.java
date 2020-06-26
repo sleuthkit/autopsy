@@ -1679,7 +1679,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                     bulkArtifacts.get(tableName).clear();
                 }
 
-                TimingMetric timingMetric = HealthMonitor.getTimingMetric("Correlation Engine: Bulk insert");
+                TimingMetric timingMetric = HealthMonitor.getTimingMetric("Central Repository: Bulk insert");
                 HealthMonitor.submitTimingMetric(timingMetric);
 
                 // Reset state

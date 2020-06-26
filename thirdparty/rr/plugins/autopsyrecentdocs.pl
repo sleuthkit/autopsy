@@ -41,80 +41,82 @@ sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
 	#::logMsg("||recentdocs||");
-	my $reg = Parse::Win32Registry->new($ntuser);
-	my $root_key = $reg->get_root_key;
-	my $key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RecentDocs";
-	my $key;
-	if ($key = $root_key->get_subkey($key_path)) {
-		#::rptMsg("RecentDocs");
-		#::rptMsg("**All values printed in MRUList\\MRUListEx order.");
-		#::rptMsg($key_path);
-		::rptMsg("<recentdocs><mtime>".gmtime($key->get_timestamp())."</mtime><artifacts>");
-# Get RecentDocs values		
-		my %rdvals = getRDValues($key);
-		if (%rdvals) {
-			my $tag;
-			if (exists $rdvals{"MRUListEx"}) {
-				$tag = "MRUListEx";
-			}
-			elsif (exists $rdvals{"MRUList"}) {
-				$tag = "MRUList";
-			}
-			else {
-				
-			}
-			
-			my @list = split(/,/,$rdvals{$tag});
-			foreach my $i (@list) {
-				::rptMsg("<doc name=\"Windows\">".$rdvals{$i} . "</doc>");
-			}
-			
-		}
-		else {
-			#::rptMsg($key_path." has no values.");
-			#::logMsg("Error: ".$key_path." has no values.");
-		}
-		::rptMsg("</artifacts></recentdocs>");
-# Get RecentDocs subkeys' values		
-	my @subkeys = $key->get_list_of_subkeys();
-		if (scalar(@subkeys) > 0) {
-			foreach my $s (@subkeys) {
-				#::rptMsg($key_path."\\".$s->get_name());
-				#::rptMsg("LastWrite Time ".gmtime($s->get_timestamp())." (UTC)");
-				
-				my %rdvals = getRDValues($s);
-				if (%rdvals) {
-					my $tag;
-					if (exists $rdvals{"MRUListEx"}) {
-						$tag = "MRUListEx";
-					}
-					elsif (exists $rdvals{"MRUList"}) {
-						$tag = "MRUList";
-					}
-					else {
-				
-					}
-			
-					my @list = split(/,/,$rdvals{$tag});
-					#::rptMsg($tag." = ".$rdvals{$tag});
-					foreach my $i (@list) {
-						#::rptMsg("".$rdvals{$i});
-					}
-					
-					#::rptMsg("");
-				}
-				else {
-					#::rptMsg($key_path." has no values.");
-				}
-			}
-		}
-		else {
-			#::rptMsg($key_path." has no subkeys.");
-		}
-	}
-	else {
-		#::rptMsg($key_path." not found.");
-	}
+    if (defined(Parse::Win32Registry->new($ntuser))) {
+        my $reg = Parse::Win32Registry->new($ntuser);
+        my $root_key = $reg->get_root_key;
+        my $key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RecentDocs";
+        my $key;
+        if ($key = $root_key->get_subkey($key_path)) {
+            #::rptMsg("RecentDocs");
+            #::rptMsg("**All values printed in MRUList\\MRUListEx order.");
+            #::rptMsg($key_path);
+            ::rptMsg("<recentdocs><mtime>".gmtime($key->get_timestamp())."</mtime><artifacts>");
+    # Get RecentDocs values		
+            my %rdvals = getRDValues($key);
+            if (%rdvals) {
+                my $tag;
+                if (exists $rdvals{"MRUListEx"}) {
+                    $tag = "MRUListEx";
+                }
+                elsif (exists $rdvals{"MRUList"}) {
+                    $tag = "MRUList";
+                }
+                else {
+                    
+                }
+                
+                my @list = split(/,/,$rdvals{$tag});
+                foreach my $i (@list) {
+                    ::rptMsg("<doc name=\"Windows\">".$rdvals{$i} . "</doc>");
+                }
+                
+            }
+            else {
+                #::rptMsg($key_path." has no values.");
+                #::logMsg("Error: ".$key_path." has no values.");
+            }
+            ::rptMsg("</artifacts></recentdocs>");
+    # Get RecentDocs subkeys' values		
+        my @subkeys = $key->get_list_of_subkeys();
+            if (scalar(@subkeys) > 0) {
+                foreach my $s (@subkeys) {
+                    #::rptMsg($key_path."\\".$s->get_name());
+                    #::rptMsg("LastWrite Time ".gmtime($s->get_timestamp())." (UTC)");
+                    
+                    my %rdvals = getRDValues($s);
+                    if (%rdvals) {
+                        my $tag;
+                        if (exists $rdvals{"MRUListEx"}) {
+                            $tag = "MRUListEx";
+                        }
+                        elsif (exists $rdvals{"MRUList"}) {
+                            $tag = "MRUList";
+                        }
+                        else {
+                    
+                        }
+                
+                        my @list = split(/,/,$rdvals{$tag});
+                        #::rptMsg($tag." = ".$rdvals{$tag});
+                        foreach my $i (@list) {
+                            #::rptMsg("".$rdvals{$i});
+                        }
+                        
+                        #::rptMsg("");
+                    }
+                    else {
+                        #::rptMsg($key_path." has no values.");
+                    }
+                }
+            }
+            else {
+                #::rptMsg($key_path." has no subkeys.");
+            }
+        }
+        else {
+            #::rptMsg($key_path." not found.");
+        }
+    }
 }
 
 
