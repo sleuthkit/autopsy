@@ -588,7 +588,10 @@ class InterestingItemsFilesSetSettings implements Serializable {
             doc.appendChild(rootElement);
             // Add the interesting files sets to the document.
 
-            List<FilesSet> sortedFilesSets = sortOnField(interestingFilesSets, filesSet -> filesSet.getName());
+            List<FilesSet> sortedFilesSets = sortOnField(
+                    interestingFilesSets, 
+                    filesSet -> filesSet == null ? null : filesSet.getName());
+            
             for (FilesSet set : sortedFilesSets) {
                 // Add the files set element and its attributes.
                 Element setElement = doc.createElement(FILE_SET_TAG);
@@ -600,7 +603,10 @@ class InterestingItemsFilesSetSettings implements Serializable {
                 // Add the child elements for the set membership rules.
                 // All conditions of a rule will be written as a single element in the xml
                 
-                List<FilesSet.Rule> sortedRules = sortOnField(set.getRules().values(), rule -> rule.getName());
+                List<FilesSet.Rule> sortedRules = sortOnField(
+                        set.getRules().values(), 
+                        rule -> rule == null ? null : rule.getName());
+                
                 for (FilesSet.Rule rule : sortedRules) {
                     // Add a rule element with the appropriate name Condition 
                     // type tag.
