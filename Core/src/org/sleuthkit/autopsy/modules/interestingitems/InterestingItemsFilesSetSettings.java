@@ -560,7 +560,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
                 bName = "";
             }
             
-            return aName.compareTo(bName);
+            return aName.compareToIgnoreCase(bName);
         };
         
         return itemsToSort.stream()
