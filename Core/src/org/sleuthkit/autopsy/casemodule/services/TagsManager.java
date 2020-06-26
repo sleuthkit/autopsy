@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,7 +56,7 @@ public class TagsManager implements Closeable {
     private final SleuthkitCase caseDb;
 
     private static String DEFAULT_TAG_SET_NAME = "Project VIC";
-    
+
     private static final Object lock = new Object();
 
     static {
@@ -235,16 +235,16 @@ public class TagsManager implements Closeable {
     public static String getNotableTagDisplayName() {
         return TagNameDefinition.getNotableTagDisplayName();
     }
-    
+
     /**
      * Creates a new TagSetDefinition file.
-     * 
+     *
      * @param tagSetDef The tag set definition.
-     * 
-     * @throws IOException 
+     *
+     * @throws IOException
      */
     public static void addTagSetDefinition(TagSetDefinition tagSetDef) throws IOException {
-        synchronized(lock) {
+        synchronized (lock) {
             TagSetDefinition.writeTagSetDefinition(tagSetDef);
         }
     }
@@ -267,20 +267,20 @@ public class TagsManager implements Closeable {
                     caseDb.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus());
                 }
                 //Assume new case and add tag sets
-                for(TagSetDefinition setDef: TagSetDefinition.readTagSetDefinitions()) {
+                for (TagSetDefinition setDef : TagSetDefinition.readTagSetDefinitions()) {
                     List<TagName> tagNameList = new ArrayList<>();
-                    for(TagNameDefinition tagNameDef: setDef.getTagNameDefinitions()) {
+                    for (TagNameDefinition tagNameDef : setDef.getTagNameDefinitions()) {
                         tagNameList.add(caseDb.addOrUpdateTagName(tagNameDef.getDisplayName(), tagNameDef.getDescription(), tagNameDef.getColor(), tagNameDef.getKnownStatus()));
                     }
-                    
-                    if(!tagNameList.isEmpty()) {
+
+                    if (!tagNameList.isEmpty()) {
                         taggingMgr.addTagSet(setDef.getName(), tagNameList);
                     }
                 }
             }
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error updating standard tag name and tag set definitions", ex);
-        } catch(IOException ex) {
+        } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Error loading tag set JSON files", ex);
         }
 
@@ -288,28 +288,41 @@ public class TagsManager implements Closeable {
             tagName.saveToCase(caseDb);
         }
     }
-    
+
     /**
      * Get a list of all tag sets currently in the case database.
-     * 
+     *
      * @return A list, possibly empty, of TagSet objects.
-     * 
+     *
      * @throws TskCoreException
      */
     public List<TagSet> getAllTagSets() throws TskCoreException {
         return caseDb.getTaggingManager().getTagSets();
     }
-    
+
+    /**
+     * Gets the tag set a tag name (tag definition) belongs to, if any.
+     *
+     * @param tagName The tag name.
+     *
+     * @return A TagSet object or null.
+     *
+     * @throws TskCoreException If there is an error querying the case database.
+     */
+    public TagSet getTagSet(TagName tagName) throws TskCoreException {
+        return caseDb.getTaggingManager().getTagSetForTagName(tagName);        
+    }
+
     /**
      * Add a new TagSet to the case database. Tags will be ranked in the order
      * which they are passed to this method.
-     * 
-     * @param name Tag set name.
+     *
+     * @param name        Tag set name.
      * @param tagNameList List of TagName in rank order.
-     * 
+     *
      * @return A new TagSet object.
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     public TagSet addTagSet(String name, List<TagName> tagNameList) throws TskCoreException {
         return caseDb.getTaggingManager().addTagSet(name, tagNameList);
@@ -501,7 +514,7 @@ public class TagsManager implements Closeable {
      *                                       name to the case database.
      */
     public TagName addTagName(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown knownStatus) throws TagNameAlreadyExistsException, TskCoreException {
-        synchronized(lock) {
+        synchronized (lock) {
             try {
                 TagName tagName = caseDb.addOrUpdateTagName(displayName, description, color, knownStatus);
                 Set<TagNameDefinition> customTypes = TagNameDefinition.getTagNameDefinitions();
