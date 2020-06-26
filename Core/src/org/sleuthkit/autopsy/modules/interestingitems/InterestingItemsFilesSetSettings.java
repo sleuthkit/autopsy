@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,9 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSets
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import java.util.Comparator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 class InterestingItemsFilesSetSettings implements Serializable {
 
@@ -536,6 +540,34 @@ class InterestingItemsFilesSetSettings implements Serializable {
         }
         return true;
     }
+    
+
+    /**
+     * Generates an alphabetically sorted list based on the provided collection and Function to retrieve a string field from each object.
+     * @param itemsToSort The items to be sorted into the newly generated list.
+     * @param getName The method to retrieve the given field from the object.
+     * @return The newly generated list sorted alphabetically by the given field.
+     */
+    private static <T> List<T> sortOnField(Collection<T> itemsToSort, final Function<T, String> getName) {
+        Comparator<T> comparator = (a,b) -> {
+            String aName = getName.apply(a);
+            String bName = getName.apply(b);
+            if (aName == null) {
+                aName = "";
+            }
+            
+            if (bName == null) {
+                bName = "";
+            }
+            
+            return aName.compareTo(bName);
+        };
+        
+        return itemsToSort.stream()
+                .sorted(comparator)
+                .collect(Collectors.toList());
+    }
+    
 
     /**
      * Write the FilesSets to a file as an xml.
@@ -555,7 +587,9 @@ class InterestingItemsFilesSetSettings implements Serializable {
             Element rootElement = doc.createElement(FILE_SETS_ROOT_TAG);
             doc.appendChild(rootElement);
             // Add the interesting files sets to the document.
-            for (FilesSet set : interestingFilesSets) {
+
+            List<FilesSet> sortedFilesSets = sortOnField(interestingFilesSets, filesSet -> filesSet.getName());
+            for (FilesSet set : sortedFilesSets) {
                 // Add the files set element and its attributes.
                 Element setElement = doc.createElement(FILE_SET_TAG);
                 setElement.setAttribute(NAME_ATTR, set.getName());
@@ -565,7 +599,9 @@ class InterestingItemsFilesSetSettings implements Serializable {
                 setElement.setAttribute(VERSION_NUMBER, Integer.toString(set.getVersionNumber()));
                 // Add the child elements for the set membership rules.
                 // All conditions of a rule will be written as a single element in the xml
-                for (FilesSet.Rule rule : set.getRules().values()) {
+                
+                List<FilesSet.Rule> sortedRules = sortOnField(set.getRules().values(), rule -> rule.getName());
+                for (FilesSet.Rule rule : sortedRules) {
                     // Add a rule element with the appropriate name Condition 
                     // type tag.
                     Element ruleElement;
