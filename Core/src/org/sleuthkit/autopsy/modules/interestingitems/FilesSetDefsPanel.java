@@ -1136,7 +1136,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "FilesSetDefsPanel.importSetButtonActionPerformed.noFiles=No files sets were found in the selected files.",
         "# {0} - fileName",
         "# {1} - errorMessage",
-        "FilesSetDefsPanel.importSetButtonActionPerformed.importError=The rules file \"{0}\" could not be read:\n\"{1}.\"",})
+        "FilesSetDefsPanel.importSetButtonActionPerformed.importError=The rules file \"{0}\" could not be read:\n{1}.",})
     private void importSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importSetButtonActionPerformed
         //save currently selected value as default value to select
         FilesSet selectedSet = this.setsList.getSelectedValue();
