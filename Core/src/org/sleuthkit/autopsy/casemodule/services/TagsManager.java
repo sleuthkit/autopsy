@@ -310,7 +310,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error querying the case database.
      */
     public TagSet getTagSet(TagName tagName) throws TskCoreException {
-        return caseDb.getTaggingManager().getTagSetForTagName(tagName);        
+        return caseDb.getTaggingManager().getTagSet(tagName);        
     }
 
     /**
