@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourceprocessors.RawDSProcessor;
 import org.sleuthkit.autopsy.logicalimager.dsp.LogicalImagerDSProcessor;
+import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
 /**
  * Panel which displays the available DataSourceProcessors and allows selection
@@ -196,6 +197,15 @@ final class AddImageWizardSelectDspVisual extends JPanel {
                 logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = {0}", dsProcessor.getDataSourceType()); //NON-NLS
             }
         }
+
+        for (DataSourceProcessor dsProcessor : JythonModuleLoader.getDataSourceProcessorModules()) {
+            if (!datasourceProcessorsMap.containsKey(dsProcessor.getDataSourceType())) {
+                datasourceProcessorsMap.put(dsProcessor.getDataSourceType(), dsProcessor);
+            } else {
+                logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = {0}", dsProcessor.getDataSourceType()); //NON-NLS
+            }
+        }
+
         dspList.add(ImageDSProcessor.getType());
         dspList.add(LocalDiskDSProcessor.getType());
         dspList.add(LocalFilesDSProcessor.getType());
