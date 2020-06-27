@@ -1341,7 +1341,7 @@ class ExtractRegistry extends Extract {
             String fileName = fileNameSid[0];
             if (fileName.startsWith("\\Device\\HarddiskVolume")) {
                 // Start at point past the 2nd slash
-                int fileNameStart = fileName.indexOf("\\", 16);
+                int fileNameStart = fileName.indexOf('\\', 16);
                 fileName = fileName.substring(fileNameStart, fileName.length());
 
             }
