@@ -42,8 +42,6 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
-import java.io.BufferedReader;
-import java.io.FileReader;
 
 /**
  * Finds and loads Autopsy modules written using the Jython variant of the
@@ -110,7 +108,7 @@ public final class JythonModuleLoader {
             if (file.isDirectory()) {
                 File[] pythonScripts = file.listFiles(new PythonScriptFileFilter());
                 for (File script : pythonScripts) {
-                        try (Scanner fileScanner = new Scanner(new BufferedReader(new FileReader(script)))) {
+                        try (Scanner fileScanner = new Scanner(script)) {
                         while (fileScanner.hasNextLine()) {
                             String line = fileScanner.nextLine();
                             if (line.startsWith("class ") && filter.accept(line)) { //NON-NLS
