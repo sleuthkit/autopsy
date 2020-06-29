@@ -33,10 +33,13 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import net.sf.sevenzipjbinding.SevenZip;
+import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.IngestRunningCheck;
@@ -206,6 +209,13 @@ public class Installer extends ModuleInstall {
                 logger.log(Level.INFO, "LIBPQ library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading LIBPQ library, ", e); //NON-NLS
+            }
+            
+            try {
+                SevenZip.initSevenZipFromPlatformJAR();
+                logger.log(Level.INFO, "7zip-java bindings loaded"); //NON-NLS
+            } catch (SevenZipNativeInitializationException e) {
+                logger.log(Level.SEVERE, "Error loading 7zip-java bindings", e); //NON-NLS
             }
         }
     }
