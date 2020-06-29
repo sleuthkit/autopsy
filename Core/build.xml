@@ -106,7 +106,7 @@
               tofile="${ext.dir}/c3p0-0.9.5.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/SparseBitSet-1.1.jar"
                       tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	
-        <copy file="${env.TSK_HOME}/case-uco/java/target/sleuthkit-caseuco-1.0.jar" 
+        <copy file="${env.TSK_HOME}/case-uco/java/dist/sleuthkit-caseuco-1.0.jar" 
               tofile="${ext.dir}/sleuthkit-caseuco-1.0.jar"/>  
     </target>
 

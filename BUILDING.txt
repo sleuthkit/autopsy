@@ -54,7 +54,7 @@ to the root 64-bit JRE directory.
 from the TSK root directory to install the libraries and such in
 the needed places (i.e. '/usr/local').
 
-2e) Build the TSK CaseUco jar file by running 'mvn clean install' in
+2e) Build the TSK CaseUco jar file by running 'ant' in
     the case-uco/java folder of the TSK source folder. You can also add the
     code to a NetBeans project and build using the regular 'build' action.
 
