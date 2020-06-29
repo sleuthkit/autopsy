@@ -135,7 +135,7 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
         tabbedPane.setEnabled(!ingestIsRunning);
         settingsPanel.enableButtons(!ingestIsRunning);
         profilePanel.enableButtons(!ingestIsRunning);
-        filterPanel.enableButtons(!ingestIsRunning);
+        filterPanel.enableButtons();
 
     }
 
