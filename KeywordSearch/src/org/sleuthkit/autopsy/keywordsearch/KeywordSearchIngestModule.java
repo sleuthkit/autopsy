@@ -526,6 +526,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 try {
                     Map<String, String> metadata = extractor.getMetadata();
                     if (!metadata.isEmpty()) {
+                        // Creating the metadata artifact here causes occasional problems
+                        // when indexing the text, so we save the metadata map to 
+                        // use after this method is complete.
                         extractedMetadata.putAll(metadata);
                     }
                     CharSource formattedMetadata = getMetaDataCharSource(metadata);
@@ -773,7 +776,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 extractStringsAndIndex(aFile);
             }
             
-            // Testing whether creating the metadata artifact here will solve the pipe broken issue
+            // Now that the indexing is complete, create the metadata artifact (if applicable).
+            // It is unclear why calling this from extractTextAndIndex() generates
+            // errors.
             if (!extractedMetadata.isEmpty()) {
                 createMetadataArtifact(aFile, extractedMetadata);
             }
