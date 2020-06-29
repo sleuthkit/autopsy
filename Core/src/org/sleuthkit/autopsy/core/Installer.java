@@ -39,7 +39,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.IngestRunningCheck;
