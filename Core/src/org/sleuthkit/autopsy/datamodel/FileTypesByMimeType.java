@@ -58,7 +58,7 @@ import org.sleuthkit.datamodel.TskData;
  * Listener which is checking for changes in IngestJobEvent Completed or
  * Canceled and IngestModuleEvent Content Changed.
  */
-public final class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
+public final class FileTypesByMimeType extends Observable implements AutopsyVisitableItem, RefreshThrottler.Refresher {
 
     private final static Logger logger = Logger.getLogger(FileTypesByMimeType.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
@@ -84,12 +84,18 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.CURRENT_CASE);
 
     /**
+     * RefreshThrottler is used to limit the number of refreshes performed when
+     * CONTENT_CHANGED and DATA_ADDED ingest module events are received.
+     */
+    private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
+
+    /**
      * Create the base expression used as the where clause in the queries for
      * files by mime type. Filters out certain kinds of files and directories,
      * and known/slack files based on user preferences.
      *
      * @return The base expression to be used in the where clause of queries for
-     *         files by mime type.
+     * files by mime type.
      */
     private String createBaseWhereExpr() {
         return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
@@ -108,6 +114,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     private void removeListeners() {
         deleteObservers();
         IngestManager.getInstance().removeIngestJobEventListener(pcl);
+        refreshThrottler.unregisterEventListener();
         Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
     }
 
@@ -155,25 +162,11 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         this.typesRoot = typesRoot;
         this.pcl = (PropertyChangeEvent evt) -> {
             String eventType = evt.getPropertyName();
-            if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())
-                    || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+            if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
                     || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
                     || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                /**
-                 * Checking for a current case is a stop gap measure until a
-                 * different way of handling the closing of cases is worked out.
-                 * Currently, remote events may be received for a case that is
-                 * already closed.
-                 */
-                try {
-                    Case.getCurrentCaseThrows();
-                    typesRoot.updateShowCounts();
-                    populateHashMap();
-                } catch (NoCurrentCaseException notUsed) {
-                    /**
-                     * Case is closed, do nothing.
-                     */
-                }
+
+                refresh();
             } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                 if (evt.getNewValue() == null) {
                     removeListeners();
@@ -181,6 +174,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             }
         };
         IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
+        refreshThrottler.registerForIngestModuleEvents();
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
         populateHashMap();
     }
@@ -201,7 +195,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * @param node the Node which you wish to check.
      *
      * @return True if originNode is an instance of ByMimeTypeNode and is empty,
-     *         false otherwise.
+     * false otherwise.
      */
     public static boolean isEmptyMimeTypeNode(Node node) {
         boolean isEmptyMimeNode = false;
@@ -210,6 +204,29 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         }
         return isEmptyMimeNode;
 
+    }
+
+    @Override
+    public void refresh() {
+        /**
+         * Checking for a current case is a stop gap measure until a different
+         * way of handling the closing of cases is worked out. Currently, remote
+         * events may be received for a case that is already closed.
+         */
+        try {
+            Case.getCurrentCaseThrows();
+            typesRoot.updateShowCounts();
+            populateHashMap();
+        } catch (NoCurrentCaseException notUsed) {
+            /**
+             * Case is closed, do nothing.
+             */
+        }
+    }
+
+    @Override
+    public boolean isRefreshRequired(PropertyChangeEvent evt) {
+        return true;
     }
 
     /**
