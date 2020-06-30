@@ -209,13 +209,6 @@ public class Installer extends ModuleInstall {
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading LIBPQ library, ", e); //NON-NLS
             }
-            
-            try {
-                SevenZip.initSevenZipFromPlatformJAR();
-                logger.log(Level.INFO, "7zip-java bindings loaded"); //NON-NLS
-            } catch (SevenZipNativeInitializationException e) {
-                logger.log(Level.SEVERE, "Error loading 7zip-java bindings", e); //NON-NLS
-            }
         }
     }
 
@@ -390,6 +383,7 @@ public class Installer extends ModuleInstall {
         ensureClassifierFolderExists();
         ensureOcrLanguagePacksFolderExists();
         initJavaFx();
+        initializeSevenZip();
         for (ModuleInstall mi : packageInstallers) {
             try {
                 mi.restored();
@@ -403,6 +397,18 @@ public class Installer extends ModuleInstall {
         preloadJython();
     }
     
+    
+    /**
+     * Initializes 7zip-java bindings.
+     */
+    private void initializeSevenZip() {
+        try {
+            SevenZip.initSevenZipFromPlatformJAR();
+            logger.log(Level.INFO, "7zip-java bindings loaded"); //NON-NLS
+        } catch (SevenZipNativeInitializationException e) {
+            logger.log(Level.SEVERE, "Error loading 7zip-java bindings", e); //NON-NLS
+        }
+    }
     
     /**
      * Runs an initial load of the Jython modules to speed up subsequent loads.
