@@ -58,7 +58,7 @@ import org.sleuthkit.datamodel.TskData;
  * Listener which is checking for changes in IngestJobEvent Completed or
  * Canceled and IngestModuleEvent Content Changed.
  */
-public final class FileTypesByMimeType extends Observable implements AutopsyVisitableItem, RefreshThrottler.Refresher {
+public final class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
 
     private final static Logger logger = Logger.getLogger(FileTypesByMimeType.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
@@ -87,7 +87,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * RefreshThrottler is used to limit the number of refreshes performed when
      * CONTENT_CHANGED and DATA_ADDED ingest module events are received.
      */
-    private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
+    private final RefreshThrottler refreshThrottler;
 
     /**
      * Create the base expression used as the where clause in the queries for
@@ -166,13 +166,14 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                     || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
                     || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
 
-                refresh();
+                refreshMimeTypes();
             } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                 if (evt.getNewValue() == null) {
                     removeListeners();
                 }
             }
         };
+        refreshThrottler = new RefreshThrottler(new FileTypesByMimeTypeRefresher());
         IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
         refreshThrottler.registerForIngestModuleEvents();
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
@@ -206,8 +207,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
 
     }
 
-    @Override
-    public void refresh() {
+    private void refreshMimeTypes() {
         /**
          * Checking for a current case is a stop gap measure until a different
          * way of handling the closing of cases is worked out. Currently, remote
@@ -224,9 +224,18 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         }
     }
 
-    @Override
-    public boolean isRefreshRequired(PropertyChangeEvent evt) {
-        return true;
+    private class FileTypesByMimeTypeRefresher implements RefreshThrottler.Refresher {
+
+        @Override
+        public void refresh() {
+            refreshMimeTypes();
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            return true;
+        }
+
     }
 
     /**
