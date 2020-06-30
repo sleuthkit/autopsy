@@ -75,7 +75,7 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
             XPathExpression expr = xpath.compile(CASE_NAME_XPATH);
             String caseName = (String) expr.evaluate(doc, XPathConstants.STRING);
             if (caseName.isEmpty()) {
-                throw new ManifestFileParserException("CaseName element is missing or empty, manifest is invalid");
+                throw new ManifestFileParserException("Case name not found, manifest is invalid");
             }
             
             expr = xpath.compile(DEVICE_ID_XPATH);
@@ -87,7 +87,7 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
             expr = xpath.compile(DATA_SOURCE_NAME_XPATH);
             String dataSourceName = (String) expr.evaluate(doc, XPathConstants.STRING);
             if (dataSourceName.isEmpty()) {
-                throw new ManifestFileParserException("DataSource element is missing or empty, manifest is invalid");                
+                throw new ManifestFileParserException("Data source path not found, manifest is invalid");                
             }
             Path dataSourcePath = filePath.getParent().resolve(dataSourceName);
             
