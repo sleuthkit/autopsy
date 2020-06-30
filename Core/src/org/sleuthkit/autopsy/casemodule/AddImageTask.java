@@ -44,6 +44,7 @@ class AddImageTask implements Runnable {
 
     private final Logger logger = Logger.getLogger(AddImageTask.class.getName());
     private final ImageDetails imageDetails;
+    private long imageId = 0;
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final AddDataSourceCallbacks addDataSourceCallbacks;
     private final AddImageTaskCallback addImageTaskCallback;
@@ -163,7 +164,10 @@ class AddImageTask implements Runnable {
      */
     private void runAddImageProcess(List<String> errorMessages) {
         try {
-            tskAddImageProcess.run(imageDetails.deviceId, new String[]{imageDetails.imagePath}, imageDetails.sectorSize, this.addDataSourceCallbacks);
+            long returnedImageId = tskAddImageProcess.run(imageDetails.deviceId, new String[]{imageDetails.imagePath}, imageDetails.sectorSize, this.addDataSourceCallbacks);
+            synchronized (tskAddImageProcessLock) {
+                imageId = returnedImageId;
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Critical error occurred adding image %s", imageDetails.imagePath), ex); //NON-NLS
             criticalErrorOccurred = true;
@@ -191,7 +195,6 @@ class AddImageTask implements Runnable {
     private void finishAddImageProcess(Case currentCase, List<String> errorMessages, List<Content> newDataSources) {
         synchronized (tskAddImageProcessLock) {
             try {
-                long imageId = tskAddImageProcess.finishAddImageProcess();
                 if (imageId != 0) {
                     Image newImage = currentCase.getSleuthkitCase().getImageById(imageId);
                     String verificationError = newImage.verifyImageSize();

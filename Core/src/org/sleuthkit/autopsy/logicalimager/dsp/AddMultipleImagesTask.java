@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DefaultAddDataSourceCallbacks;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI;
@@ -60,6 +61,7 @@ class AddMultipleImagesTask implements Runnable {
     private List<String> errorMessages = new ArrayList<>();
     private DataSourceProcessorResult result;
     private List<Content> newDataSources = new ArrayList<>();
+    private long imageId = 0;
 
     /*
      * The cancellation requested flag and SleuthKit add image process are
@@ -119,6 +121,7 @@ class AddMultipleImagesTask implements Runnable {
         progressMonitor.setIndeterminate(true);
         for (String imageFilePath : imageFilePaths) {
             synchronized (tskAddImageProcessLock) {
+                imageId = 0; // Reset the current image ID
                 if (!tskAddImageProcessStopped) {
                     addImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, false, false, "");
                 } else {
@@ -239,7 +242,10 @@ class AddMultipleImagesTask implements Runnable {
          */
         progressMonitor.setProgressText(Bundle.AddMultipleImagesTask_adding(imageFilePath));
         try {
-            addImageProcess.run(deviceId, new String[]{imageFilePath});
+            long returnedImageId = addImageProcess.run(deviceId, new String[]{imageFilePath}, 0, new DefaultAddDataSourceCallbacks());
+            synchronized (tskAddImageProcessLock) {
+                imageId = returnedImageId;
+            }
         } catch (TskCoreException ex) {
             if (ex.getMessage().contains(TSK_FS_TYPE_UNKNOWN_ERR_MSG)) {
                 /*
@@ -278,7 +284,6 @@ class AddMultipleImagesTask implements Runnable {
                 * sources to be returned via the getter method.
              */
             try {
-                long imageId = addImageProcess.finishAddImageProcess();
                 Image dataSource = currentCase.getSleuthkitCase().getImageById(imageId);
                 newDataSources.add(dataSource);
 
