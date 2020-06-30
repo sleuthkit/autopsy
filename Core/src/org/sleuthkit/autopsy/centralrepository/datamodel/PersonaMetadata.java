@@ -107,7 +107,7 @@ public class PersonaMetadata {
      */
     static PersonaMetadata addPersonaMetadata(long personaId, String name, String value, String justification, Persona.Confidence confidence) throws CentralRepoException {
 
-        CentralRepoExaminer examiner = CentralRepository.getInstance().getOrInsertExaminer(System.getProperty("user.name"));
+        CentralRepoExaminer examiner = getCRInstance().getOrInsertExaminer(System.getProperty("user.name"));
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();
@@ -123,17 +123,17 @@ public class PersonaMetadata {
                 + examiner.getId()
                 + ")";
 
-        CentralRepository.getInstance().executeInsertSQL(insertClause);
+        getCRInstance().executeInsertSQL(insertClause);
         
         String queryClause = SELECT_QUERY_BASE
                 + "WHERE pmd.persona_id = " + personaId
-                + " AND pmd.name = \"" + name + "\""
-                + " AND pmd.value = \"" + value + "\""
+                + " AND pmd.name = '" + name + "'"
+                + " AND pmd.value = '" + value + "'"
                 + " AND pmd.date_added = " + timeStampMillis
                 + " AND pmd.examiner_id = " + examiner.getId();
         
         PersonaMetadataQueryCallback queryCallback = new PersonaMetadataQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeSelectSQL(queryClause, queryCallback);
         
         Collection<PersonaMetadata> metadata = queryCallback.getMetadataList();
         if (metadata.size() != 1) {
@@ -152,7 +152,7 @@ public class PersonaMetadata {
      */
     static void removePersonaMetadata(PersonaMetadata metadata) throws CentralRepoException {
         String deleteClause = " DELETE FROM persona_metadata WHERE id = " + metadata.getId();
-        CentralRepository.getInstance().executeDeleteSQL(deleteClause);
+        getCRInstance().executeDeleteSQL(deleteClause);
     }
     
     /**
@@ -169,7 +169,7 @@ public class PersonaMetadata {
             throw new CentralRepoException("Failed to modify persona metadata, Central Repo is not enabled");
         }
         
-        String updateClause = "UPDATE persona_metadata SET confidence_id = " + confidence.getLevelId() + ", justification = \"" + justification + "\" WHERE id = " + metadata.id;
+        String updateClause = "UPDATE persona_metadata SET confidence_id = " + confidence.getLevelId() + ", justification = '" + justification + "' WHERE id = " + metadata.id;
         cr.executeUpdateSQL(updateClause);
     }
     
@@ -219,10 +219,27 @@ public class PersonaMetadata {
         String queryClause = SELECT_QUERY_BASE + "WHERE pmd.persona_id = " + personaId;
         
         PersonaMetadataQueryCallback queryCallback = new PersonaMetadataQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeSelectSQL(queryClause, queryCallback);
 
         return queryCallback.getMetadataList();
 
     }
     
+    /**
+     * Wraps the call to CentralRepository.getInstance() throwing an 
+     * exception if instance is null;
+     * 
+     * @return Instance of CentralRepository
+     * 
+     * @throws CentralRepoException 
+     */
+    private static CentralRepository getCRInstance()  throws CentralRepoException {
+        CentralRepository instance = CentralRepository.getInstance();
+        
+        if(instance == null) {
+            throw new CentralRepoException("Failed to get instance of CentralRespository, CR was null");
+        }
+        
+        return instance;
+    }
 }

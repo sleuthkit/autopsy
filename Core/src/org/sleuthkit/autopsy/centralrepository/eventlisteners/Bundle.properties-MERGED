@@ -1,5 +1,5 @@
 caseeventlistener.evidencetag=Evidence
-IngestEventsListener.ingestmodule.name=Correlation Engine
+IngestEventsListener.ingestmodule.name=Central Repository
 IngestEventsListener.prevCaseComment.text=Previous Case: 
 # {0} - typeName
 # {1} - count
