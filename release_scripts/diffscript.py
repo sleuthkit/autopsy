@@ -1,5 +1,6 @@
 """This script determines the updated, added, and deleted properties from the '.properties-MERGED' files
-and generates a csv file containing the items changed.  This script requires gitpython and jproperties.
+and generates a csv file containing the items changed.  This script requires the python libraries:
+gitpython and jproperties.  As a consequence, it also requires git >= 1.7.0 and python >= 3.4.
 """
 
 from git import Repo
