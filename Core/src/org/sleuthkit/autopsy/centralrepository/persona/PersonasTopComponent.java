@@ -263,22 +263,25 @@ public final class PersonasTopComponent extends TopComponent {
     private void initComponents() {
 
         searchButtonGroup = new javax.swing.ButtonGroup();
-        jSplitPane1 = new javax.swing.JSplitPane();
+        mainSplitPane = new javax.swing.JSplitPane();
         searchPanel = new javax.swing.JPanel();
         searchField = new javax.swing.JTextField();
         searchNameRadio = new javax.swing.JRadioButton();
         searchAccountRadio = new javax.swing.JRadioButton();
+        searchBtn = new javax.swing.JButton();
         resultsPane = new javax.swing.JScrollPane();
         resultsTable = new javax.swing.JTable();
-        searchBtn = new javax.swing.JButton();
         createAccountBtn = new javax.swing.JButton();
-        createBtn = new javax.swing.JButton();
         editBtn = new javax.swing.JButton();
         deleteBtn = new javax.swing.JButton();
-        jSeparator1 = new javax.swing.JSeparator();
+        createButtonSeparator = new javax.swing.JSeparator();
+        createBtn = new javax.swing.JButton();
+        detailsScrollPane = new javax.swing.JScrollPane();
         detailsPanel = new org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel();
 
         setName(""); // NOI18N
+
+        mainSplitPane.setDividerLocation(400);
 
         searchField.setText(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchField.text")); // NOI18N
 
@@ -289,6 +292,8 @@ public final class PersonasTopComponent extends TopComponent {
         searchButtonGroup.add(searchAccountRadio);
         org.openide.awt.Mnemonics.setLocalizedText(searchAccountRadio, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchAccountRadio.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(searchBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchBtn.text")); // NOI18N
+
         resultsTable.setToolTipText(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultsTable.toolTipText")); // NOI18N
         resultsTable.getTableHeader().setReorderingAllowed(false);
         resultsPane.setViewportView(resultsTable);
@@ -298,17 +303,15 @@ public final class PersonasTopComponent extends TopComponent {
             resultsTable.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.resultsTable.columnModel.title1")); // NOI18N
         }
 
-        org.openide.awt.Mnemonics.setLocalizedText(searchBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.searchBtn.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(createAccountBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.createAccountBtn.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(createBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.createBtn.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(editBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.editBtn.text")); // NOI18N
         editBtn.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.deleteBtn.text")); // NOI18N
         deleteBtn.setEnabled(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(createBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.createBtn.text")); // NOI18N
 
         javax.swing.GroupLayout searchPanelLayout = new javax.swing.GroupLayout(searchPanel);
         searchPanel.setLayout(searchPanelLayout);
@@ -317,13 +320,7 @@ public final class PersonasTopComponent extends TopComponent {
             .addGroup(searchPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSeparator1)
-                    .addGroup(searchPanelLayout.createSequentialGroup()
-                        .addComponent(createBtn)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(editBtn)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(deleteBtn))
+                    .addComponent(createButtonSeparator)
                     .addComponent(resultsPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addComponent(searchField)
                     .addGroup(searchPanelLayout.createSequentialGroup()
@@ -333,7 +330,14 @@ public final class PersonasTopComponent extends TopComponent {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(searchBtn))
                     .addGroup(searchPanelLayout.createSequentialGroup()
-                        .addComponent(createAccountBtn)
+                        .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(createAccountBtn)
+                            .addGroup(searchPanelLayout.createSequentialGroup()
+                                .addComponent(createBtn)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(editBtn)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(deleteBtn)))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -348,42 +352,46 @@ public final class PersonasTopComponent extends TopComponent {
                     .addComponent(searchAccountRadio)
                     .addComponent(searchBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(resultsPane, javax.swing.GroupLayout.DEFAULT_SIZE, 457, Short.MAX_VALUE)
+                .addComponent(resultsPane, javax.swing.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(editBtn)
                     .addComponent(createBtn)
                     .addComponent(deleteBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 4, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(createButtonSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 4, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(createAccountBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
-        jSplitPane1.setLeftComponent(searchPanel);
-        jSplitPane1.setRightComponent(detailsPanel);
+        mainSplitPane.setLeftComponent(searchPanel);
+
+        detailsScrollPane.setViewportView(detailsPanel);
+
+        mainSplitPane.setRightComponent(detailsScrollPane);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 794, Short.MAX_VALUE)
+            .addComponent(mainSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 816, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1)
+            .addComponent(mainSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 428, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton createAccountBtn;
     private javax.swing.JButton createBtn;
+    private javax.swing.JSeparator createButtonSeparator;
     private javax.swing.JButton deleteBtn;
     private org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel detailsPanel;
+    private javax.swing.JScrollPane detailsScrollPane;
     private javax.swing.JButton editBtn;
-    private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JSplitPane mainSplitPane;
     private javax.swing.JScrollPane resultsPane;
     private javax.swing.JTable resultsTable;
     private javax.swing.JRadioButton searchAccountRadio;

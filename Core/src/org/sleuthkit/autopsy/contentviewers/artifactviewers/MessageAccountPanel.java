@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package org.sleuthkit.autopsy.contentviewers;
+package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

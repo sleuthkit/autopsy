@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers;
+package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 
 import org.sleuthkit.autopsy.datamodel.AttachmentNode;
 import java.awt.Color;
@@ -41,7 +41,9 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.contentviewers.TranslatablePanel;
 import org.sleuthkit.autopsy.contentviewers.TranslatablePanel.TranslatablePanelException;
+import org.sleuthkit.autopsy.contentviewers.Utilities;
 import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
