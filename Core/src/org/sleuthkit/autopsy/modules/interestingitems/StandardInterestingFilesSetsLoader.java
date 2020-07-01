@@ -28,7 +28,9 @@ import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.OnStart;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * When the interesting items module loads, this runnable loads standard
@@ -49,12 +51,17 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
     };
 
     @Override
+    @Messages({
+        "StandardInterestingFilesSetsLoader_cannotLoadStandard=Unable to properly read standard interesting files sets.",
+        "StandardInterestingFilesSetsLoader_cannotLoadUserConfigured=Unable to properly read user-configured interesting files sets.",
+        "StandardInterestingFilesSetsLoader_cannotUpdateInterestingFilesSets=Unable to write updated configuration for interesting files sets to config directory."
+    })
     public void run() {
         Map<String, FilesSet> standardInterestingFileSets = null;
         try {
             standardInterestingFileSets = readStandardFileXML();
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
-            LOGGER.log(Level.SEVERE, "Unable to properly read standard interesting files sets.", ex);
+            handleError(Bundle.StandardInterestingFilesSetsLoader_cannotLoadStandard(), ex);
             return;
         }
 
@@ -64,6 +71,7 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
             userConfiguredSettings = FilesSetsManager.getInstance().getInterestingFilesSets();
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
             LOGGER.log(Level.SEVERE, "Unable to properly read user-configured interesting files sets.", ex);
+            handleError(Bundle.StandardInterestingFilesSetsLoader_cannotLoadStandard(), ex);
             return;
         }
 
@@ -74,7 +82,20 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
             // Call FilesSetManager.setInterestingFilesSets with the updated Map.
             FilesSetsManager.getInstance().setInterestingFilesSets(userConfiguredSettings);
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
-            LOGGER.log(Level.SEVERE, "Unable to write updated configuration for interesting files sets to config directory.", ex);
+            handleError(Bundle.StandardInterestingFilesSetsLoader_cannotUpdateInterestingFilesSets(), ex);
+        }
+    }
+
+    /**
+     * Responsible for handling top level exceptions and displaying to the user.
+     *
+     * @param message The message to display and log.
+     * @param ex      The exception (if any) to log.
+     */
+    private static void handleError(String message, Exception ex) {
+        LOGGER.log(Level.SEVERE, message, ex);
+        if (RuntimeProperties.runningWithGUI()) {
+            MessageNotifyUtil.Message.error(message);
         }
     }
 
