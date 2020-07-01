@@ -50,7 +50,13 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
 
     @Override
     public void run() {
-        Map<String, FilesSet> standardInterestingFileSets = readStandardFileXML();
+        Map<String, FilesSet> standardInterestingFileSets = null;
+        try {
+            standardInterestingFileSets = readStandardFileXML();
+        } catch (FilesSetsManager.FilesSetsManagerException ex) {
+            LOGGER.log(Level.SEVERE, "Unable to properly read standard interesting files sets.", ex);
+            return;
+        }
 
         // Call FilesSetManager.getInterestingFilesSets() to get a Map<String, FilesSet> of the existing rule sets.
         Map<String, FilesSet> userConfiguredSettings = null;
@@ -58,10 +64,7 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
             userConfiguredSettings = FilesSetsManager.getInstance().getInterestingFilesSets();
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
             LOGGER.log(Level.SEVERE, "Unable to properly read user-configured interesting files sets.", ex);
-        }
-
-        if (userConfiguredSettings == null) {
-            userConfiguredSettings = new HashMap<>();
+            return;
         }
 
         // Add each FilesSet read from the standard rules set XML files that is missing from the Map to the Map.
@@ -82,12 +85,17 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
      *
      * @return The mapping of files set keys to the file sets.
      */
-    private static Map<String, FilesSet> readStandardFileXML() {
+    private static Map<String, FilesSet> readStandardFileXML() throws FilesSetsManager.FilesSetsManagerException {
         Map<String, FilesSet> standardInterestingFileSets = new HashMap<>();
 
-        File[] standardFileSets = InstalledFileLocator.getDefault()
-                .locate(CONFIG_DIR, StandardInterestingFilesSetsLoader.class.getPackage().getName(), false)
-                .listFiles(DEFAULT_XML_FILTER);
+        File configFolder = InstalledFileLocator.getDefault().locate(
+                CONFIG_DIR, StandardInterestingFilesSetsLoader.class.getPackage().getName(), false);
+
+        if (configFolder == null || !configFolder.exists() || !configFolder.isDirectory()) {
+            throw new FilesSetsManager.FilesSetsManagerException("No standard interesting files set folder exists.");
+        }
+
+        File[] standardFileSets = configFolder.listFiles(DEFAULT_XML_FILTER);
 
         for (File standardFileSetsFile : standardFileSets) { //NON-NLS
             try {
