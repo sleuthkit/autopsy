@@ -517,10 +517,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
      *
      * @param oldSet            A set to replace, null if the new set is not a
      *                          replacement.
-     * @param name              The name of the files set.
-     * @param description       The description of the files set.
-     * @param ignoresKnownFiles Whether or not the files set ignores known
-     *                          files.
+     * @param newSet            The new set of rules.
      * @param rules             The set membership rules for the set. If null,
      *                          the rules in the new set will be used.
      */
