@@ -8,7 +8,7 @@ The Geolocation window shows artifacts that have longitude and latitude attribut
 
 \section geo_usage Usage
 
-To open the Geolocation window, go to "Tools" and then select "Geolocation".
+To open the Geolocation window, click on the "Geolocation" button near the top of the main window, or go to "Tools" and then select "Geolocation".
 
 \subsection geo_navigation General Usage
 
@@ -16,9 +16,9 @@ You can move the map by clicking and dragging, and zoom using either the mouse w
 
 \image html geo_track_points.png
 
-You can left click on a waypoint to highlight that waypoint and show a details pop-up in the upper right corner of the map. The details pop-up will be updated as you click on different waypoints. The data displayed will vary depending on the type of waypoint. For example, this is the endpoint of a GPS Route:
+You can left click on a waypoint to highlight that waypoint and show a details pop-up in the upper right corner of the map. The details pop-up will be updated as you click on different waypoints. The data displayed will vary depending on the type of waypoint. For example, this is a GPS bookmark:
 
-\image html geo_details_route.png
+\image html geo_details_bookmark.png
 
 While this is an image with GPS coordinates found by the \ref EXIF_parser_page :
 
