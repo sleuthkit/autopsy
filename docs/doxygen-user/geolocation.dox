@@ -12,7 +12,9 @@ To open the Geolocation window, go to "Tools" and then select "Geolocation".
 
 \subsection geo_navigation General Usage
 
-You can move the map by clicking and dragging, and zoom using either the mouse wheel or the slider in the bottom left of the map. If a map tile is not available the tile will appear grey but the waypoints will still be displayed. This is more likely to happen when changing the default \ref geo_map_options.
+You can move the map by clicking and dragging, and zoom using either the mouse wheel or the slider in the bottom left of the map. If a map tile is not available the tile will appear grey but the waypoints will still be displayed. This is more likely to happen when changing the default \ref geo_map_options. Different types of waypoint will be displayed different colors. You can use the key in the lower left to easily identify the type of each waypoint. Some types will also use different icons on the map. For example, individual track points will be displayed as smaller circles. The entire track will be highlighted when selecting an individual track point. 
+
+\image html geo_track_points.png
 
 You can left click on a waypoint to highlight that waypoint and show a details pop-up in the upper right corner of the map. The details pop-up will be updated as you click on different waypoints. The data displayed will vary depending on the type of waypoint. For example, this is the endpoint of a GPS Route:
 
