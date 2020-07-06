@@ -311,11 +311,12 @@ public final class CentralRepoAccount {
      * @throws InvalidAccountIDException If the account identifier is invalid.
      */
     public static String normalizeAccountIdentifier(CentralRepoAccountType crAccountType, String accountIdentifier) throws InvalidAccountIDException {
-        String normalizedAccountIdentifier;
-
+       
         if (StringUtils.isBlank(accountIdentifier)) {
             throw new InvalidAccountIDException("Account identifier is null or empty.");
         }
+        
+        String normalizedAccountIdentifier;
         try {
             if (crAccountType.getAcctType().equals(Account.Type.PHONE)) {
                 normalizedAccountIdentifier = CorrelationAttributeNormalizer.normalizePhone(accountIdentifier);
