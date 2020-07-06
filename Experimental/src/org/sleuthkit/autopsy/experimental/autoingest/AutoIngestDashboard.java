@@ -188,18 +188,16 @@ final class AutoIngestDashboard extends JPanel implements Observer {
              * @return The status string.
              */
             private String getServiceStatus(ServicesMonitor.Service service) {
-                String serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Unknown");
-                try {
-                    ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
-                    ServicesMonitor.ServiceStatusReport statusReport = servicesMonitor.getServiceStatusReport(service);
+                String serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Unknown");
+                ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
+                ServicesMonitor.ServiceStatusReport statusReport = servicesMonitor.getServiceStatusReport(service);
+                if (statusReport != null) {
                     ServicesMonitor.ServiceStatus status = statusReport.getStatus();
                     if (status == ServicesMonitor.ServiceStatus.UP) {
-                        serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
+                        serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
                     } else {
-                        serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
+                        serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down");
                     }
-                } catch (ServicesMonitor.ServicesMonitorException ex) {
-                    LOGGER.log(Level.SEVERE, String.format("Dashboard error getting service status for %s", service), ex);
                 }
                 return serviceStatus;
             }

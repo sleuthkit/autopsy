@@ -2164,28 +2164,32 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                  services monitor.
          */
         private boolean allServicesAreUp() throws ServicesMonitorException {
-            return (isServiceUp(ServicesMonitor.Service.COORDINATION_SERVICE.toString())
-                    && isServiceUp(ServicesMonitor.Service.DATABASE_SERVER.toString())
-                    && isServiceUp(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString())
-                    && isServiceUp(ServicesMonitor.Service.MESSAGING.toString()));
+            return (isServiceUp(ServicesMonitor.Service.COORDINATION_SERVICE)
+                    && isServiceUp(ServicesMonitor.Service.DATABASE_SERVER)
+                    && isServiceUp(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE)
+                    && isServiceUp(ServicesMonitor.Service.MESSAGING));
         }
 
         /**
          * Queries the service monitor to determine if a specified service is
          * up.
          *
-         * @param serviceName Name of the service.
+         * @param service Name of the service.
          *
          * @return True or false.
          *
          * @throws ServicesMonitorException If there is an error querying the
          *                                  services monitor.
          */
-        private boolean isServiceUp(String serviceName) throws ServicesMonitorException {
-            ServicesMonitor.ServiceStatusReport statusReport = ServicesMonitor.getInstance().getServiceStatusReport(serviceName);
-            ServicesMonitor.ServiceStatus status = statusReport.getStatus();
-            sysLogger.log(Level.INFO, "Status of {0} is {1}", new Object[]{serviceName, status});
-            return (statusReport.getStatus() == ServicesMonitor.ServiceStatus.UP);
+        private boolean isServiceUp(ServicesMonitor.Service service) throws ServicesMonitorException {
+            ServicesMonitor.ServiceStatus status = null;
+            ServicesMonitor.ServiceStatusReport statusReport = ServicesMonitor.getInstance().getServiceStatusReport(service);
+            if (statusReport != null) {
+                status = statusReport.getStatus();
+            }
+            boolean result = (status != null && status == ServicesMonitor.ServiceStatus.UP);
+            sysLogger.log(Level.INFO, "Status of {0} is {1}", new Object[]{service, result});
+            return result;
         }
 
         /**

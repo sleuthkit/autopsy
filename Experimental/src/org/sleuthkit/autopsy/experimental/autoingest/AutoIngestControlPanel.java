@@ -141,7 +141,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private static final int COMPLETED_TIME_COL_PREFERRED_WIDTH = 280;
     private static final String UPDATE_TASKS_THREAD_NAME = "AID-update-tasks-%d";
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
-    private static final String RUNNING_AS_SERVICE_PROPERTY = "autoingest.runningasservice";    
+    private static final String RUNNING_AS_SERVICE_PROPERTY = "autoingest.runningasservice";
     private static final Logger sysLogger = AutoIngestSystemLogger.getLogger();
     private static AutoIngestControlPanel instance;
     private final DefaultTableModel pendingTableModel;
@@ -158,7 +158,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * Maintain a mapping of each service to it's last status update.
      */
     private final ConcurrentHashMap<String, String> statusByService;
-    
+
     /*
      * The enum is used in conjunction with the DefaultTableModel class to
      * provide table models for the JTables used to display a view of the
@@ -245,7 +245,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * controlling automated ingest for a single node within the cluster.
      */
     private AutoIngestControlPanel() {
-        
+
         this.statusByService = new ConcurrentHashMap<>();
 
         //Disable the main window so they can only use the dashboard (if we used setVisible the taskBar icon would go away)
@@ -285,10 +285,10 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * Update status of the services on the dashboard
      */
     private void displayServicesStatus() {
-        tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message", 
-                statusByService.get(ServicesMonitor.Service.DATABASE_SERVER.toString()), 
-                statusByService.get(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString()), 
-                statusByService.get(ServicesMonitor.Service.COORDINATION_SERVICE.toString()), 
+        tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message",
+                statusByService.get(ServicesMonitor.Service.DATABASE_SERVER.toString()),
+                statusByService.get(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString()),
+                statusByService.get(ServicesMonitor.Service.COORDINATION_SERVICE.toString()),
                 statusByService.get(ServicesMonitor.Service.MESSAGING.toString())));
         String upStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
         if (statusByService.get(ServicesMonitor.Service.DATABASE_SERVER.toString()).compareTo(upStatus) != 0
@@ -300,7 +300,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             tbServicesStatusMessage.setForeground(Color.BLACK);
         }
     }
-    
+
     /**
      * Queries the services monitor and sets the text for the services status
      * text box.
@@ -333,17 +333,15 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
              */
             private String getServiceStatus(ServicesMonitor.Service service) {
                 String serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Unknown");
-                try {
-                    ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
-                    ServicesMonitor.ServiceStatusReport statusReport = servicesMonitor.getServiceStatusReport(service);
+                ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
+                ServicesMonitor.ServiceStatusReport statusReport = servicesMonitor.getServiceStatusReport(service);
+                if (statusReport != null) {
                     ServicesMonitor.ServiceStatus status = statusReport.getStatus();
                     if (status == ServicesMonitor.ServiceStatus.UP) {
                         serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
                     } else {
                         serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down");
                     }
-                } catch (ServicesMonitor.ServicesMonitorException ex) {
-                    sysLogger.log(Level.SEVERE, String.format("Dashboard error getting service status for %s", service), ex);
                 }
                 return serviceStatus;
             }
@@ -712,31 +710,31 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         }
 
         PropertyChangeListener propChangeListener = (PropertyChangeEvent evt) -> {
-            
+
             String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).toString();
             String status = evt.getNewValue().toString();
-            
+
             if (status.equals(ServicesMonitor.ServiceStatus.UP.toString())) {
                 status = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
             } else if (status.equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
                 status = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down");
                 sysLogger.log(Level.SEVERE, "Connection to {0} is down", serviceDisplayName); //NON-NLS
             }
-            
+
             // if the status update is for an existing service who's status hasn't changed - do nothing.       
             if (statusByService.containsKey(serviceDisplayName) && status.equals(statusByService.get(serviceDisplayName))) {
                 return;
             }
-            
+
             statusByService.put(serviceDisplayName, status);
             displayServicesStatus();
         };
-        
+
         // Subscribe to all multi-user services in order to display their status
         Set<String> servicesList = new HashSet<>();
         servicesList.add(ServicesMonitor.Service.COORDINATION_SERVICE.toString());
         servicesList.add(ServicesMonitor.Service.DATABASE_SERVER.toString());
-        servicesList.add(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString()); 
+        servicesList.add(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString());
         servicesList.add(ServicesMonitor.Service.MESSAGING.toString());
         ServicesMonitor.getInstance().addSubscriber(servicesList, propChangeListener);
 

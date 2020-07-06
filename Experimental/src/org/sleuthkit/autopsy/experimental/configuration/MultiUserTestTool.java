@@ -403,9 +403,12 @@ class MultiUserTestTool {
      *                                  services monitor.
      */
     private static boolean isServiceUp(ServicesMonitor.Service service) throws ServicesMonitor.ServicesMonitorException {
+        ServicesMonitor.ServiceStatus status = null;
         ServicesMonitor.ServiceStatusReport statusReport = ServicesMonitor.getInstance().getServiceStatusReport(service);
-        ServicesMonitor.ServiceStatus status = statusReport.getStatus();
-        return (status == ServicesMonitor.ServiceStatus.UP);
+        if (statusReport != null) {
+            status = statusReport.getStatus();
+        }
+        return (status != null && status == ServicesMonitor.ServiceStatus.UP);
     }
 
     /**
