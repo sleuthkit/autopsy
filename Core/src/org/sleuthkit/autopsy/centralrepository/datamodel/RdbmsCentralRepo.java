@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.HashHitInfo;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
@@ -1081,16 +1082,17 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      *                          within TSK core
      */
     @Override
-    public CentralRepoAccount getOrCreateAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
+    public CentralRepoAccount getOrCreateAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws InvalidAccountIDException, CentralRepoException {
         // Get the account fom the accounts table
-        CentralRepoAccount account = getAccount(crAccountType, accountUniqueID);
+        String normalizedAccountID = CentralRepoAccount.normalizeAccountIdentifier(crAccountType, accountUniqueID);
+        CentralRepoAccount account = getAccount(crAccountType, normalizedAccountID);
 
         // account not found in the table, create it
         if (null == account) {
 
             String query = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
                     + "VALUES ( " + crAccountType.getAccountTypeId() + ", '"
-                    + accountUniqueID + "' )";
+                    + normalizedAccountID + "' )";
 
             try (Connection connection = connect();
                     Statement s = connection.createStatement();) {

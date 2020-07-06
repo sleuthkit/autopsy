@@ -28,6 +28,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
@@ -35,6 +36,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.Cent
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 
 /**
  * Configuration dialog for creating an account.
@@ -212,6 +214,9 @@ public class CreatePersonaAccountDialog extends JDialog {
         setVisible(true);
     }
     
+    @Messages({
+        "CreatePersonaAccountDialog_invalid_account_Title=Invalid account identifier",
+        "CreatePersonaAccountDialog_invalid_account_msg=Account identifier is not valid.",})
     private CentralRepoAccount createAccount(CentralRepoAccount.CentralRepoAccountType type, String identifier) {
         CentralRepoAccount ret = null;
         try {
@@ -222,8 +227,14 @@ public class CreatePersonaAccountDialog extends JDialog {
         } catch (CentralRepoException e) {
             logger.log(Level.SEVERE, "Failed to access central repository", e);
             JOptionPane.showMessageDialog(this,
-                    Bundle.PersonaAccountDialog_get_types_exception_Title(),
                     Bundle.PersonaAccountDialog_get_types_exception_msg(),
+                    Bundle.PersonaAccountDialog_get_types_exception_Title(),
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (InvalidAccountIDException e) {
+            logger.log(Level.WARNING, "Invalid account identifier", e);
+            JOptionPane.showMessageDialog(this,
+                    Bundle.CreatePersonaAccountDialog_invalid_account_msg(),
+                    Bundle.CreatePersonaAccountDialog_invalid_account_Title(),
                     JOptionPane.ERROR_MESSAGE);
         }
         return ret;
