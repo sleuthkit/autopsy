@@ -361,14 +361,12 @@ final public class CorrelationAttributeNormalizer {
         // A phone number may have a leading '+', special telephony chars, or digits.
         // Anything else implies an invalid phone number.
         for (int i = 0; i < phoneNumber.length(); i++) {
-            if ((i == 0 && phoneNumber.charAt(i) == '+')
+            if ( !((i == 0 && phoneNumber.charAt(i) == '+')
                     || Character.isSpaceChar(phoneNumber.charAt(i))
                     || Character.isDigit(phoneNumber.charAt(i))
-                    || PHONENUMBER_CHARS.contains(String.valueOf(phoneNumber.charAt(i)))) {
-                // continue
-            } else {
+                    || PHONENUMBER_CHARS.contains(String.valueOf(phoneNumber.charAt(i))))) {
                 return false;
-            }
+            } 
         }
 
         // ensure a min length

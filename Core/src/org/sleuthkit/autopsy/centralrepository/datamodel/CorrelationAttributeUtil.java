@@ -34,7 +34,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.CommunicationsUtils;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -232,13 +231,13 @@ public class CorrelationAttributeUtil {
         /*
          * Normalize the phone number.
          */
-        if (value != null) {
-            if(CorrelationAttributeNormalizer.isValidPhoneNumber(value)) {
-                value = CorrelationAttributeNormalizer.normalizePhone(value);
-                corrAttr = makeCorrAttr(artifact, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), value);
-                if(corrAttr != null) {
-                    corrAttrInstances.add(corrAttr);
-                }
+        if (value != null
+                && CorrelationAttributeNormalizer.isValidPhoneNumber(value)) {
+
+            value = CorrelationAttributeNormalizer.normalizePhone(value);
+            corrAttr = makeCorrAttr(artifact, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), value);
+            if (corrAttr != null) {
+                corrAttrInstances.add(corrAttr);
             }
         }
     }

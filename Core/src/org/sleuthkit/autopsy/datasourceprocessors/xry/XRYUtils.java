@@ -28,7 +28,6 @@ import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQueries;
 import org.sleuthkit.datamodel.CommunicationsUtils;
 import org.sleuthkit.datamodel.InvalidAccountIDException;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Common utility methods shared among all XRY parser implementations.
