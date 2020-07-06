@@ -101,8 +101,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         this.statusByService = new ConcurrentHashMap<>();
         scheduledRefreshThreadPoolExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(AID_REFRESH_THREAD_NAME).build());
         initComponents();
-        statusByService.put(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
-        statusByService.put(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
+        statusByService.put(ServicesMonitor.Service.COORDINATION_SERVICE.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
+        statusByService.put(ServicesMonitor.Service.DATABASE_SERVER.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
+        statusByService.put(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
         statusByService.put(ServicesMonitor.Service.MESSAGING.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
         setServicesStatusMessage();
         pendingJobsPanel = new AutoIngestJobsPanel(AutoIngestJobsNode.AutoIngestJobStatus.PENDING_JOB);
@@ -148,13 +149,14 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private void displayServicesStatus() {
         tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message",
-                statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()),
-                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()),
-                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()),
+                statusByService.get(ServicesMonitor.Service.COORDINATION_SERVICE.toString()),
+                statusByService.get(ServicesMonitor.Service.DATABASE_SERVER.toString()),
+                statusByService.get(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString()),
                 statusByService.get(ServicesMonitor.Service.MESSAGING.toString())));
         String upStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
-        if (statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).compareTo(upStatus) != 0
-                || statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()).compareTo(upStatus) != 0
+        if (statusByService.get(ServicesMonitor.Service.COORDINATION_SERVICE.toString()).compareTo(upStatus) != 0
+                || statusByService.get(ServicesMonitor.Service.DATABASE_SERVER.toString()).compareTo(upStatus) != 0
+                || statusByService.get(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString()).compareTo(upStatus) != 0
                 || statusByService.get(ServicesMonitor.Service.MESSAGING.toString()).compareTo(upStatus) != 0) {
             tbServicesStatusMessage.setForeground(Color.RED);
         } else {
@@ -171,8 +173,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
             @Override
             protected Void doInBackground() throws Exception {
-                statusByService.put(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE));
-                statusByService.put(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString(), getServiceStatus(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH));
+                statusByService.put(ServicesMonitor.Service.COORDINATION_SERVICE.toString(), getServiceStatus(ServicesMonitor.Service.COORDINATION_SERVICE));
+                statusByService.put(ServicesMonitor.Service.DATABASE_SERVER.toString(), getServiceStatus(ServicesMonitor.Service.DATABASE_SERVER));
+                statusByService.put(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString(), getServiceStatus(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE));
                 statusByService.put(ServicesMonitor.Service.MESSAGING.toString(), getServiceStatus(ServicesMonitor.Service.MESSAGING));
                 return null;
             }
@@ -188,8 +191,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                 String serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Unknown");
                 try {
                     ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
-                    serviceStatus = servicesMonitor.getServiceStatus(service.toString());
-                    if (serviceStatus.compareTo(ServicesMonitor.ServiceStatusReport.UP.toString()) == 0) {
+                    ServicesMonitor.ServiceStatusReport statusReport = servicesMonitor.getServiceStatusReport(service);
+                    ServicesMonitor.ServiceStatus status = statusReport.getStatus();
+                    if (status == ServicesMonitor.ServiceStatus.UP) {
                         serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
                     } else {
                         serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
@@ -220,10 +224,10 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).toString();
             String status = evt.getNewValue().toString();
 
-            if (status.equals(ServicesMonitor.ServiceStatusReport.UP.toString())) {
+            if (status.equals(ServicesMonitor.ServiceStatus.UP.toString())) {
                 status = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
                 LOGGER.log(Level.INFO, "Connection to {0} is up", serviceDisplayName); //NON-NLS
-            } else if (status.equals(ServicesMonitor.ServiceStatusReport.DOWN.toString())) {
+            } else if (status.equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
                 status = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
                 LOGGER.log(Level.SEVERE, "Connection to {0} is down", serviceDisplayName); //NON-NLS
             } else {
@@ -241,8 +245,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
         // Subscribe to all multi-user services in order to display their status
         Set<String> servicesList = new HashSet<>();
-        servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString());
-        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString());
+        servicesList.add(ServicesMonitor.Service.COORDINATION_SERVICE.toString());
+        servicesList.add(ServicesMonitor.Service.DATABASE_SERVER.toString());
+        servicesList.add(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString());
         servicesList.add(ServicesMonitor.Service.MESSAGING.toString());
         ServicesMonitor.getInstance().addSubscriber(servicesList, propChangeListener);
 

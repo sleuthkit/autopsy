@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,7 +46,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.keywordsearch.KeywordListsManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestSettingsPanel.UpdateConfigSwingWorker;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
@@ -291,21 +290,6 @@ public class SharedConfiguration {
             throw new SharedConfigurationException(String.format("Coordination service error acquiring exclusive lock on shared configuration source %s", remoteFolder.getAbsolutePath()), ex);
         }
 
-        // Check Solr service
-        if (!isServiceUp(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString())) {
-            throw new SharedConfigurationException("Keyword search service is down");
-        }
-
-        // Check PostgreSQL service
-        if (!isServiceUp(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString())) {
-            throw new SharedConfigurationException("Case database server is down");
-        }
-
-        // Check ActiveMQ service
-        if (!isServiceUp(ServicesMonitor.Service.MESSAGING.toString())) {
-            throw new SharedConfigurationException("Messaging service is down");
-        }
-
         // Check input folder permissions
         String inputFolder = AutoIngestUserPreferences.getAutoModeImageFolder();
         if (!FileUtil.hasReadWriteAccess(Paths.get(inputFolder))) {
@@ -319,22 +303,6 @@ public class SharedConfiguration {
         }
 
         return SharedConfigResult.SUCCESS;
-    }
-
-    /**
-     * Tests service of interest to verify that it is running.
-     *
-     * @param serviceName Name of the service.
-     *
-     * @return True if the service is running, false otherwise.
-     */
-    private boolean isServiceUp(String serviceName) {
-        try {
-            return (ServicesMonitor.getInstance().getServiceStatus(serviceName).equals(ServicesMonitor.ServiceStatusReport.UP.toString()));
-        } catch (ServicesMonitor.ServicesMonitorException ex) {
-            logger.log(Level.SEVERE, String.format("Problem checking service status for %s", serviceName), ex);
-            return false;
-        }
     }
 
     /**

@@ -33,95 +33,58 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
-import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
-import org.sleuthkit.autopsy.events.MessageServiceException;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
-import org.sleuthkit.datamodel.CaseDbConnectionInfo;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
+import java.util.Objects;
+import java.util.Map;
+import org.sleuthkit.autopsy.casemodule.multiusercases.services.PostgreSqlServer;
+import org.sleuthkit.autopsy.casemodule.multiusercases.services.ActiveMqMessageBroker;
+import org.sleuthkit.autopsy.casemodule.multiusercases.services.SolrServer;
+import org.sleuthkit.autopsy.casemodule.multiusercases.services.ZooKeeperDatabase;
 
 /**
- * Monitors the status of services and publishes events and user notifications
- * when the status of a service changes.
+ * Monitors the status of application services in a collaborative, multi-user
+ * case environment and publishes events and user notifications when the status
+ * of a service changes.
  *
  * A service that wants to have its current status periodically polled by the
  * services monitor should implement the MonitoredService interface.
  *
- * A service mnonitor that wants to push its current status to the services
- * monitor should call the setServiceStatus() method when it starts up and
- * whenever its status changes.
+ * A service that wants to push its current status to the services monitor
+ * should call the setServiceStatus() method when it starts up and whenever its
+ * status changes.
  *
- * Services may choose to both implement MonitoredService and call
- * setServiceStatus().
+ * A service can implement both strategies, if desired.
  */
 public class ServicesMonitor {
-
-    /**
-     * A service status report.
-     */
-    public class ServiceStatusReport {
-
-        private final String status;
-        private final String details;
-
-        /**
-         * Constructs an instance of a service status report.
-         *
-         * @param status  The service status.
-         * @param details Additional details regarding the service status, may
-         *                be empty.
-         */
-        ServiceStatusReport(String status, String details) {
-            this.status = status;
-            this.details = details;
-        }
-
-        /**
-         * Gets the status of the service.
-         */
-        String getStatus() {
-            return status;
-        }
-
-        /**
-         * Gets any additional details regarding the status of a service.
-         *
-         * @return The additional details, may be empty.
-         */
-        String getDetails() {
-            return details;
-        }
-
-    }
-
-    /**
-     * A service that wants to have its current status periodically polled by
-     * the services monitor should implement the MonitoredService interface
-     */
-    public interface MonitoredService {
-
-        /**
-         * Gets the current status of the service.
-         *
-         * @return The status of the service.
-         */
-        ServiceStatusReport getStatus();
-
-    }
 
     /**
      * An enumeration of the core services in a collaborative, multi-user case
      * environment.
      *
-     * The display names provided here can be used to identify the service
-     * status events published for these services and to directly query the
-     * ServicesMonitor for the current status of these services.
+     * The service display names provided here can be used to identify the
+     * service status events published for these services and to directly query
+     * the ServicesMonitor for the current status of these services.
      */
+    @NbBundle.Messages({
+        "ServicesMonitor.dbServer.displayName=PostgreSQL Server",
+        "ServicesMonitor.solrServer.displayName=Solr Server",
+        "ServicesMonitor.messageBroker.displayName=ActiveMQ Message Broker",
+        "ServicesMonitor.coordinationSvc.displayName=ZooKeeper Service"
+    })
     public enum Service {
-        REMOTE_CASE_DATABASE(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.remoteCaseDatabase.displayName.text")),
-        REMOTE_KEYWORD_SEARCH(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.remoteKeywordSearch.displayName.text")),
-        MESSAGING(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.messaging.displayName.text"));
+        DATABASE_SERVER(Bundle.ServicesMonitor_dbServer_displayName()),
+        KEYWORD_SEARCH_SERVICE(Bundle.ServicesMonitor_solrServer_displayName()),
+        MESSAGING(Bundle.ServicesMonitor_messageBroker_displayName()),
+        COORDINATION_SERVICE(Bundle.ServicesMonitor_coordinationSvc_displayName()),
+        /*
+         * @deprecated
+         */
+        @Deprecated
+        REMOTE_CASE_DATABASE(Bundle.ServicesMonitor_dbServer_displayName()),
+        /*
+         * @deprecated
+         */
+        @Deprecated
+        REMOTE_KEYWORD_SEARCH(Bundle.ServicesMonitor_solrServer_displayName());
 
         private final String displayName;
 
@@ -135,15 +98,18 @@ public class ServicesMonitor {
     };
 
     /**
-     * An enumeration of the standard service statuses.
+     * An enumeration of the standard service statuses. If a service reports a
+     * status of OTHER, its reported status will be its details string.
      */
     @NbBundle.Messages({
         "serviceStatus.up=Up",
-        "serviceStatus.down=Down"
+        "serviceStatus.down=Down",
+        "serviceStatus.other=Other"
     })
     public enum ServiceStatus {
-        UP(serviceStatus_up()),
-        DOWN(serviceStatus_up());
+        UP(Bundle.serviceStatus_up()),
+        DOWN(Bundle.serviceStatus_up()),
+        OTHER(Bundle.serviceStatus_other());
 
         private final String displayName;
 
@@ -157,15 +123,119 @@ public class ServicesMonitor {
 
     };
 
+    /**
+     * A service status report.
+     */
+    public static class ServiceStatusReport {
+
+        private final String serviceName;
+        private final ServiceStatus status;
+        private final String details;
+
+        /**
+         * Constructs an instance of a service status report.
+         *
+         * @param serviceName
+         * @param status      The service status.
+         * @param details     Additional details regarding the service status,
+         *                    may be empty.
+         */
+        public ServiceStatusReport(String serviceName, ServiceStatus status, String details) {
+            this.serviceName = serviceName;
+            this.status = status;
+            this.details = details;
+        }
+
+        /**
+         * Gets the display name of the service.
+         *
+         * @return The service display name.
+         */
+        public String getServiceName() {
+            return serviceName;
+        }
+
+        /**
+         * Gets the status of the service.
+         *
+         * @return The service status.
+         */
+        public ServiceStatus getStatus() {
+            return status;
+        }
+
+        /**
+         * Gets any additional details regarding the status of a service.
+         *
+         * @return The additional service status details, may be empty.
+         */
+        public String getDetails() {
+            return details;
+        }
+
+        @Override
+        public String toString() {
+            return "ServiceStatus{" + "serviceName=" + serviceName + ", status=" + status + ", details=" + details + '}';
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 23 * hash + Objects.hashCode(this.serviceName);
+            hash = 23 * hash + Objects.hashCode(this.status);
+            hash = 23 * hash + Objects.hashCode(this.details);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final ServiceStatusReport other = (ServiceStatusReport) obj;
+            if (!Objects.equals(this.serviceName, other.getServiceName())) {
+                return false;
+            }
+            if (!Objects.equals(this.status, other.getStatus())) {
+                return false;
+            }
+            return Objects.equals(this.details, other.getDetails());
+        }
+
+    }
+
+    /**
+     * A service that wants to have its current status periodically polled by
+     * the services monitor must implement the MonitoredService interface and
+     * must be marked woith the ServiceProvider annotation.
+     */
+    public interface MonitoredService {
+
+        /**
+         * Gets the current status of the service.
+         *
+         * @return The status of the service.
+         */
+        ServiceStatusReport getStatus();
+
+    }
+
     private static final Logger logger = Logger.getLogger(ServicesMonitor.class.getName());
     private static final String PERIODIC_TASK_THREAD_NAME = "services-monitor-periodic-task-%d"; //NON-NLS
     private static final int NUMBER_OF_PERIODIC_TASK_THREADS = 1;
     private static final long CRASH_DETECTION_INTERVAL_MINUTES = 15;
-    private static final Set<String> coreServices = Stream.of(ServicesMonitor.Service.values()).map(Service::toString).collect(Collectors.toSet());
     private static ServicesMonitor servicesMonitor = new ServicesMonitor();
-    private final ScheduledThreadPoolExecutor periodicTasksExecutor;
-    private final ConcurrentHashMap<String, String> statusByService;
+    private static final Set<String> coreServiceNames = Stream.of(ServicesMonitor.Service.values()).map(Service::toString).collect(Collectors.toSet());
+    private final Map<String, MonitoredService> coreServicesByName;
+    private final Map<String, ServiceStatusReport> statusByService;
     private final AutopsyEventPublisher eventPublisher;
+    private final ScheduledThreadPoolExecutor periodicTasksExecutor;
 
     /**
      * Gets the services monitor that monitors the status of services and
@@ -187,8 +257,13 @@ public class ServicesMonitor {
      * changes.
      */
     private ServicesMonitor() {
-        eventPublisher = new AutopsyEventPublisher();
+        coreServicesByName = new ConcurrentHashMap<>();
+        coreServicesByName.put(Service.DATABASE_SERVER.toString(), new PostgreSqlServer());
+        coreServicesByName.put(Service.KEYWORD_SEARCH_SERVICE.toString(), new SolrServer());
+        coreServicesByName.put(Service.COORDINATION_SERVICE.toString(), new ZooKeeperDatabase());
+        coreServicesByName.put(Service.MESSAGING.toString(), new ActiveMqMessageBroker());
         statusByService = new ConcurrentHashMap<>();
+        eventPublisher = new AutopsyEventPublisher();
 
         /*
          * The first service statuses check is performed immediately in the
@@ -204,77 +279,53 @@ public class ServicesMonitor {
     }
 
     /**
-     * Records the status of a service and publishes a service status event if
-     * the current status is different from the previously reported status.
+     * Pushes a service status report to the services monitor.
      *
-     * @param service Name of the service.
-     * @param status  Current status of the service.
-     * @param details Additional status details.
-     *
+     * @param statusReport The service status report.
      */
-    public void setServiceStatus(String service, String status, String details) {
-        if (statusByService.containsKey(service) && status.equals(statusByService.get(service))) {
-            return;
+    public void setServiceStatus(ServiceStatusReport statusReport) {
+        String serviceName = statusReport.getServiceName();
+        ServiceStatusReport previousStatusReport = statusByService.get(serviceName);
+        if (statusIsChanged(previousStatusReport, statusReport)) {
+            reportStatus(statusReport);
         }
-
-        statusByService.put(service, status);
-
-        String serviceDisplayName;
-        try {
-            serviceDisplayName = ServicesMonitor.Service.valueOf(service).getDisplayName();
-        } catch (IllegalArgumentException ignore) {
-            serviceDisplayName = service;
-        }
-
-        if (status.equals(ServiceStatus.UP.toString())) {
-            logger.log(Level.INFO, "Connection to {0} is up", serviceDisplayName); //NON-NLS
-            MessageNotifyUtil.Notify.info(
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg", serviceDisplayName));
-        } else if (status.equals(ServiceStatus.DOWN.toString())) {
-            logger.log(Level.SEVERE, "Failed to connect to {0}. Reason: {1}", new Object[]{serviceDisplayName, details}); //NON-NLS
-            MessageNotifyUtil.Notify.error(
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"),
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.msg", serviceDisplayName));
-        } else {
-            logger.log(Level.INFO, "Status for {0} is {1} ({2})", new Object[]{serviceDisplayName, status}); //NON-NLS
-            MessageNotifyUtil.Notify.info(
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.statusChange.notify.title"),
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.statusChange.notify.msg", new Object[]{serviceDisplayName, status, details}));
-        }
-
-        eventPublisher.publishLocally(new ServiceEvent(service, status, details));
+        statusByService.put(statusReport.getServiceName(), statusReport);
     }
 
     /**
-     * Get last recorded status for a service.
+     * Gets a service status report for a specified service.
      *
-     * @param service Name of the service.
+     * @param service The service.
      *
-     * @return ServiceStatus Status for the service.
-     *
-     * @throws ServicesMonitorException If the service name is unknown to the
-     *                                  services monitor.
+     * @return The status report or null if there is no status report available
+     *         for the specifed service.
      */
-    public String getServiceStatus(String service) throws ServicesMonitorException {
+    public ServiceStatusReport getServiceStatusReport(Service service) {
+        return getServiceStatusReport(service.toString());
+    }
 
-        if (service == null || service.isEmpty()) {
-            throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullServiceName.excepton.txt"));
+    /**
+     * Gets a service status report for a specified service.
+     *
+     * @param serviceName The service name.
+     *
+     * @return The status report or null if there is no status report available
+     *         for the specifed service.
+     */
+    public ServiceStatusReport getServiceStatusReport(String serviceName) {
+        ServiceStatusReport statusReport;
+        if (coreServicesByName.containsKey(serviceName)) {
+            /*
+             * If the request is for a core service, perform an "on demand"
+             * check to get the current status.
+             */
+            MonitoredService service = coreServicesByName.get(serviceName);
+            statusReport = service.getStatus();
+            setServiceStatus(statusReport);
+        } else {
+            statusReport = statusByService.get(serviceName);
         }
-
-        /*
-         * If the request is for a core service, perform an "on demand" check to
-         * get the current status.
-         */
-        if (coreServices.contains(service)) {
-            checkServiceStatus(service);
-        }
-
-        String status = statusByService.get(service);
-        if (status == null) {
-            throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.unknownServiceName.excepton.txt", service));
-        }
-        return status;
+        return statusReport;
     }
 
     /**
@@ -283,7 +334,7 @@ public class ServicesMonitor {
      * @param subscriber The subscriber to add.
      */
     public void addSubscriber(PropertyChangeListener subscriber) {
-        eventPublisher.addSubscriber(coreServices, subscriber);
+        eventPublisher.addSubscriber(coreServiceNames, subscriber);
     }
 
     /**
@@ -314,7 +365,7 @@ public class ServicesMonitor {
      * @param subscriber The subscriber to remove.
      */
     public void removeSubscriber(PropertyChangeListener subscriber) {
-        eventPublisher.removeSubscriber(coreServices, subscriber);
+        eventPublisher.removeSubscriber(coreServiceNames, subscriber);
     }
 
     /**
@@ -350,9 +401,58 @@ public class ServicesMonitor {
             return;
         }
 
-        for (String service : coreServices) {
-            checkServiceStatus(service);
+        for (MonitoredService service : Lookup.getDefault().lookupAll(MonitoredService.class)) {
+            setServiceStatus(service.getStatus());
         }
+    }
+
+    /**
+     * Compares a previous status report for a service to a new report to
+     * determine if the status of the service has changed.
+     *
+     * @param previousStatusReport The previous report, may be null.
+     * @param newStatusReport      The new report.
+     *
+     * @return
+     */
+    private boolean statusIsChanged(ServiceStatusReport previousStatusReport, ServiceStatusReport newStatusReport) {
+        return ((previousStatusReport != null && newStatusReport != previousStatusReport) || (previousStatusReport == null));
+    }
+
+    /**
+     * Reports a service status change by logging the change, doing a user
+     * notification if running in the GUI, and firing a service status event.
+     *
+     * @param newStatusReport The service status report to publish.
+     */
+    private void reportStatus(ServiceStatusReport newStatusReport) {
+        /*
+         * Log the status.
+         */
+        String serviceName = newStatusReport.getServiceName();
+        String status = newStatusReport.getStatus().toString();
+        String details = newStatusReport.getDetails();
+        logger.log(Level.INFO, "Status of {0} is {1} Details: {2}", new Object[]{serviceName, status, details}); //NON-NLS
+
+        /*
+         * Notify the user.
+         */
+        if (RuntimeProperties.runningWithGUI()) {
+            if (status.equals(ServiceStatus.UP.toString())) {
+                MessageNotifyUtil.Notify.info(
+                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
+                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg", serviceName));
+            } else if (status.equals(ServiceStatus.DOWN.toString())) {
+                MessageNotifyUtil.Notify.error(
+                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"),
+                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.msg", serviceName));
+            }
+        }
+
+        /*
+         * Fire a local status event.
+         */
+        eventPublisher.publishLocally(new ServiceEvent(serviceName, status, details));
     }
 
     /**
@@ -371,6 +471,7 @@ public class ServicesMonitor {
                 logger.log(Level.SEVERE, "An error occurred during services monitoring", ex); //NON-NLS
             }
         }
+
     }
 
     /**
@@ -390,85 +491,53 @@ public class ServicesMonitor {
     }
 
     /**
-     * Performs a core service availability status check.
+     * Records the status of a service and publishes a service status event if
+     * the current status is different from the previously reported status.
      *
-     * @param service Name of the service to check.
+     * @param service Name of the service.
+     * @param status  Current status of the service.
+     * @param details Additional status details.
+     *
+     * @deprecated Call setServiceStatus(ServiceStatusReport newStatus) instead.
      */
-    private void checkServiceStatus(String service) {
-        if (service.equals(Service.REMOTE_CASE_DATABASE.toString())) {
-            checkDatabaseConnectionStatus();
-        } else if (service.equals(Service.REMOTE_KEYWORD_SEARCH.toString())) {
-            checkKeywordSearchServerConnectionStatus();
-        } else if (service.equals(Service.MESSAGING.toString())) {
-            checkMessagingServerConnectionStatus();
+    @Deprecated
+    public void setServiceStatus(String service, String status, String details) {
+        ServiceStatus serviceStatus;
+        if (status.equals(ServiceStatus.UP.toString())) {
+            serviceStatus = ServiceStatus.UP;
+        } else if (status.equals(ServiceStatus.DOWN.toString())) {
+            serviceStatus = ServiceStatus.DOWN;
+        } else {
+            serviceStatus = ServiceStatus.OTHER;
         }
+        ServiceStatusReport statusReport = new ServiceStatusReport(service, serviceStatus, status + " : " + details);
+        setServiceStatus(statusReport);
     }
 
     /**
-     * Performs a database server availability status check.
+     * Get last recorded status for a service.
+     *
+     * @param serviceName Name of the service.
+     *
+     * @return ServiceStatus Status for the service.
+     *
+     * @throws ServicesMonitorException If the service name is unknown to the
+     *                                  services monitor.
+     * @deprecated Call ServiceStatusReport getServiceStatusReport(String
+     * serviceName) instead.
      */
-    private void checkDatabaseConnectionStatus() {
-        CaseDbConnectionInfo info;
-        try {
-            info = UserPreferences.getDatabaseConnectionInfo();
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
-            setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), NbBundle.getMessage(this.getClass(), "ServicesMonitor.databaseConnectionInfo.error.msg"));
-            return;
-        }
-        try {
-            SleuthkitCase.tryConnect(info);
-            setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString(), "");
-        } catch (TskCoreException ex) {
-            setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), ex.getMessage());
-        }
-    }
-
-    /**
-     * Performs a keyword search service availability status check.
-     */
-    private void checkKeywordSearchServerConnectionStatus() {
-        KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-        try {
-            if (kwsService != null) {
-                int port = Integer.parseUnsignedInt(UserPreferences.getIndexingServerPort());
-                kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
-                setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString(), "");
+    @Deprecated
+    public String getServiceStatus(String serviceName) throws ServicesMonitorException {
+        ServiceStatusReport statusReport = getServiceStatusReport(serviceName);
+        if (statusReport != null) {
+            ServiceStatus status = statusReport.getStatus();
+            if (status == ServiceStatus.OTHER) {
+                return statusReport.getDetails();
             } else {
-                setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(),
-                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.KeywordSearchNull"));
+                return status.toString();
             }
-        } catch (NumberFormatException ex) {
-            String rootCause = NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.InvalidPortNumber");
-            logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
-            setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), rootCause);
-        } catch (KeywordSearchServiceException ex) {
-            String rootCause = ex.getMessage();
-            logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
-            setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), rootCause);
-        }
-    }
-
-    /**
-     * Performs messaging service availability status check.
-     */
-    private void checkMessagingServerConnectionStatus() {
-        MessageServiceConnectionInfo info;
-        try {
-            info = UserPreferences.getMessageServiceConnectionInfo();
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error accessing messaging service connection info", ex); //NON-NLS
-            setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString(), NbBundle.getMessage(this.getClass(), "ServicesMonitor.messagingService.connErr.text"));
-            return;
-        }
-
-        try {
-            info.tryConnect();
-            setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.UP.toString(), "");
-        } catch (MessageServiceException ex) {
-            String rootCause = ex.getMessage();
-            logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
-            setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString(), rootCause);
+        } else {
+            throw new ServicesMonitorException(String.format("No status available for %s", serviceName));
         }
     }
 

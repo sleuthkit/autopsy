@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -97,25 +97,25 @@ class MultiUserTestTool {
 
         // run standard tests for all services. this detects many problems sooner.
         try {
-            if (!isServiceUp(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString())) {
-                return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.REMOTE_CASE_DATABASE.getDisplayName());
+            if (!isServiceUp(ServicesMonitor.Service.DATABASE_SERVER)) {
+                return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.DATABASE_SERVER.getDisplayName());
             }
         } catch (ServicesMonitor.ServicesMonitorException ex) {
             return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService",
-                    ServicesMonitor.Service.REMOTE_CASE_DATABASE.getDisplayName() + ". " + ex.getMessage());
+                    ServicesMonitor.Service.DATABASE_SERVER.getDisplayName() + ". " + ex.getMessage());
         }
 
         try {
-            if (!isServiceUp(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString())) {
-                return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.getDisplayName());
+            if (!isServiceUp(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE)) {
+                return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.getDisplayName());
             }
         } catch (ServicesMonitor.ServicesMonitorException ex) {
             return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService",
-                    ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.getDisplayName() + ". " + ex.getMessage());
+                    ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.getDisplayName() + ". " + ex.getMessage());
         }
 
         try {
-            if (!isServiceUp(ServicesMonitor.Service.MESSAGING.toString())) {
+            if (!isServiceUp(ServicesMonitor.Service.MESSAGING)) {
                 return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.MESSAGING.getDisplayName());
             }
         } catch (ServicesMonitor.ServicesMonitorException ex) {
@@ -189,7 +189,7 @@ class MultiUserTestTool {
             }
 
             AbstractFile file = listOfFiles.get(0);
-            
+
             // Set MIME type of the test file (required to test indexing)
             FileTypeDetector fileTypeDetector = null;
             try {
@@ -395,15 +395,17 @@ class MultiUserTestTool {
     /**
      * Tests service of interest to verify that it is running.
      *
-     * @param serviceName Name of the service.
+     * @param service The service.
      *
      * @return True if the service is running, false otherwise.
      *
-     * @throws ServicesMonitorException if there is an error querying the
+     * @throws ServicesMonitorException If there is an error querying the
      *                                  services monitor.
      */
-    private static boolean isServiceUp(String serviceName) throws ServicesMonitor.ServicesMonitorException {
-        return (ServicesMonitor.getInstance().getServiceStatus(serviceName).equals(ServicesMonitor.ServiceStatusReport.UP.toString()));
+    private static boolean isServiceUp(ServicesMonitor.Service service) throws ServicesMonitor.ServicesMonitorException {
+        ServicesMonitor.ServiceStatusReport statusReport = ServicesMonitor.getInstance().getServiceStatusReport(service);
+        ServicesMonitor.ServiceStatus status = statusReport.getStatus();
+        return (status == ServicesMonitor.ServiceStatus.UP);
     }
 
     /**

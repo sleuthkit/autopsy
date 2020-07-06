@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2019 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -187,15 +187,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     private void subscribeToServiceMonitorEvents() {
         PropertyChangeListener propChangeListener = (PropertyChangeEvent evt) -> {
             if (evt.getNewValue().equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
-                /*
-                 * The application services considered to be key services are
-                 * only necessary for multi-user cases.
-                 */
                 try {
                     if (Case.getCurrentCaseThrows().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
                         return;
                     }
-                } catch (NoCurrentCaseException noCaseOpenException) {
+                } catch (NoCurrentCaseException ignored) {
                     return;
                 }
 
@@ -216,15 +212,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             }
         };
 
-        /*
-         * The key services for multi-user cases are currently the case database
-         * server and the Solr server. The Solr server is a key service not
-         * because search is essential, but because the coordination service
-         * (ZooKeeper) is running embedded within the Solr server.
-         */
         Set<String> servicesList = new HashSet<>();
-        servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString());
-        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString());
+        servicesList.add(ServicesMonitor.Service.DATABASE_SERVER.toString());
+        servicesList.add(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString());
         this.servicesMonitor.addSubscriber(servicesList, propChangeListener);
     }
 
@@ -367,7 +357,6 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         "IngestManager.startupErr.dlgErrorList=Errors:"
     })
     private IngestJobStartResult startIngestJob(IngestJob job) {
-        List<IngestModuleError> errors = null;
         Case openCase;
         try {
             openCase = Case.getCurrentCaseThrows();
@@ -376,23 +365,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         }
         if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
             try {
-                if (!servicesMonitor.getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).equals(ServicesMonitor.ServiceStatus.UP.toString())) {
-                    if (RuntimeProperties.runningWithGUI()) {
-                        EventQueue.invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                String serviceDisplayName = ServicesMonitor.Service.REMOTE_CASE_DATABASE.getDisplayName();
-                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                                        NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
-                                        NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceDisplayName),
-                                        JOptionPane.ERROR_MESSAGE);
-                            }
-                        });
-                    }
-                    return new IngestJobStartResult(null, new IngestManagerException("Ingest aborted. Remote database is down"), Collections.<IngestModuleError>emptyList()); //NON-NLS
-                }
-            } catch (ServicesMonitor.ServicesMonitorException ex) {
-                return new IngestJobStartResult(null, new IngestManagerException("Database server is down", ex), Collections.<IngestModuleError>emptyList()); //NON-NLS
+                checkAppServiceStatus(ServicesMonitor.Service.DATABASE_SERVER);
+                checkAppServiceStatus(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE);
+            } catch (IngestManagerException ex) {
+                return new IngestJobStartResult(null, ex, Collections.<IngestModuleError>emptyList()); //NON-NLS
             }
         }
 
@@ -404,7 +380,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             ingestJobsById.put(job.getId(), job);
         }
         IngestManager.logger.log(Level.INFO, "Starting ingest job {0}", job.getId()); //NON-NLS
-        errors = job.start();
+        List<IngestModuleError> errors = job.start();
         if (errors.isEmpty()) {
             this.fireIngestJobStarted(job.getId());
         } else {
@@ -434,6 +410,36 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         }
 
         return new IngestJobStartResult(job, null, errors);
+    }
+
+    /**
+     * Queries the service monitor to determine if a specified service is up.
+     *
+     * @param service The service.
+     *
+     * @throws IngestManagerException If the service is down.
+     */
+    private void checkAppServiceStatus(ServicesMonitor.Service service) throws IngestManagerException {
+        ServicesMonitor.ServiceStatus status = null;
+        ServicesMonitor.ServiceStatusReport statusReport = servicesMonitor.getServiceStatusReport(service);
+        if (statusReport != null) {
+            status = statusReport.getStatus();
+        }
+        if (status == null || status != ServicesMonitor.ServiceStatus.UP) {
+            if (RuntimeProperties.runningWithGUI()) {
+                final String serviceName = service.getDisplayName();
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                                NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
+                                NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceName),
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+            }
+            throw new IngestManagerException(String.format("%s is down", service)); //NON-NLS
+        }
     }
 
     /**
@@ -491,10 +497,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     public void addIngestJobEventListener(final PropertyChangeListener listener) {
         jobEventPublisher.addSubscriber(INGEST_JOB_EVENT_NAMES, listener);
     }
-    
+
     /**
-     * Adds an ingest job event property change listener for the given event types.
-     * 
+     * Adds an ingest job event property change listener for the given event
+     * types.
+     *
      * @param eventTypes The event types to listen for
      * @param listener   The PropertyChangeListener to be added
      */
@@ -512,18 +519,18 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     public void removeIngestJobEventListener(final PropertyChangeListener listener) {
         jobEventPublisher.removeSubscriber(INGEST_JOB_EVENT_NAMES, listener);
     }
-    
+
     /**
      * Removes an ingest job event property change listener.
      *
      * @param eventTypes The event types to stop listening for
-     * @param listener The PropertyChangeListener to be removed.
+     * @param listener   The PropertyChangeListener to be removed.
      */
     public void removeIngestJobEventListener(Set<IngestJobEvent> eventTypes, final PropertyChangeListener listener) {
         eventTypes.forEach((IngestJobEvent event) -> {
             jobEventPublisher.removeSubscriber(event.toString(), listener);
         });
-    }   
+    }
 
     /**
      * Adds an ingest module event property change listener.
@@ -535,8 +542,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Adds an ingest module event property change listener for given event types.
-     * 
+     * Adds an ingest module event property change listener for given event
+     * types.
+     *
      * @param eventTypes The event types to listen for
      * @param listener   The PropertyChangeListener to be removed.
      */
@@ -545,7 +553,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             moduleEventPublisher.addSubscriber(event.toString(), listener);
         });
     }
-    
+
     /**
      * Removes an ingest module event property change listener.
      *
@@ -554,16 +562,16 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     public void removeIngestModuleEventListener(final PropertyChangeListener listener) {
         moduleEventPublisher.removeSubscriber(INGEST_MODULE_EVENT_NAMES, listener);
     }
-    
+
     /**
      * Removes an ingest module event property change listener.
-     * 
+     *
      * @param eventTypes The event types to stop listening for
      * @param listener   The PropertyChangeListener to be removed.
      */
     public void removeIngestModuleEventListener(Set<IngestModuleEvent> eventTypes, final PropertyChangeListener listener) {
         moduleEventPublisher.removeSubscriber(INGEST_MODULE_EVENT_NAMES, listener);
-    }    
+    }
 
     /**
      * Publishes an ingest job event signifying an ingest job started.

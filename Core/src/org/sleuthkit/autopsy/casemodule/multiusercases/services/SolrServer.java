@@ -1,0 +1,66 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.casemodule.multiusercases.services;
+
+import java.util.logging.Level;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.core.ServicesMonitor;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.datamodel.CaseDbConnectionInfo;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
+
+/**
+ * An implementation of the monitored service interface that reports status for
+ * the Solr server for multi-user cases.
+ */
+public final class SolrServer implements ServicesMonitor.MonitoredService {
+
+    private static final Logger logger = Logger.getLogger(SolrServer.class.getName());
+
+    @Override
+    public ServicesMonitor.ServiceStatusReport getStatus() {
+        try {
+            KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
+            if (kwsService != null) {
+                int port = Integer.parseUnsignedInt(UserPreferences.getIndexingServerPort());
+                kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
+                return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString(), ServicesMonitor.ServiceStatus.UP, "");
+            } else {
+                return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString(), ServicesMonitor.ServiceStatus.UP, "");
+            }
+        } catch (NumberFormatException ex) {
+            String rootCause = NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.InvalidPortNumber");
+            logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error accessing PostgreSQL server (multi-user case database server) connection info", ex); //NON-NLS
+            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString(), ServicesMonitor.ServiceStatus.DOWN, ex.getLocalizedMessage());
+        } catch (KeywordSearchServiceException ex) {
+            String rootCause = ex.getMessage();
+            logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error accessing PostgreSQL server (multi-user case database server) connection info", ex); //NON-NLS
+            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString(), ServicesMonitor.ServiceStatus.DOWN, ex.getLocalizedMessage());
+        }
+    }
+
+}
