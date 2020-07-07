@@ -181,8 +181,20 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-	readConfigSettings();
-        run(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progressMonitor, callback);
+        ingestStream = new DefaultIngestStream();
+        readConfigSettings();
+        try {
+            image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
+                new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
+            final List<String> errors = new ArrayList<>();
+                errors.add(ex.getMessage());
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+            return;
+        }
+        
+        doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progressMonitor, callback);
     }
     
     /**
@@ -209,23 +221,22 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         // Read the settings from the wizard 
         readConfigSettings();
 	
-	// Set up the data source before creating the ingest stream
-	try {
-	    image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-		new String[]{imagePath}, sectorSize,
-		timeZone, md5, sha1, sha256, deviceId);
-	} catch (TskCoreException ex) {
-	    logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
-	    final List<String> errors = new ArrayList<>();
-            errors.add(ex.getMessage());
-	    callBack.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
-	    return;
-	}
-	
+        // Set up the data source before creating the ingest stream
+        try {
+            image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
+                new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
+            final List<String> errors = new ArrayList<>();
+                errors.add(ex.getMessage());
+            callBack.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+            return;
+        }
+
         // Now initialize the ingest stream
         this.ingestStream = IngestManager.getInstance().openIngestStream(image, settings);
 
-        run(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progress, callBack);
+        doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progress, callBack);
     }
     
     /**
@@ -286,7 +297,19 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      * @param callback             Callback to call when processing is done.
      */
     public void run(String deviceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        run(deviceId, imagePath, 0, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callback);
+        ingestStream = new DefaultIngestStream();
+        try {
+            image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
+                new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
+            final List<String> errors = new ArrayList<>();
+                errors.add(ex.getMessage());
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+            return;
+        }
+
+        doAddImageProcess(deviceId, imagePath, 0, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callback);
     }
 
     /**
@@ -295,6 +318,10 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      * selection and configuration panel. Returns as soon as the background task
      * is started and uses the callback object to signal task completion and
      * return results.
+     * 
+     * The image should be loaded in the database and stored in "image"
+     * before calling this method. Additionally, an ingest stream should be initialized
+     * and stored in "ingestStream". 
      *
      * @param deviceId             An ASCII-printable identifier for the device
      *                             associated with the data source that is
@@ -314,24 +341,24 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    private void run(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    private void doAddImageProcess(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
 
 	// If the data source or ingest stream haven't been initialized yet, do it now.
     if (ingestStream == null) {
-        ingestStream = new DefaultIngestStream();
+        String message = "Ingest stream was not initialized before running the add image process on " + imagePath;
+        logger.log(Level.SEVERE, message);
+        final List<String> errors = new ArrayList<>();
+        errors.add(message);
+        callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+        return;
     }
     if (image == null) {
-	    try {
-            image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                new String[]{imagePath}, sectorSize,
-                timeZone, md5, sha1, sha256, deviceId);
-            } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
-            final List<String> errors = new ArrayList<>();
-            errors.add(ex.getMessage());
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
-            return;
-	    }
+        String message = "Image was not added to database before running the add image process on " + imagePath;
+        logger.log(Level.SEVERE, message);
+        final List<String> errors = new ArrayList<>();
+        errors.add(message);
+        callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+        return;
 	}
 
 	AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null);
@@ -413,7 +440,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
         this.ignoreFatOrphanFiles = false;
         setDataSourceOptionsCalled = true;
-        run(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
+        doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
     }
 
     /**
