@@ -68,6 +68,7 @@ import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Manages the creation and execution of ingest jobs, i.e., the processing of
@@ -381,7 +382,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         "IngestManager.startupErr.dlgSolution=Please disable the failed modules or fix the errors before restarting ingest.",
         "IngestManager.startupErr.dlgErrorList=Errors:"
     })
-    private IngestJobStartResult startIngestJob(IngestJob job) {
+    IngestJobStartResult startIngestJob(IngestJob job) {
         List<IngestModuleError> errors = null;
         Case openCase;
         try {
@@ -761,7 +762,15 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     void setIngestTaskProgress(FileIngestTask task, String ingestModuleDisplayName) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
-        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), ingestModuleDisplayName, task.getDataSource(), task.getFile());
+        IngestThreadActivitySnapshot newSnap;
+        try {
+            AbstractFile file = task.getFile();
+            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), ingestModuleDisplayName, task.getDataSource(), task.getFile());
+        } catch (TskCoreException ex) {
+            // In practice, this task would never have been enqueued or processed since the file
+            // lookup would have failed.
+            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), ingestModuleDisplayName, task.getDataSource());
+        }
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }

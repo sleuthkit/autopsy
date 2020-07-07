@@ -590,6 +590,7 @@ public class HashDbIngestModule implements FileIngestModule {
      *
      * @param jobId            The ID of the job.
      * @param knownBadHashSets The list of hash sets for "known bad" files.
+     * @param noChangeHashSets The list of "no change" hash sets.
      * @param knownHashSets    The list of hash sets for "known" files.
      */
     @Messages("HashDbIngestModule.complete.noChangesFound=No Change items found:")

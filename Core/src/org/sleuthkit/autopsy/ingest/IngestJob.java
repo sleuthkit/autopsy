@@ -28,9 +28,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
@@ -71,7 +72,7 @@ public final class IngestJob {
 	STREAMING
     }
     
-
+    private static final Logger logger = Logger.getLogger(IngestJob.class.getName());
     private final static AtomicLong nextId = new AtomicLong(0L);
     private final long id;
     private final List<Content> dataSources = new ArrayList<>();
@@ -104,7 +105,7 @@ public final class IngestJob {
      * ingest modules specified via ingest job settings. Either all of the files
      * in the data source or a given subset of the files will be analyzed.
      *
-     * @param dataSource The data source to be analyzed
+     * @param dataSource The data source to be analyzed.
      * @param files      A subset of the files for the data source.
      * @param settings   The ingest job settings.
      */
@@ -146,7 +147,7 @@ public final class IngestJob {
      * @return True or false.
      */
     boolean hasIngestPipeline() {
-	return (!settings.getEnabledIngestModuleTemplates().isEmpty());
+        return (!settings.getEnabledIngestModuleTemplates().isEmpty());
     }
     
     /**
@@ -155,34 +156,26 @@ public final class IngestJob {
      * @param fileObjIds the list of file IDs
      */
     void addStreamingIngestFiles(List<Long> fileObjIds) {
-	getStreamingIngestPipeline().addStreamingIngestFiles(fileObjIds);
+        if (ingestJobPipelines.isEmpty()) {
+            logger.log(Level.SEVERE, "Attempted to add streaming ingest files with no IngestJobPipeline");
+            return;
+        }
+        // Streaming ingest jobs will only have one data source
+        IngestJobPipeline streamingIngestPipeline = ingestJobPipelines.values().iterator().next();
+        streamingIngestPipeline.addStreamingIngestFiles(fileObjIds);
     }
     
     /**
      * Start data source processing for streaming ingest.
      */
     void processStreamingIngestDataSource() {
-	getStreamingIngestPipeline().processStreamingIngestDataSource();
-    }
-    
-    /**
-     * This is a workaround to get the right pipeline. For streaming ingest
-     * there will only be one. Might be able to pass/store the ID to avoid this.
-     * 
-     * @return 
-     */
-    private IngestJobPipeline getStreamingIngestPipeline() {
-	return ingestJobPipelines.values().iterator().next();
-    }
-    
-    
-    /**
-     * If we're in streaming ingest mode we will have one data source.
-     * 
-     * @return 
-     */
-    private Content getStreamingIngestDataSource() {
-	return this.dataSources.get(0);
+        if (ingestJobPipelines.isEmpty()) {
+            logger.log(Level.SEVERE, "Attempted to start data source ingest with no IngestJobPipeline");
+            return;
+        }
+        // Streaming ingest jobs will only have one data source
+        IngestJobPipeline streamingIngestPipeline = ingestJobPipelines.values().iterator().next();
+        streamingIngestPipeline.processStreamingIngestDataSource();
     }
 
     /**
@@ -193,22 +186,19 @@ public final class IngestJob {
      */
     List<IngestModuleError> start() {
 	
-	/*
-	 * Set up the pipeline(s)
-	 */
-	if (ingestMode == Mode.STREAMING) {
-	    IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, getStreamingIngestDataSource(), settings);
-	    this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
-	} else if (files.isEmpty()) {
-	    for (Content dataSource : dataSources) {
-		IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSource, settings);
-		this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
-	    }
+        /*
+         * Set up the pipeline(s)
+         */
+        if (files.isEmpty()) {
+            for (Content dataSource : dataSources) {
+                IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSource, settings);
+                this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
+            }
         } else {
-	    IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSources.get(0), files, settings);
-	    this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
-	}
-	incompleteJobsCount.set(ingestJobPipelines.size());
+            IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSources.get(0), files, settings);
+            this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
+        }
+        incompleteJobsCount.set(ingestJobPipelines.size());
 	
         /*
          * Try to start each data source ingest job. Note that there is an

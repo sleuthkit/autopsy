@@ -221,7 +221,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                     cellValue = snapShot.getDataSource();
                     break;
                 case 2:
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                     cellValue = dateFormat.format(new Date(snapShot.getJobStartTime()));
                     break;
                 case 3:

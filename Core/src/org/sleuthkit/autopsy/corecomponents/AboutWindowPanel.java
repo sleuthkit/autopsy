@@ -19,12 +19,16 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Window;
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Locale;
+import java.util.logging.Level;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
@@ -32,10 +36,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import org.netbeans.core.actions.HTMLViewAction;
-import org.openide.awt.HtmlBrowser;
 import org.openide.modules.Places;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.SleuthkitJNI;
@@ -47,6 +51,7 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
 public final class AboutWindowPanel extends JPanel implements HyperlinkListener {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(AboutWindowPanel.class.getName());
     private URL url = null;
     private final Icon about;
     private boolean verboseLogging;
@@ -67,12 +72,32 @@ public final class AboutWindowPanel extends JPanel implements HyperlinkListener 
         description.setText(org.openide.util.NbBundle.getMessage(AboutWindowPanel.class,
                 "LBL_Description", new Object[]{getProductVersionValue(), getJavaValue(), getVMValue(),
                     getOperatingSystemValue(), getEncodingValue(), getSystemLocaleValue(), getUserDirValue(), getSleuthKitVersionValue(), Version.getNetbeansBuild(), Version.getBuildType().toString()}));
-        description.addHyperlinkListener(this);
-        copyright.addHyperlinkListener(this);
         copyright.setBackground(getBackground());
         if (verboseLoggingIsSet()) {
             disableVerboseLoggingButton();
         }        
+	
+        AboutPanelHyperlinkListener hyperlinkListener = new AboutPanelHyperlinkListener();
+        copyright.addHyperlinkListener(hyperlinkListener);
+        description.addHyperlinkListener(hyperlinkListener);
+    }
+    
+    /**
+     * Listener to display hyperlinks in an external viewer.
+     */
+    private class AboutPanelHyperlinkListener implements HyperlinkListener {
+        @Override
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+            if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED
+		    && Desktop.isDesktopSupported()) {
+                // Try to display the URL in the user's browswer. 
+		try {
+		    Desktop.getDesktop().browse(e.getURL().toURI());
+		} catch (IOException | URISyntaxException ex) {
+		    logger.log(Level.WARNING, "Failed to display URL in external viewer", ex);
+		}
+            }
+        }
     }
 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -212,7 +237,14 @@ private void logoLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         if (url != null) {
             org.openide.awt.StatusDisplayer.getDefault().setStatusText(
                     NbBundle.getMessage(HTMLViewAction.class, "CTL_OpeningBrowser")); //NON-NLS
-            HtmlBrowser.URLDisplayer.getDefault().showURL(url);
+            // Try to display the URL in the user's browswer. 
+            if(Desktop.isDesktopSupported()) {
+                try {
+                    Desktop.getDesktop().browse(url.toURI());
+                } catch (IOException | URISyntaxException ex) {
+                   logger.log(Level.WARNING, "Failed to display URL in external viewer", ex);
+                }
+            }
         }
     }
 

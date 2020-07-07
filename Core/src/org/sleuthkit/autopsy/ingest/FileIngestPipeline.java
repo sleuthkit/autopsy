@@ -120,7 +120,16 @@ final class FileIngestPipeline {
     synchronized List<IngestModuleError> process(FileIngestTask task) {
         List<IngestModuleError> errors = new ArrayList<>();
         if (!this.ingestJobPipeline.isCancelled()) {
-            AbstractFile file = task.getFile();
+            AbstractFile file;
+            try {
+                file = task.getFile();
+            } catch (TskCoreException ex) {
+                // In practice, this task would never have been enqueued since the file
+                // lookup would have failed there.
+                errors.add(new IngestModuleError("File Ingest Pipeline", ex)); // NON-NLS
+                FileIngestPipeline.ingestManager.setIngestTaskProgressCompleted(task);
+                return errors;
+            }
             for (PipelineModule module : this.modules) {
                 try {
                     FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());

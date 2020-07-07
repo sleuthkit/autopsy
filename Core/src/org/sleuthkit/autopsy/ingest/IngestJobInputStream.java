@@ -37,9 +37,9 @@ class IngestJobInputStream implements IngestStream {
      * @param ingestJob The IngestJob associated with this stream.
      */
     IngestJobInputStream(DataSource dataSource, IngestJob ingestJob) {
-	this.dataSource = dataSource;
+        this.dataSource = dataSource;
         this.ingestJob = ingestJob;
-	ingestJob.start();
+        ingestJob.start();
     }
 
     @Override

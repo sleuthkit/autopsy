@@ -45,14 +45,15 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  * Visualization for contact nodes.
  *
  */
-@ServiceProvider(service = RelationshipsViewer.class)
-public final class ContactsViewer extends JPanel implements RelationshipsViewer{
+final class ContactsViewer extends JPanel implements RelationshipsViewer {
 
-//    private final ExplorerManager tableEM;
+    private static final long serialVersionUID = 1L;
+
     private final Outline outline;
     private final ModifiableProxyLookup proxyLookup;
-    private final PropertyChangeListener focusPropertyListener;
+    private PropertyChangeListener focusPropertyListener;
     private final ContactsChildNodeFactory nodeFactory;
+    private final ContactDataViewer contactPane;
 
     @NbBundle.Messages({
         "ContactsViewer_tabTitle=Contacts",
@@ -65,33 +66,16 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
     /**
      * Visualization for contact nodes.
      */
-    public ContactsViewer() {
+    ContactsViewer() {
         initComponents();
-        
+
+        contactPane = new ContactDataViewer();
+        splitPane.setRightComponent(contactPane);
+
         outlineViewPanel.hideOutlineView(Bundle.ContactsViewer_noContacts_message());
 
         proxyLookup = new ModifiableProxyLookup(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
         nodeFactory = new ContactsChildNodeFactory(null);
-
-        // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
-        // explaination of focusPropertyListener
-        focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
-            if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
-                final Component newFocusOwner = (Component) focusEvent.getNewValue();
-
-                if (newFocusOwner == null) {
-                    return;
-                }
-                if (isDescendingFrom(newFocusOwner, contactPane)) {
-                    //if the focus owner is within the MessageContentViewer (the attachments table)
-                    proxyLookup.setNewLookups(createLookup(contactPane.getExplorerManager(), getActionMap()));
-                } else if (isDescendingFrom(newFocusOwner, ContactsViewer.this)) {
-                    //... or if it is within the Results table.
-                    proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
-
-                }
-            }
-        };
 
         outline = outlineViewPanel.getOutlineView().getOutline();
         outlineViewPanel.getOutlineView().setPropertyColumns(
@@ -100,21 +84,21 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
         );
         outline.setRootVisible(false);
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.ContactsViewer_columnHeader_Name());
-        
+
         outlineViewPanel.hideOutlineView("<No contacts for selected account>");
 
         outlineViewPanel.getExplorerManager().addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 final Node[] nodes = outlineViewPanel.getExplorerManager().getSelectedNodes();
-                contactPane.setNode(nodes);
+                contactPane.setNode(nodes != null && nodes.length > 0 ? nodes[0] : null);
             }
         });
 
         outlineViewPanel.getExplorerManager().setRootContext(new TableFilterNode(new DataResultFilterNode(new AbstractNode(Children.create(nodeFactory, true)), outlineViewPanel.getExplorerManager()), true));
-        
+
         // When a new set of nodes are added to the OutlineView the childrenAdded
         // seems to be fired before the childrenRemoved. 
-        outlineViewPanel.getExplorerManager().getRootContext().addNodeListener(new NodeAdapter(){
+        outlineViewPanel.getExplorerManager().getRootContext().addNodeListener(new NodeAdapter() {
             @Override
             public void childrenAdded(NodeMemberEvent nme) {
                 updateOutlineViewPanel();
@@ -123,9 +107,9 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
             @Override
             public void childrenRemoved(NodeMemberEvent nme) {
                 updateOutlineViewPanel();
-            }       
+            }
         });
-        
+
         splitPane.setResizeWeight(0.5);
         splitPane.setDividerLocation(0.5);
     }
@@ -144,7 +128,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
     public void setSelectionInfo(SelectionInfo info) {
         nodeFactory.refresh(info);
     }
-    
+
     @Override
     public Lookup getLookup() {
         return proxyLookup;
@@ -153,21 +137,53 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
     @Override
     public void addNotify() {
         super.addNotify();
+
+        if (focusPropertyListener == null) {
+            // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
+            // explaination of focusPropertyListener
+            focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
+                if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
+                    handleFocusChange((Component) focusEvent.getNewValue());
+                }
+            };
+        }
+
         //add listener that maintains correct selection in the Global Actions Context
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .addPropertyChangeListener("focusOwner", focusPropertyListener); //NON-NLS
     }
 
+    /**
+     * Handle the switching of the proxyLookup due to focus change.
+     *
+     * @param newFocusOwner
+     */
+    private void handleFocusChange(Component newFocusOwner) {
+        if (newFocusOwner == null) {
+            return;
+        }
+        if (isDescendingFrom(newFocusOwner, contactPane)) {
+            //if the focus owner is within the MessageContentViewer (the attachments table)
+            proxyLookup.setNewLookups(createLookup(contactPane.getExplorerManager(), getActionMap()));
+        } else if (isDescendingFrom(newFocusOwner, this)) {
+            //... or if it is within the Results table.
+            proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
+
+        }
+    }
+
     @Override
     public void removeNotify() {
         super.removeNotify();
-        KeyboardFocusManager.getCurrentKeyboardFocusManager()
-                .removePropertyChangeListener("focusOwner", focusPropertyListener); //NON-NLS
+        if (focusPropertyListener != null) {
+            KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                    .removePropertyChangeListener("focusOwner", focusPropertyListener); //NON-NLS
+        }
     }
-    
+
     private void updateOutlineViewPanel() {
         int nodeCount = outlineViewPanel.getExplorerManager().getRootContext().getChildren().getNodesCount();
-        if(nodeCount == 0) {
+        if (nodeCount == 0) {
             outlineViewPanel.hideOutlineView(Bundle.ContactsViewer_noContacts_message());
         } else {
             outlineViewPanel.showOutlineView();
@@ -185,13 +201,11 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
         java.awt.GridBagConstraints gridBagConstraints;
 
         splitPane = new javax.swing.JSplitPane();
-        contactPane = new org.sleuthkit.autopsy.communications.relationships.ContactDetailsPane();
         outlineViewPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
 
         setLayout(new java.awt.GridBagLayout());
 
         splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        splitPane.setRightComponent(contactPane);
         splitPane.setLeftComponent(outlineViewPanel);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -206,7 +220,6 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.communications.relationships.ContactDetailsPane contactPane;
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel outlineViewPanel;
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables

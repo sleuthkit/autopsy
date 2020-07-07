@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DefaultAddDataSourceCallbacks;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI;
@@ -60,6 +61,7 @@ class AddMultipleImagesTask implements Runnable {
     private List<String> errorMessages = new ArrayList<>();
     private DataSourceProcessorResult result;
     private List<Content> newDataSources = new ArrayList<>();
+    private long imageId = 0;
 
     /*
      * The cancellation requested flag and SleuthKit add image process are
@@ -119,6 +121,7 @@ class AddMultipleImagesTask implements Runnable {
         progressMonitor.setIndeterminate(true);
         for (String imageFilePath : imageFilePaths) {
             synchronized (tskAddImageProcessLock) {
+                imageId = 0; // Reset the current image ID
                 if (!tskAddImageProcessStopped) {
                     addImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, false, false, "");
                 } else {
@@ -126,7 +129,7 @@ class AddMultipleImagesTask implements Runnable {
                 }
             }
             run(imageFilePath, corruptedImageFilePaths, errorMessages);
-            commitOrRevertAddImageProcess(imageFilePath, errorMessages, newDataSources);
+            finishAddImageProcess(imageFilePath, errorMessages, newDataSources);
             synchronized (tskAddImageProcessLock) {
                 if (tskAddImageProcessStopped) {
                     errorMessages.add(Bundle.AddMultipleImagesTask_cancelled());
@@ -239,7 +242,10 @@ class AddMultipleImagesTask implements Runnable {
          */
         progressMonitor.setProgressText(Bundle.AddMultipleImagesTask_adding(imageFilePath));
         try {
-            addImageProcess.run(deviceId, new String[]{imageFilePath});
+            long returnedImageId = addImageProcess.run(deviceId, new String[]{imageFilePath}, 0, new DefaultAddDataSourceCallbacks());
+            synchronized (tskAddImageProcessLock) {
+                imageId = returnedImageId;
+            }
         } catch (TskCoreException ex) {
             if (ex.getMessage().contains(TSK_FS_TYPE_UNKNOWN_ERR_MSG)) {
                 /*
@@ -259,9 +265,9 @@ class AddMultipleImagesTask implements Runnable {
     }
     
     /**
-     * Commits or reverts the results of the TSK add image process. If the
-     * process was stopped before it completed or there was a critical error the
-     * results are reverted, otherwise they are committed.
+     * Finishes TSK add image process. 
+     * The image will always be in the database regardless of whether the user
+     * canceled or a critical error occurred. 
      *
      * @param imageFilePath  The image file path.
      * @param errorMessages  Error messages, if any, are added to this list for
@@ -270,28 +276,22 @@ class AddMultipleImagesTask implements Runnable {
      *                       added to this list for eventual return via the
      *                       getter method.
      */
-    private void commitOrRevertAddImageProcess(String imageFilePath, List<String> errorMessages, List<Content> newDataSources) {
-        synchronized (tskAddImageProcessLock) {
-            if (tskAddImageProcessStopped || criticalErrorOccurred) {
-                try {
-                    addImageProcess.revert();
-                } catch (TskCoreException ex) {
-                    errorMessages.add(Bundle.AddMultipleImagesTask_criticalErrorReverting(imageFilePath, deviceId, ex.getLocalizedMessage()));
-                    criticalErrorOccurred = true;
-                }
-                return;
-            }
-        
+    private void finishAddImageProcess(String imageFilePath, List<String> errorMessages, List<Content> newDataSources) {
+        synchronized (tskAddImageProcessLock) {        
             /*
                 * Try to commit the results of the add image process, retrieve the new
                 * image from the case database, and add it to the list of new data
                 * sources to be returned via the getter method.
              */
             try {
-                long imageId = addImageProcess.commit();
                 Image dataSource = currentCase.getSleuthkitCase().getImageById(imageId);
                 newDataSources.add(dataSource);
 
+                // Do no further processing if the user canceled
+                if (tskAddImageProcessStopped) {
+                    return;
+                }
+                
                 /*
                      * Verify the size of the new image. Note that it may not be what is
                      * expected, but at least part of it was added to the case.

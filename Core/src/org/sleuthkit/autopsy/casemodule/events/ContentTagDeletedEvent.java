@@ -46,7 +46,7 @@ public class ContentTagDeletedEvent extends TagDeletedEvent<ContentTag> implemen
     }
 
     /**
-     * Extension of {@link DeletedTagInfo} for BlackBoardArtifactTags that
+     * Extension of DeletedTagInfo for BlackBoardArtifactTags that
      * includes byte offset related info.
      */
     @Immutable
