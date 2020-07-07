@@ -224,6 +224,10 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         }
     }
 
+    /**
+     * Responsible for updating the 'By Mime Type' view in the UI. See
+     * RefreshThrottler for more details.
+     */
     private class FileTypesByMimeTypeRefresher implements RefreshThrottler.Refresher {
 
         @Override
