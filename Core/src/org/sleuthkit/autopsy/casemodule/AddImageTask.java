@@ -92,7 +92,7 @@ class AddImageTask implements Runnable {
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to start AddImageTask for %s, no current case", imageDetails.getImageName()), ex);
+            logger.log(Level.SEVERE, String.format("Failed to start AddImageTask for %s, no current case", imageDetails.getImagePath()), ex);
             return;
         }
         progressMonitor.setIndeterminate(true);
@@ -149,7 +149,7 @@ class AddImageTask implements Runnable {
                     tskAddImageProcess.stop();
 
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error cancelling adding image %s to the case database", imageDetails.getImageName()), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Error cancelling adding image %s to the case database", imageDetails.getImagePath()), ex); //NON-NLS
                 }
             }
         }
@@ -165,11 +165,11 @@ class AddImageTask implements Runnable {
         try {
             tskAddImageProcess.run(imageDetails.deviceId, imageDetails.image, imageDetails.sectorSize, this.addDataSourceCallbacks);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Critical error occurred adding image %s", imageDetails.getImageName()), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Critical error occurred adding image %s", imageDetails.getImagePath()), ex); //NON-NLS
             criticalErrorOccurred = true;
             errorMessages.add(ex.getMessage());
         } catch (TskDataException ex) {
-            logger.log(Level.WARNING, String.format("Non-critical error occurred adding image %s", imageDetails.getImageName()), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Non-critical error occurred adding image %s", imageDetails.getImagePath()), ex); //NON-NLS
             errorMessages.add(ex.getMessage());
         }
     }
@@ -331,11 +331,11 @@ class AddImageTask implements Runnable {
             this.imageWriterSettings = imageWriterSettings;
         }
 	
-	String getImageName() {
-	    if (image.getPaths().length > 0) {
-		return image.getPaths()[0];
-	    }
-	    return "Unknown data source path";
-	}
+        String getImagePath() {
+            if (image.getPaths().length > 0) {
+                return image.getPaths()[0];
+            }
+            return "Unknown data source path";
+        }
     }
 }
