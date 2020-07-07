@@ -81,6 +81,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     static final boolean DEFAULT_CONFIG_KEEP_CORRUPTED_FILES = false;
     
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
+    private static final String PHOTOREC_SUBDIRECTORY = "bin"; //NON-NLS
     private static final String PHOTOREC_EXECUTABLE = "photorec_win.exe"; //NON-NLS
     private static final String PHOTOREC_LINUX_EXECUTABLE = "photorec";
     private static final String PHOTOREC_RESULTS_BASE = "results"; //NON-NLS
@@ -454,6 +455,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         return path;
     }
 
+    
     /**
      * Finds and returns the path to the executable, if able.
      *
@@ -468,7 +470,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         Path execName;
         String photorec_linux_directory = "/usr/bin";
         if (PlatformUtil.isWindowsOS()) {
-            execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);
+            execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_SUBDIRECTORY, PHOTOREC_EXECUTABLE);
             exeFile = InstalledFileLocator.getDefault().locate(execName.toString(), PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
         } else {
             File usrBin = new File("/usr/bin/photorec");

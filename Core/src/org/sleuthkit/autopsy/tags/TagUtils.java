@@ -19,6 +19,9 @@
 package org.sleuthkit.autopsy.tags;
 
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TagSet;
@@ -52,12 +55,13 @@ public final class TagUtils {
     public static String getDecoratedTagDisplayName(TagName tagName) {
         String displayName = tagName.getDisplayName();
         try {
-            TagSet tagSet = tagName.getTagSet();
+            TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
+            TagSet tagSet = tagsManager.getTagSet(tagName);
             if (tagSet != null) {
                 displayName = tagSet.getName() + ": " + displayName;
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, String.format("Failed to get TagSet for TagName (%d)", tagName.getId()));
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Failed to get TagSet for TagName '%s' (ID=%d)", tagName.getDisplayName(), tagName.getId()));            
         }
 
         if (tagName.getKnownStatus() == TskData.FileKnown.BAD) {
