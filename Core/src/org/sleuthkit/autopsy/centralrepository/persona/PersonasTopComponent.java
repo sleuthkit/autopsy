@@ -37,6 +37,7 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -49,7 +50,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @RetainLocation("personas")
 @SuppressWarnings("PMD.SingularField")
 public final class PersonasTopComponent extends TopComponent {
-    
+
     private static final long serialVersionUID = 1L;
 
     private static final Logger logger = Logger.getLogger(PersonasTopComponent.class.getName());
@@ -62,8 +63,7 @@ public final class PersonasTopComponent extends TopComponent {
         "PersonasTopComponent_delete_exception_Title=Delete failure",
         "PersonasTopComponent_delete_exception_msg=Failed to delete persona.",
         "PersonasTopComponent_delete_confirmation_Title=Are you sure?",
-        "PersonasTopComponent_delete_confirmation_msg=Are you sure you want to delete this persona?",
-    })
+        "PersonasTopComponent_delete_confirmation_msg=Are you sure you want to delete this persona?",})
     public PersonasTopComponent() {
         initComponents();
         setName(Bundle.PersonasTopComponent_Name());
@@ -91,14 +91,14 @@ public final class PersonasTopComponent extends TopComponent {
                         PersonaDetailsMode.CREATE, selectedPersona, new CreateEditCallbackImpl());
             }
         });
-        
+
         deleteBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 NotifyDescriptor confirm = new NotifyDescriptor.Confirmation(
-                Bundle.PersonasTopComponent_delete_confirmation_msg(),
-                Bundle.PersonasTopComponent_delete_confirmation_Title(),
-                NotifyDescriptor.YES_NO_OPTION);
+                        Bundle.PersonasTopComponent_delete_confirmation_msg(),
+                        Bundle.PersonasTopComponent_delete_confirmation_Title(),
+                        NotifyDescriptor.YES_NO_OPTION);
                 DialogDisplayer.getDefault().notify(confirm);
                 if (confirm.getValue().equals(NotifyDescriptor.YES_OPTION)) {
                     try {
@@ -108,9 +108,9 @@ public final class PersonasTopComponent extends TopComponent {
                     } catch (CentralRepoException ex) {
                         logger.log(Level.SEVERE, "Failed to delete persona: " + selectedPersona.getName(), ex);
                         JOptionPane.showMessageDialog(PersonasTopComponent.this,
-                        Bundle.PersonasTopComponent_delete_exception_msg(),
-                        Bundle.PersonasTopComponent_delete_exception_Title(),
-                        JOptionPane.ERROR_MESSAGE);
+                                Bundle.PersonasTopComponent_delete_exception_msg(),
+                                Bundle.PersonasTopComponent_delete_exception_Title(),
+                                JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     executeSearch();
@@ -126,15 +126,15 @@ public final class PersonasTopComponent extends TopComponent {
                 handleSelectionChange(e);
             }
         });
-        
+
         searchNameRadio.addActionListener((ActionEvent e) -> {
             searchField.setText("");
         });
-        
+
         searchAccountRadio.addActionListener((ActionEvent e) -> {
             searchField.setText("");
         });
-        
+
         createAccountBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -226,6 +226,11 @@ public final class PersonasTopComponent extends TopComponent {
         "PersonasTopComponent_search_exception_Title=Search failure",
         "PersonasTopComponent_search_exception_msg=Failed to search personas.",})
     private void executeSearch() {
+        // To prevent downstream failures, only execute search if central repository is enabled
+        if (!CentralRepository.isEnabled()) {
+            return;
+        }
+
         Collection<Persona> results;
         try {
             if (searchNameRadio.isSelected()) {
