@@ -862,7 +862,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     /**
      * If the settings reflect that a inter-case search is being performed,
      * checks that the data sources in the current case have been processed with
-     * Correlation Engine enabled and exist in the central repository. Prompting
+     * Central Repository enabled and exist in the central repository. Prompting
      * the user as to whether they still want to perform the search in the case
      * any data sources are unprocessed. If the settings reflect that a
      * intra-case search is being performed, it just performs the search.
@@ -870,7 +870,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
      * Notes: - Does not check that the data sources were processed into the
      * current central repository instead of another. - Does not check that the
      * appropriate modules to make all correlation types available were run. -
-     * Does not check if the correlation engine was run with any of the
+     * Does not check if the Central Repository was run with any of the
      * correlation properties properties disabled.
      */
     @Messages({"CommonAttributePanel.incompleteResults.introText=Results may be incomplete. Not all data sources in the current case were ingested into the current Central Repository. The following data sources have not been processed:",
@@ -902,14 +902,14 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         //if the datasource was previously processed we do not need to perform this check
                         for (CorrelationDataSource correlatedDataSource : correlatedDataSources) {
                             if (deviceID.equals(correlatedDataSource.getDeviceID())) {
-                                //if the datasource exists in the central repository it may of been processed with the correlation engine
+                                //if the datasource exists in the central repository it may of been processed with the Central Repository
                                 dataSourceCorrelationMap.put(dataSource, CorrelatedStatus.IN_CENTRAL_REPO);
                                 break;
                             }
                         }
                     }
                     if (dataSourceCorrelationMap.get(dataSource) == CorrelatedStatus.IN_CENTRAL_REPO) {
-                        //if the data source was in the central repository check if any of the modules run on it were the correlation engine
+                        //if the data source was in the central repository check if any of the modules run on it were the Central Repository
                         for (IngestModuleInfo ingestModuleInfo : jobInfo.getIngestModuleInfo()) {
                             if (correlationEngineModuleName.equals(ingestModuleInfo.getDisplayName())) {
                                 dataSourceCorrelationMap.put(dataSource, CorrelatedStatus.CORRELATED);

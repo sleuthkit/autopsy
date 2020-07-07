@@ -1,0 +1,8 @@
+<!-- Nu2Menu entry for " TestDisk and PhotoRec v7.1" -->
+<NU2MENU>
+  <MENU ID="Programs">
+    <MITEM TYPE="ITEM" DISABLED="@Not(@FileExists(@GetProgramDrive()\Programs\testdisk\testdisk_win.exe))" CMD="RUN" FUNC="@GetProgramDrive()\Programs\testdisk\testdisk_win.exe" PARM="1">Testdisk - Fix MBR and Recover lost partitions</MITEM>
+    <MITEM TYPE="ITEM" DISABLED="@Not(@FileExists(@GetProgramDrive()\Programs\testdisk\photorec_win.exe))" CMD="RUN" FUNC="@GetProgramDrive()\Programs\testdisk\photorec_win.exe" PARM="1">PhotoRec - Recover lost files (Doc, Pic and Video)</MITEM>
+    <MITEM TYPE="ITEM" DISABLED="@Not(@FileExists(@GetProgramDrive()\Programs\testdisk\qphotorec_win.exe))" CMD="RUN" FUNC="@GetProgramDrive()\Programs\testdisk\qphotorec_win.exe" PARM="1">QPhotoRec - GUI to recover lost files (Doc, Pic and Video)</MITEM>
+  </MENU>
+</NU2MENU>

@@ -151,6 +151,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         }
 
         modulesJList.getSelectionModel().addListSelectionListener(this);
+        modulesJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         modulesJList.setCellRenderer(new ModuleCellRenderer());
         modulesJList.setListData(modules.toArray(new ReportModule[modules.size()]));
         modulesJList.setSelectedIndex(selectedIndex);

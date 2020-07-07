@@ -777,10 +777,6 @@ public class TimeLineController {
             case CONTENT_TAG_DELETED:
                 future = executor.submit(() -> filteredEvents.handleContentTagDeleted((ContentTagDeletedEvent) evt));
                 break;
-            case CURRENT_CASE:
-                //close timeline on case changes.
-                SwingUtilities.invokeLater(TimeLineController.this::shutDownTimeLine);
-                break;
             case DATA_SOURCE_ADDED:
                 future = executor.submit(() -> {
                     filteredEvents.handleDataSourceAdded();

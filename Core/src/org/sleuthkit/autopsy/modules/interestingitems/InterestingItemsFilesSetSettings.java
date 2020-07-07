@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import java.util.regex.PatternSyntaxException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -46,9 +48,13 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCond
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MimeTypeCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.ParentPathCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.DateCondition;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import java.util.Comparator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 class InterestingItemsFilesSetSettings implements Serializable {
 
@@ -79,6 +85,8 @@ class InterestingItemsFilesSetSettings implements Serializable {
     private static final Logger logger = Logger.getLogger(InterestingItemsFilesSetSettings.class.getName());
     private static final String TYPE_FILTER_ATTR = "typeFilter"; //NON-NLS
     private static final String EXTENSION_RULE_TAG = "EXTENSION"; //NON-NLS
+    private static final String STANDARD_SET = "standardSet";
+    private static final String VERSION_NUMBER = "versionNumber";
 
     private Map<String, FilesSet> filesSets;
 
@@ -378,6 +386,25 @@ class InterestingItemsFilesSetSettings implements Serializable {
         if (!ignoreUnallocated.isEmpty()) {
             ignoreUnallocatedSpace = Boolean.parseBoolean(ignoreUnallocated);
         }
+
+        String isStandardSetString = setElem.getAttribute(STANDARD_SET);
+        boolean isStandardSet = false;
+        if (StringUtils.isNotBlank(isStandardSetString)) {
+            isStandardSet = Boolean.parseBoolean(isStandardSetString);
+        }
+
+        String versionNumberString = setElem.getAttribute(VERSION_NUMBER);
+        int versionNumber = 0;
+        if (StringUtils.isNotBlank(versionNumberString)) {
+            try {
+                versionNumber = Integer.parseInt(versionNumberString);
+            } catch (NumberFormatException ex) {
+                logger.log(Level.WARNING,
+                        String.format("Unable to parse version number for files set named: %s with provided input: '%s'", setName, versionNumberString),
+                        ex);
+            }
+        }
+
         // Read the set membership rules, if any.
         Map<String, FilesSet.Rule> rules = new HashMap<>();
         NodeList allRuleElems = setElem.getChildNodes();
@@ -401,7 +428,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
         // Make the files set. Note that degenerate sets with no rules are
         // allowed to facilitate the separation of set definition and rule
         // definitions. A set without rules is simply the empty set.
-        FilesSet set = new FilesSet(setName, description, ignoreKnownFiles, ignoreUnallocatedSpace, rules);
+        FilesSet set = new FilesSet(setName, description, ignoreKnownFiles, ignoreUnallocatedSpace, rules, isStandardSet, versionNumber);
         filesSets.put(set.getName(), set);
     }
     // Note: This method takes a file path to support the possibility of
@@ -446,31 +473,51 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
     static Map<String, FilesSet> readDefinitionsXML(File xmlFile) throws FilesSetsManager.FilesSetsManagerException {
-        Map<String, FilesSet> filesSets = new HashMap<>();
         if (!xmlFile.exists()) {
-            return filesSets;
+            return new HashMap<>();
         }
         // Check if the file can be read.
         if (!xmlFile.canRead()) {
             logger.log(Level.SEVERE, "FilesSet definition file at {0} exists, but cannot be read", xmlFile.getPath()); // NON-NLS
-            return filesSets;
+            return new HashMap<>();
         }
-        // Parse the XML in the file.
+
         Document doc = XMLUtil.loadDoc(InterestingItemsFilesSetSettings.class, xmlFile.getPath());
+        return readDefinitionsXML(doc, xmlFile.getPath());
+    }
+
+    /**
+     * Reads an XML file and returns a map of fileSets. Allows for legacy XML
+     * support as well as importing of file sets to XMLs.
+     *
+     *
+     * @param doc The xml document.
+     *
+     * @return fileSets - a Map<String, Filesset> of the definition(s) found in
+     *         the xml file for logging purposes (can provide null).
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
+     */
+    static Map<String, FilesSet> readDefinitionsXML(Document doc, String resourceName) throws FilesSetsManager.FilesSetsManagerException {
+        // Parse the XML in the file.
+        Map<String, FilesSet> filesSets = new HashMap<>();
+
         if (doc == null) {
-            logger.log(Level.SEVERE, "FilesSet definition file at {0}", xmlFile.getPath()); // NON-NLS
+            logger.log(Level.SEVERE, "FilesSet definition file at {0}", resourceName); // NON-NLS
             return filesSets;
         }
         // Get the root element.
         Element root = doc.getDocumentElement();
         if (root == null) {
-            logger.log(Level.SEVERE, "Failed to get root {0} element tag of FilesSet definition file at {1}", new Object[]{FILE_SETS_ROOT_TAG, xmlFile.getPath()}); // NON-NLS
+            logger.log(Level.SEVERE, "Failed to get root {0} element tag of FilesSet definition file at {1}",
+                    new Object[]{FILE_SETS_ROOT_TAG, resourceName}); // NON-NLS
             return filesSets;
         }
         // Read in the files set definitions.
         NodeList setElems = root.getElementsByTagName(FILE_SET_TAG);
         for (int i = 0; i < setElems.getLength(); ++i) {
-            readFilesSet((Element) setElems.item(i), filesSets, xmlFile.getPath());
+            readFilesSet((Element) setElems.item(i), filesSets, resourceName);
         }
         return filesSets;
     }
@@ -493,6 +540,34 @@ class InterestingItemsFilesSetSettings implements Serializable {
         }
         return true;
     }
+    
+
+    /**
+     * Generates an alphabetically sorted list based on the provided collection and Function to retrieve a string field from each object.
+     * @param itemsToSort The items to be sorted into the newly generated list.
+     * @param getName The method to retrieve the given field from the object.
+     * @return The newly generated list sorted alphabetically by the given field.
+     */
+    private static <T> List<T> sortOnField(Collection<T> itemsToSort, final Function<T, String> getName) {
+        Comparator<T> comparator = (a,b) -> {
+            String aName = getName.apply(a);
+            String bName = getName.apply(b);
+            if (aName == null) {
+                aName = "";
+            }
+            
+            if (bName == null) {
+                bName = "";
+            }
+            
+            return aName.compareToIgnoreCase(bName);
+        };
+        
+        return itemsToSort.stream()
+                .sorted(comparator)
+                .collect(Collectors.toList());
+    }
+    
 
     /**
      * Write the FilesSets to a file as an xml.
@@ -512,15 +587,27 @@ class InterestingItemsFilesSetSettings implements Serializable {
             Element rootElement = doc.createElement(FILE_SETS_ROOT_TAG);
             doc.appendChild(rootElement);
             // Add the interesting files sets to the document.
-            for (FilesSet set : interestingFilesSets) {
+
+            List<FilesSet> sortedFilesSets = sortOnField(
+                    interestingFilesSets, 
+                    filesSet -> filesSet == null ? null : filesSet.getName());
+            
+            for (FilesSet set : sortedFilesSets) {
                 // Add the files set element and its attributes.
                 Element setElement = doc.createElement(FILE_SET_TAG);
                 setElement.setAttribute(NAME_ATTR, set.getName());
                 setElement.setAttribute(DESC_ATTR, set.getDescription());
                 setElement.setAttribute(IGNORE_KNOWN_FILES_ATTR, Boolean.toString(set.ignoresKnownFiles()));
+                setElement.setAttribute(STANDARD_SET, Boolean.toString(set.isStandardSet()));
+                setElement.setAttribute(VERSION_NUMBER, Integer.toString(set.getVersionNumber()));
                 // Add the child elements for the set membership rules.
                 // All conditions of a rule will be written as a single element in the xml
-                for (FilesSet.Rule rule : set.getRules().values()) {
+                
+                List<FilesSet.Rule> sortedRules = sortOnField(
+                        set.getRules().values(), 
+                        rule -> rule == null ? null : rule.getName());
+                
+                for (FilesSet.Rule rule : sortedRules) {
                     // Add a rule element with the appropriate name Condition 
                     // type tag.
                     Element ruleElement;
@@ -577,13 +664,13 @@ class InterestingItemsFilesSetSettings implements Serializable {
                         ruleElement.setAttribute(FS_SIZE_ATTR, Integer.toString(sizeCondition.getSizeValue()));
                         ruleElement.setAttribute(FS_UNITS_ATTR, sizeCondition.getUnit().getName());
                     }
-                    
-                     //Add the optional date condition
+
+                    //Add the optional date condition
                     DateCondition dateCondition = rule.getDateCondition();
                     if (dateCondition != null) {
                         ruleElement.setAttribute(DAYS_INCLUDED_ATTR, Integer.toString(dateCondition.getDaysIncluded()));
                     }
-                    
+
                     setElement.appendChild(ruleElement);
                 }
                 rootElement.appendChild(setElement);
