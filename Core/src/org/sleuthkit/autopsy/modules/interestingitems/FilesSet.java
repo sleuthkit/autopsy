@@ -44,6 +44,10 @@ public final class FilesSet implements Serializable {
     private final String description;
     private final boolean ignoreKnownFiles;
     private final boolean ignoreUnallocatedSpace;
+
+    private final boolean standardSet;
+    private final int versionNumber;
+
     private final Map<String, Rule> rules = new HashMap<>();
 
     /**
@@ -59,9 +63,39 @@ public final class FilesSet implements Serializable {
      *                               but a set with no rules is the empty set.
      */
     public FilesSet(String name, String description, boolean ignoreKnownFiles, boolean ignoreUnallocatedSpace, Map<String, Rule> rules) {
+        this(name, description, ignoreKnownFiles, ignoreUnallocatedSpace, rules, false, 0);
+    }
+
+    /**
+     * Constructs an interesting files set.
+     *
+     * @param name                   The name of the set.
+     * @param description            A description of the set, may be null.
+     * @param ignoreKnownFiles       Whether or not to exclude known files from
+     *                               the set.
+     * @param ignoreUnallocatedSpace Whether or not to exclude unallocated space
+     *                               from the set.
+     * @param standardSet            Whether or not the FilesSet is considered a
+     *                               standard interesting set file.
+     * @param versionNumber          The versionNumber for the FilesSet so that
+     *                               older versions can be replaced with newer
+     *                               versions.
+     * @param rules                  The rules that define the set. May be null,
+     *                               but a set with no rules is the empty set.
+     */
+    public FilesSet(String name, String description, boolean ignoreKnownFiles, boolean ignoreUnallocatedSpace, Map<String, Rule> rules,
+            boolean standardSet, int versionNumber) {
         if ((name == null) || (name.isEmpty())) {
             throw new IllegalArgumentException("Interesting files set name cannot be null or empty");
         }
+
+        if (versionNumber < 0) {
+            throw new IllegalArgumentException("version number must be >= 0");
+        }
+
+        this.standardSet = standardSet;
+        this.versionNumber = versionNumber;
+
         this.name = name;
         this.description = (description != null ? description : "");
         this.ignoreKnownFiles = ignoreKnownFiles;
@@ -69,6 +103,22 @@ public final class FilesSet implements Serializable {
         if (rules != null) {
             this.rules.putAll(rules);
         }
+    }
+
+    /**
+     * @return Whether or not the FilesSet is considered a standard interesting
+     *         set file.
+     */
+    boolean isStandardSet() {
+        return standardSet;
+    }
+
+    /**
+     * @return The versionNumber for the FilesSet so that older versions can be
+     *         replaced with newer versions.
+     */
+    int getVersionNumber() {
+        return versionNumber;
     }
 
     /**
@@ -624,7 +674,6 @@ public final class FilesSet implements Serializable {
              * To ensure compatibility with existing serialized configuration
              * settings, this class cannot have a 'serialVersionUID'.
              */
-            
             private final TextMatcher textMatcher;
 
             /**
@@ -648,10 +697,10 @@ public final class FilesSet implements Serializable {
             AbstractTextCondition(Pattern regex) {
                 this.textMatcher = new FilesSet.Rule.RegexMatcher(regex);
             }
-            
+
             /**
              * Construct a case-insensitive multi-value text condition.
-             * 
+             *
              * @param values The list of values in which to look for a match.
              */
             AbstractTextCondition(List<String> values) {
@@ -783,7 +832,6 @@ public final class FilesSet implements Serializable {
              * To ensure compatibility with existing serialized configuration
              * settings, this class cannot have a 'serialVersionUID'.
              */
-            
             private final static long SECS_PER_DAY = 60 * 60 * 24;
 
             private int daysIncluded;
@@ -834,8 +882,8 @@ public final class FilesSet implements Serializable {
                 // AbstractFile.getFileNameExtension() returns just the 
                 // extension chars and not the dot.
                 super(normalize(extension), false);
-            }            
-            
+            }
+
             /**
              * Construct a case-insensitive file name extension condition.
              *
@@ -862,29 +910,29 @@ public final class FilesSet implements Serializable {
             public boolean passes(AbstractFile file) {
                 return this.textMatches(file.getNameExtension());
             }
-            
+
             /**
              * Strip "." from the start of extensions in the provided list.
-             * 
+             *
              * @param extensions The list of extensions to be processed.
-             * 
+             *
              * @return A post-processed list of extensions.
              */
             private static List<String> normalize(List<String> extensions) {
                 List<String> values = new ArrayList<>(extensions);
-                
-                for (int i=0; i < values.size(); i++) {
+
+                for (int i = 0; i < values.size(); i++) {
                     values.set(i, normalize(values.get(i)));
                 }
-                
+
                 return values;
             }
-            
+
             /**
              * Strip "." from the start of the provided extension.
-             * 
+             *
              * @param extension The extension to be processed.
-             * 
+             *
              * @return A post-processed extension.
              */
             private static String normalize(String extension) {
