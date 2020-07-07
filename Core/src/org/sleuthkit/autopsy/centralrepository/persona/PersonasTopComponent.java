@@ -263,6 +263,8 @@ public final class PersonasTopComponent extends TopComponent {
     private void initComponents() {
 
         searchButtonGroup = new javax.swing.ButtonGroup();
+        introTextScrollPane = new javax.swing.JScrollPane();
+        introText = new javax.swing.JTextArea();
         mainSplitPane = new javax.swing.JSplitPane();
         searchPanel = new javax.swing.JPanel();
         searchField = new javax.swing.JTextField();
@@ -280,6 +282,17 @@ public final class PersonasTopComponent extends TopComponent {
         detailsPanel = new org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel();
 
         setName(""); // NOI18N
+
+        introTextScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+
+        introText.setBackground(getBackground());
+        introText.setColumns(20);
+        introText.setLineWrap(true);
+        introText.setRows(5);
+        introText.setText(org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.introText.text")); // NOI18N
+        introText.setWrapStyleWord(true);
+        introText.setFocusable(false);
+        introTextScrollPane.setViewportView(introText);
 
         mainSplitPane.setDividerLocation(400);
 
@@ -352,7 +365,7 @@ public final class PersonasTopComponent extends TopComponent {
                     .addComponent(searchAccountRadio)
                     .addComponent(searchBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(resultsPane, javax.swing.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
+                .addComponent(resultsPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(editBtn)
@@ -375,11 +388,15 @@ public final class PersonasTopComponent extends TopComponent {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 816, Short.MAX_VALUE)
+            .addComponent(introTextScrollPane)
+            .addComponent(mainSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 724, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 428, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(introTextScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(mainSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 470, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -391,6 +408,8 @@ public final class PersonasTopComponent extends TopComponent {
     private org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel detailsPanel;
     private javax.swing.JScrollPane detailsScrollPane;
     private javax.swing.JButton editBtn;
+    private javax.swing.JTextArea introText;
+    private javax.swing.JScrollPane introTextScrollPane;
     private javax.swing.JSplitPane mainSplitPane;
     private javax.swing.JScrollPane resultsPane;
     private javax.swing.JTable resultsTable;
