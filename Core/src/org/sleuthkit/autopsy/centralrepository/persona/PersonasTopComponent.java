@@ -285,7 +285,7 @@ public final class PersonasTopComponent extends TopComponent {
 
         introTextScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
-        introText.setBackground(java.awt.SystemColor.window);
+        introText.setBackground(getBackground());
         introText.setColumns(20);
         introText.setLineWrap(true);
         introText.setRows(5);
