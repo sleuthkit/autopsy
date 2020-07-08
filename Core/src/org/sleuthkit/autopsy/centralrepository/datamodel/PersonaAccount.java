@@ -24,9 +24,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Account;
 
 /**
@@ -121,39 +121,47 @@ public class PersonaAccount {
     /**
      * Creates an account for the specified Persona.
      *
-     * @param persona       Persona for which the account is being added.
-     * @param account       Account.
+     * @param persona Persona for which the account is being added.
+     * @param account Account.
      * @param justification Reason for assigning the alias, may be null.
-     * @param confidence    Confidence level.
+     * @param confidence Confidence level.
      *
      * @return PersonaAccount
      *
      * @throws CentralRepoException If there is an error in creating the
-     *                              account.
+     * account.
      */
     static PersonaAccount addPersonaAccount(Persona persona, CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
         CentralRepoExaminer currentExaminer = getCRInstance().getOrInsertExaminer(System.getProperty("user.name"));
 
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();
-        String insertClause = " INTO persona_accounts (persona_id, account_id, justification, confidence_id, date_added, examiner_id ) "
-                + "VALUES ( "
-                + persona.getId() + ", "
-                + account.getId() + ", "
-                + "'" + ((StringUtils.isBlank(justification) ? "" : SleuthkitCase.escapeSingleQuotes(justification))) + "', "
-                + confidence.getLevelId() + ", "
-                + timeStampMillis.toString() + ", "
-                + currentExaminer.getId()
-                + ")";
 
-        getCRInstance().executeInsertSQL(insertClause);
+        String insertSQL = "INSERT INTO persona_accounts (persona_id, account_id, justification, confidence_id, date_added, examiner_id ) "
+                + " VALUES ( ?, ?, ?, ?, ?, ?)";
 
-        String queryClause = PERSONA_ACCOUNTS_QUERY_CLAUSE
-                + "WHERE persona_id = " + persona.getId()
-                + " AND account_type_id = " + account.getAccountType().getAccountTypeId()
-                + " AND account_unique_identifier = '" + account.getIdentifier() + "'";
+        List<Object> params = new ArrayList<>();
+        params.add(persona.getId());
+        params.add(account.getId());
+        params.add(StringUtils.isBlank(justification) ? "" : justification);
+        params.add(confidence.getLevelId());
+        params.add(timeStampMillis);
+        params.add(currentExaminer.getId());
+
+        getCRInstance().executeSqlAsPreparedStatement(insertSQL, params);
+
+        String querySQL = PERSONA_ACCOUNTS_QUERY_CLAUSE
+                + "WHERE persona_id = ? "
+                + " AND account_type_id = ?"
+                + " AND account_unique_identifier = ?";
+
+        List<Object> queryParams = new ArrayList<>();
+        queryParams.add(persona.getId());
+        queryParams.add(account.getAccountType().getAccountTypeId());
+        queryParams.add(account.getIdentifier());
+
         PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
-        getCRInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeQueryAsPreparedStatement(querySQL, queryParams, queryCallback);
 
         Collection<PersonaAccount> accounts = queryCallback.getPersonaAccountsList();
         if (accounts.size() != 1) {
@@ -241,14 +249,17 @@ public class PersonaAccount {
      * @return Collection of PersonaAccounts, may be empty.
      *
      * @throws CentralRepoException If there is an error in getting the
-     *                              persona_account.
+     * persona_account.
      */
     static Collection<PersonaAccount> getPersonaAccountsForPersona(long personaId) throws CentralRepoException {
-        String queryClause = PERSONA_ACCOUNTS_QUERY_CLAUSE
-                + " WHERE persona_accounts.persona_id = " + personaId;
+        String querySQL = PERSONA_ACCOUNTS_QUERY_CLAUSE
+                + " WHERE persona_accounts.persona_id = ?";
+
+        List<Object> queryParams = new ArrayList<>();
+        queryParams.add(personaId);
 
         PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
-        getCRInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeQueryAsPreparedStatement(querySQL, queryParams, queryCallback);
 
         return queryCallback.getPersonaAccountsList();
     }
@@ -261,15 +272,19 @@ public class PersonaAccount {
      * @return Collection of PersonaAccounts. may be empty.
      *
      * @throws CentralRepoException If there is an error in getting the
-     *                              persona_account.
+     * persona_account.
      */
     public static Collection<PersonaAccount> getPersonaAccountsForAccount(long accountId) throws CentralRepoException {
-        String queryClause = PERSONA_ACCOUNTS_QUERY_CLAUSE
-                + " WHERE persona_accounts.account_id = " + accountId
-                + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
+        String querySQL = PERSONA_ACCOUNTS_QUERY_CLAUSE
+                + " WHERE persona_accounts.account_id = ?"
+                + " AND personas.status_id != ?";
+
+        List<Object> queryParams = new ArrayList<>();
+        queryParams.add(accountId);
+        queryParams.add(Persona.PersonaStatus.DELETED.getStatusId());
 
         PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
-        getCRInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeQueryAsPreparedStatement(querySQL, queryParams, queryCallback);
         return queryCallback.getPersonaAccountsList();
     }
 
@@ -278,22 +293,25 @@ public class PersonaAccount {
      * account identifier substring.
      *
      * @param accountIdentifierSubstring Account identifier substring to search
-     *                                   for.
+     * for.
      *
      * @return Collection of PersonaAccounts. may be empty.
      *
      * @throws CentralRepoException If there is an error in getting the
-     *                              persona_account.
+     * persona_account.
      */
     public static Collection<PersonaAccount> getPersonaAccountsForIdentifierLike(String accountIdentifierSubstring) throws CentralRepoException {
-        String queryClause = PERSONA_ACCOUNTS_QUERY_CLAUSE
-                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + accountIdentifierSubstring + "%')"
-                + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
+        String querySQL = PERSONA_ACCOUNTS_QUERY_CLAUSE
+                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER(?)"
+                + " AND personas.status_id != ?";
+
+        List<Object> queryParams = new ArrayList<>();
+        queryParams.add("%" + accountIdentifierSubstring + "%"); // substring match
+        queryParams.add(Persona.PersonaStatus.DELETED.getStatusId());
 
         PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
-        getCRInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeQueryAsPreparedStatement(querySQL, queryParams, queryCallback);
         return queryCallback.getPersonaAccountsList();
-
     }
 
     /**
@@ -302,18 +320,23 @@ public class PersonaAccount {
      * @param account Account to search for.
      *
      * @return Collection of PersonaAccounts, maybe empty if none were found or
-     *         CR is not enabled.
+     * CR is not enabled.
      *
      * @throws CentralRepoException
      */
     public static Collection<PersonaAccount> getPersonaAccountsForAccount(Account account) throws CentralRepoException {
-        String queryClause = PERSONA_ACCOUNTS_QUERY_CLAUSE
-                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + account.getTypeSpecificID() + "%')"
-                + " AND type_name = '" + account.getAccountType().getTypeName() + "' "
-                + " AND personas.status_id != " + Persona.PersonaStatus.DELETED.getStatusId();
+        String querySQL = PERSONA_ACCOUNTS_QUERY_CLAUSE
+                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER(?)"
+                + " AND type_name = ?"
+                + " AND personas.status_id != ?";
+
+        List<Object> queryParams = new ArrayList<>();
+        queryParams.add("%" + account.getTypeSpecificID() + "%"); // substring match
+        queryParams.add(account.getAccountType().getTypeName());
+        queryParams.add(Persona.PersonaStatus.DELETED.getStatusId());
 
         PersonaAccountsQueryCallback queryCallback = new PersonaAccountsQueryCallback();
-        getCRInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeQueryAsPreparedStatement(querySQL, queryParams, queryCallback);
         return queryCallback.getPersonaAccountsList();
     }
 
@@ -323,11 +346,14 @@ public class PersonaAccount {
      * @param id row id for the account to be removed
      *
      * @throws CentralRepoException If there is an error in removing the
-     *                              account.
+     * account.
      */
     static void removePersonaAccount(long id) throws CentralRepoException {
-        String deleteClause = " DELETE FROM persona_accounts WHERE id = " + id;
-        getCRInstance().executeDeleteSQL(deleteClause);
+        String deleteSQL = " DELETE FROM persona_accounts WHERE id = ?";
+        List<Object> params = new ArrayList<>();
+        params.add(id);
+
+        getCRInstance().executeSqlAsPreparedStatement(deleteSQL, params);
     }
 
     /**
@@ -336,11 +362,17 @@ public class PersonaAccount {
      * @param id row id for the account to be removed
      *
      * @throws CentralRepoException If there is an error in removing the
-     *                              account.
+     * account.
      */
     static void modifyPersonaAccount(long id, Persona.Confidence confidence, String justification) throws CentralRepoException {
-        String updateClause = "UPDATE persona_accounts SET confidence_id = " + confidence.getLevelId() + ", justification = '" + justification + "' WHERE id = " + id;
-        getCRInstance().executeUpdateSQL(updateClause);
+        String updateSQL = "UPDATE persona_accounts SET confidence_id = ?, justification = ? WHERE id = ?";
+
+        List<Object> params = new ArrayList<>();
+        params.add(confidence.getLevelId());
+        params.add(StringUtils.isBlank(justification) ? "" : justification);
+        params.add(id);
+
+        getCRInstance().executeSqlAsPreparedStatement(updateSQL, params);
     }
 
     /**
@@ -378,10 +410,10 @@ public class PersonaAccount {
      * @param personaId Id of the persona to look for.
      *
      * @return Collection of all accounts associated with the given persona, may
-     *         be empty.
+     * be empty.
      *
      * @throws CentralRepoException If there is an error in getting the
-     *                              accounts.
+     * accounts.
      */
     static Collection<CentralRepoAccount> getAccountsForPersona(long personaId) throws CentralRepoException {
         String queryClause = "SELECT account_id,  "
@@ -390,10 +422,13 @@ public class PersonaAccount {
                 + " FROM persona_accounts "
                 + " JOIN accounts as accounts on persona_accounts.account_id = accounts.id "
                 + " JOIN account_types as account_types on accounts.account_type_id = account_types.id "
-                + " WHERE persona_accounts.persona_id = " + personaId;
+                + " WHERE persona_accounts.persona_id = ?";
+
+        List<Object> queryParams = new ArrayList<>();
+        queryParams.add(personaId);
 
         AccountsForPersonaQueryCallback queryCallback = new AccountsForPersonaQueryCallback();
-        getCRInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeQueryAsPreparedStatement(queryClause, queryParams, queryCallback);
 
         return queryCallback.getAccountsList();
     }
