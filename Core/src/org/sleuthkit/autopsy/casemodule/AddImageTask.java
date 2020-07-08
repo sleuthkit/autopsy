@@ -44,7 +44,6 @@ class AddImageTask implements Runnable {
 
     private final Logger logger = Logger.getLogger(AddImageTask.class.getName());
     private final ImageDetails imageDetails;
-    private long imageId = 0;
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final AddDataSourceCallbacks addDataSourceCallbacks;
     private final AddImageTaskCallback addImageTaskCallback;
@@ -93,7 +92,7 @@ class AddImageTask implements Runnable {
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to add image data source at %s, no current case", imageDetails.imagePath), ex);
+            logger.log(Level.SEVERE, String.format("Failed to start AddImageTask for %s, no current case", imageDetails.getImagePath()), ex);
             return;
         }
         progressMonitor.setIndeterminate(true);
@@ -116,7 +115,7 @@ class AddImageTask implements Runnable {
             progressUpdateThread.start();
             runAddImageProcess(errorMessages);
             progressUpdateThread.interrupt();
-            finishAddImageProcess(currentCase, errorMessages, newDataSources);
+            finishAddImageProcess(errorMessages, newDataSources);
             progressMonitor.setProgress(100);
         } finally {
             DataSourceProcessorCallback.DataSourceProcessorResult result;
@@ -150,7 +149,7 @@ class AddImageTask implements Runnable {
                     tskAddImageProcess.stop();
 
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error cancelling adding image %s to the case database", imageDetails.imagePath), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Error cancelling adding image %s to the case database", imageDetails.getImagePath()), ex); //NON-NLS
                 }
             }
         }
@@ -164,16 +163,13 @@ class AddImageTask implements Runnable {
      */
     private void runAddImageProcess(List<String> errorMessages) {
         try {
-            long returnedImageId = tskAddImageProcess.run(imageDetails.deviceId, new String[]{imageDetails.imagePath}, imageDetails.sectorSize, this.addDataSourceCallbacks);
-            synchronized (tskAddImageProcessLock) {
-                imageId = returnedImageId;
-            }
+            tskAddImageProcess.run(imageDetails.deviceId, imageDetails.image, imageDetails.sectorSize, this.addDataSourceCallbacks);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Critical error occurred adding image %s", imageDetails.imagePath), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Critical error occurred adding image %s", imageDetails.getImagePath()), ex); //NON-NLS
             criticalErrorOccurred = true;
             errorMessages.add(ex.getMessage());
         } catch (TskDataException ex) {
-            logger.log(Level.WARNING, String.format("Non-critical error occurred adding image %s", imageDetails.imagePath), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Non-critical error occurred adding image %s", imageDetails.getImagePath()), ex); //NON-NLS
             errorMessages.add(ex.getMessage());
         }
     }
@@ -183,7 +179,6 @@ class AddImageTask implements Runnable {
      * The image will be in the database even if a critical error occurred or
      * the user canceled.
      *
-     * @param currentCase    The current case.
      * @param errorMessages  Error messages, if any, are added to this list for
      *                       eventual return via the callback.
      * @param newDataSources If the new image is successfully committed, it is
@@ -192,80 +187,67 @@ class AddImageTask implements Runnable {
      *
      * @return
      */
-    private void finishAddImageProcess(Case currentCase, List<String> errorMessages, List<Content> newDataSources) {
+    private void finishAddImageProcess(List<String> errorMessages, List<Content> newDataSources) {
         synchronized (tskAddImageProcessLock) {
-            try {
-                if (imageId != 0) {
-                    Image newImage = currentCase.getSleuthkitCase().getImageById(imageId);
-                    String verificationError = newImage.verifyImageSize();
-                    if (!verificationError.isEmpty()) {
-                        errorMessages.add(verificationError);
-                    }
-                    if (imageDetails.imageWriterSettings != null) {
-                        ImageWriterService.createImageWriter(imageId, imageDetails.imageWriterSettings);
-                    }
-                    newDataSources.add(newImage);
+            Image newImage = imageDetails.image;
+            String verificationError = newImage.verifyImageSize();
+            if (!verificationError.isEmpty()) {
+                errorMessages.add(verificationError);
+            }
+            if (imageDetails.imageWriterSettings != null) {
+                ImageWriterService.createImageWriter(newImage.getId(), imageDetails.imageWriterSettings);
+            }
+            newDataSources.add(newImage);
 
-                    // If the add image process was cancelled don't do any further processing here
-                    if (tskAddImageProcessStopped) {
-                        return;
-                    }
-                        
-                    if (!StringUtils.isBlank(imageDetails.md5)) {
-                        try {
-                            newImage.setMD5(imageDetails.md5);
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to add MD5 hash for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
-                            errorMessages.add(ex.getMessage());
-                            criticalErrorOccurred = true;
-                        } catch (TskDataException ignored) {
-                            /*
-                             * The only reasonable way for this to happen at
-                             * present is through C/C++ processing of an EWF
-                             * image, which is not an error.
-                             */
-                        }
-                    }
-                    if (!StringUtils.isBlank(imageDetails.sha1)) {
-                        try {
-                            newImage.setSha1(imageDetails.sha1);
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to add SHA1 hash for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
-                            errorMessages.add(ex.getMessage());
-                            criticalErrorOccurred = true;
-                        } catch (TskDataException ignored) {
-                            /*
-                             * The only reasonable way for this to happen at
-                             * present is through C/C++ processing of an EWF
-                             * image, which is not an error.
-                             */
-                        }
-                    }
-                    if (!StringUtils.isBlank(imageDetails.sha256)) {
-                        try {
-                            newImage.setSha256(imageDetails.sha256);
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to add SHA256 for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
-                            errorMessages.add(ex.getMessage());
-                            criticalErrorOccurred = true;
-                        } catch (TskDataException ignored) {
-                            /*
-                             * The only reasonable way for this to happen at
-                             * present is through C/C++ processing of an EWF
-                             * image, which is not an error.
-                             */
-                        }
-                    }
-                } else {
-                    String errorMessage = String.format("Error after adding image %s to the case database, no object id returned", imageDetails.imagePath); //NON-NLS
-                    logger.log(Level.SEVERE, errorMessage);
-                    errorMessages.add(errorMessage);
+            // If the add image process was cancelled don't do any further processing here
+            if (tskAddImageProcessStopped) {
+                return;
+            }
+
+            if (!StringUtils.isBlank(imageDetails.md5)) {
+                try {
+                    newImage.setMD5(imageDetails.md5);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to add MD5 hash for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
+                    errorMessages.add(ex.getMessage());
                     criticalErrorOccurred = true;
+                } catch (TskDataException ignored) {
+                    /*
+                     * The only reasonable way for this to happen at
+                     * present is through C/C++ processing of an EWF
+                     * image, which is not an error.
+                     */
                 }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Error loading image %s from the case database", imageDetails.imagePath), ex); //NON-NLS
-                errorMessages.add(ex.getMessage());
-                criticalErrorOccurred = true;
+            }
+            if (!StringUtils.isBlank(imageDetails.sha1)) {
+                try {
+                    newImage.setSha1(imageDetails.sha1);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to add SHA1 hash for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
+                    errorMessages.add(ex.getMessage());
+                    criticalErrorOccurred = true;
+                } catch (TskDataException ignored) {
+                    /*
+                     * The only reasonable way for this to happen at
+                     * present is through C/C++ processing of an EWF
+                     * image, which is not an error.
+                     */
+                }
+            }
+            if (!StringUtils.isBlank(imageDetails.sha256)) {
+                try {
+                    newImage.setSha256(imageDetails.sha256);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to add SHA256 for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
+                    errorMessages.add(ex.getMessage());
+                    criticalErrorOccurred = true;
+                } catch (TskDataException ignored) {
+                    /*
+                     * The only reasonable way for this to happen at
+                     * present is through C/C++ processing of an EWF
+                     * image, which is not an error.
+                     */
+                }
             }
         }
     }
@@ -328,7 +310,7 @@ class AddImageTask implements Runnable {
      */
     static class ImageDetails {
         String deviceId;
-        String imagePath;
+        Image image;
         int sectorSize;
         String timeZone;
         boolean ignoreFatOrphanFiles;
@@ -337,9 +319,9 @@ class AddImageTask implements Runnable {
         String sha256; 
         ImageWriterSettings imageWriterSettings;
         
-        ImageDetails(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, ImageWriterSettings imageWriterSettings) {
+        ImageDetails(String deviceId, Image image, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, ImageWriterSettings imageWriterSettings) {
             this.deviceId = deviceId;
-            this.imagePath = imagePath;
+            this.image = image;
             this.sectorSize = sectorSize;
             this.timeZone = timeZone;
             this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
@@ -347,6 +329,13 @@ class AddImageTask implements Runnable {
             this.sha1 = sha1; 
             this.sha256 = sha256; 
             this.imageWriterSettings = imageWriterSettings;
+        }
+	
+        String getImagePath() {
+            if (image.getPaths().length > 0) {
+                return image.getPaths()[0];
+            }
+            return "Unknown data source path";
         }
     }
 }

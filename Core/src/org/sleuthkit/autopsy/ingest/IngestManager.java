@@ -67,6 +67,7 @@ import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
 import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -288,14 +289,15 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
     
     /**
-     * Creates an ingest stream from the given ingest settings.
+     * Creates an ingest stream from the given ingest settings for a data source.
      * 
-     * @param settings The ingest job settings.
+     * @param dataSource The data source
+     * @param settings   The ingest job settings.
      * 
      * @return The newly created ingest stream
      */
-    public IngestStream openIngestStream(IngestJobSettings settings) {
-        IngestJob job = new IngestJob(settings);
+    public IngestStream openIngestStream(DataSource dataSource, IngestJobSettings settings) {
+        IngestJob job = new IngestJob(dataSource, IngestJob.Mode.STREAMING, settings);
         return new IngestJobInputStream(job);
     }
 

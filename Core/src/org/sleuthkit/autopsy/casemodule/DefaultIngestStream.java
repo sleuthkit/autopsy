@@ -32,11 +32,6 @@ class DefaultIngestStream implements IngestStream {
     private boolean isStopped = false;
 
     @Override
-    public void addDataSource(long dataSourceObjectId) throws IngestStreamClosedException {
-        // Do nothing
-    }
-
-    @Override
     public void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException {
         // Do nothing
     }
