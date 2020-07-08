@@ -1049,7 +1049,7 @@ final class IngestJobPipeline {
      * Add a list of files (by object ID) to the ingest queue.
      * Must call start() prior to adding files.
      * 
-     * @param fileObjIds List of newly added file IDs
+     * @param fileObjIds List of newly added file IDs.
      */
     void addStreamingIngestFiles(List<Long> fileObjIds) {
 	

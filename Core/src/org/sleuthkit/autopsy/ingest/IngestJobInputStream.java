@@ -27,7 +27,6 @@ import org.sleuthkit.datamodel.DataSource;
  */
 class IngestJobInputStream implements IngestStream {
     private final IngestJob ingestJob;
-    private final DataSource dataSource;
     private boolean isClosed = false;
     private boolean isStopped = false;
 
@@ -36,8 +35,7 @@ class IngestJobInputStream implements IngestStream {
      * 
      * @param ingestJob The IngestJob associated with this stream.
      */
-    IngestJobInputStream(DataSource dataSource, IngestJob ingestJob) {
-        this.dataSource = dataSource;
+    IngestJobInputStream(IngestJob ingestJob) {
         this.ingestJob = ingestJob;
         ingestJob.start();
     }
@@ -52,8 +50,8 @@ class IngestJobInputStream implements IngestStream {
 
     @Override
     public synchronized void close() {
-	isClosed = true;
-	ingestJob.processStreamingIngestDataSource();
+        isClosed = true;
+        ingestJob.processStreamingIngestDataSource();
     }
 
     @Override

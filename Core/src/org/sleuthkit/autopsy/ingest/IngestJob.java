@@ -110,22 +110,22 @@ public final class IngestJob {
      * @param settings   The ingest job settings.
      */
     IngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
-	this(Arrays.asList(dataSource), settings);
-	this.files.addAll(files);
+        this(Arrays.asList(dataSource), settings);
+        this.files.addAll(files);
     }
     
     /**
      * Constructs an ingest job that analyzes one data source, possibly using
-     * an ingest stream
+     * an ingest stream.
      *
      * @param settings   The ingest job settings.
      */
     IngestJob(DataSource dataSource, Mode ingestMode, IngestJobSettings settings) {
         this.id = IngestJob.nextId.getAndIncrement();
         this.ingestJobPipelines = new ConcurrentHashMap<>();
-	this.dataSources.add(dataSource);
-	this.settings = settings;
-	this.ingestMode = ingestMode;
+        this.dataSources.add(dataSource);
+        this.settings = settings;
+        this.ingestMode = ingestMode;
         incompleteJobsCount = new AtomicInteger(1);
         cancellationReason = CancellationReason.NOT_CANCELLED;
     }

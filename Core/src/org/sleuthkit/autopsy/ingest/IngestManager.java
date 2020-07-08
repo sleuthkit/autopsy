@@ -298,7 +298,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     public IngestStream openIngestStream(DataSource dataSource, IngestJobSettings settings) {
         IngestJob job = new IngestJob(dataSource, IngestJob.Mode.STREAMING, settings);
-        return new IngestJobInputStream(dataSource, job);
+        return new IngestJobInputStream(job);
     }
 
 

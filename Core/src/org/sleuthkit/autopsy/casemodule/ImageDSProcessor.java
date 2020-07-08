@@ -343,7 +343,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      */
     private void doAddImageProcess(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
 
-	// If the data source or ingest stream haven't been initialized yet, do it now.
+	// If the data source or ingest stream haven't been initialized, stop processing
     if (ingestStream == null) {
         String message = "Ingest stream was not initialized before running the add image process on " + imagePath;
         logger.log(Level.SEVERE, message);
