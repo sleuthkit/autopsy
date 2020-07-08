@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -33,7 +35,18 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo
  *
  */
 public class CentralRepoDbUtil {
-
+    private static final PropertyChangeSupport pcs = new PropertyChangeSupport(CentralRepoDbUtil.class);
+    
+    /**
+     * Event types triggered by changes caused by CentralRepoDbUtil.
+     */
+    public static enum Event { 
+        /**
+         * Fired when the central repo has been enabled or disabled.
+         */
+        CR_ENABLED_STATE
+    }
+    
     private final static Logger LOGGER = Logger.getLogger(CentralRepoDbUtil.class.getName());
     private static final String CENTRAL_REPO_NAME = "CentralRepository";
     private static final String CENTRAL_REPO_USE_KEY = "db.useCentralRepo";
@@ -250,6 +263,22 @@ public class CentralRepoDbUtil {
         //as EamDb.isEnabled() will call this method as well as checking that the selected type of central repository is not DISABLED
         return Boolean.parseBoolean(ModuleSettings.getConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY));
     }
+    
+    /**
+     * Add an event listener to suscribe to changes to CentralRepoDbUtil changes.
+     * @param listener The listener that will subscribe to event changes.
+     */
+    public static void addEventListener(PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(listener);
+    }
+    
+    /**
+     * Removes an event listener from the CentralRepoDbUtil.
+     * @param listener The listener subscribed to event changes.
+     */
+    public static void removeEventListener(PropertyChangeListener listener) {
+        pcs.removePropertyChangeListener(listener);
+    }
 
     /**
      * Saves the setting for whether the Central Repo should be able to be
@@ -259,7 +288,9 @@ public class CentralRepoDbUtil {
      *                                      used
      */
     public static void setUseCentralRepo(boolean centralRepoCheckBoxIsSelected) {
+        boolean curChoice = allowUseOfCentralRepository();
         ModuleSettings.setConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY, Boolean.toString(centralRepoCheckBoxIsSelected));
+        pcs.firePropertyChange(Event.CR_ENABLED_STATE.name(), curChoice, centralRepoCheckBoxIsSelected);
     }
 
     /**

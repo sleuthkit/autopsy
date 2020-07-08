@@ -27,6 +27,8 @@ import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
@@ -55,6 +57,25 @@ public final class PersonasTopComponent extends TopComponent {
 
     private static final Logger logger = Logger.getLogger(PersonasTopComponent.class.getName());
 
+    /**
+     * Listens for when this component will be rendered and executes a search to
+     * update gui when it is displayed.
+     */
+    private final AncestorListener onAddListener = new AncestorListener() {
+        @Override
+        public void ancestorAdded(AncestorEvent event) {
+            executeSearch();
+        }
+
+        @Override
+        public void ancestorRemoved(AncestorEvent event) {
+        }
+
+        @Override
+        public void ancestorMoved(AncestorEvent event) {
+        }
+    };
+
     private List<Persona> currentResults = null;
     private Persona selectedPersona = null;
 
@@ -67,7 +88,6 @@ public final class PersonasTopComponent extends TopComponent {
     public PersonasTopComponent() {
         initComponents();
         setName(Bundle.PersonasTopComponent_Name());
-        executeSearch();
 
         searchBtn.addActionListener(new ActionListener() {
             @Override
@@ -141,7 +161,10 @@ public final class PersonasTopComponent extends TopComponent {
                 new CreatePersonaAccountDialog(detailsPanel);
             }
         });
+
+        addAncestorListener(onAddListener);
     }
+    
 
     /**
      * Callback method for the create/edit mode of the PersonaDetailsDialog
@@ -224,10 +247,16 @@ public final class PersonasTopComponent extends TopComponent {
 
     @Messages({
         "PersonasTopComponent_search_exception_Title=Search failure",
-        "PersonasTopComponent_search_exception_msg=Failed to search personas.",})
+        "PersonasTopComponent_search_exception_msg=Failed to search personas.",
+        "PersonasTopComponent_noCR_msg=Central Repository is not enabled.",})
     private void executeSearch() {
         // To prevent downstream failures, only execute search if central repository is enabled
         if (!CentralRepository.isEnabled()) {
+            logger.log(Level.SEVERE, "Central Repository is not enabled, but execute search was called.");
+            JOptionPane.showMessageDialog(this,
+                    Bundle.PersonasTopComponent_search_exception_Title(),
+                    Bundle.PersonasTopComponent_noCR_msg(),
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
