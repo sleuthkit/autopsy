@@ -288,7 +288,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      * section panel.
      *
      * @param sectionAttributesList List of attributes to display.
-     * @param sectionLabel Section name label.
+     * @param sectionHeader Section name label.
      * @param contactPanelLayout Panel layout.
      * @param contactPanelConstraints Layout constraints.
      *
@@ -326,11 +326,9 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     }
 
     /**
-     * Kicks off a search for personas, based in the given list of attributes.
+     * Initiates a search for Personas for the accounts associated with the
+     * Contact.
      *
-     * @param accountAttributesList a list of account identifying attributes.
-     *
-     * @throws CentralRepoException
      */
     @NbBundle.Messages({
         "ContactArtifactViewer_persona_header=Persona",
@@ -338,12 +336,6 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         "ContactArtifactViewer_cr_disabled_message=Enable Central Repository to view, create and edit personas.",
         "ContactArtifactViewer_persona_unknown=Unknown"
     })
-
-    /**
-     * Initiates a search for Personas for the accounts associated with the
-     * Contact.
-     *
-     */
     private void initiatePersonasSearch() {
 
         // add a section header 
@@ -425,6 +417,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      * Displays the given persona in the persona panel.
      *
      * @param persona Persona to display.
+     * @param matchNumber Number of matches.
      * @param missingAccountsList List of contact accounts this persona may be
      * missing.
      * @param gridBagLayout Layout to use.
