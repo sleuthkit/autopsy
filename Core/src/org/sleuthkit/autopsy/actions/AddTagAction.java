@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -139,7 +139,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                 if (!tagNamesMap.isEmpty()) {
                     for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
                         TagName tagName = entry.getValue();
-                        TagSet tagSet = tagName.getTagSet();
+                        TagSet tagSet = tagsManager.getTagSet(tagName);
 
                         // Show custom tags before predefined tags in the menu
                         if (tagSet != null) {

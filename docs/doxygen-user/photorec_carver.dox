@@ -22,7 +22,7 @@ Ingest Settings
 ------
 The run-time setting for this module allows you to choose whether to keep corrupted files.
 
-\image html photo_rec_settings.png
+\image html photo_rec_settings.PNG
 
 Also note that the "Run ingest modules on" selection needs to include unallocated space for this module to run.
 

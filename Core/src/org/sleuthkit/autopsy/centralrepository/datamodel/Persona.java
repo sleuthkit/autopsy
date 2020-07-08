@@ -255,7 +255,7 @@ public class Persona {
     /**
      * Sets the comment of this persona.
      *
-     * @param name The new comment.
+     * @param comment The new comment.
      * 
      * @throws CentralRepoException If there is an error.
      */
@@ -313,7 +313,9 @@ public class Persona {
     /**
      * Modifies the confidence / justification of the given PersonaAccount
      *
-     * @param account account to modify
+     * @param account Account to modify.
+     * @param confidence Level of confidence.
+     * @param justification Justification.
      *
      * @throws CentralRepoException If there is an error in querying the
      * Personas table.
@@ -485,7 +487,9 @@ public class Persona {
     /**
      * Modifies the given alias.
      *
-     * @param alias alias to modify
+     * @param key Key for the alias to modify.
+     * @param confidence Level of confidence.
+     * @param justification Justification.
      *
      * @throws CentralRepoException If there is an error in querying the
      * Personas table.
@@ -535,7 +539,9 @@ public class Persona {
     /**
      * Modifies the given metadata.
      *
-     * @param metadata metadata to modify
+     * @param key Key for the metadata to modify.
+     * @param confidence Level of confidence.
+     * @param justification Justification.
      *
      * @throws CentralRepoException If there is an error in querying the
      * Personas table.
