@@ -19,11 +19,14 @@
 package org.sleuthkit.autopsy.discovery;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JSplitPane;
+import javax.swing.plaf.basic.BasicSplitPaneDivider;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
@@ -67,6 +70,34 @@ public final class DiscoveryTopComponent extends TopComponent {
         mainSplitPane.setLeftComponent(groupListPanel);
         rightSplitPane.setTopComponent(resultsPanel);
         rightSplitPane.setBottomComponent(detailsPanel);
+        //set color of divider
+        rightSplitPane.setUI(new BasicSplitPaneUI() {
+            @Override
+            public BasicSplitPaneDivider createDefaultDivider() {
+                return new BasicSplitPaneDividerImpl(this);
+
+            }
+        });
+    }
+
+    /**
+     * Private class for replacing the divider for the results split pane.
+     */
+    private final class BasicSplitPaneDividerImpl extends BasicSplitPaneDivider {
+
+        /**
+         * Construct a new BasicSplitPaneDividerImpl.
+         *
+         * @param ui The component which contains the split pane this divider is
+         *           in.
+         */
+        BasicSplitPaneDividerImpl(BasicSplitPaneUI ui) {
+            super(ui);
+            this.setLayout(new BorderLayout());
+            this.add(new ResultsSplitPaneDivider());
+        }
+
+        private static final long serialVersionUID = 1L;
     }
 
     /**
@@ -129,7 +160,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         mainSplitPane.setDividerLocation(250);
         mainSplitPane.setPreferredSize(new java.awt.Dimension(1100, 700));
 
-        rightSplitPane.setDividerSize(15);
+        rightSplitPane.setDividerSize(35);
         rightSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         rightSplitPane.setResizeWeight(1.0);
         rightSplitPane.setPreferredSize(new java.awt.Dimension(800, 700));
@@ -249,11 +280,11 @@ public final class DiscoveryTopComponent extends TopComponent {
     @Subscribe
     @Messages({"DiscoveryTopComponent.newSearch.text=New Search",
         "# {0} - search",
-        "DiscoveryTopComponent.searchComplete.text=Results for {0}"})
+        "DiscoveryTopComponent.searchComplete.text=Results with {0}"})
     void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
         progressMessageTextArea.setForeground(Color.black);
-        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(searchCompleteEvent.getFilters().stream().map(FileFilter::getDesc).collect(Collectors.joining(", "))));
+        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(searchCompleteEvent.getFilters().stream().map(FileFilter::getDesc).collect(Collectors.joining("; "))));
         progressMessageTextArea.setCaretPosition(0);
     }
 
@@ -269,6 +300,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
         progressMessageTextArea.setForeground(Color.red);
         progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchCancelled_text());
+
     }
 
     /**

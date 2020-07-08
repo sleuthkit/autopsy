@@ -62,7 +62,7 @@ public final class TextFileExtractor implements TextExtractor {
                     encoding = StandardCharsets.UTF_8;
                 }
             } catch (TskCoreException | IOException ex) {
-                logger.log(Level.SEVERE, String.format("Error detecting the "
+                logger.log(Level.WARNING, String.format("Error detecting the "
                         + "encoding for %s (objID=%d)", file.getName(), file.getId()), ex);
                 encoding = StandardCharsets.UTF_8;
             }
