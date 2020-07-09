@@ -73,10 +73,12 @@ public final class PersonasTopComponent extends TopComponent {
 
         @Override
         public void ancestorRemoved(AncestorEvent event) {
+            //Empty
         }
 
         @Override
         public void ancestorMoved(AncestorEvent event) {
+            //Empty
         }
     };
     
