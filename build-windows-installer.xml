@@ -39,7 +39,12 @@
             <else>
                 <echo message="64-bit JRE not found. No 64-bit installer will be built. Set the JRE_HOME_64 environment variable to generate a 64-bit installer."/>
             </else>
-        </if>    
+        </if>
+
+        <!-- Where photo rec is installed within installer -->
+        <var name="photorec-rel-path" value="${app.name}\photorec_exec"/>
+        <!-- Where the photo rec build folder is placed in the dist folder currently -->
+        <var name="photorec-inst-path" value="${inst-path}\${app.name}\photorec_exec"/>    
     </target>
     
     <target name="autoAIPath" description="Attempt to find the AI path based on standard installation location">
@@ -111,6 +116,9 @@
 
         <var name="gstreamer-path-todelete" value="${app.name}\gstreamer\1.0\x86_64"/>
 
+        <!-- The path to the correct version of photorec to use. -->
+        <var name="photorec-path-to-use" value="${photorec-inst-path}\bin"/>
+
         <var name="jvm.max.mem" value="512m" />
         
         <var name="jre-path" value="${env.JRE_HOME_32}"/>
@@ -136,6 +144,9 @@
         <var name="aut-bin-name-todelete" value="${app.name}.exe"/>
 
         <var name="gstreamer-path-todelete" value="${app.name}\gstreamer\1.0\x86"/>
+
+        <!-- The path to the correct version of photorec to use. -->
+        <var name="photorec-path-to-use" value="${photorec-inst-path}\64-bit\bin"/>
 
         <var name="jvm.max.mem" value="4G"/>
         
@@ -194,6 +205,16 @@
         <echo message="Removing extra Gstreamer binaries..."/>
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /DelFolder APPDIR\${gstreamer-path-todelete}"/>
+        </exec>
+
+        <echo message="Placing correct PhotoRec binaries..."/>
+        <!-- 'Delete' the folder being relayed to advanced installer for photorec -->
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /DelFolder APPDIR\${photorec-rel-path}"/>
+        </exec>
+        <!-- Replace that folder with the subfolder depending on 32-bit vs. 64-bit -->
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /AddFolder APPDIR\${photorec-rel-path} ${photorec-path-to-use}"/>
         </exec>
     </target>
 

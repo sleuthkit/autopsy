@@ -430,8 +430,8 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     report_index = line.find('INSERT INTO "reports"') > -1 or line.find('INSERT INTO reports ') > -1
     layout_index = line.find('INSERT INTO "tsk_file_layout"') > -1 or line.find('INSERT INTO tsk_file_layout ') > -1
     data_source_info_index = line.find('INSERT INTO "data_source_info"') > -1 or line.find('INSERT INTO data_source_info ') > -1
-    event_description_index = line.find('INSERT INTO "tsk_event_descriptions"') > -1 or line.find('INSERT INTO data_source_info ') > -1
-    events_index = line.find('INSERT INTO "tsk_events"') > -1 or line.find('INSERT INTO data_source_info ') > -1
+    event_description_index = line.find('INSERT INTO "tsk_event_descriptions"') > -1 or line.find('INSERT INTO tsk_event_descriptions ') > -1
+    events_index = line.find('INSERT INTO "tsk_events"') > -1 or line.find('INSERT INTO tsk_events ') > -1
     ingest_job_index = line.find('INSERT INTO "ingest_jobs"') > -1 or line.find('INSERT INTO ingest_jobs ') > -1
     examiners_index = line.find('INSERT INTO "tsk_examiners"') > -1 or line.find('INSERT INTO tsk_examiners ') > -1
     ig_groups_index = line.find('INSERT INTO "image_gallery_groups"') > -1 or line.find('INSERT INTO image_gallery_groups ') > -1

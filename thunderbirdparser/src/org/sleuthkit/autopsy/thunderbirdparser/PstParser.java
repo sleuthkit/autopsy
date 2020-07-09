@@ -135,7 +135,7 @@ class PstParser {
         Iterable<EmailMessage> iterable = null;
 
         try {
-            iterable = getEmaiMessageIterator(pstFile.getRootFolder(), "\\", fileID, true);
+            iterable = getEmailMessageIterator(pstFile.getRootFolder(), "\\", fileID, true);
         } catch (PSTException | IOException ex) {
             logger.log(Level.WARNING, String.format("Exception thrown while parsing fileID: %d", fileID), ex);
         }
@@ -202,7 +202,7 @@ class PstParser {
         Iterable<EmailMessage> iterable = null;
 
         try {
-            iterable = getEmaiMessageIterator(pstFile.getRootFolder(), "\\", fileID, false);
+            iterable = getEmailMessageIterator(pstFile.getRootFolder(), "\\", fileID, false);
         } catch (PSTException | IOException ex) {
             logger.log(Level.WARNING, String.format("Exception thrown while parsing fileID: %d", fileID), ex);
         }
@@ -228,7 +228,7 @@ class PstParser {
      * @throws PSTException
      * @throws IOException
      */
-    private Iterable<EmailMessage> getEmaiMessageIterator(PSTFolder folder, String path, long fileID, boolean wholeMsg) throws PSTException, IOException {
+    private Iterable<EmailMessage> getEmailMessageIterator(PSTFolder folder, String path, long fileID, boolean wholeMsg) throws PSTException, IOException {
         Iterable<EmailMessage> iterable = null;
 
         if (folder.getContentCount() > 0) {
@@ -239,7 +239,7 @@ class PstParser {
             List<PSTFolder> subFolders = folder.getSubFolders();
             for (PSTFolder subFolder : subFolders) {
                 String newpath = path + "\\" + subFolder.getDisplayName();
-                Iterable<EmailMessage> subIterable = getEmaiMessageIterator(subFolder, newpath, fileID, wholeMsg);
+                Iterable<EmailMessage> subIterable = getEmailMessageIterator(subFolder, newpath, fileID, wholeMsg);
                 if (subIterable == null) {
                     continue;
                 }

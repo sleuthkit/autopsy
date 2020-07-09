@@ -27,7 +27,7 @@ import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -56,10 +56,10 @@ public class ZoomToEvents extends Action {
 
         //disable action when the current time range already encompases the entire case.
         disabledProperty().bind(new BooleanBinding() {
-            private final FilteredEventsModel eventsModel = controller.getEventsModel();
+            private final EventsModel eventsModel = controller.getEventsModel();
 
             {
-                bind(eventsModel.zoomStateProperty());
+                bind(eventsModel.modelParamsProperty());
             }
 
             @Override

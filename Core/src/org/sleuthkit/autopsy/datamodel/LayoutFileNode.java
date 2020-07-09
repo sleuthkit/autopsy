@@ -73,7 +73,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         this.setDisplayName(nameForLayoutFile(lf));
 
         if (lf.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-icon-16.png"); //NON-NLS
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png"); //NON-NLS
         } else if (lf.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE)) {
             if (lf.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
                 this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS

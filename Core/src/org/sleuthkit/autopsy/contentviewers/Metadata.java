@@ -191,12 +191,14 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             }
             
             try {
-                List<BlackboardArtifact> sourceArtifacts = file.getArtifacts(ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
-                if (!sourceArtifacts.isEmpty()) {
-                    BlackboardArtifact artifact = sourceArtifacts.get(0);
-                    BlackboardAttribute urlAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL));
-                    if (urlAttr != null) {
-                        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.downloadSource"), urlAttr.getValueString());
+                List<BlackboardArtifact> associatedObjectArtifacts = file.getArtifacts(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
+                if (!associatedObjectArtifacts.isEmpty()) {
+                    BlackboardArtifact artifact = associatedObjectArtifacts.get(0);
+                    BlackboardAttribute associatedArtifactAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                    if (associatedArtifactAttribute != null) {
+                        long artifactId = associatedArtifactAttribute.getValueLong();
+                        BlackboardArtifact associatedArtifact = artifact.getSleuthkitCase().getBlackboardArtifact(artifactId);
+                        addDownloadSourceRow(sb, associatedArtifact);
                     }
                 }
             } catch (TskCoreException ex) {
@@ -290,6 +292,26 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         setText(sb.toString());
         jTextPane1.setCaretPosition(0);
         this.setCursor(null);
+    }
+    
+    /**
+     * Adds a row for download source from the given associated artifact, 
+     * if the associated artifacts specifies a source.
+     * 
+     * @param sb    string builder.
+     * @param associatedArtifact
+     * 
+     * @throws TskCoreException if there is an error
+     */
+    private void addDownloadSourceRow(StringBuilder sb, BlackboardArtifact associatedArtifact ) throws TskCoreException {
+        if (associatedArtifact != null && 
+                ((associatedArtifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) || 
+                 (associatedArtifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())) ) {
+            BlackboardAttribute urlAttr = associatedArtifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL));
+            if (urlAttr != null) {
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.downloadSource"), urlAttr.getValueString());
+            }
+        }
     }
     
     /**

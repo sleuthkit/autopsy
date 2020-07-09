@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.sql.SQLException;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,6 +56,7 @@ import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -72,11 +74,13 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TagSet;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -91,6 +95,8 @@ public final class ImageGalleryController {
     private static final Logger logger = Logger.getLogger(ImageGalleryController.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_STARTED, IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED, IngestManager.IngestModuleEvent.FILE_DONE);
+
+    private static String DEFAULT_TAG_SET_NAME = "Project VIC";
     /*
      * The file limit for image gallery. If the selected data source (or all
      * data sources, if that option is selected) has more than this many files
@@ -102,7 +108,8 @@ public final class ImageGalleryController {
             Case.Events.CURRENT_CASE,
             Case.Events.DATA_SOURCE_ADDED,
             Case.Events.CONTENT_TAG_ADDED,
-            Case.Events.CONTENT_TAG_DELETED
+            Case.Events.CONTENT_TAG_DELETED,
+            Case.Events.DATA_SOURCE_DELETED
     );
 
     /*
@@ -225,14 +232,16 @@ public final class ImageGalleryController {
     void startUp() throws TskCoreException {
         selectionModel = new FileIDSelectionModel(this);
         thumbnailCache = new ThumbnailCache(this);
+
+        TagSet categoryTagSet = getCategoryTagSet();
         /*
          * TODO (JIRA-5212): The next two lines need to be executed in this
          * order. Why? This suggests there is some inappropriate coupling
          * between the DrawableDB and GroupManager classes.
          */
         groupManager = new GroupManager(this);
-        drawableDB = DrawableDB.getDrawableDB(this);
-        categoryManager = new CategoryManager(this);
+        drawableDB = DrawableDB.getDrawableDB(this, categoryTagSet);
+        categoryManager = new CategoryManager(this, categoryTagSet);
         tagsManager = new DrawableTagsManager(this);
         tagsManager.registerListener(groupManager);
         tagsManager.registerListener(categoryManager);
@@ -719,6 +728,37 @@ public final class ImageGalleryController {
     }
 
     /**
+     * Returns the TagSet with the image gallery categories.
+     *
+     * @return Category TagSet.
+     *
+     * @throws TskCoreException
+     */
+    private TagSet getCategoryTagSet() throws TskCoreException {
+        List<TagSet> tagSetList = getCaseDatabase().getTaggingManager().getTagSets();
+        if (tagSetList != null && !tagSetList.isEmpty()) {
+            for (TagSet set : tagSetList) {
+                if (set.getName().equals(getCategoryTagSetName())) {
+                    return set;
+                }
+            }
+            // If we get to here the Project VIC Test set wasn't found;
+            throw new TskCoreException("Error loading Project VIC tag set: Tag set not found.");
+        } else {
+            throw new TskCoreException("Error loading Project VIC tag set: Tag set not found.");
+        }
+    }
+
+    /**
+     * Returns the name of the category tag set.
+     *
+     * @return Tagset name
+     */
+    static String getCategoryTagSetName() {
+        return DEFAULT_TAG_SET_NAME;
+    }
+
+    /**
      * A listener for ingest module application events.
      */
     private class IngestModuleEventListener implements PropertyChangeListener {
@@ -798,7 +838,22 @@ public final class ImageGalleryController {
                         if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
                             Content newDataSource = (Content) event.getNewValue();
                             if (isListeningEnabled()) {
-                                drawableDB.insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
+                                try {
+                                    drawableDB.insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
+                                } catch (SQLException ex) {
+                                    logger.log(Level.SEVERE, String.format("Error updating datasources table (data source object ID = %d, status = %s)", newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN.toString()), ex); //NON-NLS
+                                }
+                            }
+                        }
+                        break;
+                    case DATA_SOURCE_DELETED:
+                        if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                            final DataSourceDeletedEvent dataSourceDeletedEvent = (DataSourceDeletedEvent) event;
+                            long dataSourceObjId = dataSourceDeletedEvent.getDataSourceId();
+                            try {
+                                drawableDB.deleteDataSource(dataSourceObjId);
+                            } catch (SQLException | TskCoreException ex) {
+                                logger.log(Level.SEVERE, String.format("Failed to delete data source (obj_id = %d)", dataSourceObjId), ex); //NON-NLS
                             }
                         }
                         break;
@@ -869,7 +924,7 @@ public final class ImageGalleryController {
                     default:
                         break;
                 }
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | SQLException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to handle %s event for %s (objId=%d)", dataSourceEvent.getPropertyName(), dataSource.getName(), dataSourceObjId), ex);
             }
         }
@@ -884,7 +939,7 @@ public final class ImageGalleryController {
      * @throws TskCoreException If there is an error adding the data source to
      *                          the database.
      */
-    private void handleDataSourceAnalysisStarted(DataSourceAnalysisEvent event) throws TskCoreException {
+    private void handleDataSourceAnalysisStarted(DataSourceAnalysisEvent event) throws TskCoreException, SQLException {
         if (event.getSourceType() == AutopsyEvent.SourceType.LOCAL && isListeningEnabled()) {
             Content dataSource = event.getDataSource();
             long dataSourceObjId = dataSource.getId();
@@ -905,7 +960,7 @@ public final class ImageGalleryController {
      * @throws TskCoreException If there is an error updating the state ot the
      *                          data source in the database.
      */
-    private void handleDataSourceAnalysisCompleted(DataSourceAnalysisEvent event) throws TskCoreException {
+    private void handleDataSourceAnalysisCompleted(DataSourceAnalysisEvent event) throws TskCoreException, SQLException {
         if (event.getSourceType() == AutopsyEvent.SourceType.LOCAL) {
             Content dataSource = event.getDataSource();
             long dataSourceObjId = dataSource.getId();

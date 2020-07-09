@@ -117,6 +117,7 @@ class GroupCellFactory {
         final Node graphic = (group.getGroupByAttribute() == DrawableAttribute.TAGS)
                 ? controller.getTagsManager().getGraphic((TagName) group.getGroupByValue())
                 : group.getGroupKey().getGraphic();
+
         final String text = getCellText(cell);
         final String style = getSeenStyleClass(cell);
 
@@ -157,10 +158,10 @@ class GroupCellFactory {
      */
     private String getCountsText(GroupCell<?> cell) {
         return cell.getGroup()
-                .map(group ->
-                        " (" + (sortOrder.get() == GroupComparators.ALPHABETICAL
-                                ? group.getSize()
-                                : sortOrder.get().getFormattedValueOfGroup(group)) + ")"
+                .map(group
+                        -> " (" + (sortOrder.get() == GroupComparators.ALPHABETICAL
+                ? group.getSize()
+                : sortOrder.get().getFormattedValueOfGroup(group)) + ")"
                 ).orElse(""); //if item is null or group is null
     }
 

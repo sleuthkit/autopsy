@@ -18,9 +18,8 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import org.openide.nodes.Sheet;
@@ -70,8 +69,8 @@ final class ContactNode extends BlackboardArtifactNode {
 
     @Override
     protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
-        
+        Sheet sheet = new Sheet();
+
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (fromID != TSK_CONTACT) {
@@ -89,45 +88,41 @@ final class ContactNode extends BlackboardArtifactNode {
         // are used so that all attributed of that type are found, including 
         // ones that are not predefined as part of BlackboardAttributes
         try {
-            HashMap<String, BlackboardAttribute> phoneNumMap = new HashMap<>();
-            HashMap<String, BlackboardAttribute> emailMap = new HashMap<>();
-            HashMap<String, BlackboardAttribute> nameMap = new HashMap<>();
-            HashMap<String, BlackboardAttribute> otherMap = new HashMap<>();
+            List<BlackboardAttribute> phoneNumList = new ArrayList<>();
+            List<BlackboardAttribute> emailList = new ArrayList<>();
+            List<BlackboardAttribute> nameList = new ArrayList<>();
+            List<BlackboardAttribute> otherList = new ArrayList<>();
             for (BlackboardAttribute bba : artifact.getAttributes()) {
                 if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
-                    phoneNumMap.put(bba.getDisplayString(), bba);
+                    phoneNumList.add(bba);
                 } else if (bba.getAttributeType().getTypeName().startsWith("TSK_EMAIL")) {
-                    emailMap.put(bba.getDisplayString(), bba);
+                    emailList.add(bba);
                 } else if (bba.getAttributeType().getTypeName().startsWith("TSK_NAME")) {
-                    nameMap.put(bba.getDisplayString(), bba);
+                    nameList.add(bba);
                 } else {
-                    otherMap.put(bba.getDisplayString(), bba);
+                    otherList.add(bba);
                 }
             }
-            
-            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getLabel(), 
-                 sheetSet, nameMap);
-            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getLabel(), 
-                 sheetSet, phoneNumMap);
-            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getLabel(), 
-                 sheetSet, emailMap);
 
-            for (BlackboardAttribute bba : otherMap.values()) {
+            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
+                    sheetSet, nameList);
+            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getLabel(),
+                    sheetSet, phoneNumList);
+            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getLabel(),
+                    sheetSet, emailList);
+
+            for (BlackboardAttribute bba : otherList) {
                 sheetSet.put(new NodeProperty<>(bba.getAttributeType().getTypeName(), bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
             }
-            
-            // Don't need these values to appear in the Contact property sheet.
-            sheetSet.remove("S");
-            sheetSet.remove("C");
-            
+
             List<Content> children = artifact.getChildren();
-            if(children != null) {
+            if (children != null) {
                 int count = 0;
                 String imageLabelPrefix = "Image";
-                for(Content child: children) {
-                    if(child instanceof AbstractFile) {
+                for (Content child : children) {
+                    if (child instanceof AbstractFile) {
                         String imageLabel = imageLabelPrefix;
-                        if(count > 0) {
+                        if (count > 0) {
                             imageLabel = imageLabelPrefix + "-" + count;
                         }
                         sheetSet.put(new NodeProperty<>(imageLabel, imageLabel, imageLabel, child.getName()));
@@ -141,14 +136,32 @@ final class ContactNode extends BlackboardArtifactNode {
 
         return sheet;
     }
-    
-    private void addPropertiesToSheet(String propertyID, Sheet.Set sheetSet, Map<String, BlackboardAttribute> attributeMap) {
+
+    private void addPropertiesToSheet(String propertyID, Sheet.Set sheetSet, List<BlackboardAttribute> attributeList) {
         int count = 0;
-        for (BlackboardAttribute bba : attributeMap.values()) {
+        for (BlackboardAttribute bba : attributeList) {
             if (count++ > 0) {
-                sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
+                    String phoneNumCountry = PhoneNumUtil.getCountryCode(bba.getValueString());
+                    if (phoneNumCountry.equals("")) {
+                        sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                    } else {
+                        sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString() + "  [" + phoneNumCountry + "]"));
+                    }
+                } else {
+                    sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                }
             } else {
-                sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
+                    String phoneNumCountry = PhoneNumUtil.getCountryCode(bba.getValueString());
+                    if (phoneNumCountry.equals("")) {
+                        sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                    } else {
+                        sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString() + "  [" + phoneNumCountry + "]"));
+                    }
+                } else {
+                    sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                }
             }
         }
     }
@@ -180,4 +193,5 @@ final class ContactNode extends BlackboardArtifactNode {
     public String getSourceName() {
         return getDisplayName();
     }
+
 }

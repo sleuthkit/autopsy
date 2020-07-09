@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,28 +46,57 @@ public class ReportProgressPanel extends javax.swing.JPanel {
      * Used by a report generation module to communicate report generation
      * status to this panel and its listeners.
      */
+    @NbBundle.Messages({
+        "ReportProgressPanel.progress.queuing=Queuing...",
+        "ReportProgressPanel.progress.running=Running...",
+        "ReportProgressPanel.progress.complete=Complete",
+        "ReportProgressPanel.progress.canceled=Canceled",
+        "ReportProgressPanel.progress.error=Error",})
     public enum ReportStatus {
 
-        QUEUING,
-        RUNNING,
-        COMPLETE,
-        CANCELED,
-        ERROR
+        QUEUING(Bundle.ReportProgressPanel_progress_queuing()),
+        RUNNING(Bundle.ReportProgressPanel_progress_running()),
+        COMPLETE(Bundle.ReportProgressPanel_progress_complete()),
+        CANCELED(Bundle.ReportProgressPanel_progress_canceled()),
+        ERROR(Bundle.ReportProgressPanel_progress_error());
+
+        private final String displayName;
+
+        ReportStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        /**
+         * Gets the display name of the report status.
+         *
+         * @return The display name.
+         */
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     /**
      * Constructs a panel used by report generation module to show progress.
+     */
+    public ReportProgressPanel() {
+        initComponents();
+        reportProgressBar.setIndeterminate(true);
+        reportProgressBar.setMaximum(100);
+        statusMessageLabel.setText(Bundle.ReportProgressPanel_progress_queuing());
+        status = ReportStatus.QUEUING;
+        reportLabel.setText("");
+        pathLabel.setText(""); //NON-NLS
+    }
+
+    /**
+     * Sets label text.
      *
      * @param reportName The name of the report being generated.
      * @param reportPath The path to the report file.
      */
-    public ReportProgressPanel(String reportName, String reportPath) {
-        initComponents();
-        reportProgressBar.setIndeterminate(true);
-        reportProgressBar.setMaximum(100);
+    public final void setLabels(String reportName, String reportPath) {
         reportLabel.setText(reportName);
-        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.progress.queuing"));
-        status = ReportStatus.QUEUING;
         if (null != reportPath) {
             pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>"); //NON-NLS
             pathLabel.setToolTipText(reportPath);
@@ -76,10 +105,16 @@ public class ReportProgressPanel extends javax.swing.JPanel {
 
                 @Override
                 public void mouseClicked(MouseEvent mouseEvent) {
+                    /*
+                     * Do nothing for this event.
+                     */
                 }
 
                 @Override
                 public void mousePressed(MouseEvent mouseEvent) {
+                    /*
+                     * Do nothing for this event.
+                     */
                 }
 
                 @Override
@@ -123,6 +158,15 @@ public class ReportProgressPanel extends javax.swing.JPanel {
      */
     public ReportStatus getStatus() {
         return status;
+    }
+
+    /**
+     * Sets the current status of the generation of the report.
+     *
+     * @param status The current status.
+     */
+    protected void setStatus(ReportStatus status) {
+        this.status = status;
     }
 
     /**
@@ -210,6 +254,28 @@ public class ReportProgressPanel extends javax.swing.JPanel {
      * @param reportStatus The final status, must be COMPLETE or ERROR.
      */
     public void complete(ReportStatus reportStatus) {
+
+        switch (reportStatus) {
+            case COMPLETE:
+                complete(reportStatus, NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
+                break;
+            case ERROR:
+                complete(reportStatus, NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLb2.text"));
+                break;
+            default:
+                complete(reportStatus, "");
+                break;
+        }
+    }
+
+    /**
+     * Makes the components of this panel indicate the final status of
+     * generation of the report.
+     *
+     * @param reportStatus  The final status, must be COMPLETE or ERROR.
+     * @param statusMessage String to use as label or error text.
+     */
+    public void complete(ReportStatus reportStatus, String statusMessage) {
         EventQueue.invokeLater(() -> {
             reportProgressBar.setIndeterminate(false);
             if (status != ReportStatus.CANCELED) {
@@ -218,11 +284,11 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                         ReportStatus oldValue = status;
                         status = ReportStatus.COMPLETE;
                         statusMessageLabel.setForeground(Color.BLACK);
-                        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
+                        statusMessageLabel.setText(statusMessage);
                         reportProgressBar.setValue(reportProgressBar.getMaximum());
                         reportProgressBar.setStringPainted(true);
                         reportProgressBar.setForeground(GREEN);
-                        reportProgressBar.setString("Complete"); //NON-NLS
+                        reportProgressBar.setString(ReportStatus.COMPLETE.getDisplayName());
                         firePropertyChange(ReportStatus.COMPLETE.toString(), oldValue, status);
                         break;
                     }
@@ -230,11 +296,11 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                         ReportStatus oldValue = status;
                         status = ReportStatus.ERROR;
                         statusMessageLabel.setForeground(RED);
-                        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLb2.text"));
+                        statusMessageLabel.setText(statusMessage);
                         reportProgressBar.setValue(reportProgressBar.getMaximum());
                         reportProgressBar.setStringPainted(true);
                         reportProgressBar.setForeground(RED);
-                        reportProgressBar.setString("Error"); //NON-NLS
+                        reportProgressBar.setString(ReportStatus.ERROR.getDisplayName());
                         firePropertyChange(ReportStatus.COMPLETE.toString(), oldValue, status);
                         break;
                     }
@@ -250,7 +316,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
      * Makes the components of this panel indicate generation of the report was
      * cancelled.
      */
-    void cancel() {
+    public void cancel() {
         switch (status) {
             case COMPLETE:
                 break;
@@ -265,7 +331,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                 reportProgressBar.setValue(0);
                 reportProgressBar.setStringPainted(true);
                 reportProgressBar.setForeground(RED); // Red
-                reportProgressBar.setString("Cancelled"); //NON-NLS
+                reportProgressBar.setString(ReportStatus.CANCELED.getDisplayName());
                 firePropertyChange(ReportStatus.CANCELED.toString(), oldValue, status);
                 statusMessageLabel.setForeground(RED);
                 statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.procLbl.text"));
@@ -304,19 +370,14 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         separationLabel = new javax.swing.JLabel();
         statusMessageLabel = new javax.swing.JLabel();
 
-        setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         setMinimumSize(new java.awt.Dimension(486, 68));
 
-        reportProgressBar.setFont(reportProgressBar.getFont().deriveFont(reportProgressBar.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-
-        reportLabel.setFont(reportLabel.getFont().deriveFont(reportLabel.getFont().getStyle() | java.awt.Font.BOLD, 11));
+        reportLabel.setFont(reportLabel.getFont().deriveFont(reportLabel.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(reportLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.reportLabel.text")); // NOI18N
 
-        pathLabel.setFont(pathLabel.getFont().deriveFont(pathLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.pathLabel.text")); // NOI18N
         pathLabel.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
-        separationLabel.setFont(separationLabel.getFont().deriveFont(separationLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(separationLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.separationLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(statusMessageLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.statusMessageLabel.text")); // NOI18N
@@ -362,6 +423,21 @@ public class ReportProgressPanel extends javax.swing.JPanel {
     private javax.swing.JLabel separationLabel;
     private javax.swing.JLabel statusMessageLabel;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Constructs a panel used by a report generation module to show progress.
+     *
+     * @param reportName The report name.
+     * @param reportPath The report path.
+     *
+     * @deprecated Use {@link #ReportProgressPanel()} and {@link #setLabels()}
+     * instead.
+     */
+    @Deprecated
+    public ReportProgressPanel(String reportName, String reportPath) {
+        this();
+        setLabels(reportName, reportPath);
+    }
 
     /**
      * Makes the components of this panel indicate the generation of the report

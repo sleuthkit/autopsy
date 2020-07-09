@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -130,7 +131,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         jScrollPane3.setPreferredSize(new java.awt.Dimension(300, 33));
 
         outputTextArea.setEditable(false);
-        outputTextArea.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+        outputTextArea.setFont(new Font("Monospaced", Font.PLAIN, 11));
         outputTextArea.setTabSize(0);
         outputTextArea.setInheritsPopupMenu(true);
         jScrollPane3.setViewportView(outputTextArea);

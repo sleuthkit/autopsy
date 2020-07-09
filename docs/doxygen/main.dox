@@ -3,15 +3,15 @@
 <h3>Overview</h3>
 <a href="http://www.sleuthkit.org/autopsy/">Autopsy</a> has been designed as a digital forensics platform to incorporate third-party modules (either open or closed source).  This document is for developers who want to write add-on modules or modify the internal Autopsy framework. 
 
-If you are a user and are looking for documentation on how to use Autopsy, refer to the <a href="http://sleuthkit.org/autopsy/docs/user-docs/">User Docs</a>.
+If you are a user and are looking for documentation on how to use Autopsy, refer to the <a href="http://sleuthkit.org/autopsy/docs/user-docs/latest">User Docs</a>.
 
 If these pages don't answer your question, then send the question to the <a href="https://lists.sourceforge.net/lists/listinfo/sleuthkit-developers">Sleuth Kit Developer's List</a>. 
 
 <h3>Writing Python or Java Modules</h3>
 If you want to write Java or Python modules, then there are some tutorials and detailed pages in this document. The Python tutorials include:
-- File Ingest Modules: http://www.basistech.com/python-autopsy-module-tutorial-1-the-file-ingest-module/
-- Data Source Ingest Modules: http://www.basistech.com/python-autopsy-module-tutorial-2-the-data-source-ingest-module/
-- Report Modules: http://www.basistech.com/python-autopsy-module-tutorial-3-the-report-module/
+- File Ingest Modules: \subpage mod_python_file_ingest_tutorial_page
+- Data Source Ingest Modules: \subpage mod_python_ds_ingest_tutorial_page
+- Report Modules: \subpage mod_python_report_tutorial_page
 
 This document contains the following pages: 
 - \subpage platform_page
@@ -24,7 +24,7 @@ This document contains the following pages:
  - \subpage mod_content_page
  - \subpage mod_result_page
 - \subpage adv_dev_page
-- <a class="el" href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.3/query_database_page.html">Query the Database</A>
+- <a class="el" href="http://sleuthkit.org/sleuthkit/docs/jni-docs/latest/query_database_page.html">Query the Database</A>
 - \subpage mod_mobile_page
 
 <h3>Modifying Autopsy</h3>

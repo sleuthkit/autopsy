@@ -31,7 +31,7 @@
 # Sample report module for Autopsy.  Use as a starting point for new modules.
 #
 # Search for TODO for the things that you need to change
-# See http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/index.html for documentation
+# See http://sleuthkit.org/autopsy/docs/api-docs/latest/index.html for documentation
 
 import os
 from java.lang import System
@@ -69,7 +69,7 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
     # TODO: Update this method to make a report
     # The 'baseReportDir' object being passed in is a string with the directory that reports are being stored in.   Report should go into baseReportDir + getRelativeFilePath().
     # The 'progressBar' object is of type ReportProgressPanel.
-    #   See: http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/classorg_1_1sleuthkit_1_1autopsy_1_1report_1_1_report_progress_panel.html
+    #   See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1report_1_1_report_progress_panel.html
     def generateReport(self, baseReportDir, progressBar):
 
         # For an example, we write a file with the number of files created in the past 2 weeks

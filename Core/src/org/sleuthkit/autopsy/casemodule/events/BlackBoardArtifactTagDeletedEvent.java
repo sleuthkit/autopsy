@@ -46,7 +46,7 @@ public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<Blackboar
     }
 
     /**
-     * Extension of {@link DeletedTagInfo} for BlackBoardArtifactTags that
+     * Extension of DeletedTagInfo for BlackBoardArtifactTags that
      * includes artifact related info.
      */
     @Immutable
@@ -58,7 +58,7 @@ public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<Blackboar
 
         private final long artifactID;
 
-        private DeletedBlackboardArtifactTagInfo(BlackboardArtifactTag deletedTag) {
+        DeletedBlackboardArtifactTagInfo(BlackboardArtifactTag deletedTag) {
             super(deletedTag);
             artifactID = deletedTag.getArtifact().getArtifactID();
             contentID = deletedTag.getContent().getId();

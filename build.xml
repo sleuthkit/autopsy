@@ -77,7 +77,7 @@
 	</delete>
         
         <delete includeemptydirs="true" failonerror="false">
-            <fileset dir="${basedir}/docs/doxygen-dev/dev-docs" includes="**/*"/>
+            <fileset dir="${basedir}/docs/doxygen-dev/build-docs" includes="**/*"/>
         </delete>
     </target>
 
@@ -265,7 +265,7 @@
             <fileset dir="${basedir}/docs/doxygen-user/user-docs" includes="**/*"/>
         </delete>
         <delete includeemptydirs="true" failonerror="false">
-            <fileset dir="${basedir}/docs/doxygen-dev/dev-docs" includes="**/*"/>
+            <fileset dir="${basedir}/docs/doxygen-dev/build-docs" includes="**/*"/>
         </delete>
         
         <!-- Generate new -->

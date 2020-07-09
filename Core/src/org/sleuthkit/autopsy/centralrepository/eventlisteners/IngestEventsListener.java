@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2019 Basis Technology Corp.
+ * Copyright 2017-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,10 +37,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -51,7 +52,6 @@ import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
@@ -62,12 +62,18 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
+import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
+import org.sleuthkit.datamodel.Account;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT;
+import org.sleuthkit.datamodel.CommunicationsUtils;
 
 /**
  * Listen for ingest events and update entries in the Central Repository
  * database accordingly
  */
-@NbBundle.Messages({"IngestEventsListener.ingestmodule.name=Correlation Engine"})
+@NbBundle.Messages({"IngestEventsListener.ingestmodule.name=Central Repository"})
 public class IngestEventsListener {
 
     private static final Logger LOGGER = Logger.getLogger(CorrelationAttributeInstance.class.getName());
@@ -110,24 +116,24 @@ public class IngestEventsListener {
 
     /**
      * Increase the number of IngestEventsListeners adding contents to the
-     * Correlation Engine.
+     * Central Repository.
      */
     public synchronized static void incrementCorrelationEngineModuleCount() {
-        correlationModuleInstanceCount++;  //Should be called once in the Correlation Engine module's startup method.
+        correlationModuleInstanceCount++;  //Should be called once in the Central Repository module's startup method.
     }
 
     /**
      * Decrease the number of IngestEventsListeners adding contents to the
-     * Correlation Engine.
+     * Central Repository.
      */
     public synchronized static void decrementCorrelationEngineModuleCount() {
         if (getCeModuleInstanceCount() > 0) {  //prevent it ingestJobCounter from going negative
-            correlationModuleInstanceCount--;  //Should be called once in the Correlation Engine module's shutdown method.
+            correlationModuleInstanceCount--;  //Should be called once in the Central Repository module's shutdown method.
         }
     }
 
     /**
-     * Reset the counter which keeps track of if the Correlation Engine Module
+     * Reset the counter which keeps track of if the Central Repository Module
      * is being run during injest to 0.
      */
     synchronized static void resetCeModuleInstanceCount() {
@@ -135,10 +141,10 @@ public class IngestEventsListener {
     }
 
     /**
-     * Whether or not the Correlation Engine Module is enabled for any of the
+     * Whether or not the Central Repository Module is enabled for any of the
      * currently running ingest jobs.
      *
-     * @return boolean True for Correlation Engine enabled, False for disabled
+     * @return boolean True for Central Repository enabled, False for disabled
      */
     public synchronized static int getCeModuleInstanceCount() {
         return correlationModuleInstanceCount;
@@ -224,15 +230,19 @@ public class IngestEventsListener {
      * in the central repository.
      *
      * @param originalArtifact the artifact to create the interesting item for
+     * @param caseDisplayNames the case names the artifact was previously seen in
      */
     @NbBundle.Messages({"IngestEventsListener.prevExists.text=Previously Seen Devices (Central Repository)",
         "# {0} - typeName",
         "# {1} - count",
         "IngestEventsListener.prevCount.text=Number of previous {0}: {1}"})
-    static private void makeAndPostPreviousSeenArtifact(BlackboardArtifact originalArtifact) {
+    static private void makeAndPostPreviousSeenArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames) {
         Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(new BlackboardAttribute(
                         TSK_SET_NAME, MODULE_NAME,
                         Bundle.IngestEventsListener_prevExists_text()),
+                new BlackboardAttribute(
+                        TSK_COMMENT, MODULE_NAME,
+                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))),
                 new BlackboardAttribute(
                         TSK_ASSOCIATED_ARTIFACT, MODULE_NAME,
                         originalArtifact.getArtifactID()));
@@ -272,14 +282,14 @@ public class IngestEventsListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            //if ingest is running we want there to check if there is a Correlation Engine module running 
+            //if ingest is running we want there to check if there is a Central Repository module running 
             //sometimes artifacts are generated by DSPs or other sources while ingest is not running
             //in these cases we still want to create correlation attributesForNewArtifact for those artifacts when appropriate
             if (!IngestManager.getInstance().isIngestRunning() || getCeModuleInstanceCount() > 0) {
-                EamDb dbManager;
+                CentralRepository dbManager;
                 try {
-                    dbManager = EamDb.getInstance();
-                } catch (EamDbException ex) {
+                    dbManager = CentralRepository.getInstance();
+                } catch (CentralRepoException ex) {
                     LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.", ex);
                     return;
                 }
@@ -303,10 +313,10 @@ public class IngestEventsListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            EamDb dbManager;
+            CentralRepository dbManager;
             try {
-                dbManager = EamDb.getInstance();
-            } catch (EamDbException ex) {
+                dbManager = CentralRepository.getInstance();
+            } catch (CentralRepoException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.", ex);
                 return;
             }
@@ -325,27 +335,27 @@ public class IngestEventsListener {
 
     private final class AnalysisCompleteTask implements Runnable {
         
-        private final EamDb dbManager;
+        private final CentralRepository dbManager;
         private final PropertyChangeEvent event;
         
-        private AnalysisCompleteTask(EamDb db, PropertyChangeEvent evt) {
+        private AnalysisCompleteTask(CentralRepository db, PropertyChangeEvent evt) {
             dbManager = db;
             event = evt;
         }
-
+           
         @Override
         public void run() {
             // clear the tracker to reduce memory usage
             if (getCeModuleInstanceCount() == 0) {
                 recentlyAddedCeArtifacts.clear();
             }
-            //else another instance of the Correlation Engine Module is still being run.
+            //else another instance of the Central Repository Module is still being run.
 
             /*
              * Ensure the data source in the Central Repository has hash values
              * that match those in the case database.
              */
-            if (!EamDb.isEnabled()) {
+            if (!CentralRepository.isEnabled()) {
                 return;
             }
             Content dataSource;
@@ -408,7 +418,7 @@ public class IngestEventsListener {
                         }
                     }
                 }
-            } catch (EamDbException ex) {
+            } catch (CentralRepoException ex) {
                 LOGGER.log(Level.SEVERE, String.format(
                         "Unable to fetch data from the Central Repository for data source '%s' (obj_id=%d)",
                         dataSourceName, dataSourceObjectId), ex);
@@ -424,13 +434,13 @@ public class IngestEventsListener {
 
     private final class DataAddedTask implements Runnable {
 
-        private final EamDb dbManager;
+        private final CentralRepository dbManager;
         private final PropertyChangeEvent event;
         private final boolean flagNotableItemsEnabled;
         private final boolean flagPreviousItemsEnabled;
         private final boolean createCorrelationAttributes;
 
-        private DataAddedTask(EamDb db, PropertyChangeEvent evt, boolean flagNotableItemsEnabled, boolean flagPreviousItemsEnabled, boolean createCorrelationAttributes) {
+        private DataAddedTask(CentralRepository db, PropertyChangeEvent evt, boolean flagNotableItemsEnabled, boolean flagPreviousItemsEnabled, boolean createCorrelationAttributes) {
             this.dbManager = db;
             this.event = evt;
             this.flagNotableItemsEnabled = flagNotableItemsEnabled;
@@ -440,7 +450,7 @@ public class IngestEventsListener {
 
         @Override
         public void run() {
-            if (!EamDb.isEnabled()) {
+            if (!CentralRepository.isEnabled()) {
                 return;
             }
             final ModuleDataEvent mde = (ModuleDataEvent) event.getOldValue();
@@ -451,8 +461,8 @@ public class IngestEventsListener {
             List<CorrelationAttributeInstance> eamArtifacts = new ArrayList<>();
 
             for (BlackboardArtifact bbArtifact : bbArtifacts) {
-                // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
-                List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, true);
+                // makeCorrAttrToSave will filter out artifacts which should not be sources of CR data.
+                List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsToSave(bbArtifact);
                 for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                     try {
                         // Only do something with this artifact if it's unique within the job
@@ -482,9 +492,11 @@ public class IngestEventsListener {
                                 try {
                                     //only alert to previous instances when they were in another case
                                     List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                    List<String> caseDisplayNames;
                                     for (CorrelationAttributeInstance instance : previousOccurences) {
                                         if (!instance.getCorrelationCase().getCaseUUID().equals(eamArtifact.getCorrelationCase().getCaseUUID())) {
-                                            makeAndPostPreviousSeenArtifact(bbArtifact);
+                                            caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                            makeAndPostPreviousSeenArtifact(bbArtifact, caseDisplayNames);
                                             break;
                                         }
                                     }
@@ -496,7 +508,7 @@ public class IngestEventsListener {
                                 eamArtifacts.add(eamArtifact);
                             }
                         }
-                    } catch (EamDbException ex) {
+                    } catch (CentralRepoException ex) {
                         LOGGER.log(Level.SEVERE, "Error counting notable artifacts.", ex);
                     }
                 }
@@ -505,7 +517,7 @@ public class IngestEventsListener {
                 for (CorrelationAttributeInstance eamArtifact : eamArtifacts) {
                     try {
                         dbManager.addArtifactInstance(eamArtifact);
-                    } catch (EamDbException ex) {
+                    } catch (CentralRepoException ex) {
                         LOGGER.log(Level.SEVERE, "Error adding artifact to database.", ex); //NON-NLS
                     }
                 }

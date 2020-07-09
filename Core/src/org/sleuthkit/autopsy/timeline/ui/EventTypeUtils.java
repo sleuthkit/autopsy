@@ -95,6 +95,12 @@ final public class EventTypeUtils {
             imageFileName = "artifact-icon.png";
         } else if (typeID == TimelineEventType.WEB_FORM_ADDRESSES.getTypeID()) {
             imageFileName = "artifact-icon.png";
+        } else if (typeID == TimelineEventType.METADATA_CREATED.getTypeID()) {
+            imageFileName = "blue-document-attribute-b.png";
+        } else if (typeID == TimelineEventType.METADATA_LAST_SAVED.getTypeID()) {
+            imageFileName = "blue-document-attribute-m.png";
+        } else if (typeID == TimelineEventType.METADATA_LAST_PRINTED.getTypeID()) {
+            imageFileName = "blue-document.png";
         }else {
             imageFileName = "timeline_marker.png";
         }
@@ -107,15 +113,15 @@ final public class EventTypeUtils {
             return Color.hsb(359, .9, .9, 0);
         }
 
-        TimelineEventType superType = type.getSuperType();
+        TimelineEventType superType = type.getParent();
 
         Color baseColor = getColor(superType);
-        int siblings = superType.getSiblingTypes().stream()
-                .max((type1, type2) -> Integer.compare(type1.getSubTypes().size(), type2.getSubTypes().size()))
-                .get().getSubTypes().size() + 1;
-        int superSiblingsCount = superType.getSiblingTypes().size();
+        int siblings = superType.getSiblings().stream()
+                .max((type1, type2) -> Integer.compare(type1.getChildren().size(), type2.getChildren().size()))
+                .get().getChildren().size() + 1;
+        int superSiblingsCount = superType.getSiblings().size();
 
-        int ordinal = new ArrayList<>(type.getSiblingTypes()).indexOf(type);
+        int ordinal = new ArrayList<>(type.getSiblings()).indexOf(type);
         double offset = (360.0 / superSiblingsCount) / siblings;
         Color deriveColor = baseColor.deriveColor(ordinal * offset, 1, 1, 1);
 

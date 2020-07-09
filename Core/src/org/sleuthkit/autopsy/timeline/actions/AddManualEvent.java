@@ -127,6 +127,7 @@ public class AddManualEvent extends Action {
      * Use the supplied ManualEventInfo to make an TSK_TL_EVENT artifact which
      * will trigger adding a TimelineEvent.
      *
+     * @param controller
      * @param eventInfo The ManualEventInfo with the info needed to create an
      *                  event.
      *

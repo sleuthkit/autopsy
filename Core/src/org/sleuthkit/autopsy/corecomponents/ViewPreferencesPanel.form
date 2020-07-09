@@ -3,7 +3,7 @@
 <Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <Properties>
     <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[625, 465]"/>
+      <Dimension value="[727, 495]"/>
     </Property>
   </Properties>
   <AuxValues>
@@ -37,7 +37,7 @@
           <Border info="null"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[625, 465]"/>
+          <Dimension value="[727, 493]"/>
         </Property>
       </Properties>
 
@@ -46,7 +46,7 @@
         <Container class="javax.swing.JPanel" name="viewPreferencesPanel">
           <Properties>
             <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-              <Dimension value="[625, 465]"/>
+              <Dimension value="[727, 492]"/>
             </Property>
           </Properties>
 
@@ -72,7 +72,7 @@
                       <Component id="currentCaseSettingsPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="currentSessionSettingsPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -93,73 +93,103 @@
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
-                          <EmptySpace max="-2" attributes="0"/>
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
-                                  <Component id="hideOtherUsersTagsCheckbox" min="-2" max="-2" attributes="0"/>
+                                  <Component id="maxResultsLabel" max="32767" attributes="0"/>
+                                  <EmptySpace min="-2" max="-2" attributes="0"/>
+                                  <Component id="maxResultsSpinner" min="-2" pref="74" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="325" max="-2" attributes="0"/>
                               </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="scoColumnsLabel" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace min="-2" pref="135" max="-2" attributes="0"/>
-                                  <Component id="jScrollPane1" min="-2" pref="272" max="-2" attributes="0"/>
-                              </Group>
-                              <Component id="hideOtherUsersTagsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="hideKnownFilesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Group type="103" alignment="0" groupAlignment="1" attributes="0">
-                                          <Group type="103" alignment="1" groupAlignment="0" attributes="0">
+                              <Group type="102" attributes="0">
+                                  <Group type="103" groupAlignment="1" attributes="0">
+                                      <Group type="102" alignment="1" attributes="0">
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Component id="hideKnownFilesLabel" max="32767" attributes="0"/>
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <Component id="hideOtherUsersTagsLabel" max="32767" attributes="0"/>
+                                                  <EmptySpace min="-2" pref="77" max="-2" attributes="0"/>
+                                              </Group>
+                                              <Group type="102" alignment="1" attributes="0">
+                                                  <Group type="103" groupAlignment="1" attributes="0">
+                                                      <Component id="scoColumnsLabel" alignment="1" max="32767" attributes="0"/>
+                                                      <Group type="102" alignment="0" attributes="0">
+                                                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                                          <Component id="hideOtherUsersTagsCheckbox" max="32767" attributes="0"/>
+                                                      </Group>
+                                                  </Group>
+                                                  <EmptySpace min="-2" pref="99" max="-2" attributes="0"/>
+                                              </Group>
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <EmptySpace min="-2" pref="32" max="-2" attributes="0"/>
+                                                  <Component id="scoColumnsWrapAroundText" max="32767" attributes="0"/>
+                                                  <EmptySpace min="-2" pref="93" max="-2" attributes="0"/>
+                                              </Group>
                                               <Group type="102" alignment="0" attributes="0">
                                                   <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                                                  <Group type="103" groupAlignment="0" attributes="0">
-                                                      <Component id="dataSourcesHideSlackCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="viewsHideSlackCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                  </Group>
-                                              </Group>
-                                              <Component id="hideSlackFilesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          </Group>
-                                          <Group type="102" alignment="1" attributes="0">
-                                              <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                                              <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Component id="dataSourcesHideKnownCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                  <Component id="viewsHideKnownCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="scoColumnsCheckbox" max="32767" attributes="0"/>
+                                                  <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
+                                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                      </Group>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <Component id="hideSlackFilesLabel" max="32767" attributes="0"/>
+                                          <EmptySpace min="-2" pref="51" max="-2" attributes="0"/>
                                       </Group>
                                       <Group type="102" attributes="0">
                                           <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                                          <Component id="scoColumnsCheckbox" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <Group type="102" alignment="0" attributes="0">
-                                          <EmptySpace min="-2" pref="32" max="-2" attributes="0"/>
-                                          <Component id="scoColumnsWrapAroundText" min="-2" max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="1" attributes="0">
+                                              <Component id="dataSourcesHideSlackCheckbox" alignment="0" max="32767" attributes="0"/>
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <Component id="viewsHideKnownCheckbox" max="32767" attributes="0"/>
+                                                  <EmptySpace min="-2" pref="103" max="-2" attributes="0"/>
+                                              </Group>
+                                              <Component id="dataSourcesHideKnownCheckbox" alignment="0" max="32767" attributes="0"/>
+                                              <Group type="102" attributes="0">
+                                                  <Component id="viewsHideSlackCheckbox" max="32767" attributes="0"/>
+                                                  <EmptySpace min="-2" pref="116" max="-2" attributes="0"/>
+                                              </Group>
+                                          </Group>
+                                          <EmptySpace min="-2" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
-                                  <EmptySpace type="separate" max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="displayTimeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="selectFileLabel" min="-2" max="-2" attributes="0"/>
-                                      <Component id="translateTextLabel" alignment="0" min="-2" pref="120" max="-2" attributes="0"/>
                                       <Group type="102" attributes="0">
-                                          <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                                          <Component id="displayTimeLabel" max="32767" attributes="0"/>
+                                          <EmptySpace min="-2" pref="91" max="-2" attributes="0"/>
+                                      </Group>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <Component id="translateTextLabel" max="32767" attributes="0"/>
+                                          <EmptySpace min="-2" pref="46" max="-2" attributes="0"/>
+                                      </Group>
+                                      <Group type="102" attributes="0">
+                                          <Component id="selectFileLabel" max="32767" attributes="0"/>
+                                          <EmptySpace min="-2" pref="90" max="-2" attributes="0"/>
+                                      </Group>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                                           <Group type="103" groupAlignment="0" attributes="0">
-                                              <Component id="fileNameTranslationColumnCheckbox" min="-2" max="-2" attributes="0"/>
-                                              <Component id="keepCurrentViewerRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                                              <Component id="useBestViewerRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                                              <Component id="useLocalTimeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                                              <Component id="useAnotherTimeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                                              <Group type="102" attributes="0">
+                                                  <EmptySpace min="24" pref="24" max="-2" attributes="0"/>
+                                                  <Component id="jScrollPane1" max="32767" attributes="0"/>
+                                              </Group>
+                                              <Component id="fileNameTranslationColumnCheckbox" max="32767" attributes="0"/>
+                                              <Component id="useAnotherTimeRadioButton" alignment="0" max="32767" attributes="0"/>
+                                              <Group type="102" attributes="0">
+                                                  <Group type="103" groupAlignment="0" attributes="0">
+                                                      <Component id="useLocalTimeRadioButton" alignment="0" max="32767" attributes="0"/>
+                                                      <Component id="keepCurrentViewerRadioButton" alignment="0" max="32767" attributes="0"/>
+                                                      <Component id="useBestViewerRadioButton" alignment="0" max="32767" attributes="0"/>
+                                                  </Group>
+                                                  <EmptySpace min="-2" pref="44" max="-2" attributes="0"/>
+                                              </Group>
                                           </Group>
                                       </Group>
                                   </Group>
                               </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="maxResultsLabel" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="maxResultsSpinner" min="-2" pref="74" max="-2" attributes="0"/>
-                              </Group>
                           </Group>
-                          <EmptySpace max="32767" attributes="0"/>
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -202,7 +232,7 @@
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="useLocalTimeRadioButton" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="useAnotherTimeRadioButton" min="-2" max="-2" attributes="0"/>
+                                  <Component id="useAnotherTimeRadioButton" min="-2" pref="25" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="jScrollPane1" min="-2" pref="67" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
@@ -365,7 +395,6 @@
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.scoColumnsCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
-                    <Property name="horizontalAlignment" type="int" value="11"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="scoColumnsCheckboxActionPerformed"/>
@@ -453,10 +482,10 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" attributes="0">
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="groupByDataSourceCheckbox" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="32767" attributes="0"/>
+                      <Group type="102" alignment="0" attributes="0">
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
+                          <Component id="groupByDataSourceCheckbox" max="32767" attributes="0"/>
+                          <EmptySpace min="-2" pref="474" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -497,9 +526,9 @@
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="hideRejectedResultsCheckbox" min="-2" pref="259" max="-2" attributes="0"/>
-                          <EmptySpace max="32767" attributes="0"/>
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
+                          <Component id="hideRejectedResultsCheckbox" max="32767" attributes="0"/>
+                          <EmptySpace min="-2" pref="418" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>

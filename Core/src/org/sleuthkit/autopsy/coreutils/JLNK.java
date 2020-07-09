@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.openide.util.NbBundle;
@@ -35,43 +36,43 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
  */
 public class JLNK {
 
-    private int header;
-    private byte[] linkClassIdentifier;
-    private List<LinkFlags> linkFlags;
-    private List<FileAttributesFlags> fileAttributesFlags;
-    private long crtime;
-    private long atime;
-    private long mtime;
-    private int fileSize;
-    private int iconIndex;
-    private int showCommand;
-    private short hotKey;
+    private final int header;
+    private final byte[] linkClassIdentifier;
+    private final List<LinkFlags> linkFlags;
+    private final List<FileAttributesFlags> fileAttributesFlags;
+    private final long crtime;
+    private final long atime;
+    private final long mtime;
+    private final int fileSize;
+    private final int iconIndex;
+    private final int showCommand;
+    private final short hotKey;
 
-    private List<String> linkTargetIdList;
+    private final List<String> linkTargetIdList;
 
-    private boolean hasUnicodeLocalBaseAndCommonSuffixOffset;
-    private String localBasePath;
-    private String commonPathSuffix;
-    private String localBasePathUnicode;
-    private String commonPathSuffixUnicode;
+    private final boolean hasUnicodeLocalBaseAndCommonSuffixOffset;
+    private final String localBasePath;
+    private final String commonPathSuffix;
+    private final String localBasePathUnicode;
+    private final String commonPathSuffixUnicode;
 
-    private String name;
-    private String relativePath;
-    private String workingDir;
-    private String arguments;
-    private String iconLocation;
+    private final String name;
+    private final String relativePath;
+    private final String workingDir;
+    private final String arguments;
+    private final String iconLocation;
 
-    private int driveSerialNumber;
-    private DriveType driveType;
-    private String volumeLabel;
+    private final int driveSerialNumber;
+    private final DriveType driveType;
+    private final String volumeLabel;
 
-    private List<CommonNetworkRelativeLinkFlags> commonNetworkRelativeListFlags;
-    private NetworkProviderType networkProviderType;
-    private boolean unicodeNetAndDeviceName;
-    private String netName;
-    private String netNameUnicode;
-    private String deviceName;
-    private String deviceNameUnicode;
+    private final List<CommonNetworkRelativeLinkFlags> commonNetworkRelativeListFlags;
+    private final NetworkProviderType networkProviderType;
+    private final boolean unicodeNetAndDeviceName;
+    private final String netName;
+    private final String netNameUnicode;
+    private final String deviceName;
+    private final String deviceNameUnicode;
 
     public JLNK(int header, byte[] linkClassIdentifier, int linkFlags,
             int fileAttributesFlags, long crtime, long atime,
@@ -87,14 +88,14 @@ public class JLNK {
             String netName, String netNameUnicode, String deviceName,
             String deviceNameUnicode) {
         this.header = header;
-        this.linkClassIdentifier = linkClassIdentifier;
-        this.linkFlags = new ArrayList<LinkFlags>();
+        this.linkClassIdentifier = linkClassIdentifier.clone();
+        this.linkFlags = new ArrayList<>();
         for (LnkEnums.LinkFlags enumVal : LnkEnums.LinkFlags.values()) {
             if ((linkFlags & enumVal.getFlag()) == enumVal.getFlag()) {
                 this.linkFlags.add(enumVal);
             }
         }
-        this.fileAttributesFlags = new ArrayList<FileAttributesFlags>();
+        this.fileAttributesFlags = new ArrayList<>();
         for (LnkEnums.FileAttributesFlags enumVal : LnkEnums.FileAttributesFlags.values()) {
             if ((fileAttributesFlags & enumVal.getFlag()) == enumVal.getFlag()) {
                 this.fileAttributesFlags.add(enumVal);
@@ -121,7 +122,7 @@ public class JLNK {
         this.driveSerialNumber = driveSerialNumber;
         this.driveType = driveType;
         this.volumeLabel = volumeLabel;
-        this.commonNetworkRelativeListFlags = new ArrayList<CommonNetworkRelativeLinkFlags>();
+        this.commonNetworkRelativeListFlags = new ArrayList<>();
         for (LnkEnums.CommonNetworkRelativeLinkFlags enumVal : LnkEnums.CommonNetworkRelativeLinkFlags.values()) {
             if ((commonNetworkRelativeListFlags & enumVal.getFlag()) == enumVal.getFlag()) {
                 this.commonNetworkRelativeListFlags.add(enumVal);
@@ -140,7 +141,7 @@ public class JLNK {
     }
 
     public List<CommonNetworkRelativeLinkFlags> getCommonNetworkRelativeListFlags() {
-        return commonNetworkRelativeListFlags;
+        return Collections.unmodifiableList(commonNetworkRelativeListFlags);
     }
 
     public String getCommonPathSuffix() {
@@ -176,7 +177,7 @@ public class JLNK {
     }
 
     public List<FileAttributesFlags> getFileAttributesFlags() {
-        return fileAttributesFlags;
+        return Collections.unmodifiableList(fileAttributesFlags);
     }
 
     public int getFileSize() {
@@ -196,7 +197,7 @@ public class JLNK {
     }
 
     public List<String> getLinkTargetIdList() {
-        return linkTargetIdList;
+        return Collections.unmodifiableList(linkTargetIdList);
     }
 
     public int getIconIndex() {
@@ -208,11 +209,11 @@ public class JLNK {
     }
 
     public byte[] getLinkClassIdentifier() {
-        return linkClassIdentifier;
+        return linkClassIdentifier.clone();
     }
 
     public List<LinkFlags> getLinkFlags() {
-        return linkFlags;
+        return Collections.unmodifiableList(linkFlags);
     }
 
     public String getLocalBasePath() {

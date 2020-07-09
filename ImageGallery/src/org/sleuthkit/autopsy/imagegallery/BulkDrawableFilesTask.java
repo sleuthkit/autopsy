@@ -36,8 +36,8 @@ import org.sleuthkit.datamodel.TskData;
  * records for multiple drawable files.
  */
 @NbBundle.Messages({
-    "BulkDrawableFilesTask.committingDb.status=committing image/video database", 
-    "BulkDrawableFilesTask.stopCopy.status=Stopping copy to drawable db task.", 
+    "BulkDrawableFilesTask.committingDb.status=committing image/video database",
+    "BulkDrawableFilesTask.stopCopy.status=Stopping copy to drawable db task.",
     "BulkDrawableFilesTask.errPopulating.errMsg=There was an error populating Image Gallery database."
 })
 abstract class BulkDrawableFilesTask extends DrawableDbTask {
@@ -58,7 +58,7 @@ abstract class BulkDrawableFilesTask extends DrawableDbTask {
         this.taskDB = controller.getDrawablesDatabase();
         this.tskCase = controller.getCaseDatabase();
         this.dataSourceObjId = dataSourceObjId;
-        drawableQuery = " (data_source_obj_id = " + dataSourceObjId + ") " 
+        drawableQuery = " (data_source_obj_id = " + dataSourceObjId + ") "
                 + " AND ( meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue() + ")" + " AND ( " + MIMETYPE_CLAUSE //NON-NLS
                 + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%' )" //NON-NLS
                 + " ORDER BY parent_path ";
@@ -171,7 +171,11 @@ abstract class BulkDrawableFilesTask extends DrawableDbTask {
             // Mark to REBUILT_STALE if some files didnt' have MIME (ingest was still ongoing) or
             // if there was cancellation or errors
             DrawableDB.DrawableDbBuildStatusEnum datasourceDrawableDBStatus = ((hasFilesWithNoMime == true) || (endedEarly == true)) ? DrawableDB.DrawableDbBuildStatusEnum.REBUILT_STALE : DrawableDB.DrawableDbBuildStatusEnum.COMPLETE;
-            taskDB.insertOrUpdateDataSource(dataSourceObjId, datasourceDrawableDBStatus);
+            try {
+                taskDB.insertOrUpdateDataSource(dataSourceObjId, datasourceDrawableDBStatus);
+            } catch (SQLException ex) {
+                logger.log(Level.SEVERE, String.format("Error updating datasources table (data source object ID = %d, status = %s)", dataSourceObjId, datasourceDrawableDBStatus.toString(), ex)); //NON-NLS
+            }
             updateMessage("");
             updateProgress(-1.0);
         }

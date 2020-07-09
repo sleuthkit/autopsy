@@ -28,6 +28,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
@@ -57,6 +58,11 @@ public class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<Abs
     @Override
     public AbstractContentNode<? extends Content> visit(Volume volume) {
         return new VolumeNode(volume);
+    }
+    
+    @Override
+    public AbstractContentNode<? extends Content> visit(Pool pool) {
+        return new PoolNode(pool);
     }
 
     @Override

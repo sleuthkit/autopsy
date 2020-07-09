@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<INTERESTING_FILE_SETS>
+ <INTERESTING_FILE_SET description="" ignoreKnown="false" name="Cryptocurrency Wallets" standardSet="true" versionNumber="2">
+  <NAME name="Atomic Wallet" regex="false" typeFilter="file">atomic wallet.exe</NAME>
+  <NAME name="Bitcoin Armory" regex="false" typeFilter="file">armoryqt.exe</NAME>
+  <NAME name="Bitcoin Wallet" regex="false" typeFilter="file">bitcoin-qt.exe</NAME>
+  <NAME name="Bither" regex="false" typeFilter="file">BitherWinLauncher.exe</NAME>
+  <NAME name="BitPay" regex="false" typeFilter="file">bitpay.exe</NAME>
+  <NAME name="Canoe" regex="false" typeFilter="file">canoe.exe</NAME>
+  <NAME name="Coinomi Wallet" regex="false" typeFilter="file">coinomi.exe</NAME>
+  <NAME name="Copay" regex="false" typeFilter="file">copay.exe</NAME>
+  <NAME name="Dash Core Wallet" regex="false" typeFilter="file">dash-qt.exe</NAME>
+  <NAME name="Dash Electrum Wallet" regex="true" typeFilter="file">^electrum-dash(.*).exe$</NAME>
+  <NAME name="Dogecoin" regex="false" typeFilter="file">dogecoin-qt.exe</NAME>
+  <NAME name="Eidoo Wallet" regex="false" typeFilter="file">eidoo.exe</NAME>
+  <NAME name="Electron Cash" regex="false" typeFilter="file">electron-cash.exe</NAME>
+  <NAME name="Electron Cash Portable" regex="true" typeFilter="file">^electron-cash(.*)portable.exe$</NAME>
+  <NAME name="Electron Cash Standalone" regex="true" typeFilter="file">^electron-cash(.*).exe$</NAME>
+  <NAME name="Electrum" regex="true" typeFilter="file">^electrum(.*).exe</NAME>
+  <NAME name="Electrum Portable" regex="true" typeFilter="file">^electrum(.*)portable.exe</NAME>
+  <NAME name="Exodus" regex="false" typeFilter="file">exodus.exe</NAME>
+  <NAME name="GreenAddress Wallet" regex="false" typeFilter="file">GreenAddress Wallet.exe</NAME>
+  <NAME name="Guarda Wallet" regex="false" typeFilter="file">guarda.exe</NAME>
+  <NAME name="Jaxx" regex="false" typeFilter="file">jaxx liberty.exe</NAME>
+  <NAME name="Ledger" regex="false" typeFilter="file">Ledger Live.exe</NAME>
+  <NAME name="Lisk Wallet" regex="false" typeFilter="file">lisk.exe</NAME>
+  <NAME name="Litecoin" regex="false" typeFilter="file">litecoin-qt.exe</NAME>
+  <NAME name="Monero GUI Wallet" regex="false" typeFilter="file">monero-wallet-gui.exe</NAME>
+  <NAME name="MultiBit" regex="false" typeFilter="file">multibit-hd.exe</NAME>
+  <NAME name="Multidoge Wallet" regex="false" typeFilter="file">multidoge.exe</NAME>
+  <NAME name="NanoVault" regex="false" typeFilter="file">NanoVault.exe</NAME>
+  <NAME name="Neon Wallet" regex="false" typeFilter="file">neon.exe</NAME>
+  <NAME name="Qtum Core" regex="false" typeFilter="file">qtum-qt.exe</NAME>
+  <NAME name="Qtum Electrum" regex="true" typeFilter="file">^Qtum-electrum-win-(.*).exe$</NAME>
+  <NAME name="Stargazer Wallet" regex="false" typeFilter="file">stargazer.exe</NAME>
+  <NAME name="Toast Wallet" regex="false" typeFilter="file">toastwallet.exe</NAME>
+  <NAME name="Trezor Bridge" regex="false" typeFilter="file">trezord.exe</NAME>
+  <NAME name="Verge Tor QT Wallet" regex="false" typeFilter="file">verge-qt.exe</NAME>
+  <NAME name="Zecwallet" regex="false" typeFilter="file">Zecwallet Fullnode.exe</NAME>
+  <NAME name="Zecwallet Lite" regex="false" typeFilter="file">Zecwallet Lite.exe</NAME>
+  <NAME name="Zel Core" regex="false" typeFilter="file">zelcore.exe</NAME>
+  <NAME name="Zel Core Portable" regex="false" typeFilter="file">zelcore-portable.exe</NAME>
+ </INTERESTING_FILE_SET>
+</INTERESTING_FILE_SETS>

@@ -110,7 +110,6 @@ public final class IngestServices {
     @Deprecated
     public void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         IngestManager.getInstance().fireIngestModuleDataEvent(moduleDataEvent);
-
     }
 
     /**

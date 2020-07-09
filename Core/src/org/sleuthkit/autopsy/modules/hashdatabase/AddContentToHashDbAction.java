@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -42,7 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Instances of this Action allow users to content to a hash database.
  */
-final class AddContentToHashDbAction extends AbstractAction implements Presenter.Popup {
+public final class AddContentToHashDbAction extends AbstractAction implements Presenter.Popup {
 
     private static AddContentToHashDbAction instance;
 
@@ -66,12 +67,16 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             "AddContentToHashDbAction.singleSelectionNameNoMD5");
     private final static String MULTI_SELECTION_NAME_NO_MD5 = NbBundle.getMessage(AddContentToHashDbAction.class,
             "AddContentToHashDbAction.multipleSelectionNameNoMD5");
+    private static final long serialVersionUID = 1L;
 
     /**
      * AddContentToHashDbAction is a singleton to support multi-selection of
      * nodes, since org.openide.nodes.NodeOp.findActions(Node[] nodes) will only
      * pick up an Action from a node if every node in the nodes array returns a
      * reference to the same action object from Node.getActions(boolean).
+     *
+     * @return The AddContentToHashDbAction instance which is used to provide
+     *         the menu for adding content to a HashDb.
      */
     public static synchronized AddContentToHashDbAction getInstance() {
         if (null == instance) {
@@ -81,6 +86,19 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
     }
 
     private AddContentToHashDbAction() {
+    }
+
+    /**
+     * Get the menu for adding the specified collection of Files to a HashDb.
+     *
+     * @param selectedFiles The collection of AbstractFiles the menu actions
+     *                      will be applied to.
+     *
+     * @return The menu which will allow users to add the specified files to a
+     *         HashDb.
+     */
+    public JMenuItem getMenuForFiles(Collection<AbstractFile> selectedFiles) {
+        return new AddContentToHashDbMenu(selectedFiles);
     }
 
     @Override
@@ -96,10 +114,14 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
     // action.
     private final class AddContentToHashDbMenu extends JMenu {
 
-        AddContentToHashDbMenu() {
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Construct an AddContentToHashDbMenu object using the specified
+         * collection of files as the files to be added to a HashDb.
+         */
+        AddContentToHashDbMenu(Collection<AbstractFile> selectedFiles) {
             super(SINGLE_SELECTION_NAME);
-            // Get any AbstractFile objects from the lookup of the currently focused top component. 
-            final Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
             int numberOfFilesSelected = selectedFiles.size();
 
             // Disable the menu if file ingest is in progress.
@@ -109,16 +131,13 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                         SINGLE_SELECTION_NAME_DURING_INGEST,
                         MULTI_SELECTION_NAME_DURING_INGEST);
                 return;
-            }
-
-            if (selectedFiles.isEmpty()) {
+            } else if (numberOfFilesSelected == 0) {
                 setEnabled(false);
                 return;
-            } else {
-                setTextBasedOnNumberOfSelections(numberOfFilesSelected,
-                        SINGLE_SELECTION_NAME,
-                        MULTI_SELECTION_NAME);
             }
+            setTextBasedOnNumberOfSelections(numberOfFilesSelected,
+                    SINGLE_SELECTION_NAME,
+                    MULTI_SELECTION_NAME);
 
             // Disable the menu if md5 have not been computed or if the file size 
             // is empty. Display the appropriate reason to the user.
@@ -137,7 +156,26 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                     return;
                 }
             }
+            addExistingHashDatabases(selectedFiles);
+            // Add a "New Hash Set..." menu item. Selecting this item invokes a
+            // a hash database creation dialog and adds the selected files to the 
+            // the new database.
+            addSeparator();
+            JMenuItem newHashSetItem = new JMenuItem(NbBundle.getMessage(this.getClass(),
+                    "AddContentToHashDbAction.ContentMenu.createDbItem"));
+            newHashSetItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    HashDb hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
+                    if (null != hashDb) {
+                        addFilesToHashSet(selectedFiles, hashDb);
+                    }
+                }
+            });
+            add(newHashSetItem);
+        }
 
+        private void addExistingHashDatabases(Collection<AbstractFile> selectedFiles) {
             // Get the current set of updateable hash databases and add each
             // one to the menu as a separate menu item. Selecting a hash database
             // adds the selected files to the selected database.
@@ -159,23 +197,16 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                 empty.setEnabled(false);
                 add(empty);
             }
+        }
 
-            // Add a "New Hash Set..." menu item. Selecting this item invokes a
-            // a hash database creation dialog and adds the selected files to the 
-            // the new database.
-            addSeparator();
-            JMenuItem newHashSetItem = new JMenuItem(NbBundle.getMessage(this.getClass(),
-                    "AddContentToHashDbAction.ContentMenu.createDbItem"));
-            newHashSetItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    HashDb hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
-                    if (null != hashDb) {
-                        addFilesToHashSet(selectedFiles, hashDb);
-                    }
-                }
-            });
-            add(newHashSetItem);
+        /**
+         * Construct an AddContentToHashDbMenu object using the currently
+         * selected files as the files to be added to a HashDb.
+         */
+        AddContentToHashDbMenu() {
+            // Get any AbstractFile objects from the lookup of the currently focused top component. 
+            this(new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class)));
+
         }
 
         /**

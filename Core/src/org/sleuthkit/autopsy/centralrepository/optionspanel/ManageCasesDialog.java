@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,10 +28,10 @@ import javax.swing.event.ListSelectionListener;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * A dialog which displays cases existing in the central repository and the
@@ -55,7 +55,7 @@ final class ManageCasesDialog extends javax.swing.JDialog {
                 true);
         initComponents();
         try {
-            EamDb dbManager = EamDb.getInstance();
+            CentralRepository dbManager = CentralRepository.getInstance();
             Map<Integer, List<CorrelationDataSource>> dataSourcesByCaseId = new HashMap<>();
             for (CorrelationDataSource dataSource : dbManager.getDataSources()) {
                 int caseID = dataSource.getCaseID();
@@ -66,7 +66,7 @@ final class ManageCasesDialog extends javax.swing.JDialog {
             for (CorrelationCase eamCase : dbManager.getCases()) {
                 casesTableModel.addEamCase(eamCase, dataSourcesByCaseId.getOrDefault(eamCase.getID(), new ArrayList<>()));
             }
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error getting list of cases from database.", ex); // NON-NLS
         }
 
@@ -100,6 +100,7 @@ final class ManageCasesDialog extends javax.swing.JDialog {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
         casesSplitPane = new javax.swing.JSplitPane();
         caseInfoPanel = new javax.swing.JPanel();
@@ -121,6 +122,7 @@ final class ManageCasesDialog extends javax.swing.JDialog {
         examinerEmailValueLabel = new javax.swing.JLabel();
         examinerPhoneValueLabel = new javax.swing.JLabel();
         closeButton = new javax.swing.JButton();
+        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
         casesPanel = new javax.swing.JPanel();
         casesScrollPane = new javax.swing.JScrollPane();
         casesTable = new javax.swing.JTable();
@@ -129,135 +131,210 @@ final class ManageCasesDialog extends javax.swing.JDialog {
         setMinimumSize(new java.awt.Dimension(400, 400));
 
         casesSplitPane.setDividerLocation(380);
+        casesSplitPane.setResizeWeight(0.5);
+
+        caseInfoPanel.setLayout(new java.awt.GridBagLayout());
 
         dataSourcesTable.setAutoCreateRowSorter(true);
         dataSourcesTable.setModel(dataSourcesTableModel);
         dataSourcesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         dataSourcesScrollPane.setViewportView(dataSourcesTable);
 
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 9;
+        gridBagConstraints.gridwidth = 5;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(7, 22, 0, 12);
+        caseInfoPanel.add(dataSourcesScrollPane, gridBagConstraints);
+
         notesScrollPane.setBorder(null);
+        notesScrollPane.setMinimumSize(new java.awt.Dimension(25, 54));
+        notesScrollPane.setPreferredSize(new java.awt.Dimension(160, 70));
 
         notesTextArea.setEditable(false);
         notesTextArea.setBackground(new java.awt.Color(240, 240, 240));
         notesTextArea.setColumns(20);
-        notesTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         notesTextArea.setLineWrap(true);
         notesTextArea.setRows(3);
         notesTextArea.setWrapStyleWord(true);
         notesTextArea.setBorder(null);
         notesScrollPane.setViewportView(notesTextArea);
 
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 7;
+        gridBagConstraints.gridwidth = 5;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(7, 28, 0, 12);
+        caseInfoPanel.add(notesScrollPane, gridBagConstraints);
+
         org.openide.awt.Mnemonics.setLocalizedText(caseInfoLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.caseInfoLabel.text")); // NOI18N
+        caseInfoLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        caseInfoLabel.setPreferredSize(new java.awt.Dimension(130, 16));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(13, 12, 0, 0);
+        caseInfoPanel.add(caseInfoLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(dataSourcesLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.dataSourcesLabel.text")); // NOI18N
+        dataSourcesLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        dataSourcesLabel.setPreferredSize(new java.awt.Dimension(130, 16));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 0.1;
+        gridBagConstraints.insets = new java.awt.Insets(7, 12, 0, 0);
+        caseInfoPanel.add(dataSourcesLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(notesLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.notesLabel.text")); // NOI18N
+        notesLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        notesLabel.setPreferredSize(new java.awt.Dimension(130, 16));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 0.1;
+        gridBagConstraints.insets = new java.awt.Insets(7, 18, 0, 0);
+        caseInfoPanel.add(notesLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(orgLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.orgLabel.text")); // NOI18N
+        orgLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        orgLabel.setPreferredSize(new java.awt.Dimension(130, 16));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 0.1;
+        gridBagConstraints.insets = new java.awt.Insets(7, 18, 0, 0);
+        caseInfoPanel.add(orgLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(caseNumberLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.caseNumberLabel.text")); // NOI18N
+        caseNumberLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        caseNumberLabel.setPreferredSize(new java.awt.Dimension(130, 16));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 0.1;
+        gridBagConstraints.insets = new java.awt.Insets(7, 18, 0, 0);
+        caseInfoPanel.add(caseNumberLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(examinerEmailLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.examinerEmailLabel.text")); // NOI18N
+        examinerEmailLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        examinerEmailLabel.setPreferredSize(new java.awt.Dimension(130, 16));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 0.1;
+        gridBagConstraints.insets = new java.awt.Insets(7, 18, 0, 0);
+        caseInfoPanel.add(examinerEmailLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(examinerNameLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.examinerNameLabel.text")); // NOI18N
+        examinerNameLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        examinerNameLabel.setPreferredSize(new java.awt.Dimension(130, 16));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 0.1;
+        gridBagConstraints.insets = new java.awt.Insets(7, 18, 0, 0);
+        caseInfoPanel.add(examinerNameLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(examinerPhoneLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.examinerPhoneLabel.text")); // NOI18N
+        examinerPhoneLabel.setMaximumSize(new java.awt.Dimension(237, 16));
+        examinerPhoneLabel.setPreferredSize(new java.awt.Dimension(130, 16));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 0.1;
+        gridBagConstraints.insets = new java.awt.Insets(7, 18, 0, 0);
+        caseInfoPanel.add(examinerPhoneLabel, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(7, 7, 0, 12);
+        caseInfoPanel.add(orgValueLabel, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(7, 7, 0, 12);
+        caseInfoPanel.add(caseNumberValueLabel, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(7, 6, 0, 12);
+        caseInfoPanel.add(examinerNameValueLabel, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(9, 6, 0, 12);
+        caseInfoPanel.add(examinerEmailValueLabel, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(7, 6, 0, 12);
+        caseInfoPanel.add(examinerPhoneValueLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.closeButton.text")); // NOI18N
-        closeButton.setMaximumSize(new java.awt.Dimension(65, 23));
+        closeButton.setMaximumSize(new java.awt.Dimension(140, 23));
         closeButton.setMinimumSize(new java.awt.Dimension(65, 23));
-        closeButton.setPreferredSize(new java.awt.Dimension(65, 23));
+        closeButton.setPreferredSize(new java.awt.Dimension(90, 23));
         closeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 closeButtonActionPerformed(evt);
             }
         });
-
-        javax.swing.GroupLayout caseInfoPanelLayout = new javax.swing.GroupLayout(caseInfoPanel);
-        caseInfoPanel.setLayout(caseInfoPanelLayout);
-        caseInfoPanelLayout.setHorizontalGroup(
-            caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(caseInfoPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(caseInfoPanelLayout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(dataSourcesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                    .addGroup(caseInfoPanelLayout.createSequentialGroup()
-                        .addGap(6, 6, 6)
-                        .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(caseInfoPanelLayout.createSequentialGroup()
-                                .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(orgLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(caseNumberLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(examinerNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(examinerEmailLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(examinerPhoneLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(caseInfoPanelLayout.createSequentialGroup()
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(caseNumberValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(orgValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                                    .addGroup(caseInfoPanelLayout.createSequentialGroup()
-                                        .addGap(6, 6, 6)
-                                        .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(examinerNameValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(examinerEmailValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(examinerPhoneValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
-                            .addComponent(notesLabel)
-                            .addGroup(caseInfoPanelLayout.createSequentialGroup()
-                                .addGap(10, 10, 10)
-                                .addComponent(notesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 428, Short.MAX_VALUE))))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, caseInfoPanelLayout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(closeButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(caseInfoPanelLayout.createSequentialGroup()
-                        .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(caseInfoLabel)
-                            .addComponent(dataSourcesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-        caseInfoPanelLayout.setVerticalGroup(
-            caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, caseInfoPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(caseInfoLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(caseInfoPanelLayout.createSequentialGroup()
-                        .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(caseInfoPanelLayout.createSequentialGroup()
-                                .addComponent(orgLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(caseNumberLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(caseNumberValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(examinerNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(examinerNameValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                            .addComponent(orgValueLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(examinerEmailLabel))
-                    .addComponent(examinerEmailValueLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(examinerPhoneLabel)
-                    .addComponent(examinerPhoneValueLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(notesLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(notesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 55, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(dataSourcesLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(dataSourcesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 129, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(closeButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 10;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(7, 285, 13, 12);
+        caseInfoPanel.add(closeButton, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        caseInfoPanel.add(filler1, gridBagConstraints);
 
         casesSplitPane.setRightComponent(caseInfoPanel);
 
@@ -271,13 +348,13 @@ final class ManageCasesDialog extends javax.swing.JDialog {
         casesPanelLayout.setHorizontalGroup(
             casesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(casesPanelLayout.createSequentialGroup()
-                .addComponent(casesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 379, Short.MAX_VALUE)
+                .addComponent(casesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 318, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
         casesPanelLayout.setVerticalGroup(
             casesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(casesPanelLayout.createSequentialGroup()
-                .addComponent(casesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 361, Short.MAX_VALUE)
+                .addComponent(casesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 528, Short.MAX_VALUE)
                 .addGap(40, 40, 40))
         );
 
@@ -287,11 +364,11 @@ final class ManageCasesDialog extends javax.swing.JDialog {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(casesSplitPane, javax.swing.GroupLayout.Alignment.TRAILING)
+            .addComponent(casesSplitPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 850, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(casesSplitPane)
+            .addComponent(casesSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 570, Short.MAX_VALUE)
         );
 
         pack();

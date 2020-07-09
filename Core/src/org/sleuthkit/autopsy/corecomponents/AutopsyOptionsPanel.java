@@ -659,7 +659,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         });
 
         logNumAlert.setEditable(false);
-        logNumAlert.setFont(logNumAlert.getFont().deriveFont(logNumAlert.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         logNumAlert.setForeground(new java.awt.Color(255, 0, 0));
         logNumAlert.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.logNumAlert.text")); // NOI18N
         logNumAlert.setBorder(null);
@@ -758,7 +757,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(runtimePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(logoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1010, Short.MAX_VALUE))
+                    .addComponent(logoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1002, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(

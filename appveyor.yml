@@ -19,7 +19,6 @@ environment:
       LIBVHDI_HOME: "C:\\libvhdi_64bit"
       LIBVMDK_HOME: "C:\\libvmdk_64bit\\libvmdk"
       LIBEWF_HOME: "C:\\libewf_64bit"
-      POSTGRESQL_HOME_64: "C:\\Program Files\\PostgreSQL\\9.5"
       JDK_HOME: C:\Program Files\Java\jdk1.8.0
       PYTHON: "C:\\Python36-x64"
 
@@ -41,12 +40,9 @@ build_script:
   - python win32\updateAndBuildAll.py -m
   - ps: pushd bindings/java
   - ps: ant -version
-  - cmd: ant dist-PostgreSQL
+  - cmd: ant dist
   - ps: popd
   - cd %APPVEYOR_BUILD_FOLDER%
   - cmd: ant -q build
-  - cd Core
-  - cmd: ant -q test
-  - cd ..
 
 test: off

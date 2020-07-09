@@ -1,3 +1,110 @@
+---------------- VERSION 4.15.0  --------------
+New UI Features:
+- Added Document view to File Discovery.
+- Expanded Context Content Viewer to show if an app accessed a file.
+- Added translation feature to Message Content Viewer.
+- Added waypoint type filter to the Geolocation viewer.
+- Added zoom feature to Indexed Text Content Viewer.
+
+New Ingest Modules Features:
+- New GPX ingest module.
+- New Drone ingest module for DJI drones based on DatCon. 
+- Create artifacts for files opened by Adobe Reader, Windows Media Player, Office Docs (Most Recently Used (MRU) and TrustRecords), 7Zip MRU, WinRAR MRU, Applets, Microsoft Management Console (MMC) via RegRipper.
+
+New Central Repository Features:
+- Central Repository stores account IDs that were previously seen. 
+- Central Repository is enabled by default to store past hashes.  Feature to flag previously seen files is disabled by default. 
+
+Other New Features:
+- Multi-user cases can be created via command line
+
+Bug fixes:
+- Prevent entire application from crashing when gstreamer crashes on videos.
+- Improve Geolocation viewer with large data sets.
+- Fix error with non-sector aligned reads on local disks.
+- Times from Recycle Bin files are now in timeline.
+- Validate timeline events and ignore events too far in the future.
+- Moved some database queries off of UI thread.
+- Remove hard coded sizes from UI that cause issues with other languages.
+
+---------------- VERSION 4.14.0  --------------
+Specialized UIs:
+- New File Discovery UI that allows you to search and filter for certain types of files. 
+- New Map viewer that uses either Bing (when online) or offline map tiles. 
+- Communications UI shows country names for phone numbers and fixed bug in summary panel. 
+- Fixed bugs in timeline filtering. 
+- Refactored backend timeline filtering code based on The Sleuth Kit datamodel changes to remove JavaFX dependency. 
+
+Data Sources:
+- Added limited support for APFS disk images.  Does not include encrypted volumes or ones that span multiple disks.   Uses contribution to The Sleuth Kit from Blackbag Technologies. 
+- New data source processor that parses “XRY File Exports”. 
+
+Content Viewers:
+- Added a new “Context” viewer to show where a file came from.  Currently shows what message a file was attached to or what URL a file was downloaded from. 
+- Added support to seek and change playback speed for videos in “Application” viewer.
+- Improved support for Unicode HTML files in “Application” viewer.
+- Added support for webp image files in “Application” viewer.
+
+Ingest Modules:
+- Keyword Search module uses Decodetect statistical encoding detection for plain text files. Fixes issues with incorrect detection of Japanese files. 
+- Embedded File Extractor module uses statistical analysis to determine encoding of file names in ZIP files. Fixes issues with ZIP files created on Windows Japanese computers. 
+- Solr (Keyword Search module) now uses Japanese-specific tokenization using Kuromoji. 
+- Fixed Shellbags module in RegRipper (used by Autopsy Recent Activity module) to fix parsing errors. 
+- Plaso module no longer generates an error if enabled for non-disk image data sources.  
+- Added support for message attachments that are stored as an external file system file. Expanded Email and Android modules to use this technique. 
+
+General:
+- Fixed crashes by gstreamer when a video is selected.
+- Added initial capability to delete a data source from a case (excludes data in the CR).
+- Changed behavior of portable case menu item to automatically open the case and warn if it was already unpacked. 
+- Fixed bug that caused issues when case metadata had Unicode values. 
+- Added new Attachment APIs to the CommunicationsArtifactHelper class to support attachments stored as external file system files. 
+
+---------------- VERSION 4.13.0  --------------
+General:
+- Switch from Oracle JDK to OpenJDK.
+- Full command line support (case creation, adding of data sources, running ingest, and generating reports). 
+
+Logical Imager:
+- Output can be individual files instead of VHD image (uses less space).
+- More fine grained progress during collection and importing.
+- Log of files and make artifacts.
+- All console messages are saved to a log file too.
+- Improved handling of cancellation when adding results into a case.
+
+Ingest Modules:
+- Added Android support as Python modules for: Android installed apps, Android browser, Facebook Messenger, IMO, LINE, Opera, ORUX Maps, Samsung SBrowser, Skype, ShareIt, TextNow, Viber, WhatsApp, Xender, Zapya.
+- Recycle Bin files are parsed in Recent Activity module, new artifacts are created, and deleted file entries are created at the original location of the deleted files.  Code is based on Mark McKinnon’s RecycleBin module (https://github.com/markmckinnon/Autopsy-Plugins/tree/master/Recycle_Bin).
+- ShellBag registry data is extracted from RegRipper in the Recent Activity module. New artifacts are recreated for the data. Based on Mark McKinnon’s “Parse ShellBags” module (https://github.com/markmckinnon/Autopsy-Plugins/tree/master/Parse_Shellbags).
+- Additional data is extracted about users from SAM hive in Recent Activity module. Data includes password dates, permissions, groups, and full name. Based on Mark McKinnon’s “Parse SAM” module (https://github.com/markmckinnon/Autopsy-Plugins/tree/master/Parse_SAM). 
+- Email ingest module parses EML files. Based on Mark McKinnon’s “EML Parser” module (https://github.com/markmckinnon/Autopsy-Plugins/tree/master/EML_Parser).
+- Fixed bug in MBOX module that caused attachments to have a “_” in the name. 
+- New Plaso ingest module that runs Plaso and generates events for the timeline. 
+- Fixed bug in Email module for VCard files to better parse phone number types. 
+- Keyword Search module waits longer for Solr to start to prevent incorrectly reporting a problem and disabling the feature. 
+- Embedded file extractor module was updated to not report compression bombs for GZIP files. 
+
+Timeline:
+- New approach for storing event data. A dedicated events table exists and is populated as files and artifacts are added to the database. No longer requires an explicit step of populating a local events table.
+- Users can create their own events from the Timeline UI.
+- Filtering was simplified based or existence of tag or hash set hit versus a specific name. 
+
+Communications:
+- Fixed bug that hid contact book entries with duplicate numbers. 
+
+Image Gallery:
+- Fixed bug in schema that caused errors with very long file names.
+
+Report:
+- CASE report is included in a portable case.
+- Image tags are included in portable case.
+- More size options for a packaged portable case.
+- New Infrastructure to support command line-based generation.
+
+Backend:
+- Developers should use new new Blackboard.postArtifact() method to ensure artifact is indexed and added to the timeline. 
+- New classes were created to make it easier to write modules for apps. 
+
 ---------------- VERSION 4.12.0  --------------
 Collection
 - Added ability to configure a USB drive to use new logical imager tool.
@@ -6,13 +113,13 @@ Collection
 
 Ingest Modules:
 - Changed file type detection so that Tika does not rely only on extension.
-- Email ingest module assigns thread IDs to messages
+- Email ingest module assigns thread IDs to messages.
 - Android ingest modules store thread ID from their databases.
 
 Content Viewers (lower right of UI):
 - New “Text” viewer that consolidates previous Strings and “Indexed Text” viewers.
 - New “Translation” panel was added to the new “Text” viewer.
-- Added integration with Google and Bing translation (credentials required)
+- Added integration with Google and Bing translation (credentials required).
 - Redesigned “Other Occurrences” viewer to have 4th column with details of selected item.
 - Added Willi Ballentin’s “Registry Hive Viewer” panel to the “Application” viewer.
 - Improved HTML viewer to use style sheets and better layout.

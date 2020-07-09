@@ -170,7 +170,6 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         panelDescriptionTextArea.setEditable(false);
         panelDescriptionTextArea.setBackground(new java.awt.Color(240, 240, 240));
         panelDescriptionTextArea.setColumns(20);
-        panelDescriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         panelDescriptionTextArea.setLineWrap(true);
         panelDescriptionTextArea.setRows(3);
         panelDescriptionTextArea.setText(org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.panelDescriptionTextArea.text")); // NOI18N
@@ -226,7 +225,6 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         descriptionTextArea.setEditable(false);
         descriptionTextArea.setBackground(new java.awt.Color(240, 240, 240));
         descriptionTextArea.setColumns(20);
-        descriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         descriptionTextArea.setLineWrap(true);
         descriptionTextArea.setRows(5);
         descriptionTextArea.setWrapStyleWord(true);
@@ -238,7 +236,6 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(notableYesOrNoLabel, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.notableYesOrNoLabel.text")); // NOI18N
 
-        ingestRunningWarningLabel.setFont(ingestRunningWarningLabel.getFont().deriveFont(ingestRunningWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         ingestRunningWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/filetypeid/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(ingestRunningWarningLabel, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.ingestRunningWarningLabel.text")); // NOI18N
 
@@ -272,7 +269,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
                 .addGroup(tagTypesAdditionalPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(isNotableLabel)
                     .addComponent(notableYesOrNoLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 311, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 292, Short.MAX_VALUE)
                 .addComponent(ingestRunningWarningLabel)
                 .addGap(31, 31, 31))
         );
@@ -449,8 +446,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         boolean isSelected = tagNamesList.getSelectedIndex() != -1;
         boolean enableEdit = !ingestIsRunning && isSelected;
         editTagNameButton.setEnabled(enableEdit);
-        boolean enableDelete = enableEdit && !TagNameDefinition.getStandardTagNames().contains(tagNamesList.getSelectedValue().getDisplayName());
-        deleteTagNameButton.setEnabled(enableDelete);
+        deleteTagNameButton.setEnabled(enableEdit);
         if (isSelected) {
             descriptionTextArea.setText(tagNamesList.getSelectedValue().getDescription());
             if (tagNamesList.getSelectedValue().getKnownStatus() == TskData.FileKnown.BAD) {

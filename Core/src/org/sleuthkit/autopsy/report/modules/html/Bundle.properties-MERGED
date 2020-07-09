@@ -1,0 +1,39 @@
+ReportHTML.addThumbRows.dataType.title=Tagged Images - {0}
+ReportHTML.addThumbRows.dataType.msg=Tagged Results and Contents that contain images.
+ReportHTML.thumbLink.tags=Tags:
+ReportHTML.getName.text=HTML Report
+ReportHTML.getDesc.text=A report about results and tagged items in HTML format.
+ReportHTML.writeIndex.title=for case {0}
+ReportHTML.writeIndex.noFrames.msg=Your browser is not compatible with our frame setup.
+ReportHTML.writeIndex.noFrames.seeNav=Please see <a href\="content\nav.html">the navigation page</a> for artifact links,
+ReportHTML.writeIndex.seeSum=and <a href\="content\summary.html">the summary page</a> for a case summary.
+ReportHTML.writeNav.title=Report Navigation
+ReportHTML.writeNav.h1=Report Navigation
+ReportHTML.writeNav.summary=Case Summary
+ReportHTML.writeSum.case=Case:
+ReportHTML.writeSum.caseNotes=Notes:
+ReportHTML.writeSum.caseNumber=Case Number:
+ReportHTML.writeSum.caseNumImages=Number of data sources in case:
+ReportHTML.writeSum.examiner=Examiner:
+ReportHTML.writeSum.title=Case Summary
+ReportHTML.writeSum.warningMsg=<span>Warning, this report was run before ingest services completed\!</span>
+#
+# autopsy/test/scripts/regression.py._html_report_diff() uses reportGenOn.text, caseName, caseNum, 
+# examiner as a regex signature to skip report.html and summary.html
+#
+ReportHTML.writeSum.reportGenOn.text=HTML Report Generated on {0}
+ReportHTML.writeSum.imageInfoHeading=<h2>Image Information:</h2>
+ReportHTML.writeSum.softwareInfoHeading=<h2>Software Information:</h2>
+ReportHTML.writeSum.ingestHistoryHeading=<h2>Ingest History:</h2>
+ReportHTML.writeSum.modulesEnabledHeading=Enabled Modules:
+ReportHTML.writeSum.autopsyVersion=Autopsy Version:
+ReportHTML.writeSum.timezone=Timezone:
+ReportHTML.writeSum.path=Path:
+ReportHTML.writeIndex.srcModuleName.text=HTML Report
+HTMLReportConfigurationPanel.headerTextField.text=
+HTMLReportConfigurationPanel.footerLabel.text=Footer:
+# To change this license header, choose License Headers in Project Properties.
+# To change this template file, choose Tools | Templates
+# and open the template in the editor.
+HTMLReportConfigurationPanel.headerLabel.text=Header:
+HTMLReportConfigurationPanel.footerTextField.text=

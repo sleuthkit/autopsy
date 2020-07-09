@@ -3,6 +3,7 @@
 # Plugin for Registry Ripper; 
 # 
 # Change history
+#   20190527 - Added checks in Software hive
 #   20160224 - added SysProcs info
 #   20131007 - updated with Sticky Keys info
 #   20130307 - updated with autostart locations
@@ -27,16 +28,16 @@
 package termserv;
 use strict;
 
-my %config = (hive          => "System",
+my %config = (hive          => "System, Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20160224);
+              version       => 20190527);
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Gets Terminal Server values from System hive";	
+	return "Gets Terminal Server settings from System and Software hives";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -65,8 +66,6 @@ sub pluginmain {
 		if ($ts = $root_key->get_subkey($ts_path)) {
 			::rptMsg($ts_path);
 			::rptMsg("LastWrite Time ".gmtime($ts->get_timestamp())." (UTC)");
-			::rptMsg("");
-			::rptMsg("Reference: http://support.microsoft.com/kb/243215");
 			::rptMsg("");
 			
 			my $ver;
@@ -151,6 +150,14 @@ sub pluginmain {
 			};
 			::rptMsg(" InitialProgram value not found\.") if ($@);
 
+# Added 20190527			
+			eval {
+				my $sec = $ts->get_subkey("WinStations\\RDP-Tcp")->get_value("SecurityLayer")->get_data();
+				::rptMsg("WinStations\\RDP-Tcp key");
+				::rptMsg("  SecurityLayer: ".$sec);
+				::rptMsg("Analysis Tip: Maybe be empty; appears as '{blank}'");
+			};
+
 # Added 20160224			
 			eval {
 				my $sys = $ts->get_subkey("SysProcs");
@@ -181,6 +188,42 @@ sub pluginmain {
 		else {
 			::rptMsg($ts_path." not found.");
 		}
+	}
+	else {
+		::rptMsg($key_path." not found.");
+	}
+	
+# Added 20190527	
+	$key_path = "Policies\\Microsoft\\Windows NT\\Terminal Services";
+	if ($key = $root_key->get_subkey($key_path)) {
+		my $lw = $key->get_timestamp();
+		::rptMsg($key_path);
+		::rptMsg("LastWrite: ".gmtime($lw)." Z");
+		::rptMsg("");
+
+# Note: fDenyTSConnections was added here because I've seen it used by bad actors,
+# not due to any MS documentation		
+		eval {
+			my $deny = $key->get_value("fDenyTSConnections")->get_data();
+			::rptMsg("fDenyTSConnections value = ".$deny);
+		};
+		
+		eval {
+			my $fallow = $key->get_value("fAllowUnsolicited")->get_data();
+			::rptMsg("fAllowUnsolicited value = ".$fallow);
+		};
+		
+		
+		eval {
+			my $fallowfc = $key->get_value("fAllowUnsolicitedFullControl")->get_data();
+			::rptMsg("fAllowUnsolicitedFullControl value = ".$fallowfc);
+		};
+				
+		eval {
+			my $user = $key->get_value("UserAuthentication")->get_data();
+			::rptMsg("UserAuthentication value = ".$user);
+		};
+
 	}
 	else {
 		::rptMsg($key_path." not found.");

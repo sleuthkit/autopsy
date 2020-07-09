@@ -77,6 +77,9 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract dataSourceAnalyzer = new DataSourceUsageAnalyzer();
         Extract safari = new ExtractSafari();
         Extract zoneInfo = new ExtractZoneIdentifier();
+        Extract recycleBin = new ExtractRecycleBin();
+        Extract sru = new ExtractSru();
+        Extract prefetch = new ExtractPrefetch();
 
         extractors.add(chrome);
         extractors.add(firefox);
@@ -89,7 +92,10 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
         extractors.add(dataSourceAnalyzer); //this needs to run after ExtractRegistry and ExtractOs
         extractors.add(zoneInfo); // this needs to run after the web browser modules
-
+        extractors.add(recycleBin); // this needs to run after ExtractRegistry and ExtractOS
+        extractors.add(sru); 
+        extractors.add(prefetch);
+        
         browserExtractors.add(chrome);
         browserExtractors.add(firefox);
         browserExtractors.add(iexplore);

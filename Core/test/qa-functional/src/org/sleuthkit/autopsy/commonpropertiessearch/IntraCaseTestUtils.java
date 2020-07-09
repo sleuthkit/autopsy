@@ -32,11 +32,7 @@ import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeInstance;
-import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeCountSearchResults;
 import org.sleuthkit.autopsy.datamodel.utils.DataSourceLoader;
-import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValue;
-import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValueList;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
@@ -79,8 +75,6 @@ class IntraCaseTestUtils {
     static final String SET3 = "CommonFiles_img3_v1.vhd";
     static final String SET4 = "CommonFiles_img4_v1.vhd";
 
-    private final DataSourceLoader dataSourceLoader;
-
     private final String caseName;
 
     IntraCaseTestUtils(NbTestCase nbTestCase, String caseName) {
@@ -88,8 +82,6 @@ class IntraCaseTestUtils {
         this.imagePath2 = Paths.get(nbTestCase.getDataDir().toString(), SET2);
         this.imagePath3 = Paths.get(nbTestCase.getDataDir().toString(), SET3);
         this.imagePath4 = Paths.get(nbTestCase.getDataDir().toString(), SET4);
-
-        this.dataSourceLoader = new DataSourceLoader();
 
         this.caseName = caseName;
     }
@@ -126,7 +118,7 @@ class IntraCaseTestUtils {
     }
 
     Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
-        return this.dataSourceLoader.getDataSourceMap();
+        return DataSourceLoader.getAllDataSources();
     }
 
     void tearDown() {

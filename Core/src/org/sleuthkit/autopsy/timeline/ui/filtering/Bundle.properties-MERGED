@@ -1,7 +1,7 @@
 FilsetSetPanel.hiddenDescriptionsPane.displayName=Hidden Descriptions
 FilterSetPanel.applyButton.longText=(Re)Apply filters
 FilterSetPanel.applyButton.text=Apply
-FilterSetPanel.defaultButton.text=Default
+FilterSetPanel.defaultButton.text=Reset
 FilterSetPanel.hiddenDescriptionsListView.remove=Remove from list
 FilterSetPanel.hiddenDescriptionsListView.unhideAndRemove=Unhide and remove from list
 Timeline.ui.filtering.menuItem.all=all

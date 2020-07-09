@@ -20,23 +20,23 @@ package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import java.util.Objects;
 import org.sleuthkit.datamodel.TimelineEvent;
-import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 
 /**
  * Ui level filter for events that have the given description.
  */
 public final class DescriptionFilter implements UIFilter {
 
-    private final TimelineEvent.DescriptionLevel descriptionLoD;
+    private final TimelineLevelOfDetail descriptionLoD;
     private final String description;
 
-    public DescriptionFilter(TimelineEvent.DescriptionLevel descriptionLoD, String description) {
+    public DescriptionFilter(TimelineLevelOfDetail descriptionLoD, String description) {
         super();
         this.descriptionLoD = descriptionLoD;
         this.description = description;
     }
 
-    public TimelineEvent.DescriptionLevel getDescriptionLevel() {
+    public TimelineLevelOfDetail getDescriptionLevel() {
         return descriptionLoD;
     }
 

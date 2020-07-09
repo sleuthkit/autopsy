@@ -483,6 +483,7 @@ final class IngestSearchRunner {
                     if (progressGroup != null) {
                         progressGroup.setDisplayName(displayName + " " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg"));
                     }
+                    progressGroup.finish();
                     return IngestSearchRunner.Searcher.this.cancel(true);
                 }
             }, null);

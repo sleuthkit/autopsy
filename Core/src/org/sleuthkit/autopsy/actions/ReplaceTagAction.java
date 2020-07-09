@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.actions;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,7 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TagSet;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -60,10 +62,10 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
     }
 
     /**
-     * Subclasses of replaceTagAction should not override actionPerformed, 
-     * but instead override replaceTag.
-     * 
-     * @param event 
+     * Subclasses of replaceTagAction should not override actionPerformed, but
+     * instead override replaceTag.
+     *
+     * @param event
      */
     @Override
     @SuppressWarnings("NoopMethodInAbstractClass")
@@ -77,9 +79,10 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
     /**
      * Method to actually replace the selected tag with the given new tag
      *
-     * @param oldTag - the TagName which is being removed from the item
+     * @param oldTag     - the TagName which is being removed from the item
      * @param newTagName - the TagName which is being added to the itme
-     * @param comment the comment associated with the tag, empty string for no comment
+     * @param comment    the comment associated with the tag, empty string for
+     *                   no comment
      */
     abstract protected void replaceTag(T oldTag, TagName newTagName, String comment);
 
@@ -90,7 +93,6 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
      */
     abstract Collection<? extends T> getTagsToReplace();
 
-   
     @Override
     public JMenuItem getPopupPresenter() {
         return new ReplaceTagMenu();
@@ -108,60 +110,50 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
             super(getActionDisplayName());
 
             final Collection<? extends T> selectedTags = getTagsToReplace();
-            
+
             // Get the current set of tag names.
             Map<String, TagName> tagNamesMap = null;
             List<String> standardTagNames = TagsManager.getStandardTagNames();
-            try {
-                TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
-                tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                Logger.getLogger(ReplaceTagMenu.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
-            }
-
+            Map<String, JMenu> tagSetMenuMap = new HashMap<>();
             List<JMenuItem> standardTagMenuitems = new ArrayList<>();
             // Ideally we should'nt allow user to pick a replacement tag that's already been applied to an item
             // In the very least we don't allow them to pick the same tag as the one they are trying to replace
             Set<String> existingTagNames = new HashSet<>();
-            if (!selectedTags.isEmpty()) {
-                T firstTag = selectedTags.iterator().next();
-                existingTagNames.add(firstTag.getName().getDisplayName());
-            }
-            
-            if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
-                for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
-                    String tagDisplayName = entry.getKey();
-                    String notableString = entry.getValue().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
-                    JMenuItem tagNameItem = new JMenuItem(tagDisplayName + notableString);
-                    // for the bookmark tag name only, added shortcut label
-                    if (tagDisplayName.equals(NbBundle.getMessage(AddTagAction.class, "AddBookmarkTagAction.bookmark.text"))) {
-                        tagNameItem.setAccelerator(AddBookmarkTagAction.BOOKMARK_SHORTCUT);
-                    }
+            try {
+                TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
+                tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
 
-                    // Add action to replace the tag
-                    tagNameItem.addActionListener((ActionEvent event) -> {
-                        selectedTags.forEach((oldtag) -> {
-                            replaceTag(oldtag, entry.getValue(), oldtag.getComment());
-                        });
-                    });
-
-                    // Don't allow replacing a tag with same tag.
-                    if (existingTagNames.contains(tagDisplayName)) {
-                        tagNameItem.setEnabled(false);
-                    }
-                    
-                    
-                    // Show custom tags before predefined tags in the menu
-                    if (standardTagNames.contains(tagDisplayName)) {
-                        standardTagMenuitems.add(tagNameItem);
-                    } else {
-                        add(tagNameItem);
-                    }
+                if (!selectedTags.isEmpty()) {
+                    T firstTag = selectedTags.iterator().next();
+                    existingTagNames.add(firstTag.getName().getDisplayName());
                 }
-            } else {
-                JMenuItem empty = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.noTags"));
-                empty.setEnabled(false);
-                add(empty);
+
+                if (!tagNamesMap.isEmpty()) {
+                    for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
+                        TagName tagName = entry.getValue();
+                        TagSet tagSet = tagsManager.getTagSet(tagName);
+
+                        // Show custom tags before predefined tags in the menu
+                        if (tagSet != null) {
+                            JMenu menu = tagSetMenuMap.get(tagSet.getName());
+                            if (menu == null) {
+                                menu = createSubmenuForTagSet(tagSet, existingTagNames, selectedTags);
+                                tagSetMenuMap.put(tagSet.getName(), menu);
+                            }
+                        } else if (standardTagNames.contains(tagName.getDisplayName())) {
+                            standardTagMenuitems.add(createMenutItem(tagName, existingTagNames, selectedTags));
+                        } else {
+                            add(createMenutItem(tagName, existingTagNames, selectedTags));
+                        }
+                    }
+                } else {
+                    JMenuItem empty = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.noTags"));
+                    empty.setEnabled(false);
+                    add(empty);
+                }
+
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                Logger.getLogger(ReplaceTagMenu.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
 
             // 
@@ -171,7 +163,11 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
             standardTagMenuitems.forEach((menuItem) -> {
                 add(menuItem);
             });
-             
+
+            tagSetMenuMap.values().forEach((menuItem) -> {
+                add(menuItem);
+            });
+
             addSeparator();
             JMenuItem newTagMenuItem = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.newTag"));
             newTagMenuItem.addActionListener((ActionEvent event) -> {
@@ -183,7 +179,7 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                 }
             });
             add(newTagMenuItem);
-             // Create a "Choose Tag and Comment..." menu item. Selecting this item initiates
+            // Create a "Choose Tag and Comment..." menu item. Selecting this item initiates
             // a dialog that can be used to create or select a tag name with an
             // optional comment and adds a tag with the resulting name.
             JMenuItem tagAndCommentItem = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.tagAndComment"));
@@ -195,7 +191,56 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                     });
                 }
             });
-            add(tagAndCommentItem);   
+            add(tagAndCommentItem);
         }
+    }
+
+    /**
+     * Build a JMenu for the given TagSet.
+     *
+     * @param tagSet
+     * @param tagNamesToDisable
+     * @param selectedTags
+     *
+     * @return JMenu for the given TagSet
+     */
+    private JMenu createSubmenuForTagSet(TagSet tagSet, Set<String> tagNamesToDisable, Collection<? extends T> selectedTags) {
+        JMenu menu = new JMenu(tagSet.getName());
+        List<TagName> tagNameList = tagSet.getTagNames();
+
+        for (TagName tagName : tagNameList) {
+            menu.add(createMenutItem(tagName, tagNamesToDisable, selectedTags));
+        }
+
+        return menu;
+    }
+
+    /**
+     * Create a menu item for the given TagName.
+     *
+     * @param tagName TagName from which to create the menu item.
+     * @param tagNamesToDisable
+     * @param selectedTags
+     *
+     * @return Menu item for given TagName.
+     */
+    private JMenuItem createMenutItem(TagName tagName, Set<String> tagNamesToDisable, Collection<? extends T> selectedTags) {
+        String tagDisplayName = tagName.getDisplayName();
+        String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+        JMenuItem tagNameItem = new JMenuItem(tagDisplayName + notableString);
+
+        if (tagDisplayName.equals(TagsManager.getBookmarkTagDisplayName())) {
+            tagNameItem.setAccelerator(AddBookmarkTagAction.BOOKMARK_SHORTCUT);
+        }
+
+        tagNameItem.addActionListener((ActionEvent e) -> {
+            selectedTags.forEach((oldtag) -> {
+                replaceTag(oldtag, tagName, oldtag.getComment());
+            });
+        });
+
+        tagNameItem.setEnabled(!tagNamesToDisable.contains(tagDisplayName));
+
+        return tagNameItem;
     }
 }

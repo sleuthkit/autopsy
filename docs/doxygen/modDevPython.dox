@@ -15,11 +15,10 @@ Using it is very easy though in Autopsy and it allows you to access all of the J
 
 To develop a module, you should follow this section to get your environment setup and then read the later sections on the different types of modules. 
 
-There are also a set of tutorials that Basis Technology published on their blog.  While not as thorough as this documentation, they are an easy introduction to the general ideas. 
-
-- File Ingest Modules: http://www.basistech.com/python-autopsy-module-tutorial-1-the-file-ingest-module/
-- Data Source Ingest Modules: http://www.basistech.com/python-autopsy-module-tutorial-2-the-data-source-ingest-module/
-- Report Modules: http://www.basistech.com/python-autopsy-module-tutorial-3-the-report-module/
+There are also a set of tutorials that provide an easy introduction to the general ideas. 
+- File Ingest Modules: \subpage mod_python_file_ingest_tutorial_page
+- Data Source Ingest Modules: \subpage mod_python_ds_ingest_tutorial_page
+- Report Modules: \subpage mod_python_report_tutorial_page
 
 
 \section mod_dev_py_setup Basic Setup

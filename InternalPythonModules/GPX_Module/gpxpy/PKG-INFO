@@ -1,0 +1,13 @@
+Metadata-Version: 1.1
+Name: gpxpy
+Version: 0.8.8
+Summary: GPX file parser and GPS track manipulation library
+Home-page: http://www.trackprofiler.com/gpxpy/index.html
+Author: Tomo Krajina
+Author-email: tkrajina@gmail.com
+License: Apache License, Version 2.0
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3

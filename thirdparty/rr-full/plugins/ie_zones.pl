@@ -17,7 +17,7 @@
 package ie_zones;
 use strict;
 
-my %config = (hive          => "NTUSER\.DAT;Software",
+my %config = (hive          => "NTUSER\.DAT,Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
@@ -60,40 +60,48 @@ sub pluginmain {
 			::rptMsg("");
 # Get Zones and various security settings			
 			foreach my $n (0..4) {
-				$zone = $key->get_subkey('Zones\\'.$n);
-				::rptMsg("Zone ".$n.":  ".$zone->get_value("PMDisplayName")->get_data()." - ".$zone->get_value("Description")->get_data());
-				::rptMsg("LastWrite: ".gmtime($zone->get_timestamp()." UTC"));
-				
-				my @vals = $zone->get_list_of_values();
-				if (scalar(@vals) > 0) {
-					foreach my $v (@vals) {
-						my $name = $v->get_name();
-						next unless (length($name) == 4 && $name ne "Icon"); 
-						my $data = $v->get_data();
-						$name = "**".$name if ($name eq "1609" && $data == 0);
-						my $str = sprintf "%6s  0x%08x",$name,$data;
-#						::rptMsg("  ".$name."  ".$data."  ".$zones{$data});
-						::rptMsg($str."  ".$zones{$data});
-					}
-				}
-				::rptMsg("");
+                if (defined($key->get_subkey('Zones\\'.$n))) {
+                    $zone = $key->get_subkey('Zones\\'.$n);
+                    if (defined($zone->get_value("PMDisplayName"))) {
+                        ::rptMsg("Zone ".$n.":  ".$zone->get_value("PMDisplayName")->get_data()." - ".$zone->get_value("Description")->get_data());
+                    } else {
+                        ::rptMsg("Zone ".$n.":  ".$zone->get_value("DisplayName")->get_data()." - ".$zone->get_value("Description")->get_data());
+                    }
+                    ::rptMsg("LastWrite: ".gmtime($zone->get_timestamp()." UTC"));
+                    
+                    my @vals = $zone->get_list_of_values();
+                    if (scalar(@vals) > 0) {
+                        foreach my $v (@vals) {
+                            my $name = $v->get_name();
+                            next unless (length($name) == 4 && $name ne "Icon"); 
+                            my $data = $v->get_data();
+                            $name = "**".$name if ($name eq "1609" && $data == 0);
+                            my $str = sprintf "%6s  0x%08x",$name,$data;
+    #						::rptMsg("  ".$name."  ".$data."  ".$zones{$data});
+                            ::rptMsg($str."  ".$zones{$data});
+                        }
+                    }
+                    ::rptMsg("");
+                }
 			}
 # Now, get ZoneMap settings
-			my $zonemap = $key->get_subkey('ZoneMap\\Domains');
-			my @domains = $zonemap->get_list_of_subkeys();
-			if (scalar(@domains) > 0) {
-				foreach my $d (@domains) {
-					::rptMsg("Domain: ".$d->get_name());
+            if (defined($key->get_subkey('ZoneMap\\Domains'))) {
+    			my $zonemap = $key->get_subkey('ZoneMap\\Domains');
+                my @domains = $zonemap->get_list_of_subkeys();
+                if (scalar(@domains) > 0) {
+                    foreach my $d (@domains) {
+                        ::rptMsg("Domain: ".$d->get_name());
 					
-					my @vals = $d->get_list_of_values();
-					if (scalar(@vals) > 0) {
-						foreach my $v (@vals) {
-							::rptMsg("  ".$v->get_name()."  ".$v->get_data());
-						}
-					}
-					::rptMsg("");
-				}
-			}			
+                        my @vals = $d->get_list_of_values();
+                        if (scalar(@vals) > 0) {
+                            foreach my $v (@vals) {
+                                ::rptMsg("  ".$v->get_name()."  ".$v->get_data());
+                            }
+                        }
+                        ::rptMsg("");
+                    }
+                }
+            }
 		}
 		else {
 #			::rptMsg($key_path." not found.");

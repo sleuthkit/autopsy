@@ -20,20 +20,19 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
@@ -44,8 +43,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Manages Tags, Tagging, and the relationship between Categories and Tags in
  * the autopsy Db. Delegates some work to the backing autopsy TagsManager.
  */
-@NbBundle.Messages({"DrawableTagsManager.followUp=Follow Up",
-    "DrawableTagsManager.bookMark=Bookmark"})
 public final class DrawableTagsManager {
 
     private static final Logger logger = Logger.getLogger(DrawableTagsManager.class.getName());
@@ -54,9 +51,15 @@ public final class DrawableTagsManager {
     private static final Image BOOKMARK_IMAGE = new Image("/org/sleuthkit/autopsy/images/star-bookmark-icon-16.png");
 
     private final TagsManager autopsyTagsManager;
-    /** The tag name corresponding to the "built-in" tag "Follow Up" */
+    /**
+     * The tag name corresponding to the "built-in" tag "Follow Up"
+     */
     private final TagName followUpTagName;
     private final TagName bookmarkTagName;
+
+    private final ImageGalleryController controller;
+
+    private final Comparator<TagName> compareByDisplayName;
 
     /**
      * Used to distribute TagsChangeEvents
@@ -72,8 +75,16 @@ public final class DrawableTagsManager {
 
     public DrawableTagsManager(ImageGalleryController controller) throws TskCoreException {
         this.autopsyTagsManager = controller.getCase().getServices().getTagsManager();
-        followUpTagName = getTagName(Bundle.DrawableTagsManager_followUp());
-        bookmarkTagName = getTagName(Bundle.DrawableTagsManager_bookMark());
+        followUpTagName = getTagName(TagsManager.getFollowUpTagDisplayName());
+        bookmarkTagName = getTagName(TagsManager.getBookmarkTagDisplayName());
+        this.controller = controller;
+
+        compareByDisplayName = new Comparator<TagName>() {
+            @Override
+            public int compare(TagName tagName1, TagName tagName2) {
+                return tagName1.getDisplayName().compareTo(tagName2.getDisplayName());
+            }
+        };
     }
 
     /**
@@ -129,25 +140,26 @@ public final class DrawableTagsManager {
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<TagName> getNonCategoryTagNames() throws TskCoreException {
-        return autopsyTagsManager.getAllTagNames().stream()
-                .filter(CategoryManager::isNotCategoryTagName)
-                .distinct().sorted()
-                .collect(Collectors.toList());
+        List<TagName> nonCategoryTagNames = new ArrayList<>();
+        List<TagName> allTags = autopsyTagsManager.getAllTagNames();
+        for (TagName tag : allTags) {
+            if (controller.getCategoryManager().isNotCategoryTagName(tag)) {
+                nonCategoryTagNames.add(tag);
+            }
+        }
+        nonCategoryTagNames.sort(compareByDisplayName);
+        return nonCategoryTagNames;
     }
 
     /**
      * Get all the TagNames that are categories
      *
-     * @return All the TagNames that are categories, in alphabetical order by
-     *         displayName.
+     * @return All the TagNames that are categories.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<TagName> getCategoryTagNames() throws TskCoreException {
-        return autopsyTagsManager.getAllTagNames().stream()
-                .filter(CategoryManager::isCategoryTagName)
-                .distinct().sorted()
-                .collect(Collectors.toList());
+        return controller.getCategoryManager().getCategorySet().getTagNames();
     }
 
     /**
@@ -193,10 +205,6 @@ public final class DrawableTagsManager {
             }
             throw new TskCoreException("Tag name exists but an error occured in retrieving it", ex);
         }
-    }
-
-    public TagName getTagName(DhsImageCategory cat) throws TskCoreException {
-        return getTagName(cat.getDisplayName());
     }
 
     public ContentTag addContentTag(DrawableFile file, TagName tagName, String comment) throws TskCoreException {

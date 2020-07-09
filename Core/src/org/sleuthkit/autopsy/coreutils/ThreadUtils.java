@@ -44,7 +44,7 @@ final public class ThreadUtils {
             } catch (InterruptedException ignored) {
                 /*
                  * Ignore interrupts. The policy implemented by this method is
-                 * an unconditional wait.:
+                 * an unconditional wait.
                  */
             }
         }

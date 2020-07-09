@@ -52,7 +52,7 @@ The blackboard allows modules to communicate with each other and the UI. It has 
 
 The blackboard is not unique to Autopsy.  It is part of The Sleuth Kit datamodel and The Sleuth Kit Framework.  In the name of reducing the amount of documentation that we need to maintain, we provide links here to those documentation sources. 
 
-- <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.3/mod_bbpage.html">The Blackboard</a>
+- <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/latest/mod_bbpage.html">The Blackboard</a>
 
 
 \subsection mod_dev_other_services Framework Services and Utilities

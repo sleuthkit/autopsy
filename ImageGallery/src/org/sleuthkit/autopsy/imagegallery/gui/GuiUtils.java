@@ -21,10 +21,19 @@ package org.sleuthkit.autopsy.imagegallery.gui;
 import java.io.IOException;
 import java.net.URL;
 import java.util.logging.Level;
+import javafx.geometry.HPos;
+import javafx.geometry.Pos;
 import javafx.scene.control.ButtonBase;
+import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
@@ -56,7 +65,7 @@ public final class GuiUtils {
 
     /**
      * Create a MenuItem that performs the given action and also set the Action
-     * as the action for the given Button. Usefull to have a SplitMenuButton
+     * as the action for the given Button. Useful to have a SplitMenuButton
      * remember the last chosen menu item as its action.
      *
      * @param button
@@ -65,7 +74,32 @@ public final class GuiUtils {
      * @return
      */
     public static MenuItem createAutoAssigningMenuItem(ButtonBase button, Action action) {
-        MenuItem menuItem = ActionUtils.createMenuItem(action);
+        Label mainLabel = new Label(action.getText(), action.getGraphic());
+        
+        String hkDisplayText = action.getAccelerator() != null ? action.getAccelerator().getDisplayText() : "";
+        Label hotKeyLabel = new Label(hkDisplayText);
+        
+        hotKeyLabel.setMaxWidth(100);
+
+        GridPane grid = new GridPane();
+        grid.setAlignment(Pos.CENTER);
+        grid.setHgap(10);
+
+        ColumnConstraints column1 = new ColumnConstraints();
+        column1.setHalignment(HPos.LEFT);
+        grid.getColumnConstraints().add(column1); 
+
+        ColumnConstraints column2 = new ColumnConstraints();
+        column2.setHalignment(HPos.RIGHT);
+        column2.setMaxWidth(Double.MAX_VALUE);
+        grid.getColumnConstraints().add(column2); 
+        
+        grid.add(mainLabel, 0, 0);
+        grid.add(hotKeyLabel, 1, 0);
+        grid.setMaxWidth(Double.MAX_VALUE);
+
+        MenuItem menuItem = new CustomMenuItem(grid);
+        ActionUtils.configureMenuItem(action, menuItem);
         menuItem.setOnAction(actionEvent -> {
             action.handle(actionEvent);
             button.setText(action.getText());

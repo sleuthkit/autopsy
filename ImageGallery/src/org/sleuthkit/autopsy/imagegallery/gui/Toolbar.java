@@ -20,12 +20,9 @@ package org.sleuthkit.autopsy.imagegallery.gui;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +61,6 @@ import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_DELETED;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeGroupAction;
@@ -220,13 +216,13 @@ public class Toolbar extends ToolBar {
         });
         initTagMenuButton();
 
-        CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(DhsImageCategory.FIVE, controller);
+        CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(controller.getCategoryManager().getCategories().get(0), controller);
         catGroupMenuButton.setOnAction(cat5GroupAction);
         catGroupMenuButton.setText(cat5GroupAction.getText());
         catGroupMenuButton.setGraphic(cat5GroupAction.getGraphic());
         catGroupMenuButton.showingProperty().addListener(showing -> {
             if (catGroupMenuButton.isShowing()) {
-                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(DhsImageCategory.values()),
+                List<MenuItem> categoryMenues = Lists.transform(controller.getCategoryManager().getCategories(),
                         cat -> GuiUtils.createAutoAssigningMenuItem(catGroupMenuButton, new CategorizeGroupAction(cat, controller)));
                 catGroupMenuButton.getItems().setAll(categoryMenues);
             }

@@ -25,6 +25,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -53,6 +54,10 @@ public final class ViewFileInTimelineAction extends AbstractAction {
                 && file.getMtime() <= 0
                 && file.getAtime() <= 0)) {
             this.setEnabled(false);
+        }
+        // If timeline functionality is not available this action is disabled.
+        if ("false".equals(ModuleSettings.getConfigSetting("timeline", "enable_timeline"))) {
+            setEnabled(false);
         }
     }
 

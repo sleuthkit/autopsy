@@ -3,70 +3,25 @@
 \section report_summary Overview
 Report modules allow Autopsy users to create different report types.  Autopsy comes with modules to generate HTML and Excel artifact reports, a tab delimited File report, a Keyhole Markup Language (KML) report for Google Earth data, and a body file for timeline creation.  You can make additional modules to create custom output formats. 
 
-There are three types of reporting modules that differ in how the data is organized. 
-- Table report modules organize the data into tables.  If your output is in table format, this type of module will be easier to make because Autopsy does a lot of the organizing work for you. 
-- File report modules are also table-based, but they specifically deal with reporting on the Files in the case, not artifacts.
-- General report modules are free form and you are allowed to organize the output however you want.  
+All custom report modules will be general report modules. General report modules have a single method to generate the report. This method gives the module freedom to find and process any data it so chooses. General modules also have the ability to provide a configuration panel, allowing the user to choose from various displayed settings. The report module may then use the user's selection to generate a more specific report.
 
-Table report modules require their subclasses to override methods to start and end tables, and add rows to those tables. These methods are provided data, generated from a default configuration panel, for the module to report on. Because of this, when creating a table report module one only needs to focus on how to display the data, not how to find it.
-
-File report modules are similar to table report modules, but only require their sub-classes to start and end a single table, and add rows to that table. The methods are given an AbstractFile and a list of FileReportDataTypes, which specify what information about the file should be added to the report. The data can be extracted from the file by calling the FileReportDataTypes getValue method with the file as it's argument.
-
-On the other hand, general report modules have a single method to generate the report. This method gives the module freedom to find and process any data it so chooses. General modules also have the ability to provide a configuration panel, allowing the user to choose from various displayed settings. The report module may then use the user's selection to generate a more specific report.
-
-General modules are also given the responsibility of updating their report's progress bar and processing label in the UI. A progress panel is given to every general report module. It contains basic API to start, stop, and add to the progress bar, as well as update the processing label. The module is also expected to check the progress bar's status occasionally to see if the user has manually canceled the report.
+General modules are also given the responsibility of updating their report's progress bar and processing label in the UI. A progress panel is given to every general report module. It defines a basic API to start, stop, and increment the progress bar and to update the processing label. The module is also expected to check the progress bar's status occasionally to see if the user has manually canceled the report.
 
 \section report_create_module Creating a Report Module
-To create a report module, start off by creating a new Java or Python (Jython) class and implementing (Java) or inheriting (Jython) the appropriate interface:
-- org.sleuthkit.autopsy.report.TableReportModule 
-- org.sleuthkit.autopsy.report.FileReportModule 
-- org.sleuthkit.autopsy.report.GeneralReportModule 
-
-All three of these interfaces extend the org.sleuthkit.autopsy.report.ReportModule interface that defines the following methods:
+To create a report module, start off by creating a new Java or Python (Jython) class and implementing (Java) or inheriting (Jython) from org.sleuthkit.autopsy.report.GeneralReportModule. You'll need to override multiple methods including the following:
 - org.sleuthkit.autopsy.report.ReportModule.getName()
 - org.sleuthkit.autopsy.report.ReportModule.getDescription()
 - org.sleuthkit.autopsy.report.ReportModule.getRelativeFilePath()
-
-These methods will be called by Autopsy when it is presenting the reporting UI to a user.
-
-\subsection report_create_module_table Creating A Table Report Module
-If you implement TableReportModule, you should override the methods:
-- org.sleuthkit.autopsy.report.TableReportModule.startReport(String path)
-- org.sleuthkit.autopsy.report.TableReportModule.endReport()
-- org.sleuthkit.autopsy.report.TableReportModule.startDataType(String title)
-- org.sleuthkit.autopsy.report.TableReportModule.endDataType()
-- org.sleuthkit.autopsy.report.TableReportModule.startSet(String setName)
-- org.sleuthkit.autopsy.report.TableReportModule.endSet()
-- org.sleuthkit.autopsy.report.TableReportModule.addSetIndex(List<String> sets)
-- org.sleuthkit.autopsy.report.TableReportModule.addSetElement(String elementName)
-- org.sleuthkit.autopsy.report.TableReportModule.startTable(List<String> titles)
-- org.sleuthkit.autopsy.report.TableReportModule.endTable()
-- org.sleuthkit.autopsy.report.TableReportModule.addRow(List<String> row)
-- org.sleuthkit.autopsy.report.TableReportModule.dateToString(long date)
-
-When generating table module reports, Autopsy will iterate through a list of user selected data, and call methods such as addRow(List<String> row) for every "row" of data it finds, or startTable(List<String> titles) for every new category it finds. Developers are guaranteed that every start of a data type, set, or table will be followed by an appropriate end. The focus for a table report module should be to take the given information and display it in a user friendly format. See org.sleuthkit.autopsy.report.ReportExcel for an example.
-
-\subsection report_create_module_file Creating a File Report Module
-If you implement FileReportModule, the overriden methods will be:
-- org.sleuthkit.autopsy.report.FileReportModule.startReport(String path)
-- org.sleuthkit.autopsy.report.FileReportModule.endReport()
-- org.sleuthkit.autopsy.report.FileReportModule.startTable(List<FileReportDataTypes> headers)
-- org.sleuthkit.autopsy.report.FileReportModule.endTable()
-- org.sleuthkit.autopsy.report.FileReportModule.addRow(AbstractFile toAdd, List<FileReportDataTypes> columns)
-
-As when generating table module reports, Autopsy will iterate through a list of user selected data (which are represented by FileReportDataTypes), and call addRow(AbstractFile toAdd, List<FileReportDataTypes> columns) for every abstract file in the case. Developers are guaranteed that the order of method calls will be startReport(), startTable(List<FileReportDataTypes> headers), addRow(AbstractFile toAdd, List<FileReportDataTypes> columns), AbstractFile toAdd, List<FileReportDataTypes> columns),..., endTable(), endReport().
-
-\subsection report_create_module_general Creating a General Report Module
-
-If you implement GeneralReportModule, the overriden methods will be:
 - org.sleuthkit.autopsy.report.GeneralReportModule.generateReport(String reportPath, ReportProgressPanel progressPanel)
+
+If your report module requires configuration, you'll need to override:
 - org.sleuthkit.autopsy.report.GeneralReportModule.getConfigurationPanel()
 
-For general report modules, Autopsy will simply call the generateReport(String reportPath, ReportProgressPanel progressPanel) method and leave it up to the module to aquire and report data in its desired format.  The only requirements are that the module saves to the given report path and updates the org.sleuthkit.autopsy.report.ReportProgressPanel as the report progresses.
+For general report modules, Autopsy will simply call the generateReport(String reportPath, ReportProgressPanel progressPanel) method and leave it up to the module to acquire and report data in its desired format.  The only requirements are that the module saves to the given report path and updates the org.sleuthkit.autopsy.report.ReportProgressPanel as the report progresses.
 
 When updating the progress panel, it is recommended to update it as infrequently as possible, while still keeping the user informed. If your report processes 100,000 files and you chose to update the UI each time a file is reviewed, the UI would freeze when trying to process all your requests. This would cause problems to not only your reporting module, but to other modules running in parallel. A safer approach would be to update the UI every 1,000 files, or when a certain "category" of the files being processed has changed. For example, the HTML report module increments the progress bar and changes the processing label every time a new Blackboard Artifact Type is being processed.
 
-Autopsy will also display the panel returned by getConfigurationPanel() in the generate report wizard. This panel can be used to allow the user custom controls over the report.  To make this panel, use NetBeans to make a new JPanel class and use its layout interface to put the UI widgets in the places that you want them.  Then, your getConfigurationPanel() method should create an instance of that class and return it. 
+Autopsy will also display the panel returned by getConfigurationPanel() in the generate report wizard. This panel can be used to allow the user to customize the report.  To make this panel, use NetBeans to make a new JPanel class and use its layout interface to put the UI widgets in the places that you want them.  Then, your getConfigurationPanel() method should create an instance of that class and return it. 
 
 
 Typically a general report module should interact with both the Blackboard API in the org.sleuthkit.datamodel.SleuthkitCase class, in addition to an API (possibly external/thirdparty) to convert Blackboard Artifacts to the desired reporting format.
@@ -77,7 +32,7 @@ You should call org.sleuthkit.autopsy.casemodule.Case.addReport() with the path 
 
 \subsection report_create_module_indexing Indexing Reports
 
-After you have called org.sleuthkit.autopsy.casemodule.Case.addReport() and created a report, you can pass it to org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService.index() so that it is indexed and can then be found by a user.  This is most commonly used when an Ingest Module runs a 3rd party tool and the output of that tool is added back into Autopsy as a report.  Here is some example code:
+After you have called org.sleuthkit.autopsy.casemodule.Case.addReport() and created a report, you can pass it to org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService.index() so that the report text is indexed for keyword search.  This is most commonly used when an Ingest Module runs a 3rd party tool and the output of that tool is added back into Autopsy as a report.  Here is some example code:
 
 \code{.java}
 KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
@@ -90,22 +45,14 @@ if (null == searchService) {
 
 \subsection report_create_module_layer Installing your Report Module
 
-Report modules developed using Java must be registered in a layer.xml file. This file allows Autopsy to find the report module.
+Adding a service provider annotation allows Autopsy to find your report module.
 
-An example entry in a layer.xml is shown below:
 \code
-<folder name="Services">
-    <file name="org-sleuthkit-autopsy-report-ReportHTML.instance">
-        <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.TableReportModule"/>
-        <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportHTML.getDefault"/>
-        <attr name="position" intvalue="910"/>
-    </file>
-</folder>
+@ServiceProvider(service = GeneralReportModule.class)
+public class SampleReportModule implements GeneralReportModule {
 \endcode
 
-In the above example, "org-sleuthkit-autopsy-report-ReportHTML" should be replaced with the package path to your report module.
-
-It is also important to remember to include a getDefault() method in your report module. As shown in the code above, the instance to each report module is accessed via it's getDefault() method.
+It is also important to remember to include a getDefault() method in your report module. As shown in the code above, the instance to each report module is accessed via its getDefault() method.
 For example:
 
 \code
@@ -124,5 +71,48 @@ public static synchronized MyReport getDefault() {
 Report modules developed using Jython are installed in Autopsy by placing them in their own subdirectory of the python_modules
 directory. A window into the python_modules directory can be opened through the Autopsy's Tools -> Python Plugins menu item. 
 Create a folder in this directory and create or place your Python scripts in this folder.  
+
+
+\subsection report_create_module_persistence Persisting your Report Module Configuration
+
+Both Java and Python report modules can have their configurations persisted to disk. In order to do so, the report module must do
+two things:
+<ol>
+<li> The report module must have a class that defines the configuration for the module (for example, org.sleuthkit.autopsy.report.modules.html.HTMLReportModuleSettings). This class
+must implement the ReportModuleSettings interface. Note that the ReportModuleSettings interface extends Serializable, therefore the report
+settings class must contain serialVersionUID variable:
+
+\code
+class HTMLReportModuleSettings implements ReportModuleSettings {
+    
+    private static final long serialVersionUID = 1L;
+    
+    HTMLReportModuleSettings() {
+    }
+    
+    @Override
+    public long getVersionNumber() {
+        return serialVersionUID;
+    }
+}
+\endcode
+
+<li>The report module implementation class (e.g. ReportHTML) must implement the following methods of the ReportModule interface:
+- getDefaultConfiguration()
+- getConfiguration()
+- setConfiguration(ReportModuleSettings settings)
+</ol>
+
+The use case scenario for this API when the configuration of a report module is occurring is as follows (using HTMLReport as example):
+<ol>
+<li>User clicks "Generate Reports" button in the Autopsy UI.
+<li>Report Configuration UI attempts to load the persisted reporting configuration from disk.
+<li>For each existing report module, if a persisted ReportModuleSettings (i.e. HTMLReportModuleSettings) configuration exists, Configuration UI calls HTMLReport.setConfiguration() with the persisted settings; Otherwise the Configuration UI calls HTMLReport.getDefaultConfiguration(), then HTMLReport.setConfiguration().
+<li>Configuration UI calls HTMLReport.getConfigurationPanel(). The report module loads the settings into its configuration panel and returns the panel.
+<li>Configuration UI presents the panel to the user. 
+<li>User interacts with the panel to modify the current settings of the report module.
+<li>Configuration UI calls HTMLReport.getConfiguration() and obtains the latest report module configuration.
+<li>Configuration UI persists the module settings.
+</ol>
 
 */

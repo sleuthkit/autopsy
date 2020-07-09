@@ -66,7 +66,7 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
 
         org.openide.awt.Mnemonics.setLocalizedText(keepCorruptedFilesCheckbox, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.keepCorruptedFilesCheckbox.text")); // NOI18N
 
-        detectionSettingsLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        detectionSettingsLabel.setFont(detectionSettingsLabel.getFont().deriveFont(detectionSettingsLabel.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(detectionSettingsLabel, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.detectionSettingsLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

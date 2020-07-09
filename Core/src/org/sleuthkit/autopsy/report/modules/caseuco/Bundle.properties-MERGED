@@ -1,0 +1,13 @@
+CaseUcoReportModule.ingestWarning=Warning, this report will be created before ingest services completed
+CaseUcoReportModule.ioError=I/O error encountered while generating report
+CaseUcoReportModule.noCaseOpen=No case is currently open
+CaseUcoReportModule.noDataSourceSelected=No data source selected for CASE-UCO report
+CaseUcoReportModule.notInitialized=CASE-UCO settings panel has not been initialized
+CaseUcoReportModule.processingDataSource=Processing datasource: %s
+CaseUcoReportModule.srcModuleName=CASE-UCO Report
+CaseUcoReportModule.tskCoreException=TskCoreException [%s] encountered while generating the report. Please reference the log for more details.
+CaseUcoReportModule.unableToCreateDirectories=Unable to create directory for CASE-UCO report
+OpenIDE-Module-Name=CaseUcoModule
+CaseUcoReportModule.getName.text=CASE-UCO
+CaseUcoReportModule.getDesc.text=CASE-UCO format report with basic property fields for every file.
+ReportCaseUcoConfigPanel.jLabelSelectDataSource.text=Select a data source for the CASE-UCO report

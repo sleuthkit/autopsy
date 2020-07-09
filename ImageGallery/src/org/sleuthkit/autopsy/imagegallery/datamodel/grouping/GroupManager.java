@@ -62,7 +62,6 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -70,9 +69,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -106,23 +103,23 @@ public class GroupManager {
     private final ImageGalleryController controller;
 
     /**
-     * Keeps track of the current path group
-     *  - a change in path indicates the current path group is analyzed
+     * Keeps track of the current path group - a change in path indicates the
+     * current path group is analyzed
      */
     @GuardedBy("this") //NOPMD
     private GroupKey<?> currentPathGroup = null;
-    
+
     /**
-     * list of all analyzed groups - i.e. groups that are ready to be shown to user.  
-     * These are groups under the selected groupBy attribute.
+     * list of all analyzed groups - i.e. groups that are ready to be shown to
+     * user. These are groups under the selected groupBy attribute.
      */
     @GuardedBy("this") //NOPMD
     private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
     private final ObservableList<DrawableGroup> unmodifiableAnalyzedGroups = FXCollections.unmodifiableObservableList(analyzedGroups);
 
     /**
-     * list of unseen groups
-     * These are groups under the selected groupBy attribute.
+     * list of unseen groups These are groups under the selected groupBy
+     * attribute.
      */
     @GuardedBy("this") //NOPMD
     private final ObservableList<DrawableGroup> unSeenGroups = FXCollections.observableArrayList();
@@ -186,15 +183,15 @@ public class GroupManager {
     @SuppressWarnings({"rawtypes", "unchecked"})
     synchronized public Set<GroupKey<?>> getAllGroupKeysForFile(DrawableFile file) throws TskCoreException, TskDataException {
         Set<GroupKey<?>> resultSet = new HashSet<>();
-        
-        for (DrawableAttribute<?> attr: DrawableAttribute.getGroupableAttrs()) {
+
+        for (DrawableAttribute<?> attr : DrawableAttribute.getGroupableAttrs()) {
             for (Comparable<?> val : attr.getValue(file)) {
 
                 if (attr == DrawableAttribute.PATH) {
                     resultSet.add(new GroupKey(attr, val, file.getDataSource()));
                 } else if (attr == DrawableAttribute.TAGS) {
                     //don't show groups for the categories when grouped by tags.
-                    if (CategoryManager.isNotCategoryTagName((TagName) val)) {
+                    if (controller.getCategoryManager().isNotCategoryTagName((TagName) val)) {
                         resultSet.add(new GroupKey(attr, val, null));
                     }
                 } else {
@@ -204,9 +201,8 @@ public class GroupManager {
         }
         return resultSet;
     }
-   
 
-     /**
+    /**
      *
      * Returns GroupKeys for all the Groups the given file is a part of.
      *
@@ -225,7 +221,7 @@ public class GroupManager {
         }
         return Collections.emptySet();
     }
-            
+
     /**
      * @param groupKey
      *
@@ -244,7 +240,7 @@ public class GroupManager {
         setGroupBy(DrawableAttribute.PATH);
         setSortOrder(SortOrder.ASCENDING);
         setDataSource(null);
-        
+
         unSeenGroups.forEach(controller.getCategoryManager()::unregisterListener);
         unSeenGroups.clear();
         analyzedGroups.forEach(controller.getCategoryManager()::unregisterListener);
@@ -300,12 +296,12 @@ public class GroupManager {
     public ListenableFuture<?> markGroupUnseen(DrawableGroup group) {
         return exec.submit(() -> {
             try {
-                
+
                 getDrawableDB().markGroupUnseen(group.getGroupKey());
                 // only update and reshuffle if its new results        
                 if (group.isSeen() == true) {
                     group.setSeen(false);
-                } 
+                }
                 // The group may already be in 'unseen' state, e.g. when new files are added, 
                 // but not be on the unseenGroupsList yet.
                 updateUnSeenGroups(group);
@@ -314,7 +310,7 @@ public class GroupManager {
             }
         });
     }
-    
+
     /**
      * Update unseenGroups list accordingly based on the current status of
      * 'group'. Removes it if it is seen or adds it if it is unseen.
@@ -322,13 +318,13 @@ public class GroupManager {
      * @param group
      */
     synchronized private void updateUnSeenGroups(DrawableGroup group) {
-            if (group.isSeen()) {
-                unSeenGroups.removeAll(group);
-            } else if (unSeenGroups.contains(group) == false &&  
-                       getGroupBy() == group.getGroupKey().getAttribute()) {
-                        unSeenGroups.add(group);
-            }
-            sortUnseenGroups();
+        if (group.isSeen()) {
+            unSeenGroups.removeAll(group);
+        } else if (unSeenGroups.contains(group) == false
+                && getGroupBy() == group.getGroupKey().getAttribute()) {
+            unSeenGroups.add(group);
+        }
+        sortUnseenGroups();
     }
 
     /**
@@ -390,7 +386,7 @@ public class GroupManager {
         switch (groupKey.getAttribute().attrName) {
             //these cases get special treatment
             case CATEGORY:
-                return getFileIDsWithCategory((DhsImageCategory) groupKey.getValue());
+                return getFileIDsWithCategory((TagName) groupKey.getValue());
             case TAGS:
                 return getFileIDsWithTag((TagName) groupKey.getValue());
             case MIME_TYPE:
@@ -405,33 +401,18 @@ public class GroupManager {
 
     // @@@ This was kind of slow in the profiler.  Maybe we should cache it.
     // Unless the list of file IDs is necessary, use countFilesWithCategory() to get the counts.
-    synchronized public Set<Long> getFileIDsWithCategory(DhsImageCategory category) throws TskCoreException {
+    synchronized public Set<Long> getFileIDsWithCategory(TagName category) throws TskCoreException {
         Set<Long> fileIDsToReturn = Collections.emptySet();
 
         try {
             final DrawableTagsManager tagsManager = controller.getTagsManager();
-            if (category == DhsImageCategory.ZERO) {
-                Set<Long> fileIDs = new HashSet<>();
-                for (TagName catTagName : tagsManager.getCategoryTagNames()) {
-                    if (notEqual(catTagName.getDisplayName(), DhsImageCategory.ZERO.getDisplayName())) {
-                        tagsManager.getContentTagsByTagName(catTagName).stream()
-                                .filter(ct -> ct.getContent() instanceof AbstractFile)
-                                .map(ct -> ct.getContent().getId())
-                                .filter(getDrawableDB()::isInDB)
-                                .forEach(fileIDs::add);
-                    }
-                }
 
-                fileIDsToReturn = getDrawableDB().findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(fileIDs, ',') + ")"); //NON-NLS
-            } else {
-
-                List<ContentTag> contentTags = tagsManager.getContentTagsByTagName(tagsManager.getTagName(category));
-                fileIDsToReturn = contentTags.stream()
-                        .filter(ct -> ct.getContent() instanceof AbstractFile)
-                        .filter(ct -> getDrawableDB().isInDB(ct.getContent().getId()))
-                        .map(ct -> ct.getContent().getId())
-                        .collect(Collectors.toSet());
-            }
+            List<ContentTag> contentTags = tagsManager.getContentTagsByTagName(category);
+            fileIDsToReturn = contentTags.stream()
+                    .filter(ct -> ct.getContent() instanceof AbstractFile)
+                    .filter(ct -> getDrawableDB().isInDB(ct.getContent().getId()))
+                    .map(ct -> ct.getContent().getId())
+                    .collect(Collectors.toSet());
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex); //NON-NLS
             throw ex;
@@ -552,14 +533,14 @@ public class GroupManager {
     synchronized public void handleTagAdded(ContentTagAddedEvent evt) {
         GroupKey<?> newGroupKey = null;
         final long fileID = evt.getAddedTag().getContent().getId();
-        if (getGroupBy() == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(evt.getAddedTag().getName())) {
-            newGroupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getAddedTag().getName()), getDataSource());
+        if (getGroupBy() == DrawableAttribute.CATEGORY && controller.getCategoryManager().isCategoryTagName(evt.getAddedTag().getName())) {
+            newGroupKey = new GroupKey<>(DrawableAttribute.CATEGORY, evt.getAddedTag().getName(), getDataSource());
             for (GroupKey<?> oldGroupKey : groupMap.keySet()) {
                 if (oldGroupKey.equals(newGroupKey) == false) {
                     removeFromGroup(oldGroupKey, fileID);
                 }
             }
-        } else if (getGroupBy() == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(evt.getAddedTag().getName())) {
+        } else if (getGroupBy() == DrawableAttribute.TAGS && controller.getCategoryManager().isNotCategoryTagName(evt.getAddedTag().getName())) {
             newGroupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getAddedTag().getName(), getDataSource());
         }
         if (newGroupKey != null) {
@@ -569,7 +550,8 @@ public class GroupManager {
     }
 
     /**
-     * Adds an analyzed file to the in-memory group data structures. Marks the group as unseen. 
+     * Adds an analyzed file to the in-memory group data structures. Marks the
+     * group as unseen.
      *
      * @param group    Group being added to (will be null if a group has not yet
      *                 been created)
@@ -584,16 +566,20 @@ public class GroupManager {
             //if there wasn't already a DrawableGroup, then check if this group is now 
             // in an appropriate state to get one made.  
             // Path group, for example, only gets a DrawableGroup created when all files are analyzed
-            /* NOTE: With the current (Jan 2019) behavior of how we detect a PATH group as being analyzed, the group
-             * is not marked as analyzed until we add a file for another folder.  So, when the last picture in a folder
-             * is added to the group, the call to 'populateIfAnalyzed' will still not return a group and therefore this
-             * method will never mark the group as unseen. */
+            /*
+             * NOTE: With the current (Jan 2019) behavior of how we detect a
+             * PATH group as being analyzed, the group is not marked as analyzed
+             * until we add a file for another folder. So, when the last picture
+             * in a folder is added to the group, the call to
+             * 'populateIfAnalyzed' will still not return a group and therefore
+             * this method will never mark the group as unseen.
+             */
             group = popuplateIfAnalyzed(groupKey, null);
         } else {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
             group.addFile(fileID);
         }
-        
+
         // reset the seen status for the group (if it is currently considered analyzed)
         if (group != null) {
             markGroupUnseen(group);
@@ -605,18 +591,14 @@ public class GroupManager {
         GroupKey<?> groupKey = null;
         final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
         final TagName deletedTagName = deletedTagInfo.getName();
-        if (getGroupBy() == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(deletedTagName)) {
-            groupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(deletedTagName), null);
-        } else if (getGroupBy() == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(deletedTagName)) {
+        if (getGroupBy() == DrawableAttribute.CATEGORY && controller.getCategoryManager().isCategoryTagName(deletedTagName)) {
+            groupKey = new GroupKey<>(DrawableAttribute.CATEGORY, deletedTagName, null);
+        } else if (getGroupBy() == DrawableAttribute.TAGS && controller.getCategoryManager().isNotCategoryTagName(deletedTagName)) {
             groupKey = new GroupKey<>(DrawableAttribute.TAGS, deletedTagName, null);
         }
         if (groupKey != null) {
             final long fileID = deletedTagInfo.getContentID();
             DrawableGroup g = removeFromGroup(groupKey, fileID);
-
-            if (controller.getCategoryManager().getTagName(DhsImageCategory.ZERO).equals(deletedTagName) == false) {
-                addFileToGroup(null, new GroupKey<>(DrawableAttribute.CATEGORY, DhsImageCategory.ZERO, null), fileID);
-            }
         }
     }
 
@@ -653,13 +635,13 @@ public class GroupManager {
             try {
                 DrawableFile file = getDrawableDB().getFileFromID(fileId);
                 String pathVal = file.getDrawablePath();
-                GroupKey<?> pathGroupKey = new GroupKey<>(DrawableAttribute.PATH,pathVal, file.getDataSource());
-                
+                GroupKey<?> pathGroupKey = new GroupKey<>(DrawableAttribute.PATH, pathVal, file.getDataSource());
+
                 updateCurrentPathGroup(pathGroupKey);
             } catch (TskCoreException | TskDataException ex) {
                 logger.log(Level.WARNING, "Error getting drawabledb for fileId " + fileId, ex);
-            }   
-                    
+            }
+
             // Update all the groups that this file belongs to
             Set<GroupKey<?>> groupsForFile = getAllGroupKeysForFile(fileId);
             for (GroupKey<?> gk : groupsForFile) {
@@ -672,45 +654,45 @@ public class GroupManager {
         //we fire this event for all files so that the category counts get updated during initial db population
         controller.getCategoryManager().fireChange(updatedFileIDs, null);
     }
-    
+
     /**
-     * Checks if the given path is different from the current path group.
-     * If so, updates the current path group as analyzed,  and sets current path 
-     * group to the given path.
-     * 
-     * The idea is that when the path of the files being processed changes, 
-     * we have moved from one folder to the next, and the group for the 
-     * previous PATH can be considered as analyzed and can be displayed.
-     * 
-     * NOTE: this a close approximation for when all files in a folder have been processed, 
-     * but there's some room for error - files may go down the ingest pipleline  
-     * out of order or the events may not always arrive in the same order
-     * 
-     * @param groupKey 
+     * Checks if the given path is different from the current path group. If so,
+     * updates the current path group as analyzed, and sets current path group
+     * to the given path.
+     *
+     * The idea is that when the path of the files being processed changes, we
+     * have moved from one folder to the next, and the group for the previous
+     * PATH can be considered as analyzed and can be displayed.
+     *
+     * NOTE: this a close approximation for when all files in a folder have been
+     * processed, but there's some room for error - files may go down the ingest
+     * pipleline out of order or the events may not always arrive in the same
+     * order
+     *
+     * @param groupKey
      */
     synchronized private void updateCurrentPathGroup(GroupKey<?> groupKey) {
         try {
             if (groupKey.getAttribute() == DrawableAttribute.PATH) {
-            
+
                 if (this.currentPathGroup == null) {
                     currentPathGroup = groupKey;
-                }
-                else if (groupKey.getValue().toString().equalsIgnoreCase(this.currentPathGroup.getValue().toString()) == false) {
+                } else if (groupKey.getValue().toString().equalsIgnoreCase(this.currentPathGroup.getValue().toString()) == false) {
                     // mark the last path group as analyzed
                     getDrawableDB().markGroupAnalyzed(currentPathGroup);
                     popuplateIfAnalyzed(currentPathGroup, null);
-                    
+
                     currentPathGroup = groupKey;
                 }
             }
-        }
-        catch (TskCoreException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Error setting is_analyzed status for group: %s", groupKey.getValue().toString()), ex); //NON-NLS
-        } 
+        }
     }
 
     /**
-     * Resets current path group, after marking the current path group as analyzed.
+     * Resets current path group, after marking the current path group as
+     * analyzed.
      */
     synchronized public void resetCurrentPathGroup() {
         try {
@@ -719,11 +701,11 @@ public class GroupManager {
                 popuplateIfAnalyzed(currentPathGroup, null);
                 currentPathGroup = null;
             }
-        }
-        catch (TskCoreException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Error resetting last path group: %s", currentPathGroup.getValue().toString()), ex); //NON-NLS
         }
     }
+
     /**
      * If the group is analyzed (or other criteria based on grouping) and should
      * be shown to the user, then add it to the appropriate data structures so
@@ -768,12 +750,12 @@ public class GroupManager {
                         controller.getCategoryManager().registerListener(group);
                         groupMap.put(groupKey, group);
                     }
-                    
+
                     // Add to analyzedGroups only if it's the a group with the selected groupBy attribute
-                    if ((analyzedGroups.contains(group) == false) && 
-                        (getGroupBy() == group.getGroupKey().getAttribute())) {
-                            analyzedGroups.add(group);
-                            sortAnalyzedGroups();
+                    if ((analyzedGroups.contains(group) == false)
+                            && (getGroupBy() == group.getGroupKey().getAttribute())) {
+                        analyzedGroups.add(group);
+                        sortAnalyzedGroups();
                     }
                     updateUnSeenGroups(group);
 
@@ -944,11 +926,11 @@ public class GroupManager {
                 switch (groupBy.attrName) {
                     //these cases get special treatment
                     case CATEGORY:
-                        results.putAll(null, Arrays.asList(DhsImageCategory.values()));
+                        results.putAll(null, controller.getCategoryManager().getCategories());
                         break;
                     case TAGS:
                         results.putAll(null, controller.getTagsManager().getTagNamesInUse().stream()
-                                .filter(CategoryManager::isNotCategoryTagName)
+                                .filter(controller.getCategoryManager()::isNotCategoryTagName)
                                 .collect(Collectors.toList()));
                         break;
 

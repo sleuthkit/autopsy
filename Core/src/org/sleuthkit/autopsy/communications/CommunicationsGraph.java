@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -147,7 +148,7 @@ final class CommunicationsGraph extends mxGraph {
             scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
             scopes.put("size", Math.round(Math.log(adiKey.getMessageCount()) + 5));
             scopes.put("iconFileName", CommunicationsGraph.class.getResource(Utils.getIconFilePath(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
-            scopes.put("pinned", pinnedAccountModel.isAccountPinned(adiKey));
+            scopes.put("pinned", pinnedAccountModel.isAccountPinned(adiKey.getAccountDeviceInstance()));
             scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
             scopes.put("locked", lockedVertexModel.isVertexLocked((mxCell) cell));
             scopes.put("LOCK_URL", LOCK_URL);
@@ -172,7 +173,7 @@ final class CommunicationsGraph extends mxGraph {
             scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
             scopes.put("relationships", 12);// Math.round(Math.log(adiKey.getMessageCount()) + 5));
             scopes.put("iconFileName", CommunicationsGraph.class.getResource(Utils.getIconFilePath(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
-            scopes.put("pinned", pinnedAccountModel.isAccountPinned(adiKey));
+            scopes.put("pinned", pinnedAccountModel.isAccountPinned(adiKey.getAccountDeviceInstance()));
             scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
             scopes.put("locked", lockedVertexModel.isVertexLocked((mxCell) cell));
             scopes.put("LOCK_URL", LOCK_URL);
@@ -199,16 +200,24 @@ final class CommunicationsGraph extends mxGraph {
         lockedVertexModel.clear();
     }
 
-    private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
-        final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
+    private mxCell getOrCreateVertex(AccountDeviceInstance adi, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
+        final AccountDeviceInstance accountDeviceInstance = adi;
         final String name = accountDeviceInstance.getAccount().getTypeSpecificID();
 
         final mxCell vertex = nodeMap.computeIfAbsent(name + accountDeviceInstance.getDeviceId(), vertexName -> {
-            double size = Math.sqrt(accountDeviceInstanceKey.getMessageCount()) + 10;
-
+            long adiRelationshipsCount = 1;
+            try {
+                adiRelationshipsCount = commsManager.getRelationshipSourcesCount(accountDeviceInstance, currentFilter);
+            } catch (TskCoreException tskCoreException) {
+                logger.log(Level.SEVERE, "There was an error fetching relationships for the node: " + accountDeviceInstance, tskCoreException);
+            }
+                        
+            double size = Math.sqrt(adiRelationshipsCount) + 10;
+            AccountDeviceInstanceKey adiKey = new AccountDeviceInstanceKey(adi, currentFilter, adiRelationshipsCount);
+            
             mxCell newVertex = (mxCell) insertVertex(
                     getDefaultParent(),
-                    name, accountDeviceInstanceKey,
+                    name, adiKey,
                     Math.random() * 400,
                     Math.random() * 400,
                     size,
@@ -219,9 +228,11 @@ final class CommunicationsGraph extends mxGraph {
     }
 
     @SuppressWarnings("unchecked")
-    private mxCell addOrUpdateEdge(long relSources, AccountDeviceInstanceKey account1, AccountDeviceInstanceKey account2) {
-        mxCell vertex1 = getOrCreateVertex(account1);
-        mxCell vertex2 = getOrCreateVertex(account2);
+    private mxCell addOrUpdateEdge(long relSources, 
+            AccountDeviceInstance account1, AccountDeviceInstance account2, 
+            CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
+        mxCell vertex1 = getOrCreateVertex(account1, commsManager, currentFilter);
+        mxCell vertex2 = getOrCreateVertex(account2, commsManager, currentFilter);
         Object[] edgesBetween = getEdgesBetween(vertex1, vertex2);
         mxCell edge;
         if (edgesBetween.length == 0) {
@@ -260,28 +271,24 @@ final class CommunicationsGraph extends mxGraph {
                 /**
                  * set to keep track of accounts related to pinned accounts
                  */
-                final Map<AccountDeviceInstance, AccountDeviceInstanceKey> relatedAccounts = new HashMap<>();
-                for (final AccountDeviceInstanceKey adiKey : pinnedAccountModel.getPinnedAccounts()) {
+                final Set<AccountDeviceInstance> relatedAccounts = new HashSet<>();
+                for (final AccountDeviceInstance adi : pinnedAccountModel.getPinnedAccounts()) {
                     if (isCancelled()) {
                         break;
                     }
                     //get accounts related to pinned account
                     final List<AccountDeviceInstance> relatedAccountDeviceInstances
-                            = commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
-                    relatedAccounts.put(adiKey.getAccountDeviceInstance(), adiKey);
-                    getOrCreateVertex(adiKey);
+                            = commsManager.getRelatedAccountDeviceInstances(adi, currentFilter);
+                    relatedAccounts.add(adi);
+                    getOrCreateVertex(adi, commsManager, currentFilter);
 
-                    for (final AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
-                        final long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
-                        final AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
-                        relatedAccounts.put(relatedADI, relatedADIKey); //store related accounts
-                    }
+                    for (final AccountDeviceInstance relatedADI : relatedAccountDeviceInstances)
+                        relatedAccounts.add(relatedADI);
+
                     progressIndicator.progress(++progressCounter);
                 }
 
-                Set<AccountDeviceInstance> accounts = relatedAccounts.keySet();
-
-                Map<AccountPair, Long> relationshipCounts = commsManager.getRelationshipCountsPairwise(accounts, currentFilter);
+                Map<AccountPair, Long> relationshipCounts = commsManager.getRelationshipCountsPairwise(relatedAccounts, currentFilter);
 
                 int total = relationshipCounts.size();
                 int progress = 0;
@@ -290,12 +297,12 @@ final class CommunicationsGraph extends mxGraph {
                 for (Map.Entry<AccountPair, Long> entry : relationshipCounts.entrySet()) {
                     Long count = entry.getValue();
                     AccountPair relationshipKey = entry.getKey();
-                    AccountDeviceInstanceKey account1 = relatedAccounts.get(relationshipKey.getFirst());
-                    AccountDeviceInstanceKey account2 = relatedAccounts.get(relationshipKey.getSecond());
+                    AccountDeviceInstance account1 = relationshipKey.getFirst();
+                    AccountDeviceInstance account2 = relationshipKey.getSecond();
 
                     if (pinnedAccountModel.isAccountPinned(account1)
                             || pinnedAccountModel.isAccountPinned(account2)) {
-                        mxCell addEdge = addOrUpdateEdge(count, account1, account2);
+                        mxCell addEdge = addOrUpdateEdge(count, account1, account2, commsManager, currentFilter);
                         progressText = addEdge.getId();
                     }
                     progressIndicator.progress(progressText, progress++);

@@ -192,33 +192,29 @@ The first question that you must answer is what type of data do you want the use
 -# Data that is in a big text file or some other report that the user can review. To do this, you will use the Case.addReport() method to make the output available in the directory tree.
 
 
-\subsection ingest_modules_making_results_bb Posting Results to the Blackboard
+\subsection ingest_modules_making_results_bb Saving Results to the Blackboard
 The blackboard is used to store results so that they are displayed in the results tree.  
-See \ref platform_blackboard  for details on posting results to it.  You use the blackboard when you have specific items to show the user.  if you want to just shown them a big report from another library or tool, see \ref mod_report_page.
+See \ref platform_blackboard  for details on saving results to it.  You use the blackboard when you have specific items to show the user.  If you want to just shown them a big report from another library or tool, see \ref mod_report_page.
 The blackboard defines artifacts for specific data types (such as web bookmarks). 
 You can use one of the standard artifact types or create your own.
 
-When modules add data to the blackboard, they should notify listeners of the new 
-data by invoking the org.sleuthkit.autopsy.ingest.IngestServices.fireModuleDataEvent() method. 
-Do so as soon as you have added an artifact to the blackboard.
-This allows other modules (and the main UI) to know when to query the blackboard 
-for the latest data.  However, if you are writing a large number of blackboard 
-artifacts in a loop, it is better to invoke org.sleuthkit.autopsy.ingest.IngestServices.fireModuleDataEvent() 
-only once after the bulk write, so as not to flood the system with events.
+After you've added an artifact and all of its attributes to the blackboard, you should call <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/latest/classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html">sleuthkit.Blackboard.postArtifact()</a>, which will:
+<ul>
+<li>Analyze the artifact and add any timestamps to the Timeline tables
+<li>Send an event over the Sleuth Kit event bus that the artifact(s) was added
+<ul>
+<li>Autopsy is a listener of this event bus and will rebroadcast the event to other Autopsy modules
+<li>Keyword search also listens for this event and will index the artifact
+</ul>
+</ul>
 
-Further, when modules create artifacts, they should be indexed for keyword search,
-using the method org.sleuthkit.autopsy.casemodule.services.Blackboard.indexArtifact(BlackboardArtifact artifact). This can be done
-in the following way:
-
-\code
-Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
-try {
-	blackboard.indexArtifact(artifact); //Your artifact as the argument.
-}
-catch (BlackboardException ex) {
-	//YOUR EXCEPTION BEHAVIOR HERE.
-}
-\endcode
+This means you no longer have to make separate calls to:
+ - Index the artifact
+ - Fire the event to refresh the UI.
+ 
+If you are creating a large number of artifacts, you may see better performance if you save all the artifacts you create and do one bulk post at the end using <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/latest/classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html">sleuthkit.Blackboard.postArtifacts()</a>. You can also post batches of artifacts instead of saving all of them until the end.
+ 
+You should not be using the Autopsy version of Blackboard. Those methods have all been deprecated and is another example of us moving "services" into the TSK data model.
 
 
 \subsection ingest_modules_making_results_report Making a Report 

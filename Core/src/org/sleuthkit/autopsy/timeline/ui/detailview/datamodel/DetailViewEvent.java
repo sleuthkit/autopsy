@@ -22,7 +22,7 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
-import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
@@ -49,7 +49,7 @@ public interface DetailViewEvent {
      *
      * @return the description level of detail of the given events
      */
-    public TimelineEvent.DescriptionLevel getDescriptionLevel();
+    public TimelineLevelOfDetail getDescriptionLevel();
 
     /**
      * get the EventStripe (if any) that contains this event.

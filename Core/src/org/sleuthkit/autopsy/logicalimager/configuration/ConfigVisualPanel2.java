@@ -215,6 +215,7 @@ final class ConfigVisualPanel2 extends JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(ruleSetFileLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.ruleSetFileLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(finalizeImageWriter, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.finalizeImageWriter.text")); // NOI18N
+        finalizeImageWriter.setEnabled(false);
         finalizeImageWriter.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 finalizeImageWriterActionPerformed(evt);
@@ -345,9 +346,11 @@ final class ConfigVisualPanel2 extends JPanel {
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(flagEncryptionProgramsCheckBox)
-                                    .addComponent(finalizeImageWriter)
+                                    .addComponent(createVHDCheckBox)
                                     .addComponent(promptBeforeExit)
-                                    .addComponent(createVHDCheckBox))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(21, 21, 21)
+                                        .addComponent(finalizeImageWriter)))
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(jSeparator1)))))
         );
@@ -418,11 +421,12 @@ final class ConfigVisualPanel2 extends JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(flagEncryptionProgramsCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(finalizeImageWriter)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(promptBeforeExit)
+                        .addComponent(createVHDCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(createVHDCheckBox))))
+                        .addComponent(finalizeImageWriter)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(promptBeforeExit)
+                        .addGap(19, 19, 19))))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -558,6 +562,7 @@ final class ConfigVisualPanel2 extends JPanel {
 
     private void createVHDCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createVHDCheckBoxActionPerformed
         config.setCreateVHD(createVHDCheckBox.isSelected());
+        finalizeImageWriter.setEnabled(createVHDCheckBox.isSelected());
     }//GEN-LAST:event_createVHDCheckBoxActionPerformed
 
     /**
@@ -661,6 +666,7 @@ final class ConfigVisualPanel2 extends JPanel {
         finalizeImageWriter.setSelected(config.isFinalizeImageWriter());
         promptBeforeExit.setSelected(config.isPromptBeforeExit());
         createVHDCheckBox.setSelected(config.isCreateVHD());
+        finalizeImageWriter.setEnabled(config.isCreateVHD());
         LogicalImagerRuleSet ruleSet = getRuleSetFromCurrentConfig();
         flagEncryptionProgramsCheckBox.setSelected(ruleSet.find(EncryptionProgramsRule.getName()) != null);
         RulesTableModel rulesTableModel = new RulesTableModel();

@@ -50,6 +50,8 @@ final class CustomArtifactType {
     private static final String BYTES_ATTR_DISPLAY_NAME = "Custom Bytes";
     private static final String STRING_ATTR_TYPE_NAME = "CUSTOM_STRING_ATTRIBUTE";
     private static final String STRING_ATTR_DISPLAY_NAME = "Custom String";
+    private static final String JSON_ATTR_TYPE_NAME = "CUSTOM_JSON_ATTRIBUTE";
+    private static final String JSON_ATTR_DISPLAY_NAME = "Custom Json";
     private static BlackboardArtifact.Type artifactType;
     private static BlackboardAttribute.Type intAttrType;
     private static BlackboardAttribute.Type doubleAttrType;
@@ -57,6 +59,7 @@ final class CustomArtifactType {
     private static BlackboardAttribute.Type dateTimeAttrType;
     private static BlackboardAttribute.Type bytesAttrType;
     private static BlackboardAttribute.Type stringAttrType;
+    private static BlackboardAttribute.Type jsonAttrType;
 
     /**
      * Adds the custom artifact type, with its associated custom attribute
@@ -73,6 +76,7 @@ final class CustomArtifactType {
         dateTimeAttrType = blackboard.getOrAddAttributeType(DATETIME_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME, DATETIME_ATTR_DISPLAY_NAME);
         bytesAttrType = blackboard.getOrAddAttributeType(BYTES_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.BYTE, BYTES_ATTR_DISPLAY_NAME);
         stringAttrType = blackboard.getOrAddAttributeType(STRING_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, STRING_ATTR_DISPLAY_NAME);
+        jsonAttrType = blackboard.getOrAddAttributeType(JSON_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON, JSON_ATTR_DISPLAY_NAME);
     }
 
     /**
@@ -93,6 +97,7 @@ final class CustomArtifactType {
         attributes.add(new BlackboardAttribute(dateTimeAttrType, MODULE_NAME, 60L));
         attributes.add(new BlackboardAttribute(bytesAttrType, MODULE_NAME, DatatypeConverter.parseHexBinary("ABCD")));
         attributes.add(new BlackboardAttribute(stringAttrType, MODULE_NAME, "Zero"));
+        attributes.add(new BlackboardAttribute(jsonAttrType, MODULE_NAME, "{\"fruit\": \"Apple\",\"size\": \"Large\",\"color\": \"Red\"}"));
         artifact.addAttributes(attributes);
 
         /*

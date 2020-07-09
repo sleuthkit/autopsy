@@ -162,6 +162,8 @@ class CaseInformationPanel extends javax.swing.JPanel {
         editCasePropertiesDialog.setResizable(true);
         editCasePropertiesDialog.pack();
         editCasePropertiesDialog.setLocationRelativeTo(this);
+        // Workaround to ensure dialog is not hidden on macOS
+        editCasePropertiesDialog.setAlwaysOnTop(true);
         editCasePropertiesDialog.setVisible(true);
         editCasePropertiesDialog.toFront();
         caseDetailsPanel.updateCaseInfo();

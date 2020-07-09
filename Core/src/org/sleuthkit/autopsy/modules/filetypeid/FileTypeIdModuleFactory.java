@@ -41,11 +41,11 @@ public class FileTypeIdModuleFactory extends IngestModuleFactoryAdapter {
      *
      * @return The module display name.
      */
-    static String getModuleName() {
+    public static String getModuleName() {
         return NbBundle.getMessage(FileTypeIdIngestModule.class,
                 "FileTypeIdIngestModule.moduleName.text");
     }
-    
+
     @Override
     public String getModuleDisplayName() {
         return getModuleName();

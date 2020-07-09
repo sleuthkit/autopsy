@@ -65,7 +65,6 @@ import org.sleuthkit.datamodel.CommunicationsFilter.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DateRangeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DeviceFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.MostRecentFilter;
-import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DataSource;
 import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
 import static org.sleuthkit.datamodel.Relationship.Type.CONTACT;
@@ -129,9 +128,7 @@ final public class FiltersPanel extends JPanel {
     public FiltersPanel() {
         initComponents();
 
-        CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(Account.Type.DEVICE, true);
-        accountTypeMap.put(Account.Type.DEVICE, panel.getCheckBox());
-        accountTypeListPane.add(panel);
+        initalizeDeviceAccountType();
 
         deviceRequiredLabel.setVisible(false);
         accountTypeRequiredLabel.setVisible(false);
@@ -151,7 +148,6 @@ final public class FiltersPanel extends JPanel {
         updateTimeZone();
         validationListener = itemEvent -> validateFilters();
 
-        updateFilters(true);
         UserPreferences.addChangeListener(preferenceChangeEvent -> {
             if (preferenceChangeEvent.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME)
                     || preferenceChangeEvent.getKey().equals(UserPreferences.TIME_ZONE_FOR_DISPLAYS)) {
@@ -241,9 +237,15 @@ final public class FiltersPanel extends JPanel {
      * Updates the filter widgets to reflect he data sources/types in the case.
      */
     private boolean updateFilters(boolean initialState) {
-        boolean newAccountType = updateAccountTypeFilter(initialState);
-        boolean newDeviceFilter = updateDeviceFilter(initialState);
-
+        final SleuthkitCase sleuthkitCase;
+        try {
+            sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Unable to perform filter update, update has been cancelled. Case is closed.", ex);
+            return false;
+        }
+        boolean newAccountType = updateAccountTypeFilter(initialState, sleuthkitCase);
+        boolean newDeviceFilter = updateDeviceFilter(initialState, sleuthkitCase);
         // both or either are true, return true;
         return newAccountType || newDeviceFilter;
     }
@@ -260,6 +262,8 @@ final public class FiltersPanel extends JPanel {
 
             accountTypeMap.clear();
             accountTypeListPane.removeAll();
+
+            initalizeDeviceAccountType();
         });
     }
 
@@ -270,18 +274,25 @@ final public class FiltersPanel extends JPanel {
         IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
     }
 
+    private void initalizeDeviceAccountType() {
+        CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(Account.Type.DEVICE, true);
+        accountTypeMap.put(Account.Type.DEVICE, panel.getCheckBox());
+        accountTypeListPane.add(panel);
+    }
+
     /**
-     * Populate the Account Types filter widgets
+     * Populate the Account Types filter widgets.
      *
-     * @param selected the initial value for the account type checkbox
+     * @param selected      The initial value for the account type checkbox.
+     * @param sleuthkitCase The sleuthkit case for containing the account
+     *                      information.
      *
      * @return True, if a new accountType was found
      */
-    private boolean updateAccountTypeFilter(boolean selected) {
+    private boolean updateAccountTypeFilter(boolean selected, SleuthkitCase sleuthkitCase) {
         boolean newOneFound = false;
         try {
-            final CommunicationsManager communicationsManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
-            List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
+            List<Account.Type> accountTypesInUse = sleuthkitCase.getCommunicationsManager().getAccountTypesInUse();
 
             for (Account.Type type : accountTypesInUse) {
 
@@ -296,10 +307,7 @@ final public class FiltersPanel extends JPanel {
 
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to update to update Account Types Filter", ex);
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "A case is required to update the account types filter.", ex);
         }
-
         if (newOneFound) {
             accountTypeListPane.revalidate();
         }
@@ -327,17 +335,17 @@ final public class FiltersPanel extends JPanel {
     }
 
     /**
-     * Populate the devices filter widgets
+     * Populate the devices filter widgets.
      *
-     * @param selected Sets the initial state of device check box
+     * @param selected      Sets the initial state of device check box.
+     * @param sleuthkitCase The sleuthkit case for containing the data source
+     *                      information.
      *
      * @return true if a new device was found
      */
-    private boolean updateDeviceFilter(boolean selected) {
+    private boolean updateDeviceFilter(boolean selected, SleuthkitCase sleuthkitCase) {
         boolean newOneFound = false;
         try {
-            final SleuthkitCase sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-
             for (DataSource dataSource : sleuthkitCase.getDataSources()) {
                 String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
                 if (devicesMap.containsKey(dataSource.getDeviceId())) {
@@ -352,8 +360,6 @@ final public class FiltersPanel extends JPanel {
                 newOneFound = true;
 
             }
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.INFO, "Filter update cancelled.  Case is closed.");
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
         }
@@ -472,6 +478,8 @@ final public class FiltersPanel extends JPanel {
         setLayout(new java.awt.GridBagLayout());
 
         scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setAutoscrolls(true);
 
         mainPanel.setLayout(new java.awt.GridBagLayout());
 
@@ -535,7 +543,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 15, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 15, 25);
         mainPanel.add(limitPane, gridBagConstraints);
 
         startDatePicker.setEnabled(false);
@@ -602,7 +610,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(dateRangePane, gridBagConstraints);
 
         devicesPane.setLayout(new java.awt.GridBagLayout());
@@ -645,7 +653,9 @@ final public class FiltersPanel extends JPanel {
         devicesPane.add(checkAllDevicesButton, gridBagConstraints);
 
         devicesScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        devicesScrollPane.setMinimumSize(new java.awt.Dimension(27, 75));
+        devicesScrollPane.setMaximumSize(new java.awt.Dimension(32767, 30));
+        devicesScrollPane.setMinimumSize(new java.awt.Dimension(27, 30));
+        devicesScrollPane.setPreferredSize(new java.awt.Dimension(3, 30));
 
         devicesListPane.setMinimumSize(new java.awt.Dimension(4, 100));
         devicesListPane.setLayout(new javax.swing.BoxLayout(devicesListPane, javax.swing.BoxLayout.Y_AXIS));
@@ -680,7 +690,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.ipady = 100;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(devicesPane, gridBagConstraints);
 
         accountTypesPane.setLayout(new java.awt.GridBagLayout());
@@ -721,7 +731,10 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
         accountTypesPane.add(checkAllAccountTypesButton, gridBagConstraints);
 
-        accountTypesScrollPane.setPreferredSize(new java.awt.Dimension(2, 200));
+        accountTypesScrollPane.setMaximumSize(new java.awt.Dimension(32767, 210));
+        accountTypesScrollPane.setMinimumSize(new java.awt.Dimension(20, 210));
+        accountTypesScrollPane.setName(""); // NOI18N
+        accountTypesScrollPane.setPreferredSize(new java.awt.Dimension(2, 210));
 
         accountTypeListPane.setLayout(new javax.swing.BoxLayout(accountTypeListPane, javax.swing.BoxLayout.PAGE_AXIS));
         accountTypesScrollPane.setViewportView(accountTypeListPane);
@@ -754,7 +767,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(accountTypesPane, gridBagConstraints);
 
         topPane.setLayout(new java.awt.GridBagLayout());
@@ -804,6 +817,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_END;
         gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 25);
         mainPanel.add(topPane, gridBagConstraints);
 
         scrollPane.setViewportView(mainPanel);

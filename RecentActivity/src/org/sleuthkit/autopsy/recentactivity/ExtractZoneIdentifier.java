@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
@@ -36,13 +35,11 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -94,7 +91,7 @@ final class ExtractZoneIdentifier extends Extract {
             return;
         }
 
-        Collection<BlackboardArtifact> sourceArtifacts = new ArrayList<>();
+        Collection<BlackboardArtifact> associatedObjectArtifacts = new ArrayList<>();
         Collection<BlackboardArtifact> downloadArtifacts = new ArrayList<>();
 
         for (AbstractFile zoneFile : zoneFiles) {
@@ -104,7 +101,7 @@ final class ExtractZoneIdentifier extends Extract {
             }
             
             try {
-                processZoneFile(context, dataSource, zoneFile, sourceArtifacts, downloadArtifacts, knownPathIDs);
+                processZoneFile(context, dataSource, zoneFile, associatedObjectArtifacts, downloadArtifacts, knownPathIDs);
             } catch (TskCoreException ex) {
                 addErrorMessage(Bundle.ExtractZone_process_errMsg());
                 String message = String.format("Failed to process zone identifier file  %s", zoneFile.getName()); //NON-NLS
@@ -112,23 +109,23 @@ final class ExtractZoneIdentifier extends Extract {
             }
         }
 
-        postArtifacts(sourceArtifacts);
+        postArtifacts(associatedObjectArtifacts);
         postArtifacts(downloadArtifacts);
     }
 
     /**
      * Process a single Zone Identifier file.
      *
-     * @param context           IngetJobContext
-     * @param dataSource        Content
-     * @param zoneFile          Zone Indentifier file
-     * @param sourceArtifacts   List for TSK_DOWNLOAD_SOURCE artifacts
-     * @param downloadArtifacts List for TSK_WEB_DOWNLOAD aritfacts
-     * 
+     * @param context IngetJobContext
+     * @param dataSource Content
+     * @param zoneFile Zone Indentifier file
+     * @param associatedObjectArtifacts List for TSK_ASSOCIATED_OBJECT artifacts
+     * @param downloadArtifacts List for TSK_WEB_DOWNLOAD artifacts
+     *
      * @throws TskCoreException
      */
     private void processZoneFile(IngestJobContext context, Content dataSource,
-            AbstractFile zoneFile, Collection<BlackboardArtifact> sourceArtifacts,
+            AbstractFile zoneFile, Collection<BlackboardArtifact> associatedObjectArtifacts,
             Collection<BlackboardArtifact> downloadArtifacts,
             Set<Long> knownPathIDs) throws TskCoreException {
 
@@ -155,16 +152,16 @@ final class ExtractZoneIdentifier extends Extract {
                 BlackboardArtifact downloadBba = createDownloadArtifact(zoneFile, zoneInfo);
                 if (downloadBba != null) {
                     downloadArtifacts.add(downloadBba);
+                    // create a TSK_ASSOCIATED_OBJECT for the downloaded file, associating it with the TSK_WEB_DOWNLOAD artifact.
+                    if (downloadFile.getArtifactsCount(TSK_ASSOCIATED_OBJECT) == 0) {
+                        BlackboardArtifact associatedObjectBba = createAssociatedObjectArtifact(downloadFile, downloadBba);
+                        if (associatedObjectBba != null) {
+                            associatedObjectArtifacts.add(associatedObjectBba);
+                        }
+                    }
                 }
             }
             
-            // check if download has a child TSK_DOWNLOAD_SOURCE artifact, if not create one
-            if (downloadFile.getArtifactsCount(TSK_DOWNLOAD_SOURCE) == 0) {
-                BlackboardArtifact sourceBba = createDownloadSourceArtifact(downloadFile, zoneInfo);
-                if (sourceBba != null) {
-                    sourceArtifacts.add(sourceBba);
-                }
-            }
         }
     }
 
@@ -203,33 +200,26 @@ final class ExtractZoneIdentifier extends Extract {
     }
 
     /**
-     * Create a Download Source Artifact for the given ZoneIdentifierInfo
+     * Create a Associated Object Artifact for the given ZoneIdentifierInfo
      * object.
      *
      * @param downloadFile AbstractFile representing the file downloaded, not
-     *                     the zone identifier file.
-     * @param zoneInfo     Zone identifier file wrapper object
+     * the zone identifier file.
+     * @param downloadBba TSK_WEB_DOWNLOAD artifact to associate with.
      *
-     * @return TSK_DOWNLOAD_SOURCE object for given parameters
+     * @return TSK_ASSOCIATED_OBJECT artifact.
      */
-    private BlackboardArtifact createDownloadSourceArtifact(AbstractFile downloadFile, ZoneIdentifierInfo zoneInfo) {
+    private BlackboardArtifact createAssociatedObjectArtifact(AbstractFile downloadFile, BlackboardArtifact downloadBba) {
 
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
       
         bbattributes.addAll(Arrays.asList(
-                new BlackboardAttribute(TSK_URL,
-                RecentActivityExtracterModuleFactory.getModuleName(),
-                StringUtils.defaultString(zoneInfo.getURL(), "")),
-                
-                new BlackboardAttribute(TSK_DOMAIN,
-                RecentActivityExtracterModuleFactory.getModuleName(),
-                (zoneInfo.getURL() != null) ? NetworkUtils.extractDomain(zoneInfo.getURL()) : ""),
-                
-                new BlackboardAttribute(TSK_LOCATION,
-                RecentActivityExtracterModuleFactory.getModuleName(),
-                StringUtils.defaultString(zoneInfo.getZoneIdAsString(), "")))); //NON-NLS
+                new BlackboardAttribute(TSK_ASSOCIATED_ARTIFACT,
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        downloadBba.getArtifactID())
+                            ));
 
-        return createArtifactWithAttributes(TSK_DOWNLOAD_SOURCE, downloadFile, bbattributes);
+        return createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, downloadFile, bbattributes);
     }
 
     /**

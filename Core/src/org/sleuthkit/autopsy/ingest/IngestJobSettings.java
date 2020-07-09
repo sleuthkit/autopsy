@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
+import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
 
 /**
  * The settings for an ingest job.
@@ -469,6 +470,9 @@ public final class IngestJobSettings {
                         break;
                     case "Archive Extractor": //NON-NLS
                         moduleNames.add("Embedded File Extractor"); //NON-NLS
+                        break;
+                    case "Correlation Engine": //NON-NLS
+                        moduleNames.add("Central Repository"); //NON-NLS
                         break;
                     default:
                         moduleNames.add(name);

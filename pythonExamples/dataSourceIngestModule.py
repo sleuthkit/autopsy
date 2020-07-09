@@ -29,7 +29,7 @@
 
 # Simple data source-level ingest module for Autopsy.
 # Search for TODO for the things that you need to change
-# See http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/index.html for documentation
+# See http://sleuthkit.org/autopsy/docs/api-docs/latest/index.html for documentation
 
 import jarray
 import inspect
@@ -94,7 +94,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 
     # Where any setup and configuration is done
     # 'context' is an instance of org.sleuthkit.autopsy.ingest.IngestJobContext.
-    # See: http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
+    # See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
         
@@ -104,9 +104,9 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 
     # Where the analysis is done.
     # The 'dataSource' object being passed in is of type org.sleuthkit.datamodel.Content.
-    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.6.0/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html
+    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/latest/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html
     # 'progressBar' is of type org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress
-    # See: http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html
+    # See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html
     # TODO: Add your analysis code in here.
     def process(self, dataSource, progressBar):
 
@@ -119,7 +119,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
         # For our example, we will use FileManager to get all
         # files with the word "test"
         # in the name and then count and read them
-        # FileManager API: http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/classorg_1_1sleuthkit_1_1autopsy_1_1casemodule_1_1services_1_1_file_manager.html
+        # FileManager API: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1casemodule_1_1services_1_1_file_manager.html
         fileManager = Case.getCurrentCase().getServices().getFileManager()
         files = fileManager.findFiles(dataSource, "%test%")
 

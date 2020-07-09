@@ -32,7 +32,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -49,7 +49,7 @@ public class EventRootNode extends DisplayableItemNode {
      */
     public static final int MAX_EVENTS_TO_DISPLAY = 5000;
 
-    public EventRootNode(Collection<Long> eventIds, FilteredEventsModel filteredEvents) {
+    public EventRootNode(Collection<Long> eventIds, EventsModel filteredEvents) {
         super(Children.create(new EventNodeChildFactory(eventIds, filteredEvents), true), Lookups.singleton(eventIds));
     }
 
@@ -83,10 +83,10 @@ public class EventRootNode extends DisplayableItemNode {
         /**
          * filteredEvents is used to lookup the events from their IDs
          */
-        private final FilteredEventsModel filteredEvents;
+        private final EventsModel filteredEvents;
         private final Map<Long, Node> nodesMap = new HashMap<>();
 
-        EventNodeChildFactory(Collection<Long> eventIds, FilteredEventsModel filteredEvents) {
+        EventNodeChildFactory(Collection<Long> eventIds, EventsModel filteredEvents) {
             this.eventIDs = eventIds;
             this.filteredEvents = filteredEvents;
         }

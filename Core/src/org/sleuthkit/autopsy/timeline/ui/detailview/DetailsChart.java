@@ -43,7 +43,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.AddManualEvent;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
@@ -138,7 +138,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
         this.pinnedDateAxis = pinnedDateAxis;
         this.selectedNodes = selectedNodes;
 
-        FilteredEventsModel eventsModel = getController().getEventsModel();
+        EventsModel eventsModel = getController().getEventsModel();
 
         /*
          * If the time range is changed, clear the guide line and the interval
@@ -147,7 +147,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
         eventsModel.timeRangeProperty().addListener(observable -> clearTimeBasedUIElements());
 
         //if the view paramaters change, clear the selection
-        eventsModel.zoomStateProperty().addListener(observable -> getSelectedNodes().clear());
+        eventsModel.modelParamsProperty().addListener(observable -> getSelectedNodes().clear());
     }
 
     /**

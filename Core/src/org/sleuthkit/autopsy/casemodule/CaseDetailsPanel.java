@@ -22,10 +22,10 @@ import java.nio.file.Paths;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoOrganization;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * A panel that allows the user to view various details of a case and change
@@ -69,7 +69,7 @@ final class CaseDetailsPanel extends javax.swing.JPanel {
         } else {
             dbNameField.setText(theCase.getMetadata().getCaseDatabaseName());
         }
-        boolean cREnabled = EamDb.isEnabled();
+        boolean cREnabled = CentralRepository.isEnabled();
         lbOrganizationNameLabel.setEnabled(cREnabled);
         lbOrganizationNameText.setEnabled(cREnabled);
         lbPointOfContactEmailLabel.setEnabled(cREnabled);
@@ -79,15 +79,15 @@ final class CaseDetailsPanel extends javax.swing.JPanel {
         lbPointOfContactPhoneLabel.setEnabled(cREnabled);
         lbPointOfContactPhoneText.setEnabled(cREnabled);
         pnOrganization.setEnabled(cREnabled);
-        EamOrganization currentOrg = null;
+        CentralRepoOrganization currentOrg = null;
         if (cREnabled) {
             try {
-                EamDb dbManager = EamDb.getInstance();
+                CentralRepository dbManager = CentralRepository.getInstance();
                 if (dbManager != null) {
                     CorrelationCase correlationCase = dbManager.getCase(theCase);
                     currentOrg = correlationCase.getOrg();
                 }
-            } catch (EamDbException ex) {
+            } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Unable to access Correlation Case when Central Repo is enabled", ex);
             }
         }
@@ -184,13 +184,11 @@ final class CaseDetailsPanel extends javax.swing.JPanel {
 
         casePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.casePanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
-        caseNameLabel.setFont(caseNameLabel.getFont().deriveFont(caseNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseNameLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.caseNameLabel.text")); // NOI18N
         caseNameLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         caseNameLabel.setMinimumSize(new java.awt.Dimension(82, 14));
         caseNameLabel.setPreferredSize(new java.awt.Dimension(82, 14));
 
-        lbDbType.setFont(lbDbType.getFont().deriveFont(lbDbType.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         lbDbType.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbDbType.text")); // NOI18N
         lbDbType.setMaximumSize(new java.awt.Dimension(82, 14));
         lbDbType.setMinimumSize(new java.awt.Dimension(82, 14));
@@ -205,16 +203,13 @@ final class CaseDetailsPanel extends javax.swing.JPanel {
 
         dbNameField.setMinimumSize(new java.awt.Dimension(25, 14));
 
-        lbDbName.setFont(lbDbName.getFont().deriveFont(lbDbName.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         lbDbName.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbDbName.text")); // NOI18N
         lbDbName.setMaximumSize(new java.awt.Dimension(82, 14));
         lbDbName.setMinimumSize(new java.awt.Dimension(82, 14));
         lbDbName.setPreferredSize(new java.awt.Dimension(82, 14));
 
-        caseNumberLabel.setFont(caseNumberLabel.getFont().deriveFont(caseNumberLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseNumberLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.caseNumberLabel.text")); // NOI18N
 
-        caseDirLabel.setFont(caseDirLabel.getFont().deriveFont(caseDirLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseDirLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.caseDirLabel.text")); // NOI18N
         caseDirLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         caseDirLabel.setMinimumSize(new java.awt.Dimension(82, 14));
@@ -222,7 +217,6 @@ final class CaseDetailsPanel extends javax.swing.JPanel {
 
         caseDirField.setMinimumSize(new java.awt.Dimension(25, 14));
 
-        crDateLabel.setFont(crDateLabel.getFont().deriveFont(crDateLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         crDateLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.crDateLabel.text")); // NOI18N
         crDateLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         crDateLabel.setMinimumSize(new java.awt.Dimension(82, 14));
@@ -309,7 +303,6 @@ final class CaseDetailsPanel extends javax.swing.JPanel {
         lbNotesLabel.setPreferredSize(new java.awt.Dimension(82, 14));
         lbNotesLabel.setRequestFocusEnabled(false);
 
-        examinerLabel.setFont(examinerLabel.getFont().deriveFont(examinerLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         examinerLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.examinerLabel.text")); // NOI18N
         examinerLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         examinerLabel.setMinimumSize(new java.awt.Dimension(82, 14));
@@ -320,7 +313,6 @@ final class CaseDetailsPanel extends javax.swing.JPanel {
         taNotesText.setEditable(false);
         taNotesText.setBackground(new java.awt.Color(240, 240, 240));
         taNotesText.setColumns(20);
-        taNotesText.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         taNotesText.setLineWrap(true);
         taNotesText.setRows(2);
         taNotesText.setWrapStyleWord(true);

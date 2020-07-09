@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +40,6 @@ import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -644,16 +643,19 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
         nodeScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
 
-        nodePanel.setMinimumSize(new java.awt.Dimension(100, 100));
+        nodePanel.setMinimumSize(new java.awt.Dimension(0, 0));
 
         tbOops.setEditable(false);
-        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
+        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, tbOops.getFont().getSize()+1));
         tbOops.setForeground(new java.awt.Color(255, 0, 0));
         tbOops.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
 
         org.openide.awt.Mnemonics.setLocalizedText(bnEditIngestSettings, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnEditIngestSettings.text")); // NOI18N
         bnEditIngestSettings.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnEditIngestSettings.toolTipText")); // NOI18N
+        bnEditIngestSettings.setMaximumSize(new java.awt.Dimension(200, 25));
+        bnEditIngestSettings.setMinimumSize(new java.awt.Dimension(170, 25));
+        bnEditIngestSettings.setPreferredSize(new java.awt.Dimension(170, 25));
         bnEditIngestSettings.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnEditIngestSettingsActionPerformed(evt);
@@ -661,6 +663,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnAdvancedSettings, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnAdvancedSettings.text")); // NOI18N
+        bnAdvancedSettings.setMaximumSize(new java.awt.Dimension(200, 25));
+        bnAdvancedSettings.setMinimumSize(new java.awt.Dimension(170, 25));
+        bnAdvancedSettings.setPreferredSize(new java.awt.Dimension(170, 25));
         bnAdvancedSettings.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnAdvancedSettingsActionPerformed(evt);
@@ -668,6 +673,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnFileExport, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnFileExport.text")); // NOI18N
+        bnFileExport.setMaximumSize(new java.awt.Dimension(200, 25));
+        bnFileExport.setMinimumSize(new java.awt.Dimension(170, 25));
+        bnFileExport.setPreferredSize(new java.awt.Dimension(170, 25));
         bnFileExport.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnFileExportActionPerformed(evt);
@@ -707,9 +715,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         jLabelSelectOutputFolder.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
 
         org.openide.awt.Mnemonics.setLocalizedText(sharedConfigCheckbox, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.sharedConfigCheckbox.text")); // NOI18N
-        sharedConfigCheckbox.setMaximumSize(new java.awt.Dimension(191, 14));
-        sharedConfigCheckbox.setMinimumSize(new java.awt.Dimension(191, 14));
-        sharedConfigCheckbox.setPreferredSize(new java.awt.Dimension(191, 14));
+        sharedConfigCheckbox.setMaximumSize(new java.awt.Dimension(191, 21));
+        sharedConfigCheckbox.setMinimumSize(new java.awt.Dimension(191, 21));
+        sharedConfigCheckbox.setPreferredSize(new java.awt.Dimension(191, 21));
         sharedConfigCheckbox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 sharedConfigCheckboxItemStateChanged(evt);
@@ -726,6 +734,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(browseSharedSettingsButton, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.browseSharedSettingsButton.text")); // NOI18N
         browseSharedSettingsButton.setEnabled(false);
+        browseSharedSettingsButton.setMaximumSize(new java.awt.Dimension(200, 25));
+        browseSharedSettingsButton.setMinimumSize(new java.awt.Dimension(170, 25));
+        browseSharedSettingsButton.setPreferredSize(new java.awt.Dimension(170, 25));
         browseSharedSettingsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 browseSharedSettingsButtonActionPerformed(evt);
@@ -733,6 +744,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(downloadButton, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.downloadButton.text")); // NOI18N
+        downloadButton.setMaximumSize(new java.awt.Dimension(200, 25));
+        downloadButton.setMinimumSize(new java.awt.Dimension(170, 25));
+        downloadButton.setPreferredSize(new java.awt.Dimension(170, 25));
         downloadButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 downloadButtonActionPerformed(evt);
@@ -749,6 +763,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(jLabelCurrentTask, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jLabelCurrentTask.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(uploadButton, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.uploadButton.text")); // NOI18N
+        uploadButton.setMaximumSize(new java.awt.Dimension(200, 25));
+        uploadButton.setMinimumSize(new java.awt.Dimension(170, 25));
+        uploadButton.setPreferredSize(new java.awt.Dimension(170, 25));
         uploadButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 uploadButtonActionPerformed(evt);
@@ -781,10 +798,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
         pnTestMultiUser.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        lbTestMultiUserText.setFont(lbTestMultiUserText.getFont().deriveFont(lbTestMultiUserText.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        lbTestMultiUserText.setFont(lbTestMultiUserText.getFont().deriveFont(lbTestMultiUserText.getFont().getSize()+1f));
         org.openide.awt.Mnemonics.setLocalizedText(lbTestMultiUserText, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestMultiUserText.text")); // NOI18N
 
-        bnTestMultiUser.setFont(bnTestMultiUser.getFont().deriveFont(bnTestMultiUser.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(bnTestMultiUser, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnTestMultiUser.text")); // NOI18N
         bnTestMultiUser.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -806,8 +822,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lbTestResultText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(pnTestMultiUserLayout.createSequentialGroup()
-                        .addComponent(lbTestMultiUserText)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 236, Short.MAX_VALUE)
+                        .addComponent(lbTestMultiUserText, javax.swing.GroupLayout.DEFAULT_SIZE, 324, Short.MAX_VALUE)
+                        .addGap(236, 236, 236)
                         .addComponent(bnTestMultiUser, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(lbMultiUserResult, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -841,57 +857,63 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                         .addComponent(jLabelInvalidImageFolder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(nodePanelLayout.createSequentialGroup()
                         .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(pbTaskInProgress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(nodePanelLayout.createSequentialGroup()
-                                .addComponent(jLabelCurrentTask)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, nodePanelLayout.createSequentialGroup()
+                                .addComponent(sharedConfigCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jLabelTaskDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addComponent(sharedSettingsErrorTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 445, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(30, 30, 30))
                             .addGroup(nodePanelLayout.createSequentialGroup()
                                 .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(nodePanelLayout.createSequentialGroup()
-                                        .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 630, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(browseOutputFolderButton))
+                                        .addComponent(jLabelCurrentTask)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(jLabelTaskDescription, javax.swing.GroupLayout.PREFERRED_SIZE, 626, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(nodePanelLayout.createSequentialGroup()
                                         .addComponent(inputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 630, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(browseInputFolderButton))
-                                    .addComponent(uploadButton, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(masterNodeCheckBox)
+                                    .addComponent(uploadButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addGroup(nodePanelLayout.createSequentialGroup()
-                                        .addComponent(bnEditIngestSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(bnEditIngestSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(bnAdvancedSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(bnAdvancedSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(bnFileExport, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(bnFileExport, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(nodePanelLayout.createSequentialGroup()
                                         .addComponent(jLabelSelectOutputFolder)
                                         .addGap(18, 18, 18)
                                         .addComponent(jLabelInvalidResultsFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 544, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(nodePanelLayout.createSequentialGroup()
-                                        .addComponent(sharedConfigCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(sharedSettingsErrorTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(nodePanelLayout.createSequentialGroup()
                                         .addComponent(sharedSettingsTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(browseSharedSettingsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(nodePanelLayout.createSequentialGroup()
-                                        .addComponent(downloadButton, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(configButtonErrorTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 396, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(browseSharedSettingsButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(nodePanelLayout.createSequentialGroup()
                                         .addComponent(examinerModeRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, 561, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                        .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, 561, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(downloadButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(autoIngestModeRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGap(0, 0, Short.MAX_VALUE)))
                         .addGap(10, 10, 10))
                     .addGroup(nodePanelLayout.createSequentialGroup()
-                        .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(autoIngestModeRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(pnTestMultiUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                        .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(pnTestMultiUser, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(configButtonErrorTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 531, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(masterNodeCheckBox, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, nodePanelLayout.createSequentialGroup()
+                                .addComponent(outputPathTextField)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(browseOutputFolderButton))
+                            .addComponent(pbTaskInProgress, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
+
+        nodePanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {bnAdvancedSettings, bnEditIngestSettings, bnFileExport, browseSharedSettingsButton, downloadButton, uploadButton});
+
+        nodePanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {inputPathTextField, outputPathTextField});
+
+        nodePanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {browseInputFolderButton, browseOutputFolderButton});
+
         nodePanelLayout.setVerticalGroup(
             nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(nodePanelLayout.createSequentialGroup()
@@ -919,9 +941,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                     .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(25, 25, 25)
                 .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(bnEditIngestSettings)
-                    .addComponent(bnFileExport)
-                    .addComponent(bnAdvancedSettings))
+                    .addComponent(bnEditIngestSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(bnFileExport, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(bnAdvancedSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(sharedConfigCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -929,15 +951,15 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(sharedSettingsTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(browseSharedSettingsButton))
+                    .addComponent(browseSharedSettingsButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(downloadButton)
-                    .addComponent(configButtonErrorTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(downloadButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(configButtonErrorTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(masterNodeCheckBox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(uploadButton)
+                .addComponent(uploadButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(8, 8, 8)
                 .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabelCurrentTask)
@@ -946,7 +968,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 .addComponent(pbTaskInProgress, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pnTestMultiUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(82, Short.MAX_VALUE))
+                .addContainerGap(20, Short.MAX_VALUE))
         );
 
         nodeScrollPane.setViewportView(nodePanel);
@@ -959,192 +981,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(nodeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 656, Short.MAX_VALUE)
+            .addComponent(nodeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    boolean permissionsAppropriate(String path) {
-        return FileUtil.hasReadWriteAccess(Paths.get(path));
-    }
-
-    private void setSharedConfigEnable() {
-        setEnabledStateForSharedConfiguration();
-        if (sharedConfigCheckbox.isEnabled() && sharedConfigCheckbox.isSelected()) {
-            sharedSettingsTextField.setEnabled(true);
-            browseSharedSettingsButton.setEnabled(true);
-            masterNodeCheckBox.setEnabled(true);
-            downloadButton.setEnabled(true);
-            validateSettings();
-            controller.changed();
-        } else {
-            sharedSettingsTextField.setEnabled(false);
-            browseSharedSettingsButton.setEnabled(false);
-            masterNodeCheckBox.setEnabled(false);
-            downloadButton.setEnabled(false);
-            sharedSettingsErrorTextField.setText("");
-            validateSettings();
-            controller.changed();
-        }
-    }
-
-    private void downloadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downloadButtonActionPerformed
-        // First save the shared config folder and solr settings to the properties
-        String globalSettingsPath = getNormalizedFolderPath(sharedSettingsTextField.getText().trim());
-        AutoIngestUserPreferences.setSharedConfigFolder(globalSettingsPath);
-
-        enableUI(false);
-        jLabelCurrentTask.setEnabled(true);
-        jLabelTaskDescription.setEnabled(true);
-        pbTaskInProgress.setEnabled(true);
-        pbTaskInProgress.setIndeterminate(true);
-
-        UpdateConfigSwingWorker worker = new UpdateConfigSwingWorker(ConfigTaskType.DOWNLOAD);
-        try {
-            worker.execute();
-        } catch (Exception ex) {
-            jLabelTaskDescription.setText(ex.getLocalizedMessage());
-        }
-    }//GEN-LAST:event_downloadButtonActionPerformed
-
-    private void uploadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_uploadButtonActionPerformed
-        store();
-
-        enableUI(false);
-        jLabelCurrentTask.setEnabled(true);
-        jLabelTaskDescription.setEnabled(true);
-        pbTaskInProgress.setEnabled(true);
-        pbTaskInProgress.setIndeterminate(true);
-
-        UpdateConfigSwingWorker worker = new UpdateConfigSwingWorker(ConfigTaskType.UPLOAD);
-        try {
-            worker.execute();
-        } catch (Exception ex) {
-            jLabelTaskDescription.setText(ex.getLocalizedMessage());
-        }
-    }//GEN-LAST:event_uploadButtonActionPerformed
-
-    private void masterNodeCheckBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_masterNodeCheckBoxItemStateChanged
-        // Enable the global settings text box and browse button iff the checkbox is checked and enabled
-        setEnabledStateForSharedConfiguration();
-        if (masterNodeCheckBox.isEnabled() && masterNodeCheckBox.isSelected()) {
-            uploadButton.setEnabled(true);
-            validateSettings(); // This will disable the upload/save button if the settings aren't currently valid
-            controller.changed();
-        } else {
-            uploadButton.setEnabled(false);
-        }
-    }//GEN-LAST:event_masterNodeCheckBoxItemStateChanged
-
-    private void browseSharedSettingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseSharedSettingsButtonActionPerformed
-
-        String oldText = sharedSettingsTextField.getText().trim();
-        // set the current directory of the FileChooser if the oldText is valid
-        File currentDir = new File(oldText);
-        if (currentDir.exists()) {
-            fc.setCurrentDirectory(currentDir);
-        }
-
-        fc.setDialogTitle("Select shared configuration folder:");
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-        int retval = fc.showOpenDialog(this);
-        if (retval == JFileChooser.APPROVE_OPTION) {
-            String path = fc.getSelectedFile().getPath();
-            sharedSettingsTextField.setText(path);
-            validateSettings();
-            controller.changed();
-        }
-    }//GEN-LAST:event_browseSharedSettingsButtonActionPerformed
-
-    private void sharedConfigCheckboxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_sharedConfigCheckboxItemStateChanged
-        // Enable the global settings text box and browse button iff the checkbox is checked and enabled
-        setSharedConfigEnable();
-    }//GEN-LAST:event_sharedConfigCheckboxItemStateChanged
-
-    private void browseOutputFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseOutputFolderButtonActionPerformed
-        String oldText = outputPathTextField.getText().trim();
-        // set the current directory of the FileChooser if the oldText is valid
-        File currentDir = new File(oldText);
-        if (currentDir.exists()) {
-            fc.setCurrentDirectory(currentDir);
-        }
-
-        fc.setDialogTitle("Select case output folder:");
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-        int retval = fc.showOpenDialog(this);
-        if (retval == JFileChooser.APPROVE_OPTION) {
-            String path = fc.getSelectedFile().getPath();
-            outputPathTextField.setText(path);
-            validateSettings();
-            controller.changed();
-        }
-    }//GEN-LAST:event_browseOutputFolderButtonActionPerformed
-
-    private void browseInputFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseInputFolderButtonActionPerformed
-        String oldText = inputPathTextField.getText().trim();
-        // set the current directory of the FileChooser if the oldText is valid
-        File currentDir = new File(oldText);
-        if (currentDir.exists()) {
-            fc.setCurrentDirectory(currentDir);
-        }
-
-        fc.setDialogTitle("Select case input folder:");
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-        int retval = fc.showOpenDialog(this);
-        if (retval == JFileChooser.APPROVE_OPTION) {
-            String path = fc.getSelectedFile().getPath();
-            inputPathTextField.setText(path);
-            validateSettings();
-            controller.changed();
-        }
-    }//GEN-LAST:event_browseInputFolderButtonActionPerformed
-
-    private void bnFileExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnFileExportActionPerformed
-        JDialog jDialog = new JDialog();
-        FileExporterSettingsPanel fileExporterSettingsPanel = new FileExporterSettingsPanel(jDialog);
-        jDialog.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                fileExporterSettingsPanel.store();
-            }
-        });
-        JScrollPane jScrollPane = new JScrollPane(fileExporterSettingsPanel);
-        jScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        jScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        jScrollPane.setMinimumSize(new Dimension(100, 100));
-        jDialog.add(jScrollPane);
-        jDialog.setTitle(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.FileExportRules.text"));
-        jDialog.setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame32.gif"));
-        jDialog.setModalityType(java.awt.Dialog.ModalityType.APPLICATION_MODAL);
-        jDialog.pack();
-        jDialog.setLocationRelativeTo(this);
-        jDialog.setVisible(true);
-    }//GEN-LAST:event_bnFileExportActionPerformed
-
-    private void bnAdvancedSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnAdvancedSettingsActionPerformed
-        AdvancedAutoIngestSettingsPanel advancedAutoIngestSettingsPanel = new AdvancedAutoIngestSettingsPanel(getModeFromRadioButtons());
-        if (JOptionPane.showConfirmDialog(this, advancedAutoIngestSettingsPanel,
-                NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.AdvancedAutoIngestSettingsPanel.Title"),
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
-            advancedAutoIngestSettingsPanel.store();
-        }
-    }//GEN-LAST:event_bnAdvancedSettingsActionPerformed
-
-    private void bnEditIngestSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnEditIngestSettingsActionPerformed
-        displayIngestJobSettingsPanel();
-    }//GEN-LAST:event_bnEditIngestSettingsActionPerformed
-
-    private void autoIngestModeRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoIngestModeRadioButtonActionPerformed
-        enableOptionsBasedOnMode(getModeFromRadioButtons());
-        controller.changed();
-    }//GEN-LAST:event_autoIngestModeRadioButtonActionPerformed
-
-    private void examinerModeRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_examinerModeRadioButtonActionPerformed
-        enableOptionsBasedOnMode(getModeFromRadioButtons());
-        controller.changed();
-    }//GEN-LAST:event_examinerModeRadioButtonActionPerformed
 
     private void bnTestMultiUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestMultiUserActionPerformed
 
@@ -1176,6 +1015,189 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             lbTestResultText.setForeground(Color.RED);
         }
     }//GEN-LAST:event_bnTestMultiUserActionPerformed
+
+    private void autoIngestModeRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoIngestModeRadioButtonActionPerformed
+        enableOptionsBasedOnMode(getModeFromRadioButtons());
+        controller.changed();
+    }//GEN-LAST:event_autoIngestModeRadioButtonActionPerformed
+
+    private void examinerModeRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_examinerModeRadioButtonActionPerformed
+        enableOptionsBasedOnMode(getModeFromRadioButtons());
+        controller.changed();
+    }//GEN-LAST:event_examinerModeRadioButtonActionPerformed
+
+    private void masterNodeCheckBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_masterNodeCheckBoxItemStateChanged
+        // Enable the global settings text box and browse button iff the checkbox is checked and enabled
+        setEnabledStateForSharedConfiguration();
+        if (masterNodeCheckBox.isEnabled() && masterNodeCheckBox.isSelected()) {
+            uploadButton.setEnabled(true);
+            validateSettings(); // This will disable the upload/save button if the settings aren't currently valid
+            controller.changed();
+        } else {
+            uploadButton.setEnabled(false);
+        }
+    }//GEN-LAST:event_masterNodeCheckBoxItemStateChanged
+
+    private void uploadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_uploadButtonActionPerformed
+        store();
+
+        enableUI(false);
+        jLabelCurrentTask.setEnabled(true);
+        jLabelTaskDescription.setEnabled(true);
+        pbTaskInProgress.setEnabled(true);
+        pbTaskInProgress.setIndeterminate(true);
+
+        UpdateConfigSwingWorker worker = new UpdateConfigSwingWorker(ConfigTaskType.UPLOAD);
+        try {
+            worker.execute();
+        } catch (Exception ex) {
+            jLabelTaskDescription.setText(ex.getLocalizedMessage());
+        }
+    }//GEN-LAST:event_uploadButtonActionPerformed
+
+    private void downloadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downloadButtonActionPerformed
+        // First save the shared config folder and solr settings to the properties
+        String globalSettingsPath = getNormalizedFolderPath(sharedSettingsTextField.getText().trim());
+        AutoIngestUserPreferences.setSharedConfigFolder(globalSettingsPath);
+
+        enableUI(false);
+        jLabelCurrentTask.setEnabled(true);
+        jLabelTaskDescription.setEnabled(true);
+        pbTaskInProgress.setEnabled(true);
+        pbTaskInProgress.setIndeterminate(true);
+
+        UpdateConfigSwingWorker worker = new UpdateConfigSwingWorker(ConfigTaskType.DOWNLOAD);
+        try {
+            worker.execute();
+        } catch (Exception ex) {
+            jLabelTaskDescription.setText(ex.getLocalizedMessage());
+        }
+    }//GEN-LAST:event_downloadButtonActionPerformed
+
+    private void browseSharedSettingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseSharedSettingsButtonActionPerformed
+
+        String oldText = sharedSettingsTextField.getText().trim();
+        // set the current directory of the FileChooser if the oldText is valid
+        File currentDir = new File(oldText);
+        if (currentDir.exists()) {
+            fc.setCurrentDirectory(currentDir);
+        }
+
+        fc.setDialogTitle("Select shared configuration folder:");
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        int retval = fc.showOpenDialog(this);
+        if (retval == JFileChooser.APPROVE_OPTION) {
+            String path = fc.getSelectedFile().getPath();
+            sharedSettingsTextField.setText(path);
+            validateSettings();
+            controller.changed();
+        }
+    }//GEN-LAST:event_browseSharedSettingsButtonActionPerformed
+
+    private void sharedConfigCheckboxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_sharedConfigCheckboxItemStateChanged
+        // Enable the global settings text box and browse button iff the checkbox is checked and enabled
+        setSharedConfigEnable();
+    }//GEN-LAST:event_sharedConfigCheckboxItemStateChanged
+
+    private void browseInputFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseInputFolderButtonActionPerformed
+        String oldText = inputPathTextField.getText().trim();
+        // set the current directory of the FileChooser if the oldText is valid
+        File currentDir = new File(oldText);
+        if (currentDir.exists()) {
+            fc.setCurrentDirectory(currentDir);
+        }
+
+        fc.setDialogTitle("Select case input folder:");
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        int retval = fc.showOpenDialog(this);
+        if (retval == JFileChooser.APPROVE_OPTION) {
+            String path = fc.getSelectedFile().getPath();
+            inputPathTextField.setText(path);
+            validateSettings();
+            controller.changed();
+        }
+    }//GEN-LAST:event_browseInputFolderButtonActionPerformed
+
+    private void browseOutputFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseOutputFolderButtonActionPerformed
+        String oldText = outputPathTextField.getText().trim();
+        // set the current directory of the FileChooser if the oldText is valid
+        File currentDir = new File(oldText);
+        if (currentDir.exists()) {
+            fc.setCurrentDirectory(currentDir);
+        }
+
+        fc.setDialogTitle("Select case output folder:");
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        int retval = fc.showOpenDialog(this);
+        if (retval == JFileChooser.APPROVE_OPTION) {
+            String path = fc.getSelectedFile().getPath();
+            outputPathTextField.setText(path);
+            validateSettings();
+            controller.changed();
+        }
+    }//GEN-LAST:event_browseOutputFolderButtonActionPerformed
+
+    private void bnFileExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnFileExportActionPerformed
+        JDialog jDialog = new JDialog();
+        FileExporterSettingsPanel fileExporterSettingsPanel = new FileExporterSettingsPanel(jDialog);
+        jDialog.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                fileExporterSettingsPanel.store();
+            }
+        });
+        JScrollPane jScrollPane = new JScrollPane(fileExporterSettingsPanel);
+        jScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        jScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        jScrollPane.setMinimumSize(new Dimension(100, 100));
+        jDialog.add(jScrollPane);
+        jDialog.setTitle(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.FileExportRules.text"));
+        jDialog.setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame32.gif"));
+        jDialog.setModalityType(java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        jDialog.pack();
+        jDialog.setLocationRelativeTo(this);
+        jDialog.setVisible(true);
+    }//GEN-LAST:event_bnFileExportActionPerformed
+
+    private void bnAdvancedSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnAdvancedSettingsActionPerformed
+        AdvancedAutoIngestSettingsPanel advancedAutoIngestSettingsPanel = new AdvancedAutoIngestSettingsPanel(getModeFromRadioButtons());
+        if (JOptionPane.showConfirmDialog(this, advancedAutoIngestSettingsPanel,
+            NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.AdvancedAutoIngestSettingsPanel.Title"),
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+        advancedAutoIngestSettingsPanel.store();
+        }
+    }//GEN-LAST:event_bnAdvancedSettingsActionPerformed
+
+    private void bnEditIngestSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnEditIngestSettingsActionPerformed
+        displayIngestJobSettingsPanel();
+    }//GEN-LAST:event_bnEditIngestSettingsActionPerformed
+
+    boolean permissionsAppropriate(String path) {
+        return FileUtil.hasReadWriteAccess(Paths.get(path));
+    }
+
+    private void setSharedConfigEnable() {
+        setEnabledStateForSharedConfiguration();
+        if (sharedConfigCheckbox.isEnabled() && sharedConfigCheckbox.isSelected()) {
+            sharedSettingsTextField.setEnabled(true);
+            browseSharedSettingsButton.setEnabled(true);
+            masterNodeCheckBox.setEnabled(true);
+            downloadButton.setEnabled(true);
+            validateSettings();
+            controller.changed();
+        } else {
+            sharedSettingsTextField.setEnabled(false);
+            browseSharedSettingsButton.setEnabled(false);
+            masterNodeCheckBox.setEnabled(false);
+            downloadButton.setEnabled(false);
+            sharedSettingsErrorTextField.setText("");
+            validateSettings();
+            controller.changed();
+        }
+    }
 
     private void enableUI(boolean state) {
         enableOptionsBasedOnMode(OptionsUiMode.DOWNLOADING_CONFIGURATION);

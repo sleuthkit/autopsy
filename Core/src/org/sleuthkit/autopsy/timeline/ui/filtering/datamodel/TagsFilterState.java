@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2019-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,61 +18,50 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
-import com.google.common.collect.Lists;
-import java.util.Collection;
-import javafx.collections.ListChangeListener;
-import org.sleuthkit.datamodel.TimelineFilter.TagNameFilter;
-import org.sleuthkit.datamodel.TimelineFilter.TagsFilter;
+import org.sleuthkit.datamodel.TimelineFilter;
 
 /**
- * Specialization of CompoundFilterState for TagName/Tags-Filter.
- *
- * Newly added subfilters made to be SELECTED when they are added.
+ * A wrapper for a TimelineFilter.TagsFilter object that allows it to be
+ * displayed by the timeline GUI via the filter panel by providing selected,
+ * disabled, and active properties for the TagsFilter.
  */
-public class TagsFilterState extends CompoundFilterState<TagNameFilter, TagsFilter> {
+public class TagsFilterState extends SqlFilterState<TimelineFilter.TagsFilter> {
 
-    public TagsFilterState(TagsFilter delegate) {
-        super(delegate);
-        installSelectNewFiltersListener();
-
+    /**
+     * Constructs a wrapper for a TimelineFilter.TagsFilter object that allows
+     * it to be displayed by the timeline GUI via the filter panel by providing
+     * selected, disabled, and active properties for the TagsFilter.
+     *
+     * @param tagsFilter A TimelineFilter.TagsFilter object.
+     */
+    public TagsFilterState(TimelineFilter.TagsFilter tagsFilter) {
+        super(tagsFilter);
+        addSelectionListener();
     }
 
-    public TagsFilterState(TagsFilter delegate, Collection<FilterState<? extends TagNameFilter>> subFilterStates) {
-        super(delegate, subFilterStates);
-        installSelectNewFiltersListener();
+    /**
+     * "Copy constructs" a wrapper for a TimelineFilter.TagsFilter object
+     * that allows it to be displayed by the timeline GUI via the filter panel
+     * by providing selected, disabled, and active properties for the
+     * TagsFilter.
+     *
+     * @param other A TagsFilterState object.
+     */
+    public TagsFilterState(TagsFilterState other) {
+        super(other.getFilter().copyOf());
+        setSelected(other.isSelected());
+        setDisabled(other.isDisabled());
+        addSelectionListener();
     }
 
-    private void installSelectNewFiltersListener() {
-        getSubFilterStates().addListener((ListChangeListener.Change<? extends FilterState<? extends TagNameFilter>> change) -> {
-            while (change.next()) {
-                change.getAddedSubList().forEach(filterState -> filterState.setSelected(true));
-            }
+    /*
+     * Adds a listener to the selected property that updates the flag that turns
+     * the wrapped tags filter on/off.
+     */
+    private void addSelectionListener() {
+        selectedProperty().addListener(selectedProperty -> {
+            getFilter().setEventSourcesAreTagged(isSelected());
         });
     }
 
-    @Override
-    public TagsFilterState copyOf() {
-        TagsFilterState copy = new TagsFilterState(getFilter().copyOf(),
-                Lists.transform(getSubFilterStates(), FilterState::copyOf));
-
-        copy.setSelected(isSelected());
-        copy.setDisabled(isDisabled());
-        return copy;
-    }
-
-    @Override
-    public TagsFilter getActiveFilter() {
-        if (isActive() == false) {
-            return null;
-        }
-
-        TagsFilter copy = new TagsFilter();
-        //add active subfilters to copy.
-        getSubFilterStates().stream()
-                .filter(FilterState::isActive)
-                .map(FilterState::getActiveFilter)
-                .forEach(copy::addSubFilter);
-
-        return copy;
-    }
 }

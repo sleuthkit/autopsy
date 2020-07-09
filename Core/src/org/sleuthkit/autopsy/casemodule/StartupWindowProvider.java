@@ -144,4 +144,13 @@ public class StartupWindowProvider implements StartupWindowInterface {
             startupWindowToUse.close();
         }
     }
+
+    /**
+     * Get the chosen startup window.
+     *
+     * @return The startup window.
+     */
+    public StartupWindowInterface getStartupWindow() {
+        return startupWindowToUse;
+    }
 }

@@ -50,7 +50,8 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
         new PListViewer(),
         new MediaFileViewer(),
         new HtmlViewer(),
-        new WindowsRegistryViewer()
+        new WindowsRegistryViewer(),
+        new PDFViewer()
     };
 
     private FileTypeViewer lastViewer;
@@ -117,7 +118,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
         }
 
         AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
-        if (file == null) {
+        if ((file == null) || (file.isDir())) {
             return;
         }
 
@@ -189,7 +190,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
         }
 
         AbstractFile aFile = node.getLookup().lookup(AbstractFile.class);
-        if (aFile == null) {
+        if ((aFile == null) || (aFile.isDir())) {
             return false;
         }
 

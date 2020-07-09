@@ -63,7 +63,7 @@ public class TimelineDBUtils {
      * into a set of X using the mapper to convert from string to X. If
      * groupConcat is empty, null, or all whitespace, returns an empty list.
      *
-     * @param <X>         the type of elements to return
+     * X         the type of elements to return
      * @param groupConcat a string containing the group_concat result ( a comma
      *                    separated list)
      * @param mapper      a function from String to X

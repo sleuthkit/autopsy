@@ -38,7 +38,7 @@ public class ExifParserModuleFactory extends IngestModuleFactoryAdapter {
         return getModuleName();
     }
 
-    static String getModuleName() {
+    public static String getModuleName() {
         return NbBundle.getMessage(ExifParserFileIngestModule.class,
                 "ExifParserFileIngestModule.moduleName.text");
     }

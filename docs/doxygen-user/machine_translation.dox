@@ -4,7 +4,11 @@ You can configure a machine translation service to use with Autopsy. If one is c
 
 \section mt_config Configuration
 
-To set up a machine translation service, go to Options->Tools and then select the Machine Translation tab. Select the service you want to use from the drop down menu at the top.
+To set up a machine translation service, go to Options->Tools and then select the Machine Translation tab. Select the service you want to use from the drop down menu at the top. You will have to set up an account with either Bing or Google and then enter account information.
+<ul>
+<li> Bing Translate: <a href="https://docs.microsoft.com/en-us/azure/cognitive-services/translator/translator-text-how-to-signup">https://docs.microsoft.com/en-us/azure/cognitive-services/translator/translator-text-how-to-signup</a>
+<li> Google Translate: <a href="https://cloud.google.com/iam/docs/creating-managing-service-account-keys">https://cloud.google.com/iam/docs/creating-managing-service-account-keys</a>
+</ul>
 
 \image html mt_config.png
 
@@ -24,7 +28,7 @@ Once enabled, the translated versions of the file and folder names will be shown
 
 \image html mt_file_names_translated.png
 
-\section mt_content_viewer Translating File Content
+\section mt_content_viewer Translating File and Message Content
 
 After you set up a machine translation service, the Translation tab under the Text tab in the Content Viewer will be active. The Translation tab allows you to use your service to translate the beginning of a file. For example, you might see the following in the default Indexed Text tab:
 
@@ -33,5 +37,13 @@ After you set up a machine translation service, the Translation tab under the Te
 Switching to the Translation tab will display the results of running the text through the machine translation service.  
 
 \image html mt_content_viewer_translated.png
+
+Machine translation also works for messages. To translate a message, select the "Text" tab above the message content.
+
+\image html mt_message_orig.png
+
+Then use the drop-down menu on the right to change from "Original Text" to "Translated Text".
+
+\image html mt_message_translated.png
 
 */

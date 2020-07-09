@@ -47,15 +47,14 @@ sub pluginmain {
 				my $arch = $env->get_value("PROCESSOR_ARCHITECTURE")->get_data();
 				::rptMsg("<ProcessorArchitecture><mtime></mtime><artifacts><architecture mtime=\"\">" . $arch . "</architecture></artifacts></ProcessorArchitecture>");
 			};
-			::rptMsg($@) if ($@);
-			
+			::logMsg($@) if ($@);
 		}	
 		else {
-			::rptMsg($env_path." not found.");
+			::logMsg($env_path." not found.");
 		}
 	}
 	else {
-		::rptMsg($key_path." not found.");
+		::logMsg($key_path." not found.");
 		#::logMsg($key_path." not found.");
 	}
 }

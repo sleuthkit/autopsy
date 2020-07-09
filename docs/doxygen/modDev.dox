@@ -54,7 +54,7 @@ After the module is created, you will need to do some further configuration.
 - Right click on the newly created module and choose "Properties".
 - You will need to configure the module to be dependent on modules from within the Autopsy platform. Go to the "Libraries" area and choose "Add" in the "Module Dependencies" section.  Choose the:
 -- "Autopsy-core" library to get access to the Autopsy services.
--- "NetBeans Lookup" library so that your module can be discovered by Autopsy. 
+-- NetBeans "Lookup API" library so that your module can be discovered by Autopsy. 
 - If you later determine that you need to pull in external JAR files, then you will use the "Wrapped Jar" section to add them in.  
 - Note, you will also need to come back to this section if you update the platform.  You may need to add a new dependency for the version of the Autopsy-core that comes with the updated platform. 
 - Autopsy requires that all modules restart Autopsy after they are installed. Configure your module this way under Build -> Packaging.  Check the box that says Needs Restart on Install.
@@ -81,7 +81,7 @@ As you will read in the later sections about the different module types, each Au
 
 \subsection mod_dev_aut_run1 Running Your Module During Development
 
-When you are developing your Autopsy module, you can simply choose "Run" on the module and it will launch the Autopsy platform with the module enabled in it.  This is also how you can debug the module. 
+When you are developing your Autopsy module, you can simply choose "Run" on the module and it will launch the Autopsy platform with the module enabled in it.  This is also how you can debug the module. If you want to apply changes during debugging and have not changed any method signatures, you can use the "Apply Code Changes" function in NetBeans.
 
 \subsection mod_dev_aut_deploy Deploying Your Module
 

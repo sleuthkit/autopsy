@@ -27,14 +27,14 @@ import javax.imageio.ImageIO;
 import org.joda.time.format.DateTimeFormat;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.report.uisnapshot.UiSnapShotReportWriter;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
+import org.sleuthkit.autopsy.timeline.zooming.EventsModelParams;
 
 /**
  * Generate and write the Timeline snapshot report to disk.
  */
 public class SnapShotReportWriter extends UiSnapShotReportWriter{
 
-    private final ZoomState zoomState;
+    private final EventsModelParams zoomState;
     private final BufferedImage image;
 
     /**
@@ -49,7 +49,7 @@ public class SnapShotReportWriter extends UiSnapShotReportWriter{
      * @param generationDate   The generation Date of the report.
      * @param snapshot         A snapshot of the view to include in the report.
      */
-    public SnapShotReportWriter(Case currentCase, Path reportFolderPath, String reportName, ZoomState zoomState, Date generationDate, BufferedImage snapshot) {
+    public SnapShotReportWriter(Case currentCase, Path reportFolderPath, String reportName, EventsModelParams zoomState, Date generationDate, BufferedImage snapshot) {
         super(currentCase, reportFolderPath, reportName, generationDate);
         this.zoomState = zoomState;
         this.image = snapshot;

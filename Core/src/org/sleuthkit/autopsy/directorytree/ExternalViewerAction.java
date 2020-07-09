@@ -86,7 +86,7 @@ public class ExternalViewerAction extends AbstractAction {
      * @param title    Name of the action
      * @param fileNode File to display
      */
-    public ExternalViewerAction(String title, Node fileNode) {
+    public ExternalViewerAction (String title, Node fileNode) {
         this(title, fileNode.getLookup().lookup(org.sleuthkit.datamodel.AbstractFile.class), fileNode instanceof SlackFileNode);
     }
 

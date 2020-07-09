@@ -41,6 +41,8 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 /**
  * Finds and loads Autopsy modules written using the Jython variant of the
@@ -56,7 +58,7 @@ public final class JythonModuleLoader {
      * @return A list of objects that implement the IngestModuleFactory
      *         interface.
      */
-    public static List<IngestModuleFactory> getIngestModuleFactories() {
+    public static synchronized List<IngestModuleFactory> getIngestModuleFactories() {
         return getInterfaceImplementations(new IngestModuleFactoryDefFilter(), IngestModuleFactory.class);
     }
 
@@ -66,7 +68,7 @@ public final class JythonModuleLoader {
      * @return A list of objects that implement the GeneralReportModule
      *         interface.
      */
-    public static List<GeneralReportModule> getGeneralReportModules() {
+    public static synchronized List<GeneralReportModule> getGeneralReportModules() {
         return getInterfaceImplementations(new GeneralReportModuleDefFilter(), GeneralReportModule.class);
     }
     @Messages({"JythonModuleLoader.pythonInterpreterError.title=Python Modules",
@@ -97,7 +99,7 @@ public final class JythonModuleLoader {
             if (file.isDirectory()) {
                 File[] pythonScripts = file.listFiles(new PythonScriptFileFilter());
                 for (File script : pythonScripts) {
-                        try (Scanner fileScanner = new Scanner(script)) {
+                        try (Scanner fileScanner = new Scanner(new BufferedReader(new FileReader(script)))) {
                         while (fileScanner.hasNextLine()) {
                             String line = fileScanner.nextLine();
                             if (line.startsWith("class ") && filter.accept(line)) { //NON-NLS

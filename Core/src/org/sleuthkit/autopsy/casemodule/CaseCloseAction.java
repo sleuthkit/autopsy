@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +50,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.CaseCloseAction")
 @ActionRegistration(displayName = "#CTL_CaseCloseAct", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Toolbars/Case", position = 104)})
+    @ActionReference(path = "Toolbars/Case", position = 107)})
 public final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final long serialVersionUID = 1L;
@@ -95,7 +95,7 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
                         logger.log(Level.SEVERE, "Unexpected interrupt closing the current case", ex);
                     } catch (ExecutionException ex) {
                         logger.log(Level.SEVERE, "Error closing the current case", ex);
-                        MessageNotifyUtil.Message.error(Bundle.Case_closeException_couldNotCloseCase(ex.getMessage()));                        
+                        MessageNotifyUtil.Message.error(Bundle.Case_closeException_couldNotCloseCase(ex.getMessage()));
                     }
                     WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     StartupWindowProvider.getInstance().open();

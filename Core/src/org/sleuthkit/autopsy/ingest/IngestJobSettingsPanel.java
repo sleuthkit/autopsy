@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;

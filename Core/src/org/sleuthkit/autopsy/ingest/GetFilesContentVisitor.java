@@ -30,6 +30,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LocalDirectory;
+import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
@@ -70,6 +71,11 @@ abstract class GetFilesContentVisitor implements ContentVisitor<Collection<Abstr
     @Override
     public Collection<AbstractFile> visit(VolumeSystem vs) {
         return getAllFromChildren(vs);
+    }
+    
+    @Override
+    public Collection<AbstractFile> visit(Pool pool) {
+        return getAllFromChildren(pool);
     }
 
     @Override

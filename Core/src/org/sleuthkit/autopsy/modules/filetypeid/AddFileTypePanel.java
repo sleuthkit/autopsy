@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -247,7 +247,6 @@ class AddFileTypePanel extends javax.swing.JPanel {
             }
         });
 
-        mimeTypeLabel.setFont(mimeTypeLabel.getFont().deriveFont(mimeTypeLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(mimeTypeLabel, org.openide.util.NbBundle.getMessage(AddFileTypePanel.class, "AddFileTypePanel.mimeTypeLabel.text")); // NOI18N
 
         signatureList.setModel(new javax.swing.AbstractListModel<FileType.Signature>() {
@@ -257,7 +256,6 @@ class AddFileTypePanel extends javax.swing.JPanel {
         });
         jScrollPane1.setViewportView(signatureList);
 
-        mimeTypeTextField.setFont(mimeTypeTextField.getFont().deriveFont(mimeTypeTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         mimeTypeTextField.setText(org.openide.util.NbBundle.getMessage(AddFileTypePanel.class, "AddFileTypePanel.mimeTypeTextField.text")); // NOI18N
 
         addSigButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
@@ -314,7 +312,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
                             .addComponent(postHitCheckBox))
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addGap(0, 0, 0))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(71, 71, 71)
                         .addComponent(mimeFormatLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
@@ -344,7 +342,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(setNameLabel)
                     .addComponent(setNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -352,6 +350,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
         if (evt.getSource().equals(this.editSigButton) && this.signatureList.getSelectedValue() != null) {
             int selected = this.signatureList.getSelectedIndex();
             this.addSigDialog = new AddFileTypeSignatureDialog(this.signatureList.getSelectedValue());
+            this.addSigDialog.display(false);
             if (addSigDialog.getResult() == BUTTON_PRESSED.OK) {
                 signaturesListModel.removeElementAt(selected);
                 this.signaturesListModel.add(selected, this.addSigDialog.getSignature());
@@ -372,6 +371,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
     private void addSigButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addSigButtonActionPerformed
         if (evt.getSource().equals(this.addSigButton)) {
             this.addSigDialog = new AddFileTypeSignatureDialog();
+            this.addSigDialog.display(true);
             if (addSigDialog.getResult() == AddFileTypeSignatureDialog.BUTTON_PRESSED.OK) {
                 signaturesListModel.addElement(this.addSigDialog.getSignature());
             }

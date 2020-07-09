@@ -24,8 +24,11 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
@@ -33,11 +36,12 @@ import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TagSet;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -56,14 +60,12 @@ public class CategoryManager {
 
     private static final Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
 
-    private final ImageGalleryController controller;
-
     /**
-     * the DrawableDB that backs the category counts cache. The counts are
-     * initialized from this, and the counting of CAT-0 is always delegated to
-     * this db.
+     * the DrawableDB that backs the category counts cache.
      */
     private final DrawableDB drawableDb;
+
+    private final TagSet categoryTagSet;
 
     /**
      * Used to distribute CategoryChangeEvents
@@ -79,32 +81,20 @@ public class CategoryManager {
      * the count related methods go through this cache, which loads initial
      * values from the database if needed.
      */
-    private final LoadingCache<DhsImageCategory, LongAdder> categoryCounts
+    private final LoadingCache<TagName, LongAdder> categoryCounts
             = CacheBuilder.newBuilder().build(CacheLoader.from(this::getCategoryCountHelper));
-    /**
-     * cached TagNames corresponding to Categories, looked up from
-     * autopsyTagManager at initial request or if invalidated by case change.
-     */
-    private final LoadingCache<DhsImageCategory, TagName> catTagNameMap
-            = CacheBuilder.newBuilder().build(new CacheLoader<DhsImageCategory, TagName>() {
-                @Override
-                public TagName load(DhsImageCategory cat) throws TskCoreException {
-                    return getController().getTagsManager().getTagName(cat);
-                }
-            });
 
-    public CategoryManager(ImageGalleryController controller) {
-        this.controller = controller;
+    public CategoryManager(ImageGalleryController controller, TagSet categoryTagSet) throws TskCoreException {
         this.drawableDb = controller.getDrawablesDatabase();
+        this.categoryTagSet = categoryTagSet;
     }
 
-    private ImageGalleryController getController() {
-        return controller;
+    public List<TagName> getCategories() {
+        return Collections.unmodifiableList(getSortedTagNames(categoryTagSet.getTagNames()));
     }
 
     synchronized public void invalidateCaches() {
         categoryCounts.invalidateAll();
-        catTagNameMap.invalidateAll();
         fireChange(Collections.emptyList(), null);
     }
 
@@ -115,16 +105,8 @@ public class CategoryManager {
      *
      * @return the number of files with the given Category
      */
-    synchronized public long getCategoryCount(DhsImageCategory cat) {
-        if (cat == DhsImageCategory.ZERO) {
-            // Keeping track of the uncategorized files is a bit tricky while ingest
-            // is going on, so always use the list of file IDs we already have along with the
-            // other category counts instead of trying to track it separately.
-            long allOtherCatCount = getCategoryCount(DhsImageCategory.ONE) + getCategoryCount(DhsImageCategory.TWO) + getCategoryCount(DhsImageCategory.THREE) + getCategoryCount(DhsImageCategory.FOUR) + getCategoryCount(DhsImageCategory.FIVE);
-            return drawableDb.getNumberOfImageFilesInList() - allOtherCatCount;
-        } else {
-            return categoryCounts.getUnchecked(cat).sum();
-        }
+    synchronized public long getCategoryCount(TagName tagName) {
+        return categoryCounts.getUnchecked(tagName).sum();
     }
 
     /**
@@ -133,10 +115,8 @@ public class CategoryManager {
      *
      * @param cat the Category to increment
      */
-    synchronized public void incrementCategoryCount(DhsImageCategory cat) {
-        if (cat != DhsImageCategory.ZERO) {
-            categoryCounts.getUnchecked(cat).increment();
-        }
+    synchronized public void incrementCategoryCount(TagName tagName) {
+        categoryCounts.getUnchecked(tagName).increment();
     }
 
     /**
@@ -145,10 +125,8 @@ public class CategoryManager {
      *
      * @param cat the Category to decrement
      */
-    synchronized public void decrementCategoryCount(DhsImageCategory cat) {
-        if (cat != DhsImageCategory.ZERO) {
-            categoryCounts.getUnchecked(cat).decrement();
-        }
+    synchronized public void decrementCategoryCount(TagName tagName) {
+        categoryCounts.getUnchecked(tagName).decrement();
     }
 
     /**
@@ -161,14 +139,14 @@ public class CategoryManager {
      * @return a LongAdder whose value is set to the number of file with the
      *         given Category
      */
-    synchronized private LongAdder getCategoryCountHelper(DhsImageCategory cat) {
+    synchronized private LongAdder getCategoryCountHelper(TagName cat) {
         LongAdder longAdder = new LongAdder();
         longAdder.decrement();
         try {
             longAdder.add(drawableDb.getCategoryCount(cat));
             longAdder.increment();
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.WARNING, "Case closed while getting files"); //NON-NLS
+            LOGGER.log(Level.WARNING, "Case closed while getting files", ex); //NON-NLS
         }
         return longAdder;
     }
@@ -178,8 +156,8 @@ public class CategoryManager {
      *
      * @param fileIDs
      */
-    public void fireChange(Collection<Long> fileIDs, DhsImageCategory newCategory) {
-        categoryEventBus.post(new CategoryChangeEvent(fileIDs, newCategory));
+    public void fireChange(Collection<Long> fileIDs, TagName tagName) {
+        categoryEventBus.post(new CategoryChangeEvent(fileIDs, tagName));
     }
 
     /**
@@ -216,68 +194,66 @@ public class CategoryManager {
     }
 
     /**
-     * get the TagName used to store this Category in the main autopsy db.
+     * Returns true if the given TagName is a category tag.
      *
-     * @return the TagName used for this Category
+     * @param tName TagName
+     *
+     * @return True if tName is a category tag.
      */
-    synchronized public TagName getTagName(DhsImageCategory cat) {
-        return catTagNameMap.getUnchecked(cat);
+    public boolean isCategoryTagName(TagName tName) {
+        return categoryTagSet.getTagNames().contains(tName);
+    }
+
+    /**
+     * Returns true if the given TagName is not a category tag.
+     *
+     * Keep for use in location were a reference to this function is passed.
+     *
+     * @param tName TagName
+     *
+     * @return True if the given tName is not a category tag.
+     */
+    public boolean isNotCategoryTagName(TagName tName) {
+        return !isCategoryTagName(tName);
 
     }
 
-    public static DhsImageCategory categoryFromTagName(TagName tagName) {
-        return DhsImageCategory.fromDisplayName(tagName.getDisplayName());
-    }
-
-    public static boolean isCategoryTagName(TagName tName) {
-        return DhsImageCategory.isCategoryName(tName.getDisplayName());
-    }
-
-    public static boolean isNotCategoryTagName(TagName tName) {
-        return DhsImageCategory.isNotCategoryName(tName.getDisplayName());
-
+    /**
+     * Returns the category tag set.
+     *
+     * @return
+     */
+    TagSet getCategorySet() {
+        return categoryTagSet;
     }
 
     @Subscribe
     public void handleTagAdded(ContentTagAddedEvent event) {
         final ContentTag addedTag = event.getAddedTag();
-        if (isCategoryTagName(addedTag.getName())) {
-            final DrawableTagsManager tagsManager = controller.getTagsManager();
-            try {
-                //remove old category tag(s) if necessary
-                for (ContentTag ct : tagsManager.getContentTags(addedTag.getContent())) {
-                    if (ct.getId() != addedTag.getId()
-                        && CategoryManager.isCategoryTagName(ct.getName())) {
-                        try {
-                            tagsManager.deleteContentTag(ct);
-                        } catch (TskCoreException tskException) {
-                            LOGGER.log(Level.SEVERE, "Failed to delete content tag. Unable to maintain categories in a consistent state.", tskException); //NON-NLS
-                            break;
-                        }
-                    }
-                }
-            } catch (TskCoreException tskException) {
-                LOGGER.log(Level.SEVERE, "Failed to get content tags for content.  Unable to maintain category in a consistent state.", tskException); //NON-NLS
-            }
-            DhsImageCategory newCat = CategoryManager.categoryFromTagName(addedTag.getName());
-            if (newCat != DhsImageCategory.ZERO) {
-                incrementCategoryCount(newCat);
-            }
 
-            fireChange(Collections.singleton(addedTag.getContent().getId()), newCat);
+        List<DeletedContentTagInfo> removedTags = event.getDeletedTags();
+        if (removedTags != null) {
+            for (DeletedContentTagInfo tagInfo : removedTags) {
+                handleDeletedInfo(tagInfo);
+            }
+        }
+
+        if (isCategoryTagName(addedTag.getName())) {
+            incrementCategoryCount(addedTag.getName());
+            fireChange(Collections.singleton(addedTag.getContent().getId()), addedTag.getName());
         }
     }
 
     @Subscribe
     public void handleTagDeleted(ContentTagDeletedEvent event) {
         final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = event.getDeletedTagInfo();
+        handleDeletedInfo(deletedTagInfo);
+    }
+
+    private void handleDeletedInfo(DeletedContentTagInfo deletedTagInfo) {
         TagName tagName = deletedTagInfo.getName();
         if (isCategoryTagName(tagName)) {
-
-            DhsImageCategory deletedCat = CategoryManager.categoryFromTagName(tagName);
-            if (deletedCat != DhsImageCategory.ZERO) {
-                decrementCategoryCount(deletedCat);
-            }
+            decrementCategoryCount(tagName);
             fireChange(Collections.singleton(deletedTagInfo.getContentID()), null);
         }
     }
@@ -290,16 +266,16 @@ public class CategoryManager {
     public static class CategoryChangeEvent {
 
         private final ImmutableSet<Long> fileIDs;
-        private final DhsImageCategory newCategory;
+        private final TagName tagName;
 
-        public CategoryChangeEvent(Collection<Long> fileIDs, DhsImageCategory newCategory) {
+        public CategoryChangeEvent(Collection<Long> fileIDs, TagName tagName) {
             super();
             this.fileIDs = ImmutableSet.copyOf(fileIDs);
-            this.newCategory = newCategory;
+            this.tagName = tagName;
         }
 
-        public DhsImageCategory getNewCategory() {
-            return newCategory;
+        public TagName getNewCategory() {
+            return tagName;
         }
 
         /**
@@ -308,5 +284,26 @@ public class CategoryManager {
         public ImmutableSet<Long> getFileIDs() {
             return fileIDs;
         }
+    }
+
+    /**
+     * Returns the a list of the given TagName values sorted by rank.
+     *
+     * @param tagNames A list of TagNames to be sorted.
+     *
+     * @return A sorted list of TagName values.
+     */
+    private List<TagName> getSortedTagNames(List<TagName> tagNames) {
+        Comparator<TagName> compareByDisplayName = new Comparator<TagName>() {
+            @Override
+            public int compare(TagName tagName1, TagName tagName2) {
+                return ((Integer) tagName1.getRank()).compareTo(tagName2.getRank());
+            }
+        };
+
+        List<TagName> sortedTagNames = new ArrayList<>(tagNames);
+        sortedTagNames.sort(compareByDisplayName);
+
+        return sortedTagNames;
     }
 }

@@ -45,7 +45,6 @@ public class CombinedEvent {
      *
      * @param epochMillis The timestamp for this event, in millis from the Unix
      *                    epoch.
-     * @param fileID      The ID of the file shared by all the combined events.
      * @param eventMap    A map from EventType to event ID.
      */
     public CombinedEvent(long epochMillis, Map<TimelineEventType, Long> eventMap) {
