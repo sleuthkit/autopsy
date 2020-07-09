@@ -67,6 +67,8 @@ import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
 import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Manages the creation and execution of ingest jobs, i.e., the processing of
@@ -285,6 +287,20 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         caseIsOpen = false;
         clearIngestMessageBox();
     }
+    
+    /**
+     * Creates an ingest stream from the given ingest settings for a data source.
+     * 
+     * @param dataSource The data source
+     * @param settings   The ingest job settings.
+     * 
+     * @return The newly created ingest stream
+     */
+    public IngestStream openIngestStream(DataSource dataSource, IngestJobSettings settings) {
+        IngestJob job = new IngestJob(dataSource, IngestJob.Mode.STREAMING, settings);
+        return new IngestJobInputStream(job);
+    }
+
 
     /**
      * Gets the number of file ingest threads the ingest manager is using to do
@@ -304,7 +320,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     public void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.runningWithGUI());
+            IngestJob job = new IngestJob(dataSources, settings);
             if (job.hasIngestPipeline()) {
                 long taskId = nextIngestManagerTaskId.incrementAndGet();
                 Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
@@ -323,7 +339,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     public void queueIngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSource, files, settings, RuntimeProperties.runningWithGUI());
+            IngestJob job = new IngestJob(dataSource, files, settings);
             if (job.hasIngestPipeline()) {
                 long taskId = nextIngestManagerTaskId.incrementAndGet();
                 Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
@@ -333,7 +349,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Immdiately starts an ingest job for one or more data sources.
+     * Immediately starts an ingest job for one or more data sources.
      *
      * @param dataSources The data sources to process.
      * @param settings    The settings for the ingest job.
@@ -343,7 +359,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     public IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.runningWithGUI());
+            IngestJob job = new IngestJob(dataSources, settings);
             if (job.hasIngestPipeline()) {
                 return startIngestJob(job);
             }
@@ -366,7 +382,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         "IngestManager.startupErr.dlgSolution=Please disable the failed modules or fix the errors before restarting ingest.",
         "IngestManager.startupErr.dlgErrorList=Errors:"
     })
-    private IngestJobStartResult startIngestJob(IngestJob job) {
+    IngestJobStartResult startIngestJob(IngestJob job) {
         List<IngestModuleError> errors = null;
         Case openCase;
         try {
@@ -730,7 +746,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      *                                the task.
      */
     void setIngestTaskProgress(DataSourceIngestTask task, String ingestModuleDisplayName) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource()));
+        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), ingestModuleDisplayName, task.getDataSource()));
     }
 
     /**
@@ -746,7 +762,15 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     void setIngestTaskProgress(FileIngestTask task, String ingestModuleDisplayName) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
-        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource(), task.getFile());
+        IngestThreadActivitySnapshot newSnap;
+        try {
+            AbstractFile file = task.getFile();
+            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), ingestModuleDisplayName, task.getDataSource(), task.getFile());
+        } catch (TskCoreException ex) {
+            // In practice, this task would never have been enqueued or processed since the file
+            // lookup would have failed.
+            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), ingestModuleDisplayName, task.getDataSource());
+        }
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
@@ -828,8 +852,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @return A list of ingest job state snapshots.
      */
     @Override
-    public List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots() {
-        List<DataSourceIngestJob.Snapshot> snapShots = new ArrayList<>();
+    public List<Snapshot> getIngestJobSnapshots() {
+        List<Snapshot> snapShots = new ArrayList<>();
         synchronized (ingestJobsById) {
             ingestJobsById.values().forEach((job) -> {
                 snapShots.addAll(job.getDataSourceIngestJobSnapshots());

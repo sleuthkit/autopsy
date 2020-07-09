@@ -18,15 +18,22 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.SleuthkitJNI;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A local drive data source processor that implements the DataSourceProcessor
@@ -37,6 +44,7 @@ import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 @ServiceProvider(service = DataSourceProcessor.class)
 public class LocalDiskDSProcessor implements DataSourceProcessor {
 
+    private final Logger logger = Logger.getLogger(LocalDiskDSProcessor.class.getName());
     private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalDiskDSProcessor.class, "LocalDiskDSProcessor.dsType.text");
     private final LocalDiskPanel configPanel;
     private AddImageTask addDiskTask;
@@ -139,7 +147,25 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
                 imageWriterSettings = null;
             }
         }
-        addDiskTask = new AddImageTask(deviceId, drivePath, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings, progressMonitor, callback);
+
+        Image image;
+        try {
+            image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
+                new String[]{drivePath}, sectorSize,
+                timeZone, null, null, null, deviceId);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error adding local disk with path " + drivePath + " to database", ex);
+            final List<String> errors = new ArrayList<>();
+            errors.add(ex.getMessage());
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+            return;
+        }   
+
+        addDiskTask = new AddImageTask(
+                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
+                progressMonitor,
+                new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
+                new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));
         new Thread(addDiskTask).start();
     }
 
@@ -191,7 +217,23 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      * @param callback             Callback to call when processing is done.
      */
     private void run(String deviceId, String drivePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addDiskTask = new AddImageTask(deviceId, drivePath, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings, progressMonitor, callback);
+        Image image;
+        try {
+            image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
+                new String[]{drivePath}, sectorSize,
+                timeZone, null, null, null, deviceId);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error adding local disk with path " + drivePath + " to database", ex);
+            final List<String> errors = new ArrayList<>();
+            errors.add(ex.getMessage());
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+            return;
+        } 
+        
+	    addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
+                progressMonitor, 
+                new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
+                new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));
         new Thread(addDiskTask).start();
     }
 
