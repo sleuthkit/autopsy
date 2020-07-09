@@ -20,21 +20,19 @@ package org.sleuthkit.autopsy.casemodule.multiusercases.services;
 
 import java.util.logging.Level;
 import org.openide.util.Lookup;
+import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
-import org.sleuthkit.datamodel.CaseDbConnectionInfo;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An implementation of the monitored service interface that reports status for
  * the Solr server for multi-user cases.
  */
+@ServiceProvider(service = ServicesMonitor.MonitoredService.class)
 public final class SolrServer implements ServicesMonitor.MonitoredService {
 
     private static final Logger logger = Logger.getLogger(SolrServer.class.getName());
@@ -46,21 +44,14 @@ public final class SolrServer implements ServicesMonitor.MonitoredService {
             if (kwsService != null) {
                 int port = Integer.parseUnsignedInt(UserPreferences.getIndexingServerPort());
                 kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
-                return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString(), ServicesMonitor.ServiceStatus.UP, "");
+                return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE, ServicesMonitor.ServiceStatus.UP, "");
             } else {
-                return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString(), ServicesMonitor.ServiceStatus.UP, "");
+                return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE, ServicesMonitor.ServiceStatus.UP, "");
             }
-        } catch (NumberFormatException ex) {
-            String rootCause = NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.InvalidPortNumber");
-            logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
-            logger.log(Level.SEVERE, "Error accessing PostgreSQL server (multi-user case database server) connection info", ex); //NON-NLS
-            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString(), ServicesMonitor.ServiceStatus.DOWN, ex.getLocalizedMessage());
-        } catch (KeywordSearchServiceException ex) {
-            String rootCause = ex.getMessage();
-            logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
-            logger.log(Level.SEVERE, "Error accessing PostgreSQL server (multi-user case database server) connection info", ex); //NON-NLS
-            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.toString(), ServicesMonitor.ServiceStatus.DOWN, ex.getLocalizedMessage());
-        }
+        } catch (NumberFormatException | KeywordSearchServiceException ex) {
+            logger.log(Level.SEVERE, "Error connecting to Solr server", ex); //NON-NLS
+            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE, ServicesMonitor.ServiceStatus.DOWN, ex.getMessage());
+        } 
     }
 
 }

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule.multiusercases.services;
 
 import java.util.logging.Level;
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
@@ -31,6 +32,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * An implementation of the monitored service interface that reports status for
  * the database server for multi-user cases.
  */
+@ServiceProvider(service = ServicesMonitor.MonitoredService.class)
 public final class PostgreSqlServer implements ServicesMonitor.MonitoredService {
 
     private static final Logger logger = Logger.getLogger(PostgreSqlServer.class.getName());
@@ -40,14 +42,11 @@ public final class PostgreSqlServer implements ServicesMonitor.MonitoredService 
         try {
             CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
             SleuthkitCase.tryConnect(info);
-            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.DATABASE_SERVER.toString(), ServicesMonitor.ServiceStatus.UP, "");
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error accessing PostgreSQL server (multi-user case database server) connection info", ex); //NON-NLS
-            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.DATABASE_SERVER.toString(), ServicesMonitor.ServiceStatus.DOWN, ex.getLocalizedMessage());
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error connecting to PostgreSQL server (multi-user case database server)", ex); //NON-NLS
-            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.DATABASE_SERVER.toString(), ServicesMonitor.ServiceStatus.DOWN, ex.getLocalizedMessage());
-        }
+            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.DATABASE_SERVER, ServicesMonitor.ServiceStatus.UP, "");
+        } catch (UserPreferencesException | TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error connecting to PostgreSQL server", ex); //NON-NLS
+            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.DATABASE_SERVER, ServicesMonitor.ServiceStatus.DOWN, ex.getMessage());
+        } 
     }
 
 }

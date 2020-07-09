@@ -16,22 +16,17 @@ org_sleuthkit_autopsy_core_update_center=http://sleuthkit.org/autopsy/updates.xm
 Services/AutoupdateType/org_sleuthkit_autopsy_core_update_center.settings=Autopsy Update Center
 Installer.errorInitJavafx.msg=Error initializing JavaFX.
 Installer.errorInitJavafx.details=\ Some features will not be available.  Check that you have JavaFX installed (OpenJFX 8).
-ServicesMonitor.coordinationSvc.displayName=ZooKeeper
+ServicesMonitor.coordinationSvc.displayName=ZooKeeper Service
 ServicesMonitor.dbServer.displayName=PostgreSQL Server
-ServicesMonitor.failedService.notify.title=Service Is Down
-ServicesMonitor.failedService.notify.msg=Connection to {0} is down
 ServicesMonitor.messageBroker.displayName=ActiveMQ Message Broker
-ServicesMonitor.restoredService.notify.title=Service Is Up
-ServicesMonitor.restoredService.notify.msg=Connection to {0} is up
-ServicesMonitor.solrServer.displayName=Solr server
-ServicesMonitor.statusChange.notify.title=Service Status Update
-ServicesMonitor.statusChange.notify.msg=Status for {0} is {1}
-ServicesMonitor.nullServiceName.excepton.txt=Requested service name is null
-ServicesMonitor.unknownServiceName.excepton.txt=Requested service name {0} is unknown
-ServicesMonitor.KeywordSearchNull=Cannot find Keyword Search service
-ServicesMonitor.InvalidPortNumber=Invalid port number.
-ServicesMonitor.databaseConnectionInfo.error.msg=Error accessing case database connection info
-ServicesMonitor.messagingService.connErr.text=Error accessing messaging service connection info
-serviceStatus.down=Down
-serviceStatus.other=Other
-serviceStatus.up=Up
+# {0} - service name
+# {1} - service status
+# {2} - status details
+ServicesMonitor.notification.message.detailedStatus={0} is {1}.\nDetails: {2}
+# {0} - service name
+# {1} - service status
+ServicesMonitor.notification.message.status={0} is {1}
+ServicesMonitor.notification.title=Service Status
+ServicesMonitor.serviceStatus.down=down
+ServicesMonitor.serviceStatus.up=up
+ServicesMonitor.solrServer.displayName=Solr Server

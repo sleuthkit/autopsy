@@ -20,41 +20,18 @@ package org.sleuthkit.autopsy.casemodule.multiusercases.services;
 
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
-import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.CaseDbConnectionInfo;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.concurrent.GuardedBy;
-import javax.annotation.concurrent.ThreadSafe;
-import org.apache.curator.RetryPolicy;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.locks.InterProcessMutex;
-import org.apache.curator.framework.recipes.locks.InterProcessReadWriteLock;
-import org.apache.curator.retry.ExponentialBackoffRetry;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
-import org.openide.util.Exceptions;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  * An implementation of the monitored service interface that reports status for
  * the ZooKeeper database for multi-user cases.
  */
+@ServiceProvider(service = ServicesMonitor.MonitoredService.class)
 public final class ZooKeeperDatabase implements ServicesMonitor.MonitoredService {
 
     private static final Logger logger = Logger.getLogger(ZooKeeper.class.getName());
@@ -80,15 +57,15 @@ public final class ZooKeeperDatabase implements ServicesMonitor.MonitoredService
             }
             ZooKeeper.States state = zooKeeper.getState();
             if (state == ZooKeeper.States.CONNECTED || state == ZooKeeper.States.CONNECTEDREADONLY) {
-                statusReport = new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.COORDINATION_SERVICE.toString(), ServicesMonitor.ServiceStatus.UP, "");
+                statusReport = new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.COORDINATION_SERVICE, ServicesMonitor.ServiceStatus.UP, "");
             } else {
-                statusReport = new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.COORDINATION_SERVICE.toString(), ServicesMonitor.ServiceStatus.DOWN, "");
+                statusReport = new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.COORDINATION_SERVICE, ServicesMonitor.ServiceStatus.DOWN, "");
             }
             zooKeeper.close();
             return statusReport;
         } catch (IOException | InterruptedException ex) {
-            logger.log(Level.SEVERE, "Error connecting to PostgreSQL server (multi-user case database server)", ex); //NON-NLS
-            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.COORDINATION_SERVICE.toString(), ServicesMonitor.ServiceStatus.DOWN, ex.getLocalizedMessage());
+            logger.log(Level.SEVERE, "Error connecting to ZooKeeper", ex); //NON-NLS
+            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.COORDINATION_SERVICE, ServicesMonitor.ServiceStatus.DOWN, ex.getMessage());
         }
     }
 }

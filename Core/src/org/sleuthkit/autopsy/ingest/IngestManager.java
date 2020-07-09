@@ -420,14 +420,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @throws IngestManagerException If the service is down.
      */
     private void checkAppServiceStatus(ServicesMonitor.Service service) throws IngestManagerException {
-        ServicesMonitor.ServiceStatus status = null;
         ServicesMonitor.ServiceStatusReport statusReport = servicesMonitor.getServiceStatusReport(service);
-        if (statusReport != null) {
-            status = statusReport.getStatus();
-        }
-        if (status == null || status != ServicesMonitor.ServiceStatus.UP) {
+        if (statusReport == null || !statusReport.getStatus().equals(ServicesMonitor.ServiceStatus.UP.getDisplayName())) {
+            final String serviceName = service.getDisplayName();
             if (RuntimeProperties.runningWithGUI()) {
-                final String serviceName = service.getDisplayName();
                 EventQueue.invokeLater(new Runnable() {
                     @Override
                     public void run() {
@@ -438,7 +434,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                     }
                 });
             }
-            throw new IngestManagerException(String.format("%s is down", service)); //NON-NLS
+            throw new IngestManagerException(String.format("%s is down", serviceName)); //NON-NLS
         }
     }
 

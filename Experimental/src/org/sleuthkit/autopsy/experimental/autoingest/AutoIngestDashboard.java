@@ -188,15 +188,15 @@ final class AutoIngestDashboard extends JPanel implements Observer {
              * @return The status string.
              */
             private String getServiceStatus(ServicesMonitor.Service service) {
-                String serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Unknown");
+                String serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Unknown");
                 ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
                 ServicesMonitor.ServiceStatusReport statusReport = servicesMonitor.getServiceStatusReport(service);
                 if (statusReport != null) {
-                    ServicesMonitor.ServiceStatus status = statusReport.getStatus();
-                    if (status == ServicesMonitor.ServiceStatus.UP) {
-                        serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
+                    String status = statusReport.getStatus();
+                    if (status.equals(ServicesMonitor.ServiceStatus.UP.getDisplayName())) {
+                        serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
                     } else {
-                        serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down");
+                        serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
                     }
                 }
                 return serviceStatus;

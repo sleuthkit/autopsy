@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule.multiusercases.services;
 
 import java.util.logging.Level;
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
@@ -30,22 +31,20 @@ import org.sleuthkit.autopsy.events.MessageServiceException;
  * An implementation of the monitored service interface that reports status for
  * the messaging service for multi-user cases.
  */
+@ServiceProvider(service = ServicesMonitor.MonitoredService.class)
 public final class ActiveMqMessageBroker implements ServicesMonitor.MonitoredService {
 
     private static final Logger logger = Logger.getLogger(ActiveMqMessageBroker.class.getName());
-
+    
     @Override
     public ServicesMonitor.ServiceStatusReport getStatus() {
         try {
             MessageServiceConnectionInfo info = UserPreferences.getMessageServiceConnectionInfo();
             info.tryConnect();
-            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.MESSAGING.toString(), ServicesMonitor.ServiceStatus.UP, "");            
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error accessing ActiveMQ Message Broker (multi-user case messaging service) connection info", ex); //NON-NLS
-            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.MESSAGING.toString(), ServicesMonitor.ServiceStatus.DOWN, ex.getLocalizedMessage());            
-        } catch (MessageServiceException ex) {            
-            logger.log(Level.SEVERE, "Error connecting to ActiveMQ Message Broker (multi-user case messaging service)", ex); //NON-NLS
-            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.MESSAGING.toString(), ServicesMonitor.ServiceStatus.DOWN, ex.getLocalizedMessage());            
+            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.MESSAGING, ServicesMonitor.ServiceStatus.UP, "");            
+        } catch (UserPreferencesException | MessageServiceException ex) {
+            logger.log(Level.SEVERE, "Error connecting to ActiveMQ Message Broker", ex); //NON-NLS
+            return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.MESSAGING, ServicesMonitor.ServiceStatus.DOWN, ex.getMessage());            
         }        
     }
     

@@ -336,8 +336,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
                 ServicesMonitor.ServiceStatusReport statusReport = servicesMonitor.getServiceStatusReport(service);
                 if (statusReport != null) {
-                    ServicesMonitor.ServiceStatus status = statusReport.getStatus();
-                    if (status == ServicesMonitor.ServiceStatus.UP) {
+                    String status = statusReport.getStatus();
+                    if (status.equals(ServicesMonitor.ServiceStatus.UP.getDisplayName())) {
                         serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
                     } else {
                         serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down");

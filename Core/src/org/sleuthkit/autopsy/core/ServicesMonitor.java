@@ -26,8 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -102,14 +100,12 @@ public class ServicesMonitor {
      * status of OTHER, its reported status will be its details string.
      */
     @NbBundle.Messages({
-        "serviceStatus.up=Up",
-        "serviceStatus.down=Down",
-        "serviceStatus.other=Other"
+        "ServicesMonitor.serviceStatus.up=up",
+        "ServicesMonitor.serviceStatus.down=down"
     })
     public enum ServiceStatus {
-        UP(Bundle.serviceStatus_up()),
-        DOWN(Bundle.serviceStatus_up()),
-        OTHER(Bundle.serviceStatus_other());
+        UP(Bundle.ServicesMonitor_serviceStatus_up()),
+        DOWN(Bundle.ServicesMonitor_serviceStatus_down());
 
         private final String displayName;
 
@@ -129,18 +125,42 @@ public class ServicesMonitor {
     public static class ServiceStatusReport {
 
         private final String serviceName;
-        private final ServiceStatus status;
+        private final String status;
         private final String details;
 
         /**
          * Constructs an instance of a service status report.
          *
-         * @param serviceName
+         * @param service The service.
+         * @param status  The service status.
+         * @param details Additional details regarding the service status, may
+         *                be the empty string.
+         */
+        public ServiceStatusReport(Service service, ServiceStatus status, String details) {
+            this(service.getDisplayName(), status.getDisplayName(), details);
+        }
+
+        /**
+         * Constructs an instance of a service status report.
+         *
+         * @param serviceName The service name.
          * @param status      The service status.
          * @param details     Additional details regarding the service status,
-         *                    may be empty.
+         *                    may be the empty string.
          */
         public ServiceStatusReport(String serviceName, ServiceStatus status, String details) {
+            this(serviceName, status.getDisplayName(), details);
+        }
+
+        /**
+         * Constructs an instance of a service status report.
+         *
+         * @param serviceName The service name.
+         * @param status      The service status.
+         * @param details     Additional details regarding the service status,
+         *                    may be the empty string.
+         */
+        public ServiceStatusReport(String serviceName, String status, String details) {
             this.serviceName = serviceName;
             this.status = status;
             this.details = details;
@@ -160,7 +180,7 @@ public class ServicesMonitor {
          *
          * @return The service status.
          */
-        public ServiceStatus getStatus() {
+        public String getStatus() {
             return status;
         }
 
@@ -213,7 +233,7 @@ public class ServicesMonitor {
     /**
      * A service that wants to have its current status periodically polled by
      * the services monitor must implement the MonitoredService interface and
-     * must be marked woith the ServiceProvider annotation.
+     * must be marked with the MonitoredService ServiceProvider annotation.
      */
     public interface MonitoredService {
 
@@ -231,7 +251,6 @@ public class ServicesMonitor {
     private static final int NUMBER_OF_PERIODIC_TASK_THREADS = 1;
     private static final long CRASH_DETECTION_INTERVAL_MINUTES = 15;
     private static ServicesMonitor servicesMonitor = new ServicesMonitor();
-    private static final Set<String> coreServiceNames = Stream.of(ServicesMonitor.Service.values()).map(Service::toString).collect(Collectors.toSet());
     private final Map<String, MonitoredService> coreServicesByName;
     private final Map<String, ServiceStatusReport> statusByService;
     private final AutopsyEventPublisher eventPublisher;
@@ -334,29 +353,28 @@ public class ServicesMonitor {
      * @param subscriber The subscriber to add.
      */
     public void addSubscriber(PropertyChangeListener subscriber) {
-        eventPublisher.addSubscriber(coreServiceNames, subscriber);
+        eventPublisher.addSubscriber(coreServicesByName.keySet(), subscriber);
     }
 
     /**
-     * Adds a subscriber to service status events for a subset of the services
-     * known to the services monitor.
+     * Adds a subscriber to service status events for a set of services.
      *
-     * @param services   The services the subscriber is interested in.
-     * @param subscriber The subscriber to add.
+     * @param serviceNames The names of the services the subscriber is
+     *                     interested in.
+     * @param subscriber   The subscriber to add.
      */
-    public void addSubscriber(Set<String> services, PropertyChangeListener subscriber) {
-        eventPublisher.addSubscriber(services, subscriber);
+    public void addSubscriber(Set<String> serviceNames, PropertyChangeListener subscriber) {
+        eventPublisher.addSubscriber(serviceNames, subscriber);
     }
 
     /**
-     * Adds a subscriber to service status events for a specific service known
-     * to the services monitor.
+     * Adds a subscriber to service status events for a service.
      *
-     * @param service    The service the subscriber is interested in.
-     * @param subscriber The subscriber to add.
+     * @param serviceName The service the subscriber is interested in.
+     * @param subscriber  The subscriber to add.
      */
-    public void addSubscriber(String service, PropertyChangeListener subscriber) {
-        eventPublisher.addSubscriber(service, subscriber);
+    public void addSubscriber(String serviceName, PropertyChangeListener subscriber) {
+        eventPublisher.addSubscriber(serviceName, subscriber);
     }
 
     /**
@@ -365,25 +383,25 @@ public class ServicesMonitor {
      * @param subscriber The subscriber to remove.
      */
     public void removeSubscriber(PropertyChangeListener subscriber) {
-        eventPublisher.removeSubscriber(coreServiceNames, subscriber);
+        eventPublisher.removeSubscriber(coreServicesByName.keySet(), subscriber);
     }
 
     /**
-     * Removes a subscriber to service status events for a subset of the
-     * services known to the services monitor.
+     * Removes a subscriber to service status events for a set of services.
      *
-     * @param services   The services the subscriber is no longer interested in.
-     * @param subscriber The subscriber to remove.
+     * @param serviceNames The names of the services the subscriber is no longer
+     *                     interested in.
+     * @param subscriber   The subscriber to remove.
      */
-    public void removeSubscriber(Set<String> services, PropertyChangeListener subscriber) {
-        eventPublisher.removeSubscriber(services, subscriber);
+    public void removeSubscriber(Set<String> serviceNames, PropertyChangeListener subscriber) {
+        eventPublisher.removeSubscriber(serviceNames, subscriber);
     }
 
     /**
-     * Adds a subscriber to service status events for a specific service known
-     * to the services monitor.
+     * Adds a subscriber to service status events for a service.
      *
-     * @param service    The service the subscriber is no longer interested in.
+     * @param service    The name of the service the subscriber is no longer
+     *                   interested in.
      * @param subscriber The subscriber to remove.
      */
     public void removeSubscriber(String service, PropertyChangeListener subscriber) {
@@ -391,18 +409,15 @@ public class ServicesMonitor {
     }
 
     /**
-     * Checks the status of the core services in a collaborative, multi-user
-     * case environment: the database server, the keyword search server and the
-     * messaging service. Publishes a service event and user notification if the
-     * status of a service has changed since the last check.
+     * Checks the status of all monitored services in a collaborative,
+     * multi-user case environment and publishes a service event and a user
+     * notification if the status of a service has changed since the last check.
      */
     private void checkAllServices() {
-        if (!UserPreferences.getIsMultiUserModeEnabled()) {
-            return;
-        }
-
-        for (MonitoredService service : Lookup.getDefault().lookupAll(MonitoredService.class)) {
-            setServiceStatus(service.getStatus());
+        if (UserPreferences.getIsMultiUserModeEnabled()) {
+            for (MonitoredService service : Lookup.getDefault().lookupAll(MonitoredService.class)) {
+                setServiceStatus(service.getStatus());
+            }
         }
     }
 
@@ -416,41 +431,42 @@ public class ServicesMonitor {
      * @return
      */
     private boolean statusIsChanged(ServiceStatusReport previousStatusReport, ServiceStatusReport newStatusReport) {
-        return ((previousStatusReport != null && newStatusReport != previousStatusReport) || (previousStatusReport == null));
+        return (previousStatusReport == null || !newStatusReport.equals(previousStatusReport));
     }
 
     /**
      * Reports a service status change by logging the change, doing a user
-     * notification if running in the GUI, and firing a service status event.
+     * notification if running in the GUI and publishing a service status event.
      *
      * @param newStatusReport The service status report to publish.
      */
+    @NbBundle.Messages({
+        "ServicesMonitor.notification.title=Service Status",
+        "# {0} - service name", "# {1} - service status", "ServicesMonitor.notification.message.status={0} is {1}",
+        "# {0} - service name", "# {1} - service status", "# {2} - status details", "ServicesMonitor.notification.message.detailedStatus={0} is {1}.\nDetails: {2}",})
     private void reportStatus(ServiceStatusReport newStatusReport) {
         /*
          * Log the status.
          */
         String serviceName = newStatusReport.getServiceName();
-        String status = newStatusReport.getStatus().toString();
+        String status = newStatusReport.getStatus();
         String details = newStatusReport.getDetails();
-        logger.log(Level.INFO, "Status of {0} is {1} Details: {2}", new Object[]{serviceName, status, details}); //NON-NLS
+        logger.log(Level.INFO, "Status of {0} is {1}, details: {2}", new Object[]{serviceName, status, details}); //NON-NLS
 
         /*
          * Notify the user.
          */
         if (RuntimeProperties.runningWithGUI()) {
-            if (status.equals(ServiceStatus.UP.toString())) {
-                MessageNotifyUtil.Notify.info(
-                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
-                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg", serviceName));
-            } else if (status.equals(ServiceStatus.DOWN.toString())) {
-                MessageNotifyUtil.Notify.error(
-                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"),
-                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.msg", serviceName));
+            if (details.isEmpty()) {
+                MessageNotifyUtil.Notify.info(Bundle.ServicesMonitor_notification_title(), Bundle.ServicesMonitor_notification_message_status(serviceName, status));
+            } else {
+                MessageNotifyUtil.Notify.info(Bundle.ServicesMonitor_notification_title(), Bundle.ServicesMonitor_notification_message_detailedStatus(serviceName, status, details));
             }
         }
 
         /*
-         * Fire a local status event.
+         * Publish a status event to subscribers in this application instance
+         * only.
          */
         eventPublisher.publishLocally(new ServiceEvent(serviceName, status, details));
     }
@@ -502,15 +518,7 @@ public class ServicesMonitor {
      */
     @Deprecated
     public void setServiceStatus(String service, String status, String details) {
-        ServiceStatus serviceStatus;
-        if (status.equals(ServiceStatus.UP.toString())) {
-            serviceStatus = ServiceStatus.UP;
-        } else if (status.equals(ServiceStatus.DOWN.toString())) {
-            serviceStatus = ServiceStatus.DOWN;
-        } else {
-            serviceStatus = ServiceStatus.OTHER;
-        }
-        ServiceStatusReport statusReport = new ServiceStatusReport(service, serviceStatus, status + " : " + details);
+        ServiceStatusReport statusReport = new ServiceStatusReport(service, status, details);
         setServiceStatus(statusReport);
     }
 
@@ -530,12 +538,7 @@ public class ServicesMonitor {
     public String getServiceStatus(String serviceName) throws ServicesMonitorException {
         ServiceStatusReport statusReport = getServiceStatusReport(serviceName);
         if (statusReport != null) {
-            ServiceStatus status = statusReport.getStatus();
-            if (status == ServiceStatus.OTHER) {
-                return statusReport.getDetails();
-            } else {
-                return status.toString();
-            }
+            return statusReport.getStatus();
         } else {
             throw new ServicesMonitorException(String.format("No status available for %s", serviceName));
         }

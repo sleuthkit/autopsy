@@ -1595,6 +1595,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     try {
                         processJobs();
                     } catch (InterruptedException ex) {
+                        /*
+                         * Interrupted while blocked, i.e., this task was
+                         * cancelled while waiting for something to happen on
+                         * another thread because ingest is shutting down.
+                         */
                         break;
                     } catch (Exception ex) {
                         /*
@@ -1793,31 +1798,41 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         private void processJobs() throws InterruptedException {
             sysLogger.log(Level.INFO, "Started processing pending jobs queue");
             try {
-                verifyRequiredSevicesAreRunning();
-                Lock manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
-                while (null != manifestLock) {
+                Lock manifestLock = null;
+                do {
+                    try {
+                        verifyRequiredSevicesAreRunning();
+                    } catch (ServiceDownException ex) {
+                        sysLogger.log(Level.SEVERE, "Critical auto ingest system error", ex);
+                        pauseForSystemError();
+                    }
+
+                    manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
+
                     try {
                         if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                             return;
                         }
                         processJob();
+                    } catch (CoordinationServiceException ex) {
+                        sysLogger.log(Level.SEVERE, "Auto ingest system error", ex);
+                    } catch (ServiceDownException | SharedConfigDownloadException | AnalysisStartupException ex) {
+                        sysLogger.log(Level.SEVERE, "Critical auto ingest system error", ex);
+                        pauseForSystemError();
                     } finally {
                         manifestLock.release();
                     }
                     if (jobProcessingTaskFuture.isCancelled()) {
                         return;
                     }
+
                     pauseIfRequested();
                     if (jobProcessingTaskFuture.isCancelled()) {
                         return;
                     }
-                    manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
-                }
-            } catch (CoordinationServiceException | SharedConfigDownloadException | CaseManagementException | AutoIngestDataSourceProcessorException ex) {
+                } while (null != manifestLock);
+            } catch (CoordinationServiceException ex) {
                 sysLogger.log(Level.SEVERE, "Auto ingest system error", ex);
-            } catch (ServiceDownException | AnalysisStartupException ex) {
-                sysLogger.log(Level.SEVERE, "Critical auto ingest system error", ex);
-                pauseForSystemError();
             }
         }
 
@@ -1978,7 +1993,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                       configuration.
          * @throws ServiceDownException          If the one or more core
          *                                       application services is down.
-         * @throws CaseManagementException       If there is an error creating,
+         * @throws CaseOpeningException          If there is an error creating,
          *                                       opening or closing the case for
          *                                       the job.
          * @throws AnalysisStartupException      If there is an error starting
@@ -1990,7 +2005,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                       while blocked, i.e., if auto
          *                                       ingest is shutting down.
          */
-        private void processJob() throws CoordinationServiceException, SharedConfigDownloadException, ServiceDownException, CaseManagementException, AutoIngestDataSourceProcessorException, AnalysisStartupException, InterruptedException {
+        private void processJob() throws CoordinationServiceException, SharedConfigDownloadException, ServiceDownException, AnalysisStartupException, InterruptedException {
+            /*
+             * Update the job state in this process and in the ZooKeeper
+             * database and publish the job state to the local auto ingest
+             * control panel and any auto ingest dashboards on other nodes.
+             */
             Path manifestPath = currentJob.getManifest().getFilePath();
             sysLogger.log(Level.INFO, "Started processing of {0}", manifestPath);
             currentJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.PROCESSING);
@@ -2000,6 +2020,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             setChanged();
             notifyObservers(Event.JOB_STARTED);
             eventPublisher.publishRemotely(new AutoIngestJobStartedEvent(currentJob));
+
+            /*
+             * Attempt the job. Any exceptions are propagated to the enclosing
+             */
             try {
                 if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                     return;
@@ -2049,45 +2073,54 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         /**
          * Attempts processing of an auto ingest job.
          *
-         * @throws CoordinationServiceException  If there is an error acquiring
-         *                                       or releasing coordination
-         *                                       service locks or setting
-         *                                       coordination service node data.
          * @throws SharedConfigDownloadException If there is an error while
          *                                       downloading shared
          *                                       configuration.
          * @throws ServiceDownException          If the one or more core
          *                                       application services is down.
-         * @throws CaseManagementException       If there is an error creating,
-         *                                       opening or closing the case for
-         *                                       the job.
+         * @throws AnalysisStartupException      If there is an error starting
+         *                                       analysis of the data source by
+         *                                       the data source level and file
+         *                                       level ingest modules.
          * @throws InterruptedException          If the thread running the job
          *                                       processing task is interrupted
          *                                       while blocked, i.e., if auto
          *                                       ingest is shutting down.
          */
-        private void attemptJob() throws CoordinationServiceException, SharedConfigDownloadException, ServiceDownException, CaseManagementException, AnalysisStartupException, AutoIngestDataSourceProcessorException, InterruptedException {
+        private void attemptJob() throws SharedConfigDownloadException, ServiceDownException, AnalysisStartupException, InterruptedException {
             updateConfiguration();
             if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                 return;
             }
+
             verifyRequiredSevicesAreRunning();
             if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                 return;
             }
-            Case caseForJob = openCase();
+
+            Case caseForJob = null;
             try {
+                caseForJob = openCase();
                 if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                     return;
                 }
+
                 runIngestForJob(caseForJob);
 
+            } catch (CoordinationServiceException | CaseOpeningException | AutoIngestDataSourceProcessorException ex) {
+                Manifest manifest = currentJob.getManifest();
+                String caseName = manifest.getCaseName();
+                Path manifestPath = manifest.getFilePath();
+                sysLogger.log(Level.SEVERE, String.format("Error processing auto ingest job for case %s for %s", caseName, manifestPath), ex);
+
             } finally {
-                try {
-                    Case.closeCurrentCase();
-                } catch (CaseActionException ex) {
-                    Manifest manifest = currentJob.getManifest();
-                    sysLogger.log(Level.SEVERE, String.format("Error closing case %s for %s", manifest.getCaseName(), manifest.getFilePath()), ex);
+                if (caseForJob != null) {
+                    try {
+                        Case.closeCurrentCase();
+                    } catch (CaseActionException ex) {
+                        Manifest manifest = currentJob.getManifest();
+                        sysLogger.log(Level.SEVERE, String.format("Error closing case %s for %s", manifest.getCaseName(), manifest.getFilePath()), ex);
+                    }
                 }
             }
         }
@@ -2177,19 +2210,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * @param service Name of the service.
          *
          * @return True or false.
-         *
-         * @throws ServicesMonitorException If there is an error querying the
-         *                                  services monitor.
          */
-        private boolean isServiceUp(ServicesMonitor.Service service) throws ServicesMonitorException {
-            ServicesMonitor.ServiceStatus status = null;
+        private boolean isServiceUp(ServicesMonitor.Service service) {
             ServicesMonitor.ServiceStatusReport statusReport = ServicesMonitor.getInstance().getServiceStatusReport(service);
-            if (statusReport != null) {
-                status = statusReport.getStatus();
-            }
-            boolean result = (status != null && status == ServicesMonitor.ServiceStatus.UP);
-            sysLogger.log(Level.INFO, "Status of {0} is {1}", new Object[]{service, result});
-            return result;
+            return (statusReport != null && statusReport.getStatus().equals(ServicesMonitor.ServiceStatus.UP.getDisplayName()));
         }
 
         /**
@@ -2210,7 +2234,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             long delayInMins = 0;
             boolean success = false;
             while (!success && attempt < MAX_SUB_TASK_RETRIES) {
-                sysLogger.log(Level.INFO, "{0} (attempt={1}, waited={2}m", new Object[]{taskDesc, attempt + 1, delayInMins});
+                sysLogger.log(Level.INFO, "{0} (attempt={1}, waited={2} minutes)", new Object[]{taskDesc, attempt + 1, delayInMins});
                 ScheduledFuture<Boolean> future = subTaskExecutor.schedule(task, delayInMins, TimeUnit.MINUTES);
                 try {
                     success = future.get();
@@ -2236,14 +2260,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *
          * @throws CoordinationServiceException if there is an error acquiring
          *                                      or releasing the case name lock.
-         * @throws CaseManagementException      if there is an error opening the
+         * @throws CaseOpeningException         if there is an error opening the
          *                                      case.
          * @throws InterruptedException         if the thread running the auto
          *                                      ingest job processing task is
          *                                      interrupted while blocked, i.e.,
          *                                      if auto ingest is shutting down.
          */
-        private Case openCase() throws CoordinationServiceException, CaseManagementException, InterruptedException {
+        private Case openCase() throws CoordinationServiceException, CaseOpeningException, InterruptedException {
             Manifest manifest = currentJob.getManifest();
             String caseName = manifest.getCaseName();
             sysLogger.log(Level.INFO, "Opening case {0} for {1}", new Object[]{caseName, manifest.getFilePath()});
@@ -2283,14 +2307,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         return caseForJob;
 
                     } catch (KeywordSearchModuleException ex) {
-                        throw new CaseManagementException(String.format("Error creating or reading Solr settings file for case %s for %s", caseName, manifest.getFilePath()), ex);
+                        throw new CaseOpeningException(String.format("Error creating or reading Solr settings file for case %s for %s", caseName, manifest.getFilePath()), ex);
                     } catch (IOException ex) {
-                        throw new CaseManagementException(String.format("Error recording manifest file path for case %s for %s", caseName, manifest.getFilePath()), ex);
+                        throw new CaseOpeningException(String.format("Error recording manifest file path for case %s for %s", caseName, manifest.getFilePath()), ex);
                     } catch (CaseActionException ex) {
-                        throw new CaseManagementException(String.format("Error creating or opening case %s for %s", caseName, manifest.getFilePath()), ex);
+                        throw new CaseOpeningException(String.format("Error creating or opening case %s for %s", caseName, manifest.getFilePath()), ex);
                     }
                 } else {
-                    throw new CaseManagementException(String.format("Timed out acquiring case name lock for %s for %s", caseName, manifest.getFilePath()));
+                    throw new CaseOpeningException(String.format("Timed out acquiring case name lock for %s for %s", caseName, manifest.getFilePath()));
                 }
             }
         }
@@ -2849,15 +2873,15 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * Exception type thrown when there is a problem creating/opening the
          * case for an auto ingest job.
          */
-        private final class CaseManagementException extends Exception {
+        private final class CaseOpeningException extends Exception {
 
             private static final long serialVersionUID = 1L;
 
-            private CaseManagementException(String message) {
+            private CaseOpeningException(String message) {
                 super(message);
             }
 
-            private CaseManagementException(String message, Throwable cause) {
+            private CaseOpeningException(String message, Throwable cause) {
                 super(message, cause);
             }
         }

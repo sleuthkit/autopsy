@@ -89,38 +89,21 @@ class MultiUserTestTool {
         "MultiUserTestTool.unableToRunIngest=Unable to run ingest on test data source",
         "MultiUserTestTool.unexpectedError=Unexpected error while performing Multi User test",
         "# {0} - serviceName",
-        "MultiUserTestTool.serviceDown=Multi User service is down: {0}",
-        "# {0} - serviceName",
-        "MultiUserTestTool.unableToCheckService=Unable to check Multi User service state: {0}"
+        "MultiUserTestTool.serviceDown=Multi User service is down: {0}"
     })
     static String runTest(String rootOutputDirectory) {
 
         // run standard tests for all services. this detects many problems sooner.
-        try {
-            if (!isServiceUp(ServicesMonitor.Service.DATABASE_SERVER)) {
-                return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.DATABASE_SERVER.getDisplayName());
-            }
-        } catch (ServicesMonitor.ServicesMonitorException ex) {
-            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService",
-                    ServicesMonitor.Service.DATABASE_SERVER.getDisplayName() + ". " + ex.getMessage());
+        if (!isServiceUp(ServicesMonitor.Service.DATABASE_SERVER)) {
+            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.DATABASE_SERVER.getDisplayName());
         }
 
-        try {
-            if (!isServiceUp(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE)) {
-                return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.getDisplayName());
-            }
-        } catch (ServicesMonitor.ServicesMonitorException ex) {
-            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService",
-                    ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.getDisplayName() + ". " + ex.getMessage());
+        if (!isServiceUp(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE)) {
+            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE.getDisplayName());
         }
 
-        try {
-            if (!isServiceUp(ServicesMonitor.Service.MESSAGING)) {
-                return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.MESSAGING.getDisplayName());
-            }
-        } catch (ServicesMonitor.ServicesMonitorException ex) {
-            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService",
-                    ServicesMonitor.Service.MESSAGING.getDisplayName() + ". " + ex.getMessage());
+        if (!isServiceUp(ServicesMonitor.Service.MESSAGING)) {
+            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.MESSAGING.getDisplayName());
         }
 
         // Create a case in the output folder.
@@ -398,17 +381,10 @@ class MultiUserTestTool {
      * @param service The service.
      *
      * @return True if the service is running, false otherwise.
-     *
-     * @throws ServicesMonitorException If there is an error querying the
-     *                                  services monitor.
      */
-    private static boolean isServiceUp(ServicesMonitor.Service service) throws ServicesMonitor.ServicesMonitorException {
-        ServicesMonitor.ServiceStatus status = null;
+    private static boolean isServiceUp(ServicesMonitor.Service service) {
         ServicesMonitor.ServiceStatusReport statusReport = ServicesMonitor.getInstance().getServiceStatusReport(service);
-        if (statusReport != null) {
-            status = statusReport.getStatus();
-        }
-        return (status != null && status == ServicesMonitor.ServiceStatus.UP);
+        return (statusReport != null && statusReport.getStatus().equals(ServicesMonitor.ServiceStatus.UP.getDisplayName()));
     }
 
     /**

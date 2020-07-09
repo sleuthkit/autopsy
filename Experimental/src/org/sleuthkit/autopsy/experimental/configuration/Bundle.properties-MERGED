@@ -71,8 +71,6 @@ MultiUserTestTool.serviceDown=Multi User service is down: {0}
 MultiUserTestTool.startupError=Failed to analyze data source due to ingest job startup error
 MultiUserTestTool.unableAddFileAsDataSource=Unable to add test file as data source to case
 MultiUserTestTool.unableCreatFile=Unable to create a file in case output directory
-# {0} - serviceName
-MultiUserTestTool.unableToCheckService=Unable to check Multi User service state: {0}
 MultiUserTestTool.unableToCreateCase=Unable to create case
 MultiUserTestTool.unableToInitializeDatabase=Case database was not successfully initialized
 MultiUserTestTool.unableToInitializeFilTypeDetector=Unable to initialize File Type Detector
