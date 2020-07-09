@@ -841,7 +841,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException If there is an error.
      */
-    void executeSqlAsPreparedStatement(String sql, List<Object> params) throws CentralRepoException;
+    void executeCommand(String sql, List<Object> params) throws CentralRepoException;
 
     /**
      * Executes a SELECT query sql as a prepared statement, on the central
@@ -853,7 +853,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException If there is an error.
      */
-    void executeQueryAsPreparedStatement(String sql, List<Object> params, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException;
+    void executeQuery(String sql, List<Object> params, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException;
 
     /**
      * Get account type by type name.

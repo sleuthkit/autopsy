@@ -2547,7 +2547,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
 
     @Override
-    public void executeSqlAsPreparedStatement(String sql, List<Object> params) throws CentralRepoException {
+    public void executeCommand(String sql, List<Object> params) throws CentralRepoException {
       
         try (Connection conn = connect();) {
             
@@ -2569,12 +2569,12 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
 
     @Override
-    public void executeQueryAsPreparedStatement(String sql, List<Object> params, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException {
+    public void executeQuery(String sql, List<Object> params, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException {
         if (queryCallback == null) {
             throw new CentralRepoException("Query callback is null");
         }
 
-        ResultSet resultSet = null;
+       
         try ( Connection conn = connect();)   {
              PreparedStatement preparedStatement = conn.prepareStatement(sql);
              
@@ -2586,17 +2586,13 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                     paramIndex += 1;
                 }
             }
-            // execute query
-            resultSet = preparedStatement.executeQuery();
-           
-            queryCallback.process(resultSet);
+            // execute query, and the callback to process result
+            try (ResultSet resultSet = preparedStatement.executeQuery();) {
+                queryCallback.process(resultSet);
+            }
         } catch (SQLException ex) {
             throw new CentralRepoException(String.format("Error executing prepared statement for SQL query %s", sql), ex);
-        } finally {
-            if (resultSet != null) {
-                CentralRepoDbUtil.closeResultSet(resultSet);
-            }
-        }
+        } 
     }
 
     @Override

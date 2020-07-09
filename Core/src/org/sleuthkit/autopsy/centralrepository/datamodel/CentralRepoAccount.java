@@ -230,7 +230,7 @@ public final class CentralRepoAccount {
         params.add("%" + accountIdentifierSubstring + "%");
 
         AccountsQueryCallback queryCallback = new AccountsQueryCallback();
-        CentralRepository.getInstance().executeQueryAsPreparedStatement(queryClause, params, queryCallback);
+        CentralRepository.getInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getAccountsList();
     }
@@ -263,7 +263,7 @@ public final class CentralRepoAccount {
         params.add(normalizedAccountIdentifier);
 
         AccountsQueryCallback queryCallback = new AccountsQueryCallback();
-        CentralRepository.getInstance().executeQueryAsPreparedStatement(queryClause, params, queryCallback);
+        CentralRepository.getInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getAccountsList();
     }
@@ -284,7 +284,7 @@ public final class CentralRepoAccount {
         List<Object> params = new ArrayList<>(); // empty param list
 
         AccountsQueryCallback queryCallback = new AccountsQueryCallback();
-        CentralRepository.getInstance().executeQueryAsPreparedStatement(queryClause, params, queryCallback);
+        CentralRepository.getInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getAccountsList();
     }

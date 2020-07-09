@@ -114,7 +114,7 @@ public class PersonaAlias {
         params.add(timeStampMillis);
         params.add(examiner.getId());
 
-        getCRInstance().executeSqlAsPreparedStatement(insertSQL, params);
+        getCRInstance().executeCommand(insertSQL, params);
 
         String queryClause = SELECT_QUERY_BASE
                 + "WHERE pa.persona_id = ?"
@@ -129,7 +129,7 @@ public class PersonaAlias {
         queryParams.add(examiner.getId());
 
         PersonaAliasesQueryCallback queryCallback = new PersonaAliasesQueryCallback();
-        getCRInstance().executeQueryAsPreparedStatement(queryClause, queryParams, queryCallback);
+        getCRInstance().executeQuery(queryClause, queryParams, queryCallback);
 
         Collection<PersonaAlias> aliases = queryCallback.getAliases();
         if (aliases.size() != 1) {
@@ -152,7 +152,7 @@ public class PersonaAlias {
         List<Object> params = new ArrayList<>();
         params.add(alias.getId());
 
-        getCRInstance().executeSqlAsPreparedStatement(deleteSQL, params);
+        getCRInstance().executeCommand(deleteSQL, params);
     }
 
     /**
@@ -176,7 +176,7 @@ public class PersonaAlias {
         params.add(StringUtils.isBlank(justification) ? "" : justification);
         params.add(alias.getId());
 
-        cr.executeSqlAsPreparedStatement(updateClause, params);
+        cr.executeCommand(updateClause, params);
     }
 
     /**
@@ -228,7 +228,7 @@ public class PersonaAlias {
         params.add(personaId);
 
         PersonaAliasesQueryCallback queryCallback = new PersonaAliasesQueryCallback();
-        getCRInstance().executeQueryAsPreparedStatement(queryClause, params, queryCallback);
+        getCRInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getAliases();
     }

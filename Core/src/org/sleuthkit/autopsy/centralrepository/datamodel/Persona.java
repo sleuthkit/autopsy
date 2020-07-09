@@ -250,7 +250,7 @@ public class Persona {
         params.add(status.getStatusId());
         params.add(examiner.getId());
 
-        getCRInstance().executeSqlAsPreparedStatement(insertPersonaSQL, params);
+        getCRInstance().executeCommand(insertPersonaSQL, params);
         return getPersonaByUUID(uuidStr);
     }
 
@@ -269,7 +269,7 @@ public class Persona {
             params.add(StringUtils.isBlank(comment) ? "" : comment);
             params.add(id);
 
-            getCRInstance().executeSqlAsPreparedStatement(updateSQL, params);
+            getCRInstance().executeCommand(updateSQL, params);
         }
     }
 
@@ -288,7 +288,7 @@ public class Persona {
             params.add(StringUtils.isBlank(name) ? getDefaultName() : name);
             params.add(id);
 
-            getCRInstance().executeSqlAsPreparedStatement(updateSQL, params);
+            getCRInstance().executeCommand(updateSQL, params);
         }
     }
 
@@ -345,7 +345,7 @@ public class Persona {
             params.add(PersonaStatus.DELETED.getStatusId());
             params.add(id);
 
-            getCRInstance().executeSqlAsPreparedStatement(deleteSQL, params);
+            getCRInstance().executeCommand(deleteSQL, params);
         }
     }
 
@@ -413,7 +413,7 @@ public class Persona {
         params.add(uuid);
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
-        getCRInstance().executeQueryAsPreparedStatement(queryClause, params, queryCallback);
+        getCRInstance().executeQuery(queryClause, params, queryCallback);
 
         Collection<Persona> personas = queryCallback.getPersonas();
 
@@ -442,7 +442,7 @@ public class Persona {
         params.add("%" + partialName + "%"); // partial substring search
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
-        getCRInstance().executeQueryAsPreparedStatement(queryClause, params, queryCallback);
+        getCRInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getPersonas();
     }
@@ -475,7 +475,7 @@ public class Persona {
         params.add("%" + partialName + "%"); // partial substring search
         params.add(PersonaStatus.DELETED.getStatusId());
 
-        getCRInstance().executeQueryAsPreparedStatement(queryClause, params, queryCallback);
+        getCRInstance().executeQuery(queryClause, params, queryCallback);
         return queryCallback.getPersonas();
     }
 
@@ -642,7 +642,7 @@ public class Persona {
             params.add(account.getId());
 
             CaseForAccountInstanceQueryCallback queryCallback = new CaseForAccountInstanceQueryCallback();
-            getCRInstance().executeQueryAsPreparedStatement(querySql, params, queryCallback);
+            getCRInstance().executeQuery(querySql, params, queryCallback);
 
             // Add any cases that aren't already on the list.
             for (CorrelationCase corrCase : queryCallback.getCases()) {
@@ -708,7 +708,7 @@ public class Persona {
             params.add(account.getId());
 
             DatasourceForAccountInstanceQueryCallback queryCallback = new DatasourceForAccountInstanceQueryCallback();
-            getCRInstance().executeQueryAsPreparedStatement(querySql, params, queryCallback);
+            getCRInstance().executeQuery(querySql, params, queryCallback);
 
             // Add any data sources that aren't already on the list.
             for (CorrelationDataSource correlationDatasource : queryCallback.getDataSources()) {
@@ -807,7 +807,7 @@ public class Persona {
             params.add(Persona.PersonaStatus.DELETED.getStatusId());
 
             PersonaFromAccountInstanceQueryCallback queryCallback = new PersonaFromAccountInstanceQueryCallback();
-            getCRInstance().executeQueryAsPreparedStatement(querySql, params, queryCallback);
+            getCRInstance().executeQuery(querySql, params, queryCallback);
 
             // Add persona that aren't already on the list.
             for (Persona persona : queryCallback.getPersonasList()) {
@@ -843,7 +843,7 @@ public class Persona {
             params.add(Persona.PersonaStatus.DELETED.getStatusId());
 
             PersonaFromAccountInstanceQueryCallback queryCallback = new PersonaFromAccountInstanceQueryCallback();
-            getCRInstance().executeQueryAsPreparedStatement(querySql, params, queryCallback);
+            getCRInstance().executeQuery(querySql, params, queryCallback);
 
             // Add persona that aren't already on the list.
             for (Persona persona : queryCallback.getPersonasList()) {

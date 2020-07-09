@@ -124,7 +124,7 @@ public class PersonaMetadata {
         params.add(timeStampMillis);
         params.add(examiner.getId());
 
-        getCRInstance().executeSqlAsPreparedStatement(insertSQL, params);
+        getCRInstance().executeCommand(insertSQL, params);
 
         String queryClause = SELECT_QUERY_BASE
                 + "WHERE pmd.persona_id = ?"
@@ -141,7 +141,7 @@ public class PersonaMetadata {
         queryParams.add(examiner.getId());
 
         PersonaMetadataQueryCallback queryCallback = new PersonaMetadataQueryCallback();
-        getCRInstance().executeQueryAsPreparedStatement(queryClause, queryParams, queryCallback);
+        getCRInstance().executeQuery(queryClause, queryParams, queryCallback);
 
         Collection<PersonaMetadata> metadata = queryCallback.getMetadataList();
         if (metadata.size() != 1) {
@@ -165,7 +165,7 @@ public class PersonaMetadata {
         List<Object> params = new ArrayList<>();
         params.add(metadata.getId());
 
-        getCRInstance().executeSqlAsPreparedStatement(deleteSql, params);
+        getCRInstance().executeCommand(deleteSql, params);
     }
 
     /**
@@ -190,7 +190,7 @@ public class PersonaMetadata {
         params.add(StringUtils.isBlank(justification) ? "" : justification);
         params.add(metadata.id);
 
-        getCRInstance().executeSqlAsPreparedStatement(updateSql, params);
+        getCRInstance().executeCommand(updateSql, params);
     }
 
     /**
@@ -243,7 +243,7 @@ public class PersonaMetadata {
         params.add(personaId);
 
         PersonaMetadataQueryCallback queryCallback = new PersonaMetadataQueryCallback();
-        getCRInstance().executeQueryAsPreparedStatement(queryClause, params, queryCallback);
+        getCRInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getMetadataList();
 

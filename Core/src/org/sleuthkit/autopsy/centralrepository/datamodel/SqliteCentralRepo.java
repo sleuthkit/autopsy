@@ -834,20 +834,20 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
     }      
     
     @Override
-    public void executeSqlAsPreparedStatement(String sql, List<Object> params) throws CentralRepoException {
+    public void executeCommand(String sql, List<Object> params) throws CentralRepoException {
         try {
-            acquireSharedLock();
-            super.executeSqlAsPreparedStatement(sql, params);
+            acquireExclusiveLock();
+            super.executeCommand(sql, params);
         } finally {
-            releaseSharedLock();
+            releaseExclusiveLock();
         }
     }
     
     @Override
-    public void executeQueryAsPreparedStatement(String sql, List<Object> params, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException {
+    public void executeQuery(String sql, List<Object> params, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException {
         try {
             acquireSharedLock();
-            super.executeQueryAsPreparedStatement(sql, params, queryCallback);
+            super.executeQuery(sql, params, queryCallback);
         } finally {
             releaseSharedLock();
         }
