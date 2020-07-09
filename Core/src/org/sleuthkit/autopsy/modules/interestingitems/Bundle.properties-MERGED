@@ -29,7 +29,7 @@ FilesSetDefsPanel.interesting.newOwConflict=Interesting files set conflict
 FilesSetDefsPanel.interesting.overwriteSetPrompt=Interesting files set "{0}" already exists locally, overwrite?
 # {0} - FilesSet name
 # {1} - New FilesSet name
-FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name "{0}."  Would you like to rename your set to "{1}?"
+FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name "{0}."  Would you like to rename the set to "{1}?"
 FilesSetDefsPanel.Interesting.Title=Global Interesting Items Settings
 FilesSetDefsPanel.kiloBytes=Kilobytes
 FilesSetDefsPanel.loadError=Error loading interesting files sets from file.
