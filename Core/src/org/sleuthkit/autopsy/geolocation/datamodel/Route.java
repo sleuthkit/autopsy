@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.openide.util.NbBundle.Messages;
@@ -58,12 +59,12 @@ public class Route extends GeoPath {
 
         Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap = Waypoint.getAttributesFromArtifactAsMap(artifact);
 
-        createRoute(artifact, attributeMap);
-
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
         timestamp = attribute != null ? attribute.getValueLong() : null;
 
         propertiesList = Waypoint.createGeolocationProperties(attributeMap);
+        
+        createRoute(artifact, attributeMap);
     }
 
     /**
@@ -124,7 +125,14 @@ public class Route extends GeoPath {
                 throw new GeoLocationDataException(String.format("Unable to parse waypoints in TSK_GEO_WAYPOINTS attribute (artifact object ID =%d)", artifact.getId()), ex);
             }
             for (GeoWaypoints.Waypoint waypoint : waypoints) {
-                addToPath(new Waypoint(artifact, label, null, waypoint.getLatitude(), waypoint.getLongitude(), waypoint.getAltitude(), null, attributeMap, this));
+                String name = waypoint.getName();
+                Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> map = attributeMap;
+                if(name != null && !name.isEmpty()) {
+                    BlackboardAttribute pointNameAtt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION, "", name);
+                    map = new HashMap<>(attributeMap);
+                    map.put(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION, pointNameAtt);
+                }
+                addToPath(new Waypoint(artifact, label, timestamp, waypoint.getLatitude(), waypoint.getLongitude(), waypoint.getAltitude(), null, map, this));
             }
         } else {
             Waypoint start = getRouteStartPoint(artifact, attributeMap);
@@ -157,12 +165,14 @@ public class Route extends GeoPath {
         BlackboardAttribute altitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
 
         if (latitude != null && longitude != null) {
-            return new RoutePoint(artifact,
+            return new Waypoint(artifact,
                     Bundle.Route_Start_Label(),
+                    timestamp,
                     latitude.getValueDouble(),
                     longitude.getValueDouble(),
                     altitude != null ? altitude.getValueDouble() : null,
-                    attributeMap);
+                    null,
+                    attributeMap, this);
         } else {
             throw new GeoLocationDataException("Unable to create route start point, invalid longitude and/or latitude");
         }
@@ -190,49 +200,17 @@ public class Route extends GeoPath {
 
         if (latitude != null && longitude != null) {
 
-            return new RoutePoint(artifact,
+            return new Waypoint(artifact,
                     Bundle.Route_End_Label(),
+                    timestamp,
                     latitude.getValueDouble(),
                     longitude.getValueDouble(),
                     altitude != null ? altitude.getValueDouble() : null,
-                    attributeMap);
-        } else {
-            throw new GeoLocationDataException("Unable to create route end point, invalid longitude and/or latitude");
-        }
-    }
-
-    /**
-     * Route waypoint specific implementation of Waypoint.
-     */
-    private class RoutePoint extends Waypoint {
-
-        /**
-         * Construct a RoutePoint
-         *
-         * @param artifact     BlackboardArtifact for this waypoint
-         * @param label        String waypoint label
-         * @param latitude     Double waypoint latitude
-         * @param longitude    Double waypoint longitude
-         *
-         * @param attributeMap A Map of attributes for the given artifact
-         *
-         * @throws GeoLocationDataException
-         */
-        RoutePoint(BlackboardArtifact artifact, String label, Double latitude, Double longitude, Double altitude, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
-            super(artifact,
-                    label,
-                    null,
-                    latitude,
-                    longitude,
-                    altitude,
                     null,
                     attributeMap,
-                    Route.this);
-        }
-
-        @Override
-        public Long getTimestamp() {
-            return ((Route) getParentGeoPath()).getTimestamp();
+                    this);
+        } else {
+            throw new GeoLocationDataException("Unable to create route end point, invalid longitude and/or latitude");
         }
     }
 }

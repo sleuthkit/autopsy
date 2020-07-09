@@ -95,7 +95,8 @@ public class TimeLineModule {
                      */
                     synchronized (controllerLock) {
                         if (controller != null) {
-                            SwingUtilities.invokeLater(controller::shutDownTimeLine);
+                            controller.shutDownTimeLineListeners();
+                            SwingUtilities.invokeLater(controller::shutDownTimeLineGui);
                         }
                         controller = null;
                     }
