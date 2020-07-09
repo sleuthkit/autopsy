@@ -261,7 +261,8 @@ public final class PersonasTopComponent extends TopComponent {
 
     @Messages({
         "PersonasTopComponent_search_exception_Title=Search failure",
-        "PersonasTopComponent_search_exception_msg=Failed to search personas.",})
+        "PersonasTopComponent_search_exception_msg=Failed to search personas.",
+        "PersonasTopComponent_noCR_msg=Central Repository is not enabled.",})
     private void executeSearch() {
         // To prevent downstream failures, only execute search if central repository is enabled
         if (!CentralRepository.isEnabled()) {
