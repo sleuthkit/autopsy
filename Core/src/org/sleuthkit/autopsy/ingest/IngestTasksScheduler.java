@@ -255,11 +255,11 @@ final class IngestTasksScheduler {
      */
     synchronized boolean currentTasksAreCompleted(IngestJobPipeline ingestJobPipeline) {
         long jobId = ingestJobPipeline.getId();
-	
+
         return !(this.dataSourceIngestThreadQueue.hasTasksForJob(jobId)
                 || hasTasksForJob(this.rootFileTaskQueue, jobId)
                 || hasTasksForJob(this.pendingFileTaskQueue, jobId)
-		|| hasTasksForJob(this.streamedTasksQueue, jobId)
+                || hasTasksForJob(this.streamedTasksQueue, jobId)
                 || this.fileIngestThreadsQueue.hasTasksForJob(jobId));
     }
 
@@ -322,40 +322,41 @@ final class IngestTasksScheduler {
      * Files from streaming ingest will be prioritized.
      */
     synchronized private void refillIngestThreadQueue() {
-	try {
-	    takeFromStreamingTaskQueue();
-	    takeFromBatchTasksQueues();
-	} catch (InterruptedException ex) {
-	    IngestTasksScheduler.logger.log(Level.INFO, "Ingest tasks scheduler interrupted while blocked adding a task to the file level ingest task queue", ex);
-	    Thread.currentThread().interrupt();
-	}
+        try {
+            takeFromStreamingTaskQueue();
+            takeFromBatchTasksQueues();
+        } catch (InterruptedException ex) {
+            IngestTasksScheduler.logger.log(Level.INFO, "Ingest tasks scheduler interrupted while blocked adding a task to the file level ingest task queue", ex);
+            Thread.currentThread().interrupt();
+        }
     }
-    
+
     /**
      * Move tasks from the streamedTasksQueue into the fileIngestThreadsQueue.
      * Will attempt to move as many tasks as there are ingest threads.
      */
     synchronized private void takeFromStreamingTaskQueue() throws InterruptedException {
-	/*
-	 * Schedule files from the streamedTasksQueue
-	 */
-	while (fileIngestThreadsQueue.isEmpty()) {
-	    /*
-	     * We will attempt to schedule as many tasks as there are ingest queues. 
-	     */
-	    int taskCount = 0;
-	    while (taskCount < IngestManager.getInstance().getNumberOfFileIngestThreads()) {
-		final FileIngestTask streamingTask = streamedTasksQueue.poll();
-		if (streamingTask == null) {
-		    return; // No streaming tasks are queued right now
-		}
+        /*
+         * Schedule files from the streamedTasksQueue
+         */
+        while (fileIngestThreadsQueue.isEmpty()) {
+            /*
+             * We will attempt to schedule as many tasks as there are ingest
+             * queues.
+             */
+            int taskCount = 0;
+            while (taskCount < IngestManager.getInstance().getNumberOfFileIngestThreads()) {
+                final FileIngestTask streamingTask = streamedTasksQueue.poll();
+                if (streamingTask == null) {
+                    return; // No streaming tasks are queued right now
+                }
 
-		if (shouldEnqueueFileTask(streamingTask)) {
-		    fileIngestThreadsQueue.putLast(streamingTask);
-		    taskCount++;
-		}
-	    }
-	}
+                if (shouldEnqueueFileTask(streamingTask)) {
+                    fileIngestThreadsQueue.putLast(streamingTask);
+                    taskCount++;
+                }
+            }
+        }
     }
 
     /**

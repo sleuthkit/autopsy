@@ -35,14 +35,14 @@ final class FileIngestTask extends IngestTask {
     FileIngestTask(IngestJobPipeline ingestJobPipeline, AbstractFile file) {
         super(ingestJobPipeline);
         this.file = file;
-	    fileId = file.getId();
+        fileId = file.getId();
     }
-    
+
     FileIngestTask(IngestJobPipeline ingestJobPipeline, long fileId) {
         super(ingestJobPipeline);
         this.fileId = fileId;
-    }    
-    
+    }
+
     long getFileId() {
         return fileId;
     }
@@ -50,7 +50,7 @@ final class FileIngestTask extends IngestTask {
     synchronized AbstractFile getFile() throws TskCoreException {
         if (file == null) {
             file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(fileId);
-	    }
+        }
         return file;
     }
 
@@ -74,7 +74,7 @@ final class FileIngestTask extends IngestTask {
         if (thisPipeline != otherPipeline && (thisPipeline == null || !thisPipeline.equals(otherPipeline))) {
             return false;
         }
-	    return (this.fileId == other.fileId);
+        return (this.fileId == other.fileId);
     }
 
     @Override

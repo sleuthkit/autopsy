@@ -70,7 +70,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
             panels.add(progressPanel);
             progressPanelIndex = panels.indexOf(progressPanel);  //Doing programatically because number of panels is variable
             dsPanelIndex = panels.indexOf(dsPanel);
-        ingestPanelIndex = panels.indexOf(ingestConfigPanel);
+            ingestPanelIndex = panels.indexOf(ingestConfigPanel);
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();

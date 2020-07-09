@@ -92,10 +92,10 @@ public final class IngestJob {
      */
     IngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         this.id = IngestJob.nextId.getAndIncrement();
-	this.settings = settings;
+        this.settings = settings;
         this.ingestJobPipelines = new ConcurrentHashMap<>();
-	this.ingestMode = Mode.BATCH;
-	this.dataSources.addAll(dataSources);
+        this.ingestMode = Mode.BATCH;
+        this.dataSources.addAll(dataSources);
         incompleteJobsCount = new AtomicInteger(dataSources.size());
         cancellationReason = CancellationReason.NOT_CANCELLED;
     }
