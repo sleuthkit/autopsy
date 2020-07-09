@@ -27,6 +27,8 @@ import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.AncestorListener;
+import javax.swing.event.AncestorEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
@@ -37,6 +39,7 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -57,6 +60,27 @@ public final class PersonasTopComponent extends TopComponent {
     private List<Persona> currentResults = null;
     private Persona selectedPersona = null;
 
+    
+    /**
+     * Listens for when this component will be rendered and executes a search to
+     * update gui when it is displayed.
+     */
+    private final AncestorListener onAddListener = new AncestorListener() {
+        @Override
+        public void ancestorAdded(AncestorEvent event) {
+            setKeywordSearchEnabled(false);
+        }
+
+        @Override
+        public void ancestorRemoved(AncestorEvent event) {
+        }
+
+        @Override
+        public void ancestorMoved(AncestorEvent event) {
+        }
+    };
+    
+    
     @Messages({
         "PersonasTopComponent_Name=Personas",
         "PersonasTopComponent_delete_exception_Title=Delete failure",
@@ -67,7 +91,6 @@ public final class PersonasTopComponent extends TopComponent {
     public PersonasTopComponent() {
         initComponents();
         setName(Bundle.PersonasTopComponent_Name());
-        executeSearch();
 
         searchBtn.addActionListener(new ActionListener() {
             @Override
@@ -141,6 +164,8 @@ public final class PersonasTopComponent extends TopComponent {
                 new CreatePersonaAccountDialog(detailsPanel);
             }
         });
+        
+        addAncestorListener(onAddListener);
     }
 
     /**
@@ -159,6 +184,18 @@ public final class PersonasTopComponent extends TopComponent {
             }
             createBtn.setEnabled(true);
         }
+    }
+    
+    private void setKeywordSearchEnabled(boolean selected) {
+        if (cbFilterByKeyword.isSelected() != selected) {
+            cbFilterByKeyword.setSelected(selected);
+        }
+        
+        searchField.setEnabled(selected);
+        searchNameRadio.setEnabled(selected);
+        searchAccountRadio.setEnabled(selected);
+        
+        executeSearch();
     }
 
     void setPersona(int index) {
@@ -226,12 +263,27 @@ public final class PersonasTopComponent extends TopComponent {
         "PersonasTopComponent_search_exception_Title=Search failure",
         "PersonasTopComponent_search_exception_msg=Failed to search personas.",})
     private void executeSearch() {
+        // To prevent downstream failures, only execute search if central repository is enabled
+        if (!CentralRepository.isEnabled()) {
+            logger.log(Level.SEVERE, "Central Repository is not enabled, but execute search was called.");
+            JOptionPane.showMessageDialog(this,
+                    Bundle.PersonasTopComponent_search_exception_Title(),
+                    Bundle.PersonasTopComponent_noCR_msg(),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         Collection<Persona> results;
         try {
-            if (searchNameRadio.isSelected()) {
-                results = Persona.getPersonaByName(searchField.getText());
-            } else {
-                results = Persona.getPersonaByAccountIdentifierLike(searchField.getText());
+            if (cbFilterByKeyword.isSelected()) {
+                if (searchNameRadio.isSelected()) {
+                    results = Persona.getPersonaByName(searchField.getText());
+                } else {
+                    results = Persona.getPersonaByAccountIdentifierLike(searchField.getText());
+                }                
+            }
+            else {
+                results = Persona.getPersonaByName("");
             }
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Failed to search personas", ex);
@@ -278,6 +330,7 @@ public final class PersonasTopComponent extends TopComponent {
         deleteBtn = new javax.swing.JButton();
         createButtonSeparator = new javax.swing.JSeparator();
         createBtn = new javax.swing.JButton();
+        cbFilterByKeyword = new javax.swing.JCheckBox();
         detailsScrollPane = new javax.swing.JScrollPane();
         detailsPanel = new org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel();
 
@@ -326,6 +379,13 @@ public final class PersonasTopComponent extends TopComponent {
 
         org.openide.awt.Mnemonics.setLocalizedText(createBtn, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.createBtn.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(cbFilterByKeyword, org.openide.util.NbBundle.getMessage(PersonasTopComponent.class, "PersonasTopComponent.cbFilterByKeyword.text")); // NOI18N
+        cbFilterByKeyword.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbFilterByKeywordActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout searchPanelLayout = new javax.swing.GroupLayout(searchPanel);
         searchPanel.setLayout(searchPanelLayout);
         searchPanelLayout.setHorizontalGroup(
@@ -350,14 +410,16 @@ public final class PersonasTopComponent extends TopComponent {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(editBtn)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(deleteBtn)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                                .addComponent(deleteBtn))
+                            .addComponent(cbFilterByKeyword))
+                        .addGap(0, 50, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         searchPanelLayout.setVerticalGroup(
             searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(searchPanelLayout.createSequentialGroup()
-                .addContainerGap()
+                .addComponent(cbFilterByKeyword)
+                .addGap(1, 1, 1)
                 .addComponent(searchField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -365,7 +427,7 @@ public final class PersonasTopComponent extends TopComponent {
                     .addComponent(searchAccountRadio)
                     .addComponent(searchBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(resultsPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+                .addComponent(resultsPane, javax.swing.GroupLayout.PREFERRED_SIZE, 302, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(searchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(editBtn)
@@ -396,11 +458,16 @@ public final class PersonasTopComponent extends TopComponent {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(introTextScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(mainSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 470, Short.MAX_VALUE))
+                .addComponent(mainSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 489, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void cbFilterByKeywordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbFilterByKeywordActionPerformed
+        setKeywordSearchEnabled(cbFilterByKeyword.isSelected());
+    }//GEN-LAST:event_cbFilterByKeywordActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox cbFilterByKeyword;
     private javax.swing.JButton createAccountBtn;
     private javax.swing.JButton createBtn;
     private javax.swing.JSeparator createButtonSeparator;

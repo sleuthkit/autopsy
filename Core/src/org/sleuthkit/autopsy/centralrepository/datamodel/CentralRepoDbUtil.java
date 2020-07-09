@@ -25,6 +25,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
@@ -259,7 +261,18 @@ public class CentralRepoDbUtil {
      *                                      used
      */
     public static void setUseCentralRepo(boolean centralRepoCheckBoxIsSelected) {
+        closePersonasTopComponent();
         ModuleSettings.setConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY, Boolean.toString(centralRepoCheckBoxIsSelected));
+    }
+    
+    /**
+     * Closes Personas top component if it exists.
+     */
+    private static void closePersonasTopComponent() {
+        TopComponent personasWindow = WindowManager.getDefault().findTopComponent("PersonasTopComponent");
+        if (personasWindow != null) {
+            personasWindow.close();   
+        }
     }
 
     /**
