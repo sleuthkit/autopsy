@@ -52,7 +52,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @RetainLocation("personas")
 @SuppressWarnings("PMD.SingularField")
 public final class PersonasTopComponent extends TopComponent {
-    
+
     private static final long serialVersionUID = 1L;
 
     private static final Logger logger = Logger.getLogger(PersonasTopComponent.class.getName());
@@ -60,7 +60,6 @@ public final class PersonasTopComponent extends TopComponent {
     private List<Persona> currentResults = null;
     private Persona selectedPersona = null;
 
-    
     /**
      * Listens for when this component will be rendered and executes a search to
      * update gui when it is displayed.
@@ -68,7 +67,8 @@ public final class PersonasTopComponent extends TopComponent {
     private final AncestorListener onAddListener = new AncestorListener() {
         @Override
         public void ancestorAdded(AncestorEvent event) {
-            setKeywordSearchEnabled(false);
+            resetSearchControls();
+            setKeywordSearchEnabled(false, true);
         }
 
         @Override
@@ -81,15 +81,13 @@ public final class PersonasTopComponent extends TopComponent {
             //Empty
         }
     };
-    
-    
+
     @Messages({
         "PersonasTopComponent_Name=Personas",
         "PersonasTopComponent_delete_exception_Title=Delete failure",
         "PersonasTopComponent_delete_exception_msg=Failed to delete persona.",
         "PersonasTopComponent_delete_confirmation_Title=Are you sure?",
-        "PersonasTopComponent_delete_confirmation_msg=Are you sure you want to delete this persona?",
-    })
+        "PersonasTopComponent_delete_confirmation_msg=Are you sure you want to delete this persona?",})
     public PersonasTopComponent() {
         initComponents();
         setName(Bundle.PersonasTopComponent_Name());
@@ -116,14 +114,14 @@ public final class PersonasTopComponent extends TopComponent {
                         PersonaDetailsMode.CREATE, selectedPersona, new CreateEditCallbackImpl());
             }
         });
-        
+
         deleteBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 NotifyDescriptor confirm = new NotifyDescriptor.Confirmation(
-                Bundle.PersonasTopComponent_delete_confirmation_msg(),
-                Bundle.PersonasTopComponent_delete_confirmation_Title(),
-                NotifyDescriptor.YES_NO_OPTION);
+                        Bundle.PersonasTopComponent_delete_confirmation_msg(),
+                        Bundle.PersonasTopComponent_delete_confirmation_Title(),
+                        NotifyDescriptor.YES_NO_OPTION);
                 DialogDisplayer.getDefault().notify(confirm);
                 if (confirm.getValue().equals(NotifyDescriptor.YES_OPTION)) {
                     try {
@@ -133,9 +131,9 @@ public final class PersonasTopComponent extends TopComponent {
                     } catch (CentralRepoException ex) {
                         logger.log(Level.SEVERE, "Failed to delete persona: " + selectedPersona.getName(), ex);
                         JOptionPane.showMessageDialog(PersonasTopComponent.this,
-                        Bundle.PersonasTopComponent_delete_exception_msg(),
-                        Bundle.PersonasTopComponent_delete_exception_Title(),
-                        JOptionPane.ERROR_MESSAGE);
+                                Bundle.PersonasTopComponent_delete_exception_msg(),
+                                Bundle.PersonasTopComponent_delete_exception_Title(),
+                                JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     executeSearch();
@@ -151,22 +149,22 @@ public final class PersonasTopComponent extends TopComponent {
                 handleSelectionChange(e);
             }
         });
-        
+
         searchNameRadio.addActionListener((ActionEvent e) -> {
             searchField.setText("");
         });
-        
+
         searchAccountRadio.addActionListener((ActionEvent e) -> {
             searchField.setText("");
         });
-        
+
         createAccountBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new CreatePersonaAccountDialog(detailsPanel);
             }
         });
-        
+
         addAncestorListener(onAddListener);
     }
 
@@ -187,16 +185,32 @@ public final class PersonasTopComponent extends TopComponent {
             createBtn.setEnabled(true);
         }
     }
-    
-    private void setKeywordSearchEnabled(boolean selected) {
-        if (cbFilterByKeyword.isSelected() != selected) {
+
+    /**
+     * Resets search controls to default state.
+     */
+    private void resetSearchControls() {
+        searchField.setText("");
+        searchNameRadio.setSelected(true);
+        searchAccountRadio.setSelected(false);
+    }
+
+    /**
+     * Sets up the GUI for appropriate state for keyword search enabled state.
+     *
+     * @param selected    Whether or not keyword search is enabled.
+     * @param setFilterCb Whether or not the filter checkbox should be
+     *                    manipulated as a part of this change.
+     */
+    private void setKeywordSearchEnabled(boolean selected, boolean setFilterCb) {
+        if (setFilterCb && cbFilterByKeyword.isSelected() != selected) {
             cbFilterByKeyword.setSelected(selected);
         }
-        
+
         searchField.setEnabled(selected);
         searchNameRadio.setEnabled(selected);
         searchAccountRadio.setEnabled(selected);
-        
+
         executeSearch();
     }
 
@@ -283,9 +297,8 @@ public final class PersonasTopComponent extends TopComponent {
                     results = Persona.getPersonaByName(searchField.getText());
                 } else {
                     results = Persona.getPersonaByAccountIdentifierLike(searchField.getText());
-                }                
-            }
-            else {
+                }
+            } else {
                 results = Persona.getPersonaByName("");
             }
         } catch (CentralRepoException ex) {
@@ -466,7 +479,7 @@ public final class PersonasTopComponent extends TopComponent {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cbFilterByKeywordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbFilterByKeywordActionPerformed
-        setKeywordSearchEnabled(cbFilterByKeyword.isSelected());
+        setKeywordSearchEnabled(cbFilterByKeyword.isSelected(), false);
     }//GEN-LAST:event_cbFilterByKeywordActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
