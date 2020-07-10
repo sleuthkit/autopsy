@@ -452,7 +452,7 @@ public class Persona {
     }
     
     /**
-     * Escapes string for use with like statements removing '%' and '_'.
+     * Escapes string for use with like statements removing '%', '_', '\'.
      * @param initial The initial string.
      * @return The resulting string.
      */
@@ -461,8 +461,9 @@ public class Persona {
             return null;
         
         return initial
-            .replace("%", "")
-            .replace("_", "");
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+            .replace("\\", "\\\\");
     }
 
     /**
@@ -492,8 +493,9 @@ public class Persona {
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
 
         List<Object> params = new ArrayList<>();
-        params.add("%" + getLikeEscape(partialName) + "%"); // partial substring search
         params.add(PersonaStatus.DELETED.getStatusId());
+        params.add("%" + getLikeEscape(partialName) + "%"); // partial substring search
+
 
         getCRInstance().executeQuery(queryClause, params, queryCallback);
         return queryCallback.getPersonas();
