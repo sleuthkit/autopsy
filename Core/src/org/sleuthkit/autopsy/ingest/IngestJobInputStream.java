@@ -38,7 +38,7 @@ class IngestJobInputStream implements IngestStream {
      */
     IngestJobInputStream(IngestJob ingestJob) {
         this.ingestJob = ingestJob;
-        ingestJob.start();
+        IngestManager.getInstance().startIngestJob(ingestJob);
     }
 
     @Override
