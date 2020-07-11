@@ -23,6 +23,8 @@ package org.sleuthkit.autopsy.ingest;
  */
 public class IngestStreamClosedException extends Exception {
 
+    private static final long serialVersionUID = 1L;
+    
     /**
      * Constructs and instance of the custom exception class for the
      * IngestStream.

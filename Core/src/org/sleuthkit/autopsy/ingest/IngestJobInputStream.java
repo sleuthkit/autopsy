@@ -27,7 +27,7 @@ import java.util.List;
 class IngestJobInputStream implements IngestStream {
 
     private final IngestJob ingestJob;
-    private boolean isClosed = false;
+    private boolean closed = false;
     private boolean isStopped = false;
 
     /**
@@ -43,7 +43,7 @@ class IngestJobInputStream implements IngestStream {
 
     @Override
     public synchronized void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException {
-        if (isClosed) {
+        if (closed) {
             throw new IngestStreamClosedException("Can not add files - ingest stream is closed");
         }
         ingestJob.addStreamingIngestFiles(fileObjectIds);
@@ -51,18 +51,18 @@ class IngestJobInputStream implements IngestStream {
 
     @Override
     public synchronized void close() {
-        isClosed = true;
+        closed = true;
         ingestJob.processStreamingIngestDataSource();
     }
 
     @Override
     public synchronized boolean isClosed() {
-        return isClosed;
+        return closed;
     }
 
     @Override
     public synchronized void stop() {
-        this.isClosed = true;
+        this.closed = true;
         this.isStopped = true;
 
         ingestJob.cancel(IngestJob.CancellationReason.USER_CANCELLED);
