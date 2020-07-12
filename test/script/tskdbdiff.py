@@ -208,10 +208,12 @@ class TskDbDiff(object):
             while (row != None):
 
                 # File Name and artifact type
+                # Remove parent object ID from Unalloc file name
+                normalizedName = re.sub('^Unalloc_[0-9]+_', 'Unalloc_', row["name"])
                 if(row["parent_path"] != None):
-                    database_log.write(row["parent_path"] + row["name"] + ' <artifact type="' + row["display_name"] + '" > ')
+                    database_log.write(row["parent_path"] + normalizedName + ' <artifact type="' + row["display_name"] + '" > ')
                 else:
-                    database_log.write(row["name"] + ' <artifact type="' + row["display_name"] + '" > ')
+                    database_log.write(normalizedName + ' <artifact type="' + row["display_name"] + '" > ')
 
                 if isMultiUser:
                     attribute_cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
