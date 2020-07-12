@@ -429,6 +429,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     files_index = line.find('INSERT INTO "tsk_files"') > -1 or line.find('INSERT INTO tsk_files ') > -1
     path_index = line.find('INSERT INTO "tsk_files_path"') > -1 or line.find('INSERT INTO tsk_files_path ') > -1
     object_index = line.find('INSERT INTO "tsk_objects"') > -1 or line.find('INSERT INTO tsk_objects ') > -1
+    vs_parts_index = line.find('INSERT INTO "tsk_vs_parts"') > -1 or line.find('INSERT INTO tsk_vs_parts ') > -1
     report_index = line.find('INSERT INTO "reports"') > -1 or line.find('INSERT INTO reports ') > -1
     layout_index = line.find('INSERT INTO "tsk_file_layout"') > -1 or line.find('INSERT INTO tsk_file_layout ') > -1
     data_source_info_index = line.find('INSERT INTO "data_source_info"') > -1 or line.find('INSERT INTO data_source_info ') > -1
@@ -465,6 +466,10 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     if files_index:
         newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
         return newLine
+    # remove object ID
+    elif vs_parts_index:
+        newLine = ('INSERT INTO "tsk_vs_parts" VALUES(' + ', '.join(fields_list[1:]) + ');') 
+        return newLine
     # remove group ID
     elif ig_groups_index:
         newLine = ('INSERT INTO "image_gallery_groups" VALUES(' + ', '.join(fields_list[1:]) + ');') 
@@ -498,7 +503,8 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     elif layout_index:
         obj_id = fields_list[0]
         path= files_table[int(obj_id)]
-        newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', ' + ', '.join(fields_list[1:]) + ');') 
+        newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', ' + ', '.join(fields_list[1:]) + ');')
+        newLine = re.sub('Unalloc_[0-9]+_', 'Unalloc_', newLine)
         return newLine
     # remove object ID
     elif object_index:
@@ -559,6 +565,8 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
                 parent_path = parent_path[parent_path.find('ModuleOutput'):]
 
         if path and parent_path:
+            path = re.sub('Unalloc_[0-9]+_', 'Unalloc_', path)
+            parent_path = re.sub('Unalloc_[0-9]+_', 'Unalloc_', parent_path)
             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
         else:
             return line 
