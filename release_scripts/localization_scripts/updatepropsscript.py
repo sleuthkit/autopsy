@@ -5,10 +5,13 @@ This script requires the python libraries: jproperties.  It also requires Python
 from typing import List, Dict, Tuple, Callable, Iterator
 import sys
 import os
-from propsutil import set_entry_dict, get_entry_dict
+
+from langpropsutil import set_commit_for_language
+from propsutil import set_entry_dict, get_entry_dict, get_lang_bundle_name
 from csvutil import csv_to_records
 from propentry import PropEntry
 import argparse
+import pathlib
 
 
 def write_prop_entries(entries: Iterator[PropEntry], repo_path: str):
@@ -184,32 +187,36 @@ def main():
     parser = argparse.ArgumentParser(description='Updates properties files in the autopsy git repo.')
 
     parser.add_argument(dest='csv_file', type=str, help='The path to the csv file.')
-    parser.add_argument(dest='repo_path', type=str, help='The path to the repo.')
-    parser.add_argument('-p', '--path_idx', dest='path_idx', action='store', type=int, default=0, required=False, 
+
+    parser.add_argument('-r', '--repo', dest='repo_path', type=str, required=False,
+                        help='The path to the repo.  If not specified, path of script is used.')
+    parser.add_argument('-p', '--path-idx', dest='path_idx', action='store', type=int, default=0, required=False,
                         help='The column index in the csv file providing the relative path to the properties file.')
-    parser.add_argument('-k', '--key_idx', dest='key_idx', action='store', type=int, default=1, required=False, 
+    parser.add_argument('-k', '--key-idx', dest='key_idx', action='store', type=int, default=1, required=False,
                         help='The column index in the csv file providing the key within the properties file.')
-    parser.add_argument('-v', '--value_idx', dest='value_idx', action='store', type=int, default=2, required=False, 
+    parser.add_argument('-v', '--value-idx', dest='value_idx', action='store', type=int, default=2, required=False,
                         help='The column index in the csv file providing the value within the properties file.')
-    parser.add_argument('-d', '--should_delete_idx', dest='should_delete_idx', action='store', type=int, default=None,
+    parser.add_argument('-d', '--should-delete-idx', dest='should_delete_idx', action='store', type=int, default=None,
                         required=False, help='The column index in the csv file providing whether or not the file ' +
                                              'should be deleted.  Any non-blank content will be treated as True.')
-    parser.add_argument('-c', '--commit_idx', dest='latest_commit_idx', action='store', type=int, default=3,
+    parser.add_argument('-c', '--commit-idx', dest='latest_commit_idx', action='store', type=int, default=3,
                         required=False, help='The column index in the csv file providing the commit for which this ' +
                                              'update applies. The commit should be located in the header row.  ')
-    parser.add_argument('-f', '--file_rename', dest='file_rename', action='store', type=str, default=None,
+    parser.add_argument('-f', '--file-rename', dest='file_rename', action='store', type=str, default=None,
                         required=False, help='If specified, the properties file will be renamed to the argument' +
                                              ' preserving the specified relative path.')
-    parser.add_argument('--has_no_header', dest='has_no_header', action='store_true', default=False, required=False, 
-                        help='Specify whether or not there is a header within the csv file.')
-    parser.add_argument('-o', '--should_overwrite', dest='should_overwrite', action='store_true', default=False,
+    parser.add_argument('-z', '--has-no-header', dest='has_no_header', action='store_true', default=False,
+                        required=False, help='Specify whether or not there is a header within the csv file.')
+    parser.add_argument('-o', '--should-overwrite', dest='should_overwrite', action='store_true', default=False,
                         required=False, help="Whether or not to overwrite the previously existing properties files" +
                                              " ignoring previously existing values.")
-
+    parser.add_argument('-l', '--language', dest='language', type=str, default='HEAD', required=False,
+                        help='Specify the language in order to update the last updated properties file and rename ' +
+                             'files within directories.  This flag overrides the file-rename flag.')
 
     args = parser.parse_args()
 
-    repo_path = args.repo_path
+    repo_path = args.repo_path if args.repo_path is not None else str(pathlib.Path(__file__).parent.absolute())
     input_path = args.csv_file
     path_idx = args.path_idx
     key_idx = args.key_idx
@@ -217,25 +224,36 @@ def main():
     has_header = not args.has_no_header
     overwrite = args.should_overwrite
 
+    # means of determining if a key should be deleted from a file
     if args.should_delete_idx is None:
         should_delete_converter = None
     else:
         def should_delete_converter(row_items: List[str]):
             return get_should_deleted(row_items, args.should_delete_idx)
 
-    if args.file_rename is None:
-        path_converter = None
-    else:
+    # provides the means of renaming the bundle file
+    if args.language is not None:
+        def path_converter(orig_path: str):
+            return get_new_rel_path(orig_path, get_lang_bundle_name(args.language))
+    elif args.file_rename is not None:
         def path_converter(orig_path: str):
             return get_new_rel_path(orig_path, args.file_rename)
+    else:
+        path_converter = None
 
-    all_items = list(csv_to_records(input_path, has_header))
+    # retrieve records from csv
+    all_items, header = list(csv_to_records(input_path, has_header))
     prop_entries = get_prop_entries(all_items, path_idx, key_idx, value_idx, should_delete_converter, path_converter)
 
+    # write to files
     if overwrite:
         write_prop_entries(prop_entries, repo_path)
     else:
         update_prop_entries(prop_entries, repo_path)
+
+    # update the language last update if applicable
+    if args.language is not None and header is not None and len(header) > args.latest_commit_idx >= 0:
+        set_commit_for_language(args.language, header[args.latest_commit_idx])
 
     sys.exit(0)
 

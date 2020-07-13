@@ -8,6 +8,7 @@ from gitutil import get_property_files_diff, get_commit_id
 from itemchange import ItemChange
 from csvutil import records_to_csv
 import argparse
+import pathlib
 
 from langpropsutil import get_commit_for_language, LANG_FILENAME
 
@@ -56,7 +57,7 @@ def main():
                              'Japanese.  This flag overrides the first-commit flag.')
 
     args = parser.parse_args()
-    repo_path = args.repo_path
+    repo_path = args.repo_path if args.repo_path is not None else str(pathlib.Path(__file__).parent.absolute())
     output_path = args.output_path
     commit_1_id = args.commit_1_id
     if args.language is not None:

@@ -10,6 +10,18 @@ from os import path
 DEFAULT_PROPS_EXTENSION = 'properties-MERGED'
 
 
+def get_lang_bundle_name(language: str) -> str:
+    """
+    Returns the bundle name for the specific language identifier provided.
+    Args:
+        language: The language identifier (i.e. 'ja' for Japanese)
+
+    Returns:
+        The bundle name
+    """
+    return 'Bundle_{lang}.properties'.format(lang=language)
+
+
 def get_entry_dict(file_contents: Union[str, IO]) -> Dict[str, str]:
     """Retrieves a dictionary mapping the properties represented in the string.
 
