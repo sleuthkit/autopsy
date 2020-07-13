@@ -196,8 +196,7 @@ def main():
                                              'should be deleted.  Any non-blank content will be treated as True.')
     parser.add_argument('-c', '--commit_idx', dest='latest_commit_idx', action='store', type=int, default=3,
                         required=False, help='The column index in the csv file providing the commit for which this ' +
-                                             'update applies. The commit should be located in the header row'
-                                             )
+                                             'update applies. The commit should be located in the header row.  ')
     parser.add_argument('-f', '--file_rename', dest='file_rename', action='store', type=str, default=None,
                         required=False, help='If specified, the properties file will be renamed to the argument' +
                                              ' preserving the specified relative path.')
