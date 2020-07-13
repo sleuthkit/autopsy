@@ -321,4 +321,13 @@
         
         <antcall target="build-installer-${os.family}" />
     </target>
+    
+     <target name="release" depends="suite.release">
+        <chmod perm="a+x">
+            <fileset dir="${cluster}/markmckinnon" casesensitive="no" id="mm">
+                <include name="*_linux"/>
+                <include name="*_macos"/>
+            </fileset>
+        </chmod>
+    </target>
 </project>
