@@ -480,10 +480,11 @@ sub parseDeviceEntry {
 
 # Version 3 = XP    
     if ($ver == 3) {
-    	my $guid1 = parseGUID(substr($data,$ofs + 6,16));
+        if (length($data) > ($ofs + 6)) {
+    	    my $guid1 = parseGUID(substr($data,$ofs + 6,16));
 			my $guid2 = parseGUID(substr($data,$ofs + 6 + 16,16));
 			$item{name} = $guid1."\\".$guid2
-    
+        }
     }
 # Version 8 = Win7    
     elsif ($ver == 8) {

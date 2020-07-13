@@ -35,6 +35,7 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
@@ -97,7 +98,7 @@ public class ExtractActionHelper {
 
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             fileExtractionTasks.add(new FileExtractionTask(selectedFile, fileChooser.getSelectedFile()));
-            runExtractionTasks(event, fileExtractionTasks);
+            runExtractionTasks(event, fileExtractionTasks, fileChooser.getSelectedFile().getName());
         }
     }
 
@@ -147,7 +148,7 @@ public class ExtractActionHelper {
                 // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
                 fileExtractionTasks.add(new FileExtractionTask(source, new File(destinationFolder, source.getId() + "-" + FileUtil.escapeFileName(source.getName()))));
             }
-            runExtractionTasks(event, fileExtractionTasks);
+            runExtractionTasks(event, fileExtractionTasks, destinationFolder.getName());
         }
     }
 
@@ -196,8 +197,10 @@ public class ExtractActionHelper {
      * @param event               ActionEvent whose source will be used for
      *                            centering popup dialogs.
      * @param fileExtractionTasks List of file extraction tasks.
+     * @param destName            Name of the destination used for progress
+     *                            messages.
      */
-    private void runExtractionTasks(ActionEvent event, List<FileExtractionTask> fileExtractionTasks) {
+    private void runExtractionTasks(ActionEvent event, List<FileExtractionTask> fileExtractionTasks, String destName) {
 
         // verify all of the sources and destinations are OK
         for (Iterator<FileExtractionTask> it = fileExtractionTasks.iterator(); it.hasNext();) {
@@ -231,7 +234,7 @@ public class ExtractActionHelper {
         // launch a thread to do the work
         if (!fileExtractionTasks.isEmpty()) {
             try {
-                FileExtracter extracter = new FileExtracter(fileExtractionTasks);
+                FileExtracter extracter = new FileExtracter(fileExtractionTasks, destName);
                 extracter.execute();
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Unable to start background file extraction thread", ex); //NON-NLS
@@ -268,6 +271,7 @@ public class ExtractActionHelper {
     private class FileExtracter extends SwingWorker<Object, Void> {
 
         private final Logger logger = Logger.getLogger(FileExtracter.class.getName());
+        private final String destName;
         private ProgressHandle progress;
         private final List<FileExtractionTask> extractionTasks;
 
@@ -275,19 +279,28 @@ public class ExtractActionHelper {
          * Create an instance of the FileExtracter.
          *
          * @param extractionTasks List of file extraction tasks.
+         * @param destName        Name of the destination used for progress
+         *                        messages.
          */
-        FileExtracter(List<FileExtractionTask> extractionTasks) {
+        FileExtracter(List<FileExtractionTask> extractionTasks, String destName) {
             this.extractionTasks = extractionTasks;
+            this.destName = destName;
         }
 
         @Override
+        @Messages({
+            "# {0} - outputFolderName",
+            "ExtractActionHelper.progress.extracting=Extracting to {0}",
+            "# {0} - fileName",
+            "ExtractActionHelper.progress.fileExtracting=Extracting file: {0}"
+        })
         protected Object doInBackground() throws Exception {
             if (extractionTasks.isEmpty()) {
                 return null;
             }
 
             // Setup progress bar.
-            final String displayName = NbBundle.getMessage(this.getClass(), "ExtractActionHelper.progress.extracting");
+            final String displayName = Bundle.ExtractActionHelper_progress_extracting(destName);
             progress = ProgressHandle.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
@@ -301,15 +314,10 @@ public class ExtractActionHelper {
             progress.start();
             progress.switchToIndeterminate();
 
-            /*
-             * @@@ Add back in -> Causes exceptions int workUnits = 0; for
-             * (FileExtractionTask task : extractionTasks) { workUnits +=
-             * calculateProgressBarWorkUnits(task.source); }
-             * progress.switchToDeterminate(workUnits);
-             */
             // Do the extraction tasks.
             for (FileExtractionTask task : this.extractionTasks) {
-                // @@@ Note, we are no longer passing in progress
+                progress.progress(Bundle.ExtractActionHelper_progress_fileExtracting(task.destination.getName()));
+
                 ContentUtils.ExtractFscContentVisitor.extract(task.source, task.destination, null, this);
             }
 

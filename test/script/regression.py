@@ -1074,7 +1074,7 @@ class TestResultsDiffer(object):
             # Ensure gold is passed before output 
             (subprocess.check_output(["diff", '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
                                       'HTML Report Generated on \|Autopsy Report for case \|Case:\|Case Number:'
-                                      '\|Examiner:', gold_report_path, output_report_path]))
+                                      '\|Examiner:\|Unalloc_', gold_report_path, output_report_path]))
             print_report("", "REPORT COMPARISON", "The test html reports matched the gold reports")
             return True
         except subprocess.CalledProcessError as e:

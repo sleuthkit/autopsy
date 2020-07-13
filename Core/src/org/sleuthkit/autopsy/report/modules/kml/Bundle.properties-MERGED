@@ -2,6 +2,7 @@ KMLReport.bookmarkError=Could not extract Bookmark information.
 # {0} - filePath
 KMLReport.errorGeneratingReport=Error adding {0} to case as a report.
 KMLReport.exifPhotoError=Could not extract photos with EXIF metadata.
+KMLReport.failedToCompleteReport=Failed to complete report.
 KMLReport.gpsBookmarkError=Could not get GPS Bookmarks from database.
 KMLReport.gpsRouteDatabaseError=Could not get GPS Routes from database.
 KMLReport.gpsRouteError=Could not extract GPS Route information.
@@ -9,6 +10,7 @@ KMLReport.gpsSearchDatabaseError=Could not get GPS Searches from database.
 KMLReport.kmlFileWriteError=Could not write the KML file.
 KMLReport.locationDatabaseError=Could not get GPS Last Known Location from database.
 KMLReport.locationError=Could not extract Last Known Location information.
+KMLReport.partialFailure=There was an error creating the report.  Some items were not exported.
 KMLReport.stylesheetError=Error placing KML stylesheet. The .KML file will not function properly.
 KMLReport.trackpointDatabaseError=Could not get GPS Trackpoints from database.
 KMLReport.trackpointError=Could not extract Trackpoint information.

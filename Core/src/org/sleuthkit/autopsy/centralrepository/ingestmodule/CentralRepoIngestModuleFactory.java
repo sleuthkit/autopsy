@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.ingest.NoIngestModuleIngestJobSettings;
  * Factory for Central Repository ingest modules
  */
 @ServiceProvider(service = org.sleuthkit.autopsy.ingest.IngestModuleFactory.class)
-@NbBundle.Messages({"CentralRepoIngestModuleFactory.ingestmodule.name=Correlation Engine",
+@NbBundle.Messages({"CentralRepoIngestModuleFactory.ingestmodule.name=Central Repository",
                     "CentralRepoIngestModuleFactory.ingestmodule.desc=Saves properties to the central repository for later correlation"})
 public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
 

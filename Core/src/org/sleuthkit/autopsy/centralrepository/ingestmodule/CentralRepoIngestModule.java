@@ -85,7 +85,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private final boolean createCorrelationProperties;
 
     /**
-     * Instantiate the Correlation Engine ingest module.
+     * Instantiate the Central Repository ingest module.
      *
      * @param settings The ingest settings for the module instance.
      */
@@ -147,7 +147,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
          */
         if (abstractFile.getKnown() != TskData.FileKnown.KNOWN && flagTaggedNotableItems) {
             try {
-                TimingMetric timingMetric = HealthMonitor.getTimingMetric("Correlation Engine: Notable artifact query");
+                TimingMetric timingMetric = HealthMonitor.getTimingMetric("Central Repository: Notable artifact query");
                 List<String> caseDisplayNamesList = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
                 HealthMonitor.submitTimingMetric(timingMetric);
                 if (!caseDisplayNamesList.isEmpty()) {
@@ -220,7 +220,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     // see ArtifactManagerTimeTester for details
     @Messages({
         "CentralRepoIngestModule.notfyBubble.title=Central Repository Not Initialized",
-        "CentralRepoIngestModule.errorMessage.isNotEnabled=Central repository settings are not initialized, cannot run Correlation Engine ingest module."
+        "CentralRepoIngestModule.errorMessage.isNotEnabled=Central repository settings are not initialized, cannot run Central Repository ingest module."
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
@@ -235,7 +235,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
          * posited.
          *
          * Note: Flagging cannot be disabled if any other instances of the
-         * Correlation Engine module are running. This restriction is to prevent
+         * Central Repository module are running. This restriction is to prevent
          * missing results in the case where the first module is flagging
          * notable items, and the proceeding module (with flagging disabled)
          * causes the first to stop flagging.
@@ -276,7 +276,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
         // Don't allow sqlite central repo databases to be used for multi user cases
         if ((autopsyCase.getCaseType() == Case.CaseType.MULTI_USER_CASE)
                 && (CentralRepoDbManager.getSavedDbChoice().getDbPlatform() == CentralRepoPlatforms.SQLITE)) {
-            logger.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite central repository.");
+            logger.log(Level.SEVERE, "Cannot run Central Repository ingest module on a multi-user case with a SQLite central repository.");
             throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }
         jobId = context.getJobId();

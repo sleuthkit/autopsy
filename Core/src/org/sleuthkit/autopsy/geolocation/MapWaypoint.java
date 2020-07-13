@@ -62,6 +62,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Waypoint interface.
  *
  */
+@SuppressWarnings("deprecation")
 final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewer.Waypoint {
 
     private static final Logger logger = Logger.getLogger(MapWaypoint.class.getName());
@@ -77,7 +78,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID(), Color.GREEN);
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID(), Color.ORANGE);
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID(), Color.ORANGE);
-        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID(), Color.CYAN);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID(), Color.MAGENTA);
     }
 
     private final Waypoint dataModelWaypoint;

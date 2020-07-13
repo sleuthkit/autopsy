@@ -304,7 +304,7 @@ public class CentralRepoPersonasTest  extends TestCase {
             Assert.assertTrue(Instant.now().toEpochMilli() - dogPersona.getCreatedDate() < 600 * 1000);
 
             // Step 3. Add Persona Aliases
-            PersonaAlias alias1 = dogPersona.addAlias("Good Boy", "Coz he's is the best dog ever", Persona.Confidence.MEDIUM);
+            PersonaAlias alias1 = dogPersona.addAlias("Good Boy", "Coz he's is the best dog ever", Persona.Confidence.MODERATE);
             PersonaAlias alias2 = dogPersona.addAlias("WoofWoof", "How many dumb comments can I come up with?", Persona.Confidence.LOW);
 
             Assert.assertNotNull(alias1);
@@ -320,7 +320,7 @@ public class CentralRepoPersonasTest  extends TestCase {
             
             
             //Step 4: Add Persona metadata
-            PersonaMetadata metadata1 = dogPersona.addMetadata("Color", "Black", "He's got thick black hair.", Persona.Confidence.MEDIUM);
+            PersonaMetadata metadata1 = dogPersona.addMetadata("Color", "Black", "He's got thick black hair.", Persona.Confidence.MODERATE);
             PersonaMetadata metadata2 = dogPersona.addMetadata("Gender", "Male", "Because...", Persona.Confidence.LOW);
 
             Assert.assertNotNull(metadata1);
@@ -341,7 +341,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                     .getOrCreateAccount(facebookAccountType, FACEBOOK_ID_CATDOG);
             
             // Add an account to persona
-            dogPersona.addAccountToPersona(catdogFBAccount,  "Looks like dog, barks like a dog...",  Persona.Confidence.MEDIUM);
+            dogPersona.addAccount(catdogFBAccount,  "Looks like dog, barks like a dog...",  Persona.Confidence.MODERATE);
             
              // Get all acounts for the persona...
             Collection<PersonaAccount> personaAccounts = dogPersona.getPersonaAccounts();
@@ -377,6 +377,11 @@ public class CentralRepoPersonasTest  extends TestCase {
                 Assert.assertFalse(pa.getPersona().getName().isEmpty());
             }
             
+            // Remove the account from the catPersona
+            catPersona.removeAccount(catPersona.getPersonaAccounts().iterator().next());
+            
+            // Confirm the account was removed
+            Assert.assertTrue(catPersona.getPersonaAccounts().isEmpty());
             
         } catch (CentralRepoException ex) {
              Assert.fail("Didn't expect an exception here. Exception: " + ex);
@@ -404,14 +409,14 @@ public class CentralRepoPersonasTest  extends TestCase {
                 
 
             // Step 3. Add Persona Aliases
-            PersonaAlias alias1 = dogPersona.addAlias("Good Boy", "Coz he's is the best dog ever", Persona.Confidence.MEDIUM);
+            PersonaAlias alias1 = dogPersona.addAlias("Good Boy", "Coz he's is the best dog ever", Persona.Confidence.MODERATE);
             PersonaAlias alias2 = dogPersona.addAlias("WoofWoof", "How many dumb comments can I come up with?", Persona.Confidence.LOW);
 
             Assert.assertNotNull(alias1);
             Assert.assertNotNull(alias2);
 
             //Step 4: Add Persona metadata
-            PersonaMetadata metadata1 = dogPersona.addMetadata("Color", "Black", "He's got thick black hair.", Persona.Confidence.MEDIUM);
+            PersonaMetadata metadata1 = dogPersona.addMetadata("Color", "Black", "He's got thick black hair.", Persona.Confidence.MODERATE);
             PersonaMetadata metadata2 = dogPersona.addMetadata("Gender", "Male", "Because...", Persona.Confidence.LOW);
 
             Assert.assertNotNull(metadata1);
@@ -439,7 +444,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                     .getOrCreateAccount(facebookAccountType, FACEBOOK_ID_CATDOG);
             
             // Add an account to persona
-            dogPersona.addAccountToPersona(catdogFBAccount,  "Looks like dog, barks like a dog...",  Persona.Confidence.MEDIUM);
+            dogPersona.addAccount(catdogFBAccount,  "Looks like dog, barks like a dog...",  Persona.Confidence.MODERATE);
             
             
             // Step 6: Create a Second Persona
@@ -451,12 +456,12 @@ public class CentralRepoPersonasTest  extends TestCase {
             
           
               // Add Persona Aliases
-            PersonaAlias catAlias1 = catPersona.addAlias("CutieKitty", "Because", Persona.Confidence.MEDIUM);
+            PersonaAlias catAlias1 = catPersona.addAlias("CutieKitty", "Because", Persona.Confidence.MODERATE);
             Assert.assertNotNull(catAlias1);
           
             
             //Step 4: Add Persona metadata
-            PersonaMetadata catMetadata1 = catPersona.addMetadata("Color", "White", "White as snow.", Persona.Confidence.MEDIUM);
+            PersonaMetadata catMetadata1 = catPersona.addMetadata("Color", "White", "White as snow.", Persona.Confidence.MODERATE);
             PersonaMetadata catMetadata2 = catPersona.addMetadata("Breed", "Persian", "Just Because...", Persona.Confidence.LOW);
             PersonaMetadata catMetadata3 = catPersona.addMetadata("Legs", "Four", "I counted", Persona.Confidence.HIGH);
               
@@ -481,6 +486,18 @@ public class CentralRepoPersonasTest  extends TestCase {
                 Assert.assertFalse(md.getValue().isEmpty());
             }
             
+            // delete the cat alias from catPersona
+            catPersona.removeAlias(catAlias1);
+            
+            // confirm catPersona no longer has any aliases
+            Assert.assertTrue(catPersona.getAliases().isEmpty());
+            
+            // delete catMetadata2 from catPersona
+            catPersona.removeMetadata(catMetadata2);
+            
+            // confirm catPersona no longer has catMetadata2
+            Assert.assertEquals(2, catPersona.getMetadata().size());
+            Assert.assertFalse(catPersona.getMetadata().contains(catMetadata2));
             
             // Create a 3rd account and persona
               CentralRepoAccount holmesSkypeAccount = CentralRepository.getInstance()
@@ -601,7 +618,7 @@ public class CentralRepoPersonasTest  extends TestCase {
         
         CentralRepository.getInstance().addArtifactInstance(dogEmailAcctInstance);
         
-        PersonaAccount pa3 = dogPersona.addAccountToPersona(dogEmailAccount,  "Thats definitely a dog email account",  Persona.Confidence.MEDIUM);
+        PersonaAccount pa3 = dogPersona.addAccount(dogEmailAccount,  "Thats definitely a dog email account",  Persona.Confidence.MODERATE);
         Assert.assertNotNull(pa3);
         Assert.assertTrue(pa3.getPersona().getName().equalsIgnoreCase(DOG_PERSONA_NAME));
         
@@ -634,7 +651,7 @@ public class CentralRepoPersonasTest  extends TestCase {
         CentralRepository.getInstance().addArtifactInstance(catWhatsAppAccountInstance2);
         
         
-        PersonaAccount pa4 = catPersona.addAccountToPersona(catWhatsAppAccount,  "The cat has a WhatsApp account",  Persona.Confidence.MEDIUM);
+        PersonaAccount pa4 = catPersona.addAccount(catWhatsAppAccount,  "The cat has a WhatsApp account",  Persona.Confidence.MODERATE);
         Assert.assertNotNull(pa4);
         Assert.assertTrue(pa4.getPersona().getName().equalsIgnoreCase(CAT_PERSONA_NAME));
         
@@ -801,7 +818,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                         Persona.PersonaStatus.ACTIVE, emailAccount1, "The person lost his name", Persona.Confidence.LOW);
                 
                 // Verify Persona has a default name
-                Assert.assertEquals("Unknown", persona.getName());
+                Assert.assertEquals(Persona.getDefaultName(), persona.getName());
                 
             } catch (CentralRepoException ex) {
                 Assert.fail("No name persona test failed. Exception: " + ex);
@@ -1042,9 +1059,16 @@ public class CentralRepoPersonasTest  extends TestCase {
                 }
                 
                 // Get account with exact match 
-                Collection<CentralRepoAccount> accountsWithKnownIdentifier = CentralRepoAccount.getAccountsWithIdentifier(CAT_WHATSAPP_ID);
+                Collection<CentralRepoAccount> accountsWithKnownIdentifier = CentralRepoAccount.getAccountsWithIdentifier("joeexotic555@yahoo.com");
                 Assert.assertEquals(1, accountsWithKnownIdentifier.size());
                 for (CentralRepoAccount acc: accountsWithKnownIdentifier) {
+                    Assert.assertTrue(acc.getIdentifier().contains("joeexotic555@yahoo.com"));
+                }
+                
+                // Get account with exact match 
+                Collection<CentralRepoAccount> accountsWithKnownIdentifier2 = CentralRepoAccount.getAccountsWithIdentifier(CAT_WHATSAPP_ID);
+                Assert.assertEquals(1, accountsWithKnownIdentifier2.size());
+                for (CentralRepoAccount acc: accountsWithKnownIdentifier2) {
                     Assert.assertTrue(acc.getIdentifier().contains(CAT_WHATSAPP_ID));
                 }
                 

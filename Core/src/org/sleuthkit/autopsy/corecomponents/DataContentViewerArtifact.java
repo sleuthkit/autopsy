@@ -38,18 +38,16 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
-import java.util.Arrays;
 import java.util.Collections;
-import org.sleuthkit.autopsy.contentviewers.ArtifactContentViewer;
-import org.sleuthkit.autopsy.contentviewers.CallLogArtifactViewer;
-import org.sleuthkit.autopsy.contentviewers.ContactArtifactViewer;
-import org.sleuthkit.autopsy.contentviewers.DefaultArtifactContentViewer;
+import java.util.HashSet;
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultArtifactContentViewer;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the
- * Content represented by a Node. 
- * 
- * It goes through a list of known ArtifactContentViewer to find a viewer that 
+ * Content represented by a Node.
+ *
+ * It goes through a list of known ArtifactContentViewer to find a viewer that
  * supports a given artifact and then hands it the artifact to display.
  */
 @ServiceProvider(service = DataContentViewer.class, position = 7)
@@ -57,7 +55,7 @@ import org.sleuthkit.autopsy.contentviewers.DefaultArtifactContentViewer;
 public class DataContentViewerArtifact extends javax.swing.JPanel implements DataContentViewer {
 
     private static final long serialVersionUID = 1L;
-     
+
     @NbBundle.Messages({
         "DataContentViewerArtifact.failedToGetSourcePath.message=Failed to get source file path from case database",
         "DataContentViewerArtifact.failedToGetAttributes.message=Failed to get some or all attributes from case database"
@@ -65,24 +63,19 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private final static Logger logger = Logger.getLogger(DataContentViewerArtifact.class.getName());
     private final static String WAIT_TEXT = NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.waitText");
     private final static String ERROR_TEXT = NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.errorText");
-   
+
     private Node currentNode; // @@@ Remove this when the redundant setNode() calls problem is fixed. 
     private int currentPage = 1;
     private final Object lock = new Object();
     private List<BlackboardArtifact> artifactTableContents; // Accessed by multiple threads, use getArtifactContents() and setArtifactContents()
     private SwingWorker<ViewUpdate, Void> currentTask; // Accessed by multiple threads, use startNewTask()
-    
 
-    private final Collection<ArtifactContentViewer> KNOWN_ARTIFACT_VIEWERS = 
-            Arrays.asList(
-                    new ContactArtifactViewer(),
-                    new CallLogArtifactViewer()
-            );
-    
+    private final Collection<ArtifactContentViewer> knowArtifactViewers = new HashSet<>(Lookup.getDefault().lookupAll(ArtifactContentViewer.class));
+
     public DataContentViewerArtifact() {
-       
+
         initComponents();
-       
+
         resetComponents();
     }
 
@@ -271,7 +264,6 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
 
-
     /**
      * Resets the components to an empty view state.
      */
@@ -280,11 +272,11 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         currentPageLabel.setText("");
         artifactLabel.setText("");
         totalPageLabel.setText("");
-       
+
         prevPageButton.setEnabled(false);
         nextPageButton.setEnabled(false);
         currentNode = null;
-        
+
         artifactContentPanel.removeAll();
     }
 
@@ -342,7 +334,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         }
 
         for (Content content : node.getLookup().lookupAll(Content.class)) {
-            if ( (content != null)  && (!(content instanceof BlackboardArtifact)) ){
+            if ((content != null) && (!(content instanceof BlackboardArtifact))) {
                 try {
                     return content.getAllArtifactsCount() > 0;
                 } catch (TskException ex) {
@@ -373,12 +365,12 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     }
 
     private ArtifactContentViewer getSupportingViewer(BlackboardArtifact artifact) {
-        
-        return this.KNOWN_ARTIFACT_VIEWERS.stream()
-                .filter(knownViewer -> knownViewer.isSupported(artifact))
-                .findAny()
-                .orElse(new DefaultArtifactContentViewer());
-                
+        for (ArtifactContentViewer viewer : knowArtifactViewers) {
+            if (viewer.isSupported(artifact)) {
+                return viewer;
+            }
+        }
+        return new DefaultArtifactContentViewer();
     }
 
     /**
@@ -422,10 +414,9 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         currentPage = viewUpdate.currentPage;
         totalPageLabel.setText(Integer.toString(viewUpdate.numberOfPages));
         currentPageLabel.setText(Integer.toString(currentPage));
-        
-        
+
         artifactContentPanel.removeAll();
-        
+
         if (viewUpdate.artifact != null) {
             artifactLabel.setText(viewUpdate.artifact.getDisplayName());
 
@@ -437,10 +428,11 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         } else {
             artifactLabel.setText(viewUpdate.errorMsg);
         }
-        
+
+        artifactContentPanel.repaint();
         artifactContentPanel.revalidate();
         this.setCursor(null);
-        
+
         this.revalidate();
     }
 
@@ -451,7 +443,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
      * @param task A new SwingWorker object to execute as a background thread.
      */
     private synchronized void startNewTask(SwingWorker<ViewUpdate, Void> task) {
-        
+
         // The output of the previous task is no longer relevant.
         if (currentTask != null) {
             // This call sets a cancellation flag. It does not terminate the background thread running the task. 
@@ -514,7 +506,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             }
             Content underlyingContent = null;
             for (Content content : contents) {
-                if ( (content != null)  && (!(content instanceof BlackboardArtifact)) ) {
+                if ((content != null) && (!(content instanceof BlackboardArtifact))) {
                     // Get all of the blackboard artifacts associated with the content. These are what this
                     // viewer displays.
                     try {
@@ -527,7 +519,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                     }
                 }
             }
- 
+
             if (isCancelled()) {
                 return null;
             }
@@ -623,7 +615,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             // Get the artifact content to display from the cache. Note that one must be subtracted from the
             // page index to get the corresponding artifact content index.
             List<BlackboardArtifact> artifactContents = getArtifactContents();
-          
+
             // It may take a considerable amount of time to fetch the attributes of the selected artifact so check for cancellation.
             if (isCancelled()) {
                 return null;

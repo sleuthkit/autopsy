@@ -450,6 +450,7 @@
             <file name="cvt.wsmode" url="cvtWsmode.xml"/>
             <file name="discovery.wsmode" url="discoveryWsmode.xml"/>
             <file name="geolocation.wsmode" url="geolocationWsmode.xml"/>
+            <file name="personas.wsmode" url="personasWsmode.xml"/>
         </folder>
     </folder>
     

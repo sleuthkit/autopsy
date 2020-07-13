@@ -19,11 +19,18 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharSource;
 import java.io.IOException;
 import java.io.Reader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import static java.util.Locale.US;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -54,6 +61,10 @@ import org.sleuthkit.autopsy.textextractors.TextFileExtractor;
 import org.sleuthkit.autopsy.textextractors.configs.ImageConfig;
 import org.sleuthkit.autopsy.textextractors.configs.StringsConfig;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
@@ -114,6 +125,26 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
 
+    private static final List<String> METADATA_DATE_TYPES
+            = ImmutableList.of(
+                    "Last-Save-Date", //NON-NLS
+                    "Last-Printed", //NON-NLS
+                    "Creation-Date"); //NON-NLS
+
+    private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> METADATA_TYPES_MAP = ImmutableMap.<String, BlackboardAttribute.ATTRIBUTE_TYPE>builder()  
+                    .put("Last-Save-Date", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED) 
+                    .put("Last-Author", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID) 
+                    .put("Creation-Date", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED) 
+                    .put("Company", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ORGANIZATION) 
+                    .put("Author", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OWNER)
+                    .put("Application-Name", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME)
+                    .put("Last-Printed", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_PRINTED_DATETIME)
+                    .put("Producer", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME) 
+                    .put("Title", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION) 
+                    .put("pdf:PDFVersion", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VERSION)
+                   .build();
+
+    
     /**
      * Options for this extractor
      */
@@ -475,12 +506,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          *
          * @param aFile file to extract strings from, divide into chunks and
          * index
+         * @param extractedMetadata Map that will be populated with the file's metadata.
          *
          * @return true if the file was text_ingested, false otherwise
          *
          * @throws IngesterException exception thrown if indexing failed
          */
-        private boolean extractTextAndIndex(AbstractFile aFile) throws IngesterException {
+        private boolean extractTextAndIndex(AbstractFile aFile, Map<String, String> extractedMetadata) throws IngesterException {
             ImageConfig imageConfig = new ImageConfig();
             imageConfig.setOCREnabled(KeywordSearchSettings.getOcrOption());
             ProcessTerminator terminator = () -> context.fileIngestIsCancelled();
@@ -493,6 +525,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 Reader finalReader;
                 try {
                     Map<String, String> metadata = extractor.getMetadata();
+                    if (!metadata.isEmpty()) {
+                        // Creating the metadata artifact here causes occasional problems
+                        // when indexing the text, so we save the metadata map to 
+                        // use after this method is complete.
+                        extractedMetadata.putAll(metadata);
+                    }
                     CharSource formattedMetadata = getMetaDataCharSource(metadata);
                     //Append the metadata to end of the file text
                     finalReader = CharSource.concat(new CharSource() {
@@ -515,7 +553,70 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return false;
             }
         }
+        
+        private void createMetadataArtifact(AbstractFile aFile, Map<String, String> metadata) {
+    
+            String moduleName = KeywordSearchIngestModule.class.getName();
+            
+            Collection<BlackboardAttribute> attributes = new ArrayList<>(); 
+            Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+            for (Map.Entry<String, String> entry : metadata.entrySet()) {
+                if (METADATA_TYPES_MAP.containsKey(entry.getKey())) {
+                    BlackboardAttribute bba = checkAttribute(entry.getKey(), entry.getValue());
+                    if (bba != null) {
+                        attributes.add(bba);
+                    }
+                }
+            }
+            if (!attributes.isEmpty()) {
+                try {
+                    BlackboardArtifact bbart = aFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA);
+                    bbart.addAttributes(attributes);
+                    bbartifacts.add(bbart);
+                } catch (TskCoreException ex) {
+                    // Log error and return to continue processing
+                   logger.log(Level.WARNING, String.format("Error creating or adding metadata artifact for file %s.", aFile.getParentPath() + aFile.getName()), ex); //NON-NLS
+                   return;
+                }
+                if (!bbartifacts.isEmpty()) {
+                    try{
+                        Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().postArtifacts(bbartifacts, moduleName);
+                    } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
+                        // Log error and return to continue processing
+                        logger.log(Level.WARNING, String.format("Unable to post blackboard artifacts for file $s.", aFile.getParentPath() + aFile.getName()) , ex); //NON-NLS
+                        return;
+                    }
+                }
+            }
+        }
+        
 
+        private BlackboardAttribute checkAttribute(String key, String value) {
+            String moduleName = KeywordSearchIngestModule.class.getName();
+            if (!value.isEmpty() && value.charAt(0) != ' ') { 
+                if (METADATA_DATE_TYPES.contains(key)) {
+                    SimpleDateFormat metadataDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", US);    
+                    Long metadataDateTime = Long.valueOf(0);
+                    try {
+                        String metadataDate = value.replaceAll("T"," ").replaceAll("Z", "");
+                        Date usedDate = metadataDateFormat.parse(metadataDate);
+                        metadataDateTime = usedDate.getTime()/1000;
+                        return new BlackboardAttribute(METADATA_TYPES_MAP.get(key), moduleName, metadataDateTime);
+                    } catch (ParseException ex) {
+                        // catching error and displaying date that could not be parsed then will continue on.
+                        logger.log(Level.WARNING, String.format("Failed to parse date/time %s for metadata attribute %s.", value, key), ex); //NON-NLS
+                        return null;
+                    }
+                } else {
+                    return new BlackboardAttribute(METADATA_TYPES_MAP.get(key), moduleName, value);
+                }
+            }
+            
+            return null;
+
+        }
+    
+    
         /**
          * Pretty print the text extractor metadata.
          *
@@ -634,6 +735,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             }
 
             boolean wasTextAdded = false;
+            Map<String, String> extractedMetadata = new HashMap<>();
 
             //extract text with one of the extractors, divide into chunks and index with Solr
             try {
@@ -645,7 +747,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     extractStringsAndIndex(aFile);
                     return;
                 }
-                if (!extractTextAndIndex(aFile)) {
+                if (!extractTextAndIndex(aFile, extractedMetadata)) {
                     // Text extractor not found for file. Extract string only.
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                 } else {
@@ -672,6 +774,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             // if it wasn't supported or had an error, default to strings
             if (wasTextAdded == false) {
                 extractStringsAndIndex(aFile);
+            }
+            
+            // Now that the indexing is complete, create the metadata artifact (if applicable).
+            // It is unclear why calling this from extractTextAndIndex() generates
+            // errors.
+            if (!extractedMetadata.isEmpty()) {
+                createMetadataArtifact(aFile, extractedMetadata);
             }
         }
 
