@@ -194,6 +194,10 @@ def main():
     parser.add_argument('-d', '--should_delete_idx', dest='should_delete_idx', action='store', type=int, default=None,
                         required=False, help='The column index in the csv file providing whether or not the file ' +
                                              'should be deleted.  Any non-blank content will be treated as True.')
+    parser.add_argument('-c', '--commit_idx', dest='latest_commit_idx', action='store', type=int, default=3,
+                        required=False, help='The column index in the csv file providing the commit for which this ' +
+                                             'update applies. The commit should be located in the header row'
+                                             )
     parser.add_argument('-f', '--file_rename', dest='file_rename', action='store', type=str, default=None,
                         required=False, help='If specified, the properties file will be renamed to the argument' +
                                              ' preserving the specified relative path.')
@@ -202,6 +206,7 @@ def main():
     parser.add_argument('-o', '--should_overwrite', dest='should_overwrite', action='store_true', default=False,
                         required=False, help="Whether or not to overwrite the previously existing properties files" +
                                              " ignoring previously existing values.")
+
 
     args = parser.parse_args()
 
