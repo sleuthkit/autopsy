@@ -6,6 +6,7 @@ FilesIdentifierIngestModule.indexError.message=Failed to index interesting file 
 FilesSet.rule.dateRule.toString=(modified within {0} day(s))
 FilesSetDefsPanel.bytes=Bytes
 FilesSetDefsPanel.cancelImportMsg=Cancel import
+FilesSetDefsPanel.cancelNewSetMsg=Cancel
 # {0} - file name
 FilesSetDefsPanel.exportButtonActionPerformed.fileExistPrompt=File {0} exists, overwrite?
 FilesSetDefsPanel.gigaBytes=Gigabytes
@@ -27,10 +28,12 @@ FilesSetDefsPanel.interesting.fileExtensionFilterLbl=Autopsy Interesting File Se
 FilesSetDefsPanel.interesting.importButtonAction.featureName=Interesting Files Set Import
 FilesSetDefsPanel.interesting.importOwConflict=Import Interesting files set conflict
 FilesSetDefsPanel.interesting.importSetButton.text=Import Set
+FilesSetDefsPanel.interesting.newOwConflict=Interesting files set conflict
 # {0} - FilesSet name
-FilesSetDefsPanel.interesting.overwriteSetPrompt=Interesting files set <{0}> already exists locally, overwrite?
+FilesSetDefsPanel.interesting.overwriteSetPrompt=Interesting files set "{0}" already exists locally, overwrite?
 # {0} - FilesSet name
-FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name <{0}>.  Would you like to create a custom version of this file set?
+# {1} - New FilesSet name
+FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name "{0}."  Would you like to rename the set to "{1}?"
 FilesSetDefsPanel.Interesting.Title=Global Interesting Items Settings
 FilesSetDefsPanel.kiloBytes=Kilobytes
 FilesSetDefsPanel.loadError=Error loading interesting files sets from file.

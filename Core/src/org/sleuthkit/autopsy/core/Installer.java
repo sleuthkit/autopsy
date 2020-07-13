@@ -33,6 +33,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import net.sf.sevenzipjbinding.SevenZip;
+import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.modules.InstalledFileLocator;
@@ -336,8 +338,8 @@ public class Installer extends ModuleInstall {
     }
 
     /**
-     * Make a folder in the config directory for object detection classifiers if one does not
-     * exist.
+     * Make a folder in the config directory for object detection classifiers if
+     * one does not exist.
      */
     private static void ensureClassifierFolderExists() {
         File objectDetectionClassifierDir = new File(PlatformUtil.getObjectDetectionClassifierPath());
@@ -381,6 +383,7 @@ public class Installer extends ModuleInstall {
         ensureClassifierFolderExists();
         ensureOcrLanguagePacksFolderExists();
         initJavaFx();
+        initializeSevenZip();
         for (ModuleInstall mi : packageInstallers) {
             try {
                 mi.restored();
@@ -393,8 +396,21 @@ public class Installer extends ModuleInstall {
         logger.log(Level.INFO, "Autopsy Core restore completed"); //NON-NLS    
         preloadJython();
     }
-    
-    
+
+    /**
+     * Initializes 7zip-java bindings. We are performing initialization once
+     * because we encountered issues related to file locking when initialization
+     * was performed closer to where the bindings are used. See JIRA-6528.
+     */
+    private void initializeSevenZip() {
+        try {
+            SevenZip.initSevenZipFromPlatformJAR();
+            logger.log(Level.INFO, "7zip-java bindings loaded"); //NON-NLS
+        } catch (SevenZipNativeInitializationException e) {
+            logger.log(Level.SEVERE, "Error loading 7zip-java bindings", e); //NON-NLS
+        }
+    }
+
     /**
      * Runs an initial load of the Jython modules to speed up subsequent loads.
      */
@@ -403,13 +419,12 @@ public class Installer extends ModuleInstall {
             try {
                 JythonModuleLoader.getIngestModuleFactories();
                 JythonModuleLoader.getGeneralReportModules();
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 // This is a firewall exception to ensure that any possible exception caused
                 // by this initial load of the Jython modules are caught and logged.
                 logger.log(Level.SEVERE, "There was an error while doing an initial load of python plugins.", ex);
             }
-            
+
         };
         new Thread(loader).start();
     }

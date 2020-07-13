@@ -41,6 +41,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -424,15 +425,6 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             option = JOptionPane.showConfirmDialog(this, panel, NbBundle.getMessage(FilesSetPanel.class, filterDialogTitle), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
-        // While adding new ruleset(selectedSet == null), if rule set with same name already exists, do not add to the filesSets hashMap.
-        // In case of editing an existing ruleset(selectedSet != null), following check is not performed.
-        if (this.filesSets.containsKey(panel.getFilesSetName()) && shouldCreateNew) {
-            MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
-                    "FilesSetDefsPanel.doFileSetsDialog.duplicateRuleSet.text",
-                    panel.getFilesSetName()));
-            return;
-        }
-
         if (option == JOptionPane.OK_OPTION) {
             Map<String, FilesSet.Rule> rules = new HashMap<>();
             if (selectedSet != null) {
@@ -450,10 +442,16 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     rules
             );
 
-            if (shouldCreateNew) {
-                this.replaceFilesSet(null, filesSet, null);
-            } else {
-                this.replaceFilesSet(selectedSet, filesSet, null);
+            Pair<FilesSet, Integer> result = handleConflict(filesSet, false);
+            option = result.getRight();
+            FilesSet toAddOrUpdate = result.getLeft();
+
+            if (result.getRight() == JOptionPane.OK_OPTION) {
+                if (shouldCreateNew) {
+                    this.replaceFilesSet(null, toAddOrUpdate, null);
+                } else {
+                    this.replaceFilesSet(selectedSet, toAddOrUpdate, null);
+                }
             }
         }
     }
@@ -519,10 +517,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
      *
      * @param oldSet            A set to replace, null if the new set is not a
      *                          replacement.
-     * @param name              The name of the files set.
-     * @param description       The description of the files set.
-     * @param ignoresKnownFiles Whether or not the files set ignores known
-     *                          files.
+     * @param newSet            The new set of rules.
      * @param rules             The set membership rules for the set. If null,
      *                          the rules in the new set will be used.
      */
@@ -1120,16 +1115,9 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.doFileSetsDialog(this.setsList.getSelectedValue(), true);
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_copySetButtonActionPerformed
-    @NbBundle.Messages({
-        "FilesSetDefsPanel.yesOwMsg=Yes, overwrite",
-        "FilesSetDefsPanel.yesStandardFileConflictCreate=Yes, create",
-        "FilesSetDefsPanel.noSkipMsg=No, skip",
-        "FilesSetDefsPanel.cancelImportMsg=Cancel import",
-        "# {0} - FilesSet name",
-        "FilesSetDefsPanel.interesting.overwriteSetPrompt=Interesting files set <{0}> already exists locally, overwrite?",
-        "# {0} - FilesSet name",
-        "FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name <{0}>.  Would you like to create a custom version of this file set?",
-        "FilesSetDefsPanel.interesting.importOwConflict=Import Interesting files set conflict",
+
+    @NbBundle.Messages({       
+        "FilesSetDefsPanel.interesting.failImportMsg=Interesting files set not imported",
         "FilesSetDefsPanel.interesting.fileExtensionFilterLbl=Autopsy Interesting File Set File (xml)",
         "FilesSetDefsPanel.interesting.importButtonAction.featureName=Interesting Files Set Import",
         "FilesSetDefsPanel.importSetButtonActionPerformed.noFilesSelected=No files sets were selected.",
@@ -1212,7 +1200,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         FilesSet selectedSet = null;
 
         for (FilesSet set : importedSets) {
-            Pair<FilesSet, Integer> conflictResult = handleConflict(set);
+            Pair<FilesSet, Integer> conflictResult = handleConflict(set, true);
             int choice = conflictResult.getRight();
             FilesSet resultingFilesSet = conflictResult.getLeft();
 
@@ -1230,65 +1218,195 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     /**
      * Handles any possible conflicts that may arise from importing a files set.
      *
-     * @param set The set to potentially import.
+     * @param set      The set to potentially import.
+     * @param isImport The set with which to handle the conflict is being
+     *                 imported, otherwise this is a set to be added from the
+     *                 "New Set" button.
      *
      * @return A pair of the files set to be imported (or null if none) and the
      *         integer corresponding to the JOptionPane choice of the
-     *         yes_no_cancel_option.
+     *         JOptionPane.YES_NO_CANCEL option.
      */
-    private Pair<FilesSet, Integer> handleConflict(FilesSet set) {
+    private Pair<FilesSet, Integer> handleConflict(FilesSet set, boolean isImport) {
         FilesSet conflict = this.filesSets.get(set.getName());
         // if no conflict, return the files set as is with the option to proceed
         if (conflict == null) {
             return Pair.of(set, JOptionPane.OK_OPTION);
-        } else if (conflict.isStandardSet()) {
-            // if there is a conflict and the conflicting files set is a standard files set,
-            // see if allowing a custom files set is okay.
-            Object[] options = {
-                Bundle.FilesSetDefsPanel_yesStandardFileConflictCreate(),
-                Bundle.FilesSetDefsPanel_noSkipMsg(),
-                Bundle.FilesSetDefsPanel_cancelImportMsg()
-            };
-
-            int conflictChoice = JOptionPane.showOptionDialog(this,
-                    Bundle.FilesSetDefsPanel_interesting_standardFileConflict(set.getName()),
-                    Bundle.FilesSetDefsPanel_interesting_importOwConflict(),
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    options,
-                    options[0]);
-
-            // if it is okay, try again to see if there is a conflict.
-            if (conflictChoice == JOptionPane.OK_OPTION) {
-                return handleConflict(StandardInterestingFilesSetsLoader.getAsCustomFileSet(set));
-            }
-
-            return Pair.of(null, conflictChoice);
-        } else {
-            // if there is a conflict, see if it is okay to overwrite.
-            Object[] options = {
-                Bundle.FilesSetDefsPanel_yesOwMsg(),
-                Bundle.FilesSetDefsPanel_noSkipMsg(),
-                Bundle.FilesSetDefsPanel_cancelImportMsg()
-            };
-
-            int conflictChoice = JOptionPane.showOptionDialog(this,
-                    Bundle.FilesSetDefsPanel_interesting_overwriteSetPrompt(set.getName()),
-                    Bundle.FilesSetDefsPanel_interesting_importOwConflict(),
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    options,
-                    options[0]);
-
-            if (conflictChoice == JOptionPane.OK_OPTION) {
-                // if so, just return the files set to be placed in the map overwriting what is currently present.
-                return Pair.of(set, conflictChoice);
-            }
-
-            return Pair.of(null, conflictChoice);
         }
+
+        if (isImport) {
+            if (conflict.isStandardSet()) {
+                return onImportStandardSetConflict(set);
+            } else {
+                return onImportConflict(set);
+            }
+        } else {
+            if (conflict.isStandardSet()) {
+                return onNewEditSetStandardSetConflict(set);
+            } else {
+                return onNewEditSetConflict(set);
+            }
+        }
+
+    }
+
+    /**
+     * When a user imports a files set and the files set name collides with a
+     * pre-existing files set (not a standard files set), the user is prompted
+     * for how they would like that handled (overwrite, skip, or cancel whole
+     * operation)
+     *
+     * @param set The set to be imported.
+     *
+     * @return a pair of the files set and the JOptionPane.YES_NO_CANCEL option
+     */
+    @Messages({
+        "FilesSetDefsPanel.yesOwMsg=Yes, overwrite",
+        "FilesSetDefsPanel.noSkipMsg=No, skip",
+        "FilesSetDefsPanel.cancelImportMsg=Cancel import",
+        "# {0} - FilesSet name",
+        "FilesSetDefsPanel.interesting.overwriteSetPrompt=Interesting files set \"{0}\" already exists locally, overwrite?",
+        "FilesSetDefsPanel.interesting.importOwConflict=Import Interesting files set conflict",})
+    private Pair<FilesSet, Integer> onImportConflict(FilesSet set) {
+        // if there is a conflict, see if it is okay to overwrite.
+        Object[] options = {
+            Bundle.FilesSetDefsPanel_yesOwMsg(),
+            Bundle.FilesSetDefsPanel_noSkipMsg(),
+            Bundle.FilesSetDefsPanel_cancelImportMsg()
+        };
+        int conflictChoice = JOptionPane.showOptionDialog(this,
+                Bundle.FilesSetDefsPanel_interesting_overwriteSetPrompt(set.getName()),
+                Bundle.FilesSetDefsPanel_interesting_importOwConflict(),
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        if (conflictChoice == JOptionPane.OK_OPTION) {
+            // if so, just return the files set to be placed in the map overwriting what is currently present.
+            return Pair.of(set, conflictChoice);
+        }
+
+        return Pair.of(null, conflictChoice);
+    }
+
+    /**
+     * When a user imports a files set and the files set name collides with a
+     * pre-existing standard files set, the user is prompted for how they would
+     * like that handled (create files set with a " custom" suffix, skip, or
+     * cancel whole operation)
+     *
+     * @param set The set to be imported.
+     *
+     * @return a pair of the files set and the JOptionPane.YES_NO_CANCEL option
+     */
+    @Messages({
+        "FilesSetDefsPanel.yesStandardFileConflictCreate=Yes, create",
+        "# {0} - FilesSet name",
+        "# {1} - New FilesSet name",
+        "FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name \"{0}.\"  Would you like to rename your set to \"{1}?\"",})
+    private Pair<FilesSet, Integer> onImportStandardSetConflict(FilesSet set) {
+        // if there is a conflict and the conflicting files set is a standard files set,
+        // see if allowing a custom files set is okay.
+        Object[] options = {
+            Bundle.FilesSetDefsPanel_yesStandardFileConflictCreate(),
+            Bundle.FilesSetDefsPanel_noSkipMsg(),
+            Bundle.FilesSetDefsPanel_cancelImportMsg()
+        };
+        
+        String setName = set.getName();
+        String customSetName = Bundle.StandardInterestingFileSetsLoader_customSuffixed(set.getName());
+        
+        int conflictChoice = JOptionPane.showOptionDialog(this,
+                Bundle.FilesSetDefsPanel_interesting_standardFileConflict(setName, customSetName),
+                Bundle.FilesSetDefsPanel_interesting_importOwConflict(),
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        // if it is okay to create with custom prefix, try again to see if there is a conflict.
+        if (conflictChoice == JOptionPane.OK_OPTION) {
+            return handleConflict(StandardInterestingFilesSetsLoader.getAsCustomFileSet(set), true);
+        }
+
+        return Pair.of(null, conflictChoice);
+    }
+
+    /**
+     * When a user creates a files set or edits a files set and the files set
+     * name collides with a pre-existing files set (not a standard files set),
+     * the user is prompted for how they would like that handled (overwrite or
+     * cancel whole operation)
+     *
+     * @param set The set to be added.
+     *
+     * @return a pair of the files set and the JOptionPane.YES_NO_CANCEL option
+     */
+    @Messages({
+        "FilesSetDefsPanel.cancelNewSetMsg=Cancel",
+        "FilesSetDefsPanel.interesting.newOwConflict=Interesting files set conflict",})
+    private Pair<FilesSet, Integer> onNewEditSetConflict(FilesSet set) {
+        // if there is a conflict, see if it is okay to overwrite.
+        Object[] options = {
+            Bundle.FilesSetDefsPanel_yesOwMsg(),
+            Bundle.FilesSetDefsPanel_cancelNewSetMsg()
+        };
+        int conflictChoice = JOptionPane.showOptionDialog(this,
+                Bundle.FilesSetDefsPanel_interesting_overwriteSetPrompt(set.getName()),
+                Bundle.FilesSetDefsPanel_interesting_newOwConflict(),
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        if (conflictChoice == JOptionPane.OK_OPTION) {
+            // if so, just return the files set to be placed in the map overwriting what is currently present.
+            return Pair.of(set, conflictChoice);
+        }
+
+        return Pair.of(null, conflictChoice);
+    }
+
+    /**
+     * When a user creates a files set and the files set name collides with a
+     * pre-existing standard files set, the user is prompted for how they would
+     * like that handled (create files set with a " custom" suffix or cancel
+     * whole operation)
+     *
+     * @param set The set to be adedd.
+     *
+     * @return a pair of the files set and the JOptionPane.YES_NO_CANCEL option
+     */
+    private Pair<FilesSet, Integer> onNewEditSetStandardSetConflict(FilesSet set) {
+        // if there is a conflict and the conflicting files set is a standard files set,
+        // see if allowing a custom files set is okay.
+        Object[] options = {
+            Bundle.FilesSetDefsPanel_yesStandardFileConflictCreate(),
+            Bundle.FilesSetDefsPanel_cancelNewSetMsg()
+        };
+        
+        String setName = set.getName();
+        String customSetName = Bundle.StandardInterestingFileSetsLoader_customSuffixed(set.getName());
+        
+        int conflictChoice = JOptionPane.showOptionDialog(this,
+                Bundle.FilesSetDefsPanel_interesting_standardFileConflict(setName, customSetName),
+                Bundle.FilesSetDefsPanel_interesting_newOwConflict(),
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        // if it is okay to create with custom prefix, try again to see if there is a conflict.
+        if (conflictChoice == JOptionPane.OK_OPTION) {
+            return handleConflict(StandardInterestingFilesSetsLoader.getAsCustomFileSet(set), false);
+        }
+
+        return Pair.of(null, conflictChoice);
     }
 
     @NbBundle.Messages({"FilesSetDefsPanel.interesting.exportButtonAction.featureName=Interesting Files Set Export",

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.centralrepository.persona;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
@@ -200,14 +201,14 @@ public class PersonaAliasDialog extends JDialog {
         "PersonaAliasDialog_dup_Title=Alias add failure",
         "PersonaAliasDialog_dup_msg=This alias has already been added to this persona.",})
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
-        if (aliasTextField.getText().isEmpty()) {
+        if (StringUtils.isBlank(aliasTextField.getText())) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaAliasDialog_empty_msg(),
                     Bundle.PersonaAliasDialog_empty_Title(),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
-        if (justificationTextField.getText().isEmpty()) {
+        if (StringUtils.isBlank(justificationTextField.getText())) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaDetailsPanel_empty_justification_msg(),
                     Bundle.PersonaDetailsPanel_empty_justification_Title(),

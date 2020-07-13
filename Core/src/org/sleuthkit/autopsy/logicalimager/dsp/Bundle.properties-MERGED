@@ -67,6 +67,8 @@ AddMultipleImagesTask.criticalErrorReverting=Critical error reverting add image 
 # {1} - exceptionMessage
 AddMultipleImagesTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device {0}: {1}
 AddMultipleImagesTask.fsTypeUnknownErr=Cannot determine file system type
+# {0} - image path
+AddMultipleImagesTask.imageError=Error adding image {0} to the database
 # {0} - imageFilePath
 # {1} - deviceId
 # {2} - exceptionMessage

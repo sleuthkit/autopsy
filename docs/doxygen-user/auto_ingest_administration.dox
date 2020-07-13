@@ -57,7 +57,7 @@ If you right-click on a case, you can open it, see the log, delete the case, or 
 
 Note that you can select multiple cases at once to delete. If you choose to delete a case (or cases), you'll see the following confirmation dialog:
 
-\image html case_delete_confirm.png
+\image html AutoIngest/case_delete_confirm.png
 
 \section auto_ingest_admin_health_monitor Health Monitor
 
