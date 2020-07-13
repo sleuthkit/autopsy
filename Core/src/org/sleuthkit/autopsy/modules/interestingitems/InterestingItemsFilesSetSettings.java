@@ -207,7 +207,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
      */
     @Messages({
         "# {0} - regex",
-        "InterestingItemsFilesSetSettings.readDateCondition.failedCompiledRegex=Error detmining ''{0}'' number",})
+        "InterestingItemsFilesSetSettings.readDateCondition.failedCompiledRegex=Error determining ''{0}'' number",})
     private static DateCondition readDateCondition(Element ruleElement) throws FilesSetsManager.FilesSetsManagerException {
         // Read in the optional path condition. Null is o.k., but if the attribute
         // is there, be sure it is not malformed.
