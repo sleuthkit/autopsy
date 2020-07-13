@@ -65,7 +65,7 @@ def get_diff(repo_path: str, commit_1_id: str, commit_2_id: str) -> Any:
     Returns:
         The determined diff.
     """
-    repo = Repo(repo_path)
+    repo = Repo(repo_path, search_parent_directories=True)
     commit_1 = repo.commit(commit_1_id)
     commit_2 = repo.commit(commit_2_id)
     return commit_1.diff(commit_2)
@@ -81,7 +81,7 @@ def get_commit_id(repo_path: str, commit_id: str) -> str:
     Returns:
         The hash for the commit in the repo.
     """
-    repo = Repo(repo_path)
+    repo = Repo(repo_path, search_parent_directories=True)
     commit = repo.commit(commit_id)
     return str(commit.hexsha)
 
@@ -141,7 +141,7 @@ def get_property_file_entries(repo_path: str, at_commit: str = 'HEAD',
     Returns: An iterator of PropEntry objects.
 
     """
-    repo = Repo(repo_path)
+    repo = Repo(repo_path, search_parent_directories=True)
     commit = repo.commit(at_commit)
     for item in list_paths(commit.tree):
         path, blob = item
