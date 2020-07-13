@@ -41,6 +41,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     private final AddImageAction action;
     private int progressPanelIndex;
     private int dsPanelIndex;
+    private int ingestPanelIndex;
     private final static String PROP_LASTPROFILE_NAME = "AIW_LASTPROFILE_NAME"; //NON-NLS
 
     AddImageWizardIterator(AddImageAction action) {
@@ -69,6 +70,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
             panels.add(progressPanel);
             progressPanelIndex = panels.indexOf(progressPanel);  //Doing programatically because number of panels is variable
             dsPanelIndex = panels.indexOf(dsPanel);
+            ingestPanelIndex = panels.indexOf(ingestConfigPanel);
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();
@@ -177,7 +179,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
         // Start processing the data source by handing it off to the selected DSP, 
         // so it gets going in the background while the user is still picking the Ingest modules    
         // This will occur when the next button is clicked on the panel where you have chosen your data to process
-        if (index == dsPanelIndex) {
+        if (index == ingestPanelIndex) {
             ((AddImageWizardAddingProgressPanel) panels.get(progressPanelIndex)).
                     startDataSourceProcessing(((AddImageWizardDataSourceSettingsPanel) panels.get(dsPanelIndex)).getComponent().getCurrentDSProcessor());
         }

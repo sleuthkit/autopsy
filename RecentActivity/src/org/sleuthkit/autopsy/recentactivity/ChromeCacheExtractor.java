@@ -556,7 +556,9 @@ final class ChromeCacheExtractor {
         
         List<AbstractFile> effFiles = fileManager.findFiles(dataSource, "f_%", cachePath); //NON-NLS 
         for (AbstractFile abstractFile : effFiles ) {
-            this.externalFilesTable.put(cachePath + abstractFile.getName(), abstractFile);
+            if (cachePath.equals(abstractFile.getParentPath()) && abstractFile.isFile()) {
+                this.externalFilesTable.put(cachePath + abstractFile.getName(), abstractFile);
+            }
         }
     }
     /**

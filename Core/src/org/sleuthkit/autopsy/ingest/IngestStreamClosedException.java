@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,32 +18,31 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.util.List;
-import java.util.Map;
-
 /**
- * Interface that provides a snapshot of ingest progress.
+ *
  */
-public interface IngestProgressSnapshotProvider {
+public class IngestStreamClosedException extends Exception {
+
+    private static final long serialVersionUID = 1L;
+    
+    /**
+     * Constructs and instance of the custom exception class for the
+     * IngestStream.
+     *
+     * @param message Exception message.
+     */
+    IngestStreamClosedException(String message) {
+        super(message);
+    }
 
     /**
-     * Get a snapshot of the state of ingest threads.
+     * Constructs and instance of the custom exception class for the
+     * IngestStream.
      *
-     * @return A list of IngestThreadActivitySnapshot
+     * @param message   Exception message.
+     * @param throwable Exception cause.
      */
-    List<IngestManager.IngestThreadActivitySnapshot> getIngestThreadActivitySnapshots();
-
-    /**
-     * Get a snapshot of the state of ingest jobs.
-     *
-     * @return A list of ingest job snapshots.
-     */
-    List<Snapshot> getIngestJobSnapshots();
-
-    /**
-     * Gets the cumulative run times for the ingest module.
-     *
-     * @return Map of module name to run time (in milliseconds)
-     */
-    Map<String, Long> getModuleRunTimes();
+    IngestStreamClosedException(String message, Throwable throwable) {
+        super(message, throwable);
+    }
 }
