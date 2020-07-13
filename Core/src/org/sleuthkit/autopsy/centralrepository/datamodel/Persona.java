@@ -439,31 +439,39 @@ public class Persona {
 
         String queryClause = PERSONA_QUERY
                 + "WHERE p.status_id != ? "
-                + " AND LOWER(p.name) LIKE LOWER(?)";
+                + " AND LOWER(p.name) LIKE LOWER(?) ESCAPE '!'";
 
         List<Object> params = new ArrayList<>();
         params.add(PersonaStatus.DELETED.getStatusId());
-        params.add("%" + partialName + "%"); // partial substring search
+        params.add("%" + getLikeEscaped(partialName) + "%"); // partial substring search
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
         getCRInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getPersonas();
     }
-    
+
     /**
-     * Escapes string for use with like statements removing '%', '_', '\'.
+     * Escapes string for use with like statements removing '%', '_', '\'. This
+     * uses '!' as the escape character and the sql should reflect this
+     * accordingly. See
+     * https://stackoverflow.com/questions/8247970/using-like-wildcard-in-prepared-statement,
+     * https://www.postgresql.org/docs/8.3/functions-matching.html and
+     * https://www.sqlite.org/lang_expr.html for more information.
+     *
      * @param initial The initial string.
+     *
      * @return The resulting string.
      */
-    private static String getLikeEscape(String initial) {
-        if (initial == null)
+    private static String getLikeEscaped(String initial) {
+        if (initial == null) {
             return null;
-        
+        }
+
         return initial
-            .replace("%", "\\%")
-            .replace("_", "\\_")
-            .replace("\\", "\\\\");
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
     }
 
     /**
@@ -487,15 +495,14 @@ public class Persona {
                 + "	SELECT pa.persona_id\n"
                 + "	FROM persona_accounts pa\n"
                 + "	INNER JOIN accounts a ON a.id = pa.account_id\n"
-                + "	WHERE LOWER(a.account_unique_identifier) LIKE LOWER(?)\n"
+                + "	WHERE LOWER(a.account_unique_identifier) LIKE LOWER(?) ESCAPE '!'\n"
                 + ")";
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
 
         List<Object> params = new ArrayList<>();
         params.add(PersonaStatus.DELETED.getStatusId());
-        params.add("%" + getLikeEscape(partialName) + "%"); // partial substring search
-
+        params.add("%" + getLikeEscaped(partialName) + "%"); // partial substring search
 
         getCRInstance().executeQuery(queryClause, params, queryCallback);
         return queryCallback.getPersonas();
