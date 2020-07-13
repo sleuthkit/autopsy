@@ -440,6 +440,19 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
         this.ignoreFatOrphanFiles = false;
         setDataSourceOptionsCalled = true;
+        
+        ingestStream = new DefaultIngestStream();
+        try {
+            image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
+                new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
+            final List<String> errors = new ArrayList<>();
+                errors.add(ex.getMessage());
+            callBack.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+            return;
+        }
+        
         doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
     }
 
