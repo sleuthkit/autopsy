@@ -39,14 +39,14 @@ import org.sleuthkit.autopsy.discovery.FileSearchFiltering.FileFilter;
 /**
  * Create a dialog for displaying the Discovery results.
  */
-@TopComponent.Description(preferredID = "DiscoveryTopComponent", persistenceType = TopComponent.PERSISTENCE_NEVER)
+@TopComponent.Description(preferredID = "Discovery", persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "discovery", openAtStartup = false)
 @RetainLocation("discovery")
 @NbBundle.Messages("DiscoveryTopComponent.name= Discovery")
 public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
-    private static final String PREFERRED_ID = "DiscoveryTopComponent"; // NON-NLS
+    private static final String PREFERRED_ID = "Discovery"; // NON-NLS
     private final GroupListPanel groupListPanel;
     private final DetailsPanel detailsPanel;
     private final ResultsPanel resultsPanel;
