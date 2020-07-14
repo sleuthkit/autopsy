@@ -34,6 +34,33 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+
+/* BC: I had trouble following the terminology in here.  This is what Brian K sent me, 
+ * but I didn't get a chance to update anything in here.  Copying in his comments 
+ * to make them easy to find.  I think we should change them from being from OpenNLP terminology
+ * (Where Brian K got them) and replace/merge with our other terminology to make it easier to maintain.
+ * Or, ust use other terminology in comments.
+ * 
+ * ---- BEGIN FROM BRIAN K ------
+ * 
+ * "parameters" has two meanings.
+    // For the document classification task, there is one MutableContext for
+    // word in the vocabulary, and the MutableContext contains the counts of how
+    // many times the word coocurred with each class
+    private List<MutableContext> parameters = new ArrayList<>();
+ * Instead of "for", this should day "for each" or "per". A MutableContext contains the statistics of how often that word occurs in that class, along with a little more infrastructure.
+ * In its other meaning, parameters is the part of the MutableContext that stores the statistics.
+ * 
+ * The findParameters method counts occurrences in the documents to produce the MutableContext objects.
+ * 
+ * A predicate is a word in the vocabulary. You might prefer to call it "term" or "type". numPreds is the size of the vocabulary, not the length of the training documents.
+ * 
+ * An outcome is a class or category.
+ * 
+ * An Event is a document.
+ */
+
+
 /**
  * This trains a naive Bayes classifier incrementally. It is modeled after the
  * class NaiveBayseTrainer in OpenNLP. The difference is that it stores the
@@ -72,9 +99,8 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
      * Constructs a trainer that starts with the values in a model, and can
      * incrementally learn from a corpus.
      *
-     * @param modelInputPath
      */
-    private void uploadModel(String modelInputPath) throws IOException {
+    private void uploadModel() throws IOException {
         NaiveBayesModel initialModel = TextClassifierUtils.loadModel();
 
         Object[] data = initialModel.getDataStructures();
@@ -102,7 +128,7 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
 
         if (oldModelPath != null) {
             try {
-                uploadModel(oldModelPath);
+                uploadModel();
             } catch (IOException ex) {
                 //If the model doesn't exist, start with a blank one.
                 this.setParameters(new ArrayList<>());
@@ -199,6 +225,8 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
         return masterOutcomeLabels.size();
     }
 
+    
+    /** Make MutableContext objects for new documents */
     private MutableContext[] findParameters(int numOutcomes, int[] outcomeList, int[][] contexts, float[][] values, int[] numTimesEventsSeen, int numPreds) {
         int numUniqueEvents = contexts.length;
 
