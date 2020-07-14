@@ -9,9 +9,9 @@ All of these scripts provide more details on usage by calling the script with `-
 
 ## Basic Localization Update Workflow
 
-1. Call `python3 diffscript.py -l <language> <output path>` to generate a csv file containing differences in properties file values from the language's previous commit to the `HEAD` commit.  The language identifier should be the abbreviated identifier used for the bundle (i.e. 'ja' for Japanese).
+1. Call `python3 diffscript.py <output path> -l <language>` to generate a csv file containing differences in properties file values from the language's previous commit to the `HEAD` commit.  The language identifier should be the abbreviated identifier used for the bundle (i.e. 'ja' for Japanese).
 2. Update csv file with translations
-3. Call `python3 updatepropsscript.py -l <language> <input path>` to update properties files based on the newly generated csv file.  The csv file should be formatted such that the columns are bundle relative path, property files key, translated value and commit id for the latest commit id for which these changes represent.  The commit id only needs to be in the header row.
+3. Call `python3 updatepropsscript.py <input path> -l <language>` to update properties files based on the newly generated csv file.  The csv file should be formatted such that the columns are bundle relative path, property files key, translated value and commit id for the latest commit id for which these changes represent.  The commit id only needs to be in the header row.
 
 ## Localization Generation for the First Time
 First-time updates should follow a similar procedure except that instead of calling `diffscript.py`, call `python3 allbundlesscript <output path>` to generate a csv file with relative paths of bundle files, property file keys, property file values.
