@@ -214,7 +214,7 @@
     </target>
     
     <!-- override build to add branding -->
-    <target name="build" depends="build-brand,suite.build" description="Compiles autopsy and produces a basic branded build that can run on a dev system" />
+    <target name="build" depends="build-brand,suite.build,chmod_executables" description="Compiles autopsy and produces a basic branded build that can run on a dev system" />
  
     <target name="build-brand" depends="-init">
         
@@ -322,7 +322,7 @@
         <antcall target="build-installer-${os.family}" />
     </target>
     
-     <target name="release" depends="suite.release">
+     <target name="chmod_executables" >
         <chmod perm="a+x">
             <fileset dir="${cluster}/markmckinnon" casesensitive="no" id="mm">
                 <include name="*_linux"/>
