@@ -465,6 +465,8 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     # remove object ID
     if files_index:
         newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
+        # Remove object ID from Unalloc file name
+        newLine = re.sub('Unalloc_[0-9]+_', 'Unalloc_', newLine)
         return newLine
     # remove object ID
     elif vs_parts_index:
@@ -504,6 +506,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         obj_id = fields_list[0]
         path= files_table[int(obj_id)]
         newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', ' + ', '.join(fields_list[1:]) + ');')
+        # Remove object ID from Unalloc file name
         newLine = re.sub('Unalloc_[0-9]+_', 'Unalloc_', newLine)
         return newLine
     # remove object ID
@@ -565,7 +568,9 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
                 parent_path = parent_path[parent_path.find('ModuleOutput'):]
 
         if path and parent_path:
+            # Remove object ID from Unalloc file names and regripper output
             path = re.sub('Unalloc_[0-9]+_', 'Unalloc_', path)
+            path = re.sub('regripper\-[0-9]+\-full', 'regripper-full', path)
             parent_path = re.sub('Unalloc_[0-9]+_', 'Unalloc_', parent_path)
             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
         else:
