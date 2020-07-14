@@ -4,6 +4,8 @@ gitpython and jproperties.  As a consequence, it also requires git >= 1.7.0 and 
 """
 
 import sys
+
+from envutil import get_proj_dir
 from gitutil import get_property_files_diff, get_commit_id
 from itemchange import ItemChange
 from csvutil import records_to_csv
@@ -37,8 +39,8 @@ def write_diff_to_csv(repo_path: str, output_path: str, commit_1_id: str, commit
 
 
 def main():
-    parser = argparse.ArgumentParser(description="determines the updated, added, and deleted properties from the " +
-                                                 "'.properties-MERGED' files and generates a csv file containing " +
+    parser = argparse.ArgumentParser(description="determines the updated, added, and deleted properties from the "
+                                                 "'.properties-MERGED' files and generates a csv file containing "
                                                  "the items changed.",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(dest='output_path', type=str, help='The path to the output csv file.')
@@ -46,18 +48,18 @@ def main():
     parser.add_argument('-r', '--repo', dest='repo_path', type=str, required=False,
                         help='The path to the repo.  If not specified, path of script is used.')
     parser.add_argument('-fc', '--first-commit', dest='commit_1_id', type=str, required=False,
-                        help='The commit for previous release.  This flag or the language flag need to be specified' +
+                        help='The commit for previous release.  This flag or the language flag need to be specified'
                              ' in order to determine a start point for the difference.')
     parser.add_argument('-lc', '--latest-commit', dest='commit_2_id', type=str, default='HEAD', required=False,
                         help='The commit for current release.')
     parser.add_argument('-nc', '--no-commits', dest='no_commits', action='store_true', default=False,
                         required=False, help="Suppresses adding commits to the generated csv header.")
     parser.add_argument('-l', '--language', dest='language', type=str, default='HEAD', required=False,
-                        help='Specify the language in order to determine the first commit to use (i.e. \'ja\' for ' +
+                        help='Specify the language in order to determine the first commit to use (i.e. \'ja\' for '
                              'Japanese.  This flag overrides the first-commit flag.')
 
     args = parser.parse_args()
-    repo_path = args.repo_path if args.repo_path is not None else str(pathlib.Path(__file__).parent.absolute())
+    repo_path = args.repo_path if args.repo_path is not None else get_proj_dir()
     output_path = args.output_path
     commit_1_id = args.commit_1_id
     if args.language is not None:

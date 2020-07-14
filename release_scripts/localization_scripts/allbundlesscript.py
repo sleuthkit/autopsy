@@ -5,9 +5,10 @@ repo is on correct branch (i.e. develop).
 """
 
 import sys
+
+from envutil import get_proj_dir
 from gitutil import get_property_file_entries, get_commit_id
 from csvutil import records_to_csv
-import pathlib
 import argparse
 
 
@@ -25,6 +26,7 @@ def write_items_to_csv(repo_path: str, output_path: str, show_commit: bool):
         row_header.append(get_commit_id(repo_path, 'HEAD'))
 
     rows = [row_header]
+
     for entry in get_property_file_entries(repo_path):
         rows.append([entry.rel_path, entry.key, entry.value])
 
@@ -32,8 +34,9 @@ def write_items_to_csv(repo_path: str, output_path: str, show_commit: bool):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Gathers all key-value pairs within .properties-MERGED files into ' +
-                                                 'one csv file.')
+    parser = argparse.ArgumentParser(description='Gathers all key-value pairs within .properties-MERGED files into '
+                                                 'one csv file.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(dest='output_path', type=str, help='The path to the output csv file.')
     parser.add_argument('-r', '--repo', dest='repo_path', type=str, required=False,
                         help='The path to the repo.  If not specified, path of script is used.')
@@ -41,7 +44,7 @@ def main():
                         required=False, help="Suppresses adding commits to the generated csv header.")
 
     args = parser.parse_args()
-    repo_path = args.repo_path if args.repo_path is not None else str(pathlib.Path(__file__).parent.absolute())
+    repo_path = args.repo_path if args.repo_path is not None else get_proj_dir()
     output_path = args.output_path
     show_commit = not args.no_commit
 

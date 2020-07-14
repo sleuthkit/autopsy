@@ -37,6 +37,23 @@ def get_entry_dict(file_contents: Union[str, IO]) -> Dict[str, str]:
     return props.properties
 
 
+def get_entry_dict_from_path(props_path: str) -> Union[Dict[str, str], None]:
+    """
+    Retrieves a dictionary mapping the properties represented in the string or None if no properties file can be found
+    at that path.
+    Args:
+        props_path: The path to the properties file.
+
+    Returns: The entry dictionary for that properties file.
+
+    """
+    if os.path.isfile(props_path):
+        with open(props_path, "rb") as f:
+            return get_entry_dict(f)
+    else:
+        return None
+
+
 def set_entry_dict(contents: Dict[str, str], file_path: str):
     """Sets the property file to the key-value pairs of the contents dictionary.
 

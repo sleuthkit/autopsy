@@ -1,3 +1,6 @@
+"""Functions relating to using git and GitPython with an existing repo.
+"""
+
 from git import Repo, Diff, Blob
 from typing import List, Union, Iterator, Tuple, Any
 from itemchange import ItemChange, get_changed
