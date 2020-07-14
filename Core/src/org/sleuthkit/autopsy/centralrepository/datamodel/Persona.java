@@ -200,16 +200,17 @@ public class Persona {
     /**
      * Creates a Persona and associates the specified account with it.
      *
-     * @param personaName Persona name.
-     * @param comment Comment to associate with persona, may be null.
-     * @param status Persona status
-     * @param account Account for which the persona is being created.
+     * @param personaName   Persona name.
+     * @param comment       Comment to associate with persona, may be null.
+     * @param status        Persona status
+     * @param account       Account for which the persona is being created.
      * @param justification Justification for why this account belongs to this
-     * persona, may be null.
-     * @param confidence Confidence level for this association of Persona &
-     * account.
+     *                      persona, may be null.
+     * @param confidence    Confidence level for this association of Persona &
+     *                      account.
      *
      * @return Persona Persona created.
+     *
      * @throws CentralRepoException If there is an error creating the Persona.
      */
     public static Persona createPersonaForAccount(String personaName, String comment, PersonaStatus status, CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
@@ -221,15 +222,15 @@ public class Persona {
     /**
      * Inserts a row in the Persona tables.
      *
-     * @param name Persona name, may be null - default name is used in that
-     * case.
+     * @param name    Persona name, may be null - default name is used in that
+     *                case.
      * @param comment Comment to associate with persona, may be null.
-     * @param status Persona status.
+     * @param status  Persona status.
      *
      * @return Persona corresponding to the row inserted in the personas table.
      *
      * @throws CentralRepoException If there is an error in adding a row to
-     * personas table.
+     *                              personas table.
      */
     private static Persona createPersona(String name, String comment, PersonaStatus status) throws CentralRepoException {
         // generate a UUID for the persona
@@ -296,12 +297,13 @@ public class Persona {
      * Associates an account with a persona by creating a row in the
      * PersonaAccounts table.
      *
-     * @param account Account to add to persona.
+     * @param account       Account to add to persona.
      * @param justification Reason for adding the account to persona, may be
-     * null.
-     * @param confidence Confidence level.
+     *                      null.
+     * @param confidence    Confidence level.
      *
      * @return PersonaAccount
+     *
      * @throws CentralRepoException If there is an error.
      */
     public PersonaAccount addAccount(CentralRepoAccount account, String justification, Persona.Confidence confidence) throws CentralRepoException {
@@ -314,7 +316,7 @@ public class Persona {
      * @param account account to remove
      *
      * @throws CentralRepoException If there is an error in querying the
-     * Personas table.
+     *                              Personas table.
      */
     public void removeAccount(PersonaAccount account) throws CentralRepoException {
         PersonaAccount.removePersonaAccount(account.getId());
@@ -323,12 +325,12 @@ public class Persona {
     /**
      * Modifies the confidence / justification of the given PersonaAccount
      *
-     * @param account Account to modify.
-     * @param confidence Level of confidence.
+     * @param account       Account to modify.
+     * @param confidence    Level of confidence.
      * @param justification Justification.
      *
      * @throws CentralRepoException If there is an error in querying the
-     * Personas table.
+     *                              Personas table.
      */
     public void modifyAccount(PersonaAccount account, Confidence confidence, String justification) throws CentralRepoException {
         PersonaAccount.modifyPersonaAccount(account.getId(), confidence, justification);
@@ -397,11 +399,12 @@ public class Persona {
      * returns the Persona from that data.
      *
      * @param uuid Persona UUID to match.
+     *
      * @return Persona matching the given UUID, may be null if no match is
-     * found.
+     *         found.
      *
      * @throws CentralRepoException If there is an error in querying the
-     * Personas table.
+     *                              Personas table.
      */
     private static Persona getPersonaByUUID(String uuid) throws CentralRepoException {
 
@@ -425,21 +428,22 @@ public class Persona {
      * as DELETED are not returned.
      *
      * @param partialName Name substring to match.
+     *
      * @return Collection of personas matching the given name substring, may be
-     * empty if no match is found.
+     *         empty if no match is found.
      *
      * @throws CentralRepoException If there is an error in querying the
-     * Personas table.
+     *                              Personas table.
      */
     public static Collection<Persona> getPersonaByName(String partialName) throws CentralRepoException {
 
         String queryClause = PERSONA_QUERY
                 + "WHERE p.status_id != ? "
-                + " AND LOWER(p.name) LIKE LOWER(?)";
+                + " AND LOWER(p.name) LIKE LOWER(?) ESCAPE '!'";
 
         List<Object> params = new ArrayList<>();
         params.add(PersonaStatus.DELETED.getStatusId());
-        params.add("%" + partialName + "%"); // partial substring search
+        params.add("%" + getLikeEscaped(partialName) + "%"); // partial substring search
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
         getCRInstance().executeQuery(queryClause, params, queryCallback);
@@ -448,32 +452,57 @@ public class Persona {
     }
 
     /**
+     * Escapes string for use with like statements removing '%', '_', '\'. This
+     * uses '!' as the escape character and the sql should reflect this
+     * accordingly. See
+     * https://stackoverflow.com/questions/8247970/using-like-wildcard-in-prepared-statement,
+     * https://www.postgresql.org/docs/8.3/functions-matching.html and
+     * https://www.sqlite.org/lang_expr.html for more information.
+     *
+     * @param initial The initial string.
+     *
+     * @return The resulting string.
+     */
+    private static String getLikeEscaped(String initial) {
+        if (initial == null) {
+            return null;
+        }
+
+        return initial
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
+    }
+
+    /**
      * Gets the rows from the Personas table where persona accounts' names are
      * similar to the given one. Persona marked as DELETED are not returned.
      *
      * @param partialName Name substring to match.
+     *
      * @return Collection of personas matching the given name substring, may be
-     * empty if no match is found.
+     *         empty if no match is found.
      *
      * @throws CentralRepoException If there is an error in querying the
-     * Personas table.
+     *                              Personas table.
      */
     public static Collection<Persona> getPersonaByAccountIdentifierLike(String partialName) throws CentralRepoException {
-        String queryClause = "SELECT DISTINCT accounts.id as a_id,"
-                + "p.id, p.uuid, p.name, p.comment, p.created_date, p.modified_date, p.status_id, p.examiner_id, e.login_name, e.display_name"
-                + " FROM accounts"
-                + " JOIN persona_accounts as pa ON pa.account_id = accounts.id"
-                + " JOIN personas as p ON p.id = pa.persona_id"
-                + " JOIN examiners as e ON e.id = p.examiner_id"
-                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER(?)" // param 1
-                + " AND p.status_id != ?" // param 2
-                + " GROUP BY p.id";
+        String queryClause = "SELECT p.id, p.uuid, p.name, p.comment, p.created_date, p.modified_date, p.status_id, p.examiner_id, e.login_name\n"
+                + "FROM personas p\n"
+                + "LEFT JOIN examiners e ON e.id = p.examiner_id\n"
+                + "WHERE p.status_id <> ?\n"
+                + "AND p.id IN (\n"
+                + "	SELECT pa.persona_id\n"
+                + "	FROM persona_accounts pa\n"
+                + "	INNER JOIN accounts a ON a.id = pa.account_id\n"
+                + "	WHERE LOWER(a.account_unique_identifier) LIKE LOWER(?) ESCAPE '!'\n"
+                + ")";
 
         PersonaQueryCallback queryCallback = new PersonaQueryCallback();
 
         List<Object> params = new ArrayList<>();
-        params.add("%" + partialName + "%"); // partial substring search
         params.add(PersonaStatus.DELETED.getStatusId());
+        params.add("%" + getLikeEscaped(partialName) + "%"); // partial substring search
 
         getCRInstance().executeQuery(queryClause, params, queryCallback);
         return queryCallback.getPersonas();
@@ -482,11 +511,12 @@ public class Persona {
     /**
      * Creates an alias for the Persona.
      *
-     * @param alias Alias name.
+     * @param alias         Alias name.
      * @param justification Reason for assigning the alias, may be null.
-     * @param confidence Confidence level.
+     * @param confidence    Confidence level.
      *
      * @return PersonaAlias
+     *
      * @throws CentralRepoException If there is an error in creating the alias.
      */
     public PersonaAlias addAlias(String alias, String justification, Persona.Confidence confidence) throws CentralRepoException {
@@ -499,7 +529,7 @@ public class Persona {
      * @param alias alias to remove
      *
      * @throws CentralRepoException If there is an error in querying the
-     * Personas table.
+     *                              Personas table.
      */
     public void removeAlias(PersonaAlias alias) throws CentralRepoException {
         PersonaAlias.removePersonaAlias(alias);
@@ -508,12 +538,12 @@ public class Persona {
     /**
      * Modifies the given alias.
      *
-     * @param key Key for the alias to modify.
-     * @param confidence Level of confidence.
+     * @param key           Key for the alias to modify.
+     * @param confidence    Level of confidence.
      * @param justification Justification.
      *
      * @throws CentralRepoException If there is an error in querying the
-     * Personas table.
+     *                              Personas table.
      */
     public void modifyAlias(PersonaAlias key, Confidence confidence, String justification) throws CentralRepoException {
         PersonaAlias.modifyPersonaAlias(key, confidence, justification);
@@ -533,12 +563,13 @@ public class Persona {
     /**
      * Adds specified metadata to the persona.
      *
-     * @param name Metadata name.
-     * @param value Metadata value.
+     * @param name          Metadata name.
+     * @param value         Metadata value.
      * @param justification Reason for adding the metadata, may be null.
-     * @param confidence Confidence level.
+     * @param confidence    Confidence level.
      *
      * @return PersonaMetadata
+     *
      * @throws CentralRepoException If there is an error in adding metadata.
      */
     public PersonaMetadata addMetadata(String name, String value, String justification, Persona.Confidence confidence) throws CentralRepoException {
@@ -551,7 +582,7 @@ public class Persona {
      * @param metadata metadata to remove
      *
      * @throws CentralRepoException If there is an error in querying the
-     * Personas table.
+     *                              Personas table.
      */
     public void removeMetadata(PersonaMetadata metadata) throws CentralRepoException {
         PersonaMetadata.removePersonaMetadata(metadata);
@@ -560,12 +591,12 @@ public class Persona {
     /**
      * Modifies the given metadata.
      *
-     * @param key Key for the metadata to modify.
-     * @param confidence Level of confidence.
+     * @param key           Key for the metadata to modify.
+     * @param confidence    Level of confidence.
      * @param justification Justification.
      *
      * @throws CentralRepoException If there is an error in querying the
-     * Personas table.
+     *                              Personas table.
      */
     public void modifyMetadata(PersonaMetadata key, Confidence confidence, String justification) throws CentralRepoException {
         PersonaMetadata.modifyPersonaMetadata(key, confidence, justification);
@@ -588,7 +619,7 @@ public class Persona {
      * @return Collection of PersonaAccounts, may be empty.
      *
      * @throws CentralRepoException If there is an error in getting the
-     * persona_account.
+     *                              persona_account.
      */
     public Collection<PersonaAccount> getPersonaAccounts() throws CentralRepoException {
         return PersonaAccount.getPersonaAccountsForPersona(this.getId());
@@ -621,8 +652,9 @@ public class Persona {
      * Gets a list of cases that the persona appears in.
      *
      * @return Collection of cases that the persona appears in, may be empty.
+     *
      * @throws CentralRepoException If there is an error in getting the cases
-     * from the database.
+     *                              from the database.
      */
     public Collection<CorrelationCase> getCases() throws CentralRepoException {
 
@@ -688,7 +720,7 @@ public class Persona {
      * Gets all data sources that the persona appears in.
      *
      * @return Collection of data sources that the persona appears in, may be
-     * empty.
+     *         empty.
      *
      * @throws CentralRepoException
      */
@@ -765,7 +797,9 @@ public class Persona {
      * the X_instance table for the given account type.
      *
      * @param crAccountType Account type to generate the query string for.
+     *
      * @return Query substring.
+     *
      * @throws CentralRepoException
      */
     private static String getPersonaFromInstanceTableQueryTemplate(CentralRepoAccount.CentralRepoAccountType crAccountType) throws CentralRepoException {
@@ -790,6 +824,7 @@ public class Persona {
      * @param correlationCase Case to look the persona in.
      *
      * @return Collection of personas, may be empty.
+     *
      * @throws CentralRepoException
      */
     public static Collection<Persona> getPersonasForCase(CorrelationCase correlationCase) throws CentralRepoException {
@@ -826,6 +861,7 @@ public class Persona {
      * @param dataSource Data source to look the persona in.
      *
      * @return Collection of personas, may be empty.
+     *
      * @throws CentralRepoException
      */
     public static Collection<Persona> getPersonasForDataSource(CorrelationDataSource dataSource) throws CentralRepoException {
