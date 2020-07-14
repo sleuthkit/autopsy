@@ -481,7 +481,6 @@ public class PortableCaseReportModule implements ReportModule {
             reportWriter.name("@graph");
             reportWriter.beginArray();
 
-            //Acquire references to querying files.
             String caseTempDirectory = currentCase.getTempDirectory();
             SleuthkitCase skCase = currentCase.getSleuthkitCase();
             TagsManager tagsManager = currentCase.getServices().getTagsManager();
@@ -492,7 +491,6 @@ public class PortableCaseReportModule implements ReportModule {
             FileUtils.deleteDirectory(tmpDir.toFile());
             Files.createDirectory(tmpDir);
 
-            //First export the Sleuthkit Case instance.
             CaseUcoExporter exporter = new CaseUcoExporter(currentCase.getSleuthkitCase());
             for (JsonElement element : exporter.exportSleuthkitCase()) {
                 gson.toJson(element, reportWriter);

@@ -59,8 +59,8 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
 
 /**
- * CaseUcoReportModule generates a report in CASE-UCO format. This module will
- * write all files and data sources to the report.
+ * Exports an Autopsy case to a CASE-UCO report file. This module will write all
+ * files and artifacts from the selected data sources.
  */
 public final class CaseUcoReportModule implements GeneralReportModule {
 
@@ -156,7 +156,7 @@ public final class CaseUcoReportModule implements GeneralReportModule {
                 return;
             }
 
-            Case caseObj = Case.getCurrentCaseThrows();
+            Case currentCase = Case.getCurrentCaseThrows();
 
             Path caseJsonReportFile = reportDirectory.resolve(REPORT_FILE_NAME + "." + EXTENSION);
 
@@ -168,28 +168,21 @@ public final class CaseUcoReportModule implements GeneralReportModule {
                 reportWriter.name("@graph");
                 reportWriter.beginArray();
 
-                //First write the Case to the report file.
-                CaseUcoExporter exporter = new CaseUcoExporter(caseObj.getSleuthkitCase());
+                CaseUcoExporter exporter = new CaseUcoExporter(currentCase.getSleuthkitCase());
                 for (JsonElement element : exporter.exportSleuthkitCase()) {
                     gson.toJson(element, reportWriter);
                 }
 
-                // Prune the data sources so that we only report on what was selected.
-                List<DataSource> dataSources = caseObj.getSleuthkitCase().getDataSources().stream()
-                        .filter((dataSource) -> {
-                            if (settings.getSelectedDataSources() == null) {
-                                // Assume all data sources if list is null.
-                                return true;
-                            }
-                            return settings.getSelectedDataSources().contains(dataSource.getId());
-                        })
-                        .collect(Collectors.toList());
+                // Get a list of selected data sources to process.
+                List<DataSource> dataSources = getSelectedDataSources(currentCase, settings);
 
                 progressPanel.setIndeterminate(false);
                 progressPanel.setMaximumProgress(dataSources.size());
                 progressPanel.start();
 
-                //Then search each data source for file content.
+                // First stage of reporting is for files and data sources.
+                // Iterate through each data source and dump all files contained
+                // in that data source.
                 for (int i = 0; i < dataSources.size(); i++) {
                     DataSource dataSource = dataSources.get(i);
                     progressPanel.updateStatusLabel(String.format(
@@ -204,17 +197,26 @@ public final class CaseUcoReportModule implements GeneralReportModule {
                     progressPanel.setProgress(i + 1);
                 }
 
-                // Write all standard artifacts to the report.
-                for (ARTIFACT_TYPE artType : caseObj.getSleuthkitCase().getBlackboardArtifactTypesInUse()) {
-                    for (BlackboardArtifact artifact : caseObj.getSleuthkitCase().getBlackboardArtifacts(artType)) {
-                        try {
-                            for (JsonElement element : exporter.exportBlackboardArtifact(artifact)) {
-                                gson.toJson(element, reportWriter);
+                // Second stage of reporting handles artifacts.
+                Set<Long> dataSourceIds = dataSources.stream()
+                        .map((datasource) -> datasource.getId())
+                        .collect(Collectors.toSet());
+
+                // Write all standard artifacts that are contained within the 
+                // selected data sources.
+                for (ARTIFACT_TYPE artType : currentCase.getSleuthkitCase().getBlackboardArtifactTypesInUse()) {
+                    for (BlackboardArtifact artifact : currentCase.getSleuthkitCase().getBlackboardArtifacts(artType)) {
+                        if (dataSourceIds.contains(artifact.getDataSource().getId())) {
+
+                            try {
+                                for (JsonElement element : exporter.exportBlackboardArtifact(artifact)) {
+                                    gson.toJson(element, reportWriter);
+                                }
+                            } catch (ContentNotExportableException | BlackboardJsonAttrUtil.InvalidJsonException ex) {
+                                logger.log(Level.WARNING, String.format("Unable to export blackboard artifact (id: %d) to CASE/UCO. "
+                                        + "The artifact type is either not supported or the artifact instance does not have any "
+                                        + "exportable attributes.", artifact.getId()));
                             }
-                        } catch (ContentNotExportableException | BlackboardJsonAttrUtil.InvalidJsonException ex) {
-                            logger.log(Level.WARNING, String.format("Unable to export blackboard artifact (id: %d) to CASE/UCO. "
-                                    + "The artifact type is either not supported or the artifact instance does not have any "
-                                    + "exportable attributes.", artifact.getId()));
                         }
                     }
                 }
@@ -223,7 +225,7 @@ public final class CaseUcoReportModule implements GeneralReportModule {
                 reportWriter.endObject();
             }
 
-            caseObj.addReport(caseJsonReportFile.toString(),
+            currentCase.addReport(caseJsonReportFile.toString(),
                     Bundle.CaseUcoReportModule_srcModuleName(),
                     REPORT_FILE_NAME);
             progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
@@ -242,6 +244,21 @@ public final class CaseUcoReportModule implements GeneralReportModule {
         }
 
         progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
+    }
+
+    /**
+     * Get the selected data sources from the settings instance.
+     */
+    private List<DataSource> getSelectedDataSources(Case currentCase, GeneralReportSettings settings) throws TskCoreException {
+        return currentCase.getSleuthkitCase().getDataSources().stream()
+                .filter((dataSource) -> {
+                    if (settings.getSelectedDataSources() == null) {
+                        // Assume all data sources if list is null.
+                        return true;
+                    }
+                    return settings.getSelectedDataSources().contains(dataSource.getId());
+                })
+                .collect(Collectors.toList());
     }
 
     /**
@@ -268,7 +285,7 @@ public final class CaseUcoReportModule implements GeneralReportModule {
             if (current instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile) (current);
                 if (SUPPORTED_TYPES.contains(file.getMetaType().getValue())) {
-                    
+
                     for (JsonElement element : exporter.exportAbstractFile(file)) {
                         gson.toJson(element, reportWriter);
                     }
