@@ -13,6 +13,21 @@ def get_text(blob: Blob) -> str:
     return blob.data_stream.read().decode('utf-8')
 
 
+def get_git_root(child_path: str) -> str:
+    """
+    Taken from https://stackoverflow.com/questions/22081209/find-the-root-of-the-git-repository-where-the-file-lives,
+    this obtains the root path of the git repo in which this file exists.
+    Args:
+        child_path:  The path of a child within the repo.
+
+    Returns: The repo root path.
+
+    """
+    git_repo = Repo(child_path, search_parent_directories=True)
+    git_root = git_repo.git.rev_parse("--show-toplevel")
+    return git_root
+
+
 def get_changed_from_diff(rel_path: str, diff: Diff) -> List[ItemChange]:
     """Determines changes from a git python diff.
 

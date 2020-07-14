@@ -7,7 +7,7 @@ repo is on correct branch (i.e. develop).
 import sys
 
 from envutil import get_proj_dir
-from gitutil import get_property_file_entries, get_commit_id
+from gitutil import get_property_file_entries, get_commit_id, get_git_root
 from csvutil import records_to_csv
 import argparse
 
@@ -44,7 +44,7 @@ def main():
                         required=False, help="Suppresses adding commits to the generated csv header.")
 
     args = parser.parse_args()
-    repo_path = args.repo_path if args.repo_path is not None else get_proj_dir()
+    repo_path = args.repo_path if args.repo_path is not None else get_git_root(get_proj_dir())
     output_path = args.output_path
     show_commit = not args.no_commit
 

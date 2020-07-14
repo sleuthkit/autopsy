@@ -33,7 +33,10 @@ def get_entry_dict(file_contents: Union[str, IO]) -> Dict[str, str]:
     """
 
     props = Properties()
-    props.load(file_contents, "utf-8")
+    try:
+        props.load(file_contents)
+    except Exception as e:
+        raise Exception("There was an error loading properties file {file}".format(file=file_contents), e)
     return props.properties
 
 
@@ -84,11 +87,12 @@ def update_entry_dict(contents: Dict[str, str], file_path: str):
     """
     contents_to_edit = contents.copy()
 
-    if path.isfile(file_path):
-        cur_dict = get_entry_dict(file_path)
-        for cur_key, cur_val in cur_dict.values():
-            # only update contents if contents does not already have key
-            if cur_key not in contents_to_edit:
-                contents_to_edit[cur_key] = cur_val
+    cur_dict = get_entry_dict_from_path(file_path)
+    if cur_dict is None:
+        cur_dict = {}
+    for cur_key, cur_val in cur_dict.items():
+        # only update contents if contents does not already have key
+        if cur_key not in contents_to_edit:
+            contents_to_edit[cur_key] = cur_val
 
     set_entry_dict(contents_to_edit, file_path)

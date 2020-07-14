@@ -6,7 +6,7 @@ gitpython and jproperties.  As a consequence, it also requires git >= 1.7.0 and 
 import sys
 
 from envutil import get_proj_dir
-from gitutil import get_property_files_diff, get_commit_id
+from gitutil import get_property_files_diff, get_commit_id, get_git_root
 from itemchange import ItemChange
 from csvutil import records_to_csv
 import argparse
@@ -59,7 +59,7 @@ def main():
                              'Japanese.  This flag overrides the first-commit flag.')
 
     args = parser.parse_args()
-    repo_path = args.repo_path if args.repo_path is not None else get_proj_dir()
+    repo_path = args.repo_path if args.repo_path is not None else get_git_root(get_proj_dir())
     output_path = args.output_path
     commit_1_id = args.commit_1_id
     if args.language is not None:

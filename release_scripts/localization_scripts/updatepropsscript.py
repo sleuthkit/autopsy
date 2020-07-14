@@ -7,8 +7,9 @@ import sys
 import os
 
 from envutil import get_proj_dir
+from gitutil import get_git_root
 from langpropsutil import set_commit_for_language
-from propsutil import set_entry_dict, get_entry_dict, get_lang_bundle_name
+from propsutil import set_entry_dict, get_entry_dict_from_path, get_lang_bundle_name
 from csvutil import csv_to_records
 from propentry import PropEntry
 import argparse
@@ -42,7 +43,7 @@ def update_prop_entries(entries: Iterator[PropEntry], repo_path: str):
     for rel_path, (entries, to_delete) in items_by_file.items():
         abs_path = os.path.join(repo_path, rel_path)
 
-        prop_items = get_entry_dict(abs_path)
+        prop_items = get_entry_dict_from_path(abs_path)
         if prop_items is None:
             prop_items = {}
 
@@ -194,7 +195,7 @@ def main():
                                                         'commit id, if specified, should only be in the first row.')
 
     parser.add_argument('-r', '--repo', dest='repo_path', type=str, required=False,
-                        help='The path to the repo.  If not specified, path of script is used.')
+                        help='The path to the repo.  If not specified, parent repo of path of script is used.')
     parser.add_argument('-p', '--path-idx', dest='path_idx', action='store', type=int, default=0, required=False,
                         help='The column index in the csv file providing the relative path to the properties file.')
     parser.add_argument('-k', '--key-idx', dest='key_idx', action='store', type=int, default=1, required=False,
@@ -223,7 +224,7 @@ def main():
 
     args = parser.parse_args()
 
-    repo_path = args.repo_path if args.repo_path is not None else get_proj_dir()
+    repo_path = args.repo_path if args.repo_path is not None else get_git_root(get_proj_dir())
     input_path = args.csv_file
     path_idx = args.path_idx
     key_idx = args.key_idx

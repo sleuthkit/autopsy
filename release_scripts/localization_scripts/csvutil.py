@@ -40,11 +40,14 @@ def csv_to_records(input_path: str, header_row: bool) -> Tuple[List[List[str]], 
 
         header = None
         results = []
-        for row in csv_reader:
-            if header_row:
-                header = row
-                header_row = False
-            else:
-                results.append(row)
+        try:
+            for row in csv_reader:
+                if header_row:
+                    header = row
+                    header_row = False
+                else:
+                    results.append(row)
+        except Exception as e:
+            raise Exception("There was an error parsing csv {path}".format(path=input_path), e)
 
         return results, header
