@@ -294,11 +294,23 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @param dataSource The data source
      * @param settings   The ingest job settings.
      * 
-     * @return The newly created ingest stream
+     * @return The newly created ingest stream.
+     * 
+     * @throws TskCoreException if there was an error starting the ingest job.
      */
-    public IngestStream openIngestStream(DataSource dataSource, IngestJobSettings settings) {
+    public IngestStream openIngestStream(DataSource dataSource, IngestJobSettings settings) throws TskCoreException {
         IngestJob job = new IngestJob(dataSource, IngestJob.Mode.STREAMING, settings);
-        return new IngestJobInputStream(job);
+        IngestJobInputStream stream = new IngestJobInputStream(job);
+        if (stream.getIngestJobStartResult().getJob() != null) {
+            return stream;
+        } else if (stream.getIngestJobStartResult().getModuleErrors().isEmpty()) {
+            for (IngestModuleError error : stream.getIngestJobStartResult().getModuleErrors()) {
+                logger.log(Level.SEVERE, String.format("%s ingest module startup error for %s", error.getModuleDisplayName(), dataSource.getName()), error.getThrowable());
+            }
+            throw new TskCoreException("Error starting ingest modules");
+        } else {
+            throw new TskCoreException("Error starting ingest modules", stream.getIngestJobStartResult().getStartupException());
+        }
     }
 
 
