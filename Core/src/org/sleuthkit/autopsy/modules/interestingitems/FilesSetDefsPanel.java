@@ -1116,11 +1116,15 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_copySetButtonActionPerformed
 
-    @NbBundle.Messages({
+    @NbBundle.Messages({       
         "FilesSetDefsPanel.interesting.failImportMsg=Interesting files set not imported",
         "FilesSetDefsPanel.interesting.fileExtensionFilterLbl=Autopsy Interesting File Set File (xml)",
-        "FilesSetDefsPanel.interesting.importButtonAction.featureName=Interesting Files Set Import"
-    })
+        "FilesSetDefsPanel.interesting.importButtonAction.featureName=Interesting Files Set Import",
+        "FilesSetDefsPanel.importSetButtonActionPerformed.noFilesSelected=No files sets were selected.",
+        "FilesSetDefsPanel.importSetButtonActionPerformed.noFiles=No files sets were found in the selected files.",
+        "# {0} - fileName",
+        "# {1} - errorMessage",
+        "FilesSetDefsPanel.importSetButtonActionPerformed.importError=The rules file \"{0}\" could not be read:\n{1}.",})
     private void importSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importSetButtonActionPerformed
         //save currently selected value as default value to select
         FilesSet selectedSet = this.setsList.getSelectedValue();
@@ -1136,8 +1140,8 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             File selFile = chooser.getSelectedFile();
             if (selFile == null) {
                 JOptionPane.showMessageDialog(this,
-                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.failImportMsg"),
-                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.importButtonAction.featureName"),
+                        Bundle.FilesSetDefsPanel_importSetButtonActionPerformed_noFilesSelected(),
+                        Bundle.FilesSetDefsPanel_interesting_importButtonAction_featureName(),
                         JOptionPane.WARNING_MESSAGE);
                 logger.warning("Selected file was null, when trying to import interesting files set definitions");
                 return;
@@ -1146,12 +1150,17 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             try {
                 importedSets = InterestingItemsFilesSetSettings.readDefinitionsXML(selFile).values(); //read the xml from that path
                 if (importedSets.isEmpty()) {
-                    throw new FilesSetsManager.FilesSetsManagerException("No Files Sets were read from the xml.");
+                    JOptionPane.showMessageDialog(this,
+                            Bundle.FilesSetDefsPanel_importSetButtonActionPerformed_noFiles(),
+                            Bundle.FilesSetDefsPanel_interesting_importButtonAction_featureName(),
+                            JOptionPane.WARNING_MESSAGE);
+                    logger.log(Level.WARNING, "No Interesting files set definitions were read from the selected file");
+                    return;
                 }
             } catch (FilesSetsManager.FilesSetsManagerException ex) {
                 JOptionPane.showMessageDialog(this,
-                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.failImportMsg"),
-                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.importButtonAction.featureName"),
+                        Bundle.FilesSetDefsPanel_importSetButtonActionPerformed_importError(selFile.getName(), ex.getMessage()),
+                        Bundle.FilesSetDefsPanel_interesting_importButtonAction_featureName(),
                         JOptionPane.WARNING_MESSAGE);
                 logger.log(Level.WARNING, "No Interesting files set definitions were read from the selected file, exception", ex);
                 return;
