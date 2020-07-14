@@ -572,6 +572,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             path = re.sub('Unalloc_[0-9]+_', 'Unalloc_', path)
             path = re.sub('regripper\-[0-9]+\-full', 'regripper-full', path)
             parent_path = re.sub('Unalloc_[0-9]+_', 'Unalloc_', parent_path)
+            parent_path = re.sub('regripper\-[0-9]+\-full', 'regripper-full', parent_path)
             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
         else:
             return line 
