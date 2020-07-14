@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import java.awt.event.ItemListener;
@@ -46,6 +47,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -69,8 +71,6 @@ import org.sleuthkit.datamodel.DataSource;
 import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
 import static org.sleuthkit.datamodel.Relationship.Type.CONTACT;
 import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Panel that holds the Filter control widgets and triggers queries against the
@@ -114,6 +114,8 @@ final public class FiltersPanel extends JPanel {
      */
     private final ItemListener validationListener;
 
+    private final RefreshThrottler refreshThrottler;
+
     /**
      * Is the device account type filter enabled or not. It should be enabled
      * when the Table/Brows mode is active and disabled when the visualization
@@ -129,6 +131,7 @@ final public class FiltersPanel extends JPanel {
         initComponents();
 
         initalizeDeviceAccountType();
+        setDateTimeFiltersToDefault();
 
         deviceRequiredLabel.setVisible(false);
         accountTypeRequiredLabel.setVisible(false);
@@ -165,20 +168,17 @@ final public class FiltersPanel extends JPanel {
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())) {
-                    updateFilters(true);
                     needsRefresh = true;
-                    validateFilters();
                 }
             }
         };
 
+        refreshThrottler = new RefreshThrottler(new FilterPanelRefresher());
+
         this.ingestJobListener = pce -> {
             String eventType = pce.getPropertyName();
-            if (eventType.equals(COMPLETED.toString())
-                    && updateFilters(true)) {
-
+            if (eventType.equals(COMPLETED.toString())) {
                 needsRefresh = true;
-                validateFilters();
             }
         };
 
@@ -220,39 +220,46 @@ final public class FiltersPanel extends JPanel {
         }
     }
 
-    /**
-     * Update the filter widgets, and apply them.
-     */
-    void updateAndApplyFilters(boolean initialState) {
-        updateFilters(initialState);
-        applyFilters();
-        initalizeDateTimeFilters();
+    @Override
+    public void setEnabled(boolean enabled) {
+        this.applyFiltersButton.setEnabled(enabled);
+        this.refreshButton.setEnabled(enabled && needsRefresh);
+        this.startCheckBox.setEnabled(enabled);
+        this.endCheckBox.setEnabled(enabled);
+
+        this.startDatePicker.setEnabled(enabled && startCheckBox.isSelected());
+        this.endDatePicker.setEnabled(enabled && endCheckBox.isSelected());
+
+        this.limitComboBox.setEnabled(enabled);
+
+        this.unCheckAllAccountTypesButton.setEnabled(enabled);
+        this.unCheckAllDevicesButton.setEnabled(enabled);
+
+        this.checkAllAccountTypesButton.setEnabled(enabled);
+        this.checkAllDevicesButton.setEnabled(enabled);
+
+        this.devicesListPane.setEnabled(enabled);
+        this.accountTypeListPane.setEnabled(enabled);
+    }
+
+    void updateFilters() {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                new FilterPanelRefresher().refresh();
+            }
+        };
+        runnable.run();
     }
 
     private void updateTimeZone() {
         dateRangeLabel.setText("Date Range (" + Utils.getUserPreferredZoneId().toString() + "):");
     }
 
-    /**
-     * Updates the filter widgets to reflect he data sources/types in the case.
-     */
-    private boolean updateFilters(boolean initialState) {
-        final SleuthkitCase sleuthkitCase;
-        try {
-            sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "Unable to perform filter update, update has been cancelled. Case is closed.", ex);
-            return false;
-        }
-        boolean newAccountType = updateAccountTypeFilter(initialState, sleuthkitCase);
-        boolean newDeviceFilter = updateDeviceFilter(initialState, sleuthkitCase);
-        // both or either are true, return true;
-        return newAccountType || newDeviceFilter;
-    }
-
     @Override
     public void addNotify() {
         super.addNotify();
+        refreshThrottler.registerForIngestModuleEvents();
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, ingestListener);
         IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobListener);
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
@@ -270,6 +277,7 @@ final public class FiltersPanel extends JPanel {
     @Override
     public void removeNotify() {
         super.removeNotify();
+        refreshThrottler.unregisterEventListener();
         IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
         IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
     }
@@ -283,33 +291,26 @@ final public class FiltersPanel extends JPanel {
     /**
      * Populate the Account Types filter widgets.
      *
-     * @param selected      The initial value for the account type checkbox.
-     * @param sleuthkitCase The sleuthkit case for containing the account
-     *                      information.
+     * @param accountTypesInUse List of accountTypes currently in use
      *
      * @return True, if a new accountType was found
      */
-    private boolean updateAccountTypeFilter(boolean selected, SleuthkitCase sleuthkitCase) {
+    private boolean updateAccountTypeFilter(List<Account.Type> accountTypesInUse) {
         boolean newOneFound = false;
-        try {
-            List<Account.Type> accountTypesInUse = sleuthkitCase.getCommunicationsManager().getAccountTypesInUse();
+        boolean selected = accountTypeMap.isEmpty() || (accountTypeMap.size() == 1 && accountTypeMap.containsKey(Account.Type.DEVICE));
 
-            for (Account.Type type : accountTypesInUse) {
+        for (Account.Type type : accountTypesInUse) {
+            if (!accountTypeMap.containsKey(type) && !type.equals(Account.Type.CREDIT_CARD)) {
+                CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(type, selected);
+                accountTypeMap.put(type, panel.getCheckBox());
+                accountTypeListPane.add(panel);
 
-                if (!accountTypeMap.containsKey(type) && !type.equals(Account.Type.CREDIT_CARD)) {
-                    CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(type, selected);
-                    accountTypeMap.put(type, panel.getCheckBox());
-                    accountTypeListPane.add(panel);
-
-                    newOneFound = true;
-                }
+                newOneFound = true;
             }
-
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Unable to update to update Account Types Filter", ex);
         }
+
         if (newOneFound) {
-            accountTypeListPane.revalidate();
+            accountTypeListPane.validate();
         }
 
         return newOneFound;
@@ -343,32 +344,35 @@ final public class FiltersPanel extends JPanel {
      *
      * @return true if a new device was found
      */
-    private boolean updateDeviceFilter(boolean selected, SleuthkitCase sleuthkitCase) {
+    private void updateDeviceFilterPanel(Map<String, DataSource> dataSourceMap) {
+        needsRefresh = devicesMap.isEmpty();
         boolean newOneFound = false;
-        try {
-            for (DataSource dataSource : sleuthkitCase.getDataSources()) {
-                String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
-                if (devicesMap.containsKey(dataSource.getDeviceId())) {
-                    continue;
-                }
-
-                final JCheckBox jCheckBox = new JCheckBox(dsName, selected);
-                jCheckBox.addItemListener(validationListener);
-                devicesListPane.add(jCheckBox);
-                devicesMap.put(dataSource.getDeviceId(), jCheckBox);
-
-                newOneFound = true;
-
+        for (Entry<String, DataSource> entry : dataSourceMap.entrySet()) {
+            if (devicesMap.containsKey(entry.getValue().getDeviceId())) {
+                continue;
             }
-        } catch (TskCoreException tskCoreException) {
-            logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
+
+            final JCheckBox jCheckBox = new JCheckBox(entry.getKey(), needsRefresh);
+            jCheckBox.addItemListener(validationListener);
+            devicesListPane.add(jCheckBox);
+            devicesMap.put(entry.getValue().getDeviceId(), jCheckBox);
+
+            newOneFound = true;
         }
 
         if (newOneFound) {
-            devicesListPane.revalidate();
+            devicesListPane.validate();
+        }
+    }
+
+    private void updateDateTimePicker(Integer start, Integer end) {
+        if (start != null && start != 0) {
+            startDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(start), Utils.getUserPreferredZoneId()).toLocalDate());
         }
 
-        return newOneFound;
+        if (end != null && end != 0) {
+            endDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(end), Utils.getUserPreferredZoneId()).toLocalDate());
+        }
     }
 
     /**
@@ -477,9 +481,9 @@ final public class FiltersPanel extends JPanel {
 
         setLayout(new java.awt.GridBagLayout());
 
-        scrollPane.setBorder(null);
         scrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setAutoscrolls(true);
+        scrollPane.setBorder(null);
 
         mainPanel.setLayout(new java.awt.GridBagLayout());
 
@@ -836,10 +840,10 @@ final public class FiltersPanel extends JPanel {
     /**
      * Post an event with the new filters.
      */
-    private void applyFilters() {
+    void applyFilters() {
+        validateFilters();
         CVTEvents.getCVTEventBus().post(new CVTEvents.FilterChangeEvent(getFilter(), getStartControlState(), getEndControlState()));
         needsRefresh = false;
-        validateFilters();
     }
 
     /**
@@ -956,31 +960,6 @@ final public class FiltersPanel extends JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setAllSelected(Map<?, JCheckBox> map, boolean selected) {
         map.values().forEach(box -> box.setSelected(selected));
-    }
-
-    /**
-     * initalize the DateTimePickers by grabbing the earliest and latest time
-     * from the autopsy db.
-     */
-    private void initalizeDateTimeFilters() {
-        Case currentCase = null;
-        try {
-            currentCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.INFO, "Tried to intialize communication filters date range filters without an open case, using default values");
-        }
-
-        if (currentCase == null) {
-            setDateTimeFiltersToDefault();
-            openCase = null;
-            return;
-        }
-
-        if (!currentCase.equals(openCase)) {
-            setDateTimeFiltersToDefault();
-            openCase = currentCase;
-            (new DatePickerWorker()).execute();
-        }
     }
 
     private void setDateTimeFiltersToDefault() {
@@ -1158,70 +1137,24 @@ final public class FiltersPanel extends JPanel {
         }
     }
 
-    /**
-     * A simple class that implements CaseDbAccessQueryCallback. Can be used as
-     * an anonymous innerclass with the CaseDbAccessManager select function.
-     */
-    class FilterPanelQueryCallback implements CaseDbAccessQueryCallback {
+    final class FilterPanelRefresher extends CVTFilterRefresher {
 
         @Override
-        public void process(ResultSet rs) {
-            // Subclasses can implement their own process function.
-        }
-    }
+        void updateFilterPanel(CVTFilterRefresher.FilterPanelData data) {
+            updateDateTimePicker(data.getStartTime(), data.getEndTime());
+            updateDeviceFilterPanel(data.getDataSourceMap());
+            updateAccountTypeFilter(data.getAccountTypesInUse());
 
-    final class DatePickerWorker extends SwingWorker<Map<String, Integer>, Void> {
+            FiltersPanel.this.repaint();
 
-        @Override
-        protected Map<String, Integer> doInBackground() throws Exception {
-            if (openCase == null) {
-                return null;
+            if (needsRefresh) {
+                applyFilters();
+            }
+            if (!isEnabled()) {
+                setEnabled(true);
             }
 
-            Map<String, Integer> resultMap = new HashMap<>();
-            String queryString = "max(date_time) as end,  min(date_time) as start from account_relationships"; // NON-NLS
-
-            openCase.getSleuthkitCase().getCaseDbAccessManager().select(queryString, new FilterPanelQueryCallback() {
-                @Override
-                public void process(ResultSet rs) {
-                    try {
-                        if (rs.next()) {
-                            int startDate = rs.getInt("start"); // NON-NLS
-                            int endDate = rs.getInt("end"); // NON-NLS
-
-                            resultMap.put("start", startDate); // NON-NLS
-                            resultMap.put("end", endDate); // NON-NLS
-                        }
-                    } catch (SQLException ex) {
-                        // Not the end of the world if this fails.
-                        logger.log(Level.WARNING, String.format("SQL Exception thrown from Query: %s", queryString), ex);
-                    }
-                }
-            });
-
-            return resultMap;
-        }
-
-        @Override
-        protected void done() {
-            try {
-                Map<String, Integer> resultMap = get();
-                if (resultMap != null) {
-                    Integer start = resultMap.get("start");
-                    Integer end = resultMap.get("end");
-
-                    if (start != null && start != 0) {
-                        startDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(start), Utils.getUserPreferredZoneId()).toLocalDate());
-                    }
-
-                    if (end != null && end != 0) {
-                        endDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(end), Utils.getUserPreferredZoneId()).toLocalDate());
-                    }
-                }
-            } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.WARNING, "Exception occured after date time sql query", ex);
-            }
+            validateFilters();
         }
     }
-
 }
