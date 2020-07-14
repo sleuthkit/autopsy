@@ -29,7 +29,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -354,14 +356,23 @@ final public class FiltersPanel extends JPanel {
 
             final JCheckBox jCheckBox = new JCheckBox(entry.getKey(), needsRefresh);
             jCheckBox.addItemListener(validationListener);
+            jCheckBox.setToolTipText(entry.getKey());
             devicesListPane.add(jCheckBox);
             devicesMap.put(entry.getValue().getDeviceId(), jCheckBox);
-
+            
             newOneFound = true;
         }
 
         if (newOneFound) {
-            devicesListPane.validate();
+            devicesListPane.removeAll();
+            List<JCheckBox> checkList = new ArrayList<>(devicesMap.values());
+            checkList.sort(new DeviceCheckBoxComparator());
+
+            for (JCheckBox cb : checkList) {
+                devicesListPane.add(cb);
+            }
+
+            devicesListPane.revalidate();
         }
     }
 
@@ -617,6 +628,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(dateRangePane, gridBagConstraints);
 
+        devicesPane.setPreferredSize(new java.awt.Dimension(300, 300));
         devicesPane.setLayout(new java.awt.GridBagLayout());
 
         unCheckAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllDevicesButton.text")); // NOI18N
@@ -656,7 +668,6 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
         devicesPane.add(checkAllDevicesButton, gridBagConstraints);
 
-        devicesScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         devicesScrollPane.setMaximumSize(new java.awt.Dimension(32767, 30));
         devicesScrollPane.setMinimumSize(new java.awt.Dimension(27, 30));
         devicesScrollPane.setPreferredSize(new java.awt.Dimension(3, 30));
@@ -690,10 +701,10 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.ipady = 100;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(devicesPane, gridBagConstraints);
 
@@ -1155,6 +1166,18 @@ final public class FiltersPanel extends JPanel {
             }
 
             validateFilters();
+        }
+    }
+    
+    /**
+     * Sorts a list of JCheckBoxes in alphabetical order of the text field
+     * value.
+     */
+    class DeviceCheckBoxComparator implements Comparator<JCheckBox> {
+
+        @Override
+        public int compare(JCheckBox e1, JCheckBox e2) {
+            return e1.getText().toLowerCase().compareTo(e2.getText().toLowerCase());
         }
     }
 }
