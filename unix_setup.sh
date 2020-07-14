@@ -72,6 +72,10 @@ else
     echo "done"
 fi
 
+# make sure thirdparty files are executable
+chmod u+x autopsy/markmckinnon/Export*
+chmod u+x autopsy/markmckinnon/parse*
+
 # make sure it is executable
 chmod u+x bin/autopsy
 
