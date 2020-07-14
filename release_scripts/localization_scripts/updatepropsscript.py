@@ -150,7 +150,7 @@ def get_prop_entries(rows: List[List[str]],
 
 
 def get_should_deleted(row_items: List[str], requested_idx: int) -> bool:
-    """If there is a value at row_items[requested_idx] and that value is not empty, then this will return true.
+    """If there is a value at row_items[requested_idx] and that value starts with 'DELET', then this will return true.
 
     Args:
         row_items (List[str]): The row items.
@@ -159,7 +159,7 @@ def get_should_deleted(row_items: List[str], requested_idx: int) -> bool:
     Returns:
         bool: True if the row specifies it should be deleted.
     """
-    if idx_bounded(requested_idx, len(row_items)) and len((row_items[requested_idx].strip())) > 0:
+    if idx_bounded(requested_idx, len(row_items)) and row_items[requested_idx].strip().upper().startswith('DELET'):
         return True
     else:
         return False
@@ -187,8 +187,10 @@ def main():
 
     parser.add_argument(dest='csv_file', type=str, help='The path to the csv file.  The default format for the csv '
                                                         'file has columns of relative path, properties file key, '
-                                                        'properties file value, and commit id for how recent these '
-                                                        'updates are.  A header row is expected by default and the '
+                                                        'properties file value, whether or not the key should be '
+                                                        'deleted, and commit id for how recent these updates are.  '
+                                                        'If the key should be deleted, the deletion row should be '
+                                                        '\'DELETION.\'  A header row is expected by default and the '
                                                         'commit id, if specified, should only be in the first row.')
 
     parser.add_argument('-r', '--repo', dest='repo_path', type=str, required=False,
@@ -199,12 +201,13 @@ def main():
                         help='The column index in the csv file providing the key within the properties file.')
     parser.add_argument('-v', '--value-idx', dest='value_idx', action='store', type=int, default=2, required=False,
                         help='The column index in the csv file providing the value within the properties file.')
-    parser.add_argument('-d', '--should-delete-idx', dest='should_delete_idx', action='store', type=int, default=None,
+    parser.add_argument('-d', '--should-delete-idx', dest='should_delete_idx', action='store', type=int, default=3,
                         required=False, help='The column index in the csv file providing whether or not the file '
                                              'should be deleted.  Any non-blank content will be treated as True.')
-    parser.add_argument('-c', '--commit-idx', dest='latest_commit_idx', action='store', type=int, default=3,
+    parser.add_argument('-c', '--commit-idx', dest='latest_commit_idx', action='store', type=int, default=4,
                         required=False, help='The column index in the csv file providing the commit for which this '
                                              'update applies. The commit should be located in the header row.  ')
+
     parser.add_argument('-f', '--file-rename', dest='file_rename', action='store', type=str, default=None,
                         required=False, help='If specified, the properties file will be renamed to the argument'
                                              ' preserving the specified relative path.')
@@ -213,6 +216,7 @@ def main():
     parser.add_argument('-o', '--should-overwrite', dest='should_overwrite', action='store_true', default=False,
                         required=False, help="Whether or not to overwrite the previously existing properties files"
                                              " ignoring previously existing values.")
+
     parser.add_argument('-l', '--language', dest='language', type=str, default='HEAD', required=False,
                         help='Specify the language in order to update the last updated properties file and rename '
                              'files within directories.  This flag overrides the file-rename flag.')
