@@ -29,6 +29,7 @@ class IngestJobInputStream implements IngestStream {
     private final IngestJob ingestJob;
     private boolean closed = false;
     private boolean isStopped = false;
+    private final IngestJobStartResult ingestJobStartResult;
 
     /**
      * Create an ingest stream object, saving a reference to the associated
@@ -38,7 +39,16 @@ class IngestJobInputStream implements IngestStream {
      */
     IngestJobInputStream(IngestJob ingestJob) {
         this.ingestJob = ingestJob;
-        IngestManager.getInstance().startIngestJob(ingestJob);
+        ingestJobStartResult = IngestManager.getInstance().startIngestJob(ingestJob);
+    }
+    
+    /**
+     * Check the result from starting the ingest jobs.
+     * 
+     * @return The IngestJobStartResult object returned from IngestManager.startIngestJob().
+     */
+    IngestJobStartResult getIngestJobStartResult() {
+        return ingestJobStartResult;
     }
 
     @Override
