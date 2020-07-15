@@ -45,7 +45,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 abstract class CVTFilterRefresher implements RefreshThrottler.Refresher {
 
     private static final Logger logger = Logger.getLogger(CVTFilterRefresher.class.getName());
-
     /**
      * contains all of the gui control specific update code. Refresh will call
      * this method with an involkLater so that the updating of the swing

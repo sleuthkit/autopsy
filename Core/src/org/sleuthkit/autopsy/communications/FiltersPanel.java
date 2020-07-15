@@ -162,17 +162,23 @@ final public class FiltersPanel extends JPanel {
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())) {
-                    needsRefresh = true;
+                   if(!needsRefresh) {
+                        needsRefresh = true;
+                        validateFilters(); 
+                   }
                 }
             }
         };
 
-        refreshThrottler = new RefreshThrottler(new FilterPanelRefresher());
+        refreshThrottler = new RefreshThrottler(new FilterPanelRefresher(false, false));
 
         this.ingestJobListener = pce -> {
             String eventType = pce.getPropertyName();
             if (eventType.equals(COMPLETED.toString())) {
-                needsRefresh = true;
+                 if(!needsRefresh) {
+                        needsRefresh = true;
+                        validateFilters(); 
+                   }
             }
         };
 
@@ -214,33 +220,11 @@ final public class FiltersPanel extends JPanel {
         }
     }
 
-    @Override
-    public void setEnabled(boolean enabled) {
-        this.applyFiltersButton.setEnabled(enabled);
-        this.refreshButton.setEnabled(enabled && needsRefresh);
-        this.startCheckBox.setEnabled(enabled);
-        this.endCheckBox.setEnabled(enabled);
-
-        this.startDatePicker.setEnabled(enabled && startCheckBox.isSelected());
-        this.endDatePicker.setEnabled(enabled && endCheckBox.isSelected());
-
-        this.limitComboBox.setEnabled(enabled);
-
-        this.unCheckAllAccountTypesButton.setEnabled(enabled);
-        this.unCheckAllDevicesButton.setEnabled(enabled);
-
-        this.checkAllAccountTypesButton.setEnabled(enabled);
-        this.checkAllDevicesButton.setEnabled(enabled);
-
-        this.devicesListPane.setEnabled(enabled);
-        this.accountTypeListPane.setEnabled(enabled);
-    }
-
-    void updateFilters() {
+    void initalizeFilters() {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                new FilterPanelRefresher().refresh();
+                new FilterPanelRefresher(true, true).refresh();
             }
         };
         runnable.run();
@@ -289,13 +273,12 @@ final public class FiltersPanel extends JPanel {
      *
      * @return True, if a new accountType was found
      */
-    private boolean updateAccountTypeFilter(List<Account.Type> accountTypesInUse) {
+    private boolean updateAccountTypeFilter(List<Account.Type> accountTypesInUse,  boolean checkNewOnes) {
         boolean newOneFound = false;
-        boolean selected = accountTypeMap.isEmpty() || (accountTypeMap.size() == 1 && accountTypeMap.containsKey(Account.Type.DEVICE));
-
+        
         for (Account.Type type : accountTypesInUse) {
             if (!accountTypeMap.containsKey(type) && !type.equals(Account.Type.CREDIT_CARD)) {
-                CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(type, selected);
+                CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(type, checkNewOnes);
                 accountTypeMap.put(type, panel.getCheckBox());
                 accountTypeListPane.add(panel);
 
@@ -338,15 +321,14 @@ final public class FiltersPanel extends JPanel {
      *
      * @return true if a new device was found
      */
-    private void updateDeviceFilterPanel(Map<String, DataSource> dataSourceMap) {
-        needsRefresh = devicesMap.isEmpty();
+    private void updateDeviceFilterPanel(Map<String, DataSource> dataSourceMap, boolean checkNewOnes) {
         boolean newOneFound = false;
         for (Entry<String, DataSource> entry : dataSourceMap.entrySet()) {
             if (devicesMap.containsKey(entry.getValue().getDeviceId())) {
                 continue;
             }
 
-            final JCheckBox jCheckBox = new JCheckBox(entry.getKey(), needsRefresh);
+            final JCheckBox jCheckBox = new JCheckBox(entry.getKey(), checkNewOnes);
             jCheckBox.addItemListener(validationListener);
             jCheckBox.setToolTipText(entry.getKey());
             devicesListPane.add(jCheckBox);
@@ -844,9 +826,10 @@ final public class FiltersPanel extends JPanel {
      * Post an event with the new filters.
      */
     void applyFilters() {
-        validateFilters();
-        CVTEvents.getCVTEventBus().post(new CVTEvents.FilterChangeEvent(getFilter(), getStartControlState(), getEndControlState()));
-        needsRefresh = false;
+       needsRefresh = false; 
+       validateFilters();
+       CVTEvents.getCVTEventBus().post(new CVTEvents.FilterChangeEvent(getFilter(), getStartControlState(), getEndControlState()));
+        
     }
 
     /**
@@ -1147,22 +1130,33 @@ final public class FiltersPanel extends JPanel {
      */
     final class FilterPanelRefresher extends CVTFilterRefresher {
 
+        private boolean selectNewOption = false;
+        private boolean refreshAfterUpdate = false;
+        
+        FilterPanelRefresher(boolean selectNewOptions, boolean refreshAfterUpdate) {
+            this.selectNewOption = selectNewOptions;
+            this.refreshAfterUpdate = refreshAfterUpdate;
+        }
+        
         @Override
         void updateFilterPanel(CVTFilterRefresher.FilterPanelData data) {
             updateDateTimePicker(data.getStartTime(), data.getEndTime());
-            updateDeviceFilterPanel(data.getDataSourceMap());
-            updateAccountTypeFilter(data.getAccountTypesInUse());
+            updateDeviceFilterPanel(data.getDataSourceMap(), selectNewOption);
+            updateAccountTypeFilter(data.getAccountTypesInUse(), selectNewOption);
 
             FiltersPanel.this.repaint();
 
-            if (needsRefresh) {
+            if (refreshAfterUpdate) {
                 applyFilters();
             }
+            
             if (!isEnabled()) {
                 setEnabled(true);
             }
 
             validateFilters();
+            
+            repaint();
         }
     }
 

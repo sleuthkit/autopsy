@@ -189,8 +189,7 @@ public final class CVTTopComponent extends TopComponent {
          *
          * Re-applying the filters means we will lose the selection...
          */
-        filtersPane.setEnabled(false);
-        filtersPane.updateFilters();
+        filtersPane.initalizeFilters();
     }
 
     @Override
