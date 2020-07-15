@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -38,53 +40,57 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *  Refreshes the CVTFilterPanel.
+ * Refreshes the CVTFilterPanel.
  */
-abstract class CVTFilterRefresher implements RefreshThrottler.Refresher{
-    
+abstract class CVTFilterRefresher implements RefreshThrottler.Refresher {
+
+    private static final Logger logger = Logger.getLogger(CVTFilterRefresher.class.getName());
+
     /**
-     * contains all of the gui control specific update code. Refresh will
-     * call this method with an involkLater so that the updating of the swing
+     * contains all of the gui control specific update code. Refresh will call
+     * this method with an involkLater so that the updating of the swing
      * controls can happen on the EDT.
-     * 
-     * @param data 
+     *
+     * @param data
      */
     abstract void updateFilterPanel(FilterPanelData data);
 
     @Override
     public void refresh() {
-        try{
+        try {
             Integer startTime;
             Integer endTime;
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-        
+
             // Fetch Min/Max start times
-            try(SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery("SELECT MAX(date_time) as end,  MIN(date_time) as start from account_relationships")){
+            try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery("SELECT MAX(date_time) as end,  MIN(date_time) as start from account_relationships")) {
+                // ResultSet is closed by CasDBQuery
                 ResultSet rs = dbQuery.getResultSet();
                 startTime = rs.getInt("start"); // NON-NLS
                 endTime = rs.getInt("end"); // NON-NLS
-            } 
+            }
             // Get the devices with CVT artifacts
             List<Integer> deviceObjIds = new ArrayList<>();
-            try(SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery("SELECT DISTINCT data_source_obj_id FROM account_relationships")) {
+            try (SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery("SELECT DISTINCT data_source_obj_id FROM account_relationships")) {
+                // ResultSet is closed by CasDBQuery
                 ResultSet rs = queryResult.getResultSet();
-                while(rs.next()) {
+                while (rs.next()) {
                     deviceObjIds.add(rs.getInt(1));
                 }
-            }  
+            }
 
             // The map key is the Content name instead of the data source name
             // to match how the CVT filters work.
             Map<String, DataSource> dataSourceMap = new HashMap<>();
             for (DataSource dataSource : skCase.getDataSources()) {
-                if(deviceObjIds.contains((int)dataSource.getId())) {
+                if (deviceObjIds.contains((int) dataSource.getId())) {
                     String dsName = skCase.getContentById(dataSource.getId()).getName();
                     dataSourceMap.put(dsName, dataSource);
                 }
             }
-            
+
             List<Account.Type> accountTypesInUse = skCase.getCommunicationsManager().getAccountTypesInUse();
-            
+
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -92,14 +98,14 @@ abstract class CVTFilterRefresher implements RefreshThrottler.Refresher{
                 }
             });
 
-        } catch(SQLException | TskCoreException ex) {
-            ex.printStackTrace();
+        } catch (SQLException | TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to update CVT filter panel.", ex);
         } catch (NoCurrentCaseException notUsed) {
             /**
              * Case is closed, do nothing.
              */
         }
-        
+
     }
 
     @Override
@@ -112,19 +118,23 @@ abstract class CVTFilterRefresher implements RefreshThrottler.Refresher{
                     && (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()
                     || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
                     || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
-                    || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())) ;
+                    || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()));
         }
-        
+
         return false;
     }
-    
+
+    /**
+     * Class to hold the data for setting up the filter panel gui controls.
+     */
     class FilterPanelData {
-        private final  Map<String, DataSource> dataSourceMap;
+
+        private final Map<String, DataSource> dataSourceMap;
         private final Integer startTime;
         private final Integer endTime;
         private final List<Account.Type> accountTypesInUse;
-        
-        FilterPanelData( Map<String, DataSource> dataSourceMap, List<Account.Type> accountTypesInUse, Integer startTime, Integer endTime) {
+
+        FilterPanelData(Map<String, DataSource> dataSourceMap, List<Account.Type> accountTypesInUse, Integer startTime, Integer endTime) {
             this.dataSourceMap = dataSourceMap;
             this.startTime = startTime;
             this.endTime = endTime;
@@ -146,8 +156,7 @@ abstract class CVTFilterRefresher implements RefreshThrottler.Refresher{
         List<Account.Type> getAccountTypesInUse() {
             return accountTypesInUse;
         }
-        
-        
+
     }
-    
+
 }

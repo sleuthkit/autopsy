@@ -23,8 +23,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -38,8 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -48,12 +44,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingWorker;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -63,7 +56,6 @@ import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbAccessQueryCallback;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DateRangeFilter;
@@ -359,7 +351,7 @@ final public class FiltersPanel extends JPanel {
             jCheckBox.setToolTipText(entry.getKey());
             devicesListPane.add(jCheckBox);
             devicesMap.put(entry.getValue().getDeviceId(), jCheckBox);
-            
+
             newOneFound = true;
         }
 
@@ -1148,6 +1140,11 @@ final public class FiltersPanel extends JPanel {
         }
     }
 
+    /**
+     * Extends the CVTFilterRefresher abstract class to add the calls to update
+     * the ui controls with the data found. Note that updateFilterPanel is run
+     * in the EDT.
+     */
     final class FilterPanelRefresher extends CVTFilterRefresher {
 
         @Override
@@ -1168,7 +1165,7 @@ final public class FiltersPanel extends JPanel {
             validateFilters();
         }
     }
-    
+
     /**
      * Sorts a list of JCheckBoxes in alphabetical order of the text field
      * value.
