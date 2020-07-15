@@ -1084,7 +1084,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     public CentralRepoAccount getOrCreateAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
         String query = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
                 + "VALUES ( " + crAccountType.getAccountTypeId() + ", '"
-                + accountUniqueID + "' ) ON CONFLICT DO NOTHING";
+                + accountUniqueID + "' ) " + getConflictClause();
 
         try (Connection connection = connect();
                 Statement s = connection.createStatement();) {
