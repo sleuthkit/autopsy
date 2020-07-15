@@ -65,7 +65,6 @@ public final class ContextUsagePanel extends javax.swing.JPanel {
         jUsageNameLabel = new javax.swing.JLabel();
         jUsageTextLabel = new javax.swing.JLabel();
 
-        setBackground(new java.awt.Color(255, 255, 255));
         setPreferredSize(new java.awt.Dimension(495, 75));
 
         org.openide.awt.Mnemonics.setLocalizedText(jUsageGoToResultButton, org.openide.util.NbBundle.getMessage(ContextUsagePanel.class, "ContextUsagePanel.jUsageGoToResultButton.text")); // NOI18N

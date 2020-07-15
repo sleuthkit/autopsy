@@ -65,7 +65,6 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
         jSourceNameLabel = new javax.swing.JLabel();
         jSourceTextLabel = new javax.swing.JLabel();
 
-        setBackground(new java.awt.Color(255, 255, 255));
         setPreferredSize(new java.awt.Dimension(495, 75));
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceGoToResultButton, org.openide.util.NbBundle.getMessage(ContextSourcePanel.class, "ContextSourcePanel.jSourceGoToResultButton.text")); // NOI18N

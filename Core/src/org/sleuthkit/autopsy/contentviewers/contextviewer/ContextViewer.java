@@ -89,8 +89,6 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         javax.swing.JLabel jUnknownLabel = new javax.swing.JLabel();
         jScrollPane = new javax.swing.JScrollPane();
 
-        jSourcePanel.setBackground(javax.swing.UIManager.getDefaults().getColor("window"));
-
         jSourceLabel.setFont(jSourceLabel.getFont().deriveFont(jSourceLabel.getFont().getStyle() | java.awt.Font.BOLD, jSourceLabel.getFont().getSize()+1));
         org.openide.awt.Mnemonics.setLocalizedText(jSourceLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceLabel.text")); // NOI18N
 
@@ -111,8 +109,6 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                 .addGap(2, 2, 2))
         );
 
-        jUsagePanel.setBackground(javax.swing.UIManager.getDefaults().getColor("window"));
-
         jUsageLabel.setFont(jUsageLabel.getFont().deriveFont(jUsageLabel.getFont().getStyle() | java.awt.Font.BOLD, jUsageLabel.getFont().getSize()+1));
         org.openide.awt.Mnemonics.setLocalizedText(jUsageLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageLabel.text")); // NOI18N
 
@@ -132,8 +128,6 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                 .addComponent(jUsageLabel)
                 .addGap(2, 2, 2))
         );
-
-        jUnknownPanel.setBackground(new java.awt.Color(255, 255, 255));
 
         org.openide.awt.Mnemonics.setLocalizedText(jUnknownLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUnknownLabel.text")); // NOI18N
 
