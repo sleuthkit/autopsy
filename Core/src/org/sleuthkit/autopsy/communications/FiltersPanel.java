@@ -157,15 +157,14 @@ final public class FiltersPanel extends JPanel {
             if (eventType.equals(DATA_ADDED.toString())) {
                 // Indicate that a refresh may be needed, unless the data added is Keyword or Hashset hits
                 ModuleDataEvent eventData = (ModuleDataEvent) pce.getOldValue();
-                if (null != eventData
+                if (!needsRefresh
+                        && null != eventData
                         && (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())) {
-                   if(!needsRefresh) {
-                        needsRefresh = true;
-                        validateFilters(); 
-                   }
+                    needsRefresh = true;
+                    validateFilters();
                 }
             }
         };
@@ -174,11 +173,11 @@ final public class FiltersPanel extends JPanel {
 
         this.ingestJobListener = pce -> {
             String eventType = pce.getPropertyName();
-            if (eventType.equals(COMPLETED.toString())) {
-                 if(!needsRefresh) {
-                        needsRefresh = true;
-                        validateFilters(); 
-                   }
+            if (eventType.equals(COMPLETED.toString()) && !needsRefresh) {
+
+                needsRefresh = true;
+                validateFilters();
+
             }
         };
 
@@ -273,9 +272,9 @@ final public class FiltersPanel extends JPanel {
      *
      * @return True, if a new accountType was found
      */
-    private boolean updateAccountTypeFilter(List<Account.Type> accountTypesInUse,  boolean checkNewOnes) {
+    private boolean updateAccountTypeFilter(List<Account.Type> accountTypesInUse, boolean checkNewOnes) {
         boolean newOneFound = false;
-        
+
         for (Account.Type type : accountTypesInUse) {
             if (!accountTypeMap.containsKey(type) && !type.equals(Account.Type.CREDIT_CARD)) {
                 CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(type, checkNewOnes);
@@ -826,10 +825,10 @@ final public class FiltersPanel extends JPanel {
      * Post an event with the new filters.
      */
     void applyFilters() {
-       needsRefresh = false; 
-       validateFilters();
-       CVTEvents.getCVTEventBus().post(new CVTEvents.FilterChangeEvent(getFilter(), getStartControlState(), getEndControlState()));
-        
+        needsRefresh = false;
+        validateFilters();
+        CVTEvents.getCVTEventBus().post(new CVTEvents.FilterChangeEvent(getFilter(), getStartControlState(), getEndControlState()));
+
     }
 
     /**
@@ -1130,14 +1129,14 @@ final public class FiltersPanel extends JPanel {
      */
     final class FilterPanelRefresher extends CVTFilterRefresher {
 
-        private boolean selectNewOption = false;
-        private boolean refreshAfterUpdate = false;
-        
+        private final boolean selectNewOption;
+        private final boolean refreshAfterUpdate;
+
         FilterPanelRefresher(boolean selectNewOptions, boolean refreshAfterUpdate) {
             this.selectNewOption = selectNewOptions;
             this.refreshAfterUpdate = refreshAfterUpdate;
         }
-        
+
         @Override
         void updateFilterPanel(CVTFilterRefresher.FilterPanelData data) {
             updateDateTimePicker(data.getStartTime(), data.getEndTime());
@@ -1149,13 +1148,13 @@ final public class FiltersPanel extends JPanel {
             if (refreshAfterUpdate) {
                 applyFilters();
             }
-            
+
             if (!isEnabled()) {
                 setEnabled(true);
             }
 
             validateFilters();
-            
+
             repaint();
         }
     }
