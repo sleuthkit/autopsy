@@ -1082,32 +1082,22 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     @Override
     public CentralRepoAccount getOrCreateAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
 
-        // TBD: normalize the account id  - waiting for a PR to be merged
-        // Get the account fom the accounts table
-        CentralRepoAccount account = getAccount(crAccountType, accountUniqueID);
+        String insertSQL = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
+                + "VALUES (?, ?) " + getConflictClause();
 
-        // account not found in the table, create it
-        if (null == account) {
+        try (Connection connection = connect();
+                PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);) {
 
-            String insertSQL = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
-                    + "VALUES (?, ?)";
+            preparedStatement.setInt(1, crAccountType.getAccountTypeId());
+            preparedStatement.setString(2, accountUniqueID); // TBD: fill in the normalized ID
 
-            try (Connection connection = connect();
-                    PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);) {
+            preparedStatement.executeUpdate();
 
-                preparedStatement.setInt(1, crAccountType.getAccountTypeId());
-                preparedStatement.setString(2, accountUniqueID); // TBD: fill in the normalized ID
-
-                preparedStatement.executeUpdate();
-
-                // get the account from the db - should exist now.
-                account = getAccount(crAccountType, accountUniqueID);
-            } catch (SQLException ex) {
-                throw new CentralRepoException("Error adding an account to CR database.", ex);
-            }
+            // get the account from the db - should exist now.
+            return getAccount(crAccountType, accountUniqueID);
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error adding an account to CR database.", ex);
         }
-
-        return account;
     }
 
     @Override
