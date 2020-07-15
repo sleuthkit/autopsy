@@ -45,7 +45,6 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
         addFilter(new PastOccurrencesFilterPanel(), true, pastOccurrencesIndices, 0);
         addFilter(new HashSetFilterPanel(), false, null, 1);
         addFilter(new InterestingItemsFilterPanel(), false, null, 1);
-        addFilter(new ObjectDetectedFilterPanel(), false, null, 1);
         addFilter(new ParentFolderFilterPanel(), false, null, 1);
         addPanelsToScrollPane(documentsFiltersSplitPane);
     }

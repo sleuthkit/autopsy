@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.TskDataException;
 
 /**
  *
- * Stores information about a Data Source in the correlation engine
+ * Stores information about a Data Source in the Central Repository
  *
  */
 public class CorrelationDataSource implements Serializable {

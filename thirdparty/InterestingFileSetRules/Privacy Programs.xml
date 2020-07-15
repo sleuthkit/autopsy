@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<INTERESTING_FILE_SETS>
+ <INTERESTING_FILE_SET description="This list contains rules identifying VPN's and Privacy browsers" ignoreKnown="false" name="Privacy Programs" standardSet="true" versionNumber="2">
+  <NAME name="AncorFree Hotspot Shield VPN" regex="false" typeFilter="file">AncorFreeHotspotShieldVPN.exe</NAME>
+  <NAME name="AncorFree Hotspot Shield VPN" regex="false" typeFilter="file">AncorFreeVPN.exe</NAME>
+  <NAME name="AncorFree Hotspot Shield VPN" regex="false" typeFilter="file">HotspotShieldVPN.EXE</NAME>
+  <NAME name="AVG Secure Browser" regex="false" typeFilter="file">AVGBrowser.exe</NAME>
+  <NAME name="Avira browser" regex="false" typeFilter="file">Avira.Systray.exe</NAME>
+  <NAME name="Avira Phantom VPN" regex="false" typeFilter="file">AviraPhantomVPN.exe</NAME>
+  <NAME name="Avira Scout browser" regex="false" typeFilter="file">AviraScout.exe</NAME>
+  <NAME name="Brave browser" regex="false" typeFilter="file">Brave.exe</NAME>
+  <NAME name="CM Browser" regex="false" typeFilter="file">CM.exe</NAME>
+  <NAME name="Comodo browser" regex="false" typeFilter="file">dragon.exe</NAME>
+  <NAME name="CyberGhost" regex="false" typeFilter="file">CyberGhost.exe</NAME>
+  <NAME name="Disconnect browser" regex="false" typeFilter="file">Disconnect.exe</NAME>
+  <NAME name="Dolphin Zero browser" regex="false" typeFilter="file">DolphinZero.exe</NAME>
+  <NAME name="Dooble browser" regex="false" typeFilter="file">Dooble.exe</NAME>
+  <NAME name="Epic browser" regex="false" typeFilter="file">Epic.exe</NAME>
+  <NAME name="ExpressVPN" regex="false" typeFilter="file">ExpressVPN.exe</NAME>
+  <NAME name="Freelan" regex="false" typeFilter="file">Freelan.exe</NAME>
+  <NAME name="Freenet" regex="false" typeFilter="file">Freenet.exe</NAME>
+  <NAME name="Hide.me VPN" regex="false" typeFilter="file">HidemeVPN.exe</NAME>
+  <NAME name="Hide.me VPN" regex="false" typeFilter="file">Hideme.exe</NAME>
+  <NAME name="HideMyAss" regex="false" typeFilter="file">HideMyAss.exe</NAME>
+  <NAME name="HotspotShield" regex="false" typeFilter="file">HotspotShield.exe</NAME>
+  <NAME name="HTTPS Everywhere " regex="false" typeFilter="file">HTTPSEverywhere.exe</NAME>
+  <NAME name="Kaspersky Secure Connection VPN" regex="false" typeFilter="file">KasperskyVPN.exe</NAME>
+  <NAME name="NordVPN" regex="false" typeFilter="file">NordVPN.exe</NAME>
+  <NAME name="NortonSecureVpn" regex="false" typeFilter="file">NortonSecureVpn.exe</NAME>
+  <NAME name="NortonSecureVpn" regex="false" typeFilter="file">NortonVPN.exe</NAME>
+  <NAME name="OpenVpn" regex="false" typeFilter="file">OpenVpn.exe</NAME>
+  <NAME name="Pale Moon browser" regex="false" typeFilter="file">PaleMoon.exe</NAME>
+  <NAME name="Private Internet Access" regex="false" typeFilter="file">PIA.exe</NAME>
+  <NAME name="PrivateInternetAccess" regex="false" typeFilter="file">PrivateInternetAccess.exe</NAME>
+  <NAME name="PrivateVPN" regex="false" typeFilter="file">PrivateVPN.exe</NAME>
+  <NAME name="ProtonVPN" regex="false" typeFilter="file">ProtonVPN.exe</NAME>
+  <NAME name="PureVPN" regex="false" typeFilter="file">PureVPN.exe</NAME>
+  <NAME name="SaferVPN" regex="false" typeFilter="file">SaferVPN.exe</NAME>
+  <NAME name="SRWare Iron browser" regex="false" typeFilter="file">SRWareIron.exe</NAME>
+  <NAME name="SurfShark" regex="false" typeFilter="file">SurfShark.exe</NAME>
+  <NAME name="Tor browser" regex="false" typeFilter="file">Tor.exe</NAME>
+  <NAME name="Tunnelbear" regex="false" typeFilter="file">Tunnelbear.exe</NAME>
+  <NAME name="UltraVpn" regex="false" typeFilter="file">UltraVpn.exe</NAME>
+  <NAME name="VpnGate" regex="false" typeFilter="file">VpnGate.exe</NAME>
+  <NAME name="VyprVPN" regex="false" typeFilter="file">VyprVPN.exe</NAME>
+  <NAME name="Waterfox browser" regex="false" typeFilter="file">Waterfox.exe</NAME>
+  <NAME name="ZenMate" regex="false" typeFilter="file">ZenMate.exe</NAME>
+  <NAME name="Zenmate" regex="false" typeFilter="file">Zenmate.exe</NAME>
+ </INTERESTING_FILE_SET>
+</INTERESTING_FILE_SETS>

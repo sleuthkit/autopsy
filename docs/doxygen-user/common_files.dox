@@ -32,7 +32,7 @@ Finally, if you have the Central Repository enabled you can choose to hide match
 
 \subsection common_properties_central_repo Scope - between current case and cases in the Central Repository
 
-This type of search looks for files that contain common properties between the current case and other cases in the Central Repository. You must run the Correlation Engine ingest module on each case with the property you want to search for enabled, along with the ingest modules that produce that property type (see \ref cr_manage_properties). 
+This type of search looks for files that contain common properties between the current case and other cases in the Central Repository. You must run the Central Repository ingest module on each case with the property you want to search for enabled, along with the ingest modules that produce that property type (see \ref cr_manage_properties). 
 
 \image html common_properties_cr.png
 
