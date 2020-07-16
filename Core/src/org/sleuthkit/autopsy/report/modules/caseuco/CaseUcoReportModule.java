@@ -77,7 +77,7 @@ public final class CaseUcoReportModule implements GeneralReportModule {
     };
 
     private static final String REPORT_FILE_NAME = "CASE_UCO_output";
-    private static final String EXTENSION = "json-ld";
+    private static final String EXTENSION = "jsonld";
 
     // Hidden constructor for the report
     private CaseUcoReportModule() {
