@@ -2563,7 +2563,16 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         sysLogger.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
                         if (selectedProcessor.supportsIngestStream()) {
                             IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
-                            // TODO check for settings errors
+                            if (! ingestJobSettings.getWarnings().isEmpty()) {
+                                for (String warning : ingestJobSettings.getWarnings()) {
+                                    sysLogger.log(Level.SEVERE, "Ingest job settings error for {0}: {1}", new Object[]{manifestPath, warning});
+                                }
+                                currentJob.setErrorsOccurred(true);
+                                setErrorsOccurredFlagForCase(caseDirectoryPath);
+                                jobLogger.logIngestJobSettingsErrors();
+                                // TODO Change exception type
+                                throw new AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException("Error(s) in ingest job settings");
+                            }
                             currentIngestStream = selectedProcessor.processWithIngestStream(dataSource.getDeviceId(), dataSource.getPath(), ingestJobSettings, progressMonitor, callBack);
                         } else {
                             selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
@@ -2683,7 +2692,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobEventListener);
             try {
                 synchronized (ingestLock) {
-                    // TODO don't do all this
+                    // TODO Don't redo loading the settings when there's an ingest stream
                     IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
                     List<String> settingsWarnings = ingestJobSettings.getWarnings();
                     if (settingsWarnings.isEmpty()) {
