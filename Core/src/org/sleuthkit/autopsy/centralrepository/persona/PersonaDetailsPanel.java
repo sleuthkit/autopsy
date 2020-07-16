@@ -34,6 +34,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
+import org.apache.commons.lang.StringUtils;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
@@ -891,14 +892,14 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
             return null;
 
         }
-        if (commentField.getText().isEmpty()) {
+        if (StringUtils.isBlank(commentField.getText())) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaDetailsPanel_EmptyComment_msg(),
                     Bundle.PersonaDetailsPanel_EmptyComment_Title(),
                     JOptionPane.ERROR_MESSAGE);
             return null;
         }
-        if (nameField.getText().isEmpty()) {
+        if (StringUtils.isBlank(nameField.getText())) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaDetailsPanel_EmptyName_msg(),
                     Bundle.PersonaDetailsPanel_EmptyName_Title(),

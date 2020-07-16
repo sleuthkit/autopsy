@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.datamodel.Account;
@@ -222,10 +223,13 @@ public final class CentralRepoAccount {
     public static Collection<CentralRepoAccount> getAccountsWithIdentifierLike(String accountIdentifierSubstring) throws CentralRepoException {
 
         String queryClause = ACCOUNTS_QUERY_CLAUSE
-                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + accountIdentifierSubstring + "%')";
+                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER(?)";
+
+        List<Object> params = new ArrayList<>();
+        params.add("%" + accountIdentifierSubstring + "%");
 
         AccountsQueryCallback queryCallback = new AccountsQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        CentralRepository.getInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getAccountsList();
     }
@@ -245,10 +249,13 @@ public final class CentralRepoAccount {
 
         String normalizedAccountIdentifier = normalizeAccountIdentifier(accountIdentifier);
         String queryClause = ACCOUNTS_QUERY_CLAUSE
-                + " WHERE LOWER(accounts.account_unique_identifier) = LOWER('" + normalizedAccountIdentifier + "')";
+                + " WHERE LOWER(accounts.account_unique_identifier) = LOWER(?)";
+
+        List<Object> params = new ArrayList<>();
+        params.add(normalizedAccountIdentifier);
 
         AccountsQueryCallback queryCallback = new AccountsQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        CentralRepository.getInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getAccountsList();
     }
@@ -266,8 +273,10 @@ public final class CentralRepoAccount {
 
         String queryClause = ACCOUNTS_QUERY_CLAUSE;
 
+        List<Object> params = new ArrayList<>(); // empty param list
+
         AccountsQueryCallback queryCallback = new AccountsQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        CentralRepository.getInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getAccountsList();
     }

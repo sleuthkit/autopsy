@@ -28,6 +28,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
@@ -246,7 +247,7 @@ public class CreatePersonaAccountDialog extends JDialog {
         "CreatePersonaAccountDialog_success_msg=Account added.",
     })
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
-        if (identifierTextField.getText().isEmpty()) {
+        if (StringUtils.isBlank(identifierTextField.getText())) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaAccountDialog_identifier_empty_msg(),
                     Bundle.PersonaAccountDialog_identifier_empty_Title(),

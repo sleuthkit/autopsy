@@ -126,26 +126,47 @@ final class MessageAccountPanel extends JPanel {
             return dataList;
         }
 
+        @Messages({
+            "MessageAccountPanel_no_matches=No matches found.",
+        })
         @Override
         protected void done() {
             try {
                 List<AccountContainer> dataList = get();
 
-                dataList.forEach(container -> {
-                    container.initalizeSwingControls();
-                });
+                if (!dataList.isEmpty()) {
+                    dataList.forEach(container -> {
+                        container.initalizeSwingControls();
+                    });
 
-                GroupLayout layout = new GroupLayout(MessageAccountPanel.this);
-                layout.setHorizontalGroup(
-                        layout.createParallelGroup(Alignment.LEADING)
-                                .addGroup(layout.createSequentialGroup()
-                                        .addContainerGap()
-                                        .addGroup(getMainHorizontalGroup(layout, dataList))
-                                        .addContainerGap(158, Short.MAX_VALUE)));
+                    GroupLayout layout = new GroupLayout(MessageAccountPanel.this);
+                    layout.setHorizontalGroup(
+                            layout.createParallelGroup(Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                            .addContainerGap()
+                                            .addGroup(getMainHorizontalGroup(layout, dataList))
+                                            .addContainerGap(158, Short.MAX_VALUE)));
 
-                layout.setVerticalGroup(getMainVerticalGroup(layout, dataList));
-                setLayout(layout);
-                repaint();
+                    layout.setVerticalGroup(getMainVerticalGroup(layout, dataList));
+                    setLayout(layout);
+                    repaint();
+                } else {
+                    // No match found, display a message.
+                    JPanel messagePanel = new javax.swing.JPanel();
+                    JLabel messageLabel = new javax.swing.JLabel();
+
+                    messagePanel.setLayout(new java.awt.BorderLayout());
+
+                    messageLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+                    messageLabel.setText(Bundle.MessageAccountPanel_no_matches());
+                    messageLabel.setEnabled(false);
+                    messagePanel.add(messageLabel, java.awt.BorderLayout.CENTER);
+
+                    setLayout(new javax.swing.OverlayLayout(MessageAccountPanel.this));
+
+                    add(messagePanel);
+                    repaint();
+                }
             } catch (CancellationException ex) {
                 logger.log(Level.INFO, "MessageAccoutPanel thread cancelled", ex);
             } catch (InterruptedException | ExecutionException ex) {

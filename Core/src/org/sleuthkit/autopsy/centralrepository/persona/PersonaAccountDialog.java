@@ -28,6 +28,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
@@ -282,14 +283,14 @@ public class PersonaAccountDialog extends JDialog {
         "PersonaAccountDialog_invalid_account_msg=Account identifier is not valid.",
     })
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
-        if (identifierTextField.getText().isEmpty()) {
+        if (StringUtils.isBlank(identifierTextField.getText())) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaAccountDialog_identifier_empty_msg(),
                     Bundle.PersonaAccountDialog_identifier_empty_Title(),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
-        if (justificationTextField.getText().isEmpty()) {
+        if (StringUtils.isBlank(justificationTextField.getText())) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaDetailsPanel_empty_justification_msg(),
                     Bundle.PersonaDetailsPanel_empty_justification_Title(),
