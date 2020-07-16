@@ -34,6 +34,8 @@ public interface IngestStream {
      * @throws IngestStreamClosedException
      */
     void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException;
+    
+    IngestJob getIngestJob();
 
     /**
      * Closes the ingest stream. Should be called after all files from data

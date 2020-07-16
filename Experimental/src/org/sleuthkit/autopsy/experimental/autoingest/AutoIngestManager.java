@@ -101,6 +101,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
+import org.sleuthkit.autopsy.ingest.IngestStream;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleException;
 import org.sleuthkit.autopsy.keywordsearch.Server;
 import org.sleuthkit.datamodel.Content;
@@ -165,6 +166,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private AutoIngestJob currentJob;
     @GuardedBy("jobsLock")
     private List<AutoIngestJob> completedJobs;
+    private IngestStream currentIngestStream = null;
     private CoordinationService coordinationService;
     private JobProcessingTask jobProcessingTask;
     private Future<?> jobProcessingTaskFuture;
@@ -2443,6 +2445,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 return;
             }
 
+            currentIngestStream = null;
             runDataSourceProcessor(caseForJob, dataSource);
             if (dataSource.getContent().isEmpty()) {
                 currentJob.setProcessingStage(AutoIngestJob.Stage.COMPLETED, Date.from(Instant.now()));
@@ -2558,7 +2561,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         caseForJob.notifyAddingDataSource(taskId);
                         jobLogger.logDataSourceProcessorSelected(selectedProcessor.getDataSourceType());
                         sysLogger.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
-                        selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
+                        if (selectedProcessor.supportsIngestStream()) {
+                            IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
+                            // TODO check for settings errors
+                            currentIngestStream = selectedProcessor.processWithIngestStream(dataSource.getDeviceId(), dataSource.getPath(), ingestJobSettings, progressMonitor, callBack);
+                        } else {
+                            selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
+                        }
                         ingestLock.wait();
 
                         // at this point we got the content object(s) from the current DSP.
@@ -2674,11 +2683,19 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobEventListener);
             try {
                 synchronized (ingestLock) {
+                    // TODO don't do all this
                     IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
                     List<String> settingsWarnings = ingestJobSettings.getWarnings();
                     if (settingsWarnings.isEmpty()) {
-                        IngestJobStartResult ingestJobStartResult = IngestManager.getInstance().beginIngestJob(dataSource.getContent(), ingestJobSettings);
-                        IngestJob ingestJob = ingestJobStartResult.getJob();
+                        
+                        IngestJobStartResult ingestJobStartResult = null;
+                        IngestJob ingestJob;
+                        if (currentIngestStream == null) {
+                            ingestJobStartResult = IngestManager.getInstance().beginIngestJob(dataSource.getContent(), ingestJobSettings);
+                            ingestJob = ingestJobStartResult.getJob();
+                        } else {
+                            ingestJob = currentIngestStream.getIngestJob();
+                        }
                         if (null != ingestJob) {
                             currentJob.setIngestJob(ingestJob);
                             /*
@@ -2714,7 +2731,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                     }
                                 }
                             }
-                        } else if (!ingestJobStartResult.getModuleErrors().isEmpty()) {
+                        } else if (ingestJobStartResult != null && !ingestJobStartResult.getModuleErrors().isEmpty()) {
                             for (IngestModuleError error : ingestJobStartResult.getModuleErrors()) {
                                 sysLogger.log(Level.SEVERE, String.format("%s ingest module startup error for %s", error.getModuleDisplayName(), manifestPath), error.getThrowable());
                             }
@@ -2722,7 +2739,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             setErrorsOccurredFlagForCase(caseDirectoryPath);
                             jobLogger.logIngestModuleStartupErrors();
                             throw new AnalysisStartupException(String.format("Error(s) during ingest module startup for %s", manifestPath));
-                        } else {
+                        } else if (ingestJobStartResult != null) {
                             sysLogger.log(Level.SEVERE, String.format("Ingest manager ingest job start error for %s", manifestPath), ingestJobStartResult.getStartupException());
                             currentJob.setErrorsOccurred(true);
                             setErrorsOccurredFlagForCase(caseDirectoryPath);

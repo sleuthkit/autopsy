@@ -22,6 +22,8 @@ import java.nio.file.Path;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestStream;
 
 /**
  * Interface implemented by DataSourceProcessors in order to be supported by
@@ -66,6 +68,10 @@ public interface AutoIngestDataSourceProcessor extends DataSourceProcessor {
      */
     void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack);
 
+    default IngestStream processWithIngestStream(String deviceId, Path dataSourcePath, IngestJobSettings settings, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        throw new UnsupportedOperationException("Streaming ingest not supported for this data source processor");
+    }
+   
     /**
      * A custom exception for the use of AutomatedIngestDataSourceProcessor.
      */
