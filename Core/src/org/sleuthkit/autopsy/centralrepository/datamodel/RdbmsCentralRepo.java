@@ -1179,7 +1179,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      *
      * @throws CentralRepoException
      */
-    private CentralRepoAccount getAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
+    @Override
+    public CentralRepoAccount getAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
 
         CentralRepoAccount crAccount = accountsCache.getIfPresent(Pair.of(crAccountType, accountUniqueID));
         if (crAccount == null) {

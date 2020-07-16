@@ -633,21 +633,18 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
                     return new HashMap<>();
                 }
 
+                // make a list of all unique accounts for this contact
+                if (!account.getAccountType().equals(Account.Type.DEVICE)) {
+                    CentralRepoAccount.CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName());
+                    CentralRepoAccount crAccount = CentralRepository.getInstance().getAccount(crAccountType, account.getTypeSpecificID());
+
+                    if (crAccount != null && uniqueAccountsList.contains(crAccount) == false) {
+                        uniqueAccountsList.add(crAccount);
+                    }
+                }
+                
                 Collection<PersonaAccount> personaAccounts = PersonaAccount.getPersonaAccountsForAccount(account);
                 if (personaAccounts != null && !personaAccounts.isEmpty()) {
-
-                    // look for unique accounts 
-                    Collection<CentralRepoAccount> accountCandidates
-                            = personaAccounts
-                                    .stream()
-                                    .map(PersonaAccount::getAccount)
-                                    .collect(Collectors.toList());
-                    for (CentralRepoAccount crAccount : accountCandidates) {
-                        if (uniqueAccountsList.contains(crAccount) == false) {
-                            uniqueAccountsList.add(crAccount);
-                        }
-                    }
-
                     // get personas for the account
                     Collection<Persona> personas
                             = personaAccounts
