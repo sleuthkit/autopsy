@@ -33,6 +33,7 @@ import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.TskData;
 
 
@@ -74,7 +75,7 @@ public class CentralRepoPersonasTest  extends TestCase {
     private static final String FACEBOOK_ID_CATDOG = "BalooSherkhan";
    
     private static final String DOG_EMAIL_ID = "superpupper@junglebook.com";
-    private static final String CAT_WHATSAPP_ID = "111 222 3333";
+    private static final String CAT_WHATSAPP_ID = "1112223333@s.whatsapp.net";
     private static final String EMAIL_ID_1 = "rkipling@jungle.book";
     
     private static final String HOLMES_SKYPE_ID = "live:holmes@221baker.com";
@@ -383,7 +384,7 @@ public class CentralRepoPersonasTest  extends TestCase {
             // Confirm the account was removed
             Assert.assertTrue(catPersona.getPersonaAccounts().isEmpty());
             
-        } catch (CentralRepoException ex) {
+        } catch (InvalidAccountIDException | CentralRepoException ex) {
              Assert.fail("Didn't expect an exception here. Exception: " + ex);
         }
     }
@@ -518,7 +519,7 @@ public class CentralRepoPersonasTest  extends TestCase {
             Assert.assertEquals(0, holmesMetadataList.size());
 
             
-        } catch (CentralRepoException ex) {
+        } catch (InvalidAccountIDException | CentralRepoException ex) {
              Assert.fail("Didn't expect an exception here. Exception: " + ex);
         }
     }
@@ -795,7 +796,7 @@ public class CentralRepoPersonasTest  extends TestCase {
         
         
         }
-         catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
+         catch (CentralRepoException | CorrelationAttributeNormalizationException | InvalidAccountIDException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -820,7 +821,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                 // Verify Persona has a default name
                 Assert.assertEquals(Persona.getDefaultName(), persona.getName());
                 
-            } catch (CentralRepoException ex) {
+            } catch (InvalidAccountIDException | CentralRepoException ex) {
                 Assert.fail("No name persona test failed. Exception: " + ex);
             }
         }
@@ -893,7 +894,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                 Assert.assertEquals(4, personaSearchResult.size());
                 
                 
-            } catch (CentralRepoException ex) {
+            } catch (InvalidAccountIDException | CentralRepoException ex) {
                 Assert.fail("No name persona test failed. Exception: " + ex);
             }
         }
@@ -1004,7 +1005,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                 Assert.assertEquals(6, personaSearchResult.size());
                 
                 
-            } catch (CentralRepoException ex) {
+            } catch (InvalidAccountIDException | CentralRepoException ex) {
                 Assert.fail("No name persona test failed. Exception: " + ex);
             }
         }
@@ -1077,7 +1078,7 @@ public class CentralRepoPersonasTest  extends TestCase {
                 Assert.assertEquals(0, accountsWithUnknownIdentifier.size());
                 
                 
-            } catch (CentralRepoException ex) {
+            } catch (InvalidAccountIDException | CentralRepoException ex) {
                 Assert.fail("No name persona test failed. Exception: " + ex);
             }
         }

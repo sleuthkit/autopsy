@@ -1084,7 +1084,6 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     public CentralRepoAccount getOrCreateAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws InvalidAccountIDException, CentralRepoException {
         // Get the account fom the accounts table
         String normalizedAccountID = CentralRepoAccount.normalizeAccountIdentifier(crAccountType, accountUniqueID);
-        CentralRepoAccount account = getAccount(crAccountType, normalizedAccountID);
 
         String insertSQL = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
                 + "VALUES (?, ?) " + getConflictClause();
@@ -1093,12 +1092,12 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                 PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);) {
 
             preparedStatement.setInt(1, crAccountType.getAccountTypeId());
-            preparedStatement.setString(2, normalizedAccoun);
+            preparedStatement.setString(2, normalizedAccountID);
 
             preparedStatement.executeUpdate();
 
             // get the account from the db - should exist now.
-            return getAccount(crAccountType, normalizedAccount);
+            return getAccount(crAccountType, normalizedAccountID);
         } catch (SQLException ex) {
             throw new CentralRepoException("Error adding an account to CR database.", ex);
         }
