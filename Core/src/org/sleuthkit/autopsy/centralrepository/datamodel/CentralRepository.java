@@ -884,5 +884,18 @@ public interface CentralRepository {
      * @throws CentralRepoException
      */
     CentralRepoAccount getOrCreateAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException;
+    
+    /**
+     * Gets an account from the accounts table matching the given type/ID, if
+     * one exists.
+     *
+     * @param crAccountType   CR account type to look for or create
+     * @param accountUniqueID type specific unique account id
+     *
+     * @return CR account, if found, null otherwise.
+     *
+     * @throws CentralRepoException
+     */
+    CentralRepoAccount getAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException;
 
 }

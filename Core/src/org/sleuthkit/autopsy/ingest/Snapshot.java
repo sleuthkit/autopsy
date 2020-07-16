@@ -178,6 +178,13 @@ public final class Snapshot implements Serializable {
         }
         return this.tasksSnapshot.getDsQueueSize();
     }
+    
+     long getStreamingQueueSize() {
+        if (null == this.tasksSnapshot) {
+            return 0;
+        }
+        return this.tasksSnapshot.getStreamingQueueSize();
+    }   
 
     long getRunningListSize() {
         if (null == this.tasksSnapshot) {
