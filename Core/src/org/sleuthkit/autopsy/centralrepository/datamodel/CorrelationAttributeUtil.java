@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.HashUtility;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -187,6 +188,10 @@ public class CorrelationAttributeUtil {
             logger.log(Level.SEVERE, String.format("Error normalizing correlation attribute (%s)", artifact), ex); // NON-NLS
             return correlationAttrs;
         } 
+        catch (InvalidAccountIDException ex) {
+            logger.log(Level.SEVERE, String.format("Invalid account identifier (%s)", artifact), ex); // NON-NLS
+            return correlationAttrs;
+        } 
         catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", artifact), ex); // NON-NLS
             return correlationAttrs;
@@ -281,7 +286,7 @@ public class CorrelationAttributeUtil {
      *
      * @return The correlation attribute instance.
      */
-    private static void makeCorrAttrFromAcctArtifact(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact acctArtifact) throws TskCoreException, CentralRepoException {
+    private static void makeCorrAttrFromAcctArtifact(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact acctArtifact) throws InvalidAccountIDException, TskCoreException, CentralRepoException {
 
         // Get the account type from the artifact
         BlackboardAttribute accountTypeAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
