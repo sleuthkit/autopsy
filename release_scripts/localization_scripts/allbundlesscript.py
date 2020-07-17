@@ -21,6 +21,8 @@ def write_items_to_csv(repo_path: str, output_path: str, show_commit: bool, valu
         repo_path (str): The local path to the git repo.
         output_path (str): The output path for the csv file.
         show_commit (bool): Whether or not to include the commit id in the header
+        value_regex (Union[str, None]): If non-none, only key value pairs where the value is a regex match with this
+        value will be included.
     """
 
     row_header = ['Relative path', 'Key', 'Value']
@@ -37,6 +39,7 @@ def write_items_to_csv(repo_path: str, output_path: str, show_commit: bool, valu
 
 
 def main():
+    # noinspection PyTypeChecker
     parser = argparse.ArgumentParser(description='Gathers all key-value pairs within .properties-MERGED files into '
                                                  'one csv file.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)

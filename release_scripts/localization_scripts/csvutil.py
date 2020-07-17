@@ -4,7 +4,6 @@
 from typing import List, Iterable, Tuple
 import csv
 import os
-import codecs
 
 
 def records_to_csv(output_path: str, rows: Iterable[List[str]]):

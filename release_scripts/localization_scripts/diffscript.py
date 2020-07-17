@@ -10,7 +10,6 @@ from gitutil import get_property_files_diff, get_commit_id, get_git_root
 from itemchange import ItemChange
 from csvutil import records_to_csv
 import argparse
-import pathlib
 from typing import Union
 import re
 
@@ -47,7 +46,8 @@ def write_diff_to_csv(repo_path: str, output_path: str, commit_1_id: str, commit
 
 
 def main():
-    parser = argparse.ArgumentParser(description="determines the updated, added, and deleted properties from the "
+    # noinspection PyTypeChecker
+    parser = argparse.ArgumentParser(description="Determines the updated, added, and deleted properties from the "
                                                  "'.properties-MERGED' files and generates a csv file containing "
                                                  "the items changed.",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)

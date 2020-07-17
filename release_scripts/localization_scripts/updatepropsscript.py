@@ -183,6 +183,7 @@ def get_new_rel_path(orig_path: str, new_filename: str) -> str:
 
 
 def main():
+    # noinspection PyTypeChecker
     parser = argparse.ArgumentParser(description='Updates properties files in the autopsy git repo.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 

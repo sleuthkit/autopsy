@@ -4,7 +4,6 @@
 from typing import Dict, Union, IO
 from jproperties import Properties
 import os
-from os import path
 
 # The default extension for property files in autopsy repo
 DEFAULT_PROPS_EXTENSION = 'properties-MERGED'
