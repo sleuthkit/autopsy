@@ -1062,23 +1062,25 @@ public class Server {
                     }
                 }
             } else {
-                // In single user mode, the index is stored in case output directory
-                File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
-                if (!dataDir.exists()) {
-                    dataDir.mkdirs();
-                }
+                if (!coreIsLoaded(collectionName)) {
+                    // In single user mode, the index is stored in case output directory
+                    File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
+                    if (!dataDir.exists()) {
+                        dataDir.mkdirs();
+                    }
 
-                // for single user cases, we unload the core when we close the case. So we have to load the core again. 
-                CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
-                createCoreRequest.setDataDir(dataDir.getAbsolutePath());
-                createCoreRequest.setCoreName(collectionName);
-                createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
-                createCoreRequest.setIsLoadOnStartup(false);
-                createCoreRequest.setIsTransient(true);
-                localSolrServer.request(createCoreRequest);
+                    // for single user cases, we unload the core when we close the case. So we have to load the core again. 
+                    CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
+                    createCoreRequest.setDataDir(dataDir.getAbsolutePath());
+                    createCoreRequest.setCoreName(collectionName);
+                    createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
+                    createCoreRequest.setIsLoadOnStartup(false);
+                    createCoreRequest.setIsTransient(true);
+                    localSolrServer.request(createCoreRequest);
 
-                if (!coreIndexFolderExists(collectionName)) {
-                    throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+                    if (!coreIndexFolderExists(collectionName)) {
+                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+                    }
                 }
             }
 
