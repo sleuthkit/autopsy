@@ -207,11 +207,8 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.SizeFilter.desc=Files with size in range(s): {0}",
-            "FileSearchFiltering.SizeFilter.or= or ",
-            "# {0} - Minimum bytes",
-            "# {1} - Maximum bytes",
-            "FileSearchFiltering.SizeFilter.range=({0} to {1})",})
+            "FileSearchFiltering.SizeFilter.desc=Size(s): {0}",
+            "FileSearchFiltering.SizeFilter.or=, "})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
@@ -219,7 +216,7 @@ class FileSearchFiltering {
                 if (!desc.isEmpty()) {
                     desc += Bundle.FileSearchFiltering_SizeFilter_or();
                 }
-                desc += Bundle.FileSearchFiltering_SizeFilter_range(size.getMinBytes(), size.getMaxBytes());
+                desc += size.getSizeGroup();
             }
             desc = Bundle.FileSearchFiltering_SizeFilter_desc(desc);
             return desc;
@@ -364,10 +361,12 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.ParentFilter.desc=Files with paths matching: {0}",
-            "FileSearchFiltering.ParentFilter.or= or ",
+            "FileSearchFiltering.ParentFilter.desc=Paths matching: {0}",
+            "FileSearchFiltering.ParentFilter.or=, ",
             "FileSearchFiltering.ParentFilter.exact=(exact match)",
-            "FileSearchFiltering.ParentFilter.substring=(substring)",})
+            "FileSearchFiltering.ParentFilter.substring=(substring)",
+            "FileSearchFiltering.ParentFilter.included=(included)",
+            "FileSearchFiltering.ParentFilter.excluded=(excluded)"})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
@@ -379,6 +378,11 @@ class FileSearchFiltering {
                     desc += searchTerm.getSearchStr() + Bundle.FileSearchFiltering_ParentFilter_exact();
                 } else {
                     desc += searchTerm.getSearchStr() + Bundle.FileSearchFiltering_ParentFilter_substring();
+                }
+                if (searchTerm.isIncluded()) {
+                    desc += Bundle.FileSearchFiltering_ParentFilter_included();                           
+                } else {
+                    desc += Bundle.FileSearchFiltering_ParentFilter_excluded();
                 }
             }
             desc = Bundle.FileSearchFiltering_ParentFilter_desc(desc);
@@ -417,8 +421,8 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.DataSourceFilter.desc=Files in data source(s): {0}",
-            "FileSearchFiltering.DataSourceFilter.or= or ",
+            "FileSearchFiltering.DataSourceFilter.desc=Data source(s): {0}",
+            "FileSearchFiltering.DataSourceFilter.or=, ",
             "# {0} - Data source name",
             "# {1} - Data source ID",
             "FileSearchFiltering.DataSourceFilter.datasource={0}({1})",})
@@ -466,7 +470,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.KeywordListFilter.desc=Files with keywords in list(s): {0}",})
+            "FileSearchFiltering.KeywordListFilter.desc=Keywords in list(s): {0}",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_KeywordListFilter_desc(concatenateSetNamesForDisplay(listNames));
@@ -516,8 +520,8 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.FileTypeFilter.desc=Files with type: {0}",
-            "FileSearchFiltering.FileTypeFilter.or= or ",})
+            "FileSearchFiltering.FileTypeFilter.desc=Type: {0}",
+            "FileSearchFiltering.FileTypeFilter.or=, ",})
         @Override
         String getDesc() {
             String desc = "";
@@ -586,8 +590,8 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.FrequencyFilter.desc=Files with frequency: {0}",
-            "FileSearchFiltering.FrequencyFilter.or= or ",})
+            "FileSearchFiltering.FrequencyFilter.desc=Past occurrences: {0}",
+            "FileSearchFiltering.FrequencyFilter.or=, ",})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
@@ -595,7 +599,7 @@ class FileSearchFiltering {
                 if (!desc.isEmpty()) {
                     desc += Bundle.FileSearchFiltering_FrequencyFilter_or();
                 }
-                desc += freq.name();
+                desc += freq.toString();
             }
             return Bundle.FileSearchFiltering_FrequencyFilter_desc(desc);
         }
@@ -632,7 +636,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.HashSetFilter.desc=Files with hash set hits in set(s): {0}",})
+            "FileSearchFiltering.HashSetFilter.desc=Hash set hits in set(s): {0}",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_HashSetFilter_desc(concatenateSetNamesForDisplay(setNames));
@@ -670,7 +674,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.InterestingItemSetFilter.desc=Files with interesting item hits in set(s): {0}",})
+            "FileSearchFiltering.InterestingItemSetFilter.desc=Interesting item hits in set(s): {0}",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_InterestingItemSetFilter_desc(concatenateSetNamesForDisplay(setNames));
@@ -708,7 +712,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.ObjectDetectionFilter.desc=Files with objects detected in set(s): {0}",})
+            "FileSearchFiltering.ObjectDetectionFilter.desc=Objects detected in set(s): {0}",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_ObjectDetectionFilter_desc(concatenateSetNamesForDisplay(typeNames));
@@ -784,7 +788,7 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.ScoreFilter.desc=Files with score(s) of : {0}",})
+            "FileSearchFiltering.ScoreFilter.desc=Score(s) of : {0}",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_ScoreFilter_desc(
@@ -826,8 +830,8 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - tag names",
-            "FileSearchFiltering.TagsFilter.desc=Files that have been tagged {0}",
-            "FileSearchFiltering.TagsFilter.or= or ",})
+            "FileSearchFiltering.TagsFilter.desc=Tagged {0}",
+            "FileSearchFiltering.TagsFilter.or=, ",})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
@@ -862,7 +866,7 @@ class FileSearchFiltering {
         }
 
         @NbBundle.Messages({
-            "FileSearchFiltering.UserCreatedFilter.desc=Files that contain EXIF data",})
+            "FileSearchFiltering.UserCreatedFilter.desc=that contain EXIF data",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_UserCreatedFilter_desc();
@@ -931,7 +935,7 @@ class FileSearchFiltering {
         }
 
         @NbBundle.Messages({
-            "FileSearchFiltering.PreviouslyNotableFilter.desc=Files that were previously marked as notable",})
+            "FileSearchFiltering.PreviouslyNotableFilter.desc=that were previously marked as notable",})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_PreviouslyNotableFilter_desc();
@@ -949,7 +953,7 @@ class FileSearchFiltering {
         }
 
         @NbBundle.Messages({
-            "FileSearchFiltering.KnownFilter.desc=Files which are not known"})
+            "FileSearchFiltering.KnownFilter.desc=which are not known"})
         @Override
         String getDesc() {
             return Bundle.FileSearchFiltering_KnownFilter_desc();

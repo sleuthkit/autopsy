@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,6 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +35,6 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JList;
 import javax.swing.KeyStroke;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -150,7 +148,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
         }
         );
 
-        try {
+        try { 
             TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
             List<String> standardTagNames = TagsManager.getStandardTagNames();
             Map<String, TagName> tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
@@ -161,7 +159,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
             tagNamesMap.entrySet().stream().map((entry) -> entry.getValue()).forEachOrdered((tagName) -> {
                 TagSet tagSet = null;
                 try {
-                    tagSet = tagName.getTagSet();
+                    tagSet = tagsManager.getTagSet(tagName);
                 } catch (TskCoreException ex) {
                     Logger.getLogger(GetTagNameAndCommentDialog.class
                     .getName()).log(Level.SEVERE, "Failed to get tag set", ex); //NON-NLS

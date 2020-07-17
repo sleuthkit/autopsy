@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.centralrepository.persona;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
@@ -216,14 +217,14 @@ public class PersonaMetadataDialog extends JDialog {
         "AddMetadataDialog_empty_name_Title=Missing field(s)",
         "AddMetadataDialog_empty_name_msg=A metadata entry cannot have an empty name or value.",})
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
-        if (nameTextField.getText().isEmpty() || valueTextField.getText().isEmpty()) {
+        if (StringUtils.isBlank(nameTextField.getText()) || StringUtils.isBlank(valueTextField.getText())) {
             JOptionPane.showMessageDialog(this,
                     Bundle.AddMetadataDialog_empty_name_msg(),
                     Bundle.AddMetadataDialog_empty_name_Title(),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
-        if (justificationTextField.getText().isEmpty()) {
+        if (StringUtils.isBlank(justificationTextField.getText())) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaDetailsPanel_empty_justification_msg(),
                     Bundle.PersonaDetailsPanel_empty_justification_Title(),

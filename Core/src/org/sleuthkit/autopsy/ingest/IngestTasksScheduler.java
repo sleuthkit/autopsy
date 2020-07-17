@@ -27,6 +27,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -58,6 +59,8 @@ final class IngestTasksScheduler {
     private final TreeSet<FileIngestTask> rootFileTaskQueue;
     @GuardedBy("this")
     private final Deque<FileIngestTask> pendingFileTaskQueue;
+    @GuardedBy("this")
+    private final Queue<FileIngestTask> streamedTasksQueue;
     private final IngestTaskTrackingQueue fileIngestThreadsQueue;
 
     /**
@@ -82,6 +85,7 @@ final class IngestTasksScheduler {
         this.rootFileTaskQueue = new TreeSet<>(new RootDirectoryTaskComparator());
         this.pendingFileTaskQueue = new LinkedList<>();
         this.fileIngestThreadsQueue = new IngestTaskTrackingQueue();
+	this.streamedTasksQueue = new LinkedList<>();
     }
 
     /**
@@ -105,38 +109,38 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * Schedules a data source level ingest task and zero to many file level
-     * ingest tasks for a data source ingest job.
+     * Schedules a data source level ingest task and zero to many file level 
+     * ingest tasks for an ingest job pipeline.
      *
-     * @param job The data source ingest job.
+     * @param ingestJobPipeline The ingest job pipeline.
      */
-    synchronized void scheduleIngestTasks(DataSourceIngestJob job) {
-        if (!job.isCancelled()) {
+    synchronized void scheduleIngestTasks(IngestJobPipeline ingestJobPipeline) {
+        if (!ingestJobPipeline.isCancelled()) {
             /*
              * Scheduling of both the data source ingest task and the initial
-             * file ingest tasks for a job must be an atomic operation.
+             * file ingest tasks for an ingestJobPipeline must be an atomic operation.
              * Otherwise, the data source task might be completed before the
              * file tasks are scheduled, resulting in a potential false positive
              * when another thread checks whether or not all the tasks for the
-             * job are completed.
+             * ingestJobPipeline are completed.
              */
-            this.scheduleDataSourceIngestTask(job);
-            this.scheduleFileIngestTasks(job, Collections.emptyList());
+            this.scheduleDataSourceIngestTask(ingestJobPipeline);
+            this.scheduleFileIngestTasks(ingestJobPipeline, Collections.emptyList());
         }
     }
 
     /**
-     * Schedules a data source level ingest task for a data source ingest job.
+     * Schedules a data source level ingest task for an ingest job pipeline.
      *
-     * @param job The data source ingest job.
+     * @param ingestJobPipeline The ingest job pipeline.
      */
-    synchronized void scheduleDataSourceIngestTask(DataSourceIngestJob job) {
-        if (!job.isCancelled()) {
-            DataSourceIngestTask task = new DataSourceIngestTask(job);
+    synchronized void scheduleDataSourceIngestTask(IngestJobPipeline ingestJobPipeline) {
+        if (!ingestJobPipeline.isCancelled()) {
+            DataSourceIngestTask task = new DataSourceIngestTask(ingestJobPipeline);
             try {
                 this.dataSourceIngestThreadQueue.putLast(task);
             } catch (InterruptedException ex) {
-                IngestTasksScheduler.logger.log(Level.INFO, String.format("Ingest tasks scheduler interrupted while blocked adding a task to the data source level ingest task queue (jobId={%d)", job.getId()), ex);
+                IngestTasksScheduler.logger.log(Level.INFO, String.format("Ingest tasks scheduler interrupted while blocked adding a task to the data source level ingest task queue (jobId={%d)", ingestJobPipeline.getId()), ex);
                 Thread.currentThread().interrupt();
             }
         }
@@ -144,40 +148,59 @@ final class IngestTasksScheduler {
 
     /**
      * Schedules file tasks for either all the files or a given subset of the
-     * files for a data source source ingest job.
+     * files for an ingest job pipeline.
      *
-     * @param job   The data source ingest job.
+     * @param ingestJobPipeline   The ingest job pipeline.
      * @param files A subset of the files for the data source; if empty, then
      *              file tasks for all files in the data source are scheduled.
      */
-    synchronized void scheduleFileIngestTasks(DataSourceIngestJob job, Collection<AbstractFile> files) {
-        if (!job.isCancelled()) {
+    synchronized void scheduleFileIngestTasks(IngestJobPipeline ingestJobPipeline, Collection<AbstractFile> files) {
+        if (!ingestJobPipeline.isCancelled()) {
             Collection<AbstractFile> candidateFiles;
             if (files.isEmpty()) {
-                candidateFiles = getTopLevelFiles(job.getDataSource());
+                candidateFiles = getTopLevelFiles(ingestJobPipeline.getDataSource());
             } else {
                 candidateFiles = files;
             }
             for (AbstractFile file : candidateFiles) {
-                FileIngestTask task = new FileIngestTask(job, file);
+                FileIngestTask task = new FileIngestTask(ingestJobPipeline, file);
                 if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
                     this.rootFileTaskQueue.add(task);
                 }
             }
-            shuffleFileTaskQueues();
+            refillIngestThreadQueue();
         }
     }
+    
+    /**
+     * Schedules file tasks for the given list of file IDs.
+     *
+     * @param ingestJobPipeline   The ingest job pipeline.
+     * @param files A subset of the files for the data source; if empty, then
+     *              file tasks for all files in the data source are scheduled.
+     */
+    synchronized void scheduleStreamedFileIngestTasks(IngestJobPipeline ingestJobPipeline, List<Long> fileIds) {
+        if (!ingestJobPipeline.isCancelled()) {
+            for (long id : fileIds) {
+		// Create the file ingest task. Note that we do not do the shouldEnqueueFileTask() 
+		// check here in order to delay loading the AbstractFile object.
+                FileIngestTask task = new FileIngestTask(ingestJobPipeline, id);
+                this.streamedTasksQueue.add(task);
+            }
+            refillIngestThreadQueue();
+        }
+    }    
 
     /**
-     * Schedules file level ingest tasks for a given set of files for a data
-     * source ingest job by adding them directly to the front of the file tasks
+     * Schedules file level ingest tasks for a given set of files for an ingest
+     * job pipeline by adding them directly to the front of the file tasks
      * queue for the ingest manager's file ingest threads.
      *
-     * @param job   The data source ingest job.
+     * @param ingestJobPipeline   The ingestJobPipeline.
      * @param files A set of files for the data source.
      */
-    synchronized void fastTrackFileIngestTasks(DataSourceIngestJob job, Collection<AbstractFile> files) {
-        if (!job.isCancelled()) {
+    synchronized void fastTrackFileIngestTasks(IngestJobPipeline ingestJobPipeline, Collection<AbstractFile> files) {
+        if (!ingestJobPipeline.isCancelled()) {
             /*
              * Put the files directly into the queue for the file ingest
              * threads, if they pass the file filter for the job. The files are
@@ -187,12 +210,12 @@ final class IngestTasksScheduler {
              * already in progress.
              */
             for (AbstractFile file : files) {
-                FileIngestTask fileTask = new FileIngestTask(job, file);
+                FileIngestTask fileTask = new FileIngestTask(ingestJobPipeline, file);
                 if (shouldEnqueueFileTask(fileTask)) {
                     try {
                         this.fileIngestThreadsQueue.putFirst(fileTask);
                     } catch (InterruptedException ex) {
-                        IngestTasksScheduler.logger.log(Level.INFO, String.format("Ingest tasks scheduler interrupted while scheduling file level ingest tasks (jobId={%d)", job.getId()), ex);
+                        IngestTasksScheduler.logger.log(Level.INFO, String.format("Ingest tasks scheduler interrupted while scheduling file level ingest tasks (jobId={%d)", ingestJobPipeline.getId()), ex);
                         Thread.currentThread().interrupt();
                         return;
                     }
@@ -219,36 +242,39 @@ final class IngestTasksScheduler {
      */
     synchronized void notifyTaskCompleted(FileIngestTask task) {
         this.fileIngestThreadsQueue.taskCompleted(task);
-        shuffleFileTaskQueues();
+        refillIngestThreadQueue();
     }
 
     /**
      * Queries the task scheduler to determine whether or not all of the ingest
-     * tasks for a data source ingest job have been completed.
+     * tasks for an ingest job pipeline have been completed.
      *
-     * @param job The data source ingest job.
+     * @param ingestJobPipeline The ingestJobPipeline.
      *
      * @return True or false.
      */
-    synchronized boolean tasksForJobAreCompleted(DataSourceIngestJob job) {
-        long jobId = job.getId();
+    synchronized boolean currentTasksAreCompleted(IngestJobPipeline ingestJobPipeline) {
+        long jobId = ingestJobPipeline.getId();
+
         return !(this.dataSourceIngestThreadQueue.hasTasksForJob(jobId)
                 || hasTasksForJob(this.rootFileTaskQueue, jobId)
                 || hasTasksForJob(this.pendingFileTaskQueue, jobId)
+                || hasTasksForJob(this.streamedTasksQueue, jobId)
                 || this.fileIngestThreadsQueue.hasTasksForJob(jobId));
     }
 
     /**
-     * Clears the "upstream" task scheduling queues for a data source ingest
-     * job, but does nothing about tasks that have already been moved into the
+     * Clears the "upstream" task scheduling queues for an ingest pipeline,
+     * but does nothing about tasks that have already been moved into the
      * queue that is consumed by the file ingest threads.
      *
-     * @param job The data source ingest job.
+     * @param ingestJobPipeline The ingestJobPipeline.
      */
-    synchronized void cancelPendingTasksForIngestJob(DataSourceIngestJob job) {
-        long jobId = job.getId();
-        IngestTasksScheduler.removeTasksForJob(this.rootFileTaskQueue, jobId);
-        IngestTasksScheduler.removeTasksForJob(this.pendingFileTaskQueue, jobId);
+    synchronized void cancelPendingTasksForIngestJob(IngestJobPipeline ingestJobPipeline) {
+        long jobId = ingestJobPipeline.getId();
+        IngestTasksScheduler.removeTasksForJob(rootFileTaskQueue, jobId);
+        IngestTasksScheduler.removeTasksForJob(pendingFileTaskQueue, jobId);
+        IngestTasksScheduler.removeTasksForJob(streamedTasksQueue, jobId);
     }
 
     /**
@@ -291,6 +317,48 @@ final class IngestTasksScheduler {
         }
         return topLevelFiles;
     }
+    
+    /**
+     * Schedules file ingest tasks for the ingest manager's file ingest threads.
+     * Files from streaming ingest will be prioritized.
+     */
+    synchronized private void refillIngestThreadQueue() {
+        try {
+            takeFromStreamingTaskQueue();
+            takeFromBatchTasksQueues();
+        } catch (InterruptedException ex) {
+            IngestTasksScheduler.logger.log(Level.INFO, "Ingest tasks scheduler interrupted while blocked adding a task to the file level ingest task queue", ex);
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * Move tasks from the streamedTasksQueue into the fileIngestThreadsQueue.
+     * Will attempt to move as many tasks as there are ingest threads.
+     */
+    synchronized private void takeFromStreamingTaskQueue() throws InterruptedException {
+        /*
+         * Schedule files from the streamedTasksQueue
+         */
+        while (fileIngestThreadsQueue.isEmpty()) {
+            /*
+             * We will attempt to schedule as many tasks as there are ingest
+             * queues.
+             */
+            int taskCount = 0;
+            while (taskCount < IngestManager.getInstance().getNumberOfFileIngestThreads()) {
+                final FileIngestTask streamingTask = streamedTasksQueue.poll();
+                if (streamingTask == null) {
+                    return; // No streaming tasks are queued right now
+                }
+
+                if (shouldEnqueueFileTask(streamingTask)) {
+                    fileIngestThreadsQueue.putLast(streamingTask);
+                    taskCount++;
+                }
+            }
+        }
+    }
 
     /**
      * Schedules file ingest tasks for the ingest manager's file ingest threads
@@ -322,8 +390,9 @@ final class IngestTasksScheduler {
      * during ingest. The reason for the LIFO additions is to give priority to
      * files derived from prioritized files.
      */
-    synchronized private void shuffleFileTaskQueues() {
-        while (this.fileIngestThreadsQueue.isEmpty()) {
+    synchronized private void takeFromBatchTasksQueues() throws InterruptedException {
+	
+        while (this.fileIngestThreadsQueue.isEmpty()) {	    
             /*
              * If the pending file task queue is empty, move the highest
              * priority root file task, if there is one, into it.
@@ -345,17 +414,11 @@ final class IngestTasksScheduler {
                 return;
             }
             if (shouldEnqueueFileTask(pendingTask)) {
-                try {
-                    /*
-                     * The task is added to the queue for the ingest threads
-                     * AFTER the higher priority tasks that preceded it.
-                     */
-                    this.fileIngestThreadsQueue.putLast(pendingTask);
-                } catch (InterruptedException ex) {
-                    IngestTasksScheduler.logger.log(Level.INFO, "Ingest tasks scheduler interrupted while blocked adding a task to the file level ingest task queue", ex);
-                    Thread.currentThread().interrupt();
-                    return;
-                }
+		/*
+		 * The task is added to the queue for the ingest threads
+		 * AFTER the higher priority tasks that preceded it.
+		 */
+		this.fileIngestThreadsQueue.putLast(pendingTask);
             }
 
             /*
@@ -365,27 +428,27 @@ final class IngestTasksScheduler {
              * own, or into the queue for the file ingest threads, if it passes
              * the filter for the job.
              */
-            final AbstractFile file = pendingTask.getFile();
+            AbstractFile file = null;
             try {
+                file = pendingTask.getFile();
                 for (Content child : file.getChildren()) {
                     if (child instanceof AbstractFile) {
                         AbstractFile childFile = (AbstractFile) child;
-                        FileIngestTask childTask = new FileIngestTask(pendingTask.getIngestJob(), childFile);
+                        FileIngestTask childTask = new FileIngestTask(pendingTask.getIngestJobPipeline(), childFile);
                         if (childFile.hasChildren()) {
                             this.pendingFileTaskQueue.add(childTask);
                         } else if (shouldEnqueueFileTask(childTask)) {
-                            try {
-                                this.fileIngestThreadsQueue.putLast(childTask);
-                            } catch (InterruptedException ex) {
-                                IngestTasksScheduler.logger.log(Level.INFO, "Ingest tasks scheduler interrupted while blocked adding a task to the file level ingest task queue", ex);
-                                Thread.currentThread().interrupt();
-                                return;
-                            }
+                            this.fileIngestThreadsQueue.putLast(childTask);
                         }
                     }
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Error getting the children of %s (objId=%d)", file.getName(), file.getId()), ex);  //NON-NLS
+                if (file != null) {
+                    logger.log(Level.SEVERE, String.format("Error getting the children of %s (objId=%d)", file.getName(), file.getId()), ex);  //NON-NLS
+                } else {
+                    // In practice, the task would have already returned false from the call to shouldEnqueueFileTask()
+                    logger.log(Level.SEVERE, "Error loading file with object ID {0}", pendingTask.getFileId());
+                }
             }
         }
     }
@@ -400,7 +463,13 @@ final class IngestTasksScheduler {
      * @return True or false.
      */
     private static boolean shouldEnqueueFileTask(final FileIngestTask task) {
-        final AbstractFile file = task.getFile();
+        AbstractFile file;
+        try {
+            file = task.getFile();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error loading file with ID {0}", task.getFileId());
+            return false;
+        }
 
         // Skip the task if the file is actually the pseudo-file for the parent
         // or current directory.
@@ -483,7 +552,12 @@ final class IngestTasksScheduler {
      * @return True or false.
      */
     private static boolean shouldBeCarved(final FileIngestTask task) {
-        return task.getIngestJob().shouldProcessUnallocatedSpace() && task.getFile().getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS);
+        try {
+            AbstractFile file = task.getFile();
+            return task.getIngestJobPipeline().shouldProcessUnallocatedSpace() && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS);
+        } catch (TskCoreException ex) {
+            return false;
+        }
     }
 
     /**
@@ -495,7 +569,12 @@ final class IngestTasksScheduler {
      * @return True or false. 
      */
     private static boolean fileAcceptedByFilter(final FileIngestTask task) {
-        return !(task.getIngestJob().getFileIngestFilter().fileIsMemberOf(task.getFile()) == null);
+        try {
+            AbstractFile file = task.getFile();
+            return !(task.getIngestJobPipeline().getFileIngestFilter().fileIsMemberOf(file) == null);
+        } catch (TskCoreException ex) {
+            return false;
+        }
     }
 
     /**
@@ -509,7 +588,7 @@ final class IngestTasksScheduler {
      */
     synchronized private static boolean hasTasksForJob(Collection<? extends IngestTask> tasks, long jobId) {
         for (IngestTask task : tasks) {
-            if (task.getIngestJob().getId() == jobId) {
+            if (task.getIngestJobPipeline().getId() == jobId) {
                 return true;
             }
         }
@@ -527,7 +606,7 @@ final class IngestTasksScheduler {
         Iterator<? extends IngestTask> iterator = tasks.iterator();
         while (iterator.hasNext()) {
             IngestTask task = iterator.next();
-            if (task.getIngestJob().getId() == jobId) {
+            if (task.getIngestJobPipeline().getId() == jobId) {
                 iterator.remove();
             }
         }
@@ -544,7 +623,7 @@ final class IngestTasksScheduler {
     private static int countTasksForJob(Collection<? extends IngestTask> queue, long jobId) {
         int count = 0;
         for (IngestTask task : queue) {
-            if (task.getIngestJob().getId() == jobId) {
+            if (task.getIngestJobPipeline().getId() == jobId) {
                 count++;
             }
         }
@@ -564,7 +643,8 @@ final class IngestTasksScheduler {
                 countTasksForJob(this.rootFileTaskQueue, jobId),
                 countTasksForJob(this.pendingFileTaskQueue, jobId),
                 this.fileIngestThreadsQueue.countQueuedTasksForJob(jobId),
-                this.dataSourceIngestThreadQueue.countRunningTasksForJob(jobId) + this.fileIngestThreadsQueue.countRunningTasksForJob(jobId));
+                this.dataSourceIngestThreadQueue.countRunningTasksForJob(jobId) + this.fileIngestThreadsQueue.countRunningTasksForJob(jobId),
+                countTasksForJob(this.streamedTasksQueue, jobId));
     }
 
     /**
@@ -575,10 +655,36 @@ final class IngestTasksScheduler {
 
         @Override
         public int compare(FileIngestTask q1, FileIngestTask q2) {
-            AbstractFilePriority.Priority p1 = AbstractFilePriority.getPriority(q1.getFile());
-            AbstractFilePriority.Priority p2 = AbstractFilePriority.getPriority(q2.getFile());
+            // In practice the case where one or both calls to getFile() fails
+            // should never occur since such tasks would not be added to the queue.
+            AbstractFile file1 = null;
+            AbstractFile file2 = null;
+            try {
+                file1 = q1.getFile();
+            } catch (TskCoreException ex) {
+                // Do nothing - the exception has been logged elsewhere
+            }
+            
+            try {
+                file2 = q2.getFile();
+            } catch (TskCoreException ex) {
+                // Do nothing - the exception has been logged elsewhere
+            }
+            
+            if (file1 == null) {
+                if (file2 == null) {
+                    return (int) (q2.getFileId() - q1.getFileId());
+                } else {
+                    return 1;
+                }
+            } else  if (file2 == null) {
+                return -1;
+            }
+            
+            AbstractFilePriority.Priority p1 = AbstractFilePriority.getPriority(file1);
+            AbstractFilePriority.Priority p2 = AbstractFilePriority.getPriority(file2);
             if (p1 == p2) {
-                return (int) (q2.getFile().getId() - q1.getFile().getId());
+                return (int) (file2.getId() - file1.getId());
             } else {
                 return p2.ordinal() - p1.ordinal();
             }
@@ -843,19 +949,22 @@ final class IngestTasksScheduler {
         private final long dirQueueSize;
         private final long fileQueueSize;
         private final long runningListSize;
+        private final long streamingQueueSize;
 
         /**
          * Constructs a snapshot of ingest tasks data for an ingest job.
          *
          * @param jobId The identifier associated with the job.
          */
-        IngestJobTasksSnapshot(long jobId, long dsQueueSize, long rootQueueSize, long dirQueueSize, long fileQueueSize, long runningListSize) {
+        IngestJobTasksSnapshot(long jobId, long dsQueueSize, long rootQueueSize, long dirQueueSize, long fileQueueSize, 
+                long runningListSize, long streamingQueueSize) {
             this.jobId = jobId;
             this.dsQueueSize = dsQueueSize;
             this.rootQueueSize = rootQueueSize;
             this.dirQueueSize = dirQueueSize;
             this.fileQueueSize = fileQueueSize;
             this.runningListSize = runningListSize;
+            this.streamingQueueSize = streamingQueueSize;
         }
 
         /**
@@ -890,6 +999,10 @@ final class IngestTasksScheduler {
 
         long getFileQueueSize() {
             return fileQueueSize;
+        }
+        
+        long getStreamingQueueSize() {
+            return streamingQueueSize;
         }
 
         long getDsQueueSize() {

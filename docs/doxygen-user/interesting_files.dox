@@ -15,7 +15,7 @@ This module allows you to make sets of rules that will be run against each file 
 
 \section interesting_files_config Configuration
 
-To create and edit your rule sets, go to "Tools", "Options" and then select the "Interesting Files" tab. The area on the left side will show you a list of all the rule sets that are currently available. Selecting a rule set will display its description and information about each of its rules on the right side of the panel.
+To create and edit your rule sets, go to "Tools", "Options" and then select the "Interesting Files" tab. The area on the left side will show you a list of all the rule sets that are currently available. This will include the official rule sets that are included with Autopsy and any rule sets that you create. Selecting a rule set will display its description and information about each of its rules on the right side of the panel.
 
 \image html InterestingFiles/main.png
 
@@ -30,6 +30,8 @@ The buttons on the bottom of the left side of the panel control the rule sets.
 <li><b>Import Set</b> - Imports a previously exported rule set. Once imported, you will not need the original copy.
 <li><b>Export Set</b> - Exports the selected rule set in a format that can be shared with other Autopsy users.
 </ul>
+
+Note that the predefined rule sets can not be deleted or edited. If you believe you have additions that would be useful to the community, see the \ref update_interesting_files_page page for instructions on submitting updates.
 
 Selecting a rule set will display its description, whether it ignores known files, and the rules contained in the set. Selecting a rule will display the conditions for that rule in the "Rule Details" section.
 

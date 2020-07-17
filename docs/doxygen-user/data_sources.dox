@@ -47,10 +47,11 @@ Data sources can be removed from cases created with Autopsy 4.14.0 and later. Se
 \section ds_img Adding a Disk Image
 
 Autopsy supports disk images in the following formats: 
-- Raw Single (For example: *.img, *.dd, *.raw, *.bin)
-- Raw Split (For example: *.001, *.002, *.aa, *.ab, etc)
-- EnCase (For example: *.e01, *.e02, etc)
-- Virtual Machines (For example: *.vmdk, *.vhd)
+- Raw Single (*.img, *.dd, *.raw, *.bin)
+- Raw Split (*.001, *.aa)
+- EnCase (*.e01)
+- Virtual Machine Disk (*.vmdk)
+- Virtual Hard Disk (*.vhd)
 
 \image html data_source_disk_image.png
 

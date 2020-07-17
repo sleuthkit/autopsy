@@ -23,11 +23,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.datamodel.Account;
-import org.sleuthkit.datamodel.CommunicationsUtils;
-import static org.sleuthkit.datamodel.CommunicationsUtils.normalizeEmailAddress;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 
 /**
  * This class abstracts an Account as stored in the CR database.
@@ -223,10 +223,13 @@ public final class CentralRepoAccount {
     public static Collection<CentralRepoAccount> getAccountsWithIdentifierLike(String accountIdentifierSubstring) throws CentralRepoException {
 
         String queryClause = ACCOUNTS_QUERY_CLAUSE
-                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER('%" + accountIdentifierSubstring + "%')";
+                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER(?)";
+
+        List<Object> params = new ArrayList<>();
+        params.add("%" + accountIdentifierSubstring + "%");
 
         AccountsQueryCallback queryCallback = new AccountsQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        CentralRepository.getInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getAccountsList();
     }
@@ -242,21 +245,17 @@ public final class CentralRepoAccount {
      * @throws CentralRepoException If there is an error in getting the
      * accounts.
      */
-    public static Collection<CentralRepoAccount> getAccountsWithIdentifier(String accountIdentifier) throws CentralRepoException {
+    public static Collection<CentralRepoAccount> getAccountsWithIdentifier(String accountIdentifier) throws InvalidAccountIDException, CentralRepoException {
 
-        String normalizedAccountIdentifier;
-
-        try {
-            normalizedAccountIdentifier = normalizeAccountIdentifier(accountIdentifier);
-        } catch (TskCoreException ex) {
-            throw new CentralRepoException("Failed to normalize account identifier.", ex);
-        }
-
+        String normalizedAccountIdentifier = normalizeAccountIdentifier(accountIdentifier);
         String queryClause = ACCOUNTS_QUERY_CLAUSE
-                + " WHERE LOWER(accounts.account_unique_identifier) = LOWER('" + normalizedAccountIdentifier + "')";
+                + " WHERE LOWER(accounts.account_unique_identifier) = LOWER(?)";
+
+        List<Object> params = new ArrayList<>();
+        params.add(normalizedAccountIdentifier);
 
         AccountsQueryCallback queryCallback = new AccountsQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        CentralRepository.getInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getAccountsList();
     }
@@ -274,8 +273,10 @@ public final class CentralRepoAccount {
 
         String queryClause = ACCOUNTS_QUERY_CLAUSE;
 
+        List<Object> params = new ArrayList<>(); // empty param list
+
         AccountsQueryCallback queryCallback = new AccountsQueryCallback();
-        CentralRepository.getInstance().executeSelectSQL(queryClause, queryCallback);
+        CentralRepository.getInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getAccountsList();
     }
@@ -287,14 +288,24 @@ public final class CentralRepoAccount {
      * @param accountIdentifier Account identifier to be normalized.
      * @return normalized identifier
      *
-     * @throws TskCoreException
+     * @throws InvalidAccountIDException If the account identifier is not valid.
      */
-    private static String normalizeAccountIdentifier(String accountIdentifier) throws TskCoreException {
-        String normalizedAccountIdentifier = accountIdentifier;
-        if (CommunicationsUtils.isValidPhoneNumber(accountIdentifier)) {
-            normalizedAccountIdentifier = CommunicationsUtils.normalizePhoneNum(accountIdentifier);
-        } else if (CommunicationsUtils.isValidEmailAddress(accountIdentifier)) {
-            normalizedAccountIdentifier = normalizeEmailAddress(accountIdentifier);
+    private static String normalizeAccountIdentifier(String accountIdentifier) throws InvalidAccountIDException {
+        if (StringUtils.isEmpty(accountIdentifier)) {
+            throw new InvalidAccountIDException("Account id is null or empty.");
+        }
+
+        String normalizedAccountIdentifier;
+        try {
+            if (CorrelationAttributeNormalizer.isValidPhoneNumber(accountIdentifier)) {
+                normalizedAccountIdentifier = CorrelationAttributeNormalizer.normalizePhone(accountIdentifier);
+            } else if (CorrelationAttributeNormalizer.isValidEmailAddress(accountIdentifier)) {
+                normalizedAccountIdentifier = CorrelationAttributeNormalizer.normalizeEmail(accountIdentifier);
+            } else {
+                normalizedAccountIdentifier = accountIdentifier.toLowerCase().trim();
+            }
+        } catch (CorrelationAttributeNormalizationException ex) {
+            throw new InvalidAccountIDException("Failed to normalize the account idenitier.", ex);
         }
         return normalizedAccountIdentifier;
     }

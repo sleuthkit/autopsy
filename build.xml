@@ -214,7 +214,7 @@
     </target>
     
     <!-- override build to add branding -->
-    <target name="build" depends="build-brand,suite.build" description="Compiles autopsy and produces a basic branded build that can run on a dev system" />
+    <target name="build" depends="build-brand,suite.build,chmod_executables" description="Compiles autopsy and produces a basic branded build that can run on a dev system" />
  
     <target name="build-brand" depends="-init">
         
@@ -320,5 +320,14 @@
         <delete dir="${nbdist.dir}/${app.name}-tmp-installer" quiet="true"/>
         
         <antcall target="build-installer-${os.family}" />
+    </target>
+    
+     <target name="chmod_executables" >
+        <chmod perm="a+x">
+            <fileset dir="${cluster}/markmckinnon" casesensitive="no" id="mm">
+                <include name="*_linux"/>
+                <include name="*_macos"/>
+            </fileset>
+        </chmod>
     </target>
 </project>

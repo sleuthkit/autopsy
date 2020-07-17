@@ -506,12 +506,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          *
          * @param aFile file to extract strings from, divide into chunks and
          * index
+         * @param extractedMetadata Map that will be populated with the file's metadata.
          *
          * @return true if the file was text_ingested, false otherwise
          *
          * @throws IngesterException exception thrown if indexing failed
          */
-        private boolean extractTextAndIndex(AbstractFile aFile) throws IngesterException {
+        private boolean extractTextAndIndex(AbstractFile aFile, Map<String, String> extractedMetadata) throws IngesterException {
             ImageConfig imageConfig = new ImageConfig();
             imageConfig.setOCREnabled(KeywordSearchSettings.getOcrOption());
             ProcessTerminator terminator = () -> context.fileIngestIsCancelled();
@@ -525,7 +526,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 try {
                     Map<String, String> metadata = extractor.getMetadata();
                     if (!metadata.isEmpty()) {
-                        createMetadataArtifact(aFile, metadata);
+                        // Creating the metadata artifact here causes occasional problems
+                        // when indexing the text, so we save the metadata map to 
+                        // use after this method is complete.
+                        extractedMetadata.putAll(metadata);
                     }
                     CharSource formattedMetadata = getMetaDataCharSource(metadata);
                     //Append the metadata to end of the file text
@@ -731,6 +735,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             }
 
             boolean wasTextAdded = false;
+            Map<String, String> extractedMetadata = new HashMap<>();
 
             //extract text with one of the extractors, divide into chunks and index with Solr
             try {
@@ -742,7 +747,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     extractStringsAndIndex(aFile);
                     return;
                 }
-                if (!extractTextAndIndex(aFile)) {
+                if (!extractTextAndIndex(aFile, extractedMetadata)) {
                     // Text extractor not found for file. Extract string only.
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                 } else {
@@ -769,6 +774,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             // if it wasn't supported or had an error, default to strings
             if (wasTextAdded == false) {
                 extractStringsAndIndex(aFile);
+            }
+            
+            // Now that the indexing is complete, create the metadata artifact (if applicable).
+            // It is unclear why calling this from extractTextAndIndex() generates
+            // errors.
+            if (!extractedMetadata.isEmpty()) {
+                createMetadataArtifact(aFile, extractedMetadata);
             }
         }
 

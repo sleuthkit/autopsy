@@ -66,7 +66,7 @@ final class ExtractPrefetch extends Extract {
     private static final String MODULE_NAME = "extractPREFETCH"; //NON-NLS
 
     private static final String PREFETCH_TSK_COMMENT = "Prefetch File";
-    private static final String PREFETCH_FILE_LOCATION = "/Windows/Prefetch";
+    private static final String PREFETCH_FILE_LOCATION = "/windows/prefetch";
     private static final String PREFETCH_TOOL_FOLDER = "markmckinnon"; //NON-NLS
     private static final String PREFETCH_TOOL_NAME_WINDOWS_64 = "parse_prefetch_x64.exe"; //NON-NLS
     private static final String PREFETCH_TOOL_NAME_WINDOWS_32 = "parse_prefetch_x32.exe"; //NON-NLS
@@ -112,9 +112,9 @@ final class ExtractPrefetch extends Extract {
             return;
         }
 
-        String modOutFile = modOutPath + File.separator + PREFETCH_PARSER_DB_FILE;
+        String modOutFile = modOutPath + File.separator + dataSource.getName() + "-" +  PREFETCH_PARSER_DB_FILE;
         try {
-            String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), PREFETCH_DIR_NAME );
+            String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME );
             parsePrefetchFiles(prefetchDumper, tempDirPath, modOutFile, modOutPath);
             createAppExecArtifacts(modOutFile, dataSource);
         } catch (IOException ex) {
@@ -148,8 +148,8 @@ final class ExtractPrefetch extends Extract {
                 return;
             }
 
-            String prefetchFile = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), PREFETCH_DIR_NAME) + File.separator + pFile.getName();
-            if (pFile.getParentPath().contains(PREFETCH_FILE_LOCATION)) {
+            String prefetchFile = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME) + File.separator + pFile.getName();
+            if (pFile.getParentPath().toLowerCase().contains(PREFETCH_FILE_LOCATION.toLowerCase())) {
                 try {
                     ContentUtils.writeToFile(pFile, new File(prefetchFile));
                 } catch (IOException ex) {
@@ -293,7 +293,7 @@ final class ExtractPrefetch extends Extract {
                             }
                     }
                 } else {
-                    logger.log(Level.SEVERE, "File has a null value " + prefetchFileName);//NON-NLS
+                    logger.log(Level.WARNING, "File has a null value " + prefetchFileName);//NON-NLS
                 }
                     
             }
@@ -371,17 +371,21 @@ final class ExtractPrefetch extends Extract {
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
         try {
-            files = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS            
+            files = fileManager.findFiles(dataSource, fileName); //NON-NLS
+                        
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to find prefetch files.", ex); //NON-NLS
             return null;  // No need to continue
         }
         
-        if (!files.isEmpty()) {
-            return files.get(0);
-        } else {
-            return null;
+        for (AbstractFile pFile : files) {
+
+            if (pFile.getParentPath().toLowerCase().contains(filePath.toLowerCase())) {
+                return pFile;
+            }
         }
+
+        return null;
         
     }
  
