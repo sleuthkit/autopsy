@@ -372,6 +372,7 @@ final class HashLookupSettings implements Serializable {
         private final boolean readOnly;
         private final int referenceSetID;
         private DatabaseType dbType;
+        private final boolean officialSet;
 
         /**
          * Constructs a HashDbInfo object for files type
@@ -393,9 +394,10 @@ final class HashLookupSettings implements Serializable {
             this.version = "";
             this.readOnly = false;
             this.dbType = DatabaseType.FILE;
+            this.officialSet = false;
         }
         
-        HashDbInfo(String hashSetName, String version, int referenceSetID, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean readOnly, boolean searchDuringIngest, boolean sendIngestMessages){
+        HashDbInfo(String hashSetName, String version, int referenceSetID, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean readOnly, boolean searchDuringIngest, boolean sendIngestMessages, boolean officialSet){
             this.hashSetName = hashSetName;
             this.version = version;
             this.referenceSetID = referenceSetID;
@@ -405,6 +407,7 @@ final class HashLookupSettings implements Serializable {
             this.sendIngestMessages = sendIngestMessages;
             this.path = "";
             dbType = DatabaseType.CENTRAL_REPOSITORY;     
+            this.officialSet = officialSet;
         }
         
         HashDbInfo(HashDbManager.HashDb db) throws TskCoreException{
@@ -423,6 +426,7 @@ final class HashLookupSettings implements Serializable {
                 } else {
                     this.path = fileTypeDb.getDatabasePath();
                 }
+                this.officialSet = ((HashDbManager.SleuthkitHashSet) db).isOfficialSet();
             } else {
                 HashDbManager.CentralRepoHashSet centralRepoDb = (HashDbManager.CentralRepoHashSet)db;
                 this.hashSetName = centralRepoDb.getHashSetName();
@@ -434,8 +438,20 @@ final class HashLookupSettings implements Serializable {
                 this.path = "";
                 this.referenceSetID = centralRepoDb.getReferenceSetID();
                 this.dbType = DatabaseType.CENTRAL_REPOSITORY;
+                this.officialSet = false;
             }
         }
+
+        /**
+         * Gets whether or not this is an official set.
+         * 
+         * @return Whether or not this is an official set.
+         */
+        public boolean isOfficialSet() {
+            return officialSet;
+        }
+        
+        
 
         /**
          * Gets the hash set name.

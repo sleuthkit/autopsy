@@ -59,9 +59,9 @@
             <fileset dir="${thirdparty.dir}/InterestingFileSetRules"/>
         </copy>
 
-        <!--Copy StandardHashSets to release-->
-        <copy todir="${basedir}/release/StandardHashSets" >
-            <fileset dir="${thirdparty.dir}/StandardHashSets"/>
+        <!--Copy OfficialHashSets to release-->
+        <copy todir="${basedir}/release/OfficialHashSets" >
+            <fileset dir="${thirdparty.dir}/OfficialHashSets"/>
         </copy>
 
         <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we

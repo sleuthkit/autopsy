@@ -31,6 +31,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -77,6 +80,20 @@ public class HashDbManager implements PropertyChangeListener {
     private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
     private boolean allDatabasesLoadedCorrectly = false;
 
+    private static final String OFFICIAL_HASH_SETS_FOLDER = "OfficialHashSets";
+    private static final String KDB_EXT = "kdb";
+    
+    private static final String DB_NAME_PARAM = "dbName";
+    private static final String KNOWN_STATUS_PARAM = "knownStatus";
+    private static final Pattern OFFICIAL_FILENAME = Pattern.compile("(?<" + DB_NAME_PARAM + ">.+?)\\.(?<" + KNOWN_STATUS_PARAM + ">.+?)\\." + KDB_EXT);
+    
+    private static final FilenameFilter DEFAULT_KDB_FILTER = new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+            return name.endsWith("." + KDB_EXT);
+        }
+    };
+    
     /**
      * Property change event support In events: For both of these enums, the old
      * value should be null, and the new value should be the hashset name
@@ -503,7 +520,8 @@ public class HashDbManager implements PropertyChangeListener {
                     //   sendIngestMessages: true if the hash set is notable
                     boolean sendIngestMessages = KnownFilesType.fromFileKnown(globalSet.getFileKnownStatus()).equals(HashDb.KnownFilesType.KNOWN_BAD);
                     crHashSets.add(new HashDbInfo(globalSet.getSetName(), globalSet.getVersion(),
-                            globalSet.getGlobalSetID(), KnownFilesType.fromFileKnown(globalSet.getFileKnownStatus()), globalSet.isReadOnly(), false, sendIngestMessages));
+                            globalSet.getGlobalSetID(), KnownFilesType.fromFileKnown(globalSet.getFileKnownStatus()), 
+                            globalSet.isReadOnly(), false, sendIngestMessages, false));
                 }
             } catch (CentralRepoException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
@@ -546,24 +564,58 @@ public class HashDbManager implements PropertyChangeListener {
         }
     }
     
-    private static String STANDARD_HASH_SET_DIR = "StandardHashSets";
+
     
-    private static final FilenameFilter DEFAULT_KDB_FILTER = new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-            return name.endsWith(".kdb");
-        }
-    };
-    
-    private void loadStandardHashSets() throws HashDbManagerException {
+    private List<HashDbInfo> loadHashSetsFromFolder(String folder) throws HashDbManagerException {
         File configFolder = InstalledFileLocator.getDefault().locate(
-                STANDARD_HASH_SET_DIR, HashDbManager.class.getPackage().getName(), false);
+                folder, HashDbManager.class.getPackage().getName(), false);
         
         if (configFolder == null || !configFolder.exists() || !configFolder.isDirectory()) {
-            throw new HashDbManagerException("No standard hash set folder exists.");
+            throw new HashDbManagerException("Folder provided: " + folder + " does not exist.");
         }
         
-        File[] standardFileSets = configFolder.listFiles(DEFAULT_KDB_FILTER);
+        return Stream.of(configFolder.listFiles(DEFAULT_KDB_FILTER))
+                .map((f) -> {
+                    try {
+                        return getOfficialHashDbFromFile(f);
+                    } catch (HashDbManagerException ex) {
+                        logger.log(Level.WARNING, String.format("Hashset: %s could not be properly read.", f.getAbsolutePath()), ex);
+                        return null;
+                    }
+                })
+                .filter((hashdb) -> hashdb != null)
+                .collect(Collectors.toList());
+    }
+    
+
+    
+    private HashDbInfo getOfficialHashDbFromFile(File file) throws HashDbManagerException {
+        if (file == null || !file.exists()) {
+            throw new HashDbManagerException(String.format("No file found for: %s", file == null ? "<null>" : file.getAbsolutePath()));
+        }
+        String filename = file.getName();
+        Matcher match = OFFICIAL_FILENAME.matcher(filename);
+        if (match == null) {
+            throw new HashDbManagerException(String.format("File with name: %s does not match regex of: %s", filename, OFFICIAL_FILENAME.toString()));
+        }
+        
+        String hashdbName = match.group(DB_NAME_PARAM);
+        final String knownStatus = match.group(KNOWN_STATUS_PARAM);
+        
+        KnownFilesType knownFilesType = Stream.of(HashDb.KnownFilesType.values())
+                .filter(k -> k.name().toUpperCase().equals(knownStatus.toUpperCase()))
+                .findFirst()
+                .orElseThrow(() -> new HashDbManagerException(String.format("No KnownFilesType matches %s for file: %s", knownStatus, filename)));
+            
+        return new HashDbInfo(
+                hashdbName, 
+                "", // version
+                -1, //reference set id
+                knownFilesType, 
+                true, // readonly
+                false, //searchDuringIngest, 
+                false, //sendIngestMessages
+                true); // isOfficialSet
     }
 
     /**
@@ -577,7 +629,19 @@ public class HashDbManager implements PropertyChangeListener {
     private void configureSettings(HashLookupSettings settings) {
         allDatabasesLoadedCorrectly = true;
         List<HashDbInfo> hashDbInfoList = settings.getHashDbInfo();
-        for (HashDbInfo hashDbInfo : hashDbInfoList) {
+        
+        List<HashDbInfo> officialHashSets;
+        try {
+           officialHashSets = loadHashSetsFromFolder(OFFICIAL_HASH_SETS_FOLDER);
+        }
+        catch(HashDbManagerException ex) {
+            logger.log(Level.WARNING, "There was an error loading the official hash sets.", ex);
+            officialHashSets = new ArrayList<HashDbInfo>();
+        }
+        
+        final Stream combined = Stream.concat(hashDbInfoList.stream(), officialHashSets.stream());
+        
+        combined.forEach((HashDbInfo hashDbInfo) -> {
             try {
                 if (hashDbInfo.isFileDatabaseType()) {
                     String dbPath = this.getValidFilePath(hashDbInfo.getHashSetName(), hashDbInfo.getPath());
@@ -604,7 +668,7 @@ public class HashDbManager implements PropertyChangeListener {
                         JOptionPane.ERROR_MESSAGE);
                 allDatabasesLoadedCorrectly = false;
             }
-        }
+        });
 
         if (CentralRepository.isEnabled()) {
             try {
@@ -885,14 +949,20 @@ public class HashDbManager implements PropertyChangeListener {
         private final HashDb.KnownFilesType knownFilesType;
         private boolean indexing;
         private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+        private final boolean isOfficialSet;
 
         private SleuthkitHashSet(int handle, String hashSetName, boolean useForIngest, boolean sendHitMessages, KnownFilesType knownFilesType) {
+            this(handle, hashSetName, useForIngest, sendHitMessages, knownFilesType, false);
+        }
+        
+        private SleuthkitHashSet(int handle, String hashSetName, boolean useForIngest, boolean sendHitMessages, KnownFilesType knownFilesType, boolean isOfficialSet) {
             this.handle = handle;
             this.hashSetName = hashSetName;
             this.searchDuringIngest = useForIngest;
             this.sendIngestMessages = sendHitMessages;
             this.knownFilesType = knownFilesType;
             this.indexing = false;
+            this.isOfficialSet = isOfficialSet;
         }
 
         /**
@@ -1143,6 +1213,10 @@ public class HashDbManager implements PropertyChangeListener {
                 return false;
             }
             return true;
+        }
+
+        boolean isOfficialSet() {
+            return isOfficialSet;
         }
     }
 
