@@ -3,6 +3,12 @@ from propsutil import get_entry_dict
 
 
 class ItemChange:
+    rel_path: str
+    key: str
+    prev_val: str
+    cur_val: str
+    type: str
+
     def __init__(self, rel_path: str, key: str, prev_val: str, cur_val: str):
         """Describes the change that occurred for a particular key of a properties file.
 

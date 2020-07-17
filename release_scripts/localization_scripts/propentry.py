@@ -1,4 +1,9 @@
 class PropEntry:
+    rel_path: str
+    key: str
+    value: str
+    should_delete: str
+
     def __init__(self, rel_path: str, key: str, value: str, should_delete: bool = False):
         """Defines a property file entry to be updated in a property file.
 
