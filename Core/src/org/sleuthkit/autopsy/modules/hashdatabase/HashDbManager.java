@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -37,6 +38,7 @@ import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.io.FilenameUtils;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
@@ -542,6 +544,26 @@ public class HashDbManager implements PropertyChangeListener {
         } catch (HashLookupSettings.HashLookupSettingsException ex) {
             Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Could not read Hash lookup settings from disk.", ex);
         }
+    }
+    
+    private static String STANDARD_HASH_SET_DIR = "StandardHashSets";
+    
+    private static final FilenameFilter DEFAULT_KDB_FILTER = new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+            return name.endsWith(".kdb");
+        }
+    };
+    
+    private void loadStandardHashSets() throws HashDbManagerException {
+        File configFolder = InstalledFileLocator.getDefault().locate(
+                STANDARD_HASH_SET_DIR, HashDbManager.class.getPackage().getName(), false);
+        
+        if (configFolder == null || !configFolder.exists() || !configFolder.isDirectory()) {
+            throw new HashDbManagerException("No standard hash set folder exists.");
+        }
+        
+        File[] standardFileSets = configFolder.listFiles(DEFAULT_KDB_FILTER);
     }
 
     /**
