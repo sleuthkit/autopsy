@@ -886,5 +886,19 @@ public interface CentralRepository {
      * @throws InvalidAccountIDException If the account identifier is not valid.
      */
     CentralRepoAccount getOrCreateAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws InvalidAccountIDException, CentralRepoException;
+    
+    /**
+     * Gets an account from the accounts table matching the given type/ID, if
+     * one exists.
+     *
+     * @param crAccountType   CR account type to look for or create
+     * @param accountUniqueID type specific unique account id
+     *
+     * @return CR account, if found, null otherwise.
+     *
+     * @throws CentralRepoException  If there is an error accessing Central Repository.
+     * @throws InvalidAccountIDException If the account identifier is not valid.
+     */
+    CentralRepoAccount getAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws InvalidAccountIDException, CentralRepoException;
 
 }

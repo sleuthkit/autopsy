@@ -1180,15 +1180,17 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      * @return CentralRepoAccount for the give type/id. May return null if not
      *         found.
      *
-     * @throws CentralRepoException
+     * @throws CentralRepoException  If there is an error accessing Central Repository.
+     * @throws InvalidAccountIDException If the account identifier is not valid.
      */
-    private CentralRepoAccount getAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
-
-        CentralRepoAccount crAccount = accountsCache.getIfPresent(Pair.of(crAccountType, accountUniqueID));
+    @Override
+    public CentralRepoAccount getAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws InvalidAccountIDException, CentralRepoException {
+        String normalizedAccountID = CentralRepoAccount.normalizeAccountIdentifier(crAccountType, accountUniqueID);
+        CentralRepoAccount crAccount = accountsCache.getIfPresent(Pair.of(crAccountType, normalizedAccountID));
         if (crAccount == null) {
-            crAccount = getCRAccountFromDb(crAccountType, accountUniqueID);
+            crAccount = getCRAccountFromDb(crAccountType, normalizedAccountID);
             if (crAccount != null) {
-                accountsCache.put(Pair.of(crAccountType, accountUniqueID), crAccount);
+                accountsCache.put(Pair.of(crAccountType, normalizedAccountID), crAccount);
             }
         }
 
