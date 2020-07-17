@@ -25,7 +25,6 @@ import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -181,6 +180,8 @@ class MessageNode extends BlackboardArtifactNode {
      * A no op action to override the default action of BlackboardArtifactNode
      */
     private class DefaultMessageAction extends AbstractAction {
+
+        private static final long serialVersionUID = 1L;
 
         @Override
         public void actionPerformed(ActionEvent e) {
