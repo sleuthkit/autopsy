@@ -27,6 +27,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.datamodel.HashHitInfo;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 
 /**
  * Main interface for interacting with the database
@@ -880,10 +881,11 @@ public interface CentralRepository {
      * @param crAccountType CR account type to look for or create
      * @param accountUniqueID type specific unique account id
      * @return CR account
-     *
-     * @throws CentralRepoException
+     * 
+     * @throws CentralRepoException  If there is an error accessing Central Repository.
+     * @throws InvalidAccountIDException If the account identifier is not valid.
      */
-    CentralRepoAccount getOrCreateAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException;
+    CentralRepoAccount getOrCreateAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws InvalidAccountIDException, CentralRepoException;
     
     /**
      * Gets an account from the accounts table matching the given type/ID, if
@@ -894,8 +896,9 @@ public interface CentralRepository {
      *
      * @return CR account, if found, null otherwise.
      *
-     * @throws CentralRepoException
+     * @throws CentralRepoException  If there is an error accessing Central Repository.
+     * @throws InvalidAccountIDException If the account identifier is not valid.
      */
-    CentralRepoAccount getAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException;
+    CentralRepoAccount getAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws InvalidAccountIDException, CentralRepoException;
 
 }
