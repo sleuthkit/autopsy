@@ -52,6 +52,7 @@ import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.HashHitInfo;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
@@ -1080,7 +1081,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      *                          within TSK core
      */
     @Override
-    public CentralRepoAccount getOrCreateAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
+    public CentralRepoAccount getOrCreateAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws InvalidAccountIDException, CentralRepoException {
+        // Get the account fom the accounts table
+        String normalizedAccountID = CentralRepoAccount.normalizeAccountIdentifier(crAccountType, accountUniqueID);
 
         String insertSQL = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
                 + "VALUES (?, ?) " + getConflictClause();
@@ -1089,12 +1092,12 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                 PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);) {
 
             preparedStatement.setInt(1, crAccountType.getAccountTypeId());
-            preparedStatement.setString(2, accountUniqueID); // TBD: fill in the normalized ID
+            preparedStatement.setString(2, normalizedAccountID);
 
             preparedStatement.executeUpdate();
 
             // get the account from the db - should exist now.
-            return getAccount(crAccountType, accountUniqueID);
+            return getAccount(crAccountType, normalizedAccountID);
         } catch (SQLException ex) {
             throw new CentralRepoException("Error adding an account to CR database.", ex);
         }
@@ -1177,16 +1180,17 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      * @return CentralRepoAccount for the give type/id. May return null if not
      *         found.
      *
-     * @throws CentralRepoException
+     * @throws CentralRepoException  If there is an error accessing Central Repository.
+     * @throws InvalidAccountIDException If the account identifier is not valid.
      */
     @Override
-    public CentralRepoAccount getAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
-
-        CentralRepoAccount crAccount = accountsCache.getIfPresent(Pair.of(crAccountType, accountUniqueID));
+    public CentralRepoAccount getAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws InvalidAccountIDException, CentralRepoException {
+        String normalizedAccountID = CentralRepoAccount.normalizeAccountIdentifier(crAccountType, accountUniqueID);
+        CentralRepoAccount crAccount = accountsCache.getIfPresent(Pair.of(crAccountType, normalizedAccountID));
         if (crAccount == null) {
-            crAccount = getCRAccountFromDb(crAccountType, accountUniqueID);
+            crAccount = getCRAccountFromDb(crAccountType, normalizedAccountID);
             if (crAccount != null) {
-                accountsCache.put(Pair.of(crAccountType, accountUniqueID), crAccount);
+                accountsCache.put(Pair.of(crAccountType, normalizedAccountID), crAccount);
             }
         }
 
