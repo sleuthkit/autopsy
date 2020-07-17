@@ -7,9 +7,9 @@ Ingest Modules:
 - Include Interesting File set rules for cloud storage, encryption, cryptocurrency and privacy programs.
 - Updated PhotoRec 7.1 and include 64-bit version
 - Updated RegRipper in Recent Activity to 2.8
-- Create artifacts for prefetch, Background Activity Monitor, and System Resource Usage. 
-- Support MBOX files bigger than 2GB
-- Document metadata are saved as explicit artifacts and added to the timeline. 
+- Create artifacts for Prefetch, Background Activity Monitor, and System Resource Usage. 
+- Support MBOX files greater than 2GB
+- Document metadata is saved as explicit artifacts and added to the timeline. 
 - New “no change” hashset type that does not change status of file. 
 
 
