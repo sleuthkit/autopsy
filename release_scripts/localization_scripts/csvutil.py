@@ -4,6 +4,7 @@
 from typing import List, Iterable, Tuple
 import csv
 import os
+import codecs
 
 
 def records_to_csv(output_path: str, rows: Iterable[List[str]]):
@@ -20,9 +21,8 @@ def records_to_csv(output_path: str, rows: Iterable[List[str]]):
     if not os.path.exists(parent_dir):
         os.makedirs(parent_dir)
 
-    with open(output_path, 'w', encoding="utf-8", newline='') as csvfile:
+    with open(output_path, 'w', encoding="utf-8-sig", newline='') as csvfile:
         writer = csv.writer(csvfile)
-
         for row in rows:
             writer.writerow(row)
 
@@ -35,7 +35,7 @@ def csv_to_records(input_path: str, header_row: bool) -> Tuple[List[List[str]], 
         header_row (bool): Whether or not there is a header row to be skipped.
     """
 
-    with open(input_path, encoding='utf-8') as csv_file:
+    with open(input_path, encoding='utf-8-sig') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
 
         header = None

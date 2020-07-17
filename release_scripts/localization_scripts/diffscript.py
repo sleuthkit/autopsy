@@ -11,11 +11,14 @@ from itemchange import ItemChange
 from csvutil import records_to_csv
 import argparse
 import pathlib
+from typing import Union
+import re
 
 from langpropsutil import get_commit_for_language, LANG_FILENAME
 
 
-def write_diff_to_csv(repo_path: str, output_path: str, commit_1_id: str, commit_2_id: str, show_commits: bool):
+def write_diff_to_csv(repo_path: str, output_path: str, commit_1_id: str, commit_2_id: str, show_commits: bool,
+                      value_regex: Union[str, None]):
     """Determines the changes made in '.properties-MERGED' files from one commit to another commit.
 
     Args:
@@ -23,7 +26,9 @@ def write_diff_to_csv(repo_path: str, output_path: str, commit_1_id: str, commit
         output_path (str): The output path for the csv file.
         commit_1_id (str): The initial commit for the diff.
         commit_2_id (str): The latest commit for the diff.
-        show_commits (bool): show commits in the header row.
+        show_commits (bool): Show commits in the header row.
+        value_regex (Union[str, None]): If non-none, only key value pairs where the value is a regex match with this
+        value will be included.
     """
 
     row_header = ItemChange.get_headers()
@@ -32,8 +37,11 @@ def write_diff_to_csv(repo_path: str, output_path: str, commit_1_id: str, commit
 
     rows = [row_header]
 
-    rows += map(lambda item_change: item_change.get_row(),
-                get_property_files_diff(repo_path, commit_1_id, commit_2_id))
+    item_changes = get_property_files_diff(repo_path, commit_1_id, commit_2_id)
+    if value_regex is not None:
+        item_changes = filter(lambda item_change: re.match(value_regex, item_change.cur_val) is not None, item_changes)
+
+    rows += map(lambda item_change: item_change.get_row(), item_changes)
 
     records_to_csv(output_path, rows)
 
@@ -57,11 +65,17 @@ def main():
     parser.add_argument('-l', '--language', dest='language', type=str, default='HEAD', required=False,
                         help='Specify the language in order to determine the first commit to use (i.e. \'ja\' for '
                              'Japanese.  This flag overrides the first-commit flag.')
+    parser.add_argument('-vr', '--value-regex', dest='value_regex', type=str, default=None, required=False,
+                        help='Specify the regex for the property value where a regex match against the property value '
+                             'will display the key value pair in csv output (i.e. \'[a-zA-Z]\' or \'\\S\' for removing '
+                             'just whitespace items).  If this option is not specified, all key value pairs will be '
+                             'accepted.')
 
     args = parser.parse_args()
     repo_path = args.repo_path if args.repo_path is not None else get_git_root(get_proj_dir())
     output_path = args.output_path
     commit_1_id = args.commit_1_id
+    value_regex = args.value_regex
     if args.language is not None:
         commit_1_id = get_commit_for_language(args.language)
 
@@ -74,7 +88,7 @@ def main():
     commit_2_id = args.commit_2_id
     show_commits = not args.no_commits
 
-    write_diff_to_csv(repo_path, output_path, commit_1_id, commit_2_id, show_commits)
+    write_diff_to_csv(repo_path, output_path, commit_1_id, commit_2_id, show_commits, value_regex)
 
     sys.exit(0)
 

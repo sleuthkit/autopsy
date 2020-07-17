@@ -9,10 +9,12 @@ import sys
 from envutil import get_proj_dir
 from gitutil import get_property_file_entries, get_commit_id, get_git_root
 from csvutil import records_to_csv
+from typing import Union
+import re
 import argparse
 
 
-def write_items_to_csv(repo_path: str, output_path: str, show_commit: bool):
+def write_items_to_csv(repo_path: str, output_path: str, show_commit: bool, value_regex: Union[str, None]):
     """Determines the contents of '.properties-MERGED' files and writes to a csv file.
 
     Args:
@@ -28,7 +30,8 @@ def write_items_to_csv(repo_path: str, output_path: str, show_commit: bool):
     rows = [row_header]
 
     for entry in get_property_file_entries(repo_path):
-        rows.append([entry.rel_path, entry.key, entry.value])
+        if value_regex is None or re.match(value_regex, entry.value):
+            rows.append([entry.rel_path, entry.key, entry.value])
 
     records_to_csv(output_path, rows)
 
@@ -42,13 +45,19 @@ def main():
                         help='The path to the repo.  If not specified, path of script is used.')
     parser.add_argument('-nc', '--no_commit', dest='no_commit', action='store_true', default=False,
                         required=False, help="Suppresses adding commits to the generated csv header.")
+    parser.add_argument('-vr', '--value-regex', dest='value_regex', type=str, default=None, required=False,
+                        help='Specify the regex for the property value where a regex match against the property value '
+                             'will display the key value pair in csv output (i.e. \'[a-zA-Z]\' or \'\\S\' for removing '
+                             'just whitespace items).  If this option is not specified, all key value pairs will be '
+                             'accepted.')
 
     args = parser.parse_args()
     repo_path = args.repo_path if args.repo_path is not None else get_git_root(get_proj_dir())
     output_path = args.output_path
     show_commit = not args.no_commit
+    value_regex = args.value_regex
 
-    write_items_to_csv(repo_path, output_path, show_commit)
+    write_items_to_csv(repo_path, output_path, show_commit, value_regex)
 
     sys.exit(0)
 
