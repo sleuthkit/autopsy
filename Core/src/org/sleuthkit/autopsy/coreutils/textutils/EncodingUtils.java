@@ -92,7 +92,6 @@ public class EncodingUtils {
             // Get all guesses by Tika. These CharsetMatch's are ordered
             // by descending confidence (largest first).
             if (tikaResults.length > 0) {
-                // Grab our top pick
                 CharsetMatch topPick = tikaResults[0];
                 
                 if (topPick.getName().equalsIgnoreCase("IBM500") && tikaResults.length > 1) {
