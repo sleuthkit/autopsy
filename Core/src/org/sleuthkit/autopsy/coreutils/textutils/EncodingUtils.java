@@ -95,22 +95,20 @@ public class EncodingUtils {
                 // Grab our top pick
                 CharsetMatch topPick = tikaResults[0];
                 
-                if (topPick.getName().equalsIgnoreCase("IBM500")) {
+                if (topPick.getName().equalsIgnoreCase("IBM500") && tikaResults.length > 1) {
                     // Legacy encoding, let's discard this one in favor
                     // of the second pick. Tika has some problems with 
                     // mistakenly identifying text as IBM500. See JIRA-6600 
                     // for more details.
-                    if (tikaResults.length > 1) {
-                        topPick = tikaResults[1];
-                    }
+                    topPick = tikaResults[1];
                 }
                 
                 if (!topPick.getName().equalsIgnoreCase("IBM500") && 
-                        topPick.getConfidence() >= MIN_CHARSETDETECT_MATCH_CONFIDENCE) {
-                    //Check if the nio package has support for the charset determined by Tika.
-                    if(Charset.isSupported(topPick.getName())) {
-                        return Charset.forName(topPick.getName());
-                    }
+                        topPick.getConfidence() >= MIN_CHARSETDETECT_MATCH_CONFIDENCE &&
+                        Charset.isSupported(topPick.getName())) {
+                    // Choose this charset since it's supported and has high 
+                    // enough confidence
+                    return Charset.forName(topPick.getName());
                 }
             }
         }
