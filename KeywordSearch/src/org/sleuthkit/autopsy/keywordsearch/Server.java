@@ -69,6 +69,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -345,27 +346,11 @@ public class Server {
     
     private CloudSolrClient getCloudSolrClient(List<String> solrUrls, String defaultCollectionName) {
         CloudSolrClient client;
-        //client = new CloudSolrClient.Builder()
-        //        .withZkHost("127.0.0.1:9983")
-        //        .build();
-        
-        // Using a ZK Host String
-        //String zkHostString = "zkServerA:2181,zkServerB:2181,zkServerC:2181/solr";
-        //SolrClient solr = new CloudSolrClient.Builder().withZkHost(zkHostString).build();
-        
-        /* ELTODO
-        Builder builder = new CloudSolrClient.Builder();
-	builder.withZkHost(
-			Arrays.asList(new String[] { "192.168.204.181:2181,192.168.204.182:2181,192.168.204.183:2181" }));
-	CloudSolrClient client = builder.build();*/
-        
         logger.log(Level.INFO, "Creating new CloudSolrClient"); //NON-NLS
         client = new CloudSolrClient.Builder(solrUrls).build();
         if (!defaultCollectionName.isEmpty()) {
             client.setDefaultCollection(defaultCollectionName);
         }
-        // ELTODO client.setZkClientTimeout(60000);
-        // ELTODO client.setZkConnectTimeout(60000);
         client.connect();
         return client;
     }
@@ -601,7 +586,7 @@ public class Server {
                     IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());                    
                     List<String> solrServerList = getSolrServerList(properties.getHost(), properties.getPort());
                     for (String server : solrServerList) {
-                        solrUrls.add("http://" + server + "/solr"); // ELTODO optimize this
+                        solrUrls.add("http://" + server + "/solr");
                         logger.log(Level.INFO, "Using Solr server: {0}", server);
                     }
                 } else {
@@ -1882,7 +1867,7 @@ public class Server {
                 List<String> solrServerList = getSolrServerList(properties.getHost(), properties.getPort());
                 List<String> solrUrls = new ArrayList<>();
                 for (String server : solrServerList) {
-                    solrUrls.add("http://" + server + "/solr"); // ELTODO optimize this
+                    solrUrls.add("http://" + server + "/solr");
                     logger.log(Level.INFO, "Using Solr server: {0}", server);
                 }
                 // get SolrJ client
@@ -2004,20 +1989,26 @@ public class Server {
         }
 
         synchronized void close() throws KeywordSearchModuleException {
-            // We only unload cores for "single-user" cases.
-            if (this.caseType == CaseType.MULTI_USER_CASE) {
-                // solrClient.close(); // do we need to do this?
-                return;
-            }
-
             try {
+                // We only unload cores for "single-user" cases.
+                if (this.caseType == CaseType.MULTI_USER_CASE) {
+                    return;
+                }
+                
                 CoreAdminRequest.unloadCore(this.name, localSolrServer);
-            } catch (SolrServerException | RemoteSolrException  ex) {
+            } catch (SolrServerException | RemoteSolrException ex) {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.close.exception.msg"), ex);
             } catch (IOException ex) {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.close.exception.msg2"), ex);
+            } finally {
+                try {
+                    solrClient.close();
+                } catch (IOException ex) {
+                    throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.close.exception.msg2"), ex);
+                }
             }
         }
 
