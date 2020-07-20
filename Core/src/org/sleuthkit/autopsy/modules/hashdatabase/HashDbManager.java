@@ -628,8 +628,9 @@ public class HashDbManager implements PropertyChangeListener {
                 change = true;
             } else {
                 newItems.add(hashset);
-                curNames.add(thisName);
             }
+            
+            curNames.add(thisName);
         }
 
         if (!change) {
@@ -709,7 +710,7 @@ public class HashDbManager implements PropertyChangeListener {
         return new SleuthkitHashSet(
                 SleuthkitJNI.openHashDatabase(file.getAbsolutePath()),
                 hashdbName,
-                false, //searchDuringIngest
+                true, //searchDuringIngest
                 false, //sendIngestMessages
                 knownFilesType,
                 true); // official set
