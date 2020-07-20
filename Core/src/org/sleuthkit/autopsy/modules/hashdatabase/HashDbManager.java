@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
+import java.awt.HeadlessException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -746,46 +747,11 @@ public class HashDbManager implements PropertyChangeListener {
         hashDbInfoList = handleNameConflict(hashDbInfoList, officialSetNames);
 
         for (HashDbInfo hashDbInfo : hashDbInfoList) {
-            try {
-                if (hashDbInfo.isFileDatabaseType()) {
-                    String dbPath = this.getValidFilePath(hashDbInfo.getHashSetName(), hashDbInfo.getPath());
-                    if (dbPath != null) {
-                        addHashDatabase(SleuthkitJNI.openHashDatabase(dbPath), hashDbInfo.getHashSetName(), hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType());
-                    } else {
-                        logger.log(Level.WARNING, Bundle.HashDbManager_noDbPath_message(hashDbInfo.getHashSetName()));
-                        allDatabasesLoadedCorrectly = false;
-                    }
-                } else {
-                    if (CentralRepository.isEnabled()) {
-                        addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(),
-                                hashDbInfo.getReferenceSetID(),
-                                hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(),
-                                hashDbInfo.getKnownFilesType(), hashDbInfo.isReadOnly());
-                    }
-                }
-            } catch (TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash set", ex); //NON-NLS
-                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                        NbBundle.getMessage(this.getClass(),
-                                "HashDbManager.unableToOpenHashDbMsg", hashDbInfo.getHashSetName()),
-                        NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
-                        JOptionPane.ERROR_MESSAGE);
-                allDatabasesLoadedCorrectly = false;
-            }
+            configureLocalDb(hashDbInfo);
         }
 
         if (CentralRepository.isEnabled()) {
-            try {
-                updateHashSetsFromCentralRepository();
-            } catch (TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash set", ex); //NON-NLS
-
-                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                        Bundle.HashDbManager_centralRepoLoadError_message(),
-                        NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
-                        JOptionPane.ERROR_MESSAGE);
-                allDatabasesLoadedCorrectly = false;
-            }
+            configureCrDbs();
         }
 
         /*
@@ -806,6 +772,56 @@ public class HashDbManager implements PropertyChangeListener {
                 allDatabasesLoadedCorrectly = false;
                 logger.log(Level.SEVERE, "Could not overwrite hash set settings.", ex);
             }
+        }
+    }
+
+    /**
+     * Configures central repository hash set databases.
+     */
+    private void configureCrDbs() {
+        try {
+            updateHashSetsFromCentralRepository();
+        } catch (TskCoreException ex) {
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash set", ex); //NON-NLS
+            
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                    Bundle.HashDbManager_centralRepoLoadError_message(),
+                    NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
+            allDatabasesLoadedCorrectly = false;
+        }
+    }
+
+    /**
+     * Handles configuring a local hash set database.
+     * @param hashDbInfo The local hash set database.
+     */
+    private void configureLocalDb(HashDbInfo hashDbInfo) {
+        try {
+            if (hashDbInfo.isFileDatabaseType()) {
+                String dbPath = this.getValidFilePath(hashDbInfo.getHashSetName(), hashDbInfo.getPath());
+                if (dbPath != null) {
+                    addHashDatabase(SleuthkitJNI.openHashDatabase(dbPath), hashDbInfo.getHashSetName(), hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType());
+                } else {
+                    logger.log(Level.WARNING, Bundle.HashDbManager_noDbPath_message(hashDbInfo.getHashSetName()));
+                    allDatabasesLoadedCorrectly = false;
+                }
+            } else {
+                if (CentralRepository.isEnabled()) {
+                    addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(),
+                            hashDbInfo.getReferenceSetID(),
+                            hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(),
+                            hashDbInfo.getKnownFilesType(), hashDbInfo.isReadOnly());
+                }
+            }
+        } catch (TskCoreException ex) {
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash set", ex); //NON-NLS
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbManager.unableToOpenHashDbMsg", hashDbInfo.getHashSetName()),
+                    NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
+            allDatabasesLoadedCorrectly = false;
         }
     }
 
@@ -1067,20 +1083,20 @@ public class HashDbManager implements PropertyChangeListener {
         private final HashDb.KnownFilesType knownFilesType;
         private boolean indexing;
         private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
-        private final boolean isOfficialSet;
+        private final boolean officialSet;
 
         private SleuthkitHashSet(int handle, String hashSetName, boolean useForIngest, boolean sendHitMessages, KnownFilesType knownFilesType) {
             this(handle, hashSetName, useForIngest, sendHitMessages, knownFilesType, false);
         }
 
-        private SleuthkitHashSet(int handle, String hashSetName, boolean useForIngest, boolean sendHitMessages, KnownFilesType knownFilesType, boolean isOfficialSet) {
+        private SleuthkitHashSet(int handle, String hashSetName, boolean useForIngest, boolean sendHitMessages, KnownFilesType knownFilesType, boolean officialSet) {
             this.handle = handle;
             this.hashSetName = hashSetName;
             this.searchDuringIngest = useForIngest;
             this.sendIngestMessages = sendHitMessages;
             this.knownFilesType = knownFilesType;
             this.indexing = false;
-            this.isOfficialSet = isOfficialSet;
+            this.officialSet = officialSet;
         }
 
         /**
@@ -1357,7 +1373,7 @@ public class HashDbManager implements PropertyChangeListener {
          * @return Whether or not the set is an official set.
          */
         boolean isOfficialSet() {
-            return isOfficialSet;
+            return officialSet;
         }
     }
 
