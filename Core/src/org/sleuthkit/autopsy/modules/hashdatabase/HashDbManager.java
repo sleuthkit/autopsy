@@ -520,8 +520,7 @@ public class HashDbManager implements PropertyChangeListener {
                     //   sendIngestMessages: true if the hash set is notable
                     boolean sendIngestMessages = KnownFilesType.fromFileKnown(globalSet.getFileKnownStatus()).equals(HashDb.KnownFilesType.KNOWN_BAD);
                     crHashSets.add(new HashDbInfo(globalSet.getSetName(), globalSet.getVersion(),
-                            globalSet.getGlobalSetID(), KnownFilesType.fromFileKnown(globalSet.getFileKnownStatus()),
-                            globalSet.isReadOnly(), false, sendIngestMessages, false));
+                            globalSet.getGlobalSetID(), KnownFilesType.fromFileKnown(globalSet.getFileKnownStatus()), globalSet.isReadOnly(), false, sendIngestMessages));
                 }
             } catch (CentralRepoException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
@@ -612,7 +611,7 @@ public class HashDbManager implements PropertyChangeListener {
         }
         String filename = file.getName();
         Matcher match = OFFICIAL_FILENAME.matcher(filename);
-        if (match == null) {
+        if (!match.find()) {
             throw new HashDbManagerException(String.format("File with name: %s does not match regex of: %s", filename, OFFICIAL_FILENAME.toString()));
         }
 
@@ -625,14 +624,13 @@ public class HashDbManager implements PropertyChangeListener {
                 .orElseThrow(() -> new HashDbManagerException(String.format("No KnownFilesType matches %s for file: %s", knownStatus, filename)));
 
         return new HashDbInfo(
-                hashdbName,
-                "", // version
-                -1, //reference set id
-                knownFilesType,
-                true, // readonly
-                false, //searchDuringIngest, 
+                hashdbName, 
+                knownFilesType, 
+                false, //searchDuringIngest
                 false, //sendIngestMessages
-                true); // isOfficialSet
+                file.getAbsolutePath(), 
+                true,  // read only
+                true); // official set
     }
 
     /**

@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,7 +62,7 @@ final class HashLookupSettings implements Serializable {
     private static final String CONFIG_FILE_NAME = "hashsets.xml"; //NON-NLS
     private static final String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILE_NAME;
     private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
-    
+
     private static final String USER_DIR_PLACEHOLDER = "[UserConfigFolder]";
     private static final String CURRENT_USER_DIR = PlatformUtil.getUserConfigDirectory();
 
@@ -77,13 +77,13 @@ final class HashLookupSettings implements Serializable {
     HashLookupSettings(List<HashDbInfo> hashDbInfoList) {
         this.hashDbInfoList = hashDbInfoList;
     }
-    
-    static List<HashDbInfo> convertHashSetList(List<HashDbManager.HashDb> hashSets) throws HashLookupSettingsException{
+
+    static List<HashDbInfo> convertHashSetList(List<HashDbManager.HashDb> hashSets) throws HashLookupSettingsException {
         List<HashDbInfo> dbInfoList = new ArrayList<>();
-        for(HashDbManager.HashDb db:hashSets){
-            try{
+        for (HashDbManager.HashDb db : hashSets) {
+            try {
                 dbInfoList.add(new HashDbInfo(db));
-            } catch (TskCoreException ex){
+            } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Could not load hash set settings for {0}", db.getHashSetName());
             }
         }
@@ -125,15 +125,17 @@ final class HashLookupSettings implements Serializable {
      * @throws HashLookupSettingsException If there's a problem importing the
      *                                     settings
      */
-    private static HashLookupSettings readSerializedSettings() throws HashLookupSettingsException {        
+    private static HashLookupSettings readSerializedSettings() throws HashLookupSettingsException {
         try {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(SERIALIZATION_FILE_PATH))) {
                 HashLookupSettings filesSetsSettings = (HashLookupSettings) in.readObject();
 
-                /* NOTE: to support JIRA-4177, we need to check if any of the hash 
-                database paths are in Windows user directory. If so, we replace the path 
-                with USER_DIR_PLACEHOLDER before saving to disk. When reading from disk, 
-                USER_DIR_PLACEHOLDER needs to be replaced with current user directory path.
+                /*
+                 * NOTE: to support JIRA-4177, we need to check if any of the
+                 * hash database paths are in Windows user directory. If so, we
+                 * replace the path with USER_DIR_PLACEHOLDER before saving to
+                 * disk. When reading from disk, USER_DIR_PLACEHOLDER needs to
+                 * be replaced with current user directory path.
                  */
                 convertPlaceholderToPath(filesSetsSettings);
                 return filesSetsSettings;
@@ -291,11 +293,12 @@ final class HashLookupSettings implements Serializable {
      * @return Whether or not the settings were written successfully
      */
     static boolean writeSettings(HashLookupSettings settings) {
-        
-        /* NOTE: to support JIRA-4177, we need to check if any of the hash 
-        database paths are in Windows user directory. If so, replace the path 
-        with USER_DIR_PLACEHOLDER so that when it is read, it gets updated to be 
-        the current user directory path. 
+
+        /*
+         * NOTE: to support JIRA-4177, we need to check if any of the hash
+         * database paths are in Windows user directory. If so, replace the path
+         * with USER_DIR_PLACEHOLDER so that when it is read, it gets updated to
+         * be the current user directory path.
          */
         convertPathToPlaceholder(settings);
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(SERIALIZATION_FILE_PATH))) {
@@ -310,10 +313,10 @@ final class HashLookupSettings implements Serializable {
     }
 
     /**
-     * For file type hash sets, check if hash set paths needs to be modified 
-     * per JIRA-4177. If the file path is in current Windows user directory,
-     * replace the path with USER_DIR_PLACEHOLDER.
-     * 
+     * For file type hash sets, check if hash set paths needs to be modified per
+     * JIRA-4177. If the file path is in current Windows user directory, replace
+     * the path with USER_DIR_PLACEHOLDER.
+     *
      * @param settings HashLookupSettings settings object to examiner and modify
      */
     static void convertPathToPlaceholder(HashLookupSettings settings) {
@@ -328,7 +331,7 @@ final class HashLookupSettings implements Serializable {
             }
         }
     }
-    
+
     /**
      * For file type hash sets, check if hash set paths needs to be modified per
      * JIRA-4177. Replace USER_DIR_PLACEHOLDER with path to current Windows user
@@ -349,7 +352,6 @@ final class HashLookupSettings implements Serializable {
         }
     }
 
-
     /**
      * Represents the serializable information within a hash lookup in order to
      * be written to disk. Used to hand off information when loading and saving
@@ -357,11 +359,11 @@ final class HashLookupSettings implements Serializable {
      */
     static final class HashDbInfo implements Serializable {
 
-        enum DatabaseType{
+        enum DatabaseType {
             FILE,
             CENTRAL_REPOSITORY
         };
-        
+
         private static final long serialVersionUID = 1L;
         private final String hashSetName;
         private final HashDbManager.HashDb.KnownFilesType knownFilesType;
@@ -385,6 +387,25 @@ final class HashLookupSettings implements Serializable {
          * @param path               The path to the db
          */
         HashDbInfo(String hashSetName, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages, String path) {
+            this(hashSetName, knownFilesType, searchDuringIngest, sendIngestMessages, path, false, false);
+        }
+
+        /**
+         * Constructs a HashDbInfo object for files type
+         *
+         * @param hashSetName        The name of the hash set
+         * @param knownFilesType     The known files type
+         * @param searchDuringIngest Whether or not the db is searched during
+         *                           ingest
+         * @param sendIngestMessages Whether or not ingest messages are sent
+         * @param path               The path to the db
+         * @param readOnly           Whether or not the hash set should be
+         *                           readOnly
+         * @param officialSet        Whether or not the hash set is a Standard
+         *                           Official Hash Set.
+         */
+        HashDbInfo(String hashSetName, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean searchDuringIngest,
+                boolean sendIngestMessages, String path, boolean readOnly, boolean officialSet) {
             this.hashSetName = hashSetName;
             this.knownFilesType = knownFilesType;
             this.searchDuringIngest = searchDuringIngest;
@@ -392,12 +413,12 @@ final class HashLookupSettings implements Serializable {
             this.path = path;
             this.referenceSetID = -1;
             this.version = "";
-            this.readOnly = false;
+            this.readOnly = readOnly;
             this.dbType = DatabaseType.FILE;
-            this.officialSet = false;
+            this.officialSet = officialSet;
         }
-        
-        HashDbInfo(String hashSetName, String version, int referenceSetID, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean readOnly, boolean searchDuringIngest, boolean sendIngestMessages, boolean officialSet){
+
+        HashDbInfo(String hashSetName, String version, int referenceSetID, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean readOnly, boolean searchDuringIngest, boolean sendIngestMessages) {
             this.hashSetName = hashSetName;
             this.version = version;
             this.referenceSetID = referenceSetID;
@@ -406,13 +427,13 @@ final class HashLookupSettings implements Serializable {
             this.searchDuringIngest = searchDuringIngest;
             this.sendIngestMessages = sendIngestMessages;
             this.path = "";
-            dbType = DatabaseType.CENTRAL_REPOSITORY;     
-            this.officialSet = officialSet;
+            dbType = DatabaseType.CENTRAL_REPOSITORY;
+            this.officialSet = false;
         }
-        
-        HashDbInfo(HashDbManager.HashDb db) throws TskCoreException{
-            if(db instanceof HashDbManager.SleuthkitHashSet){
-                HashDbManager.SleuthkitHashSet fileTypeDb = (HashDbManager.SleuthkitHashSet)db;
+
+        HashDbInfo(HashDbManager.HashDb db) throws TskCoreException {
+            if (db instanceof HashDbManager.SleuthkitHashSet) {
+                HashDbManager.SleuthkitHashSet fileTypeDb = (HashDbManager.SleuthkitHashSet) db;
                 this.hashSetName = fileTypeDb.getHashSetName();
                 this.knownFilesType = fileTypeDb.getKnownFilesType();
                 this.searchDuringIngest = fileTypeDb.getSearchDuringIngest();
@@ -428,11 +449,11 @@ final class HashLookupSettings implements Serializable {
                 }
                 this.officialSet = ((HashDbManager.SleuthkitHashSet) db).isOfficialSet();
             } else {
-                HashDbManager.CentralRepoHashSet centralRepoDb = (HashDbManager.CentralRepoHashSet)db;
+                HashDbManager.CentralRepoHashSet centralRepoDb = (HashDbManager.CentralRepoHashSet) db;
                 this.hashSetName = centralRepoDb.getHashSetName();
                 this.version = centralRepoDb.getVersion();
                 this.knownFilesType = centralRepoDb.getKnownFilesType();
-                this.readOnly = ! centralRepoDb.isUpdateable();
+                this.readOnly = !centralRepoDb.isUpdateable();
                 this.searchDuringIngest = centralRepoDb.getSearchDuringIngest();
                 this.sendIngestMessages = centralRepoDb.getSendIngestMessages();
                 this.path = "";
@@ -444,14 +465,12 @@ final class HashLookupSettings implements Serializable {
 
         /**
          * Gets whether or not this is an official set.
-         * 
+         *
          * @return Whether or not this is an official set.
          */
         public boolean isOfficialSet() {
             return officialSet;
         }
-        
-        
 
         /**
          * Gets the hash set name.
@@ -461,20 +480,22 @@ final class HashLookupSettings implements Serializable {
         String getHashSetName() {
             return hashSetName;
         }
-        
+
         /**
          * Get the version for the hash set
+         *
          * @return version
          */
-        String getVersion(){
+        String getVersion() {
             return version;
         }
-        
+
         /**
          * Get whether the hash set is read only (only applies to central repo)
+         *
          * @return readOnly
          */
-        boolean isReadOnly(){
+        boolean isReadOnly() {
             return readOnly;
         }
 
@@ -495,7 +516,7 @@ final class HashLookupSettings implements Serializable {
         boolean getSearchDuringIngest() {
             return searchDuringIngest;
         }
-        
+
         /**
          * Sets the search during ingest setting.
          *
@@ -520,81 +541,83 @@ final class HashLookupSettings implements Serializable {
          */
         String getPath() {
             return path;
-        }       
+        }
 
         /**
          * Sets the path.
+         *
          * @param path the path to set
          */
         public void setPath(String path) {
             this.path = path;
         }
-        
-        int getReferenceSetID(){
+
+        int getReferenceSetID() {
             return referenceSetID;
         }
-        
+
         /**
          * Returns whether the database is a normal file type.
+         *
          * @return true if database is type FILE
          */
-        boolean isFileDatabaseType(){
+        boolean isFileDatabaseType() {
             return dbType == DatabaseType.FILE;
         }
-        
-        boolean isCentralRepoDatabaseType(){
+
+        boolean isCentralRepoDatabaseType() {
             return dbType == DatabaseType.CENTRAL_REPOSITORY;
         }
-        
-        boolean matches(HashDb hashDb){
-            if(hashDb == null){
+
+        boolean matches(HashDb hashDb) {
+            if (hashDb == null) {
                 return false;
             }
-            
-            if( ! this.knownFilesType.equals(hashDb.getKnownFilesType())){
+
+            if (!this.knownFilesType.equals(hashDb.getKnownFilesType())) {
                 return false;
             }
-            
-            if((this.dbType == DatabaseType.CENTRAL_REPOSITORY) && (! (hashDb instanceof CentralRepoHashSet))
-                    || (this.dbType == DatabaseType.FILE) && (! (hashDb instanceof SleuthkitHashSet))){
+
+            if ((this.dbType == DatabaseType.CENTRAL_REPOSITORY) && (!(hashDb instanceof CentralRepoHashSet))
+                    || (this.dbType == DatabaseType.FILE) && (!(hashDb instanceof SleuthkitHashSet))) {
                 return false;
             }
-            
-            if( ! this.hashSetName.equals(hashDb.getHashSetName())){
+
+            if (!this.hashSetName.equals(hashDb.getHashSetName())) {
                 return false;
             }
-            
-            if(hashDb instanceof CentralRepoHashSet){
+
+            if (hashDb instanceof CentralRepoHashSet) {
                 CentralRepoHashSet crDb = (CentralRepoHashSet) hashDb;
-                if(this.referenceSetID != crDb.getReferenceSetID()){
+                if (this.referenceSetID != crDb.getReferenceSetID()) {
                     return false;
                 }
 
-                if(! version.equals(crDb.getVersion())){
+                if (!version.equals(crDb.getVersion())) {
                     return false;
                 }
             }
-            
+
             return true;
         }
-        
+
         @Override
         public boolean equals(Object obj) {
             if (obj == null) {
                 return false;
             }
-            
+
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            
+
             final HashDbInfo other = (HashDbInfo) obj;
-            
-            if(! this.dbType.equals(other.dbType)){
+
+            if (!this.dbType.equals(other.dbType)) {
                 return false;
             }
-            
-            if(this.dbType.equals(DatabaseType.FILE)){
+
+            if (this.dbType.equals(DatabaseType.FILE)) {
                 // For files, we expect the name and known type to match
                 return (this.hashSetName.equals(other.hashSetName)
                         && this.knownFilesType.equals(other.knownFilesType));
@@ -612,25 +635,27 @@ final class HashLookupSettings implements Serializable {
             hash = 89 * hash + Objects.hashCode(this.hashSetName);
             hash = 89 * hash + Objects.hashCode(this.knownFilesType);
             hash = 89 * hash + Objects.hashCode(this.dbType);
-            if(this.dbType.equals(DatabaseType.CENTRAL_REPOSITORY)){
+            if (this.dbType.equals(DatabaseType.CENTRAL_REPOSITORY)) {
                 hash = 89 * hash + this.referenceSetID;
             }
-            
+
             return hash;
         }
-        
+
         /**
-         * This overrides the default deserialization code so we can 
-         * properly set the dbType enum given an old settings file.
+         * This overrides the default deserialization code so we can properly
+         * set the dbType enum given an old settings file.
+         *
          * @param stream
+         *
          * @throws IOException
-         * @throws ClassNotFoundException 
+         * @throws ClassNotFoundException
          */
         private void readObject(java.io.ObjectInputStream stream)
-            throws IOException, ClassNotFoundException {
+                throws IOException, ClassNotFoundException {
             stream.defaultReadObject();
-            
-            if(dbType == null){
+
+            if (dbType == null) {
                 dbType = DatabaseType.FILE;
             }
         }
