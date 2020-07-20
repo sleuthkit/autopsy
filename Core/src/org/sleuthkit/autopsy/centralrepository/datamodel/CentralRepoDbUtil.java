@@ -262,9 +262,7 @@ public class CentralRepoDbUtil {
      *                                      used
      */
     public static void setUseCentralRepo(boolean centralRepoCheckBoxIsSelected) {
-        if (!centralRepoCheckBoxIsSelected) {
-            closePersonasTopComponent();   
-        }
+        closePersonasTopComponent();
         ModuleSettings.setConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY, Boolean.toString(centralRepoCheckBoxIsSelected));
     }
     
