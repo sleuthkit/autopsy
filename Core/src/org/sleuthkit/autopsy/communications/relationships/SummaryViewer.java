@@ -268,10 +268,10 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         referencesDataLabel = new javax.swing.JLabel();
         caseReferencesPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
         fileRefPane = new javax.swing.JPanel();
-        fileRefScrolPanel = new javax.swing.JPanel();
-        scrollPane = new javax.swing.JScrollPane();
+        javax.swing.JPanel fileRefScrolPanel = new javax.swing.JPanel();
+        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane();
         fileRefList = new javax.swing.JList<>();
-        selectAccountPane = new javax.swing.JPanel();
+        javax.swing.JPanel selectAccountPane = new javax.swing.JPanel();
         selectAccountFileRefLabel = new javax.swing.JLabel();
 
         setLayout(new java.awt.GridBagLayout());
@@ -487,14 +487,11 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
     private javax.swing.JPanel countsPanel;
     private javax.swing.JList<String> fileRefList;
     private javax.swing.JPanel fileRefPane;
-    private javax.swing.JPanel fileRefScrolPanel;
     private javax.swing.JLabel messagesDataLabel;
     private javax.swing.JLabel messagesLabel;
     private javax.swing.JLabel referencesDataLabel;
     private javax.swing.JLabel referencesLabel;
-    private javax.swing.JScrollPane scrollPane;
     private javax.swing.JLabel selectAccountFileRefLabel;
-    private javax.swing.JPanel selectAccountPane;
     private javax.swing.JPanel summaryPanel;
     private javax.swing.JLabel thumbnailCntLabel;
     private javax.swing.JLabel thumbnailsDataLabel;
