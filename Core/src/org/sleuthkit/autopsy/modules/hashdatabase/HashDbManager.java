@@ -44,7 +44,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
@@ -571,6 +570,10 @@ public class HashDbManager implements PropertyChangeListener {
         }
     }
 
+    /**
+     * Loads official hash sets into officialHashSets and also populates
+     * officialHashSetPaths and officialHashSetNames variables.
+     */
     private void loadOfficialHashSets() {
         officialHashSetPaths = new HashSet<>();
         officialHashSetNames = new HashSet<>();
@@ -599,6 +602,17 @@ public class HashDbManager implements PropertyChangeListener {
         }
     }
 
+    /**
+     * Handles a potential conflict between official and non-official hash sets.
+     * Non-official hashsets have '(Custom)' added. If a conflict is identified,
+     * the hashset settings are fixed, saved, reloaded, and returned. Otherwise,
+     * the original list is returned.
+     *
+     * @param curHashsets   The list of non-official hash sets.
+     * @param officialNames The set of names for official hash sets.
+     *
+     * @return The new list of non-official hash sets with conflicts removed.
+     */
     @Messages({
         "# {0} - hashSetName",
         "HashDbManager_handleNameConflict_conflictSuffix={0} (Custom)"
@@ -629,7 +643,7 @@ public class HashDbManager implements PropertyChangeListener {
             } else {
                 newItems.add(hashset);
             }
-            
+
             curNames.add(thisName);
         }
 
@@ -1195,6 +1209,11 @@ public class HashDbManager implements PropertyChangeListener {
             }
         }
 
+        /**
+         * Throws an exception if the current set is an official set.
+         *
+         * @throws TskCoreException
+         */
         private void officialSetCheck() throws TskCoreException {
             if (isOfficialSet()) {
                 throw new TskCoreException("Hashes cannot be added to an official set");

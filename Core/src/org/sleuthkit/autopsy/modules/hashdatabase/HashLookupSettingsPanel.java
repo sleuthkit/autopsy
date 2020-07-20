@@ -232,27 +232,36 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         // Update ingest in progress warning label.
         ingestWarningLabel.setVisible(ingestIsRunning);
     }
-    
-    
+
     private static String getPathString(String path, boolean justFilename) {
-        if (StringUtils.isBlank(path))
+        if (StringUtils.isBlank(path)) {
             return "";
-        
-        if (!justFilename)
+        }
+
+        if (!justFilename) {
             return path;
-        
+        }
+
         return new File(path).getName();
     }
 
-    
+    /**
+     * Updates UI for a SleuthkitHashSet.
+     *
+     * @param ingestIsRunning Whether or not ingest is running.
+     * @param hashDb          The hash set to be included in the list of hash
+     *                        sets.
+     *
+     * @throws MissingResourceException
+     */
     private void updateForSleuthkitHashSet(boolean ingestIsRunning, SleuthkitHashSet hashDb) throws MissingResourceException {
         // Disable the central repo fields
         hashDbVersionLabel.setText(Bundle.HashLookupSettingsPanel_notApplicable());
         hashDbOrgLabel.setText(Bundle.HashLookupSettingsPanel_notApplicable());
-        
+
         // Enable the delete button if ingest is not running and is not an official hashset
         deleteDatabaseButton.setEnabled(!ingestIsRunning && !hashDb.isOfficialSet());
-        
+
         try {
             String dbPath = getPathString(hashDb.getDatabasePath(), hashDb.isOfficialSet());
             hashDbLocationLabel.setText(dbPath);
@@ -260,7 +269,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting hash set path of " + hashDb.getHashSetName() + " hash set", ex); //NON-NLS
             hashDbLocationLabel.setText(ERROR_GETTING_PATH_TEXT);
         }
-        
+
         try {
             String indexPath = getPathString(hashDb.getIndexPath(), hashDb.isOfficialSet());
             indexPathLabel.setText(indexPath);
@@ -268,7 +277,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + hashDb.getHashSetName() + " hash set", ex); //NON-NLS
             indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
         }
-        
+
         // Update indexing components.
         try {
             if (hashDb.isIndexing()) {
@@ -311,7 +320,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
     }
 
-    
     private boolean isLocalIngestJobEvent(PropertyChangeEvent evt) {
         if (evt instanceof AutopsyEvent) {
             AutopsyEvent event = (AutopsyEvent) evt;
