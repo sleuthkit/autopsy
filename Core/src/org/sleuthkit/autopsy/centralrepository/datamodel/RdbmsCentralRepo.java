@@ -1085,8 +1085,19 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         // Get the account fom the accounts table
         String normalizedAccountID = CentralRepoAccount.normalizeAccountIdentifier(crAccountType, accountUniqueID);
 
-        String insertSQL = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
-                + "VALUES (?, ?) " + getConflictClause();
+        // insert the account.  If there is a conflict, ignore it.
+        String insertSQL;
+        switch (CentralRepoDbManager.getSavedDbChoice().getDbPlatform()) {
+            case POSTGRESQL:
+                insertSQL =  "INSERT INTO accounts (account_type_id, account_unique_identifier) VALUES (?, ?) " + getConflictClause();  //NON-NLS
+                break;
+            case SQLITE:
+                insertSQL = "INSERT OR IGNORE INTO accounts (account_type_id, account_unique_identifier) VALUES (?, ?) "; //NON-NLS
+                break;
+            default:
+                throw new CentralRepoException(String.format("Cannot add account to currently selected CR database platform %s", CentralRepoDbManager.getSavedDbChoice().getDbPlatform())); //NON-NLS
+        }
+        
 
         try (Connection connection = connect();
                 PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);) {
