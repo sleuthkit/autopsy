@@ -74,6 +74,8 @@ public class HashDbManager implements PropertyChangeListener {
     private static final String HASH_DATABASE_FILE_EXTENSON = "kdb"; //NON-NLS
     private static HashDbManager instance = null;
     private List<HashDb> hashSets = new ArrayList<>();
+    private List<HashDb> officialHashSets = new ArrayList<>();
+    
     private Set<String> hashSetNames = new HashSet<>();
     private Set<String> hashSetPaths = new HashSet<>();
     PropertyChangeSupport changeSupport = new PropertyChangeSupport(HashDbManager.class);
@@ -417,7 +419,7 @@ public class HashDbManager implements PropertyChangeListener {
 
     void save() throws HashDbManagerException {
         try {
-            if (!HashLookupSettings.writeSettings(new HashLookupSettings(HashLookupSettings.convertHashSetList(this.hashSets)))) {
+            if (!HashLookupSettings.writeSettings(new HashLookupSettings(HashLookupSettings.convertHashSetList(getNonOfficialHashSets())))) {
                 throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.saveErrorExceptionMsg"));
             }
         } catch (HashLookupSettings.HashLookupSettingsException ex) {
@@ -438,10 +440,9 @@ public class HashDbManager implements PropertyChangeListener {
         } catch (TskCoreException ex) {
             Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
         }
-
-        List<HashDb> hashDbs = new ArrayList<>();
-        hashDbs.addAll(this.hashSets);
-        return hashDbs;
+        
+        return Stream.concat(this.officialHashSets.stream(), this.hashSets.stream())
+                .collect(Collectors.toList());
     }
 
     /**
@@ -450,16 +451,10 @@ public class HashDbManager implements PropertyChangeListener {
      * @return A list, possibly empty, of hash databases.
      */
     public synchronized List<HashDb> getKnownFileHashSets() {
-        List<HashDb> hashDbs = new ArrayList<>();
-        try {
-            updateHashSetsFromCentralRepository();
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
-        }
-        this.hashSets.stream().filter((db) -> (db.getKnownFilesType() == HashDb.KnownFilesType.KNOWN)).forEach((db) -> {
-            hashDbs.add(db);
-        });
-        return hashDbs;
+        return getAllHashSets()
+                .stream()
+                .filter((db) -> (db.getKnownFilesType() == HashDb.KnownFilesType.KNOWN))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -468,16 +463,10 @@ public class HashDbManager implements PropertyChangeListener {
      * @return A list, possibly empty, of hash databases.
      */
     public synchronized List<HashDb> getKnownBadFileHashSets() {
-        List<HashDb> hashDbs = new ArrayList<>();
-        try {
-            updateHashSetsFromCentralRepository();
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
-        }
-        this.hashSets.stream().filter((db) -> (db.getKnownFilesType() == HashDb.KnownFilesType.KNOWN_BAD)).forEach((db) -> {
-            hashDbs.add(db);
-        });
-        return hashDbs;
+        return getAllHashSets()
+                .stream()
+                .filter((db) -> (db.getKnownFilesType() == HashDb.KnownFilesType.KNOWN_BAD))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -486,26 +475,28 @@ public class HashDbManager implements PropertyChangeListener {
      * @return A list, possibly empty, of hash databases.
      */
     public synchronized List<HashDb> getUpdateableHashSets() {
-        return getUpdateableHashSets(this.hashSets);
+        return getUpdateableHashSets(getAllHashSets());
+    }
+    
+    private List<HashDb> getNonOfficialHashSets() {
+        return getAllHashSets()
+                .stream()
+                .filter((HashDb db) -> (db instanceof SleuthkitHashSet && ((SleuthkitHashSet) db).isOfficialSet()) ? false : true)
+                .collect(Collectors.toList());
     }
 
     private List<HashDb> getUpdateableHashSets(List<HashDb> hashDbs) {
-        ArrayList<HashDb> updateableDbs = new ArrayList<>();
-        try {
-            updateHashSetsFromCentralRepository();
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
-        }
-        for (HashDb db : hashDbs) {
-            try {
-                if (db.isUpdateable()) {
-                    updateableDbs.add(db);
-                }
-            } catch (TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error checking updateable status of " + db.getHashSetName() + " hash set", ex); //NON-NLS
-            }
-        }
-        return updateableDbs;
+        return hashDbs
+                .stream()
+                .filter((HashDb db) -> {
+                    try {
+                        return db.isUpdateable();
+                    } catch (TskCoreException ex) {
+                        Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error checking updateable status of " + db.getHashSetName() + " hash set", ex); //NON-NLS
+                        return false;
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     private List<HashDbInfo> getCentralRepoHashSetsFromDatabase() {
@@ -534,7 +525,7 @@ public class HashDbManager implements PropertyChangeListener {
      * cancellation of configuration panels.
      */
     public synchronized void loadLastSavedConfiguration() {
-        closeHashDatabases(this.hashSets);
+        closeHashDatabases(getAllHashSets());
         hashSetNames.clear();
         hashSetPaths.clear();
 
@@ -556,6 +547,13 @@ public class HashDbManager implements PropertyChangeListener {
 
     private void loadHashsetsConfiguration() {
         try {
+            officialHashSets = loadHashSetsFromFolder(OFFICIAL_HASH_SETS_FOLDER);
+        } catch (HashDbManagerException ex) {
+            logger.log(Level.WARNING, "There was an error loading the official hash sets.", ex);
+            officialHashSets = new ArrayList<HashDb>();
+        }
+        
+        try {
             HashLookupSettings settings = HashLookupSettings.readSettings();
             this.configureSettings(settings);
         } catch (HashLookupSettings.HashLookupSettingsException ex) {
@@ -572,7 +570,7 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @throws HashDbManagerException If folder does not exist.
      */
-    private List<HashDbInfo> loadHashSetsFromFolder(String folder) throws HashDbManagerException {
+    private List<HashDb> loadHashSetsFromFolder(String folder) throws HashDbManagerException {
         File configFolder = InstalledFileLocator.getDefault().locate(
                 folder, HashDbManager.class.getPackage().getName(), false);
 
@@ -584,7 +582,7 @@ public class HashDbManager implements PropertyChangeListener {
                 .map((f) -> {
                     try {
                         return getOfficialHashDbFromFile(f);
-                    } catch (HashDbManagerException ex) {
+                    } catch (HashDbManagerException | TskCoreException ex) {
                         logger.log(Level.WARNING, String.format("Hashset: %s could not be properly read.", f.getAbsolutePath()), ex);
                         return null;
                     }
@@ -605,7 +603,7 @@ public class HashDbManager implements PropertyChangeListener {
      *                                HashDbManager.OFFICIAL_FILENAME for
      *                                regex).
      */
-    private HashDbInfo getOfficialHashDbFromFile(File file) throws HashDbManagerException {
+    private HashDb getOfficialHashDbFromFile(File file) throws HashDbManagerException, TskCoreException {
         if (file == null || !file.exists()) {
             throw new HashDbManagerException(String.format("No file found for: %s", file == null ? "<null>" : file.getAbsolutePath()));
         }
@@ -623,16 +621,16 @@ public class HashDbManager implements PropertyChangeListener {
                 .findFirst()
                 .orElseThrow(() -> new HashDbManagerException(String.format("No KnownFilesType matches %s for file: %s", knownStatus, filename)));
 
-        return new HashDbInfo(
+        return new SleuthkitHashSet(
+                SleuthkitJNI.createHashDatabase(file.getAbsolutePath()), 
                 hashdbName, 
-                knownFilesType, 
                 false, //searchDuringIngest
                 false, //sendIngestMessages
-                file.getAbsolutePath(), 
-                true,  // read only
+                knownFilesType, 
                 true); // official set
     }
 
+    
     /**
      * Configures the given settings object by adding all contained hash db to
      * the system.
@@ -644,18 +642,7 @@ public class HashDbManager implements PropertyChangeListener {
     private void configureSettings(HashLookupSettings settings) {
         allDatabasesLoadedCorrectly = true;
         List<HashDbInfo> hashDbInfoList = settings.getHashDbInfo();
-
-        List<HashDbInfo> officialHashSets;
-        try {
-            officialHashSets = loadHashSetsFromFolder(OFFICIAL_HASH_SETS_FOLDER);
-        } catch (HashDbManagerException ex) {
-            logger.log(Level.WARNING, "There was an error loading the official hash sets.", ex);
-            officialHashSets = new ArrayList<HashDbInfo>();
-        }
-
-        final Stream<HashDbInfo> combined = Stream.concat(hashDbInfoList.stream(), officialHashSets.stream());
-
-        combined.forEach((HashDbInfo hashDbInfo) -> {
+        for (HashDbInfo hashDbInfo : hashDbInfoList) {
             try {
                 if (hashDbInfo.isFileDatabaseType()) {
                     String dbPath = this.getValidFilePath(hashDbInfo.getHashSetName(), hashDbInfo.getPath());
@@ -682,7 +669,7 @@ public class HashDbManager implements PropertyChangeListener {
                         JOptionPane.ERROR_MESSAGE);
                 allDatabasesLoadedCorrectly = false;
             }
-        });
+        }
 
         if (CentralRepository.isEnabled()) {
             try {
@@ -710,7 +697,7 @@ public class HashDbManager implements PropertyChangeListener {
          */
         if (!allDatabasesLoadedCorrectly && RuntimeProperties.runningWithGUI()) {
             try {
-                HashLookupSettings.writeSettings(new HashLookupSettings(HashLookupSettings.convertHashSetList(this.hashSets)));
+                HashLookupSettings.writeSettings(new HashLookupSettings(HashLookupSettings.convertHashSetList(getNonOfficialHashSets())));
                 allDatabasesLoadedCorrectly = true;
             } catch (HashLookupSettings.HashLookupSettingsException ex) {
                 allDatabasesLoadedCorrectly = false;
@@ -734,7 +721,7 @@ public class HashDbManager implements PropertyChangeListener {
     }
 
     private boolean hashDbInfoIsNew(HashDbInfo dbInfo) {
-        for (HashDb db : this.hashSets) {
+        for (HashDb db : getAllHashSets()) {
             if (dbInfo.matches(db)) {
                 return false;
             }
