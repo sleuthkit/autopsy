@@ -655,7 +655,7 @@ public class HashDbManager implements PropertyChangeListener {
             officialHashSets = new ArrayList<HashDbInfo>();
         }
 
-        final Stream combined = Stream.concat(hashDbInfoList.stream(), officialHashSets.stream());
+        final Stream<HashDbInfo> combined = Stream.concat(hashDbInfoList.stream(), officialHashSets.stream());
 
         combined.forEach((HashDbInfo hashDbInfo) -> {
             try {
