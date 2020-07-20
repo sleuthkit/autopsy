@@ -182,6 +182,8 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
             NbBundle.getMessage(this.getClass(),
             "IngestJobTableModel.colName.rootQueued"),
             NbBundle.getMessage(this.getClass(),
+            "IngestJobTableModel.colName.streamingQueued"),
+            NbBundle.getMessage(this.getClass(),
             "IngestJobTableModel.colName.dsQueued")};
         private List<Snapshot> jobSnapshots;
 
@@ -243,6 +245,9 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                     cellValue = snapShot.getRootQueueSize();
                     break;
                 case 9:
+                    cellValue = snapShot.getStreamingQueueSize();
+                    break;
+                case 10:
                     cellValue = snapShot.getDsQueueSize();
                     break;
                 default:

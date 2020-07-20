@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.guiutils;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
@@ -33,13 +33,13 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  * potentially expensive UI refresh events when DATA_ADDED and CONTENT_CHANGED
  * ingest manager events are received.
  */
-class RefreshThrottler {
+public class RefreshThrottler {
 
     /**
      * The Refresher interface needs to be implemented by ChildFactory instances
      * that wish to take advantage of throttled refresh functionality.
      */
-    interface Refresher {
+    public interface Refresher {
 
         /**
          * The RefreshThrottler calls this method when the RefreshTask runs.
@@ -89,7 +89,7 @@ class RefreshThrottler {
      */
     private final PropertyChangeListener pcl;
 
-    RefreshThrottler(Refresher r) {
+    public RefreshThrottler(Refresher r) {
         this.refreshTaskRef = new AtomicReference<>(null);
         refresher = r;
 
@@ -112,14 +112,14 @@ class RefreshThrottler {
     /**
      * Set up listener for ingest module events of interest.
      */
-    void registerForIngestModuleEvents() {
+    public void registerForIngestModuleEvents() {
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
     }
 
     /**
      * Remove ingest module event listener.
      */
-    void unregisterEventListener() {
+    public void unregisterEventListener() {
         IngestManager.getInstance().removeIngestModuleEventListener(pcl);
     }
 }

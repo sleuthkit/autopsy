@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 
 /**
  * Class which contains the Nodes for the 'By Mime Type' view located in the
