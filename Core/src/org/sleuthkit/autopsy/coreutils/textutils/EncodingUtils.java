@@ -89,7 +89,7 @@ public class EncodingUtils {
             detector.setText(stream);
             
             CharsetMatch[] tikaResults = detector.detectAll();
-            // Get all guesses by Tika. These CharsetMatch's are ordered
+            // Get all guesses by Tika. These matches are ordered
             // by descending confidence (largest first).
             if (tikaResults.length > 0) {
                 CharsetMatch topPick = tikaResults[0];
@@ -98,7 +98,8 @@ public class EncodingUtils {
                     // Legacy encoding, let's discard this one in favor
                     // of the second pick. Tika has some problems with 
                     // mistakenly identifying text as IBM500. See JIRA-6600 
-                    // for more details.
+                    // and https://issues.apache.org/jira/browse/TIKA-2771 for 
+                    // more details.
                     topPick = tikaResults[1];
                 }
                 
