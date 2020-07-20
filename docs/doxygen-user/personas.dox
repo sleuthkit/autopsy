@@ -30,7 +30,7 @@ The left panel in the Personas Editor is a table that lists personas, based on t
  
 By default, when the Personas Editor is launched, all the personas in the Central Repository are listed in the table. You may filter this list by checking the "Filter personas by Keyword" checkbox.  Type in either a persona name or an account identifier in the textbox and select the "Name" or "Account" radio button appropriately.  Then click the "Show" button to show only the personas that match the filtering criteria.
 
-\image html personas_main.png
+\image html Personas/personas_main.png
 
 \subsection personas_create Create Personas
 
@@ -56,7 +56,7 @@ Each persona needs at least one account associated with it. These accounts must 
 <li><b>Justification</b>: Why this account is being added to the persona
 </ul>
 
-\image html personas_create.png
+\image html Personas/personas_create.png
 
 When finished adding at least one account and filling in the required fields, click on OK to create the persona.  A persona with the specified name will be created and associated with the specified account(s).
 
@@ -64,7 +64,7 @@ When finished adding at least one account and filling in the required fields, cl
 
 To edit a persona, click the "Edit Persona" button. You'll be able to edit all the data about the persona.
 
-\image html persona_edit.png
+\image html Personas/persona_edit.png
 
 \subsection personas_delete Delete Personas
 
@@ -74,7 +74,7 @@ To delete a persona, select the persona in the table and click on the "Delete Pe
 
 All personas must be associated with at least one account. Normally these account will be added to the central repository by various ingest modules, but you can also create them manually with the "Create Account" button.
 
-\image html personas_create_account.png
+\image html Personas/personas_create_account.png
 
 \section personas_artifact_viewers Persona integration in Content Viewers
 
@@ -82,26 +82,26 @@ Autopsy shows persona associated with accounts, where applicable. When viewing c
  
 As shown below, when viewing a contact result you may see persona data. When one or more personas are found associated with the accounts in the result then the Persona name is shown in the contact content viewer. There will be a "View" button to see the details of the persona.
 
-\image html personas_contact_found.png
+\image html Personas/personas_contact_found.png
 
 If no matching persona is found, a "Create" button is shown to create a persona for the account(s). This will bring you to the \ref personas_create "Create Personas" panel with the account(s) already added.
 
-\image html personas_contact_not_found.png
+\image html Personas/personas_contact_not_found.png
 
 Personas are integrated similarly in the content viewers for call logs and messages/e-mail.
 
-\image html personas_calllog.png
+\image html Personas/personas_calllog.png
 <br>
-\image html personas_message.png
+\image html Personas/personas_message.png
 
 \section personas_cvt Persona Integration in the Communications Visualization Tool
 
 Personas are integrated with the \ref communications_page.  When viewing accounts in the Accounts browsers in the Communications Visualization Tool, associated persona information is shown in the tooltip if you hover over the account.
 
-\image html personas_cvt_hover.png
+\image html Personas/personas_cvt_hover.png
 
 As in the Autopsy main window, you may also create or view personas when examining contacts, call logs, and messages in the Communications Visualization Tool.
 
-\image html personas_cvt_accounts.png
+\image html Personas/personas_cvt_accounts.png
 
 */
