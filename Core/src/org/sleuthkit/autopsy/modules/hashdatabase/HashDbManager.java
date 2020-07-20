@@ -620,7 +620,7 @@ public class HashDbManager implements PropertyChangeListener {
         final String knownStatus = match.group(KNOWN_STATUS_PARAM);
 
         KnownFilesType knownFilesType = Stream.of(HashDb.KnownFilesType.values())
-                .filter(k -> k.name().toUpperCase().equals(knownStatus.toUpperCase()))
+                .filter(k -> k.getIdentifier().toUpperCase().equals(knownStatus.toUpperCase()))
                 .findFirst()
                 .orElseThrow(() -> new HashDbManagerException(String.format("No KnownFilesType matches %s for file: %s", knownStatus, filename)));
 
@@ -804,17 +804,21 @@ public class HashDbManager implements PropertyChangeListener {
         })
         public enum KnownFilesType {
 
-            KNOWN(Bundle.HashDbManager_known_text(), TskData.FileKnown.KNOWN, false, false),
-            KNOWN_BAD(Bundle.HashDbManager_knownBad_text(), TskData.FileKnown.BAD, true, true),
-            NO_CHANGE(Bundle.HashDbManager_noChange_text(), TskData.FileKnown.UNKNOWN, true, false);
+            KNOWN(Bundle.HashDbManager_known_text(), "Known", TskData.FileKnown.KNOWN, false, false),
+            KNOWN_BAD(Bundle.HashDbManager_knownBad_text(), "Notable", TskData.FileKnown.BAD, true, true),
+            NO_CHANGE(Bundle.HashDbManager_noChange_text(), "NoChange", TskData.FileKnown.UNKNOWN, true, false);
 
             private final String displayName;
+            private final String identifier;
             private final TskData.FileKnown fileKnown;
             private final boolean allowSendInboxMessages;
             private final boolean defaultSendInboxMessages;
 
-            KnownFilesType(String displayName, TskData.FileKnown fileKnown, boolean allowSendInboxMessages, boolean defaultSendInboxMessages) {
+            KnownFilesType(String displayName, String identifier, TskData.FileKnown fileKnown,
+                    boolean allowSendInboxMessages, boolean defaultSendInboxMessages) {
+
                 this.displayName = displayName;
+                this.identifier = identifier;
                 this.fileKnown = fileKnown;
                 this.allowSendInboxMessages = allowSendInboxMessages;
                 this.defaultSendInboxMessages = defaultSendInboxMessages;
@@ -840,6 +844,16 @@ public class HashDbManager implements PropertyChangeListener {
              */
             boolean isDefaultInboxMessages() {
                 return defaultSendInboxMessages;
+            }
+
+            /**
+             * Returns the identifier for this KnownFilesType. This is used for
+             * Official Hash Sets in their naming convention.
+             *
+             * @return The identifier for this type.
+             */
+            String getIdentifier() {
+                return identifier;
             }
 
             public String getDisplayName() {
