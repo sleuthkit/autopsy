@@ -62,6 +62,11 @@ public final class CVTTopComponent extends TopComponent {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public CVTTopComponent() {
+        // Temporarily disabling CVT since we've seen similar errors in the past 
+        // from the TopComponent creation during application close.
+    }
+        
+    private CVTTopComponent(String temp) {
         initComponents();
 
         splitPane.setRightComponent(relationshipBrowser);
