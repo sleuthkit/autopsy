@@ -7,6 +7,7 @@ import sys
 import os
 
 from envutil import get_proj_dir
+from fileutil import get_new_path
 from gitutil import get_git_root
 from langpropsutil import set_commit_for_language
 from propsutil import set_entry_dict, get_entry_dict_from_path, get_lang_bundle_name
@@ -166,22 +167,6 @@ def get_should_deleted(row_items: List[str], requested_idx: int) -> bool:
         return False
 
 
-def get_new_rel_path(orig_path: str, new_filename: str) -> str:
-    """Obtains a new relative path.  This tries to determine if the provided path is a directory or filename (has an
-    extension containing '.') then constructs the new path with the old parent directory and the new filename.
-
-    Args:
-        orig_path (str): The original path.
-        new_filename (str): The new filename to use.
-
-    Returns:
-        str: The new path.
-    """
-    potential_parent_dir, orig_file = os.path.split(orig_path)
-    parent_dir = orig_path if '.' not in orig_file else potential_parent_dir
-    return os.path.join(parent_dir, new_filename)
-
-
 def main():
     # noinspection PyTypeChecker
     parser = argparse.ArgumentParser(description='Updates properties files in the autopsy git repo.',
@@ -243,10 +228,10 @@ def main():
     # provides the means of renaming the bundle file
     if args.language is not None:
         def path_converter(orig_path: str):
-            return get_new_rel_path(orig_path, get_lang_bundle_name(args.language))
+            return get_new_path(orig_path, get_lang_bundle_name(args.language))
     elif args.file_rename is not None:
         def path_converter(orig_path: str):
-            return get_new_rel_path(orig_path, args.file_rename)
+            return get_new_path(orig_path, args.file_rename)
     else:
         path_converter = None
 

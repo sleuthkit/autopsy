@@ -1,5 +1,13 @@
 from typing import Iterator, List, Union
 from propsutil import get_entry_dict
+from enum import Enum
+
+
+class ChangeType(Enum):
+    """Describes the nature of a change in the properties file."""
+    ADDITION = 'ADDITION'
+    DELETION = 'DELETION'
+    CHANGE = 'CHANGE'
 
 
 class ItemChange:
@@ -7,7 +15,7 @@ class ItemChange:
     key: str
     prev_val: str
     cur_val: str
-    type: str
+    type: ChangeType
 
     def __init__(self, rel_path: str, key: str, prev_val: str, cur_val: str):
         """Describes the change that occurred for a particular key of a properties file.
@@ -23,11 +31,11 @@ class ItemChange:
         self.prev_val = prev_val
         self.cur_val = cur_val
         if ItemChange.has_str_content(cur_val) and not ItemChange.has_str_content(prev_val):
-            self.type = 'ADDITION'
+            self.type = ChangeType.ADDITION
         elif not ItemChange.has_str_content(cur_val) and ItemChange.has_str_content(prev_val):
-            self.type = 'DELETION'
+            self.type = ChangeType.DELETION
         else:
-            self.type = 'CHANGE'
+            self.type = ChangeType.CHANGE
 
     @staticmethod
     def has_str_content(content: str):

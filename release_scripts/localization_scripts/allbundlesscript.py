@@ -7,6 +7,7 @@ repo is on correct branch (i.e. develop).
 import sys
 
 from envutil import get_proj_dir
+from fileutil import get_filename_addition, OMITTED_ADDITION
 from gitutil import get_property_file_entries, get_commit_id, get_git_root
 from csvutil import records_to_csv
 from typing import Union
@@ -29,13 +30,20 @@ def write_items_to_csv(repo_path: str, output_path: str, show_commit: bool, valu
     if show_commit:
         row_header.append(get_commit_id(repo_path, 'HEAD'))
 
-    rows = [row_header]
+    rows = []
+    omitted = []
 
     for entry in get_property_file_entries(repo_path):
+        new_entry = [entry.rel_path, entry.key, entry.value]
         if value_regex is None or re.match(value_regex, entry.value):
-            rows.append([entry.rel_path, entry.key, entry.value])
+            rows.append(new_entry)
+        else:
+            omitted.append(new_entry)
 
-    records_to_csv(output_path, rows)
+    records_to_csv(output_path, [row_header] + rows)
+
+    if len(omitted) > 0:
+        records_to_csv(get_filename_addition(output_path, OMITTED_ADDITION), [row_header] + omitted)
 
 
 def main():

@@ -2,17 +2,15 @@
 and generates a csv file containing the items changed.  This script requires the python libraries:
 gitpython and jproperties.  As a consequence, it also requires git >= 1.7.0 and python >= 3.4.
 """
-
+import re
 import sys
-
 from envutil import get_proj_dir
+from fileutil import get_filename_addition, OMITTED_ADDITION
 from gitutil import get_property_files_diff, get_commit_id, get_git_root
-from itemchange import ItemChange
+from itemchange import ItemChange, ChangeType
 from csvutil import records_to_csv
 import argparse
 from typing import Union
-import re
-
 from langpropsutil import get_commit_for_language, LANG_FILENAME
 
 
@@ -34,15 +32,20 @@ def write_diff_to_csv(repo_path: str, output_path: str, commit_1_id: str, commit
     if show_commits:
         row_header += [get_commit_id(repo_path, commit_1_id), get_commit_id(repo_path, commit_2_id)]
 
-    rows = [row_header]
+    rows = []
+    omitted = []
 
-    item_changes = get_property_files_diff(repo_path, commit_1_id, commit_2_id)
-    if value_regex is not None:
-        item_changes = filter(lambda item_change: re.match(value_regex, item_change.cur_val) is not None, item_changes)
+    for entry in get_property_files_diff(repo_path, commit_1_id, commit_2_id):
+        new_entry = [entry.rel_path, entry.key, entry.value]
+        if value_regex is not None and (entry.type == ChangeType.DELETION or (not re.match(value_regex, entry.value))):
+            omitted.append(new_entry)
+        else:
+            rows.append(new_entry)
 
-    rows += map(lambda item_change: item_change.get_row(), item_changes)
+    records_to_csv(output_path, [row_header] + rows)
 
-    records_to_csv(output_path, rows)
+    if len(omitted) > 0:
+        records_to_csv(get_filename_addition(output_path, OMITTED_ADDITION), [row_header] + omitted)
 
 
 def main():
