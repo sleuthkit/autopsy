@@ -34,15 +34,18 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.discovery.FileGroup.GroupSortingAlgorithm;
+import static org.sleuthkit.autopsy.discovery.FileGroup.GroupSortingAlgorithm.BY_GROUP_NAME;
 import org.sleuthkit.autopsy.discovery.FileSearch.GroupingAttributeType;
+import static org.sleuthkit.autopsy.discovery.FileSearch.GroupingAttributeType.PARENT_PATH;
 import org.sleuthkit.autopsy.discovery.FileSorter.SortingMethod;
+import static org.sleuthkit.autopsy.discovery.FileSorter.SortingMethod.BY_FILE_SIZE;
 
 /**
  * Dialog for displaying the controls and filters for configuration of a
  * Discovery search.
  */
 final class DiscoveryDialog extends javax.swing.JDialog {
-
+    
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
             Case.Events.DATA_SOURCE_ADDED, Case.Events.DATA_SOURCE_DELETED);
     private static final long serialVersionUID = 1L;
@@ -116,6 +119,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         add(imageFilterPanel, CENTER);
         imageFilterPanel.addPropertyChangeListener(listener);
         updateComboBoxes();
+        groupSortingComboBox.setSelectedItem(BY_GROUP_NAME);
         pack();
         repaint();
     }
@@ -129,6 +133,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.getOptionsForGrouping()) {
             addTypeToGroupByComboBox(type);
         }
+        groupByCombobox.setSelectedItem(PARENT_PATH);
         orderByCombobox.removeAllItems();
         // Set up the file order list
         for (FileSorter.SortingMethod method : FileSorter.SortingMethod.getOptionsForOrdering()) {
@@ -136,7 +141,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 orderByCombobox.addItem(method);
             }
         }
-        groupSortingComboBox.setSelectedIndex(0);
+        orderByCombobox.setSelectedItem(BY_FILE_SIZE);
     }
 
     /**
@@ -512,7 +517,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         tc.toFront();
         tc.requestActive();
     }//GEN-LAST:event_searchButtonActionPerformed
-
+    
     @Override
     public void dispose() {
         setVisible(false);
@@ -531,7 +536,8 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * The adjust the controls to reflect whether the settings are valid based
      * on the error.
      *
-     * @param error The error message to display, empty string if there is no error.
+     * @param error The error message to display, empty string if there is no
+     *              error.
      */
     private void setValid(String error) {
         if (StringUtils.isBlank(error)) {
@@ -560,7 +566,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * filters available.
      */
     private class CasePropertyChangeListener implements PropertyChangeListener {
-
+        
         @Override
         @SuppressWarnings("fallthrough")
         public void propertyChange(PropertyChangeEvent evt) {
