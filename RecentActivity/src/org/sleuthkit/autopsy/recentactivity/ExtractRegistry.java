@@ -961,8 +961,8 @@ class ExtractRegistry extends Extract {
             while (line != null) {
                 line = line.trim();
 
-                if (line.matches("^network v.*")) {
- //                   parseNetworkInterfaces(regfile, reader);
+                if (line.matches("^bam v.*")) {
+                    parseBamKey(regAbstractFile, reader, Bundle.Registry_System_Bam());
                 } else if (line.matches("^bthport v..*")) {
                     parseBlueToothDevices(regAbstractFile, reader)  ;
                 }  
@@ -1381,30 +1381,6 @@ class ExtractRegistry extends Extract {
                     parseWinRARMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Winrar());
                 } else if (line.matches("^officedocs2010 v.*")) {
                     parseOfficeDocs2010MRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Officedocs());
-                } 
-                line = reader.readLine();
-            }
-        }     
-    }
-    
-    /**
-     * Create artifacts from the System registry Hive
-     * 
-     * @param regFileName name of the regripper output file
-     * 
-     * @param regFile registry file the artifact is associated with
-     * 
-     * @throws FileNotFound and IOException
-     */
-    private void createSystemArtifacts(String regFileName, AbstractFile regFile) throws FileNotFoundException, IOException {
-        File regfile = new File(regFileName);
-        try (BufferedReader reader = new BufferedReader(new FileReader(regfile))) {
-            String line = reader.readLine();
-            while (line != null) {
-                line = line.trim();
-
-                if (line.matches("^bam v.*")) {
-                    parseBamKey(regFile, reader, Bundle.Registry_System_Bam());
                 } 
                 line = reader.readLine();
             }
