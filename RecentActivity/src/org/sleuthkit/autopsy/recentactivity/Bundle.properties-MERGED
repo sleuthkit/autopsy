@@ -206,6 +206,7 @@ Recently_Used_Artifacts_Mmc=Recently opened according to Windows Management Cons
 Recently_Used_Artifacts_Office_Trustrecords=Stored in TrustRecords because Office security exception was granted
 Recently_Used_Artifacts_Officedocs=Recently opened according to Office MRU
 Recently_Used_Artifacts_Winrar=Recently opened according to WinRAR MRU
+Registry_System_Bam=Recently Executed according to Background Activity Moderator (BAM)
 RegRipperFullNotFound=Full version RegRipper executable not found.
 RegRipperNotFound=Autopsy RegRipper executable not found.
 # {0} - file name

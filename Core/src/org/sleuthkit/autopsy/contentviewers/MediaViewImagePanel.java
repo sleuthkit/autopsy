@@ -131,6 +131,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private double zoomRatio;
     private double rotation; // Can be 0, 90, 180, and 270.
 
+    private boolean autoResize = true; // Auto resize when the user changes the size
+    // of the content viewer unless the user has used the zoom buttons.
     private static final double[] ZOOM_STEPS = {
         0.0625, 0.125, 0.25, 0.375, 0.5, 0.75,
         1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10};
@@ -197,7 +199,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         imageTaggingOptions.add(exportTagsMenuItem);
 
         imageTaggingOptions.setPopupSize(300, 150);
-        
+
         //Disable image tagging for non-windows users or upon failure to load OpenCV.
         if (!PlatformUtil.isWindowsOS() || !OpenCvLoader.openCvIsLoaded()) {
             tagsMenu.setEnabled(false);
@@ -266,8 +268,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     /**
      * Handle tags menu item enabling and disabling given the state of the
-     * content viewer. For example, when the tags group is empty (no tags on image),
-     * disable delete menu item, hide menu item, and export menu item.
+     * content viewer. For example, when the tags group is empty (no tags on
+     * image), disable delete menu item, hide menu item, and export menu item.
      */
     private void subscribeTagMenuItemsToStateChanges() {
         pcs.addPropertyChangeListener((event) -> {
@@ -394,6 +396,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 }
 
                 try {
+                    autoResize = true;
                     Image fxImage = readImageTask.get();
                     masterGroup.getChildren().clear();
                     tagsGroup.getChildren().clear();
@@ -464,7 +467,9 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * current file.
      *
      * @param contentTags
+     *
      * @return
+     *
      * @throws TskCoreException
      * @throws NoCurrentCaseException
      */
@@ -488,7 +493,9 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * appropriate type.
      *
      * @param contentTags
+     *
      * @return
+     *
      * @throws TskCoreException
      * @throws NoCurrentCaseException
      */
@@ -685,16 +692,21 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }// </editor-fold>//GEN-END:initComponents
 
     private void rotateLeftButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateLeftButtonActionPerformed
+        autoResize = false;
+        
         rotation = (rotation + 270) % 360;
         updateView();
     }//GEN-LAST:event_rotateLeftButtonActionPerformed
 
     private void rotateRightButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateRightButtonActionPerformed
+        autoResize = false;
+        
         rotation = (rotation + 90) % 360;
         updateView();
     }//GEN-LAST:event_rotateRightButtonActionPerformed
 
     private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
+        autoResize = false;
         // Find the next zoom step.
         for (int i = 0; i < ZOOM_STEPS.length; i++) {
             if (zoomRatio < ZOOM_STEPS[i]) {
@@ -706,6 +718,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }//GEN-LAST:event_zoomInButtonActionPerformed
 
     private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
+        autoResize = false;
         // Find the next zoom step.
         for (int i = ZOOM_STEPS.length - 1; i >= 0; i--) {
             if (zoomRatio > ZOOM_STEPS[i]) {
@@ -717,11 +730,16 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
     private void zoomResetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomResetButtonActionPerformed
+        autoResize = true;
         resetView();
     }//GEN-LAST:event_zoomResetButtonActionPerformed
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        updateView();
+        if (autoResize) {
+            resetView();
+        } else {
+            updateView();
+        }
     }//GEN-LAST:event_formComponentResized
 
     /**
@@ -801,6 +819,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * Creates an ImageTag instance from the ContentViewerTag.
      *
      * @param contentViewerTag
+     *
      * @return
      */
     private ImageTag buildImageTag(ContentViewerTag<ImageTagRegion> contentViewerTag) {
@@ -883,17 +902,17 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                         List<ContentTag> tags = Case.getCurrentCase().getServices()
                                 .getTagsManager().getContentTagsByContent(file);
                         List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
-                        
+
                         //Pull out image tag regions
                         Collection<ImageTagRegion> regions = contentViewerTags.stream()
                                 .map(cvTag -> cvTag.getDetails()).collect(Collectors.toList());
-                        
+
                         //Apply tags to image and write to file
                         BufferedImage taggedImage = ImageTagsUtil.getImageWithTags(file, regions);
                         Path output = Paths.get(exportChooser.getSelectedFile().getPath(),
                                 FilenameUtils.getBaseName(file.getName()) + "-with_tags.png"); //NON-NLS
                         ImageIO.write(taggedImage, "png", output.toFile());
-                        
+
                         JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_successfulExport());
                     } catch (Exception ex) { //Runtime exceptions may spill out of ImageTagsUtil from JavaFX.
                         //This ensures we (devs and users) have something when it doesn't work.
