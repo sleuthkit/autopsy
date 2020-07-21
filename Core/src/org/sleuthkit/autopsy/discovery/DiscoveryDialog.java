@@ -34,11 +34,11 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.discovery.FileGroup.GroupSortingAlgorithm;
-import static org.sleuthkit.autopsy.discovery.FileGroup.GroupSortingAlgorithm.BY_GROUP_NAME;
+import static org.sleuthkit.autopsy.discovery.FileGroup.GroupSortingAlgorithm.BY_GROUP_SIZE;
 import org.sleuthkit.autopsy.discovery.FileSearch.GroupingAttributeType;
 import static org.sleuthkit.autopsy.discovery.FileSearch.GroupingAttributeType.PARENT_PATH;
 import org.sleuthkit.autopsy.discovery.FileSorter.SortingMethod;
-import static org.sleuthkit.autopsy.discovery.FileSorter.SortingMethod.BY_FILE_SIZE;
+import static org.sleuthkit.autopsy.discovery.FileSorter.SortingMethod.BY_FILE_NAME;
 
 /**
  * Dialog for displaying the controls and filters for configuration of a
@@ -119,7 +119,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         add(imageFilterPanel, CENTER);
         imageFilterPanel.addPropertyChangeListener(listener);
         updateComboBoxes();
-        groupSortingComboBox.setSelectedItem(BY_GROUP_NAME);
+        groupSortingComboBox.setSelectedItem(BY_GROUP_SIZE);
         pack();
         repaint();
     }
@@ -141,7 +141,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 orderByCombobox.addItem(method);
             }
         }
-        orderByCombobox.setSelectedItem(BY_FILE_SIZE);
+        orderByCombobox.setSelectedItem(BY_FILE_NAME);
     }
 
     /**
