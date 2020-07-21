@@ -36,8 +36,8 @@ def write_diff_to_csv(repo_path: str, output_path: str, commit_1_id: str, commit
     omitted = []
 
     for entry in get_property_files_diff(repo_path, commit_1_id, commit_2_id):
-        new_entry = [entry.rel_path, entry.key, entry.value]
-        if value_regex is not None and (entry.type == ChangeType.DELETION or (not re.match(value_regex, entry.value))):
+        new_entry = entry.get_row()
+        if value_regex is not None and (entry.type == ChangeType.DELETION or not re.match(value_regex, entry.cur_val)):
             omitted.append(new_entry)
         else:
             rows.append(new_entry)
@@ -72,7 +72,9 @@ def main():
                         help='Specify the regex for the property value where a regex match against the property value '
                              'will display the key value pair in csv output (i.e. \'[a-zA-Z]\' or \'\\S\' for removing '
                              'just whitespace items).  If this option is not specified, all key value pairs will be '
-                             'accepted.')
+                             'accepted.  If this option is specified, entries marked as \'DELETION\' will also be '
+                             'omitted another csv file will be created in the same directory as the original '
+                             'output_path with \'' + OMITTED_ADDITION + ' appended.')
 
     args = parser.parse_args()
     repo_path = args.repo_path if args.repo_path is not None else get_git_root(get_proj_dir())

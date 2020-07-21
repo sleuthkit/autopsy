@@ -60,7 +60,8 @@ def main():
                         help='Specify the regex for the property value where a regex match against the property value '
                              'will display the key value pair in csv output (i.e. \'[a-zA-Z]\' or \'\\S\' for removing '
                              'just whitespace items).  If this option is not specified, all key value pairs will be '
-                             'accepted.')
+                             'accepted.  If this option is specified, another csv file will be created in the same '
+                             'directory as the original output_path with \'' + OMITTED_ADDITION + ' appended.')
 
     args = parser.parse_args()
     repo_path = args.repo_path if args.repo_path is not None else get_git_root(get_proj_dir())
