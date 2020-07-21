@@ -1017,10 +1017,10 @@ class ExtractRegistry extends Extract {
                         line = reader.readLine();
                     }
                     String lastSeenTokens[] = line.split(": ");
-                    String lastSeen = lastSeenTokens[1].replace(" Z", "");;
+                    String lastSeen = lastSeenTokens[1].replace(" Z", "");
                     line = reader.readLine();
                     String lastConnectedTokens[] = line.split(": ");
-                    String lastConnected = lastConnectedTokens[1].replace(" Z", "");;
+                    String lastConnected = lastConnectedTokens[1].replace(" Z", "");
                     try {
                         Date usedSeenDate = dateFormat.parse(lastSeen);
                         bthLastSeen = usedSeenDate.getTime()/1000;
