@@ -15,3 +15,6 @@ All of these scripts provide more details on usage by calling the script with `-
 
 ## Localization Generation for the First Time
 First-time updates should follow a similar procedure except that instead of calling `diffscript.py`, call `python3 allbundlesscript <output path>` to generate a csv file with relative paths of bundle files, property file keys, property file values.
+
+##Unit Tests
+Unit tests can be run from this directory using `python3 -m unittest`
