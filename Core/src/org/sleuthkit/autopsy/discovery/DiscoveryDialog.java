@@ -23,6 +23,7 @@ import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -30,6 +31,7 @@ import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -38,6 +40,11 @@ import static org.sleuthkit.autopsy.discovery.FileGroup.GroupSortingAlgorithm.BY
 import org.sleuthkit.autopsy.discovery.FileSearch.GroupingAttributeType;
 import static org.sleuthkit.autopsy.discovery.FileSearch.GroupingAttributeType.PARENT_PATH;
 import org.sleuthkit.autopsy.discovery.FileSorter.SortingMethod;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 import static org.sleuthkit.autopsy.discovery.FileSorter.SortingMethod.BY_FILE_NAME;
 
 /**
@@ -48,6 +55,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
             Case.Events.DATA_SOURCE_ADDED, Case.Events.DATA_SOURCE_DELETED);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(DiscoveryDialog.class.getName());
     private ImageFilterPanel imageFilterPanel = null;
@@ -57,8 +65,12 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private static final Color UNSELECTED_COLOR = new Color(240, 240, 240);
     private SearchWorker searchWorker = null;
     private static DiscoveryDialog discDialog;
+    private static volatile boolean shouldUpdate = false;
     private FileSearchData.FileType fileType = FileSearchData.FileType.IMAGE;
     private final PropertyChangeListener listener;
+    private final Set<BlackboardAttribute> objectsDetected = new HashSet<>();
+    private final Set<BlackboardAttribute> interestingItems = new HashSet<>();
+    private final Set<BlackboardAttribute> hashSets = new HashSet<>();
 
     /**
      * Get the Discovery dialog instance.
@@ -68,6 +80,10 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     static synchronized DiscoveryDialog getDiscoveryDialogInstance() {
         if (discDialog == null) {
             discDialog = new DiscoveryDialog();
+        }
+        if (shouldUpdate) {
+            discDialog.updateSearchSettings();
+            shouldUpdate = false;
         }
         return discDialog;
     }
@@ -92,6 +108,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         }
         updateSearchSettings();
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this.new CasePropertyChangeListener());
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, this.new ModuleChangeListener());
     }
 
     /**
@@ -581,12 +598,91 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 case DATA_SOURCE_ADDED:
                 //fallthrough
                 case DATA_SOURCE_DELETED:
-                    updateSearchSettings();
+                    shouldUpdate = true;
                     break;
                 default:
                     //do nothing if the event is not one of the above events.
                     break;
             }
+        }
+    }
+
+    /**
+     * PropertyChangeListener to listen to ingest module events that may modify
+     * the filters available.
+     */
+    private class ModuleChangeListener implements PropertyChangeListener {
+
+        @Override
+        @SuppressWarnings("fallthrough")
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (!shouldUpdate) {
+                String eventType = evt.getPropertyName();
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCaseThrows();
+                        /**
+                         * Even with the check above, it is still possible that
+                         * the case will be closed in a different thread before
+                         * this code executes. If that happens, it is possible
+                         * for the event to have a null oldValue.
+                         */
+                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                        if (null != eventData) {
+                            if (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID() && eventData.getArtifacts() != null) {
+                                shouldUpdate = shouldUpdateFilters(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID(), eventData, objectsDetected);
+                            } else if (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                                shouldUpdate = shouldUpdateFilters(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), eventData, hashSets);
+                            } else if (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
+                                    || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+                                shouldUpdate = shouldUpdateFilters(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), eventData, interestingItems);
+                            }
+
+                        }
+                    } catch (NoCurrentCaseException notUsed) {
+                        // Case is closed, do nothing.
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, "Unable to determine if discovery UI should be updated", ex);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Helper method to determine if the artifact in the eventData
+         * represents a new value for the filter.
+         *
+         * @param attributeTypeId  The attribute id of the attribute which
+         *                         contains the value for the filter.
+         * @param eventData        The event which contains the artifacts.
+         * @param filterSetToCheck The set of current values for the relevant
+         *                         filter.
+         *
+         * @return True if the value is a new value for the filter, false
+         *         otherwise.
+         *
+         * @throws TskCoreException Thrown because the attributes were unable to
+         *                          be retrieved for one of the artifacts in the
+         *                          eventData.
+         */
+        private boolean shouldUpdateFilters(int attributeTypeId, ModuleDataEvent eventData, Set<BlackboardAttribute> filterSetToCheck) throws TskCoreException {
+            for (BlackboardArtifact artifact : eventData.getArtifacts()) {
+                if (artifact.getAttributes() != null) {
+                    for (BlackboardAttribute attr : artifact.getAttributes()) {
+                        if (attr.getAttributeType().getTypeID() == attributeTypeId && !filterSetToCheck.contains(attr)) {
+                            filterSetToCheck.add(attr);
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
         }
     }
 }
