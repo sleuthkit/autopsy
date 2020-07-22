@@ -1,0 +1,1 @@
+TEST_OUTPUT_FOLDER = 'testartifacts/output'
