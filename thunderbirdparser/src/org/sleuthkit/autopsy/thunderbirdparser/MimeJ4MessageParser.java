@@ -231,11 +231,11 @@ class MimeJ4MessageParser {
                     || e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN)) {
                 handleTextBody(email, (TextBody) e.getBody(), e.getMimeType(), e.getHeader().getFields());
             } else {
-                // Ignore other types.
-            }
+                handleAttachment(email, e, fileID, index);
+            } 
         }
     }
-
+    
     /**
      * Extract text out of a body part of the message.
      *
