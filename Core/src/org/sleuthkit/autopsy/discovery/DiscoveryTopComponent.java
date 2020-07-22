@@ -49,17 +49,12 @@ public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
     private static final String PREFERRED_ID = "Discovery"; // NON-NLS
+    private static final int ANIMATION_INCREMENT = 30;
+    private volatile static int resultsAreaSize = 250;
     private final GroupListPanel groupListPanel;
     private final DetailsPanel detailsPanel;
     private final ResultsPanel resultsPanel;
     private int dividerLocation = -1;
-
-
-
-    private volatile static int resultsAreaSize = 250;
-    private volatile static int previousResultsAreaSize = -1;
-    private static final int ANIMATION_INCREMENT = 30;
-
     private SwingAnimator animator = null;
 
     /**
@@ -89,11 +84,7 @@ public final class DiscoveryTopComponent extends TopComponent {
                 if (evt.getPropertyName().equalsIgnoreCase(JSplitPane.DIVIDER_LOCATION_PROPERTY)) {
                     //Only change the saved location when it was a manual change by the user and not the animation or the window opening initially
                     if ((animator == null || !animator.isRunning()) && evt.getNewValue() instanceof Integer
-                            && ((int) evt.getNewValue() + 5) < (rightSplitPane.getHeight() - rightSplitPane.getDividerSize()) && (int) evt.getNewValue() != previousResultsAreaSize) {
-                        System.out.println("setting small size" + (int) evt.getNewValue());
-                        System.out.println("HEIGHT:  " + rightSplitPane.getHeight());
-                        System.out.println("DIVIDER LOC: " + rightSplitPane.getDividerLocation());
-                        previousResultsAreaSize = (int) evt.getOldValue();
+                            && ((int) evt.getNewValue() + 5) < (rightSplitPane.getHeight() - rightSplitPane.getDividerSize())) {
                         resultsAreaSize = (int) evt.getNewValue();
 
                     }
