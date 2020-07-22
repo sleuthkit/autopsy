@@ -1,6 +1,5 @@
 """Functions handling retrieving and storing when a language was last updated.
 """
-
 from typing import Union
 from envutil import get_proj_dir
 from propsutil import get_entry_dict_from_path, update_entry_dict

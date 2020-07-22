@@ -1,11 +1,11 @@
 """Provides tools for reading from and writing to java properties files.
 """
-
 from typing import Dict, Union, IO
 from jproperties import Properties
 import os
 
 # The default extension for property files in autopsy repo
+
 DEFAULT_PROPS_EXTENSION = 'properties-MERGED'
 
 
