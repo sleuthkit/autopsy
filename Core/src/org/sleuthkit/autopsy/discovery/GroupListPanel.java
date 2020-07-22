@@ -66,7 +66,8 @@ final class GroupListPanel extends javax.swing.JPanel {
     @Messages({"GroupsListPanel.noResults.message.text=No results were found for the selected filters.\n\n"
         + "Reminder:\n"
         + "  -The File Type Identification module must be run on each data source you want to find results in.\n"
-        + "  -The Hash Lookup and Exif Parser modules should also be run on each data source to ensure complete results.",
+        + "  -The Hash Lookup module must be run on each data source if you want to filter by past occurrence.\n"
+        + "  -The Exif module must be run on each data source if you are filtering by User Created content.",
         "GroupsListPanel.noResults.title.text=No results found"})
     /**
      * Subscribe to and update list of groups in response to
