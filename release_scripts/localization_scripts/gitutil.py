@@ -100,7 +100,7 @@ def get_commit_id(repo_path: str, commit_id: str) -> str:
         The hash for the commit in the repo.
     """
     repo = Repo(repo_path, search_parent_directories=True)
-    commit = repo.commit(commit_id)
+    commit = repo.commit(commit_id.strip())
     return str(commit.hexsha)
 
 
@@ -118,7 +118,7 @@ def get_property_files_diff(repo_path: str, commit_1_id: str, commit_2_id: str,
         All found item changes in values of keys between the property files.
     """
 
-    diffs = get_diff(repo_path, commit_1_id, commit_2_id)
+    diffs = get_diff(repo_path, commit_1_id.strip(), commit_2_id.strip())
     for diff in diffs:
         rel_path = get_rel_path(diff)
         if rel_path is None or not rel_path.endswith('.' + property_file_extension):
@@ -160,7 +160,7 @@ def get_property_file_entries(repo_path: str, at_commit: str = 'HEAD',
 
     """
     repo = Repo(repo_path, search_parent_directories=True)
-    commit = repo.commit(at_commit)
+    commit = repo.commit(at_commit.strip())
     for item in list_paths(commit.tree):
         path, blob = item
         if path.endswith(property_file_extension):

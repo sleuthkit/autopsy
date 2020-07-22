@@ -65,7 +65,7 @@ def main():
                         help='The commit for current release.')
     parser.add_argument('-nc', '--no-commits', dest='no_commits', action='store_true', default=False,
                         required=False, help="Suppresses adding commits to the generated csv header.")
-    parser.add_argument('-l', '--language', dest='language', type=str, default='HEAD', required=False,
+    parser.add_argument('-l', '--language', dest='language', type=str, default=None, required=False,
                         help='Specify the language in order to determine the first commit to use (i.e. \'ja\' for '
                              'Japanese.  This flag overrides the first-commit flag.')
     parser.add_argument('-vr', '--value-regex', dest='value_regex', type=str, default=None, required=False,
@@ -81,8 +81,9 @@ def main():
     output_path = args.output_path
     commit_1_id = args.commit_1_id
     value_regex = args.value_regex
-    if args.language is not None:
-        commit_1_id = get_commit_for_language(args.language)
+    lang = args.language
+    if lang is not None:
+        commit_1_id = get_commit_for_language(lang)
 
     if commit_1_id is None:
         print('Either the first commit or language flag need to be specified.  If specified, the language file, ' +
