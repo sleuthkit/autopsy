@@ -54,9 +54,11 @@ public final class DiscoveryTopComponent extends TopComponent {
     private final ResultsPanel resultsPanel;
     private int dividerLocation = -1;
 
-    private static final int ANIMATION_INCREMENT = 10;
+
+
     private volatile static int resultsAreaSize = 250;
     private volatile static int previousResultsAreaSize = -1;
+    private static final int ANIMATION_INCREMENT = 30;
 
     private SwingAnimator animator = null;
 
