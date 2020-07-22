@@ -1,4 +1,5 @@
 import os
+import unittest
 from typing import Union, Tuple
 
 
@@ -58,3 +59,48 @@ def get_filename_addition(orig_path: str, filename_addition: str) -> str:
     else:
         ext = '' if extension is None else extension
         return os.path.join(parent_dir, '{0}{1}.{2}'.format(filename, filename_addition, ext))
+
+
+class FileUtilTest(unittest.TestCase):
+
+    @staticmethod
+    def _joined_paths(pieces: Tuple[str, str, str]) -> str:
+        return os.path.join(pieces[0], pieces[1] + '.' + pieces[2])
+
+    PATH_PIECES1 = ('/test/folder', 'filename', 'ext')
+    PATH_PIECES2 = ('/test.test2/folder.test2', 'filename.test', 'ext')
+    PATH_PIECES3 = ('/test.test2/folder.test2/folder', None, None)
+
+    def __init__(self):
+        self.PATH1 = FileUtilTest._joined_paths(self.PATH_PIECES1)
+        self.PATH2 = FileUtilTest._joined_paths(self.PATH_PIECES2)
+        self.PATH3 = self.PATH_PIECES3[0]
+
+        self.ALL_ITEMS = [
+            (self.PATH_PIECES1, self.PATH1),
+            (self.PATH_PIECES2, self.PATH2),
+            (self.PATH_PIECES3, self.PATH3)
+        ]
+
+    def get_path_pieces_test(self):
+        for (expected_path, expected_filename, expected_ext), path in self.ALL_ITEMS:
+            path, filename, ext = get_path_pieces(path)
+            self.assertEqual(path, expected_path)
+            self.assertEqual(filename, expected_filename)
+            self.assertEqual(ext, expected_ext)
+
+    def get_new_path_test(self):
+        for (expected_path, expected_filename, expected_ext), path in self.ALL_ITEMS:
+            new_name = "newname.file"
+            new_path = get_new_path(path, new_name)
+            self.assertEqual(new_path, os.path.join(expected_path, new_name))
+
+    def get_filename_addition_test(self):
+        for (expected_path, expected_filename, expected_ext), path in self.ALL_ITEMS:
+            addition = "addition"
+            new_path = get_filename_addition(path, addition)
+            self.assertEqual(
+                new_path, os.path.join(
+                    expected_path,
+                    "{file_name}{addition}.{extension}".format(
+                        file_name=expected_filename, addition=addition, extension=expected_ext)))
