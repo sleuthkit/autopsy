@@ -269,6 +269,7 @@ final public class FiltersPanel extends JPanel {
      * Populate the Account Types filter widgets.
      *
      * @param accountTypesInUse List of accountTypes currently in use
+     * @param checkNewOnes
      *
      * @return True, if a new accountType was found
      */
@@ -314,9 +315,8 @@ final public class FiltersPanel extends JPanel {
     /**
      * Populate the devices filter widgets.
      *
-     * @param selected      Sets the initial state of device check box.
-     * @param sleuthkitCase The sleuthkit case for containing the data source
-     *                      information.
+     * @param dataSourceMap
+     * @param checkNewOnes 
      *
      * @return true if a new device was found
      */

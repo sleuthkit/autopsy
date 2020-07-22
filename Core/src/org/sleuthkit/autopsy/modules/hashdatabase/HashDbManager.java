@@ -735,7 +735,7 @@ public class HashDbManager implements PropertyChangeListener {
      * the system.
      *
      * @param settings        The settings to configure.
-     * @param offcialSetNames The official set names. Any name collisions will
+     * @param officialSetNames The official set names. Any name collisions will
      *                        trigger rename for primary file.
      */
     @Messages({"# {0} - hash set name", "HashDbManager.noDbPath.message=Couldn't get valid hash set path for: {0}",
