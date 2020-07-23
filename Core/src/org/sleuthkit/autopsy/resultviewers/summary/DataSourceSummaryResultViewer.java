@@ -18,22 +18,31 @@
  */
 package org.sleuthkit.autopsy.resultviewers.summary;
 
+import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.util.logging.Level;
+import javax.swing.SwingUtilities;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
+import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryTabbedPane;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
-
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 
 /**
- *
- * @author gregd
+ * A tabular result viewer that displays a summary of the selected Data Source.
  */
+@ServiceProvider(service = DataResultViewer.class)
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
+    private static final long serialVersionUID = 1L;
+    private static final Logger LOGGER = Logger.getLogger(DataSourceSummaryResultViewer.class.getName());
+    
     private final String title;
     
     public DataSourceSummaryResultViewer() {
@@ -50,6 +59,7 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
     public DataSourceSummaryResultViewer(ExplorerManager explorerManager, String title) {
         super(explorerManager);
         this.title = title;
+        initComponents();
     }
     
     @Override
@@ -59,25 +69,47 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
 
     @Override
     public boolean isSupported(Node node) {
-        if (node == null) {
-            return false;
-        }
-
-        DataSource contentItem = node.getLookup().lookup(DataSource.class);
-        if (contentItem == null) {
-            return false;
-        }
-        
-        Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(datasourceObjId);
+        return getDataSource(node) != null;
+    }
+    
+    private DataSource getDataSource(Node node) {
+        return node == null ? null: node.getLookup().lookup(DataSource.class);
     }
 
     @Override
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void setNode(Node node) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (!SwingUtilities.isEventDispatchThread()) {
+            LOGGER.log(Level.SEVERE, "Attempting to run setNode() from non-EDT thread.");
+            return;
+        }
+        
+        DataSource dataSource = getDataSource(node);
+                
+        if (dataSource == null) {
+            LOGGER.log(Level.SEVERE, "No datasource for node found.");
+            return;
+        }
+        
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            summaryPanel.setDataSource(dataSource);
+        }
+        finally {
+            this.setCursor(null);
+        }
     }
 
     @Override
     public String getTitle() {
         return title;
     }
+    
+    private void initComponents() {
+        summaryPanel = new DataSourceSummaryTabbedPane();
+        setLayout(new BorderLayout());
+        add(summaryPanel, BorderLayout.CENTER);
+    }
+
+    private DataSourceSummaryTabbedPane summaryPanel;
 }
