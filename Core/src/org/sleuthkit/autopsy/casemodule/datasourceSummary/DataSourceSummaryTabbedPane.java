@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
-import java.util.Map;
 import javax.swing.JTabbedPane;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.datamodel.DataSource;
@@ -36,29 +35,27 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     private DataSource dataSource = null;
         
     public DataSourceSummaryTabbedPane() {
-        Map<Long, Long> fileCountsMap = DataSourceInfoUtilities.getCountsOfFiles();
-        
-        
-        countsPanel = new DataSourceSummaryCountsPanel(fileCountsMap);
+        countsPanel = new DataSourceSummaryCountsPanel();
         detailsPanel = new DataSourceSummaryDetailsPanel();
         ingestHistoryPanel = new IngestJobInfoPanel();
-        
+        setTabs();
+    }
+
+    private void setTabs() {
+        this.removeAll();
         addTab(Bundle.DataSourceSummaryDialog_detailsTab_title(), detailsPanel);
         addTab(Bundle.DataSourceSummaryDialog_countsTab_title(), countsPanel);
         addTab(Bundle.DataSourceSummaryDialog_ingestHistoryTab_title(), ingestHistoryPanel);
     }
-
+    
     public DataSource getDataSource() {
         return dataSource;
     }
 
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
-        
-        
-        countsPanel.updateCountsTableData(dataSource);
+        countsPanel.setDataSource(dataSource);
         detailsPanel.setDataSource(dataSource);
         ingestHistoryPanel.setDataSource(dataSource);
-        // TODO trigger updates in child components
     }
 }
