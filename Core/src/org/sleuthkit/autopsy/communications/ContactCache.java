@@ -48,11 +48,9 @@ final class ContactCache {
 
     private static final Logger logger = Logger.getLogger(ContactCache.class.getName());
 
-    private final LoadingCache<Account, List<BlackboardArtifact>> contactCache;
+    private final LoadingCache<Account, List<BlackboardArtifact>> accountMap;
 
     private static ContactCache instance;
-
-    private final PropertyChangeListener ingestListener;
 
     /**
      * Returns the list of Contacts for the given Account.
@@ -65,21 +63,21 @@ final class ContactCache {
      * @throws ExecutionException
      */
     static synchronized List<BlackboardArtifact> getContacts(Account account) throws ExecutionException {
-        return getInstance().contactCache.get(account);
+        return getInstance().accountMap.get(account);
     }
 
     /**
      * Force the cache to invalidate all entries.
      */
     static synchronized void invalidateCache() {
-        getInstance().contactCache.invalidateAll();
+        getInstance().accountMap.invalidateAll();
     }
 
     /**
      * Construct a new instance.
      */
     private ContactCache() {
-        contactCache = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build(
+        accountMap = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build(
                 new CacheLoader<Account, List<BlackboardArtifact>>() {
             @Override
             public List<BlackboardArtifact> load(Account key) {
@@ -94,7 +92,7 @@ final class ContactCache {
             }
         });
 
-        this.ingestListener = pce -> {
+        PropertyChangeListener ingestListener = pce -> {
             String eventType = pce.getPropertyName();
             if (eventType.equals(DATA_ADDED.toString())) {
                 ModuleDataEvent eventData = (ModuleDataEvent) pce.getOldValue();
