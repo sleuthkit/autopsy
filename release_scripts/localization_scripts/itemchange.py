@@ -9,6 +9,9 @@ class ChangeType(Enum):
     DELETION = 'DELETION'
     CHANGE = 'CHANGE'
 
+    def __str__(self):
+        return str(self.value)
+
 
 class ItemChange:
     rel_path: str
