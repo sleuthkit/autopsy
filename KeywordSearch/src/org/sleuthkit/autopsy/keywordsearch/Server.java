@@ -57,7 +57,7 @@ import org.apache.solr.client.solrj.response.CollectionAdminResponse;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import java.util.concurrent.TimeoutException;
-import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -69,7 +69,6 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -326,6 +325,15 @@ public class Server {
             currentSolrStopPort = DEFAULT_SOLR_STOP_PORT;
             ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT, String.valueOf(currentSolrStopPort));
         }
+    }
+    
+    private HttpSolrClient getSolrClient(String solrUrl) {
+        HttpSolrClient client = new HttpSolrClient.Builder(solrUrl)
+                .withConnectionTimeout(10000)
+                .withResponseParser(new XMLResponseParser())
+                .build();
+
+        return client;
     }
 
     private ConcurrentUpdateSolrClient getLocalSolrClient(String solrUrl) {
@@ -1850,7 +1858,7 @@ public class Server {
 
         // the server to access a collection needs to be built from a URL with the
         // collection in it, and is only good for collection-specific operations
-        private final SolrClient solrClient;
+        private final HttpSolrClient solrClient;
 
         private Collection(String name, Case theCase, Index index) throws TimeoutException, InterruptedException, SolrServerException, IOException {
             this.name = name;
@@ -1860,18 +1868,20 @@ public class Server {
             
             if (caseType == CaseType.SINGLE_USER_CASE) {
                 // get SolrJ client
-                solrClient = getLocalSolrClient("http://localhost:" + currentSolrServerPort + "/solr/" + name);
+                // ELTODO solrClient = getLocalSolrClient("http://localhost:" + currentSolrServerPort + "/solr/" + name);
+                solrClient = getSolrClient("http://localhost:" + currentSolrServerPort + "/solr/" + name);
             } else {
                 // read Solr conenction info from user preferences, unless "solrserver.txt" is present
                 IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
-                List<String> solrServerList = getSolrServerList(properties.getHost(), properties.getPort());
+                solrClient = getSolrClient("http://" + properties.host + ":" + properties.port + "/solr/" + name);
+                /*List<String> solrServerList = getSolrServerList(properties.getHost(), properties.getPort());
                 List<String> solrUrls = new ArrayList<>();
                 for (String server : solrServerList) {
                     solrUrls.add("http://" + server + "/solr");
                     logger.log(Level.INFO, "Using Solr server: {0}", server);
                 }
                 // get SolrJ client
-                solrClient = getCloudSolrClient(solrUrls, name);
+                solrClient = getCloudSolrClient(solrUrls, name);*/
             }
         }
 
