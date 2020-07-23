@@ -15,7 +15,7 @@ from langpropsutil import get_commit_for_language, LANG_FILENAME
 
 
 def write_diff_to_csv(repo_path: str, output_path: str, commit_1_id: str, commit_2_id: str, show_commits: bool,
-                      value_regex: Union[str, None]):
+                      value_regex: Union[str, None] = None):
     """Determines the changes made in '.properties-MERGED' files from one commit to another commit.
 
     Args:
@@ -68,19 +68,11 @@ def main():
     parser.add_argument('-l', '--language', dest='language', type=str, default=None, required=False,
                         help='Specify the language in order to determine the first commit to use (i.e. \'ja\' for '
                              'Japanese.  This flag overrides the first-commit flag.')
-    parser.add_argument('-vr', '--value-regex', dest='value_regex', type=str, default=None, required=False,
-                        help='Specify the regex for the property value where a regex match against the property value '
-                             'will display the key value pair in csv output (i.e. \'[a-zA-Z]\' or \'\\S\' for removing '
-                             'just whitespace items).  If this option is not specified, all key value pairs will be '
-                             'accepted.  If this option is specified, entries marked as \'DELETION\' will also be '
-                             'omitted another csv file will be created in the same directory as the original '
-                             'output_path with \'' + OMITTED_ADDITION + ' appended.')
 
     args = parser.parse_args()
     repo_path = args.repo_path if args.repo_path is not None else get_git_root(get_proj_dir())
     output_path = args.output_path
     commit_1_id = args.commit_1_id
-    value_regex = args.value_regex
     lang = args.language
     if lang is not None:
         commit_1_id = get_commit_for_language(lang)
@@ -94,7 +86,7 @@ def main():
     commit_2_id = args.commit_2_id
     show_commits = not args.no_commits
 
-    write_diff_to_csv(repo_path, output_path, commit_1_id, commit_2_id, show_commits, value_regex)
+    write_diff_to_csv(repo_path, output_path, commit_1_id, commit_2_id, show_commits)
 
     sys.exit(0)
 

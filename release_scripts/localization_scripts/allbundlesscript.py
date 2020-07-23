@@ -15,7 +15,7 @@ import re
 import argparse
 
 
-def write_items_to_csv(repo_path: str, output_path: str, show_commit: bool, value_regex: Union[str, None]):
+def write_items_to_csv(repo_path: str, output_path: str, show_commit: bool, value_regex: Union[str, None] = None):
     """Determines the contents of '.properties-MERGED' files and writes to a csv file.
 
     Args:
@@ -56,20 +56,13 @@ def main():
                         help='The path to the repo.  If not specified, path of script is used.')
     parser.add_argument('-nc', '--no_commit', dest='no_commit', action='store_true', default=False,
                         required=False, help="Suppresses adding commits to the generated csv header.")
-    parser.add_argument('-vr', '--value-regex', dest='value_regex', type=str, default=None, required=False,
-                        help='Specify the regex for the property value where a regex match against the property value '
-                             'will display the key value pair in csv output (i.e. \'[a-zA-Z]\' or \'\\S\' for removing '
-                             'just whitespace items).  If this option is not specified, all key value pairs will be '
-                             'accepted.  If this option is specified, another csv file will be created in the same '
-                             'directory as the original output_path with \'' + OMITTED_ADDITION + ' appended.')
 
     args = parser.parse_args()
     repo_path = args.repo_path if args.repo_path is not None else get_git_root(get_proj_dir())
     output_path = args.output_path
     show_commit = not args.no_commit
-    value_regex = args.value_regex
 
-    write_items_to_csv(repo_path, output_path, show_commit, value_regex)
+    write_items_to_csv(repo_path, output_path, show_commit)
 
     sys.exit(0)
 
