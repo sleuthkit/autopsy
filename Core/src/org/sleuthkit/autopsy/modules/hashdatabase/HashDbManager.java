@@ -433,7 +433,7 @@ public class HashDbManager implements PropertyChangeListener {
 
     void save() throws HashDbManagerException {
         try {
-            if (!HashLookupSettings.writeSettings(new HashLookupSettings(HashLookupSettings.convertHashSetList(getNonOfficialHashSets())))) {
+            if (!HashLookupSettings.writeSettings(new HashLookupSettings(HashLookupSettings.convertHashSetList(this.hashSets)))) {
                 throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.saveErrorExceptionMsg"));
             }
         } catch (HashLookupSettings.HashLookupSettingsException ex) {
@@ -492,13 +492,6 @@ public class HashDbManager implements PropertyChangeListener {
         return getUpdateableHashSets(getAllHashSets());
     }
 
-    private List<HashDb> getNonOfficialHashSets() {
-        return getAllHashSets()
-                .stream()
-                .filter((HashDb db) -> (db instanceof SleuthkitHashSet && ((SleuthkitHashSet) db).isOfficialSet()) ? false : true)
-                .collect(Collectors.toList());
-    }
-
     private List<HashDb> getUpdateableHashSets(List<HashDb> hashDbs) {
         return hashDbs
                 .stream()
@@ -539,7 +532,7 @@ public class HashDbManager implements PropertyChangeListener {
      * cancellation of configuration panels.
      */
     public synchronized void loadLastSavedConfiguration() {
-        closeHashDatabases(getAllHashSets());
+        closeHashDatabases(this.hashSets);
         hashSetNames.clear();
         hashSetPaths.clear();
 
@@ -765,7 +758,7 @@ public class HashDbManager implements PropertyChangeListener {
          */
         if (!allDatabasesLoadedCorrectly && RuntimeProperties.runningWithGUI()) {
             try {
-                HashLookupSettings.writeSettings(new HashLookupSettings(HashLookupSettings.convertHashSetList(getNonOfficialHashSets())));
+                HashLookupSettings.writeSettings(new HashLookupSettings(HashLookupSettings.convertHashSetList(this.hashSets)));
                 allDatabasesLoadedCorrectly = true;
             } catch (HashLookupSettings.HashLookupSettingsException ex) {
                 allDatabasesLoadedCorrectly = false;
@@ -839,7 +832,7 @@ public class HashDbManager implements PropertyChangeListener {
     }
 
     private boolean hashDbInfoIsNew(HashDbInfo dbInfo) {
-        for (HashDb db : getAllHashSets()) {
+        for (HashDb db : this.hashSets) {
             if (dbInfo.matches(db)) {
                 return false;
             }
