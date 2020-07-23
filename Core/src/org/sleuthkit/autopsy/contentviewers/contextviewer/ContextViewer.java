@@ -290,6 +290,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                 contextContainer.add(usagePanel);
             }
         }
+        
+        contextContainer.setBackground(javax.swing.UIManager.getDefaults().getColor("window"));
         contextContainer.setEnabled(foundASource);
         contextContainer.setVisible(foundASource);
         jScrollPane.getViewport().setView(contextContainer);

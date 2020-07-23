@@ -34,6 +34,7 @@ import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper;
@@ -307,8 +308,13 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         } else if(namespace == XryNamespace.TO || direction == CommunicationDirection.OUTGOING) {
                             recipientIdsList.add(pair.getValue());
                         } else {
-                            currentCase.getCommunicationsManager().createAccountFileInstance(
-                                Account.Type.PHONE, pair.getValue(), PARSER_NAME, parent);
+                            try {
+                                currentCase.getCommunicationsManager().createAccountFileInstance(
+                                        Account.Type.PHONE, pair.getValue(), PARSER_NAME, parent);
+                            } catch (InvalidAccountIDException ex) {
+                                logger.log(Level.WARNING, String.format("Invalid account identifier %s", pair.getValue()), ex);
+                            }
+
                             otherAttributes.add(new BlackboardAttribute(
                                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
                                         PARSER_NAME, pair.getValue()));

@@ -272,8 +272,9 @@ final class IngestTasksScheduler {
      */
     synchronized void cancelPendingTasksForIngestJob(IngestJobPipeline ingestJobPipeline) {
         long jobId = ingestJobPipeline.getId();
-        IngestTasksScheduler.removeTasksForJob(this.rootFileTaskQueue, jobId);
-        IngestTasksScheduler.removeTasksForJob(this.pendingFileTaskQueue, jobId);
+        IngestTasksScheduler.removeTasksForJob(rootFileTaskQueue, jobId);
+        IngestTasksScheduler.removeTasksForJob(pendingFileTaskQueue, jobId);
+        IngestTasksScheduler.removeTasksForJob(streamedTasksQueue, jobId);
     }
 
     /**
@@ -642,7 +643,8 @@ final class IngestTasksScheduler {
                 countTasksForJob(this.rootFileTaskQueue, jobId),
                 countTasksForJob(this.pendingFileTaskQueue, jobId),
                 this.fileIngestThreadsQueue.countQueuedTasksForJob(jobId),
-                this.dataSourceIngestThreadQueue.countRunningTasksForJob(jobId) + this.fileIngestThreadsQueue.countRunningTasksForJob(jobId));
+                this.dataSourceIngestThreadQueue.countRunningTasksForJob(jobId) + this.fileIngestThreadsQueue.countRunningTasksForJob(jobId),
+                countTasksForJob(this.streamedTasksQueue, jobId));
     }
 
     /**
@@ -947,19 +949,22 @@ final class IngestTasksScheduler {
         private final long dirQueueSize;
         private final long fileQueueSize;
         private final long runningListSize;
+        private final long streamingQueueSize;
 
         /**
          * Constructs a snapshot of ingest tasks data for an ingest job.
          *
          * @param jobId The identifier associated with the job.
          */
-        IngestJobTasksSnapshot(long jobId, long dsQueueSize, long rootQueueSize, long dirQueueSize, long fileQueueSize, long runningListSize) {
+        IngestJobTasksSnapshot(long jobId, long dsQueueSize, long rootQueueSize, long dirQueueSize, long fileQueueSize, 
+                long runningListSize, long streamingQueueSize) {
             this.jobId = jobId;
             this.dsQueueSize = dsQueueSize;
             this.rootQueueSize = rootQueueSize;
             this.dirQueueSize = dirQueueSize;
             this.fileQueueSize = fileQueueSize;
             this.runningListSize = runningListSize;
+            this.streamingQueueSize = streamingQueueSize;
         }
 
         /**
@@ -994,6 +999,10 @@ final class IngestTasksScheduler {
 
         long getFileQueueSize() {
             return fileQueueSize;
+        }
+        
+        long getStreamingQueueSize() {
+            return streamingQueueSize;
         }
 
         long getDsQueueSize() {

@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.centralrepository.persona;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -59,28 +61,6 @@ public final class PersonasTopComponent extends TopComponent {
 
     private List<Persona> currentResults = null;
     private Persona selectedPersona = null;
-
-    /**
-     * Listens for when this component will be rendered and executes a search to
-     * update gui when it is displayed.
-     */
-    private final AncestorListener onAddListener = new AncestorListener() {
-        @Override
-        public void ancestorAdded(AncestorEvent event) {
-            resetSearchControls();
-            setKeywordSearchEnabled(false, true);
-        }
-
-        @Override
-        public void ancestorRemoved(AncestorEvent event) {
-            //Empty
-        }
-
-        @Override
-        public void ancestorMoved(AncestorEvent event) {
-            //Empty
-        }
-    };
 
     @Messages({
         "PersonasTopComponent_Name=Personas",
@@ -165,7 +145,17 @@ public final class PersonasTopComponent extends TopComponent {
             }
         });
 
-        addAncestorListener(onAddListener);
+        /**
+         * Listens for when this component will be rendered and executes a
+         * search to update gui when it is displayed.
+         */
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                resetSearchControls();
+                setKeywordSearchEnabled(false, true);
+            }
+        });
     }
 
     /**
@@ -276,7 +266,7 @@ public final class PersonasTopComponent extends TopComponent {
     }
 
     @Messages({
-        "PersonasTopComponent_search_exception_Title=Search failure",
+        "PersonasTopComponent_search_exception_Title=There was a failure during the search.  Try opening a case to fully initialize the central repository database.",
         "PersonasTopComponent_search_exception_msg=Failed to search personas.",
         "PersonasTopComponent_noCR_msg=Central Repository is not enabled.",})
     private void executeSearch() {

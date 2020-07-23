@@ -228,13 +228,22 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
-                errors.add(ex.getMessage());
+            errors.add(ex.getMessage());
             callBack.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
             return;
         }
 
         // Now initialize the ingest stream
-        this.ingestStream = IngestManager.getInstance().openIngestStream(image, settings);
+        try {
+            ingestStream = IngestManager.getInstance().openIngestStream(image, settings);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error starting ingest modules", ex);
+            final List<String> errors = new ArrayList<>();
+            errors.add(ex.getMessage());
+            callBack.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+            return;
+        }
+        
 
         doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progress, callBack);
     }
