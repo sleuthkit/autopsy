@@ -380,7 +380,7 @@ final class ExtractPrefetch extends Extract {
         
         for (AbstractFile pFile : files) {
 
-            if (pFile.getParentPath().toLowerCase().contains(filePath.toLowerCase())) {
+            if (pFile.getParentPath().toLowerCase().endsWith(filePath.toLowerCase() + '/')) {
                 return pFile;
             }
         }

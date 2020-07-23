@@ -568,9 +568,12 @@ public class PortableCaseReportModule implements ReportModule {
      * @param content Content to add to the report.
      * @param dataSource Parent dataSource of the content instance.
      * @param tmpDir Path to the tmpDir to enforce uniqueness
-     * @param reportGenerator Report generator instance to add the content to
+     * @param gson
+     * @param exporter
+     * @param reportWriter Report generator instance to add the content to
      * @param dataSourceHasBeenIncluded Flag determining if the data source
      * should be written to the report (false indicates that it should be written).
+     * 
      * @throws IOException If an I/O error occurs.
      * @throws TskCoreException If an internal database error occurs.
      *
