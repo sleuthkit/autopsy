@@ -105,6 +105,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     private static final Image EXTERNAL = new Image(MediaViewImagePanel.class.getResource("/org/sleuthkit/autopsy/images/external.png").toExternalForm());
     private final static Logger LOGGER = Logger.getLogger(MediaViewImagePanel.class.getName());
+    private static final long serialVersionUID = 1L;
 
     private final boolean fxInited;
 
@@ -168,7 +169,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         "MediaViewImagePanel.hideTagOption=Hide",
         "MediaViewImagePanel.exportTagOption=Export"
     })
-    public MediaViewImagePanel() {
+    MediaViewImagePanel() {
         initComponents();
         fxInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
 
@@ -210,59 +211,69 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
-                    // build jfx ui (we could do this in FXML?)
-                    fxImageView = new ImageView();  // will hold image
-                    masterGroup = new Group(fxImageView);
-                    tagsGroup = new ImageTagsGroup(fxImageView);
-                    tagsGroup.getChildren().addListener((Change<? extends Node> c) -> {
-                        if (c.getList().isEmpty()) {
-                            pcs.firePropertyChange(new PropertyChangeEvent(this,
-                                    "state", null, State.EMPTY));
-                        }
-                    });
-
-                    subscribeTagMenuItemsToStateChanges();
-
-                    masterGroup.getChildren().add(tagsGroup);
-
-                    //Update buttons when users select (or unselect) image tags.
-                    tagsGroup.addFocusChangeListener((event) -> {
-                        if (event.getPropertyName().equals(ImageTagControls.NOT_FOCUSED.getName())) {
-                            if (masterGroup.getChildren().contains(imageTagCreator)) {
-                                return;
-                            }
-
-                            if (tagsGroup.getChildren().isEmpty()) {
-                                pcs.firePropertyChange(new PropertyChangeEvent(this,
-                                        "state", null, State.EMPTY));
-                            } else {
-                                pcs.firePropertyChange(new PropertyChangeEvent(this,
-                                        "state", null, State.CREATE));
-                            }
-                        } else if (event.getPropertyName().equals(ImageTagControls.FOCUSED.getName())) {
-                            pcs.firePropertyChange(new PropertyChangeEvent(this,
-                                    "state", null, State.SELECTED));
-                        }
-                    });
-
-                    scrollPane = new ScrollPane(masterGroup); // scrolls and sizes imageview
-                    scrollPane.getStyleClass().add("bg"); //NOI18N
-                    scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
-                    scrollPane.setHbarPolicy(ScrollBarPolicy.AS_NEEDED);
-
-                    fxPanel = new JFXPanel(); // bridge jfx-swing
-                    Scene scene = new Scene(scrollPane); //root of jfx tree
-                    scene.getStylesheets().add(MediaViewImagePanel.class.getResource("MediaViewImagePanel.css").toExternalForm()); //NOI18N
-                    fxPanel.setScene(scene);
-
-                    fxImageView.setSmooth(true);
-                    fxImageView.setCache(true);
-
-                    EventQueue.invokeLater(() -> {
-                        add(fxPanel);//add jfx ui to JPanel
-                    });
+                    addFxPanel();
                 }
             });
+        }
+    }
+
+    private synchronized void addFxPanel() {
+        // build jfx ui (we could do this in FXML?)
+        fxImageView = new ImageView();  // will hold image
+        masterGroup = new Group(fxImageView);
+        tagsGroup = new ImageTagsGroup(fxImageView);
+        tagsGroup.getChildren().addListener((Change<? extends Node> c) -> {
+            if (c.getList().isEmpty()) {
+                pcs.firePropertyChange(new PropertyChangeEvent(this,
+                        "state", null, State.EMPTY));
+            }
+        });
+
+        subscribeTagMenuItemsToStateChanges();
+
+        masterGroup.getChildren().add(tagsGroup);
+
+        //Update buttons when users select (or unselect) image tags.
+        tagsGroup.addFocusChangeListener((event) -> {
+            focusChangeAction(event);
+        });
+
+        scrollPane = new ScrollPane(masterGroup); // scrolls and sizes imageview
+        scrollPane.getStyleClass().add("bg"); //NOI18N
+        scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setHbarPolicy(ScrollBarPolicy.AS_NEEDED);
+
+        fxPanel = new JFXPanel(); // bridge jfx-swing
+        Scene scene = new Scene(scrollPane); //root of jfx tree
+        scene
+                .getStylesheets().add(MediaViewImagePanel.class
+                        .getResource("MediaViewImagePanel.css").toExternalForm()); //NOI18N
+        fxPanel.setScene(scene);
+
+        fxImageView.setSmooth(true);
+        fxImageView.setCache(true);
+
+        EventQueue.invokeLater(() -> {
+            add(fxPanel);//add jfx ui to JPanel
+        });
+    }
+
+    private synchronized void focusChangeAction(PropertyChangeEvent event) {
+        if (event.getPropertyName().equals(ImageTagControls.NOT_FOCUSED.getName())) {
+            if (masterGroup.getChildren().contains(imageTagCreator)) {
+                return;
+            }
+
+            if (tagsGroup.getChildren().isEmpty()) {
+                pcs.firePropertyChange(new PropertyChangeEvent(this,
+                        "state", null, State.EMPTY));
+            } else {
+                pcs.firePropertyChange(new PropertyChangeEvent(this,
+                        "state", null, State.CREATE));
+            }
+        } else if (event.getPropertyName().equals(ImageTagControls.FOCUSED.getName())) {
+            pcs.firePropertyChange(new PropertyChangeEvent(this,
+                    "state", null, State.SELECTED));
         }
     }
 
@@ -282,10 +293,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                     exportTagsMenuItem.setEnabled(true);
                     break;
                 case SELECTED:
-                    if (masterGroup.getChildren().contains(imageTagCreator)) {
-                        imageTagCreator.disconnect();
-                        masterGroup.getChildren().remove(imageTagCreator);
-                    }
+                    masterGroupRemove();
                     createTagMenuItem.setEnabled(false);
                     deleteTagMenuItem.setEnabled(true);
                     hideTagsMenuItem.setEnabled(true);
@@ -307,9 +315,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                     break;
                 case DEFAULT:
                 case EMPTY:
-                    if (masterGroup.getChildren().contains(imageTagCreator)) {
-                        imageTagCreator.disconnect();
-                    }
+                    disconnectImageTagCreator();
                     createTagMenuItem.setEnabled(true);
                     deleteTagMenuItem.setEnabled(false);
                     hideTagsMenuItem.setEnabled(false);
@@ -334,23 +340,40 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         });
     }
 
-    public boolean isInited() {
+    private synchronized void disconnectImageTagCreator() {
+        if (masterGroup.getChildren().contains(imageTagCreator)) {
+            imageTagCreator.disconnect();
+        }
+    }
+
+    private synchronized void masterGroupRemove() {
+        if (masterGroup.getChildren().contains(imageTagCreator)) {
+            imageTagCreator.disconnect();
+            masterGroup.getChildren().remove(imageTagCreator);
+        }
+    }
+
+    boolean isInited() {
         return fxInited;
     }
 
     /**
      * Clear the displayed image
      */
-    public void reset() {
+    void reset() {
         Platform.runLater(() -> {
-            fxImageView.setViewport(new Rectangle2D(0, 0, 0, 0));
-            fxImageView.setImage(null);
-            pcs.firePropertyChange(new PropertyChangeEvent(this,
-                    "state", null, State.DEFAULT));
-            masterGroup.getChildren().clear();
-            scrollPane.setContent(null);
-            scrollPane.setContent(masterGroup);
+            resetNow();
         });
+    }
+
+    private synchronized void resetNow() {
+        fxImageView.setViewport(new Rectangle2D(0, 0, 0, 0));
+        fxImageView.setImage(null);
+        pcs.firePropertyChange(new PropertyChangeEvent(this,
+                "state", null, State.DEFAULT));
+        masterGroup.getChildren().clear();
+        scrollPane.setContent(null);
+        scrollPane.setContent(masterGroup);
     }
 
     private void showErrorNode(String errorMessage, AbstractFile file) {
@@ -379,12 +402,54 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         }
 
         Platform.runLater(() -> {
-            if (readImageTask != null) {
+            showImageFxHelper(file);
+        });
+    }
+
+    
+    private synchronized void showImageFxHelper(final AbstractFile file){
+        if (readImageTask != null) {
                 readImageTask.cancel();
             }
             readImageTask = ImageUtils.newReadImageTask(file);
             readImageTask.setOnSucceeded(succeeded -> {
-                if (!Case.isCaseOpen()) {
+                imageTaskSucceed(file);
+            });
+            readImageTask.setOnFailed(failed -> {
+                imageTaskFail(file);
+            });
+
+            maskerPane.setProgressNode(progressBar);
+            progressBar.progressProperty().bind(readImageTask.progressProperty());
+            maskerPane.textProperty().bind(readImageTask.messageProperty());
+            scrollPane.setContent(null); // Prevent content display issues.
+            scrollPane.setCursor(Cursor.WAIT);
+            new Thread(readImageTask).start();
+    }
+    
+    private synchronized void imageTaskFail(final AbstractFile currentFile){
+        if (!Case.isCaseOpen()) {
+                    /*
+                     * Handle in-between condition when case is being closed and
+                     * an image was previously selected
+                     *
+                     * NOTE: I think this is unnecessary -jm
+                     */
+                    reset();
+                    return;
+                }
+                Throwable exception = readImageTask.getException();
+                if (exception instanceof OutOfMemoryError
+                        && exception.getMessage().contains("Java heap space")) {
+                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_OOMText(), currentFile);
+                } else {
+                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), currentFile);
+                }
+
+                scrollPane.setCursor(Cursor.DEFAULT);
+    }
+    private synchronized void imageTaskSucceed(final AbstractFile currentFile){
+         if (!Case.isCaseOpen()) {
                     /*
                      * Handle the in-between condition when case is being closed
                      * and an image was previously selected
@@ -400,7 +465,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                     Image fxImage = readImageTask.get();
                     masterGroup.getChildren().clear();
                     tagsGroup.getChildren().clear();
-                    this.file = file;
+                    this.file = currentFile;
                     if (nonNull(fxImage)) {
                         // We have a non-null image, so let's show it.
                         fxImageView.setImage(fxImage);
@@ -410,7 +475,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
                         try {
                             List<ContentTag> tags = Case.getCurrentCase().getServices()
-                                    .getTagsManager().getContentTagsByContent(file);
+                                    .getTagsManager().getContentTagsByContent(currentFile);
 
                             List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
                             //Add all image tags                            
@@ -424,44 +489,13 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                         }
                         scrollPane.setContent(masterGroup);
                     } else {
-                        showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
+                        showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), currentFile);
                     }
                 } catch (InterruptedException | ExecutionException ex) {
-                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
+                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), currentFile);
                 }
                 scrollPane.setCursor(Cursor.DEFAULT);
-            });
-            readImageTask.setOnFailed(failed -> {
-                if (!Case.isCaseOpen()) {
-                    /*
-                     * Handle in-between condition when case is being closed and
-                     * an image was previously selected
-                     *
-                     * NOTE: I think this is unnecessary -jm
-                     */
-                    reset();
-                    return;
-                }
-                Throwable exception = readImageTask.getException();
-                if (exception instanceof OutOfMemoryError
-                        && exception.getMessage().contains("Java heap space")) {
-                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_OOMText(), file);
-                } else {
-                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
-                }
-
-                scrollPane.setCursor(Cursor.DEFAULT);
-            });
-
-            maskerPane.setProgressNode(progressBar);
-            progressBar.progressProperty().bind(readImageTask.progressProperty());
-            maskerPane.textProperty().bind(readImageTask.messageProperty());
-            scrollPane.setContent(null); // Prevent content display issues.
-            scrollPane.setCursor(Cursor.WAIT);
-            new Thread(readImageTask).start();
-        });
     }
-
     /**
      * Finds all ContentViewerTags that are of type 'ImageTagRegion' for the
      * current file.
@@ -476,9 +510,11 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private List<ContentViewerTag<ImageTagRegion>> getContentViewerTags(List<ContentTag> contentTags)
             throws TskCoreException, NoCurrentCaseException {
         List<ContentViewerTag<ImageTagRegion>> contentViewerTags = new ArrayList<>();
+
         for (ContentTag contentTag : contentTags) {
             ContentViewerTag<ImageTagRegion> contentViewerTag = ContentViewerTagManager
-                    .getTag(contentTag, ImageTagRegion.class);
+                    .getTag(contentTag, ImageTagRegion.class
+                    );
             if (contentViewerTag == null) {
                 continue;
             }
@@ -535,7 +571,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      *
      * @return
      */
-    public List<String> getExtensions() {
+    List<String> getExtensions() {
         return Collections.unmodifiableList(supportedExtensions);
     }
 
@@ -693,14 +729,14 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     private void rotateLeftButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateLeftButtonActionPerformed
         autoResize = false;
-        
+
         rotation = (rotation + 270) % 360;
         updateView();
     }//GEN-LAST:event_rotateLeftButtonActionPerformed
 
     private void rotateRightButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateRightButtonActionPerformed
         autoResize = false;
-        
+
         rotation = (rotation + 90) % 360;
         updateView();
     }//GEN-LAST:event_rotateRightButtonActionPerformed
@@ -774,7 +810,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * Enables create tag logic when the Create button is pressed in the Tags
      * Menu.
      */
-    private void createTag() {
+    private synchronized void createTag() {
         pcs.firePropertyChange(new PropertyChangeEvent(this,
                 "state", null, State.DISABLE));
         imageTagCreator = new ImageTagCreator(fxImageView);
@@ -806,8 +842,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
             //Remove image tag creator from panel
             Platform.runLater(() -> {
-                imageTagCreator.disconnect();
-                masterGroup.getChildren().remove(imageTagCreator);
+               masterGroupRemove();
             });
         };
 
@@ -864,7 +899,12 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      */
     private void showOrHideTags() {
         Platform.runLater(() -> {
-            if (DisplayOptions.HIDE_TAGS.getName().equals(hideTagsMenuItem.getText())) {
+            showOrHideHelper();
+        });
+    }
+    
+    private synchronized void showOrHideHelper(){
+                    if (DisplayOptions.HIDE_TAGS.getName().equals(hideTagsMenuItem.getText())) {
                 //Temporarily remove the tags group and update buttons
                 masterGroup.getChildren().remove(tagsGroup);
                 hideTagsMenuItem.setText(DisplayOptions.SHOW_TAGS.getName());
@@ -878,7 +918,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 pcs.firePropertyChange(new PropertyChangeEvent(this,
                         "state", null, State.VISIBLE));
             }
-        });
     }
 
     @NbBundle.Messages({
@@ -928,6 +967,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private void tagsMenuMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tagsMenuMousePressed
         if (imageTaggingOptions.isEnabled()) {
             imageTaggingOptions.show(tagsMenu, -300 + tagsMenu.getWidth(), tagsMenu.getHeight() + 3);
+
         }
     }//GEN-LAST:event_tagsMenuMousePressed
 
@@ -1023,7 +1063,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * are also made to try and ensure when the user zooms out, they don't find
      * themselves looking at an entire screen of dead space.
      */
-    private void updateView() {
+    private synchronized void updateView() {
         Image image = fxImageView.getImage();
         if (image == null) {
             return;
