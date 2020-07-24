@@ -65,8 +65,10 @@ abstract class CVTFilterRefresher implements RefreshThrottler.Refresher {
             try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery("SELECT MAX(date_time) as end,  MIN(date_time) as start from account_relationships")) {
                 // ResultSet is closed by CasDBQuery
                 ResultSet rs = dbQuery.getResultSet();
+                
                 startTime = rs.getInt("start"); // NON-NLS
                 endTime = rs.getInt("end"); // NON-NLS
+                
             }
             // Get the devices with CVT artifacts
             List<Integer> deviceObjIds = new ArrayList<>();
