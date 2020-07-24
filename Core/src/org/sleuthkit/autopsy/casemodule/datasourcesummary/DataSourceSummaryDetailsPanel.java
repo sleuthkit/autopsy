@@ -19,13 +19,12 @@
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.text.DecimalFormat;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -70,7 +69,7 @@ class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
 
-        if (dataSource == null) {
+        if (dataSource == null || !Case.isCaseOpen()) {
             updateDetailsPanelData(null, null, null, null);
         } else {
             long id = dataSource.getId();

@@ -33,35 +33,56 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
-
 /**
  * A tabular result viewer that displays a summary of the selected Data Source.
  */
 @ServiceProvider(service = DataResultViewer.class)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
+
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DataSourceSummaryResultViewer.class.getName());
-    
+
     private final String title;
-    
+
+    /**
+     * Constructs a tabular result viewer that displays a summary of the
+     * selected Data Source.
+     */
     public DataSourceSummaryResultViewer() {
         this(null);
     }
-    
+
+    /**
+     * Constructs a tabular result viewer that displays a summary of the
+     * selected Data Source.
+     *
+     * @param explorerManager The explorer manager of the ancestor top
+     *                        component.
+     *
+     */
     @Messages({
         "DataSourceSummaryResultViewer_title=Summary"
     })
     public DataSourceSummaryResultViewer(ExplorerManager explorerManager) {
         this(explorerManager, Bundle.DataSourceSummaryResultViewer_title());
     }
-    
+
+    /**
+     * Constructs a tabular result viewer that displays a summary of the
+     * selected Data Source.
+     *
+     * @param explorerManager The explorer manager of the ancestor top
+     *                        component.
+     * @param title           The title.
+     *
+     */
     public DataSourceSummaryResultViewer(ExplorerManager explorerManager, String title) {
         super(explorerManager);
         this.title = title;
         initComponents();
     }
-    
+
     @Override
     public DataResultViewer createInstance() {
         return new DataSourceSummaryResultViewer();
@@ -71,9 +92,16 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
     public boolean isSupported(Node node) {
         return getDataSource(node) != null;
     }
-    
+
+    /**
+     * Returns the datasource attached to the node or null if none can be found.
+     *
+     * @param node The node to search.
+     *
+     * @return The datasource or null if not found.
+     */
     private DataSource getDataSource(Node node) {
-        return node == null ? null: node.getLookup().lookup(DataSource.class);
+        return node == null ? null : node.getLookup().lookup(DataSource.class);
     }
 
     @Override
@@ -83,19 +111,18 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
             LOGGER.log(Level.SEVERE, "Attempting to run setNode() from non-EDT thread.");
             return;
         }
-        
+
         DataSource dataSource = getDataSource(node);
-                
+
         if (dataSource == null) {
             LOGGER.log(Level.SEVERE, "No datasource for node found.");
             return;
         }
-        
+
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             summaryPanel.setDataSource(dataSource);
-        }
-        finally {
+        } finally {
             this.setCursor(null);
         }
     }
@@ -104,7 +131,7 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
     public String getTitle() {
         return title;
     }
-    
+
     private void initComponents() {
         summaryPanel = new DataSourceSummaryTabbedPane();
         setLayout(new BorderLayout());

@@ -24,6 +24,7 @@ import javax.swing.JLabel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 import org.sleuthkit.datamodel.DataSource;
 
@@ -39,25 +40,28 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count"
 })
 class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
+
+    private static final Object[][] EMPTY_PAIRS = new Object[][]{};
+
     private static final Object[] MIME_TYPE_COLUMN_HEADERS = new Object[]{
         Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_type_header(),
         Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_count_header()
     };
-    
+
     private static final Object[] FILE_BY_CATEGORY_COLUMN_HEADERS = new Object[]{
         Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_type_header(),
         Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_count_header()
     };
-    
+
     private static final Object[] ARTIFACT_COUNTS_COLUMN_HEADERS = new Object[]{
         Bundle.DataSourceSummaryCountsPanel_ArtifactCountsTableModel_type_header(),
         Bundle.DataSourceSummaryCountsPanel_ArtifactCountsTableModel_count_header()
     };
-    
+
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryCountsPanel.class.getName());
     private final DefaultTableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer();
-    
+
     private DataSource dataSource;
 
     /**
@@ -71,41 +75,62 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         setDataSource(null);
     }
 
+    /**
+     * The datasource currently used as the model in this panel.
+     *
+     * @return The datasource currently being used as the model in this panel.
+     */
     public DataSource getDataSource() {
         return dataSource;
     }
 
+    /**
+     * Sets datasource to visualize in the panel.
+     *
+     * @param dataSource The datasource to use in this panel.
+     */
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
-        updateCountsTableData(dataSource);
+        if (dataSource == null || !Case.isCaseOpen()) {
+            updateCountsTableData(EMPTY_PAIRS,
+                    EMPTY_PAIRS,
+                    EMPTY_PAIRS);
+        } else {
+            updateCountsTableData(getMimeTypeModel(dataSource),
+                    getFileCategoryModel(dataSource),
+                    getArtifactCountsModel(dataSource));
+        }
+
     }
 
     /**
-     * Specify the DataSource to display file information for
+     * Specify the DataSource to display file information for.
      *
-     * @param selectedDataSource the DataSource to display file information for
+     * @param mimeTypeDataModel     The mime type data model.
+     * @param fileCategoryDataModel The file category data model.
+     * @param artifactDataModel     The artifact type data model.
      */
-    private void updateCountsTableData(DataSource selectedDataSource) {
-        fileCountsByMimeTypeTable.setModel(new DefaultTableModel(getMimeTypeModel(selectedDataSource), MIME_TYPE_COLUMN_HEADERS));
+    private void updateCountsTableData(Object[][] mimeTypeDataModel, Object[][] fileCategoryDataModel, Object[][] artifactDataModel) {
+        fileCountsByMimeTypeTable.setModel(new DefaultTableModel(mimeTypeDataModel, MIME_TYPE_COLUMN_HEADERS));
         fileCountsByMimeTypeTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
         fileCountsByMimeTypeTable.getColumnModel().getColumn(0).setPreferredWidth(130);
-        
-        fileCountsByCategoryTable.setModel(new DefaultTableModel(getFileCategoryModel(selectedDataSource), FILE_BY_CATEGORY_COLUMN_HEADERS));
+
+        fileCountsByCategoryTable.setModel(new DefaultTableModel(fileCategoryDataModel, FILE_BY_CATEGORY_COLUMN_HEADERS));
         fileCountsByCategoryTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
         fileCountsByCategoryTable.getColumnModel().getColumn(0).setPreferredWidth(130);
- 
-        artifactCountsTable.setModel(new DefaultTableModel(getArtifactCountsModel(selectedDataSource), ARTIFACT_COUNTS_COLUMN_HEADERS));
+
+        artifactCountsTable.setModel(new DefaultTableModel(artifactDataModel, ARTIFACT_COUNTS_COLUMN_HEADERS));
         artifactCountsTable.getColumnModel().getColumn(0).setPreferredWidth(230);
         artifactCountsTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
-        
+
         this.repaint();
     }
-    
-    
-    private static Object[] pair(String key, Object val) {
-        return new Object[]{key, val};
-    }
-    
+
+    /**
+     * Determines the JTable data model for datasource mime types.
+     * @param dataSource The DataSource.
+     * @return The model to be used with a JTable.
+     */
     @Messages({
         "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.images.row=Images",
         "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.videos.row=Videos",
@@ -115,24 +140,34 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     })
     private static Object[][] getMimeTypeModel(DataSource dataSource) {
         return new Object[][]{
-            pair(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_images_row(), 
-                    getCount(dataSource, FileTypeUtils.FileTypeCategory.IMAGE)),
-            pair(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_videos_row(), 
-                    getCount(dataSource, FileTypeUtils.FileTypeCategory.VIDEO)),
-            pair(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_audio_row(), 
-                    getCount(dataSource, FileTypeUtils.FileTypeCategory.AUDIO)),
-            pair(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_documents_row(), 
-                    getCount(dataSource, FileTypeUtils.FileTypeCategory.DOCUMENTS)),
-            pair(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_executables_row(), 
-                    getCount(dataSource, FileTypeUtils.FileTypeCategory.EXECUTABLE))
+            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_images_row(),
+                getCount(dataSource, FileTypeUtils.FileTypeCategory.IMAGE)},
+            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_videos_row(),
+                getCount(dataSource, FileTypeUtils.FileTypeCategory.VIDEO)},
+            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_audio_row(),
+                getCount(dataSource, FileTypeUtils.FileTypeCategory.AUDIO)},
+            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_documents_row(),
+                getCount(dataSource, FileTypeUtils.FileTypeCategory.DOCUMENTS)},
+            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_executables_row(),
+                getCount(dataSource, FileTypeUtils.FileTypeCategory.EXECUTABLE)}
         };
     }
 
+    /**
+     * Retrieves the counts of files of a particular mime type for a particular DataSource.
+     * @param dataSource The DataSource.
+     * @param category The mime type category.
+     * @return The count.
+     */
     private static Long getCount(DataSource dataSource, FileTypeUtils.FileTypeCategory category) {
         return DataSourceInfoUtilities.getCountOfFilesForMimeTypes(dataSource, category.getMediaTypes());
     }
-    
-    
+
+    /**
+     * Determines the JTable data model for datasource file categories.
+     * @param dataSource The DataSource.
+     * @return The model to be used with a JTable.
+     */
     @Messages({
         "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.all.row=All",
         "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.allocated.row=Allocated",
@@ -150,20 +185,29 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         Long directories = zeroIfNull(DataSourceInfoUtilities.getCountsOfDirectories().get(dataSourceId));
 
         return new Object[][]{
-            pair(Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_all_row(), fileCount),
-            pair(Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_allocated_row(), allocatedFiles),
-            pair(Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_unallocated_row(), unallocatedFiles),
-            pair(Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_slack_row(), slackFiles),
-            pair(Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_directory_row(), directories)
+            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_all_row(), fileCount},
+            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_allocated_row(), allocatedFiles},
+            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_unallocated_row(), unallocatedFiles},
+            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_slack_row(), slackFiles},
+            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_directory_row(), directories}
         };
     }
 
-
+    /**
+     * Returns 0 if value is null.
+     * @param origValue The original value.
+     * @return The value or 0 if null.
+     */
     private static Long zeroIfNull(Long origValue) {
         return origValue == null ? 0 : origValue;
     }
 
-
+    /**
+     * Safely gets the allocated files count.
+     * @param allFilesCount The count of all files.
+     * @param unallocatedFilesCount The count of unallocated files.
+     * @return The count of allocated files.
+     */
     private static long getAllocatedCount(Long allFilesCount, Long unallocatedFilesCount) {
         if (allFilesCount == null) {
             return 0;
@@ -173,17 +217,22 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
             return allFilesCount - unallocatedFilesCount;
         }
     }
-    
+
+    /**
+     * The counts of different artifact types found in a DataSource.
+     * @param selectedDataSource The DataSource.
+     * @return The JTable data model of counts of artifact types.
+     */
     private static Object[][] getArtifactCountsModel(DataSource selectedDataSource) {
         Long dataSourceId = selectedDataSource == null ? null : selectedDataSource.getId();
         Map<String, Long> artifactMapping = DataSourceInfoUtilities.getCountsOfArtifactsByType().get(dataSourceId);
         if (artifactMapping == null) {
-            return new Object[][]{};
+            return EMPTY_PAIRS;
         }
-        
+
         return artifactMapping.entrySet().stream()
                 .filter((entrySet) -> entrySet != null && entrySet.getKey() != null)
-                .sorted((a,b) -> a.getKey().compareTo(b.getKey()))
+                .sorted((a, b) -> a.getKey().compareTo(b.getKey()))
                 .map((entrySet) -> new Object[]{entrySet.getKey(), entrySet.getValue()})
                 .toArray(Object[][]::new);
     }

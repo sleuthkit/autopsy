@@ -19,21 +19,26 @@
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import javax.swing.JTabbedPane;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
  * A tabbed pane showing the summary of a data source including tabs of:
- * DataSourceSummaryCountsPanel, DataSourceSummaryDetailsPanel, and 
+ * DataSourceSummaryCountsPanel, DataSourceSummaryDetailsPanel, and
  * IngestJobInfoPanel.
  */
 public class DataSourceSummaryTabbedPane extends JTabbedPane {
+
     private final DataSourceSummaryCountsPanel countsPanel;
     private final DataSourceSummaryDetailsPanel detailsPanel;
     private final IngestJobInfoPanel ingestHistoryPanel;
-    
+
     private DataSource dataSource = null;
-        
+
+    /**
+     * Constructs a tabbed pane showing the summary of a data source.
+     */
     public DataSourceSummaryTabbedPane() {
         countsPanel = new DataSourceSummaryCountsPanel();
         detailsPanel = new DataSourceSummaryDetailsPanel();
@@ -47,15 +52,29 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
         addTab(Bundle.DataSourceSummaryDialog_countsTab_title(), countsPanel);
         addTab(Bundle.DataSourceSummaryDialog_ingestHistoryTab_title(), ingestHistoryPanel);
     }
-    
+
+    /**
+     * The datasource currently used as the model in this panel.
+     *
+     * @return The datasource currently being used as the model in this panel.
+     */
     public DataSource getDataSource() {
         return dataSource;
     }
 
+    /**
+     * Sets datasource to visualize in the tabbed panel.
+     *
+     * @param dataSource The datasource to use in this panel.
+     */
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
+
         countsPanel.setDataSource(dataSource);
         detailsPanel.setDataSource(dataSource);
-        ingestHistoryPanel.setDataSource(dataSource);
+        
+        // make sure ingest history panel doesn't try to show a data source when null or case is closed
+        ingestHistoryPanel.setDataSource(
+                dataSource != null && Case.isCaseOpen() ? dataSource : null);
     }
 }
