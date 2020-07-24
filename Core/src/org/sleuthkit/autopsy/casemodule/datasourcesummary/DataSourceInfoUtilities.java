@@ -97,6 +97,51 @@ final class DataSourceInfoUtilities {
         }
     }
 
+    private static Long baseCountOfFiles(DataSource currentDataSource, String additionalWhere, String onError) {
+        if (currentDataSource != null) {
+            try {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                return skCase.countFilesWhere(
+                        "COUNT(*) AS value"
+                        + " FROM tsk_files"
+                        + " WHERE dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
+                        + " AND name<>''"
+                        + " AND data_source_obj_id=" + currentDataSource.getId()
+                        + " AND " + additionalWhere);
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, onError, ex);
+                //unable to get count of files for the specified mimetypes cell will be displayed as empty
+            }
+        }
+        return null;
+    }
+
+    static Long getCountOfFiles(DataSource currentDataSource) {
+        return baseCountOfFiles(currentDataSource,
+                "type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType(),
+                "Unable to get count of files, providing empty results");
+    }
+
+    static Long getCountOfUnallocatedFiles(DataSource currentDataSource) {
+        return baseCountOfFiles(currentDataSource,
+                "type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                + " AND dir_flags=" + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue(),
+                "Unable to get counts of unallocated files for datasource, providing empty results");
+    }
+
+    static Long getCountOfDirectories(DataSource currentDataSource) {
+        return baseCountOfFiles(currentDataSource,
+                "'type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                + " AND meta_type=" + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue(),
+                "Unable to get count of directories for datasource, providing empty results");
+    }
+
+    static Long getCountOfSlackFiles(DataSource currentDataSource) {
+        return baseCountOfFiles(currentDataSource,
+                "type=" + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType(),
+                "Unable to get count of slack files for datasources, providing empty results");
+    }
+
     /**
      * Get a map containing the number of artifacts in each data source in the
      * current case.

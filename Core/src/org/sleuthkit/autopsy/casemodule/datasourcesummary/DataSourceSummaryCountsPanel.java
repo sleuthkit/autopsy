@@ -178,11 +178,11 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     private static Object[][] getFileCategoryModel(DataSource selectedDataSource) {
         Long dataSourceId = selectedDataSource == null ? null : selectedDataSource.getId();
         // or 0 if not found
-        Long fileCount = zeroIfNull(DataSourceInfoUtilities.getCountsOfFiles().get(dataSourceId));
-        Long unallocatedFiles = zeroIfNull(DataSourceInfoUtilities.getCountsOfUnallocatedFiles().get(dataSourceId));
+        Long fileCount = zeroIfNull(DataSourceInfoUtilities.getCountOfFiles(selectedDataSource));
+        Long unallocatedFiles = zeroIfNull(DataSourceInfoUtilities.getCountOfUnallocatedFiles(selectedDataSource));
         Long allocatedFiles = zeroIfNull(getAllocatedCount(fileCount, unallocatedFiles));
-        Long slackFiles = zeroIfNull(DataSourceInfoUtilities.getCountsOfSlackFiles().get(dataSourceId));
-        Long directories = zeroIfNull(DataSourceInfoUtilities.getCountsOfDirectories().get(dataSourceId));
+        Long slackFiles = zeroIfNull(DataSourceInfoUtilities.getCountOfSlackFiles(selectedDataSource));
+        Long directories = zeroIfNull(DataSourceInfoUtilities.getCountOfDirectories(selectedDataSource));
 
         return new Object[][]{
             new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_all_row(), fileCount},
