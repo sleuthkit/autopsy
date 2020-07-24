@@ -217,6 +217,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         }
     }
 
+    /**
+     * Private helper method to ensure the adding of the FX panel is
+     * synchronized.
+     */
     private synchronized void addFxPanel() {
         // build jfx ui (we could do this in FXML?)
         fxImageView = new ImageView();  // will hold image
@@ -258,6 +262,12 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         });
     }
 
+    /**
+     * Private helper method to ensure that when the focus changes the code
+     * executed is synchronized.
+     *
+     * @param event The even triggered in response to the focus changing.
+     */
     private synchronized void focusChangeAction(PropertyChangeEvent event) {
         if (event.getPropertyName().equals(ImageTagControls.NOT_FOCUSED.getName())) {
             if (masterGroup.getChildren().contains(imageTagCreator)) {
@@ -293,7 +303,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                     exportTagsMenuItem.setEnabled(true);
                     break;
                 case SELECTED:
-                    masterGroupRemove();
+                    removeImageTagCreator();
                     createTagMenuItem.setEnabled(false);
                     deleteTagMenuItem.setEnabled(true);
                     hideTagsMenuItem.setEnabled(true);
@@ -340,19 +350,32 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         });
     }
 
+    /**
+     * Private helper method to ensure the disconnecting of the imageTagCreator
+     * in the masterGroup is synchronized.
+     */
     private synchronized void disconnectImageTagCreator() {
         if (masterGroup.getChildren().contains(imageTagCreator)) {
             imageTagCreator.disconnect();
         }
     }
 
-    private synchronized void masterGroupRemove() {
+    /**
+     * Private helper method to ensure removal of the imageTagCreator from the
+     * masterGroup is synchronized.
+     */
+    private synchronized void removeImageTagCreator() {
         if (masterGroup.getChildren().contains(imageTagCreator)) {
             imageTagCreator.disconnect();
             masterGroup.getChildren().remove(imageTagCreator);
         }
     }
 
+    /**
+     * Has JavaFx been initiated.
+     *
+     * @return True if JavaFx has been initiated, false otherwise.
+     */
     boolean isInited() {
         return fxInited;
     }
@@ -366,6 +389,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         });
     }
 
+    /**
+     * Private helper method to ensure the clearing of the displayed image is
+     * synchronized.
+     */
     private synchronized void resetNow() {
         fxImageView.setViewport(new Rectangle2D(0, 0, 0, 0));
         fxImageView.setImage(null);
@@ -394,108 +421,126 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     /**
      * Show the contents of the given AbstractFile as a visual image.
      *
-     * @param file image file to show
+     * @param file The image file to show.
      */
     void showImageFx(final AbstractFile file) {
         if (!fxInited) {
             return;
         }
-
         Platform.runLater(() -> {
             showImageFxHelper(file);
         });
     }
 
-    
-    private synchronized void showImageFxHelper(final AbstractFile file){
+    /**
+     * Private helper method to ensure the displaying of an image is
+     * synchronized.
+     *
+     * @param currentFile The image file to show.
+     */
+    private synchronized void showImageFxHelper(final AbstractFile currentFile) {
         if (readImageTask != null) {
-                readImageTask.cancel();
-            }
-            readImageTask = ImageUtils.newReadImageTask(file);
-            readImageTask.setOnSucceeded(succeeded -> {
-                imageTaskSucceed(file);
-            });
-            readImageTask.setOnFailed(failed -> {
-                imageTaskFail(file);
-            });
+            readImageTask.cancel();
+        }
+        readImageTask = ImageUtils.newReadImageTask(currentFile);
+        readImageTask.setOnSucceeded(succeeded -> {
+            imageTaskSucceed(currentFile);
+        });
+        readImageTask.setOnFailed(failed -> {
+            imageTaskFail(currentFile);
+        });
 
-            maskerPane.setProgressNode(progressBar);
-            progressBar.progressProperty().bind(readImageTask.progressProperty());
-            maskerPane.textProperty().bind(readImageTask.messageProperty());
-            scrollPane.setContent(null); // Prevent content display issues.
-            scrollPane.setCursor(Cursor.WAIT);
-            new Thread(readImageTask).start();
+        maskerPane.setProgressNode(progressBar);
+        progressBar.progressProperty().bind(readImageTask.progressProperty());
+        maskerPane.textProperty().bind(readImageTask.messageProperty());
+        scrollPane.setContent(null); // Prevent content display issues.
+        scrollPane.setCursor(Cursor.WAIT);
+        new Thread(readImageTask).start();
     }
-    
-    private synchronized void imageTaskFail(final AbstractFile currentFile){
+
+    /**
+     * Private helper method to ensure the failure to display an image is
+     * synchronized.
+     *
+     * @param currentFile The image file to show.
+     */
+    private synchronized void imageTaskFail(final AbstractFile currentFile) {
         if (!Case.isCaseOpen()) {
-                    /*
-                     * Handle in-between condition when case is being closed and
-                     * an image was previously selected
-                     *
-                     * NOTE: I think this is unnecessary -jm
-                     */
-                    reset();
-                    return;
-                }
-                Throwable exception = readImageTask.getException();
-                if (exception instanceof OutOfMemoryError
-                        && exception.getMessage().contains("Java heap space")) {
-                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_OOMText(), currentFile);
-                } else {
-                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), currentFile);
-                }
+            /*
+             * Handle in-between condition when case is being closed and an
+             * image was previously selected
+             *
+             * NOTE: I think this is unnecessary -jm
+             */
+            reset();
+            return;
+        }
+        Throwable exception = readImageTask.getException();
+        if (exception instanceof OutOfMemoryError
+                && exception.getMessage().contains("Java heap space")) {
+            showErrorNode(Bundle.MediaViewImagePanel_errorLabel_OOMText(), currentFile);
+        } else {
+            showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), currentFile);
+        }
 
-                scrollPane.setCursor(Cursor.DEFAULT);
+        scrollPane.setCursor(Cursor.DEFAULT);
     }
-    private synchronized void imageTaskSucceed(final AbstractFile currentFile){
-         if (!Case.isCaseOpen()) {
-                    /*
-                     * Handle the in-between condition when case is being closed
-                     * and an image was previously selected
-                     *
-                     * NOTE: I think this is unnecessary -jm
-                     */
-                    reset();
-                    return;
-                }
+
+    /**
+     * Private helper method to ensure the successful display an image is
+     * synchronized.
+     *
+     * @param currentFile The image file to show.
+     */
+    private synchronized void imageTaskSucceed(final AbstractFile currentFile) {
+        if (!Case.isCaseOpen()) {
+            /*
+             * Handle the in-between condition when case is being closed and an
+             * image was previously selected
+             *
+             * NOTE: I think this is unnecessary -jm
+             */
+            reset();
+            return;
+        }
+
+        try {
+            autoResize = true;
+            Image fxImage = readImageTask.get();
+            masterGroup.getChildren().clear();
+            tagsGroup.getChildren().clear();
+            this.file = currentFile;
+            if (nonNull(fxImage)) {
+                // We have a non-null image, so let's show it.
+                fxImageView.setImage(fxImage);
+                resetView();
+                masterGroup.getChildren().add(fxImageView);
+                masterGroup.getChildren().add(tagsGroup);
 
                 try {
-                    autoResize = true;
-                    Image fxImage = readImageTask.get();
-                    masterGroup.getChildren().clear();
-                    tagsGroup.getChildren().clear();
-                    this.file = currentFile;
-                    if (nonNull(fxImage)) {
-                        // We have a non-null image, so let's show it.
-                        fxImageView.setImage(fxImage);
-                        resetView();
-                        masterGroup.getChildren().add(fxImageView);
-                        masterGroup.getChildren().add(tagsGroup);
+                    List<ContentTag> tags = Case.getCurrentCase().getServices()
+                            .getTagsManager().getContentTagsByContent(currentFile);
 
-                        try {
-                            List<ContentTag> tags = Case.getCurrentCase().getServices()
-                                    .getTagsManager().getContentTagsByContent(currentFile);
-
-                            List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
-                            //Add all image tags                            
-                            tagsGroup = buildImageTagsGroup(contentViewerTags);
-                            if (!tagsGroup.getChildren().isEmpty()) {
-                                pcs.firePropertyChange(new PropertyChangeEvent(this,
-                                        "state", null, State.NONEMPTY));
-                            }
-                        } catch (TskCoreException | NoCurrentCaseException ex) {
-                            LOGGER.log(Level.WARNING, "Could not retrieve image tags for file in case db", ex); //NON-NLS
-                        }
-                        scrollPane.setContent(masterGroup);
-                    } else {
-                        showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), currentFile);
+                    List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
+                    //Add all image tags                            
+                    tagsGroup = buildImageTagsGroup(contentViewerTags);
+                    if (!tagsGroup.getChildren().isEmpty()) {
+                        pcs.firePropertyChange(new PropertyChangeEvent(this,
+                                "state", null, State.NONEMPTY));
                     }
-                } catch (InterruptedException | ExecutionException ex) {
-                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), currentFile);
+                } catch (TskCoreException | NoCurrentCaseException ex) {
+                    LOGGER.log(Level.WARNING, "Could not retrieve image tags for file in case db", ex); //NON-NLS
                 }
-                scrollPane.setCursor(Cursor.DEFAULT);
+                scrollPane.setContent(masterGroup);
+            } else {
+                showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), currentFile);
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), currentFile);
+        }
+        scrollPane.setCursor(Cursor.DEFAULT);
     }
+
     /**
      * Finds all ContentViewerTags that are of type 'ImageTagRegion' for the
      * current file.
@@ -842,7 +887,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
             //Remove image tag creator from panel
             Platform.runLater(() -> {
-               masterGroupRemove();
+                removeImageTagCreator();
             });
         };
 
@@ -902,22 +947,22 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             showOrHideHelper();
         });
     }
-    
-    private synchronized void showOrHideHelper(){
-                    if (DisplayOptions.HIDE_TAGS.getName().equals(hideTagsMenuItem.getText())) {
-                //Temporarily remove the tags group and update buttons
-                masterGroup.getChildren().remove(tagsGroup);
-                hideTagsMenuItem.setText(DisplayOptions.SHOW_TAGS.getName());
-                tagsGroup.clearFocus();
-                pcs.firePropertyChange(new PropertyChangeEvent(this,
-                        "state", null, State.HIDDEN));
-            } else {
-                //Add tags group back in and update buttons
-                masterGroup.getChildren().add(tagsGroup);
-                hideTagsMenuItem.setText(DisplayOptions.HIDE_TAGS.getName());
-                pcs.firePropertyChange(new PropertyChangeEvent(this,
-                        "state", null, State.VISIBLE));
-            }
+
+    private synchronized void showOrHideHelper() {
+        if (DisplayOptions.HIDE_TAGS.getName().equals(hideTagsMenuItem.getText())) {
+            //Temporarily remove the tags group and update buttons
+            masterGroup.getChildren().remove(tagsGroup);
+            hideTagsMenuItem.setText(DisplayOptions.SHOW_TAGS.getName());
+            tagsGroup.clearFocus();
+            pcs.firePropertyChange(new PropertyChangeEvent(this,
+                    "state", null, State.HIDDEN));
+        } else {
+            //Add tags group back in and update buttons
+            masterGroup.getChildren().add(tagsGroup);
+            hideTagsMenuItem.setText(DisplayOptions.HIDE_TAGS.getName());
+            pcs.firePropertyChange(new PropertyChangeEvent(this,
+                    "state", null, State.VISIBLE));
+        }
     }
 
     @NbBundle.Messages({
