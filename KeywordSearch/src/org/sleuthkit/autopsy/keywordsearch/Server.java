@@ -57,7 +57,6 @@ import org.apache.solr.client.solrj.response.CollectionAdminResponse;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import java.util.concurrent.TimeoutException;
-import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -246,7 +245,7 @@ public class Server {
 
     // A reference to the Solr server we are currently connected to for the Case.
     // This could be a local or remote server.
-    private CloudSolrClient remoteSolrServer;
+    private ConcurrentUpdateSolrClient remoteSolrServer;
 
     private Collection currentCollection;
     private final ReentrantReadWriteLock currentCoreLock;
@@ -261,7 +260,7 @@ public class Server {
     Server() {
         initSettings();
 
-        this.localSolrServer = getLocalSolrClient("http://localhost:" + currentSolrServerPort + "/solr");
+        this.localSolrServer = getSolrClient("http://localhost:" + currentSolrServerPort + "/solr");
         
         serverAction = new ServerAction();
         File solr8Folder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
@@ -326,17 +325,8 @@ public class Server {
             ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT, String.valueOf(currentSolrStopPort));
         }
     }
-    
-    private HttpSolrClient getSolrClient(String solrUrl) {
-        HttpSolrClient client = new HttpSolrClient.Builder(solrUrl)
-                .withConnectionTimeout(10000)
-                .withResponseParser(new XMLResponseParser())
-                .build();
 
-        return client;
-    }
-
-    private ConcurrentUpdateSolrClient getLocalSolrClient(String solrUrl) {
+    private ConcurrentUpdateSolrClient getSolrClient(String solrUrl) {
         int numThreads = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getNumThreads();
         int numDocs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getDocumentsQueueSize();
         int connectionTimeoutMs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getConnectionTimeout();
@@ -352,10 +342,16 @@ public class Server {
         return client;
     }
     
-    private CloudSolrClient getCloudSolrClient(List<String> solrUrls, String defaultCollectionName) {
-        CloudSolrClient client;
+    private CloudSolrClient getCloudSolrClient(String host, String port, String defaultCollectionName) throws SolrServerException, IOException {
+        List<String> solrServerList = getSolrServerList(host, port);
+        List<String> solrUrls = new ArrayList<>();
+        for (String server : solrServerList) {
+            solrUrls.add("http://" + server + "/solr");
+            logger.log(Level.INFO, "Using Solr server: {0}", server);
+        }
+        
         logger.log(Level.INFO, "Creating new CloudSolrClient"); //NON-NLS
-        client = new CloudSolrClient.Builder(solrUrls).build();
+        CloudSolrClient client = new CloudSolrClient.Builder(solrUrls).build();
         if (!defaultCollectionName.isEmpty()) {
             client.setDefaultCollection(defaultCollectionName);
         }
@@ -585,27 +581,8 @@ public class Server {
                     throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg")); 
                 }              
             } else {
-                
-                List<String> solrUrls = new ArrayList<>();
-                if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
-                    // Solr 8
-                    
-                    // read Solr conenction info from user preferences, unless "solrserver.txt" is present
-                    IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());                    
-                    List<String> solrServerList = getSolrServerList(properties.getHost(), properties.getPort());
-                    for (String server : solrServerList) {
-                        solrUrls.add("http://" + server + "/solr");
-                        logger.log(Level.INFO, "Using Solr server: {0}", server);
-                    }
-                } else {
-                    // Solr 4
-                    String solr4ServerHost = UserPreferences.getSolr4ServerHost().trim();
-                    String solr4ServerPort = UserPreferences.getSolr4ServerPort().trim();
-                    solrUrls.add("http://" + solr4ServerHost + ":" + solr4ServerPort + "/solr");
-                }
-
                 // create SolrJ client to connect to remore Solr server
-                remoteSolrServer = getCloudSolrClient(solrUrls, "");
+                remoteSolrServer = configureMultiUserConnection(theCase, index, "");
 
                 // test the connection
                 connectToSolrServer(remoteSolrServer);
@@ -613,6 +590,29 @@ public class Server {
         } catch (SolrServerException | IOException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
         }        
+    }
+    
+    private ConcurrentUpdateSolrClient configureMultiUserConnection(Case theCase, Index index, String name) {
+        String solrUrl;
+        if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
+            // Solr 8
+
+            // read Solr conenction info from user preferences, unless "solrserver.txt" is present
+            IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+            solrUrl = "http://" + properties.host + ":" + properties.port + "/solr";
+        } else {
+            // Solr 4
+            String solr4ServerHost = UserPreferences.getSolr4ServerHost().trim();
+            String solr4ServerPort = UserPreferences.getSolr4ServerPort().trim();
+            solrUrl = "http://" + solr4ServerHost + ":" + solr4ServerPort + "/solr";
+        }
+
+        if (!name.isEmpty()) {
+            solrUrl = solrUrl + "/" + name;
+        }
+
+        // create SolrJ client to connect to remore Solr server
+        return getSolrClient(solrUrl);
     }
 
     /**
@@ -970,13 +970,8 @@ public class Server {
         "# {0} - colelction name", "Server.deleteCore.exception.msg=Failed to delete Solr colelction {0}",})
     void deleteCollection(String coreName, CaseMetadata metadata) throws KeywordSearchServiceException {
         try {
-            IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());           
-            List<String> solrServerList = getSolrServerList(properties.getHost(), properties.getPort());
-            List<String> solrUrls = new ArrayList<>();
-            for (String server : solrServerList) {
-                solrUrls.add("http://" + server + "/solr");
-            }
-            CloudSolrClient solrServer = getCloudSolrClient(solrUrls, "");
+            IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());
+            ConcurrentUpdateSolrClient solrServer = getSolrClient("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
             connectToSolrServer(solrServer);
             
             CollectionAdminRequest.Delete deleteCollectionRequest = CollectionAdminRequest.deleteCollection(coreName);
@@ -1737,7 +1732,7 @@ public class Server {
      * @throws IOException
      */
     private void connectToEbmeddedSolrServer() throws SolrServerException, IOException {
-        ConcurrentUpdateSolrClient solrServer = getLocalSolrClient("http://localhost:" + currentSolrServerPort + "/solr");
+        ConcurrentUpdateSolrClient solrServer = getSolrClient("http://localhost:" + currentSolrServerPort + "/solr");
         TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
         CoreAdminRequest.getStatus(null, solrServer);
         HealthMonitor.submitTimingMetric(metric);
@@ -1745,9 +1740,7 @@ public class Server {
     
     
     void connectToSolrServer(String host, String port) throws SolrServerException, IOException {
-        List<String> solrUrls = new ArrayList<>();
-        solrUrls.add("http://" + host + ":" + port + "/solr");
-        try (CloudSolrClient solrServer = getCloudSolrClient(solrUrls, "")) {
+        try (ConcurrentUpdateSolrClient solrServer = getSolrClient("http://" + host + ":" + port + "/solr")) {
             connectToSolrServer(solrServer);
         }
     }
@@ -1761,7 +1754,7 @@ public class Server {
      * @throws SolrServerException
      * @throws IOException
      */
-    private void connectToSolrServer(CloudSolrClient solrServer) throws SolrServerException, IOException {
+    private void connectToSolrServer(ConcurrentUpdateSolrClient solrServer) throws SolrServerException, IOException {
         TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
         CollectionAdminRequest.ClusterStatus statusRequest = CollectionAdminRequest.getClusterStatus();
         CollectionAdminResponse statusResponse = statusRequest.process(solrServer);
@@ -1775,13 +1768,11 @@ public class Server {
     }
     
     private List<String> getSolrServerList(String host, String port) throws SolrServerException, IOException {
-        List<String> solrUrls = new ArrayList<>();
-        solrUrls.add("http://" + host + ":" + port + "/solr");
-        CloudSolrClient solrServer = getCloudSolrClient(solrUrls, "");
+        ConcurrentUpdateSolrClient solrServer = getSolrClient("http://" + host + ":" + port + "/solr");
         return getSolrServerList(solrServer);
     }
     
-    private List<String> getSolrServerList(CloudSolrClient solrServer) throws SolrServerException, IOException {
+    private List<String> getSolrServerList(ConcurrentUpdateSolrClient solrServer) throws SolrServerException, IOException {
         
         CollectionAdminRequest.ClusterStatus statusRequest = CollectionAdminRequest.getClusterStatus();
         CollectionAdminResponse statusResponse;
@@ -1858,30 +1849,32 @@ public class Server {
 
         // the server to access a collection needs to be built from a URL with the
         // collection in it, and is only good for collection-specific operations
-        private final HttpSolrClient solrClient;
+        private final ConcurrentUpdateSolrClient solrClient;
+        
+        private CloudSolrClient indexingClient = null;
 
         private Collection(String name, Case theCase, Index index) throws TimeoutException, InterruptedException, SolrServerException, IOException {
             this.name = name;
             this.caseType = theCase.getCaseType();
             this.textIndex = index;
-
             
             if (caseType == CaseType.SINGLE_USER_CASE) {
                 // get SolrJ client
-                // ELTODO solrClient = getLocalSolrClient("http://localhost:" + currentSolrServerPort + "/solr/" + name);
                 solrClient = getSolrClient("http://localhost:" + currentSolrServerPort + "/solr/" + name);
             } else {
                 // read Solr conenction info from user preferences, unless "solrserver.txt" is present
-                IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
-                solrClient = getSolrClient("http://" + properties.host + ":" + properties.port + "/solr/" + name);
-                /*List<String> solrServerList = getSolrServerList(properties.getHost(), properties.getPort());
-                List<String> solrUrls = new ArrayList<>();
-                for (String server : solrServerList) {
-                    solrUrls.add("http://" + server + "/solr");
-                    logger.log(Level.INFO, "Using Solr server: {0}", server);
+                solrClient = configureMultiUserConnection(theCase, index, name);
+                
+                // for Solr 8 MU cases, use CloudSolrClient for indexing
+                if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
+                    // get SolrJ client
+                    IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+                    indexingClient = getCloudSolrClient(properties.getHost(), properties.getPort(), name);
+                } else {
+                    String solr4ServerHost = UserPreferences.getSolr4ServerHost().trim();
+                    String solr4ServerPort = UserPreferences.getSolr4ServerPort().trim();
+                    indexingClient = getCloudSolrClient(solr4ServerHost, solr4ServerPort, name);
                 }
-                // get SolrJ client
-                solrClient = getCloudSolrClient(solrUrls, name);*/
             }
         }
 
@@ -1925,7 +1918,11 @@ public class Server {
         private void commit() throws SolrServerException {
             try {
                 //commit and block
-                solrClient.commit(true, true);
+                if (indexingClient != null) {
+                    indexingClient.commit(true, true);
+                } else {
+                    solrClient.commit(true, true);
+                }
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Could not commit index. ", e); //NON-NLS
                 throw new SolrServerException(NbBundle.getMessage(this.getClass(), "Server.commit.exception.msg"), e);
@@ -1941,7 +1938,11 @@ public class Server {
 
         void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
             try {
-                solrClient.add(doc);
+                if (indexingClient != null) {
+                    indexingClient.add(doc);
+                } else {
+                    solrClient.add(doc);
+                }
             } catch (SolrServerException | RemoteSolrException ex) {
                 logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex); //NON-NLS
                 throw new KeywordSearchModuleException(
@@ -2013,12 +2014,12 @@ public class Server {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.close.exception.msg2"), ex);
             } finally {
-                try {
+                // ELTODO try {
                     solrClient.close();
-                } catch (IOException ex) {
+                /*} catch (IOException ex) {
                     throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.close.exception.msg2"), ex);
-                }
+                }*/
             }
         }
 
