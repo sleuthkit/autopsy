@@ -147,7 +147,6 @@ public final class DiscoveryTopComponent extends TopComponent {
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(resultsPanel);
-
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(detailsPanel);
         super.componentClosed();
     }
