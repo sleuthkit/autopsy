@@ -609,7 +609,7 @@ public class Server {
         if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
             // Solr 8
 
-            // read Solr conenction info from user preferences, unless "solrserver.txt" is present
+            // read Solr connection info from user preferences, unless "solrserver.txt" is present
             IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
             solrUrl = "http://" + properties.host + ":" + properties.port + "/solr";
         } else {
@@ -1875,7 +1875,7 @@ public class Server {
                 queryClient = getSolrClient("http://localhost:" + localSolrServerPort + "/solr/" + name);
                 indexingClient = getConcurrentClient("http://localhost:" + localSolrServerPort + "/solr/" + name);
             } else {
-                // read Solr conenction info from user preferences, unless "solrserver.txt" is present
+                // read Solr connection info from user preferences, unless "solrserver.txt" is present
                 queryClient = configureMultiUserConnection(theCase, index, name);
                 
                 // for MU cases, use CloudSolrClient for indexing. Indexing is only supported for Solr 8.
@@ -1883,7 +1883,7 @@ public class Server {
                     IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
                     indexingClient = getCloudSolrClient(properties.getHost(), properties.getPort(), name);
                 } else {
-                    indexingClient = null;
+                    indexingClient = configureMultiUserConnection(theCase, index, name);
                 }
             }
         }
