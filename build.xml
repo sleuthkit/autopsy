@@ -4,11 +4,11 @@
 <!-- If you delete this file and reopen the project it will be recreated. -->
 <project name="Autopsy 4" default="build" basedir=".">
     <description>Builds the module suite Autopsy 4.</description>
-	
+
     <import file="nbproject/build-impl.xml"/>
     <import file="${basedir}/TSKVersion.xml"/>
     <!-- IMPORTANT: nbproject/platform.properties has a netbeans-plat-version property that MUST be kept in sync (manually) -->
-    <property name="netbeans-plat-version" value="8.2" />
+    <property name="netbeans-plat-version" value="11.3" />
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
     <!-- Supported java versions.-->
     <condition property="supported-java-versions">
