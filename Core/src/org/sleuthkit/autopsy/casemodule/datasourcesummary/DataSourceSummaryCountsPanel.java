@@ -41,18 +41,22 @@ import org.sleuthkit.datamodel.DataSource;
 })
 class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
+    // Result returned for a data model if no data found.
     private static final Object[][] EMPTY_PAIRS = new Object[][]{};
 
+    // column headers for mime type table
     private static final Object[] MIME_TYPE_COLUMN_HEADERS = new Object[]{
         Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_type_header(),
         Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_count_header()
     };
 
+    // column headers for file by category table
     private static final Object[] FILE_BY_CATEGORY_COLUMN_HEADERS = new Object[]{
         Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_type_header(),
         Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_count_header()
     };
 
+    // column headers for artifact counts table
     private static final Object[] ARTIFACT_COUNTS_COLUMN_HEADERS = new Object[]{
         Bundle.DataSourceSummaryCountsPanel_ArtifactCountsTableModel_type_header(),
         Bundle.DataSourceSummaryCountsPanel_ArtifactCountsTableModel_count_header()
@@ -128,7 +132,9 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
     /**
      * Determines the JTable data model for datasource mime types.
+     *
      * @param dataSource The DataSource.
+     *
      * @return The model to be used with a JTable.
      */
     @Messages({
@@ -154,9 +160,12 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Retrieves the counts of files of a particular mime type for a particular DataSource.
+     * Retrieves the counts of files of a particular mime type for a particular
+     * DataSource.
+     *
      * @param dataSource The DataSource.
-     * @param category The mime type category.
+     * @param category   The mime type category.
+     *
      * @return The count.
      */
     private static Long getCount(DataSource dataSource, FileTypeUtils.FileTypeCategory category) {
@@ -165,7 +174,9 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
     /**
      * Determines the JTable data model for datasource file categories.
+     *
      * @param dataSource The DataSource.
+     *
      * @return The model to be used with a JTable.
      */
     @Messages({
@@ -176,8 +187,6 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.directory.row=Directory"
     })
     private static Object[][] getFileCategoryModel(DataSource selectedDataSource) {
-        Long dataSourceId = selectedDataSource == null ? null : selectedDataSource.getId();
-        // or 0 if not found
         Long fileCount = zeroIfNull(DataSourceInfoUtilities.getCountOfFiles(selectedDataSource));
         Long unallocatedFiles = zeroIfNull(DataSourceInfoUtilities.getCountOfUnallocatedFiles(selectedDataSource));
         Long allocatedFiles = zeroIfNull(getAllocatedCount(fileCount, unallocatedFiles));
@@ -195,7 +204,9 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
     /**
      * Returns 0 if value is null.
+     *
      * @param origValue The original value.
+     *
      * @return The value or 0 if null.
      */
     private static Long zeroIfNull(Long origValue) {
@@ -204,8 +215,10 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
     /**
      * Safely gets the allocated files count.
-     * @param allFilesCount The count of all files.
+     *
+     * @param allFilesCount         The count of all files.
      * @param unallocatedFilesCount The count of unallocated files.
+     *
      * @return The count of allocated files.
      */
     private static long getAllocatedCount(Long allFilesCount, Long unallocatedFilesCount) {
@@ -220,12 +233,13 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
     /**
      * The counts of different artifact types found in a DataSource.
+     *
      * @param selectedDataSource The DataSource.
+     *
      * @return The JTable data model of counts of artifact types.
      */
     private static Object[][] getArtifactCountsModel(DataSource selectedDataSource) {
-        Long dataSourceId = selectedDataSource == null ? null : selectedDataSource.getId();
-        Map<String, Long> artifactMapping = DataSourceInfoUtilities.getCountsOfArtifactsByType().get(dataSourceId);
+        Map<String, Long> artifactMapping = DataSourceInfoUtilities.getCountsOfArtifactsByType(selectedDataSource);
         if (artifactMapping == null) {
             return EMPTY_PAIRS;
         }

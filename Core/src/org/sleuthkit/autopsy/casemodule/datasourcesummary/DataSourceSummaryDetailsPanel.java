@@ -72,11 +72,10 @@ class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         if (dataSource == null || !Case.isCaseOpen()) {
             updateDetailsPanelData(null, null, null, null);
         } else {
-            long id = dataSource.getId();
             updateDetailsPanelData(dataSource,
-                    DataSourceInfoUtilities.getSizeOfUnallocatedFiles().get(id),
-                    DataSourceInfoUtilities.getOperatingSystems().get(id),
-                    DataSourceInfoUtilities.getDataSourceTypes().get(id));
+                    DataSourceInfoUtilities.getSizeOfUnallocatedFiles(dataSource),
+                    DataSourceInfoUtilities.getOperatingSystems(dataSource),
+                    DataSourceInfoUtilities.getDataSourceType(dataSource));
         }
     }
 

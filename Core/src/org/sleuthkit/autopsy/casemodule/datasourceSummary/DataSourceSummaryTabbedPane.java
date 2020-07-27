@@ -46,6 +46,9 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
         setTabs();
     }
 
+    /**
+     * Set tabs to the details panel, counts panel, and ingest history panel.
+     */
     private void setTabs() {
         this.removeAll();
         addTab(Bundle.DataSourceSummaryDialog_detailsTab_title(), detailsPanel);
@@ -72,7 +75,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
 
         countsPanel.setDataSource(dataSource);
         detailsPanel.setDataSource(dataSource);
-        
+
         // make sure ingest history panel doesn't try to show a data source when null or case is closed
         ingestHistoryPanel.setDataSource(
                 dataSource != null && Case.isCaseOpen() ? dataSource : null);
