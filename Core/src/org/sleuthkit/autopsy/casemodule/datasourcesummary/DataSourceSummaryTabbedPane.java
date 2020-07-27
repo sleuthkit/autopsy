@@ -30,9 +30,13 @@ import org.sleuthkit.datamodel.DataSource;
  */
 public class DataSourceSummaryTabbedPane extends JTabbedPane {
 
+    private static final long serialVersionUID = 1L;
     private final DataSourceSummaryCountsPanel countsPanel;
     private final DataSourceSummaryDetailsPanel detailsPanel;
-    private final IngestJobInfoPanel ingestHistoryPanel;
+
+    // ingest panel requires an open case in order to properly initialize.  
+    // So it will be instantiated when a data source is selected.
+    private IngestJobInfoPanel ingestHistoryPanel = null;
 
     private DataSource dataSource = null;
 
@@ -42,18 +46,30 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     public DataSourceSummaryTabbedPane() {
         countsPanel = new DataSourceSummaryCountsPanel();
         detailsPanel = new DataSourceSummaryDetailsPanel();
-        ingestHistoryPanel = new IngestJobInfoPanel();
-        setTabs();
     }
 
     /**
-     * Set tabs to the details panel, counts panel, and ingest history panel.
+     * Set tabs to the details panel, counts panel, and ingest history panel. If
+     * no data source or case is closed, no tabs will be shwon.
+     *
+     * @param dataSource The data source to display.
      */
-    private void setTabs() {
+    private void setTabs(DataSource dataSource) {
         this.removeAll();
-        addTab(Bundle.DataSourceSummaryDialog_detailsTab_title(), detailsPanel);
-        addTab(Bundle.DataSourceSummaryDialog_countsTab_title(), countsPanel);
-        addTab(Bundle.DataSourceSummaryDialog_ingestHistoryTab_title(), ingestHistoryPanel);
+        if (dataSource != null && Case.isCaseOpen()) {
+            addTab(Bundle.DataSourceSummaryDialog_detailsTab_title(), detailsPanel);
+            detailsPanel.setDataSource(dataSource);
+            
+            addTab(Bundle.DataSourceSummaryDialog_countsTab_title(), countsPanel);
+            countsPanel.setDataSource(dataSource);
+            
+            if (ingestHistoryPanel == null) {
+                ingestHistoryPanel = new IngestJobInfoPanel();
+            }
+            
+            addTab(Bundle.DataSourceSummaryDialog_ingestHistoryTab_title(), ingestHistoryPanel);
+            ingestHistoryPanel.setDataSource(dataSource);
+        }
     }
 
     /**
@@ -72,12 +88,6 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
      */
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
-
-        countsPanel.setDataSource(dataSource);
-        detailsPanel.setDataSource(dataSource);
-
-        // make sure ingest history panel doesn't try to show a data source when null or case is closed
-        ingestHistoryPanel.setDataSource(
-                dataSource != null && Case.isCaseOpen() ? dataSource : null);
+        setTabs(dataSource);
     }
 }
