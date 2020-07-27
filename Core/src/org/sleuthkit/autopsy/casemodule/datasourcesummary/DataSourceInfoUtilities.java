@@ -108,7 +108,7 @@ final class DataSourceInfoUtilities {
      */
     static Long getCountOfDirectories(DataSource currentDataSource) {
         return getCountOfFiles(currentDataSource,
-                "'type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                "type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
                 + " AND meta_type=" + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue(),
                 "Unable to get count of directories for datasource, providing empty results");
     }
@@ -172,14 +172,23 @@ final class DataSourceInfoUtilities {
         }
 
         final String valueParam = "value";
-        String query = "SELECT SUM(size) AS " + valueParam
+        final String countParam = "count";
+        String query = "SELECT SUM(size) AS " + valueParam + ", COUNT(*) AS " + countParam
                 + " FROM tsk_files WHERE type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
                 + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
                 + " AND dir_flags=" + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
                 + " AND name<>''"
                 + " AND data_source_obj_id=" + currentDataSource.getId();
 
-        ResultSetHandler<Long> handler = (resultSet) -> resultSet.getLong(valueParam);
+        ResultSetHandler<Long> handler = (resultSet) -> {
+            if (resultSet.next()) {
+                // ensure that there is an unallocated count result that is attached to this data source
+                long resultCount = resultSet.getLong(valueParam);
+                return (resultCount > 0) ? resultSet.getLong(valueParam) : null;
+            } else {
+                return null;
+            }
+        };
         String errorMessage = "Unable to get size of unallocated files; returning null.";
 
         return getBaseQueryResult(query, handler, errorMessage);
@@ -462,7 +471,6 @@ final class DataSourceInfoUtilities {
         }
         return null;
     }
-
 
     /**
      * Helper method to execute a select query with a

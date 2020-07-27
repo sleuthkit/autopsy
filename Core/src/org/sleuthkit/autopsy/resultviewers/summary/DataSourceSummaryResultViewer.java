@@ -114,11 +114,6 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
 
         DataSource dataSource = getDataSource(node);
 
-        if (dataSource == null) {
-            LOGGER.log(Level.SEVERE, "No datasource for node found.");
-            return;
-        }
-
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             summaryPanel.setDataSource(dataSource);
