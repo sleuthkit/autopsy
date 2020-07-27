@@ -23,6 +23,8 @@ import java.awt.KeyboardFocusManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import static javax.swing.SwingUtilities.isDescendingFrom;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
@@ -81,6 +83,18 @@ class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider {
                     messageContentViewer.setNode(nodes[0]);
                 } else {
                     messageContentViewer.setNode(null);
+                }
+                
+            }
+        });
+        
+        // This is a trick to get the first message to be selected after the ChildFactory has added
+        // new data to the table.
+        outlineViewPanel.getOutlineView().getOutline().getOutlineModel().addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                if (e.getType() == TableModelEvent.INSERT) {
+                    outline.setRowSelectionInterval(0, 0);
                 }
             }
         });
