@@ -25,8 +25,10 @@ import java.awt.Frame;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.logging.Level;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
@@ -37,6 +39,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
+import org.apache.commons.lang3.StringUtils;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -197,68 +200,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         if (db instanceof SleuthkitHashSet) {
             SleuthkitHashSet hashDb = (SleuthkitHashSet) db;
-
-            // Disable the central repo fields
-            hashDbVersionLabel.setText(Bundle.HashLookupSettingsPanel_notApplicable());
-            hashDbOrgLabel.setText(Bundle.HashLookupSettingsPanel_notApplicable());
-
-            // Enable the delete button if ingest is not running
-            deleteDatabaseButton.setEnabled(!ingestIsRunning);
-
-            try {
-                hashDbLocationLabel.setText(db.getDatabasePath());
-            } catch (TskCoreException ex) {
-                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting hash set path of " + db.getHashSetName() + " hash set", ex); //NON-NLS
-                hashDbLocationLabel.setText(ERROR_GETTING_PATH_TEXT);
-            }
-
-            try {
-                indexPathLabel.setText(hashDb.getIndexPath());
-            } catch (TskCoreException ex) {
-                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash set", ex); //NON-NLS
-                indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
-            }
-
-            // Update indexing components.
-            try {
-                if (hashDb.isIndexing()) {
-                    indexButton.setText(
-                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.indexing"));
-                    hashDbIndexStatusLabel.setText(
-                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexGen"));
-                    hashDbIndexStatusLabel.setForeground(Color.black);
-                    indexButton.setEnabled(false);
-                } else if (hashDb.hasIndex()) {
-                    if (hashDb.hasIndexOnly()) {
-                        hashDbIndexStatusLabel.setText(
-                                NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexOnly"));
-                    } else {
-                        hashDbIndexStatusLabel.setText(
-                                NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexed"));
-                    }
-                    hashDbIndexStatusLabel.setForeground(Color.black);
-                    if (hashDb.canBeReIndexed()) {
-                        indexButton.setText(
-                                NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.reIndex"));
-                        indexButton.setEnabled(true);
-                    } else {
-                        indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
-                        indexButton.setEnabled(false);
-                    }
-                } else {
-                    hashDbIndexStatusLabel.setText(
-                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.noIndex"));
-                    hashDbIndexStatusLabel.setForeground(Color.red);
-                    indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
-                    indexButton.setEnabled(true);
-                }
-            } catch (TskCoreException ex) {
-                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index state of hash set", ex); //NON-NLS
-                hashDbIndexStatusLabel.setText(ERROR_GETTING_INDEX_STATUS_TEXT);
-                hashDbIndexStatusLabel.setForeground(Color.red);
-                indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
-                indexButton.setEnabled(false);
-            }
+            updateForSleuthkitHashSet(ingestIsRunning, hashDb);
         } else {
 
             // Disable the file type fields/buttons
@@ -289,6 +231,93 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         // Update ingest in progress warning label.
         ingestWarningLabel.setVisible(ingestIsRunning);
+    }
+
+    private static String getPathString(String path, boolean justFilename) {
+        if (StringUtils.isBlank(path)) {
+            return "";
+        }
+
+        if (!justFilename) {
+            return path;
+        }
+
+        return new File(path).getName();
+    }
+
+    /**
+     * Updates UI for a SleuthkitHashSet.
+     *
+     * @param ingestIsRunning Whether or not ingest is running.
+     * @param hashDb          The hash set to be included in the list of hash
+     *                        sets.
+     *
+     * @throws MissingResourceException
+     */
+    private void updateForSleuthkitHashSet(boolean ingestIsRunning, SleuthkitHashSet hashDb) throws MissingResourceException {
+        // Disable the central repo fields
+        hashDbVersionLabel.setText(Bundle.HashLookupSettingsPanel_notApplicable());
+        hashDbOrgLabel.setText(Bundle.HashLookupSettingsPanel_notApplicable());
+
+        // Enable the delete button if ingest is not running and is not an official hashset
+        deleteDatabaseButton.setEnabled(!ingestIsRunning && !hashDb.isOfficialSet());
+
+        try {
+            String dbPath = getPathString(hashDb.getDatabasePath(), hashDb.isOfficialSet());
+            hashDbLocationLabel.setText(dbPath);
+        } catch (TskCoreException ex) {
+            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting hash set path of " + hashDb.getHashSetName() + " hash set", ex); //NON-NLS
+            hashDbLocationLabel.setText(ERROR_GETTING_PATH_TEXT);
+        }
+
+        try {
+            String indexPath = getPathString(hashDb.getIndexPath(), hashDb.isOfficialSet());
+            indexPathLabel.setText(indexPath);
+        } catch (TskCoreException ex) {
+            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + hashDb.getHashSetName() + " hash set", ex); //NON-NLS
+            indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
+        }
+
+        // Update indexing components.
+        try {
+            if (hashDb.isIndexing()) {
+                indexButton.setText(
+                        NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.indexing"));
+                hashDbIndexStatusLabel.setText(
+                        NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexGen"));
+                hashDbIndexStatusLabel.setForeground(Color.black);
+                indexButton.setEnabled(false);
+            } else if (hashDb.hasIndex()) {
+                if (hashDb.hasIndexOnly()) {
+                    hashDbIndexStatusLabel.setText(
+                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexOnly"));
+                } else {
+                    hashDbIndexStatusLabel.setText(
+                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexed"));
+                }
+                hashDbIndexStatusLabel.setForeground(Color.black);
+                if (hashDb.canBeReIndexed()) {
+                    indexButton.setText(
+                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.reIndex"));
+                    indexButton.setEnabled(true);
+                } else {
+                    indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
+                    indexButton.setEnabled(false);
+                }
+            } else {
+                hashDbIndexStatusLabel.setText(
+                        NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.noIndex"));
+                hashDbIndexStatusLabel.setForeground(Color.red);
+                indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
+                indexButton.setEnabled(true);
+            }
+        } catch (TskCoreException ex) {
+            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index state of hash set", ex); //NON-NLS
+            hashDbIndexStatusLabel.setText(ERROR_GETTING_INDEX_STATUS_TEXT);
+            hashDbIndexStatusLabel.setForeground(Color.red);
+            indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
+            indexButton.setEnabled(false);
+        }
     }
 
     private boolean isLocalIngestJobEvent(PropertyChangeEvent evt) {
