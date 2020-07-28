@@ -961,9 +961,9 @@ class ExtractRegistry extends Extract {
             while (line != null) {
                 line = line.trim();
 
-                if (line.matches("^bam v.*")) {
+                if (line.toLowerCase().matches("^bam v.*")) {
                     parseBamKey(regAbstractFile, reader, Bundle.Registry_System_Bam());
-                } else if (line.matches("^bthport v..*")) {
+                } else if (line.toLowerCase().matches("^bthport v..*")) {
                     parseBlueToothDevices(regAbstractFile, reader)  ;
                 }  
                 line = reader.readLine();
@@ -993,56 +993,25 @@ class ExtractRegistry extends Extract {
     private void parseBlueToothDevices(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
-        // date format for plugin Tue Jun 23 10:27:54 2020 Z
-        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", US);
-        Long bthLastSeen = Long.valueOf(0);
-        Long bthLastConnected = Long.valueOf(0);
         while (!line.contains(SECTION_DIVIDER)) {
             line = reader.readLine();
             line = line.trim();
-            if (line.contains("Device Unique ID")) {
+            if (line.toLowerCase().contains("device unique id")) {
                 // Columns are seperated by colons :
                 // Data : Values
                 // Record is 4 lines in length (Device Unique Id, Name, Last Seen,  LastConnected
-                while (!line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("Radio Support not found")) {
-                    // Split line on "> " which is the record delimiter between position and file
-                    String deviceTokens[] = line.split(": ");
-                    String deviceUniqueId = deviceTokens[1];
+                while (!line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.toLowerCase().contains("radio support not found")) {
+                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                    addBlueToothAttribute(line, attributes, TSK_DEVICE_ID);
                     line = reader.readLine();
-                    // Default device name to unknown as a device name may not exist.
-                    String deviceName = "Unknown";
-                    if (line.contains("Name")) {
-                        String nameTokens[] = line.split(": ");
-                        deviceName = nameTokens[1];
+                    // Name may not exist, check for it to make sure.
+                    if (line.toLowerCase().contains("name")) {
+                        addBlueToothAttribute(line, attributes, TSK_NAME);
                         line = reader.readLine();
                     }
-                    String lastSeenTokens[] = line.split(": ");
-                    String lastSeen = lastSeenTokens[1].replace(" Z", "");
+                    addBlueToothAttribute(line, attributes, TSK_DATETIME);
                     line = reader.readLine();
-                    String lastConnectedTokens[] = line.split(": ");
-                    String lastConnected = lastConnectedTokens[1].replace(" Z", "");
-                    try {
-                        Date usedSeenDate = dateFormat.parse(lastSeen);
-                        bthLastSeen = usedSeenDate.getTime()/1000;
-                    } catch (ParseException ex) {
-                        // catching error and displaying date that could not be parsed
-                        // we set the timestamp to 0 and continue on processing
-                        logger.log(Level.WARNING, String.format("Failed to parse date/time %s for Bluetooth Last Seen attribute.", lastSeen), ex); //NON-NLS
-                    }
-                    try {
-                        Date usedConnectedDate = dateFormat.parse(lastConnected);
-                        bthLastConnected = usedConnectedDate.getTime()/1000;
-                    } catch (ParseException ex) {
-                        // catching error and displaying date that could not be parsed
-                        // we set the timestamp to 0 and continue on processing
-                        logger.log(Level.WARNING, String.format("Failed to parse date/time %s for Bluetooth Last connected attribute.", lastSeen), ex); //NON-NLS
-                    }
-
-                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                    attributes.add(new BlackboardAttribute(TSK_DEVICE_ID, getName(), deviceUniqueId));
-                    attributes.add(new BlackboardAttribute(TSK_NAME, getName(), deviceName));
-                    attributes.add(new BlackboardAttribute(TSK_DATETIME, getName(), bthLastSeen));
-                    attributes.add(new BlackboardAttribute(TSK_DATETIME_ACCESSED, getName(), bthLastConnected));
+                    addBlueToothAttribute(line, attributes, TSK_DATETIME_ACCESSED);
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING, regFile, attributes);
                     if(bba != null) {
                          bbartifacts.add(bba);
@@ -1059,6 +1028,38 @@ class ExtractRegistry extends Extract {
         }
     }
 
+
+    private void addBlueToothAttribute(String line, Collection<BlackboardAttribute> attributes, ATTRIBUTE_TYPE attributeType) {
+	if(line == null) {
+		return;
+	}
+	
+	String tokens[] = line.split(": ");
+	if(tokens.length > 1 && !tokens[1].isEmpty()) {
+            String tokenString = tokens[1];
+            if (attributeType.getDisplayName().toLowerCase().contains("date")) {
+                String dateString = tokenString.toLowerCase().replace(" z", "");
+                // date format for plugin Tue Jun 23 10:27:54 2020 Z
+                SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", US);
+                Long dateLong = Long.valueOf(0);
+                try {
+                    Date newDate = dateFormat.parse(dateString);
+                    dateLong = newDate.getTime()/1000;
+                } catch (ParseException ex) {
+                    // catching error and displaying date that could not be parsed
+                    // we set the timestamp to 0 and continue on processing
+                    logger.log(Level.WARNING, String.format("Failed to parse date/time %s for Bluetooth Last Seen attribute.", dateString), ex); //NON-NLS
+                }
+	        attributes.add(new BlackboardAttribute(attributeType, getName(), dateLong));
+                    
+                    
+            } else {
+		attributes.add(new BlackboardAttribute(attributeType, getName(), tokenString));
+            }
+	}
+}
+
+    
     /**
      * Parse the output of the SAM regripper plugin to get additional Account
      * information
