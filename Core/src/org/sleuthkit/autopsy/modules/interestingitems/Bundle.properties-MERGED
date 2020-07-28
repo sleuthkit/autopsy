@@ -12,7 +12,7 @@ FilesSetDefsPanel.exportButtonActionPerformed.fileExistPrompt=File {0} exists, o
 FilesSetDefsPanel.gigaBytes=Gigabytes
 # {0} - fileName
 # {1} - errorMessage
-FilesSetDefsPanel.importSetButtonActionPerformed.importError=The rules file "{0}" could not be read:\n"{1}."
+FilesSetDefsPanel.importSetButtonActionPerformed.importError=The rules file "{0}" could not be read:\n{1}.
 FilesSetDefsPanel.importSetButtonActionPerformed.noFiles=No files sets were found in the selected files.
 FilesSetDefsPanel.importSetButtonActionPerformed.noFilesSelected=No files sets were selected.
 # {0} - filter name
@@ -24,6 +24,7 @@ FilesSetDefsPanel.interesting.exportButtonAction.featureName=Interesting Files S
 FilesSetDefsPanel.interesting.ExportedMsg=Interesting files set exported
 FilesSetDefsPanel.interesting.exportSetButton.text=Export Set
 FilesSetDefsPanel.interesting.failExportMsg=Export of interesting files set failed
+FilesSetDefsPanel.interesting.failImportMsg=Interesting files set not imported
 FilesSetDefsPanel.interesting.fileExtensionFilterLbl=Autopsy Interesting File Set File (xml)
 FilesSetDefsPanel.interesting.importButtonAction.featureName=Interesting Files Set Import
 FilesSetDefsPanel.interesting.importOwConflict=Import Interesting files set conflict
@@ -33,7 +34,7 @@ FilesSetDefsPanel.interesting.newOwConflict=Interesting files set conflict
 FilesSetDefsPanel.interesting.overwriteSetPrompt=Interesting files set "{0}" already exists locally, overwrite?
 # {0} - FilesSet name
 # {1} - New FilesSet name
-FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name "{0}."  Would you like to rename the set to "{1}?"
+FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name "{0}."  Would you like to rename your set to "{1}?"
 FilesSetDefsPanel.Interesting.Title=Global Interesting Items Settings
 FilesSetDefsPanel.kiloBytes=Kilobytes
 FilesSetDefsPanel.loadError=Error loading interesting files sets from file.
@@ -64,7 +65,7 @@ FilesSetRulePanel.ZeroFileSizeError=File size condition value must not be 0 (Unl
 FilesSetsManager.allFilesAndDirectories=All Files and Directories (Not Unallocated Space)
 FilesSetsManager.allFilesDirectoriesAndUnallocated=All Files, Directories, and Unallocated Space
 # {0} - regex
-InterestingItemsFilesSetSettings.readDateCondition.failedCompiledRegex=Error detmining ''{0}'' number
+InterestingItemsFilesSetSettings.readDateCondition.failedCompiledRegex=Error determining ''{0}'' number
 # {0} - condition
 # {1} - rule
 InterestingItemsFilesSetSettings.readMetaTypeCondition.malformedXml=Files set is malformed for metatype condition, ''{0}'', in rule ''{1}''
@@ -180,3 +181,6 @@ FilesSetDefsPanel.mimeTypeLabel.text=MIME Type:
 FilesSetDefsPanel.fileSizeLabel.text=File Size:
 # {0} - filesSetName
 StandardInterestingFileSetsLoader.customSuffixed={0} (Custom)
+StandardInterestingFilesSetsLoader_cannotLoadStandard=Unable to properly read standard interesting files sets.
+StandardInterestingFilesSetsLoader_cannotLoadUserConfigured=Unable to properly read user-configured interesting files sets.
+StandardInterestingFilesSetsLoader_cannotUpdateInterestingFilesSets=Unable to write updated configuration for interesting files sets to config directory.

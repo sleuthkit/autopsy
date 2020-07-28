@@ -39,7 +39,7 @@ final class SwingAnimator {
     private Timer timer = null;
 
     //duration in milliseconds betweeen each firing of the Timer
-    private static final int INITIAL_TIMING = 10;
+    private static final int INITIAL_TIMING = 30;
     private int timing = INITIAL_TIMING;
 
     /**

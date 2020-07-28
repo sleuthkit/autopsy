@@ -376,7 +376,7 @@ final class ResultsPanel extends javax.swing.JPanel {
         javax.swing.Box.Filler filler4 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
         resultsViewerPanel = new javax.swing.JPanel();
 
-        setMinimumSize(new java.awt.Dimension(700, 200));
+        setMinimumSize(new java.awt.Dimension(300, 60));
         setPreferredSize(new java.awt.Dimension(700, 700));
         setLayout(new java.awt.BorderLayout());
 
@@ -533,7 +533,7 @@ final class ResultsPanel extends javax.swing.JPanel {
 
         add(pagingPanel, java.awt.BorderLayout.PAGE_START);
 
-        resultsViewerPanel.setMinimumSize(new java.awt.Dimension(0, 160));
+        resultsViewerPanel.setMinimumSize(new java.awt.Dimension(0, 60));
         resultsViewerPanel.setPreferredSize(new java.awt.Dimension(700, 700));
         resultsViewerPanel.setLayout(new java.awt.BorderLayout());
         add(resultsViewerPanel, java.awt.BorderLayout.CENTER);
