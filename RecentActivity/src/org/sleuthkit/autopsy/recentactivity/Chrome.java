@@ -87,12 +87,12 @@ class Chrome extends Extract {
     
     private static final Map<String, String> BROWSERS_MAP = ImmutableMap.<String, String>builder()  
             .put("Microsoft Edge", "Microsoft/Edge") 
-//            .put("Yandex Browser", "YandexBrowser") 
+            .put("Yandex Browser", "YandexBrowser") 
             .put("Opera", "Opera Software") 
-//            .put("SalamWeb", "SalamWeb") 
-//            .put("UC Browser", "UCBrowser")
-//            .put("Brave", "BraveSoftware")
-//            .put("Google Chrome", "Chrome")
+            .put("SalamWeb", "SalamWeb") 
+            .put("UC Browser", "UCBrowser")
+            .put("Brave", "BraveSoftware")
+            .put("Google Chrome", "Chrome")
             .build();
 
     
@@ -200,7 +200,7 @@ class Chrome extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + allocatedHistoryFiles.get(j).getName() + j + ".db"; //NON-NLS
             final AbstractFile historyFile = allocatedHistoryFiles.get(j++);
             if ((historyFile.getSize() == 0) || (historyFile.getName().toLowerCase().contains("-slack"))
-                    || (historyFile.getName().toLowerCase().contains("cache"))) {
+                    || (historyFile.getName().toLowerCase().contains("cache")) || (historyFile.getName().toLowerCase().contains("media"))) {
                 continue;
             }
             try {
@@ -285,7 +285,9 @@ class Chrome extends Extract {
 
         while (j < bookmarkFiles.size()) {
             AbstractFile bookmarkFile = bookmarkFiles.get(j++);
-            if ((bookmarkFile.getSize() == 0) || (bookmarkFile.getName().toLowerCase().contains("-slack"))) {
+            if ((bookmarkFile.getSize() == 0) || (bookmarkFile.getName().toLowerCase().contains("-slack"))
+                    || (bookmarkFile.getName().toLowerCase().contains("extras")) || (bookmarkFile.getName().toLowerCase().contains("log"))
+                    || (bookmarkFile.getName().toLowerCase().contains("backup")) || (bookmarkFile.getName().toLowerCase().contains("visualized"))) {
                 continue;
             }
             String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + bookmarkFile.getName() + j + ".db"; //NON-NLS
@@ -490,7 +492,7 @@ class Chrome extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadFiles;
         try {
-            downloadFiles = fileManager.findFiles(dataSource, "%History%", "Chrome"); //NON-NLS
+            downloadFiles = fileManager.findFiles(dataSource, "%History%", browserLocation); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getDownload.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
