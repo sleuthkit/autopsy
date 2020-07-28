@@ -65,6 +65,7 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryCountsPanel.class.getName());
     private final DefaultTableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer();
+    private FileTypePieChart fileTypePieChart = new FileTypePieChart();
 
     private DataSource dataSource;
 
@@ -78,6 +79,7 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         fileCountsByCategoryTable.getTableHeader().setReorderingAllowed(false);
         setDataSource(null);
     }
+    
 
     /**
      * The datasource currently used as the model in this panel.
@@ -104,7 +106,7 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
                     getFileCategoryModel(dataSource),
                     getArtifactCountsModel(dataSource));
         }
-
+        this.fileTypePieChart.setDataSource(dataSource);
     }
 
     /**
@@ -269,6 +271,7 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         artifactCountsScrollPane = new javax.swing.JScrollPane();
         artifactCountsTable = new javax.swing.JTable();
+        fileTypePiePanel = fileTypePieChart;
 
         fileCountsByMimeTypeScrollPane.setViewportView(fileCountsByMimeTypeTable);
 
@@ -282,6 +285,8 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
         artifactCountsTable.setAutoCreateRowSorter(true);
         artifactCountsScrollPane.setViewportView(artifactCountsTable);
+
+        fileTypePiePanel.setPreferredSize(new java.awt.Dimension(298, 309));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -299,8 +304,11 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(artifactCountsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(artifactCountsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(fileTypePiePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 424, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(18, Short.MAX_VALUE))
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {fileCountsByCategoryScrollPane, fileCountsByMimeTypeScrollPane});
@@ -315,7 +323,8 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
                     .addComponent(jLabel1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(artifactCountsScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(fileTypePiePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(artifactCountsScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(fileCountsByMimeTypeScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -338,6 +347,7 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     private javax.swing.JTable fileCountsByCategoryTable;
     private javax.swing.JScrollPane fileCountsByMimeTypeScrollPane;
     private javax.swing.JTable fileCountsByMimeTypeTable;
+    private javax.swing.JPanel fileTypePiePanel;
     private javax.swing.JLabel jLabel1;
     // End of variables declaration//GEN-END:variables
 }
