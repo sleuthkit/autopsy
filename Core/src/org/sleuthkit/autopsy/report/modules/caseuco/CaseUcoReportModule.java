@@ -220,10 +220,13 @@ public final class CaseUcoReportModule implements GeneralReportModule {
                                 for (JsonElement element : exporter.exportBlackboardArtifact(artifact)) {
                                     gson.toJson(element, reportWriter);
                                 }
-                            } catch (ContentNotExportableException | BlackboardJsonAttrUtil.InvalidJsonException ex) {
+                            } catch (ContentNotExportableException ex) {
                                 logger.log(Level.INFO, String.format("Unable to export blackboard artifact (id: %d, type: %d) to CASE/UCO. "
                                         + "The artifact type is either not supported or the artifact instance does not have any "
                                         + "exportable attributes.", artifact.getId(), artType.getTypeID()));
+                            } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
+                                logger.log(Level.WARNING, String.format("Artifact instance (id: %d, type: %d) contained a "
+                                        + "malformed json attribute.", artifact.getId(), artType.getTypeID()), ex);
                             }
                         }
                     }
