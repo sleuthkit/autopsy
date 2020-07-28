@@ -221,7 +221,7 @@ public final class CaseUcoReportModule implements GeneralReportModule {
                                     gson.toJson(element, reportWriter);
                                 }
                             } catch (ContentNotExportableException | BlackboardJsonAttrUtil.InvalidJsonException ex) {
-                                logger.log(Level.WARNING, String.format("Unable to export blackboard artifact (id: %d, type: %d) to CASE/UCO. "
+                                logger.log(Level.INFO, String.format("Unable to export blackboard artifact (id: %d, type: %d) to CASE/UCO. "
                                         + "The artifact type is either not supported or the artifact instance does not have any "
                                         + "exportable attributes.", artifact.getId(), artType.getTypeID()));
                             }
