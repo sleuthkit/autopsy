@@ -305,7 +305,7 @@ public final class CentralRepoAccount {
                 normalizedAccountIdentifier = accountIdentifier.toLowerCase().trim();
             }
         } catch (CorrelationAttributeNormalizationException ex) {
-            throw new InvalidAccountIDException("Failed to normalize the account idenitier.", ex);
+            throw new InvalidAccountIDException("Failed to normalize the account idenitier " + accountIdentifier, ex);
         }
         return normalizedAccountIdentifier;
     }
