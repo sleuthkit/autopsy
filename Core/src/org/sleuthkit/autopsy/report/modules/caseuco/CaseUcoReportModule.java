@@ -201,21 +201,32 @@ public final class CaseUcoReportModule implements GeneralReportModule {
                 Set<Long> dataSourceIds = dataSources.stream()
                         .map((datasource) -> datasource.getId())
                         .collect(Collectors.toSet());
+                
+                logger.log(Level.INFO, "Writing all artifacts to the CASE-UCO report. "
+                        + "Keyword hits will be skipped as they can't be represented"
+                        + " in CASE format.");
 
                 // Write all standard artifacts that are contained within the 
                 // selected data sources.
                 for (ARTIFACT_TYPE artType : currentCase.getSleuthkitCase().getBlackboardArtifactTypesInUse()) {
+                    if(artType.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
+                        // Keyword hits cannot be represented in CASE.
+                        continue;
+                    }
+                    
                     for (BlackboardArtifact artifact : currentCase.getSleuthkitCase().getBlackboardArtifacts(artType)) {
                         if (dataSourceIds.contains(artifact.getDataSource().getId())) {
-
                             try {
                                 for (JsonElement element : exporter.exportBlackboardArtifact(artifact)) {
                                     gson.toJson(element, reportWriter);
                                 }
-                            } catch (ContentNotExportableException | BlackboardJsonAttrUtil.InvalidJsonException ex) {
-                                logger.log(Level.WARNING, String.format("Unable to export blackboard artifact (id: %d) to CASE/UCO. "
+                            } catch (ContentNotExportableException ex) {
+                                logger.log(Level.INFO, String.format("Unable to export blackboard artifact (id: %d, type: %d) to CASE/UCO. "
                                         + "The artifact type is either not supported or the artifact instance does not have any "
-                                        + "exportable attributes.", artifact.getId()));
+                                        + "exportable attributes.", artifact.getId(), artType.getTypeID()));
+                            } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
+                                logger.log(Level.WARNING, String.format("Artifact instance (id: %d, type: %d) contained a "
+                                        + "malformed json attribute.", artifact.getId(), artType.getTypeID()), ex);
                             }
                         }
                     }
