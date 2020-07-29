@@ -1,11 +1,25 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
 import javax.swing.JPanel;
 import org.sleuthkit.datamodel.DataSource;
 
@@ -18,17 +32,20 @@ import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
 
 import java.text.DecimalFormat;
+import javax.swing.JLabel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 
 /**
- *
- * @author gregd
+ * A Pie Chart that shows file mime types in a data source.
  */
 public class FileTypePieChart extends JPanel {
-
+    private static final Font DEFAULT_FONT = new JLabel().getFont(); 
+    private static final Font DEFAULT_HEADER_FONT = new Font(DEFAULT_FONT.getName(), DEFAULT_FONT.getStyle(), (int) (DEFAULT_FONT.getSize() * 1.5));
+    
+    private final DefaultPieDataset dataset = new DefaultPieDataset();
     private DataSource dataSource;
-    private DefaultPieDataset dataset = new DefaultPieDataset();
+
 
     public FileTypePieChart() {
         // Create chart
@@ -38,12 +55,24 @@ public class FileTypePieChart extends JPanel {
                 true,
                 true,
                 false);
-
+        
+        chart.setBackgroundPaint(null);
+        chart.getLegend().setItemFont(DEFAULT_FONT);
+        chart.getTitle().setFont(DEFAULT_HEADER_FONT);
+        
+        PiePlot plot = ((PiePlot) chart.getPlot());
+        
         //Format Label
         PieSectionLabelGenerator labelGenerator = new StandardPieSectionLabelGenerator(
                 "{0}: {1} ({2})", new DecimalFormat("0"), new DecimalFormat("0.0%"));
-        ((PiePlot) chart.getPlot()).setLabelGenerator(labelGenerator);
+        
+        plot.setLabelGenerator(labelGenerator);
+        plot.setLabelFont(DEFAULT_FONT);
 
+        plot.setBackgroundPaint(null);
+        plot.setOutlinePaint(null);
+
+        
         // Create Panel
         ChartPanel panel = new ChartPanel(chart);
         this.setLayout(new BorderLayout());
