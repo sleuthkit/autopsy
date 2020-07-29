@@ -39,13 +39,16 @@ import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 /**
  * A Pie Chart that shows file mime types in a data source.
  */
-public class FileTypePieChart extends JPanel {
+class FileTypePieChart extends JPanel {
     private static final Font DEFAULT_FONT = new JLabel().getFont(); 
     private static final Font DEFAULT_HEADER_FONT = new Font(DEFAULT_FONT.getName(), DEFAULT_FONT.getStyle(), (int) (DEFAULT_FONT.getSize() * 1.5));
     
     private final DefaultPieDataset dataset = new DefaultPieDataset();
     private DataSource dataSource;
 
+    /**
+     * Default constructor for the pie chart.
+     */
     @Messages({
         "DataSourceSummaryCountsPanel.byMimeTypeLabel.text=Files by MIME Type",
         "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.audio.row=Audio",
@@ -54,7 +57,7 @@ public class FileTypePieChart extends JPanel {
         "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.images.row=Images",
         "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.videos.row=Videos"
     })
-    public FileTypePieChart() {
+    FileTypePieChart() {
         // Create chart
         JFreeChart chart = ChartFactory.createPieChart(
                 Bundle.DataSourceSummaryCountsPanel_byMimeTypeLabel_text(),
@@ -86,10 +89,20 @@ public class FileTypePieChart extends JPanel {
         this.add(panel, BorderLayout.CENTER);
     }
 
+    /**
+     * The datasource currently used as the model with this pie chart.
+     *
+     * @return The datasource currently being used as the model in this pie chart.
+     */
     DataSource getDataSource() {
-        return this.dataSource;
+        return dataSource;
     }
 
+    /**
+     * Sets datasource to visualize in the pie chart.
+     *
+     * @param dataSource The datasource to use in this pie chart.
+     */
     void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
         this.dataset.clear();
