@@ -1,3 +1,59 @@
+---------------- VERSION 4.16.0  --------------
+Ingest:
+- Added streaming ingest capability for disk images that allow files to be analyzed as soon as they are added to the database. 
+- Changed backend code so that disk image-based files are added by Java code instead of C/C++ code. 
+
+Ingest Modules: 
+- Include Interesting File set rules for cloud storage, encryption, cryptocurrency and privacy programs.
+- Updated PhotoRec 7.1 and include 64-bit version.
+- Updated RegRipper in Recent Activity to 2.8
+- Create artifacts for Prefetch, Background Activity Monitor, and System Resource Usage. 
+- Support MBOX files greater than 2GB.
+- Document metadata is saved as explicit artifacts and added to the timeline. 
+- New “no change” hashset type that does not change status of file. 
+
+
+Central Repository / Personas:
+- Accounts in the Central Repository can be grouped together and associated with a digital persona.
+- All accounts are now stored in the Central Repository to support correlation and persona creation. 
+
+Content viewers:
+- Created artifact-specific viewers in the Results viewer for contact book and call log. 
+- Moved Message viewer to a Results sub-viewer and expanded to show accounts. 
+- Added Application sub-viewer for PDF files based on IcePDF.
+- Annotation viewer now includes comments from hash set hits.
+
+Geolocation Viewer:
+- Different data types now are displayed using different colors.
+- Track points in a track are now displayed as small, connected circles instead of full pins.
+- Filter panel shows only data sources with geo location data. 
+- Geolocation artifact points can be tagged and commented upon.
+
+File Discovery:
+- Changed UI to have more of a search flow and content viewer is hidden until an item is selected.
+
+Reports:
+- Can be generated for a single data source instead of the entire case. 
+- CASE / UCO report module now includes artifacts in addition to files. 
+- Added backend concept of Tag Sets to support Project Vic categories from different countries. 
+
+Performance: 
+- Add throttling of UI refreshes to ensure data is quickly displayed and the tree does not get backed up with requests. 
+- Improved efficiency of adding a data source with many orphan files.
+- Improved efficiency of loading file systems.
+- Jython interpreter is preloaded at application startup.
+
+Misc bug fixes and improvements:
+- Fixed bug from last release where hex content viewer text was no longer fixed width.
+- Altered locking to allow multiple data sources to be added at once more smoothly and to support batch inserts of file data.
+- Central repository comments will no longer store tag descriptions.
+- Account type nodes in the Accounts tree show counts.
+- Full time stamps displayed for messages in ingest inbox.
+- More detailed status during file exports.
+- Improved efficiency of adding timeline events.
+- Fixed bug with CVT most recent filter.
+- Improved documentation and support for running on Linux/macOS.
+
 ---------------- VERSION 4.15.0  --------------
 New UI Features:
 - Added Document view to File Discovery.

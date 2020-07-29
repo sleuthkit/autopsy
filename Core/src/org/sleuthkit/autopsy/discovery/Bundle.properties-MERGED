@@ -186,7 +186,7 @@ FileSorter.SortingMethod.filetype.displayName=File Type
 FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency
 FileSorter.SortingMethod.fullPath.displayName=Full Path
 FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names
-GroupsListPanel.noResults.message.text=No results were found for the selected filters.
+GroupsListPanel.noResults.message.text=No results were found for the selected filters.\n\nReminder:\n  -The File Type Identification module must be run on each data source you want to find results in.\n  -The Hash Lookup module must be run on each data source if you want to filter by past occurrence.\n  -The Exif module must be run on each data source if you are filtering by User Created content.
 GroupsListPanel.noResults.title.text=No results found
 ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
 # {0} - otherInstanceCount

@@ -305,8 +305,40 @@ public final class CentralRepoAccount {
                 normalizedAccountIdentifier = accountIdentifier.toLowerCase().trim();
             }
         } catch (CorrelationAttributeNormalizationException ex) {
-            throw new InvalidAccountIDException("Failed to normalize the account idenitier.", ex);
+            throw new InvalidAccountIDException("Failed to normalize the account idenitier " + accountIdentifier, ex);
         }
+        return normalizedAccountIdentifier;
+    }
+    
+    /**
+     * Normalizes an account identifier, based on the given account type.
+     *
+     * @param crAccountType Account type.
+     * @param accountIdentifier Account identifier to be normalized.
+     * @return Normalized identifier.
+     *
+     * @throws InvalidAccountIDException If the account identifier is invalid.
+     */
+    public static String normalizeAccountIdentifier(CentralRepoAccountType crAccountType, String accountIdentifier) throws InvalidAccountIDException {
+       
+        if (StringUtils.isBlank(accountIdentifier)) {
+            throw new InvalidAccountIDException("Account identifier is null or empty.");
+        }
+        
+        String normalizedAccountIdentifier;
+        try {
+            if (crAccountType.getAcctType().equals(Account.Type.PHONE)) {
+                normalizedAccountIdentifier = CorrelationAttributeNormalizer.normalizePhone(accountIdentifier);
+            } else if (crAccountType.getAcctType().equals(Account.Type.EMAIL)) {
+                normalizedAccountIdentifier = CorrelationAttributeNormalizer.normalizeEmail(accountIdentifier);
+            } else {
+                // convert to lowercase
+                normalizedAccountIdentifier = accountIdentifier.toLowerCase();
+            }
+        } catch (CorrelationAttributeNormalizationException ex) {
+            throw new InvalidAccountIDException("Invalid account identifier", ex);
+        }
+
         return normalizedAccountIdentifier;
     }
 }

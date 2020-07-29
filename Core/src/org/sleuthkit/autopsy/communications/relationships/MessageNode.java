@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
+import java.awt.event.ActionEvent;
 import java.util.logging.Level;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
@@ -54,6 +56,8 @@ class MessageNode extends BlackboardArtifactNode {
     private final String threadID;
 
     private final Action preferredAction;
+
+    private final Action defaultNoopAction = new DefaultMessageAction();
 
     MessageNode(BlackboardArtifact artifact, String threadID, Action preferredAction) {
         super(artifact);
@@ -148,7 +152,7 @@ class MessageNode extends BlackboardArtifactNode {
 
     @Override
     public Action getPreferredAction() {
-        return preferredAction;
+        return preferredAction != null ? preferredAction : defaultNoopAction;
     }
 
     private int getAttachmentsCount() throws TskCoreException {
@@ -170,5 +174,18 @@ class MessageNode extends BlackboardArtifactNode {
         }
 
         return attachmentsCount;
+    }
+
+    /**
+     * A no op action to override the default action of BlackboardArtifactNode
+     */
+    private class DefaultMessageAction extends AbstractAction {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // Do Nothing.
+        }
     }
 }

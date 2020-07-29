@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.Cent
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 
 /**
  * Configuration dialog for creating an account.
@@ -216,7 +217,8 @@ public class CreatePersonaAccountDialog extends JDialog {
     @Messages({
         "CreatePersonaAccountDialog_error_title=Account failure",
         "CreatePersonaAccountDialog_error_msg=Failed to create account.",
-    })
+        "CreatePersonaAccountDialog_invalid_account_Title=Invalid account identifier",
+        "CreatePersonaAccountDialog_invalid_account_msg=Account identifier is not valid.",})
     private CentralRepoAccount createAccount(CentralRepoAccount.CentralRepoAccountType type, String identifier) {
         CentralRepoAccount ret = null;
         try {
@@ -227,8 +229,14 @@ public class CreatePersonaAccountDialog extends JDialog {
         } catch (CentralRepoException e) {
             logger.log(Level.SEVERE, "Failed to create account", e);
             JOptionPane.showMessageDialog(this,
-                    Bundle.CreatePersonaAccountDialog_error_title(),
                     Bundle.CreatePersonaAccountDialog_error_msg(),
+                    Bundle.CreatePersonaAccountDialog_error_title(),
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (InvalidAccountIDException e) {
+            logger.log(Level.WARNING, "Invalid account identifier", e);
+            JOptionPane.showMessageDialog(this,
+                    Bundle.CreatePersonaAccountDialog_invalid_account_msg(),
+                    Bundle.CreatePersonaAccountDialog_invalid_account_Title(),
                     JOptionPane.ERROR_MESSAGE);
         }
         return ret;
