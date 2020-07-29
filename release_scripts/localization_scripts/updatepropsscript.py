@@ -178,7 +178,10 @@ def main():
                                                         'deleted, and commit id for how recent these updates are.  '
                                                         'If the key should be deleted, the deletion row should be '
                                                         '\'DELETION.\'  A header row is expected by default and the '
-                                                        'commit id, if specified, should only be in the first row.')
+                                                        'commit id, if specified, should only be in the first row.  The'
+                                                        ' input path should be specified as a relative path with the '
+                                                        'dot slash notation (i.e. `./inputpath.csv`) or an absolute '
+                                                        'path.')
 
     parser.add_argument('-r', '--repo', dest='repo_path', type=str, required=False,
                         help='The path to the repo.  If not specified, parent repo of path of script is used.')

@@ -9,12 +9,12 @@ All of these scripts provide more details on usage by calling the script with `-
 
 ## Basic Localization Update Workflow
 
-1. Call `python3 diffscript.py <output path> -l <language>` to generate a csv file containing differences in properties file values from the language's previous commit to the `HEAD` commit.  The language identifier should be the abbreviated identifier used for the bundle (i.e. 'ja' for Japanese).
+1. Call `python3 diffscript.py <output path> -l <language>` to generate a csv file containing differences in properties file values from the language's previous commit to the `HEAD` commit.  The language identifier should be the abbreviated identifier used for the bundle (i.e. 'ja' for Japanese).  The output path should be specified as a relative path with the dot slash notation (i.e. `./outputpath.csv`) or an absolute path.
 2. Update csv file with translations
-3. Call `python3 updatepropsscript.py <input path> -l <language>` to update properties files based on the newly generated csv file.  The csv file should be formatted such that the columns are bundle relative path, property files key, translated value and commit id for the latest commit id for which these changes represent.  The commit id only needs to be in the header row.
+3. Call `python3 updatepropsscript.py <input path> -l <language>` to update properties files based on the newly generated csv file.  The csv file should be formatted such that the columns are bundle relative path, property files key, translated value and commit id for the latest commit id for which these changes represent.  The commit id only needs to be in the header row.  The output path should be specified as a relative path with the dot slash notation (i.e. `./outputpath.csv`) or an absolute path.
 
 ## Localization Generation for the First Time
-First-time updates should follow a similar procedure except that instead of calling `diffscript.py`, call `python3 allbundlesscript <output path>` to generate a csv file with relative paths of bundle files, property file keys, property file values.
+First-time updates should follow a similar procedure except that instead of calling `diffscript.py`, call `python3 allbundlesscript <output path>` to generate a csv file with relative paths of bundle files, property file keys, property file values.  The output path should be specified as a relative path with the dot slash notation (i.e. `./inputpath.csv`) or an absolute path.
 
 ##Unit Tests
 Unit tests can be run from this directory using `python3 -m unittest`.

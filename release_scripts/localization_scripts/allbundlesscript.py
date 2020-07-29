@@ -51,7 +51,9 @@ def main():
     parser = argparse.ArgumentParser(description='Gathers all key-value pairs within .properties-MERGED files into '
                                                  'one csv file.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument(dest='output_path', type=str, help='The path to the output csv file.')
+    parser.add_argument(dest='output_path', type=str, help='The path to the output csv file.  The output path should be'
+                                                           ' specified as a relative path with the dot slash notation '
+                                                           '(i.e. \'./outputpath.csv\') or an absolute path.')
     parser.add_argument('-r', '--repo', dest='repo_path', type=str, required=False,
                         help='The path to the repo.  If not specified, path of script is used.')
     parser.add_argument('-nc', '--no_commit', dest='no_commit', action='store_true', default=False,

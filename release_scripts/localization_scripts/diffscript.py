@@ -54,7 +54,9 @@ def main():
                                                  "'.properties-MERGED' files and generates a csv file containing "
                                                  "the items changed.",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument(dest='output_path', type=str, help='The path to the output csv file.')
+    parser.add_argument(dest='output_path', type=str, help='The path to the output csv file.  The output path should '
+                                                           'be specified as a relative path with the dot slash notation'
+                                                           ' (i.e. \'./outputpath.csv\') or an absolute path.')
 
     parser.add_argument('-r', '--repo', dest='repo_path', type=str, required=False,
                         help='The path to the repo.  If not specified, path of script is used.')
