@@ -33,7 +33,7 @@ import org.jfree.data.general.DefaultPieDataset;
 
 import java.text.DecimalFormat;
 import javax.swing.JLabel;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 
 /**
@@ -46,11 +46,18 @@ public class FileTypePieChart extends JPanel {
     private final DefaultPieDataset dataset = new DefaultPieDataset();
     private DataSource dataSource;
 
-
+    @Messages({
+        "DataSourceSummaryCountsPanel.byMimeTypeLabel.text=Files by MIME Type",
+        "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.audio.row=Audio",
+        "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.documents.row=Documents",
+        "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.executables.row=Executables",
+        "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.images.row=Images",
+        "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.videos.row=Videos"
+    })
     public FileTypePieChart() {
         // Create chart
         JFreeChart chart = ChartFactory.createPieChart(
-                NbBundle.getMessage(DataSourceSummaryCountsPanel.class, "DataSourceSummaryCountsPanel.byMimeTypeLabel.text"),
+                Bundle.DataSourceSummaryCountsPanel_byMimeTypeLabel_text(),
                 dataset,
                 true,
                 true,

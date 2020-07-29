@@ -75,7 +75,6 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     DataSourceSummaryCountsPanel() {
         rightAlignedRenderer.setHorizontalAlignment(JLabel.RIGHT);
         initComponents();
-        fileCountsByMimeTypeTable.getTableHeader().setReorderingAllowed(false);
         fileCountsByCategoryTable.getTableHeader().setReorderingAllowed(false);
         setDataSource(null);
     }
@@ -98,13 +97,9 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
         if (dataSource == null || !Case.isCaseOpen()) {
-            updateCountsTableData(EMPTY_PAIRS,
-                    EMPTY_PAIRS,
-                    EMPTY_PAIRS);
+            updateCountsTableData(EMPTY_PAIRS, EMPTY_PAIRS);
         } else {
-            updateCountsTableData(getMimeTypeModel(dataSource),
-                    getFileCategoryModel(dataSource),
-                    getArtifactCountsModel(dataSource));
+            updateCountsTableData(getFileCategoryModel(dataSource), getArtifactCountsModel(dataSource));
         }
         this.fileTypePieChart.setDataSource(dataSource);
     }
@@ -112,15 +107,10 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     /**
      * Specify the DataSource to display file information for.
      *
-     * @param mimeTypeDataModel     The mime type data model.
      * @param fileCategoryDataModel The file category data model.
      * @param artifactDataModel     The artifact type data model.
      */
-    private void updateCountsTableData(Object[][] mimeTypeDataModel, Object[][] fileCategoryDataModel, Object[][] artifactDataModel) {
-        fileCountsByMimeTypeTable.setModel(new DefaultTableModel(mimeTypeDataModel, MIME_TYPE_COLUMN_HEADERS));
-        fileCountsByMimeTypeTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
-        fileCountsByMimeTypeTable.getColumnModel().getColumn(0).setPreferredWidth(130);
-
+    private void updateCountsTableData(Object[][] fileCategoryDataModel, Object[][] artifactDataModel) {
         fileCountsByCategoryTable.setModel(new DefaultTableModel(fileCategoryDataModel, FILE_BY_CATEGORY_COLUMN_HEADERS));
         fileCountsByCategoryTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
         fileCountsByCategoryTable.getColumnModel().getColumn(0).setPreferredWidth(130);
@@ -130,35 +120,6 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         artifactCountsTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
 
         this.repaint();
-    }
-
-    /**
-     * Determines the JTable data model for datasource mime types.
-     *
-     * @param dataSource The DataSource.
-     *
-     * @return The model to be used with a JTable.
-     */
-    @Messages({
-        "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.images.row=Images",
-        "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.videos.row=Videos",
-        "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.audio.row=Audio",
-        "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.documents.row=Documents",
-        "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.executables.row=Executables"
-    })
-    private static Object[][] getMimeTypeModel(DataSource dataSource) {
-        return new Object[][]{
-            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_images_row(),
-                getCount(dataSource, FileTypeUtils.FileTypeCategory.IMAGE)},
-            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_videos_row(),
-                getCount(dataSource, FileTypeUtils.FileTypeCategory.VIDEO)},
-            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_audio_row(),
-                getCount(dataSource, FileTypeUtils.FileTypeCategory.AUDIO)},
-            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_documents_row(),
-                getCount(dataSource, FileTypeUtils.FileTypeCategory.DOCUMENTS)},
-            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_executables_row(),
-                getCount(dataSource, FileTypeUtils.FileTypeCategory.EXECUTABLE)}
-        };
     }
 
     /**
@@ -262,9 +223,6 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        fileCountsByMimeTypeScrollPane = new javax.swing.JScrollPane();
-        fileCountsByMimeTypeTable = new javax.swing.JTable();
-        byMimeTypeLabel = new javax.swing.JLabel();
         fileCountsByCategoryScrollPane = new javax.swing.JScrollPane();
         fileCountsByCategoryTable = new javax.swing.JTable();
         byCategoryLabel = new javax.swing.JLabel();
@@ -272,10 +230,6 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         artifactCountsScrollPane = new javax.swing.JScrollPane();
         artifactCountsTable = new javax.swing.JTable();
         fileTypePiePanel = fileTypePieChart;
-
-        fileCountsByMimeTypeScrollPane.setViewportView(fileCountsByMimeTypeTable);
-
-        org.openide.awt.Mnemonics.setLocalizedText(byMimeTypeLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryCountsPanel.class, "DataSourceSummaryCountsPanel.byMimeTypeLabel.text")); // NOI18N
 
         fileCountsByCategoryScrollPane.setViewportView(fileCountsByCategoryTable);
 
@@ -294,47 +248,35 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(fileCountsByMimeTypeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 140, Short.MAX_VALUE)
-                    .addComponent(byMimeTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
+                .addComponent(fileTypePiePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 424, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(byCategoryLabel)
                     .addComponent(fileCountsByCategoryScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(artifactCountsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(fileTypePiePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 424, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(18, Short.MAX_VALUE))
+                    .addComponent(artifactCountsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(232, Short.MAX_VALUE))
         );
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {fileCountsByCategoryScrollPane, fileCountsByMimeTypeScrollPane});
-
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(byMimeTypeLabel)
-                    .addComponent(byCategoryLabel)
-                    .addComponent(jLabel1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(fileTypePiePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(artifactCountsScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(byCategoryLabel)
+                            .addComponent(jLabel1))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(fileCountsByMimeTypeScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(fileCountsByCategoryScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addComponent(artifactCountsScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(fileCountsByCategoryScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
-
-        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {fileCountsByCategoryScrollPane, fileCountsByMimeTypeScrollPane});
-
     }// </editor-fold>//GEN-END:initComponents
 
 
@@ -342,11 +284,8 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane artifactCountsScrollPane;
     private javax.swing.JTable artifactCountsTable;
     private javax.swing.JLabel byCategoryLabel;
-    private javax.swing.JLabel byMimeTypeLabel;
     private javax.swing.JScrollPane fileCountsByCategoryScrollPane;
     private javax.swing.JTable fileCountsByCategoryTable;
-    private javax.swing.JScrollPane fileCountsByMimeTypeScrollPane;
-    private javax.swing.JTable fileCountsByMimeTypeTable;
     private javax.swing.JPanel fileTypePiePanel;
     private javax.swing.JLabel jLabel1;
     // End of variables declaration//GEN-END:variables
