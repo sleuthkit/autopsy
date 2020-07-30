@@ -18,6 +18,11 @@
  */
 package org.sleuthkit.autopsy.modules.photoreccarver;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
@@ -26,7 +31,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel {
-
+    private static final String EXTENSION_LIST_SEPARATOR = ",";
+    
     /**
      * Instantiate the ingest job settings panel.
      *
@@ -43,13 +49,42 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
      * @param settings The ingest job settings.
      */
     private void customizeComponents(PhotoRecCarverIngestJobSettings settings) {
+        includeExcludeCheckbox.setSelected(settings.hasFileOptOption());
+        extensionListTextfield.setText(String.join(EXTENSION_LIST_SEPARATOR, settings.getIncludeExcludeExtensions()));
+        includeRadioButton.setSelected(!settings.isIncludeElseExclude());
+        excludeRadioButton.setSelected(!settings.isIncludeElseExclude());
         keepCorruptedFilesCheckbox.setSelected(settings.isKeepCorruptedFiles());
+        setIncludePanelEnabled();
+    }
+    
+    private void setIncludePanelEnabled() {
+        setIncludePanelEnabled(includeExcludeCheckbox.isSelected());
+    }
+    
+    private void setIncludePanelEnabled(boolean enabled) {
+        extensionListTextfield.setEnabled(enabled);
+        includeRadioButton.setEnabled(enabled);
+        excludeRadioButton.setEnabled(enabled);
     }
 
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        return new PhotoRecCarverIngestJobSettings(
-                keepCorruptedFilesCheckbox.isSelected());
+        return new PhotoRecCarverIngestJobSettings( 
+            keepCorruptedFilesCheckbox.isSelected(),
+            includeExcludeCheckbox.isSelected(),
+            includeRadioButton.isSelected(),
+            getExtensions(extensionListTextfield.getText()));
+    }
+    
+    private List<String> getExtensions(String combinedList) {
+        if (StringUtils.isBlank(combinedList)) {
+            return Collections.emptyList();
+        }
+        
+        return Stream.of(combinedList.split(EXTENSION_LIST_SEPARATOR))
+                .map(ext -> ext.trim().replaceAll(EXTENSION_LIST_SEPARATOR, ""))
+                .filter(ext -> StringUtils.isNotBlank(ext))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -61,26 +96,91 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        includeExcludeButtonGroup = new javax.swing.ButtonGroup();
         keepCorruptedFilesCheckbox = new javax.swing.JCheckBox();
-        detectionSettingsLabel = new javax.swing.JLabel();
+        javax.swing.JLabel detectionSettingsLabel = new javax.swing.JLabel();
+        includeExcludeCheckbox = new javax.swing.JCheckBox();
+        javax.swing.JPanel includeExcludeParentPanel = new javax.swing.JPanel();
+        includeRadioButton = new javax.swing.JRadioButton();
+        excludeRadioButton = new javax.swing.JRadioButton();
+        javax.swing.JLabel includeExcludeExtensionsLabel = new javax.swing.JLabel();
+        extensionListTextfield = new javax.swing.JTextField();
+
+        setPreferredSize(null);
 
         org.openide.awt.Mnemonics.setLocalizedText(keepCorruptedFilesCheckbox, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.keepCorruptedFilesCheckbox.text")); // NOI18N
 
         detectionSettingsLabel.setFont(detectionSettingsLabel.getFont().deriveFont(detectionSettingsLabel.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(detectionSettingsLabel, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.detectionSettingsLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(includeExcludeCheckbox, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.includeExcludeCheckbox.text")); // NOI18N
+        includeExcludeCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                includeExcludeCheckboxActionPerformed(evt);
+            }
+        });
+
+        includeExcludeParentPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
+        includeExcludeButtonGroup.add(includeRadioButton);
+        includeRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(includeRadioButton, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.includeRadioButton.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(excludeRadioButton, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.excludeRadioButton.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(includeExcludeExtensionsLabel, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.includeExcludeExtensionsLabel.text")); // NOI18N
+
+        extensionListTextfield.setText(org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.extensionListTextfield.text")); // NOI18N
+
+        javax.swing.GroupLayout includeExcludeParentPanelLayout = new javax.swing.GroupLayout(includeExcludeParentPanel);
+        includeExcludeParentPanel.setLayout(includeExcludeParentPanelLayout);
+        includeExcludeParentPanelLayout.setHorizontalGroup(
+            includeExcludeParentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(includeExcludeParentPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(includeExcludeParentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(includeExcludeParentPanelLayout.createSequentialGroup()
+                        .addGroup(includeExcludeParentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(includeRadioButton)
+                            .addComponent(excludeRadioButton)
+                            .addComponent(includeExcludeExtensionsLabel))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(extensionListTextfield, javax.swing.GroupLayout.Alignment.TRAILING))
+                .addContainerGap())
+        );
+        includeExcludeParentPanelLayout.setVerticalGroup(
+            includeExcludeParentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(includeExcludeParentPanelLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(includeRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(excludeRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(includeExcludeExtensionsLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(extensionListTextfield, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(keepCorruptedFilesCheckbox))
-                    .addComponent(detectionSettingsLabel))
-                .addContainerGap(159, Short.MAX_VALUE))
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(detectionSettingsLabel)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(10, 10, 10)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(includeExcludeCheckbox)
+                                    .addComponent(keepCorruptedFilesCheckbox)))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(35, 35, 35)
+                        .addComponent(includeExcludeParentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(190, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -89,12 +189,24 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
                 .addComponent(detectionSettingsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(keepCorruptedFilesCheckbox)
-                .addContainerGap(145, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(includeExcludeCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(includeExcludeParentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(26, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void includeExcludeCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_includeExcludeCheckboxActionPerformed
+        setIncludePanelEnabled();
+    }//GEN-LAST:event_includeExcludeCheckboxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel detectionSettingsLabel;
+    private javax.swing.JRadioButton excludeRadioButton;
+    private javax.swing.JTextField extensionListTextfield;
+    private javax.swing.ButtonGroup includeExcludeButtonGroup;
+    private javax.swing.JCheckBox includeExcludeCheckbox;
+    private javax.swing.JRadioButton includeRadioButton;
     private javax.swing.JCheckBox keepCorruptedFilesCheckbox;
     // End of variables declaration//GEN-END:variables
 }

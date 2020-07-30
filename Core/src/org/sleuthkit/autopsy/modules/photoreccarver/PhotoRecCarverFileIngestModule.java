@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -79,6 +80,9 @@ import org.sleuthkit.datamodel.TskData;
 final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     static final boolean DEFAULT_CONFIG_KEEP_CORRUPTED_FILES = false;
+    static final boolean DEFAULT_CONFIG_FILE_OPT_OPTIONS = false;
+    static final boolean DEFAULT_CONFIG_INCLUDE_ELSE_EXCLUDE = false;
+    
     
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
     private static final String PHOTOREC_SUBDIRECTORY = "bin"; //NON-NLS
@@ -99,9 +103,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private File executableFile;
     private IngestServices services;
     private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
+    private final PhotoRecCarverIngestJobSettings settings;
     private long jobId;
     
-    private final boolean keepCorruptedFiles;
 
     private static class IngestJobTotals {
         private final AtomicLong totalItemsRecovered = new AtomicLong(0);
@@ -115,7 +119,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @param settings Ingest job settings used to configure the module.
      */
     PhotoRecCarverFileIngestModule(PhotoRecCarverIngestJobSettings settings) {
-        keepCorruptedFiles = settings.isKeepCorruptedFiles();
+        this.settings = settings;
     }
 
     private static synchronized IngestJobTotals getTotalsForIngestJobs(long ingestJobId) {
@@ -176,6 +180,42 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
             }
         }
+    }
+    
+
+    
+    private String getPhotorecOptions() {
+        List<String> toRet = new ArrayList<String>();
+        
+        if (settings.hasFileOptOption()) {
+            String enable = "enable";
+            String disable = "disable";
+            
+            // if we are including file extensions, then we are excluding 
+            // everything else and vice-versa.
+            String everythingEnable = settings.isIncludeElseExclude() ?
+                    disable : enable;
+            
+            toRet.addAll(Arrays.asList("everything", everythingEnable));
+            
+            final String itemEnable = settings.isIncludeElseExclude() ?
+                    enable : disable;
+            
+            settings.getIncludeExcludeExtensions().forEach((extension) -> {
+                toRet.addAll(Arrays.asList(extension, itemEnable));
+            });
+        }
+        
+        if (settings.isKeepCorruptedFiles()) {
+            toRet.add("keep_corrupted_file");
+        }
+        
+        if (toRet.size() > 0) {
+            toRet.add(0, "options");
+        }
+        
+        toRet.add("search");
+        return String.join(",", toRet);
     }
 
     /**
@@ -242,11 +282,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                     outputDirPath.toAbsolutePath().toString() + File.separator + PHOTOREC_RESULTS_BASE,
                     "/cmd", // NON-NLS
                     tempFilePath.toFile().toString());
-            if (keepCorruptedFiles) {
-                processAndSettings.command().add("options,keep_corrupted_file,search"); // NON-NLS
-            } else {
-                processAndSettings.command().add("search"); // NON-NLS
-            }
+            
+            String photorecOptions = getPhotorecOptions();
+            processAndSettings.command().add(photorecOptions);
             
             // Add environment variable to force PhotoRec to run with the same permissions Autopsy uses
             processAndSettings.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
