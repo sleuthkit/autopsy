@@ -75,6 +75,7 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         initComponents();
         fileCountsByMimeTypeTable.getTableHeader().setReorderingAllowed(false);
         fileCountsByCategoryTable.getTableHeader().setReorderingAllowed(false);
+        artifactCountsTable.getTableHeader().setReorderingAllowed(false);
         setDataSource(null);
     }
 
@@ -279,7 +280,6 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(DataSourceSummaryCountsPanel.class, "DataSourceSummaryCountsPanel.jLabel1.text")); // NOI18N
 
-        artifactCountsTable.setAutoCreateRowSorter(true);
         artifactCountsScrollPane.setViewportView(artifactCountsTable);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
