@@ -108,16 +108,32 @@ class FileTypePieChart extends JPanel {
         this.dataset.clear();
 
         if (dataSource != null) {
-            this.dataset.setValue(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_images_row(),
-                    getCount(dataSource, FileTypeUtils.FileTypeCategory.IMAGE));
-            this.dataset.setValue(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_videos_row(),
-                    getCount(dataSource, FileTypeUtils.FileTypeCategory.VIDEO));
-            this.dataset.setValue(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_audio_row(),
-                    getCount(dataSource, FileTypeUtils.FileTypeCategory.AUDIO));
-            this.dataset.setValue(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_documents_row(),
-                    getCount(dataSource, FileTypeUtils.FileTypeCategory.DOCUMENTS));
-            this.dataset.setValue(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_executables_row(),
-                    getCount(dataSource, FileTypeUtils.FileTypeCategory.EXECUTABLE));
+            addIfPresent(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_images_row(),
+                    FileTypeUtils.FileTypeCategory.IMAGE);
+           addIfPresent(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_videos_row(), 
+                   FileTypeUtils.FileTypeCategory.VIDEO);
+            addIfPresent(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_audio_row(),
+                    FileTypeUtils.FileTypeCategory.AUDIO);
+            addIfPresent(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_documents_row(),
+                    FileTypeUtils.FileTypeCategory.DOCUMENTS);
+            addIfPresent(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_executables_row(),
+                    FileTypeUtils.FileTypeCategory.EXECUTABLE);
+        }
+    }
+    
+    /**
+     * Adds count for file type category if there is a value.  Uses fields 'dataSource' and 'dataset'.
+     * @param label The label for this pie slice.
+     * @param category The category for the pie slice.
+     */
+    private void addIfPresent(String label, FileTypeUtils.FileTypeCategory category) {
+        if (this.dataSource == null) {
+            return;
+        }
+        
+        Long count = getCount(this.dataSource, category);
+        if (count != null && count > 0) {
+            this.dataset.setValue(label, count);
         }
     }
 
