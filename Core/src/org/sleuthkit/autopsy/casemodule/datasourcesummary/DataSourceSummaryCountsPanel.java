@@ -22,7 +22,6 @@ import java.util.Map;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JLabel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.DataSource;
@@ -75,6 +74,7 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         rightAlignedRenderer.setHorizontalAlignment(JLabel.RIGHT);
         initComponents();
         fileCountsByCategoryTable.getTableHeader().setReorderingAllowed(false);
+        artifactCountsTable.getTableHeader().setReorderingAllowed(false);
         setDataSource(null);
     }
     
@@ -110,11 +110,11 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
      * @param artifactDataModel     The artifact type data model.
      */
     private void updateCountsTableData(Object[][] fileCategoryDataModel, Object[][] artifactDataModel) {
-        fileCountsByCategoryTable.setModel(new DefaultTableModel(fileCategoryDataModel, FILE_BY_CATEGORY_COLUMN_HEADERS));
+        fileCountsByCategoryTable.setModel(new NonEditableTableModel(fileCategoryDataModel, FILE_BY_CATEGORY_COLUMN_HEADERS));
         fileCountsByCategoryTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
         fileCountsByCategoryTable.getColumnModel().getColumn(0).setPreferredWidth(130);
 
-        artifactCountsTable.setModel(new DefaultTableModel(artifactDataModel, ARTIFACT_COUNTS_COLUMN_HEADERS));
+        artifactCountsTable.setModel(new NonEditableTableModel(artifactDataModel, ARTIFACT_COUNTS_COLUMN_HEADERS));
         artifactCountsTable.getColumnModel().getColumn(0).setPreferredWidth(230);
         artifactCountsTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
 
@@ -230,7 +230,6 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(resultsByTypeLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryCountsPanel.class, "DataSourceSummaryCountsPanel.resultsByTypeLabel.text")); // NOI18N
 
-        artifactCountsTable.setAutoCreateRowSorter(true);
         artifactCountsScrollPane.setViewportView(artifactCountsTable);
 
         fileTypePiePanel.setPreferredSize(new java.awt.Dimension(400, 300));
