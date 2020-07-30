@@ -503,7 +503,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             tc.open();
         }
         tc.resetTopComponent();
-        List<FileSearchFiltering.FileFilter> filters;
+        List<AbstractFilter> filters;
         if (videosButton.isSelected()) {
             filters = videoFilterPanel.getFilters();
         } else if (documentsButton.isSelected()) {

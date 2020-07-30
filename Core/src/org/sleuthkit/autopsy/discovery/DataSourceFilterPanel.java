@@ -194,10 +194,10 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     @Override
-    FileSearchFiltering.FileFilter getFilter() {
+    AbstractFilter getFilter() {
         if (dataSourceCheckbox.isSelected()) {
             List<DataSource> dataSources = dataSourceList.getSelectedValuesList().stream().map(t -> t.getDataSource()).collect(Collectors.toList());
-            return new FileSearchFiltering.DataSourceFilter(dataSources);
+            return new SearchFiltering.DataSourceFilter(dataSources);
         }
         return null;
     }

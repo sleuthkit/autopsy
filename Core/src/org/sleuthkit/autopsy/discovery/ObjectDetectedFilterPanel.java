@@ -167,9 +167,9 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     @Override
-    FileSearchFiltering.FileFilter getFilter() {
+    AbstractFilter getFilter() {
         if (objectsCheckbox.isSelected()) {
-            return new FileSearchFiltering.ObjectDetectionFilter(objectsList.getSelectedValuesList());
+            return new SearchFiltering.ObjectDetectionFilter(objectsList.getSelectedValuesList());
         }
         return null;
     }

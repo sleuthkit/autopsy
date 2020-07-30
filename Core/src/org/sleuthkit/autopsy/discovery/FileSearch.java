@@ -122,7 +122,7 @@ class FileSearch {
      * @throws FileSearchException
      */
     static SearchResults runFileSearchDebug(String userName,
-            List<FileSearchFiltering.FileFilter> filters,
+            List<AbstractFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
@@ -136,7 +136,7 @@ class FileSearch {
         attributesNeededForGroupingOrSorting.addAll(fileSortingMethod.getRequiredAttributes());
 
         // Run the queries for each filter
-        List<ResultFile> resultFiles = FileSearchFiltering.runQueries(filters, caseDb, centralRepoDb);
+        List<ResultFile> resultFiles = SearchFiltering.runQueries(filters, caseDb, centralRepoDb);
 
         // Add the data to resultFiles for any attributes needed for sorting and grouping
         addAttributes(attributesNeededForGroupingOrSorting, resultFiles, caseDb, centralRepoDb);
@@ -174,7 +174,7 @@ class FileSearch {
      * @throws FileSearchException
      */
     static Map<GroupKey, Integer> getGroupSizes(String userName,
-            List<FileSearchFiltering.FileFilter> filters,
+            List<AbstractFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
@@ -211,7 +211,7 @@ class FileSearch {
      * @throws FileSearchException
      */
     static List<ResultFile> getFilesInGroup(String userName,
-            List<FileSearchFiltering.FileFilter> filters,
+            List<AbstractFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
@@ -483,7 +483,7 @@ class FileSearch {
      * @throws FileSearchException
      */
     private static Map<GroupKey, List<ResultFile>> runFileSearch(String userName,
-            List<FileSearchFiltering.FileFilter> filters,
+            List<AbstractFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
@@ -498,7 +498,7 @@ class FileSearch {
         attributesNeededForGroupingOrSorting.addAll(fileSortingMethod.getRequiredAttributes());
 
         // Run the queries for each filter
-        List<ResultFile> resultFiles = FileSearchFiltering.runQueries(filters, caseDb, centralRepoDb);
+        List<ResultFile> resultFiles = SearchFiltering.runQueries(filters, caseDb, centralRepoDb);
 
         // Add the data to resultFiles for any attributes needed for sorting and grouping
         addAttributes(attributesNeededForGroupingOrSorting, resultFiles, caseDb, centralRepoDb);
@@ -2077,13 +2077,13 @@ class FileSearch {
          * @param groupSortingType   The algorithm to sort the groups by.
          * @param fileSortingMethod  The method to sort the files by.
          */
-        SearchKey(String userName, List<FileSearchFiltering.FileFilter> filters,
+        SearchKey(String userName, List<AbstractFilter> filters,
                 AttributeType groupAttributeType,
                 FileGroup.GroupSortingAlgorithm groupSortingType,
                 FileSorter.SortingMethod fileSortingMethod) {
             StringBuilder searchStringBuilder = new StringBuilder();
             searchStringBuilder.append(userName);
-            for (FileSearchFiltering.FileFilter filter : filters) {
+            for (AbstractFilter filter : filters) {
                 searchStringBuilder.append(filter.toString());
             }
             searchStringBuilder.append(groupAttributeType).append(groupSortingType).append(fileSortingMethod);

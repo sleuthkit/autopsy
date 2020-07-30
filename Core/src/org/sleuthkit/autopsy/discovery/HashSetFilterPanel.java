@@ -161,9 +161,9 @@ final class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     @Override
-    FileSearchFiltering.FileFilter getFilter() {
+    AbstractFilter getFilter() {
         if (hashSetCheckbox.isSelected()) {
-            return new FileSearchFiltering.HashSetFilter(hashSetList.getSelectedValuesList());
+            return new SearchFiltering.HashSetFilter(hashSetList.getSelectedValuesList());
         }
         return null;
     }

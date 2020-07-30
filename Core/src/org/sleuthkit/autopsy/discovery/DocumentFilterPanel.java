@@ -98,4 +98,9 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
     private javax.swing.JSplitPane documentsFiltersSplitPane;
     // End of variables declaration//GEN-END:variables
 
+    @Override
+    SearchData.ResultType getResultType() {
+        return SearchData.ResultType.FILE;
+    }
+
 }

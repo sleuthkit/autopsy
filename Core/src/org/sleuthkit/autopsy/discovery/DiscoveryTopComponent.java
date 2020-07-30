@@ -36,7 +36,6 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.discovery.FileSearchFiltering.FileFilter;
 
 /**
  * Create a dialog for displaying the Discovery results.
@@ -299,7 +298,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
         progressMessageTextArea.setForeground(Color.black);
-        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(searchCompleteEvent.getFilters().stream().map(FileFilter::getDesc).collect(Collectors.joining("; "))));
+        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(searchCompleteEvent.getFilters().stream().map(AbstractFilter::getDesc).collect(Collectors.joining("; "))));
         progressMessageTextArea.setCaretPosition(0);
     }
 

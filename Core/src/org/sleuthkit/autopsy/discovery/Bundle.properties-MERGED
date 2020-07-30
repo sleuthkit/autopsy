@@ -1,3 +1,5 @@
+ArtifactSearchData.ArtifactType.Domain.displayName=Domain
+ArtifactSearchData.ArtifactType.Other.displayName=Other
 CTL_OpenDiscoveryAction=Discovery
 # {0} - dataSourceName
 DataSourceModuleWrapper.exifModule.text=Exif Parser module was not run on data source: {0}\n

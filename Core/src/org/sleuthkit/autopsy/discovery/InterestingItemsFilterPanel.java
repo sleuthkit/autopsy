@@ -163,9 +163,9 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     @Override
-    FileSearchFiltering.FileFilter getFilter() {
+    AbstractFilter getFilter() {
         if (interestingItemsCheckbox.isSelected()) {
-            return new FileSearchFiltering.InterestingFileSetFilter(interestingItemsList.getSelectedValuesList());
+            return new SearchFiltering.InterestingFileSetFilter(interestingItemsList.getSelectedValuesList());
         }
         return null;
     }

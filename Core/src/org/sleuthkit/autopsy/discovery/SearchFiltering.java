@@ -42,7 +42,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 /**
  * Run various filters to return a subset of files from the current case.
  */
-class FileSearchFiltering {
+class SearchFiltering {
 
     /**
      * Run the given filters to get a list of matching files.
@@ -54,13 +54,13 @@ class FileSearchFiltering {
      *
      * @return
      */
-    static List<ResultFile> runQueries(List<FileFilter> filters, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
+    static List<ResultFile> runQueries(List<AbstractFilter> filters, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
         if (caseDb == null) {
             throw new FileSearchException("Case DB parameter is null"); // NON-NLS
         }
         // Combine all the SQL queries from the filters into one query
         String combinedQuery = "";
-        for (FileFilter filter : filters) {
+        for (AbstractFilter filter : filters) {
             if (!filter.getWhereClause().isEmpty()) {
                 if (!combinedQuery.isEmpty()) {
                     combinedQuery += " AND "; // NON-NLS
@@ -94,7 +94,7 @@ class FileSearchFiltering {
      * @throws TskCoreException
      * @throws FileSearchException
      */
-    private static List<ResultFile> getResultList(List<FileFilter> filters, String combinedQuery, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws TskCoreException, FileSearchException {
+    private static List<ResultFile> getResultList(List<AbstractFilter> filters, String combinedQuery, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws TskCoreException, FileSearchException {
         // Get all matching abstract files
         List<ResultFile> resultList = new ArrayList<>();
         List<AbstractFile> sqlResults = caseDb.findAllFilesWhere(combinedQuery);
@@ -110,7 +110,7 @@ class FileSearchFiltering {
         }
 
         // Now run any non-SQL filters. 
-        for (FileFilter filter : filters) {
+        for (AbstractFilter filter : filters) {
             if (filter.useAlternateFilter()) {
                 resultList = filter.applyAlternateFilter(resultList, caseDb, centralRepoDb);
             }
@@ -123,60 +123,9 @@ class FileSearchFiltering {
     }
 
     /**
-     * Base class for the filters.
-     */
-    static abstract class FileFilter {
-
-        /**
-         * Returns part of a query on the tsk_files table that can be AND-ed
-         * with other pieces
-         *
-         * @return the SQL query or an empty string if there is no SQL query for
-         *         this filter.
-         */
-        abstract String getWhereClause();
-
-        /**
-         * Indicates whether this filter needs to use the secondary, non-SQL
-         * method applyAlternateFilter().
-         *
-         * @return false by default
-         */
-        boolean useAlternateFilter() {
-            return false;
-        }
-
-        /**
-         * Run a secondary filter that does not operate on tsk_files.
-         *
-         * @param currentResults The current list of matching files; empty if no
-         *                       filters have yet been run.
-         * @param caseDb         The case database
-         * @param centralRepoDb  The central repo database. Can be null if the
-         *                       filter does not require it.
-         *
-         * @return The list of files that match this filter (and any that came
-         *         before it)
-         *
-         * @throws FileSearchException
-         */
-        List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws FileSearchException {
-            return new ArrayList<>();
-        }
-
-        /**
-         * Get a description of the selected filter.
-         *
-         * @return A description of the filter
-         */
-        abstract String getDesc();
-    }
-
-    /**
      * A filter for specifying the file size
      */
-    static class SizeFilter extends FileFilter {
+    static class SizeFilter extends AbstractFilter {
 
         private final List<FileSize> fileSizes;
 
@@ -316,7 +265,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying parent path (either full path or substring)
      */
-    static class ParentFilter extends FileFilter {
+    static class ParentFilter extends AbstractFilter {
 
         private final List<ParentSearchTerm> parentSearchTerms;
 
@@ -393,7 +342,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying data sources
      */
-    static class DataSourceFilter extends FileFilter {
+    static class DataSourceFilter extends AbstractFilter {
 
         private final List<DataSource> dataSources;
 
@@ -444,7 +393,7 @@ class FileSearchFiltering {
      * A filter for specifying keyword list names. A file must contain a keyword
      * from one of the given lists to pass.
      */
-    static class KeywordListFilter extends FileFilter {
+    static class KeywordListFilter extends AbstractFilter {
 
         private final List<String> listNames;
 
@@ -480,7 +429,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying file types.
      */
-    static class FileTypeFilter extends FileFilter {
+    static class FileTypeFilter extends AbstractFilter {
 
         private final List<FileType> categories;
 
@@ -539,7 +488,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying frequency in the central repository.
      */
-    static class FrequencyFilter extends FileFilter {
+    static class FrequencyFilter extends AbstractFilter {
 
         private final List<Frequency> frequencies;
 
@@ -609,7 +558,7 @@ class FileSearchFiltering {
      * A filter for specifying hash set names. A file must match one of the
      * given sets to pass.
      */
-    static class HashSetFilter extends FileFilter {
+    static class HashSetFilter extends AbstractFilter {
 
         private final List<String> setNames;
 
@@ -647,7 +596,7 @@ class FileSearchFiltering {
      * A filter for specifying interesting file set names. A file must match one
      * of the given sets to pass.
      */
-    static class InterestingFileSetFilter extends FileFilter {
+    static class InterestingFileSetFilter extends AbstractFilter {
 
         private final List<String> setNames;
 
@@ -685,7 +634,7 @@ class FileSearchFiltering {
      * A filter for specifying object types detected. A file must match one of
      * the given types to pass.
      */
-    static class ObjectDetectionFilter extends FileFilter {
+    static class ObjectDetectionFilter extends AbstractFilter {
 
         private final List<String> typeNames;
 
@@ -723,7 +672,7 @@ class FileSearchFiltering {
      * A filter for specifying the score. A file must have one of the given
      * scores to pass
      */
-    static class ScoreFilter extends FileFilter {
+    static class ScoreFilter extends AbstractFilter {
 
         private final List<Score> scores;
 
@@ -800,7 +749,7 @@ class FileSearchFiltering {
      * A filter for specifying tag names. A file must contain one of the given
      * tags to pass.
      */
-    static class TagsFilter extends FileFilter {
+    static class TagsFilter extends AbstractFilter {
 
         private final List<TagName> tagNames;
 
@@ -849,7 +798,7 @@ class FileSearchFiltering {
      * A filter for specifying that the file must have user content suspected
      * data.
      */
-    static class UserCreatedFilter extends FileFilter {
+    static class UserCreatedFilter extends AbstractFilter {
 
         /**
          * Create the ExifFilter
@@ -877,7 +826,7 @@ class FileSearchFiltering {
      * A filter for specifying that the file must have been marked as notable in
      * the CR.
      */
-    static class NotableFilter extends FileFilter {
+    static class NotableFilter extends AbstractFilter {
 
         /**
          * Create the NotableFilter
@@ -945,7 +894,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying if known files should be included.
      */
-    static class KnownFilter extends FileFilter {
+    static class KnownFilter extends AbstractFilter {
 
         @Override
         String getWhereClause() {
@@ -992,7 +941,7 @@ class FileSearchFiltering {
         return result;
     }
 
-    private FileSearchFiltering() {
+    private SearchFiltering(){
         // Class should not be instantiated
     }
 }

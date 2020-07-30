@@ -105,4 +105,9 @@ final class VideoFilterPanel extends AbstractFiltersPanel {
     private javax.swing.JSplitPane videoFiltersSplitPane;
     // End of variables declaration//GEN-END:variables
 
+    @Override
+    SearchData.ResultType getResultType() {
+        return SearchData.ResultType.FILE;
+    }
+
 }

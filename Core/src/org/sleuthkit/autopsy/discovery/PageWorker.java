@@ -34,7 +34,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
 
     private final static Logger logger = Logger.getLogger(PageWorker.class.getName());
     private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
-    private final List<FileSearchFiltering.FileFilter> searchfilters;
+    private final List<AbstractFilter> searchfilters;
     private final FileSearch.AttributeType groupingAttribute;
     private final FileGroup.GroupSortingAlgorithm groupSort;
     private final FileSorter.SortingMethod fileSortMethod;
@@ -61,7 +61,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
      * @param resultType        The type of files which exist in the group.
      * @param centralRepo       The central repository to be used.
      */
-    PageWorker(List<FileSearchFiltering.FileFilter> searchfilters, FileSearch.AttributeType groupingAttribute,
+    PageWorker(List<AbstractFilter> searchfilters, FileSearch.AttributeType groupingAttribute,
             FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod, GroupKey groupKey,
             int startingEntry, int pageSize, FileSearchData.FileType resultType, CentralRepository centralRepo) {
         this.searchfilters = searchfilters;

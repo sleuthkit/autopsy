@@ -154,9 +154,9 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     @Override
-    FileSearchFiltering.FileFilter getFilter() {
+    AbstractFilter getFilter() {
         if (pastOccurrencesCheckbox.isSelected()) {
-            return new FileSearchFiltering.FrequencyFilter(crFrequencyList.getSelectedValuesList());
+            return new SearchFiltering.FrequencyFilter(crFrequencyList.getSelectedValuesList());
         }
         return null;
     }

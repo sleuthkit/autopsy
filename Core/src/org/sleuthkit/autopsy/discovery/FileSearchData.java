@@ -28,11 +28,16 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 
 /**
- * Utility enums for FileSearch.
+ * Utility enums for searches made for files with Discovery.
  */
-final class FileSearchData {
+final class FileSearchData extends SearchData {
 
     private final static long BYTES_PER_MB = 1000000;
+
+    @Override
+    ResultType getResultType() {
+        return ResultType.FILE;
+    }
 
     /**
      * Enum representing how often the file occurs in the Central Repository.
@@ -256,8 +261,8 @@ final class FileSearchData {
         public String toString() {
             return sizeGroup + displaySize;
         }
-        
-        String getSizeGroup(){
+
+        String getSizeGroup() {
             return sizeGroup;
         }
 
@@ -384,14 +389,6 @@ final class FileSearchData {
             return OTHER;
         }
 
-        /**
-         * Get the list of enums that are valid for filtering.
-         *
-         * @return enums that can be used to filter
-         */
-        static List<FileType> getOptionsForFiltering() {
-            return Arrays.asList(IMAGE, VIDEO);
-        }
     }
 
     /**

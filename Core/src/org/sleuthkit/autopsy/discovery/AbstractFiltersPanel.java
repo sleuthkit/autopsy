@@ -61,6 +61,8 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         secondColumnPanel.setLayout(new GridBagLayout());
     }
 
+    abstract SearchData.ResultType getResultType();
+    
     /**
      * Get the type of results this filters panel is for.
      *
@@ -242,12 +244,18 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *
      * @return The list of filters selected by the user.
      */
-    synchronized List<FileSearchFiltering.FileFilter> getFilters() {
-        List<FileSearchFiltering.FileFilter> filtersToUse = new ArrayList<>();
-        filtersToUse.add(new FileSearchFiltering.FileTypeFilter(getFileType()));
+    synchronized List<AbstractFilter> getFilters() {
+        
+        List<AbstractFilter> filtersToUse = new ArrayList<>();
+        if (getResultType().equals(SearchData.ResultType.FILE)) {
+             filtersToUse.add(new SearchFiltering.FileTypeFilter(getFileType()));
+        } else if (getResultType().equals(SearchData.ResultType.ARTIFACT)){
+            
+        }
+       
         for (AbstractDiscoveryFilterPanel filterPanel : filters) {
             if (filterPanel.getCheckbox().isSelected()) {
-                FileSearchFiltering.FileFilter filter = filterPanel.getFilter();
+                AbstractFilter filter = filterPanel.getFilter();
                 if (filter != null) {
                     filtersToUse.add(filter);
                 }

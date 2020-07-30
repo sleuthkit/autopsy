@@ -39,7 +39,7 @@ final class GroupListPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     private FileType resultType = null;
     private Map<GroupKey, Integer> groupMap = null;
-    private List<FileSearchFiltering.FileFilter> searchfilters;
+    private List<AbstractFilter> searchfilters;
     private FileSearch.AttributeType groupingAttribute;
     private FileGroup.GroupSortingAlgorithm groupSort;
     private FileSorter.SortingMethod fileSortMethod;
