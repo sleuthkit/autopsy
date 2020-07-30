@@ -22,7 +22,6 @@ import java.util.Map;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JLabel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
@@ -115,15 +114,15 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
      * @param artifactDataModel     The artifact type data model.
      */
     private void updateCountsTableData(Object[][] mimeTypeDataModel, Object[][] fileCategoryDataModel, Object[][] artifactDataModel) {
-        fileCountsByMimeTypeTable.setModel(new DefaultTableModel(mimeTypeDataModel, MIME_TYPE_COLUMN_HEADERS));
+        fileCountsByMimeTypeTable.setModel(new NonEditableTableModel(mimeTypeDataModel, MIME_TYPE_COLUMN_HEADERS));
         fileCountsByMimeTypeTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
         fileCountsByMimeTypeTable.getColumnModel().getColumn(0).setPreferredWidth(130);
 
-        fileCountsByCategoryTable.setModel(new DefaultTableModel(fileCategoryDataModel, FILE_BY_CATEGORY_COLUMN_HEADERS));
+        fileCountsByCategoryTable.setModel(new NonEditableTableModel(fileCategoryDataModel, FILE_BY_CATEGORY_COLUMN_HEADERS));
         fileCountsByCategoryTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
         fileCountsByCategoryTable.getColumnModel().getColumn(0).setPreferredWidth(130);
 
-        artifactCountsTable.setModel(new DefaultTableModel(artifactDataModel, ARTIFACT_COUNTS_COLUMN_HEADERS));
+        artifactCountsTable.setModel(new NonEditableTableModel(artifactDataModel, ARTIFACT_COUNTS_COLUMN_HEADERS));
         artifactCountsTable.getColumnModel().getColumn(0).setPreferredWidth(230);
         artifactCountsTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
 
