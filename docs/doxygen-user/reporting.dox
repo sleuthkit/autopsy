@@ -8,6 +8,10 @@ of any coordinates found to load into software like Google Earth.
 
 \image html reports_select.png
 
+Most report types will allow you to select which data sources to include in the report. Note that the names of excluded data sources may still be present in the report. For example, the \ref report_html will list all data sources in the case on the main page but will not contain results, tagged files, etc. from the excluded data source(s).
+
+\image html reports_datasource_select.png
+
 The different types of reports will be described below. The majority of the report modules will generate a report file which
 will be displayed in the case under the "Reports" node of the \ref tree_viewer_page.
 

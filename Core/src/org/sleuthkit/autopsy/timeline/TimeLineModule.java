@@ -40,7 +40,7 @@ public class TimeLineModule {
     private static final Logger logger = Logger.getLogger(TimeLineModule.class.getName());
 
     private static final Object controllerLock = new Object();
-    private static TimeLineController controller;
+    private static volatile TimeLineController controller;
 
     /**
      * provides static utilities, can not be instantiated
