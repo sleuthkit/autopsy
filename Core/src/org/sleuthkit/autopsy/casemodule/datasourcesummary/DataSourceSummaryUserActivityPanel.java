@@ -58,6 +58,7 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
      */
     public DataSourceSummaryUserActivityPanel() {
         initComponents();
+        topProgramsTable.getTableHeader().setReorderingAllowed(false);
     }
 
     /**
@@ -88,7 +89,7 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
      * @param data The data in Object[][] form to be used by the DefaultTableModel.
      */
     private void updateTopPrograms(Object[][] data) {
-        topProgramsTable.setModel(new DefaultTableModel(data, TOP_PROGS_COLUMN_HEADERS));
+        topProgramsTable.setModel(new NonEditableTableModel(data, TOP_PROGS_COLUMN_HEADERS));
         topProgramsTable.getColumnModel().getColumn(0).setPreferredWidth(230);
         topProgramsTable.getColumnModel().getColumn(1).setCellRenderer(RIGHT_ALIGNED_RENDERER);        
         this.repaint();
@@ -133,8 +134,6 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(programsRunLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.programsRunLabel.text")); // NOI18N
 
         topProgramsScrollPane.setPreferredSize(new java.awt.Dimension(290, 187));
-
-        topProgramsTable.setAutoCreateRowSorter(true);
         topProgramsScrollPane.setViewportView(topProgramsTable);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

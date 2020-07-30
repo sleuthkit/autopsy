@@ -70,9 +70,6 @@
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
       <SubComponents>
         <Component class="javax.swing.JTable" name="topProgramsTable">
-          <Properties>
-            <Property name="autoCreateRowSorter" type="boolean" value="true"/>
-          </Properties>
         </Component>
       </SubComponents>
     </Container>
