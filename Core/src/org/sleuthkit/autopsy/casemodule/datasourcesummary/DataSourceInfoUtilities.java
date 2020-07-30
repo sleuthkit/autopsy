@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019 - 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -29,6 +28,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -195,6 +195,33 @@ final class DataSourceInfoUtilities {
     }
 
     /**
+     * Generates a result set handler that will return a map of string to long.
+     *
+     * @param keyParam   The named parameter in the result set representing the
+     *                   key.
+     * @param valueParam The named parameter in the result set representing the
+     *                   value.
+     *
+     * @return The result set handler to generate the map of string to long.
+     */
+    private static ResultSetHandler<LinkedHashMap<String, Long>> getStringLongResultSetHandler(String keyParam, String valueParam) {
+        ResultSetHandler<LinkedHashMap<String, Long>> handler = (resultSet) -> {
+            LinkedHashMap<String, Long> toRet = new LinkedHashMap<>();
+            while (resultSet.next()) {
+                try {
+                    toRet.put(resultSet.getString(keyParam), resultSet.getLong(valueParam));
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "Failed to get a result pair from the result set.", ex);
+                }
+            }
+
+            return toRet;
+        };
+
+        return handler;
+    }
+
+    /**
      * Retrieves counts for each artifact type in a data source.
      *
      * @param selectedDataSource The data source.
@@ -216,22 +243,50 @@ final class DataSourceInfoUtilities {
                 + " WHERE bba.data_source_obj_id =" + selectedDataSource.getId()
                 + " GROUP BY bbt.display_name";
 
-        ResultSetHandler<Map<String, Long>> handler = (resultSet) -> {
-            Map<String, Long> toRet = new HashMap<>();
-            while (resultSet.next()) {
-                try {
-                    toRet.put(resultSet.getString(nameParam), resultSet.getLong(valueParam));
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "Failed to get a result pair from the result set.", ex);
-                }
-            }
-
-            return toRet;
-        };
-
         String errorMessage = "Unable to get artifact type counts; returning null.";
+        return getBaseQueryResult(query, getStringLongResultSetHandler(nameParam, valueParam), errorMessage);
+    }
 
-        return getBaseQueryResult(query, handler, errorMessage);
+    /**
+     * Retrieves a list of the top programs used on the data source. Currently
+     * determines this based off of which prefetch results return the highest
+     * count.
+     *
+     * @param dataSource The data source.
+     * @param count      The number of programs to return.
+     *
+     * @return
+     */
+    static Map<String, Long> getTopPrograms(DataSource dataSource, int count) {
+        if (dataSource == null || count <= 0) {
+            return Collections.emptyMap();
+        }
+
+        String progNameParam = "prog_name";
+        String runTimesParam = "run_times";
+        String prefetchIdentifier = "Windows Prefetch Extractor";
+
+        String query = "SELECT program_artifacts." + progNameParam + ", MAX(attr.value_int32) AS " + runTimesParam + "\n"
+                + "FROM blackboard_artifacts bba\n"
+                + "INNER JOIN blackboard_attributes attr ON bba.artifact_id = attr.artifact_id\n"
+                + "INNER JOIN (\n"
+                + "-- get all the different artifacts coming from prefetch\n"
+                + "	SELECT \n"
+                + "		bba.artifact_id as artifact_id, \n"
+                + "		attr.value_text as " + progNameParam + "\n"
+                + "	FROM blackboard_artifacts bba\n"
+                + "	INNER JOIN blackboard_attributes attr ON bba.artifact_id = attr.artifact_id\n"
+                + "	WHERE bba.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() + "\n"
+                + "	AND attr.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID() + "\n"
+                + "	AND attr.source = '" + prefetchIdentifier + "'\n"
+                + ") program_artifacts ON bba.artifact_id = program_artifacts.artifact_id\n"
+                + "WHERE attr.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT.getTypeID() + "\n"
+                + "GROUP BY program_artifacts." + progNameParam + "\n"
+                + "ORDER BY " + runTimesParam + " DESC\n"
+                + "LIMIT " + count + " OFFSET 0";
+
+        String errorMessage = "Unable to get top program counts; returning null.";
+        return getBaseQueryResult(query, getStringLongResultSetHandler(progNameParam, runTimesParam), errorMessage);
     }
 
     /**

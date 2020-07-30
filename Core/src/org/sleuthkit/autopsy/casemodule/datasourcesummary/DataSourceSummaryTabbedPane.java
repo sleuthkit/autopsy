@@ -33,6 +33,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     private static final long serialVersionUID = 1L;
     private final DataSourceSummaryCountsPanel countsPanel;
     private final DataSourceSummaryDetailsPanel detailsPanel;
+    private final DataSourceSummaryUserActivityPanel userActivityPanel;
 
     // ingest panel requires an open case in order to properly initialize.  
     // So it will be instantiated when a data source is selected.
@@ -46,6 +47,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     public DataSourceSummaryTabbedPane() {
         countsPanel = new DataSourceSummaryCountsPanel();
         detailsPanel = new DataSourceSummaryDetailsPanel();
+        userActivityPanel = new DataSourceSummaryUserActivityPanel();
     }
 
     /**
@@ -62,6 +64,9 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
             
             addTab(Bundle.DataSourceSummaryDialog_countsTab_title(), countsPanel);
             countsPanel.setDataSource(dataSource);
+            
+            addTab(Bundle.DataSourceSummaryUserActivityPanel_tab_title(), userActivityPanel);
+            userActivityPanel.setDataSource(dataSource);
             
             if (ingestHistoryPanel == null) {
                 ingestHistoryPanel = new IngestJobInfoPanel();
