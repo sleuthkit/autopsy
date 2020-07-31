@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,9 +62,10 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
     }
     
     private void setIncludePanelEnabled(boolean enabled) {
-        extensionListTextfield.setEnabled(enabled);
         includeRadioButton.setEnabled(enabled);
         excludeRadioButton.setEnabled(enabled);
+        extensionListLabel.setEnabled(enabled);
+        extensionListTextfield.setEnabled(enabled);
     }
 
     @Override
@@ -103,10 +104,8 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
         javax.swing.JPanel includeExcludeParentPanel = new javax.swing.JPanel();
         includeRadioButton = new javax.swing.JRadioButton();
         excludeRadioButton = new javax.swing.JRadioButton();
-        javax.swing.JLabel includeExcludeExtensionsLabel = new javax.swing.JLabel();
+        extensionListLabel = new javax.swing.JLabel();
         extensionListTextfield = new javax.swing.JTextField();
-
-        setPreferredSize(null);
 
         org.openide.awt.Mnemonics.setLocalizedText(keepCorruptedFilesCheckbox, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.keepCorruptedFilesCheckbox.text")); // NOI18N
 
@@ -126,9 +125,10 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
         includeRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(includeRadioButton, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.includeRadioButton.text")); // NOI18N
 
+        includeExcludeButtonGroup.add(excludeRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(excludeRadioButton, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.excludeRadioButton.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(includeExcludeExtensionsLabel, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.includeExcludeExtensionsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(extensionListLabel, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.extensionListLabel.text")); // NOI18N
 
         extensionListTextfield.setText(org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.extensionListTextfield.text")); // NOI18N
 
@@ -143,7 +143,7 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
                         .addGroup(includeExcludeParentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(includeRadioButton)
                             .addComponent(excludeRadioButton)
-                            .addComponent(includeExcludeExtensionsLabel))
+                            .addComponent(extensionListLabel))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(extensionListTextfield, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addContainerGap())
@@ -156,7 +156,7 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(excludeRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(includeExcludeExtensionsLabel)
+                .addComponent(extensionListLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(extensionListTextfield, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -203,6 +203,7 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton excludeRadioButton;
+    private javax.swing.JLabel extensionListLabel;
     private javax.swing.JTextField extensionListTextfield;
     private javax.swing.ButtonGroup includeExcludeButtonGroup;
     private javax.swing.JCheckBox includeExcludeCheckbox;
