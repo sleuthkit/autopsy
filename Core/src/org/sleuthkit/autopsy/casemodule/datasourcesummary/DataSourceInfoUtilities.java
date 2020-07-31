@@ -30,6 +30,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.stream.Collectors;
+import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -63,7 +65,7 @@ final class DataSourceInfoUtilities {
                         "dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
                         + " AND name<>''"
                         + " AND data_source_obj_id=" + currentDataSource.getId()
-                        + " AND " + additionalWhere);
+                        + (StringUtils.isBlank(additionalWhere) ? "" : (" AND " + additionalWhere)));
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, onError, ex);
                 //unable to get count of files for the specified types cell will be displayed as empty
@@ -455,21 +457,66 @@ final class DataSourceInfoUtilities {
      *         source, null if no count was retrieved
      */
     static Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) {
-        if (currentDataSource != null) {
-            try {
-                String inClause = String.join("', '", setOfMimeTypes);
-                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                return skCase.countFilesWhere("data_source_obj_id=" + currentDataSource.getId()
-                        + " AND type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
-                        + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
-                        + " AND mime_type IN ('" + inClause + "')"
-                        + " AND name<>''");
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                logger.log(Level.WARNING, "Unable to get count of files for specified mime types", ex);
-                //unable to get count of files for the specified mimetypes cell will be displayed as empty
-            }
-        }
-        return null;
+        return getCountOfFiles(currentDataSource,
+                " type <> " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                + " AND mime_type IN " + getSqlSet(setOfMimeTypes),
+                "Unable to get count of files for specified mime types");
+    }
+
+    /**
+     * Get the number of files in the case database for the current data source
+     * which do not have the specified mimetypes.
+     *
+     * @param currentDataSource the data source which we are finding a file
+     *                          count
+     *
+     * @param setOfMimeTypes    the set of mime types that should be excluded.
+     *
+     * @return a Long value which represents the number of files that do not
+     *         have the specific mime type, but do have a mime type.
+     */
+    static Long getCountOfFilesNotInMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) {
+        return getCountOfFiles(currentDataSource,
+                " type <> " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                + " AND mime_type NOT IN " + getSqlSet(setOfMimeTypes)
+                + " AND mime_type IS NOT NULL AND mime_type <> '' ",
+                "Unable to get count of files without specified mime types");
+    }
+
+    /**
+     * Gets the number of files in the data source with no assigned mime type.
+     *
+     * @param currentDataSource The data source.
+     *
+     * @return The number of files with no mime type or null if there is an
+     *         issue searching the data source.
+     *
+     */
+    static Long getCountOfFilesWithNoMimeType(DataSource currentDataSource) {
+        return getCountOfFiles(currentDataSource,
+                " type <> " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                + " AND (mime_type IS NULL OR mime_type = '') ",
+                "Unable to get count of files without a mime type");
+    }
+
+    /**
+     * Derives a sql set string (i.e. "('val1', 'val2', 'val3')"). A naive
+     * attempt is made to sanitize the strings by removing single quotes from
+     * values.
+     *
+     * @param setValues The values that should be present in the set. Single
+     *                  quotes are removed.
+     *
+     * @return The sql set string.
+     */
+    private static String getSqlSet(Set<String> setValues) {
+        List<String> quotedValues = setValues
+                .stream()
+                .map(str -> String.format("'%s'", str.replace("'", "")))
+                .collect(Collectors.toList());
+
+        String commaSeparatedQuoted = String.join(", ", quotedValues);
+        return String.format("(%s) ", commaSeparatedQuoted);
     }
 
     /**
