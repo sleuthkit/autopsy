@@ -39,7 +39,7 @@ class DefaultIngestStream implements IngestStream {
     
     @Override
     public IngestJob getIngestJob() {
-        return null;
+        throw new UnsupportedOperationException("DefaultIngestStream has no associated IngestJob");
     }
 
     @Override

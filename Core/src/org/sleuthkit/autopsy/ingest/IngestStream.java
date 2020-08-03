@@ -35,6 +35,11 @@ public interface IngestStream {
      */
     void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException;
     
+    /**
+     * Get the ingest job associated with this ingest stream.
+     * 
+     * @return The IngestJob.
+     */
     IngestJob getIngestJob();
 
     /**
