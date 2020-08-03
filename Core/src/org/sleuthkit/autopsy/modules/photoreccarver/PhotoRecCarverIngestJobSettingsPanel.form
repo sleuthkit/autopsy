@@ -20,30 +20,25 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="detectionSettingsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="keepCorruptedFilesCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="includeExcludeCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="includeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="excludeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="exampleLabel" min="-2" max="-2" attributes="0"/>
-                          <Component id="extensionListTextfield" min="-2" pref="258" max="-2" attributes="0"/>
-                          <Component id="fullListOfTypesLabel" min="-2" max="-2" attributes="0"/>
-                          <Component id="fullListOfTypesHyperlink" alignment="0" min="-2" pref="250" max="-2" attributes="0"/>
-                          <Component id="extensionListLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                  </Group>
+                  <Component id="detectionSettingsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="keepCorruptedFilesCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="includeExcludeCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+          </Group>
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace min="-2" pref="31" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="includeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="excludeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="exampleLabel" min="-2" max="-2" attributes="0"/>
+                  <Component id="extensionListTextfield" min="-2" pref="258" max="-2" attributes="0"/>
+                  <Component id="fullListOfTypesLabel" min="-2" max="-2" attributes="0"/>
+                  <Component id="fullListOfTypesHyperlink" alignment="0" min="-2" pref="250" max="-2" attributes="0"/>
+                  <Component id="extensionListLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+              </Group>
           </Group>
       </Group>
     </DimensionLayout>
