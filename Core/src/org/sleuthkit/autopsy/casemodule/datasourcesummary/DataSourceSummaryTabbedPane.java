@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import javax.swing.JTabbedPane;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.datamodel.DataSource;
 
@@ -31,14 +30,10 @@ import org.sleuthkit.datamodel.DataSource;
 public class DataSourceSummaryTabbedPane extends JTabbedPane {
 
     private static final long serialVersionUID = 1L;
-    private static final int TAB_COUNT = 3;
     
     private final DataSourceSummaryCountsPanel countsPanel;
     private final DataSourceSummaryDetailsPanel detailsPanel;
-
-    // ingest panel requires an open case in order to properly initialize.  
-    // So it will be instantiated when a data source is selected.
-    private IngestJobInfoPanel ingestHistoryPanel = null;
+    private final IngestJobInfoPanel ingestHistoryPanel;
 
     private DataSource dataSource = null;
 
@@ -48,33 +43,11 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     public DataSourceSummaryTabbedPane() {
         countsPanel = new DataSourceSummaryCountsPanel();
         detailsPanel = new DataSourceSummaryDetailsPanel();
-    }
-
-    /**
-     * Set tabs to the details panel, counts panel, and ingest history panel. If
-     * no data source or case is closed, no tabs will be shwon.
-     *
-     * @param dataSource The data source to display.
-     */
-    private void setTabs(DataSource dataSource) {
-        if (dataSource != null && Case.isCaseOpen()) {
-            detailsPanel.setDataSource(dataSource);
-            countsPanel.setDataSource(dataSource);
-            
-            if (ingestHistoryPanel == null) {
-                ingestHistoryPanel = new IngestJobInfoPanel();
-            }
-            
-            ingestHistoryPanel.setDataSource(dataSource);
-            
-            // initialize tabs if they have not been initialized properly.
-            if (getTabCount() != TAB_COUNT) {
-                removeAll();
-                addTab(Bundle.DataSourceSummaryDialog_detailsTab_title(), detailsPanel);
-                addTab(Bundle.DataSourceSummaryDialog_countsTab_title(), countsPanel);
-                addTab(Bundle.DataSourceSummaryDialog_ingestHistoryTab_title(), ingestHistoryPanel);
-            }
-        }
+        ingestHistoryPanel = new IngestJobInfoPanel();
+        
+        addTab(Bundle.DataSourceSummaryDialog_detailsTab_title(), detailsPanel);
+        addTab(Bundle.DataSourceSummaryDialog_countsTab_title(), countsPanel);
+        addTab(Bundle.DataSourceSummaryDialog_ingestHistoryTab_title(), ingestHistoryPanel);
     }
 
     /**
@@ -93,6 +66,9 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
      */
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
-        setTabs(dataSource);
+
+        detailsPanel.setDataSource(dataSource);
+        countsPanel.setDataSource(dataSource);
+        ingestHistoryPanel.setDataSource(dataSource);
     }
 }
