@@ -22,7 +22,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.beans.PropertyChangeListener;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -40,7 +39,6 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -132,95 +130,31 @@ final class ContactCache {
      */
     private Map<String, List<BlackboardArtifact>> buildMap() throws TskCoreException, SQLException {
         Map<String, List<BlackboardArtifact>> acctMap = new HashMap<>();
-        List<String> accountIdList = getAccountList();
         List<BlackboardArtifact> contactList = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
 
-        for(String id: accountIdList) {
-            acctMap.put(id, findContactForAccount(contactList, id));
-        }
-
-        return acctMap;
-    }
-
-    /**
-     * Returns a list of TSK_CONTACT artifacts that reference the given account.
-     *
-     * @param allContactList List of existing TSK_CONTACT artifacts.
-     * @param account        String account unique id.
-     *
-     * @return A list of TSK_CONTACT artifact that reference the given account
-     *         or empty list of none were found.
-     *
-     * @throws TskCoreException
-     */
-    private List<BlackboardArtifact> findContactForAccount(List<BlackboardArtifact> allContactList, String accountId) throws TskCoreException {
-        List<BlackboardArtifact> accountContacts = new ArrayList<>();
-
-        for (BlackboardArtifact contact : allContactList) {
-            if (isAccountRelatedToArtifact(contact, accountId)) {
-                accountContacts.add(contact);
-            }
-        }
-
-        return accountContacts;
-    }
-
-    /**
-     * Determine if there is an attribute in the given list that references the
-     * given account.
-     *
-     * @param contactAttributes List of attributes.
-     * @param account           String account uniqueID.
-     *
-     * @return True if one of the attributes in the list reference the account.
-     */
-    private boolean isAccountRelatedToArtifact(BlackboardArtifact artifact, String accountId) throws TskCoreException {
-        List<BlackboardAttribute> contactAttributes = artifact.getAttributes();
-        for (BlackboardAttribute attribute : contactAttributes) {
-            if (isAccountInAttribute(attribute, accountId)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Checks the given attribute to see if it references the given account.
-     *
-     * @param attribute BlackboardAttribute to check.
-     * @param account   References account.
-     *
-     * @return True if the attribute references the account.
-     */
-    private boolean isAccountInAttribute(BlackboardAttribute attribute, String accountId) {
-
-        String typeName = attribute.getAttributeType().getTypeName();
-        return (typeName.startsWith("TSK_EMAIL")
+        for(BlackboardArtifact contactArtifact: contactList) {
+            List<BlackboardAttribute> contactAttributes = contactArtifact.getAttributes();
+            for(BlackboardAttribute attribute: contactAttributes) {
+                String typeName = attribute.getAttributeType().getTypeName();
+                
+                if(typeName.startsWith("TSK_EMAIL")
                 || typeName.startsWith("TSK_PHONE")
                 || typeName.startsWith("TSK_NAME")
-                || typeName.startsWith("TSK_ID"))
-                && attribute.getValueString().equals(accountId);
-    }
-    
-    /**
-     * Gets a list of all accounts unique IDs from the db.
-     * 
-     * @return A list of unique account ids or empty list if no accounts were found.
-     * 
-     * @throws TskCoreException
-     * @throws SQLException 
-     */
-    private List<String> getAccountList() throws TskCoreException, SQLException {
-        List<String> uniqueIdList = new ArrayList<>();
-        
-        CaseDbQuery caseDbQuery = Case.getCurrentCase().getSleuthkitCase().executeQuery("SELECT account_unique_indenifier FROM accounts");
-        ResultSet resultSet = caseDbQuery.getResultSet();
-        
-        while(resultSet.next()) {
-            uniqueIdList.add(resultSet.getString(1));
+                || typeName.startsWith("TSK_ID")) {
+                    String accountID = attribute.getValueString();
+                    List<BlackboardArtifact> artifactList = acctMap.get(accountID);
+                    if(artifactList == null) {
+                        artifactList = new ArrayList<>();
+                        acctMap.put(accountID, artifactList);
+                    }
+                    if(!artifactList.contains(contactArtifact)) {
+                        artifactList.add(contactArtifact);
+                    }
+                }
+            }
+            
         }
-        
-        return uniqueIdList;
+      
+        return acctMap;
     }
-
 }
