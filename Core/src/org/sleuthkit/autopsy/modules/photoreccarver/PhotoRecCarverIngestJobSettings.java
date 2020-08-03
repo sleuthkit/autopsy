@@ -95,9 +95,9 @@ final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSett
      * @return The extension names.
      */
     public List<String> getIncludeExcludeExtensions() {
-        return includeExcludeExtensions == null ? 
-                Collections.emptyList() : 
-                Collections.unmodifiableList(includeExcludeExtensions);
+        return includeExcludeExtensions == null
+                ? Collections.emptyList()
+                : Collections.unmodifiableList(includeExcludeExtensions);
     }
 
     /**
