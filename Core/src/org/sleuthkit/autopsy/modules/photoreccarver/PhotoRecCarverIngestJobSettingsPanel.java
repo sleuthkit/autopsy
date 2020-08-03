@@ -156,14 +156,13 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
         keepCorruptedFilesCheckbox = new javax.swing.JCheckBox();
         javax.swing.JLabel detectionSettingsLabel = new javax.swing.JLabel();
         includeExcludeCheckbox = new javax.swing.JCheckBox();
-        javax.swing.JPanel includeExcludeParentPanel = new javax.swing.JPanel();
-        includeRadioButton = new javax.swing.JRadioButton();
         excludeRadioButton = new javax.swing.JRadioButton();
-        extensionListLabel = new javax.swing.JLabel();
-        extensionListTextfield = new javax.swing.JTextField();
         exampleLabel = new javax.swing.JLabel();
         fullListOfTypesLabel = new javax.swing.JLabel();
+        extensionListLabel = new javax.swing.JLabel();
         fullListOfTypesHyperlink = new javax.swing.JLabel();
+        extensionListTextfield = new javax.swing.JTextField();
+        includeRadioButton = new javax.swing.JRadioButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(keepCorruptedFilesCheckbox, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.keepCorruptedFilesCheckbox.text")); // NOI18N
 
@@ -177,71 +176,46 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
             }
         });
 
-        includeExcludeParentPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        includeExcludeButtonGroup.add(includeRadioButton);
-        includeRadioButton.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(includeRadioButton, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.includeRadioButton.text")); // NOI18N
-
         includeExcludeButtonGroup.add(excludeRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(excludeRadioButton, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.excludeRadioButton.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(extensionListLabel, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.extensionListLabel.text")); // NOI18N
-
-        extensionListTextfield.setText(org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.extensionListTextfield.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(exampleLabel, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.exampleLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(fullListOfTypesLabel, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.fullListOfTypesLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(extensionListLabel, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.extensionListLabel.text")); // NOI18N
+
         org.openide.awt.Mnemonics.setLocalizedText(fullListOfTypesHyperlink, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.fullListOfTypesHyperlink.text")); // NOI18N
 
-        javax.swing.GroupLayout includeExcludeParentPanelLayout = new javax.swing.GroupLayout(includeExcludeParentPanel);
-        includeExcludeParentPanel.setLayout(includeExcludeParentPanelLayout);
-        includeExcludeParentPanelLayout.setHorizontalGroup(
-            includeExcludeParentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(includeExcludeParentPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(includeExcludeParentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(fullListOfTypesLabel)
-                    .addComponent(exampleLabel)
-                    .addComponent(extensionListLabel)
-                    .addComponent(extensionListTextfield, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(fullListOfTypesHyperlink, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(includeRadioButton)
-                    .addComponent(excludeRadioButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        includeExcludeParentPanelLayout.setVerticalGroup(
-            includeExcludeParentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(includeExcludeParentPanelLayout.createSequentialGroup()
-                .addComponent(includeRadioButton)
-                .addGap(0, 0, 0)
-                .addComponent(excludeRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(extensionListLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(extensionListTextfield, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(exampleLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(fullListOfTypesLabel)
-                .addGap(0, 0, 0)
-                .addComponent(fullListOfTypesHyperlink, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
-                .addContainerGap())
-        );
+        extensionListTextfield.setText(org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.extensionListTextfield.text")); // NOI18N
+
+        includeExcludeButtonGroup.add(includeRadioButton);
+        includeRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(includeRadioButton, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.includeRadioButton.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(includeExcludeParentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(detectionSettingsLabel)
-                    .addComponent(keepCorruptedFilesCheckbox)
-                    .addComponent(includeExcludeCheckbox)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(detectionSettingsLabel)
+                            .addComponent(keepCorruptedFilesCheckbox)
+                            .addComponent(includeExcludeCheckbox)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(16, 16, 16)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(includeRadioButton)
+                            .addComponent(excludeRadioButton)
+                            .addComponent(exampleLabel)
+                            .addComponent(extensionListTextfield, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(fullListOfTypesLabel)
+                            .addComponent(fullListOfTypesHyperlink, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(extensionListLabel))))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -250,10 +224,23 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
                 .addComponent(detectionSettingsLabel)
                 .addGap(0, 2, 2)
                 .addComponent(keepCorruptedFilesCheckbox)
-                .addGap(0, 0, 0)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(includeExcludeCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(includeExcludeParentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(includeRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(excludeRadioButton)
+                .addGap(4, 4, 4)
+                .addComponent(extensionListLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(extensionListTextfield, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(exampleLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(fullListOfTypesLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(fullListOfTypesHyperlink)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
