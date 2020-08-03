@@ -18,21 +18,34 @@
  */
 package org.sleuthkit.autopsy.modules.photoreccarver;
 
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Desktop;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Ingest job settings panel for the Encryption Detection module.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel {
+
+    private static final Logger logger = Logger.getLogger(PhotoRecCarverIngestJobSettingsPanel.class.getName());
     private static final String EXTENSION_LIST_SEPARATOR = ",";
-    
+    private static final String PHOTOREC_TYPES_URL = "https://www.cgsecurity.org/wiki/File_Formats_Recovered_By_PhotoRec";
+
     /**
      * Instantiate the ingest job settings panel.
      *
@@ -54,36 +67,78 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
         includeRadioButton.setSelected(!settings.isIncludeElseExclude());
         excludeRadioButton.setSelected(!settings.isIncludeElseExclude());
         keepCorruptedFilesCheckbox.setSelected(settings.isKeepCorruptedFiles());
+        setupTypesHyperlink();
         setIncludePanelEnabled();
     }
-    
+
+    /**
+     * Sets up a clickable hyperlink for the different supported types for
+     * extensions.
+     */
+    private void setupTypesHyperlink() {
+        // taken from https://www.codejava.net/java-se/swing/how-to-create-hyperlink-with-jlabel-in-java-swing
+        this.fullListOfTypesHyperlink.setForeground(Color.BLUE.darker());
+        this.fullListOfTypesHyperlink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        this.fullListOfTypesHyperlink.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                try {
+                    Desktop.getDesktop().browse(new URI(PHOTOREC_TYPES_URL));
+                } catch (IOException | URISyntaxException ex) {
+                    logger.log(Level.WARNING, "There was an error going to types huperlink: " + PHOTOREC_TYPES_URL, ex);
+                }
+            }
+        });
+
+    }
+
+    /**
+     * Whether or not the file type inclusion/exclusion panel should be enabled
+     * based on whether or not the includeExcludeCheckbox is checked.
+     */
     private void setIncludePanelEnabled() {
         setIncludePanelEnabled(includeExcludeCheckbox.isSelected());
     }
-    
+
+    /**
+     * Sets components in the inclusion/exclusion panel to the specified enabled
+     * state.
+     *
+     * @param enabled Whether or not to enable components.
+     */
     private void setIncludePanelEnabled(boolean enabled) {
         includeRadioButton.setEnabled(enabled);
         excludeRadioButton.setEnabled(enabled);
         extensionListLabel.setEnabled(enabled);
         extensionListTextfield.setEnabled(enabled);
+        exampleLabel.setEnabled(enabled);
+        fullListOfTypesLabel.setEnabled(enabled);
     }
 
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        return new PhotoRecCarverIngestJobSettings( 
-            keepCorruptedFilesCheckbox.isSelected(),
-            includeExcludeCheckbox.isSelected(),
-            includeRadioButton.isSelected(),
-            getExtensions(extensionListTextfield.getText()));
+        return new PhotoRecCarverIngestJobSettings(
+                keepCorruptedFilesCheckbox.isSelected(),
+                includeExcludeCheckbox.isSelected(),
+                includeRadioButton.isSelected(),
+                getExtensions(extensionListTextfield.getText()));
     }
-    
+
+    /**
+     * Determines a list of extensions to pass as parameters to photorec based
+     * on the specified input. Splits on separator and trims.
+     *
+     * @param combinedList The comma-separated list.
+     *
+     * @return The list of strings to use with photorec.
+     */
     private List<String> getExtensions(String combinedList) {
         if (StringUtils.isBlank(combinedList)) {
             return Collections.emptyList();
         }
-        
+
         return Stream.of(combinedList.split(EXTENSION_LIST_SEPARATOR))
-                .map(ext -> ext.trim().replaceAll(EXTENSION_LIST_SEPARATOR, ""))
+                .map(ext -> ext.trim())
                 .filter(ext -> StringUtils.isNotBlank(ext))
                 .collect(Collectors.toList());
     }
@@ -106,6 +161,9 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
         excludeRadioButton = new javax.swing.JRadioButton();
         extensionListLabel = new javax.swing.JLabel();
         extensionListTextfield = new javax.swing.JTextField();
+        exampleLabel = new javax.swing.JLabel();
+        fullListOfTypesLabel = new javax.swing.JLabel();
+        fullListOfTypesHyperlink = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(keepCorruptedFilesCheckbox, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.keepCorruptedFilesCheckbox.text")); // NOI18N
 
@@ -132,6 +190,12 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
 
         extensionListTextfield.setText(org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.extensionListTextfield.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(exampleLabel, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.exampleLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(fullListOfTypesLabel, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.fullListOfTypesLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(fullListOfTypesHyperlink, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.fullListOfTypesHyperlink.text")); // NOI18N
+
         javax.swing.GroupLayout includeExcludeParentPanelLayout = new javax.swing.GroupLayout(includeExcludeParentPanel);
         includeExcludeParentPanel.setLayout(includeExcludeParentPanelLayout);
         includeExcludeParentPanelLayout.setHorizontalGroup(
@@ -139,26 +203,31 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
             .addGroup(includeExcludeParentPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(includeExcludeParentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(includeExcludeParentPanelLayout.createSequentialGroup()
-                        .addGroup(includeExcludeParentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(includeRadioButton)
-                            .addComponent(excludeRadioButton)
-                            .addComponent(extensionListLabel))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(extensionListTextfield, javax.swing.GroupLayout.Alignment.TRAILING))
-                .addContainerGap())
+                    .addComponent(fullListOfTypesLabel)
+                    .addComponent(exampleLabel)
+                    .addComponent(extensionListLabel)
+                    .addComponent(extensionListTextfield, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(fullListOfTypesHyperlink, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(includeRadioButton)
+                    .addComponent(excludeRadioButton))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         includeExcludeParentPanelLayout.setVerticalGroup(
             includeExcludeParentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(includeExcludeParentPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(includeRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(0, 0, 0)
                 .addComponent(excludeRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(extensionListLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(extensionListTextfield, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(exampleLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(fullListOfTypesLabel)
+                .addGap(0, 0, 0)
+                .addComponent(fullListOfTypesHyperlink, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -167,33 +236,24 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(detectionSettingsLabel)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(10, 10, 10)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(includeExcludeCheckbox)
-                                    .addComponent(keepCorruptedFilesCheckbox)))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(35, 35, 35)
-                        .addComponent(includeExcludeParentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(190, Short.MAX_VALUE))
+                    .addComponent(includeExcludeParentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(detectionSettingsLabel)
+                    .addComponent(keepCorruptedFilesCheckbox)
+                    .addComponent(includeExcludeCheckbox)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(detectionSettingsLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(0, 2, 2)
                 .addComponent(keepCorruptedFilesCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(0, 0, 0)
                 .addComponent(includeExcludeCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(includeExcludeParentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(26, Short.MAX_VALUE))
+                .addComponent(includeExcludeParentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -202,9 +262,12 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
     }//GEN-LAST:event_includeExcludeCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel exampleLabel;
     private javax.swing.JRadioButton excludeRadioButton;
     private javax.swing.JLabel extensionListLabel;
     private javax.swing.JTextField extensionListTextfield;
+    private javax.swing.JLabel fullListOfTypesHyperlink;
+    private javax.swing.JLabel fullListOfTypesLabel;
     private javax.swing.ButtonGroup includeExcludeButtonGroup;
     private javax.swing.JCheckBox includeExcludeCheckbox;
     private javax.swing.JRadioButton includeRadioButton;
