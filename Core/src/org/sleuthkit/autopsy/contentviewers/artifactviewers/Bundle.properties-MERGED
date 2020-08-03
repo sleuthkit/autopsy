@@ -61,6 +61,7 @@ DefaultArtifactContentViewer.copyMenuItem.text=Copy
 DefaultArtifactContentViewer.selectAllMenuItem.text=Select All
 MessageAccountPanel_button_create_label=Create
 MessageAccountPanel_button_view_label=View
+MessageAccountPanel_contact_label=Contact:
 MessageAccountPanel_no_matches=No matches found.
 MessageAccountPanel_persona_label=Persona:
 MessageAccountPanel_unknown_label=Unknown
