@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -249,7 +248,7 @@ final class DataSourceInfoUtilities {
      * @return The concatenated string or null if the query could not be
      *         executed.
      */
-    private static String getConcattedStringQuery(String query, String valueParam, String separator, String errorMessage, String singleErrorMessage) {
+    private static String getConcattedStringsResult(String query, String valueParam, String separator, String errorMessage, String singleErrorMessage) {
         ResultSetHandler<String> handler = (resultSet) -> {
             String toRet = "";
             boolean first = true;
@@ -295,7 +294,7 @@ final class DataSourceInfoUtilities {
         String errorMessage = "Unable to execute query to retrieve concatted attribute values.";
         String singleErrorMessage = "There was an error retrieving one of the results.  That result will be omitted from concatted value.";
         String separator = ", ";
-        return getConcattedStringQuery(query, valueParam, separator, errorMessage, singleErrorMessage);
+        return getConcattedStringsResult(query, valueParam, separator, errorMessage, singleErrorMessage);
     }
 
     /**
