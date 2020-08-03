@@ -38,6 +38,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
 
 /**
  * Utilities for getting information about a data source or all data sources
@@ -48,7 +49,7 @@ final class DataSourceInfoUtilities {
     private static final Logger logger = Logger.getLogger(DataSourceInfoUtilities.class.getName());
 
     /**
-     * Gets a count of files for a particular datasource where it is not a
+     * Gets a count of tsk_files for a particular datasource where it is not a
      * virtual directory and has a name.
      *
      * @param currentDataSource The datasource.
@@ -57,7 +58,7 @@ final class DataSourceInfoUtilities {
      *
      * @return The count of files or null on error.
      */
-    private static Long getCountOfFiles(DataSource currentDataSource, String additionalWhere, String onError) {
+    private static Long getCountOfTskFiles(DataSource currentDataSource, String additionalWhere, String onError) {
         if (currentDataSource != null) {
             try {
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -73,6 +74,15 @@ final class DataSourceInfoUtilities {
         }
         return null;
     }
+    
+    private static Long getCountOfRegularFiles(DataSource currentDataSource, String additionalWhere, String onError) {
+        String whereClause = "meta_type=" + TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue();
+        if (StringUtils.isNotBlank(additionalWhere)) {
+            whereClause += " AND " + additionalWhere;
+        }
+        
+        return getCountOfTskFiles(currentDataSource, whereClause, onError);
+    }
 
     /**
      * Get count of files in a data source.
@@ -82,7 +92,7 @@ final class DataSourceInfoUtilities {
      * @return The count.
      */
     static Long getCountOfFiles(DataSource currentDataSource) {
-        return getCountOfFiles(currentDataSource,
+        return getCountOfRegularFiles(currentDataSource,
                 "type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType(),
                 "Unable to get count of files, providing empty results");
     }
@@ -95,7 +105,7 @@ final class DataSourceInfoUtilities {
      * @return The count.
      */
     static Long getCountOfUnallocatedFiles(DataSource currentDataSource) {
-        return getCountOfFiles(currentDataSource,
+        return getCountOfRegularFiles(currentDataSource,
                 "type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
                 + " AND dir_flags=" + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue(),
                 "Unable to get counts of unallocated files for datasource, providing empty results");
@@ -109,7 +119,7 @@ final class DataSourceInfoUtilities {
      * @return The count.
      */
     static Long getCountOfDirectories(DataSource currentDataSource) {
-        return getCountOfFiles(currentDataSource,
+        return getCountOfTskFiles(currentDataSource,
                 "type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
                 + " AND meta_type=" + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue(),
                 "Unable to get count of directories for datasource, providing empty results");
@@ -123,7 +133,7 @@ final class DataSourceInfoUtilities {
      * @return The count.
      */
     static Long getCountOfSlackFiles(DataSource currentDataSource) {
-        return getCountOfFiles(currentDataSource,
+        return getCountOfTskFiles(currentDataSource,
                 "type=" + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType(),
                 "Unable to get count of slack files for datasources, providing empty results");
     }
@@ -383,6 +393,7 @@ final class DataSourceInfoUtilities {
         try {
             final String countFilesQuery = "data_source_obj_id, COUNT(*) AS value"
                     + " FROM tsk_files WHERE type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                    +  "AND meta_type=" + TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
                     + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
                     + " AND name<>'' GROUP BY data_source_obj_id"; //NON-NLS
             return getValuesMap(countFilesQuery);
@@ -457,7 +468,7 @@ final class DataSourceInfoUtilities {
      *         source, null if no count was retrieved
      */
     static Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) {
-        return getCountOfFiles(currentDataSource,
+        return getCountOfTskFiles(currentDataSource,
                 " type <> " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
                 + " AND mime_type IN " + getSqlSet(setOfMimeTypes),
                 "Unable to get count of files for specified mime types");
@@ -476,7 +487,7 @@ final class DataSourceInfoUtilities {
      *         have the specific mime type, but do have a mime type.
      */
     static Long getCountOfFilesNotInMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) {
-        return getCountOfFiles(currentDataSource,
+        return getCountOfTskFiles(currentDataSource,
                 " type <> " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
                 + " AND mime_type NOT IN " + getSqlSet(setOfMimeTypes)
                 + " AND mime_type IS NOT NULL AND mime_type <> '' ",
@@ -493,7 +504,7 @@ final class DataSourceInfoUtilities {
      *
      */
     static Long getCountOfFilesWithNoMimeType(DataSource currentDataSource) {
-        return getCountOfFiles(currentDataSource,
+        return getCountOfTskFiles(currentDataSource,
                 " type <> " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
                 + " AND (mime_type IS NULL OR mime_type = '') ",
                 "Unable to get count of files without a mime type");
