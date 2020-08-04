@@ -1,0 +1,309 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"  />
+  <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1,shrink-to-fit=no"  />
+  <title>ImageMagick - Exceptions</title>
+  <meta name="application-name" content="ImageMagick" />
+  <meta name="description" content="Use ImageMagick® to create, edit, compose, and convert bitmap images. Resize an image, crop it, change its shades and colors, add captions, and more." />
+  <meta name="application-url" content="https://imagemagick.org" />
+  <meta name="generator" content="PHP" />
+  <meta name="keywords" content="exceptions, image converter, image resizer, image editor, photo editor, jpg converter, png converter, tiff converter, vector images, online, free, swiss army" />
+  <meta name="rating" content="GENERAL" />
+  <meta name="robots" content="INDEX, FOLLOW" />
+  <meta name="generator" content="ImageMagick Studio LLC" />
+  <meta name="author" content="ImageMagick Studio LLC" />
+  <meta name="revisit-after" content="2 DAYS" />
+  <meta name="resource-type" content="document" />
+  <meta name="copyright" content="Copyright (c) 1999-2020 ImageMagick Studio LLC" />
+  <meta name="distribution" content="Global" />
+  <meta name="magick-serial" content="P131-S030410-R485315270133-P82224-A6668-G1245-1" />
+  <meta property='og:url' content='../' />
+  <meta property='og:title' content='ImageMagick' />
+  <meta property='og:image' content='../images/logo.png' />
+  <meta property='og:type' content='website' />
+  <meta property='og:site_name' content='ImageMagick' />
+  <meta property='og:description' content="Create, Edit, Compose, or Convert Bitmap Images" />
+  <meta name="google-site-verification" content="_bMOCDpkx9ZAzBwb2kF3PRHbfUUdFj2uO8Jd1AXArz4" />
+  <link href="exception.html" rel="canonical" />
+  <link href="../images/wand.png" rel="icon" />
+  <link href="../images/wand.ico" rel="shortcut icon" />
+  <link href="assets/magick.css" rel="stylesheet" />
+</head>
+<body>
+  <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    <a class="navbar-brand" href="../index.html"><img class="d-block" id="icon" alt="ImageMagick" width="32" height="32" src="../images/wand.ico"/></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsMagick" aria-controls="navbarsMagick" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="navbar-collapse collapse" id="navbarsMagick" style="">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item ">
+        <a class="nav-link" href="../index.html">Home <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="download.html">Download</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="command-line-tools.html">Tools</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="command-line-processing.html">Command-line</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="resources.html">Resources</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="develop.html">Develop</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" target="_blank" href="https://github.com/ImageMagick/ImageMagick/discussions">Community</a>
+      </li>
+    </ul>
+    </div>
+    <form class="form-inline my-2 my-lg-0" action="https://imagemagick.org/script/search.php">
+      <input class="form-control mr-sm-2" type="text" name="q" placeholder="Search" aria-label="Search">
+      <button class="btn btn-outline-success my-2 my-sm-0" type="submit" name="sa">Search</button>
+    </form>
+  </nav>
+  <div class="container">
+   <script async="async" src="https://localhost/pagead/js/adsbygoogle.js"></script>    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-3129977114552745"
+         data-ad-slot="6345125851"
+         data-full-width-responsive="true"
+         data-ad-format="horizontal"></ins>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+  </div>
+
+  <main class="container">
+    <div class="magick-template">
+<div class="magick-header">
+
+<p class="lead magick-description">ImageMagick returns a status of 0 whenever a command or algorithm successfully complete without complaint.  A warning code generally is typically just a notice that something unusual occurred but the command or algorithm still completed and most likely the results are still usable.  An error means the command or algorithm could not complete as expected and any results are unreliable.  A fatal error means the command or algorithm could not complete and the process exits prematurely and no results are returned.</p>
+
+<table class="table table-sm table-striped">
+  <caption>ImageMagick Error and Warning Codes</caption>
+  <tbody>
+  <tr>
+    <th>Domain</th>
+    <th>Description</th>
+    <th>Warning</th>
+    <th>Error</th>
+    <th>Fatal Error</th>
+  </tr>
+
+  <tr>
+    <td>Success</td>
+    <td>the command or algorithm completed successfully without complaint</td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+  </tr>
+
+  <tr>
+    <td>Resource Limit</td>
+    <td>a program resource is exhausted (e.g. not enough memory)</td>
+    <td>300</td>
+    <td>400</td>
+    <td>700</td>
+  </tr>
+
+  <tr>
+    <td>Type</td>
+    <td>A font is unavailable; a substitution may have occurred</td>
+    <td>305</td>
+    <td>405</td>
+    <td>705</td>
+  </tr>
+
+  <tr>
+    <td>Option</td>
+    <td>a command-line option was malformed</td>
+    <td>310</td>
+    <td>410</td>
+    <td>710</td>
+  </tr>
+
+  <tr>
+    <td>Delegate</td>
+    <td>an ImageMagick <i>delegate</i> failed to complete</td>
+    <td>315</td>
+    <td>415</td>
+    <td>715</td>
+  </tr>
+
+  <tr>
+    <td>Missing Delegate</td>
+    <td>the image type can not be read or written because the appropriate <i>Delegate</i> is missing</td>
+    <td>320</td>
+    <td>420</td>
+    <td>720</td>
+  </tr>
+
+  <tr>
+    <td>Corrupt Image</td>
+    <td>the image file may be corrupt</td>
+    <td>325</td>
+    <td>425</td>
+    <td>725</td>
+  </tr>
+
+  <tr>
+    <td>FileOpen</td>
+    <td>the image file could not be opened for reading or writing</td>
+    <td>330</td>
+    <td>430</td>
+    <td>730</td>
+  </tr>
+
+  <tr>
+    <td>Blob</td>
+    <td>a binary large object could not be allocated, read, or written</td>
+    <td>335</td>
+    <td>435</td>
+    <td>735</td>
+  </tr>
+
+  <tr>
+    <td>Stream</td>
+    <td>there was a problem reading or writing from a stream</td>
+    <td>340</td>
+    <td>440</td>
+    <td>740</td>
+  </tr>
+
+  <tr>
+    <td>Cache</td>
+    <td>pixels could not be read or written to the pixel cache</td>
+    <td>345</td>
+    <td>445</td>
+    <td>745</td>
+  </tr>
+
+  <tr>
+    <td>Coder</td>
+    <td>there was a problem with an image coder</td>
+    <td>350</td>
+    <td>450</td>
+    <td>750</td>
+  </tr>
+
+  <tr>
+    <td>Module</td>
+    <td>there was a problem with an image module</td>
+    <td>355</td>
+    <td>455</td>
+    <td>755</td>
+  </tr>
+
+  <tr>
+    <td>Draw</td>
+    <td>a drawing operation failed</td>
+    <td>360</td>
+    <td>460</td>
+    <td>760</td>
+  </tr>
+
+  <tr>
+    <td>Image</td>
+    <td>the operation could not complete due to an incompatible image</td>
+    <td>365</td>
+    <td>465</td>
+    <td>765</td>
+  </tr>
+
+  <tr>
+    <td>Wand</td>
+    <td>there was a problem specific to the MagickWand API</td>
+    <td>370</td>
+    <td>470</td>
+    <td>770</td>
+  </tr>
+
+  <tr>
+    <td>Random</td>
+    <td>there is a problem generating a true or pseudo-random number</td>
+    <td>375</td>
+    <td>475</td>
+    <td>775</td>
+  </tr>
+
+  <tr>
+    <td>XServer</td>
+    <td>an X resource is unavailable</td>
+    <td>380</td>
+    <td>480</td>
+    <td>780</td>
+  </tr>
+
+  <tr>
+    <td>Monitor</td>
+    <td>there was a problem activating the progress monitor</td>
+    <td>385</td>
+    <td>485</td>
+    <td>785</td>
+  </tr>
+
+  <tr>
+    <td>Registry</td>
+    <td>there was a problem getting or setting the registry</td>
+    <td>390</td>
+    <td>490</td>
+    <td>790</td>
+  </tr>
+
+  <tr>
+    <td>Configure</td>
+    <td>there was a problem getting a configuration file</td>
+    <td>395</td>
+    <td>495</td>
+    <td>795</td>
+  </tr>
+
+  <tr>
+    <td>Policy</td>
+    <td>a policy denies access to a delegate, coder, filter, path, or resource.</td>
+    <td>399</td>
+    <td>499</td>
+    <td>799</td>
+  </tr>
+  </tbody>
+</table>
+
+</div>
+    </div>
+  </main><!-- /.container -->
+  <footer class="magick-footer">
+    <p><a href="security-policy.html">Security</a> •
+    <a href="architecture.html">Architecture</a>
+     
+    <a href="exception.html#"><img class="d-inline" id="wand" alt="And Now a Touch of Magick" width="16" height="16" src="../images/wand.ico"/></a>
+     
+    <a href="links.html">Related</a> •
+     <a href="sitemap.html">Sitemap</a>
+    <br/>
+    <a href="support.html">Sponsor</a> •
+    <a href="cite.html">Cite</a> •
+    <a href="http://pgp.mit.edu/pks/lookup?op=get&amp;search=0x89AB63D48277377A">Public Key</a> •
+    <a href="https://imagemagick.org/script/contact.php">Contact Us</a> 
+    <br/>
+    <a href="https://github.com/imagemagick/imagemagick" target="_blank" rel="noopener" aria-label="GitHub"><svg xmlns="http://www.w3.org/2000/svg" class="navbar-nav-svg" viewBox="0 0 512 499.36" width="2%" height="2%" role="img" focusable="false"><title>GitHub</title><path fill="currentColor" fill-rule="evenodd" d="M256 0C114.64 0 0 114.61 0 256c0 113.09 73.34 209 175.08 242.9 12.8 2.35 17.47-5.56 17.47-12.34 0-6.08-.22-22.18-.35-43.54-71.2 15.49-86.2-34.34-86.2-34.34-11.64-29.57-28.42-37.45-28.42-37.45-23.27-15.84 1.73-15.55 1.73-15.55 25.69 1.81 39.21 26.38 39.21 26.38 22.84 39.12 59.92 27.82 74.5 21.27 2.33-16.54 8.94-27.82 16.25-34.22-56.84-6.43-116.6-28.43-116.6-126.49 0-27.95 10-50.8 26.35-68.69-2.63-6.48-11.42-32.5 2.51-67.75 0 0 21.49-6.88 70.4 26.24a242.65 242.65 0 0 1 128.18 0c48.87-33.13 70.33-26.24 70.33-26.24 14 35.25 5.18 61.27 2.55 67.75 16.41 17.9 26.31 40.75 26.31 68.69 0 98.35-59.85 120-116.88 126.32 9.19 7.9 17.38 23.53 17.38 47.41 0 34.22-.31 61.83-.31 70.23 0 6.85 4.61 14.81 17.6 12.31C438.72 464.97 512 369.08 512 256.02 512 114.62 397.37 0 256 0z"/></svg></a> •
+        <a href="https://twitter.com/imagemagick" target="_blank" rel="noopener" aria-label="Twitter"><svg xmlns="http://www.w3.org/2000/svg" class="navbar-nav-svg" viewBox="0 0 512 416.32" width="2%" height="2%" role="img" focusable="false"><title>Twitter</title><path fill="currentColor" d="M160.83 416.32c193.2 0 298.92-160.22 298.92-298.92 0-4.51 0-9-.2-13.52A214 214 0 0 0 512 49.38a212.93 212.93 0 0 1-60.44 16.6 105.7 105.7 0 0 0 46.3-58.19 209 209 0 0 1-66.79 25.37 105.09 105.09 0 0 0-181.73 71.91 116.12 116.12 0 0 0 2.66 24c-87.28-4.3-164.73-46.3-216.56-109.82A105.48 105.48 0 0 0 68 159.6a106.27 106.27 0 0 1-47.53-13.11v1.43a105.28 105.28 0 0 0 84.21 103.06 105.67 105.67 0 0 1-47.33 1.84 105.06 105.06 0 0 0 98.14 72.94A210.72 210.72 0 0 1 25 370.84a202.17 202.17 0 0 1-25-1.43 298.85 298.85 0 0 0 160.83 46.92"/></svg></a>
+    <br/>
+    <small>© 1999-2020 ImageMagick Studio LLC</small></p>
+  </footer>
+
+  <!-- Javascript assets -->
+  <script src="assets/magick.js" crossorigin="anonymous"></script>
+  <script>window.jQuery || document.write('<script src="https://localhost/ajax/libs/jquery/3.4.1/jquery.min.js"><\/script>')</script>
+</body>
+</html>

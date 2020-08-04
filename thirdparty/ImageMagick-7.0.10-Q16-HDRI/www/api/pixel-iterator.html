@@ -1,0 +1,543 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"  />
+  <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1,shrink-to-fit=no"  />
+  <title>ImageMagick - MagickWand, C API: Pixel Iterator Methods</title>
+  <meta name="application-name" content="ImageMagick" />
+  <meta name="description" content="Use ImageMagick® to create, edit, compose, and convert bitmap images. Resize an image, crop it, change its shades and colors, add captions, and more." />
+  <meta name="application-url" content="https://imagemagick.org" />
+  <meta name="generator" content="PHP" />
+  <meta name="keywords" content="magickwc, api:, pixel, iterator, methods, image converter, image resizer, image editor, photo editor, jpg converter, png converter, tiff converter, vector images, online, free, swiss army" />
+  <meta name="rating" content="GENERAL" />
+  <meta name="robots" content="INDEX, FOLLOW" />
+  <meta name="generator" content="ImageMagick Studio LLC" />
+  <meta name="author" content="ImageMagick Studio LLC" />
+  <meta name="revisit-after" content="2 DAYS" />
+  <meta name="resource-type" content="document" />
+  <meta name="copyright" content="Copyright (c) 1999-2020 ImageMagick Studio LLC" />
+  <meta name="distribution" content="Global" />
+  <meta name="magick-serial" content="P131-S030410-R485315270133-P82224-A6668-G1245-1" />
+  <meta property='og:url' content='../../' />
+  <meta property='og:title' content='ImageMagick' />
+  <meta property='og:image' content='../../images/logo.png' />
+  <meta property='og:type' content='website' />
+  <meta property='og:site_name' content='ImageMagick' />
+  <meta property='og:description' content="Create, Edit, Compose, or Convert Bitmap Images" />
+  <meta name="google-site-verification" content="_bMOCDpkx9ZAzBwb2kF3PRHbfUUdFj2uO8Jd1AXArz4" />
+  <link href="pixel-iterator.html" rel="canonical" />
+  <link href="../images/wand.png" rel="icon" />
+  <link href="../images/wand.ico" rel="shortcut icon" />
+  <link href="assets/magick.css" rel="stylesheet" />
+</head>
+<body>
+  <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    <a class="navbar-brand" href="../index.html"><img class="d-block" id="icon" alt="ImageMagick" width="32" height="32" src="../images/wand.ico"/></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsMagick" aria-controls="navbarsMagick" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="navbar-collapse collapse" id="navbarsMagick" style="">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item ">
+        <a class="nav-link" href="../index.html">Home <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="../www/download.html">Download</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="../www/command-line-tools.html">Tools</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="../www/command-line-processing.html">Command-line</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="../www/resources.html">Resources</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="../www/develop.html">Develop</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" target="_blank" href="https://github.com/ImageMagick/ImageMagick/discussions">Community</a>
+      </li>
+    </ul>
+    </div>
+    <form class="form-inline my-2 my-lg-0" action="../https://imagemagick.org/script/search.php">
+      <input class="form-control mr-sm-2" type="text" name="q" placeholder="Search" aria-label="Search">
+      <button class="btn btn-outline-success my-2 my-sm-0" type="submit" name="sa">Search</button>
+    </form>
+  </nav>
+  <div class="container">
+   <script async="async" src="https://localhost/pagead/js/adsbygoogle.js"></script>    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-3129977114552745"
+         data-ad-slot="6345125851"
+         data-full-width-responsive="true"
+         data-ad-format="horizontal"></ins>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+  </div>
+
+  <main class="container">
+    <div class="magick-template">
+<div class="magick-header">
+<p class="text-center"><a href="pixel-iterator.html#ClearPixelIterator">ClearPixelIterator</a> &#8226; <a href="pixel-iterator.html#ClonePixelIterator">ClonePixelIterator</a> &#8226; <a href="pixel-iterator.html#DestroyPixelIterator">DestroyPixelIterator</a> &#8226; <a href="pixel-iterator.html#IsPixelIterator">IsPixelIterator</a> &#8226; <a href="pixel-iterator.html#NewPixelIterator">NewPixelIterator</a> &#8226; <a href="pixel-iterator.html#PixelClearIteratorException">PixelClearIteratorException</a> &#8226; <a href="pixel-iterator.html#NewPixelRegionIterator">NewPixelRegionIterator</a> &#8226; <a href="pixel-iterator.html#PixelGetCurrentIteratorRow">PixelGetCurrentIteratorRow</a> &#8226; <a href="pixel-iterator.html#PixelGetIteratorException">PixelGetIteratorException</a> &#8226; <a href="pixel-iterator.html#PixelGetIteratorExceptionType">PixelGetIteratorExceptionType</a> &#8226; <a href="pixel-iterator.html#PixelGetIteratorRow">PixelGetIteratorRow</a> &#8226; <a href="pixel-iterator.html#PixelGetNextIteratorRow">PixelGetNextIteratorRow</a> &#8226; <a href="pixel-iterator.html#PixelGetPreviousIteratorRow">PixelGetPreviousIteratorRow</a> &#8226; <a href="pixel-iterator.html#PixelResetIterator">PixelResetIterator</a> &#8226; <a href="pixel-iterator.html#PixelSetFirstIteratorRow">PixelSetFirstIteratorRow</a> &#8226; <a href="pixel-iterator.html#PixelSetIteratorRow">PixelSetIteratorRow</a> &#8226; <a href="pixel-iterator.html#PixelSetLastIteratorRow">PixelSetLastIteratorRow</a> &#8226; <a href="pixel-iterator.html#PixelSyncIterator">PixelSyncIterator</a></p>
+
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="ClearPixelIterator">ClearPixelIterator</a></h2>
+
+<p>ClearPixelIterator() clear resources associated with a PixelIterator.</p>
+
+<p>The format of the ClearPixelIterator method is:</p>
+
+<pre class="text">
+void ClearPixelIterator(PixelIterator *iterator)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the pixel iterator. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="ClonePixelIterator">ClonePixelIterator</a></h2>
+
+<p>ClonePixelIterator() makes an exact copy of the specified iterator.</p>
+
+<p>The format of the ClonePixelIterator method is:</p>
+
+<pre class="text">
+PixelIterator *ClonePixelIterator(const PixelIterator *iterator)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the magick iterator. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="DestroyPixelIterator">DestroyPixelIterator</a></h2>
+
+<p>DestroyPixelIterator() deallocates resources associated with a PixelIterator.</p>
+
+<p>The format of the DestroyPixelIterator method is:</p>
+
+<pre class="text">
+PixelIterator *DestroyPixelIterator(PixelIterator *iterator)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the pixel iterator. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="IsPixelIterator">IsPixelIterator</a></h2>
+
+<p>IsPixelIterator() returns MagickTrue if the iterator is verified as a pixel iterator.</p>
+
+<p>The format of the IsPixelIterator method is:</p>
+
+<pre class="text">
+MagickBooleanType IsPixelIterator(const PixelIterator *iterator)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the magick iterator. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="NewPixelIterator">NewPixelIterator</a></h2>
+
+<p>NewPixelIterator() returns a new pixel iterator.</p>
+
+<p>The format of the NewPixelIterator method is:</p>
+
+<pre class="text">
+PixelIterator *NewPixelIterator(MagickWand *wand)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>wand</dt>
+<dd>the magick wand. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="PixelClearIteratorException">PixelClearIteratorException</a></h2>
+
+<p>PixelClearIteratorException() clear any exceptions associated with the iterator.</p>
+
+<p>The format of the PixelClearIteratorException method is:</p>
+
+<pre class="text">
+MagickBooleanType PixelClearIteratorException(PixelIterator *iterator)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the pixel iterator. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="NewPixelRegionIterator">NewPixelRegionIterator</a></h2>
+
+<p>NewPixelRegionIterator() returns a new pixel iterator.</p>
+
+<p>The format of the NewPixelRegionIterator method is:</p>
+
+<pre class="text">
+PixelIterator *NewPixelRegionIterator(MagickWand *wand,const ssize_t x,
+  const ssize_t y,const size_t width,const size_t height)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>wand</dt>
+<dd>the magick wand. </dd>
+
+<dd> </dd>
+<dt>x,y,columns,rows</dt>
+<dd> These values define the perimeter of a region of pixels. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="PixelGetCurrentIteratorRow">PixelGetCurrentIteratorRow</a></h2>
+
+<p>PixelGetCurrentIteratorRow() returns the current row as an array of pixel wands from the pixel iterator.</p>
+
+<p>The format of the PixelGetCurrentIteratorRow method is:</p>
+
+<pre class="text">
+PixelWand **PixelGetCurrentIteratorRow(PixelIterator *iterator,
+  size_t *number_wands)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the pixel iterator. </dd>
+
+<dd> </dd>
+<dt>number_wands</dt>
+<dd>the number of pixel wands. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="PixelGetIteratorException">PixelGetIteratorException</a></h2>
+
+<p>PixelGetIteratorException() returns the severity, reason, and description of any error that occurs when using other methods in this API.</p>
+
+<p>The format of the PixelGetIteratorException method is:</p>
+
+<pre class="text">
+char *PixelGetIteratorException(const PixelIterator *iterator,
+  ExceptionType *severity)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the pixel iterator. </dd>
+
+<dd> </dd>
+<dt>severity</dt>
+<dd>the severity of the error is returned here. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="PixelGetIteratorExceptionType">PixelGetIteratorExceptionType</a></h2>
+
+<p>PixelGetIteratorExceptionType() the exception type associated with the iterator.  If no exception has occurred, UndefinedExceptionType is returned.</p>
+
+<p>The format of the PixelGetIteratorExceptionType method is:</p>
+
+<pre class="text">
+ExceptionType PixelGetIteratorExceptionType(
+  const PixelIterator *iterator)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the pixel iterator. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="PixelGetIteratorRow">PixelGetIteratorRow</a></h2>
+
+<p>PixelGetIteratorRow() returns the current pixel iterator row.</p>
+
+<p>The format of the PixelGetIteratorRow method is:</p>
+
+<pre class="text">
+MagickBooleanType PixelGetIteratorRow(PixelIterator *iterator)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the pixel iterator. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="PixelGetNextIteratorRow">PixelGetNextIteratorRow</a></h2>
+
+<p>PixelGetNextIteratorRow() returns the next row as an array of pixel wands from the pixel iterator.</p>
+
+<p>The format of the PixelGetNextIteratorRow method is:</p>
+
+<pre class="text">
+PixelWand **PixelGetNextIteratorRow(PixelIterator *iterator,
+  size_t *number_wands)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the pixel iterator. </dd>
+
+<dd> </dd>
+<dt>number_wands</dt>
+<dd>the number of pixel wands. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="PixelGetPreviousIteratorRow">PixelGetPreviousIteratorRow</a></h2>
+
+<p>PixelGetPreviousIteratorRow() returns the previous row as an array of pixel wands from the pixel iterator.</p>
+
+<p>The format of the PixelGetPreviousIteratorRow method is:</p>
+
+<pre class="text">
+PixelWand **PixelGetPreviousIteratorRow(PixelIterator *iterator,
+  size_t *number_wands)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the pixel iterator. </dd>
+
+<dd> </dd>
+<dt>number_wands</dt>
+<dd>the number of pixel wands. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="PixelResetIterator">PixelResetIterator</a></h2>
+
+<p>PixelResetIterator() resets the pixel iterator.  Use it in conjunction with PixelGetNextIteratorRow() to iterate over all the pixels in a pixel container.</p>
+
+<p>The format of the PixelResetIterator method is:</p>
+
+<pre class="text">
+void PixelResetIterator(PixelIterator *iterator)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the pixel iterator. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="PixelSetFirstIteratorRow">PixelSetFirstIteratorRow</a></h2>
+
+<p>PixelSetFirstIteratorRow() sets the pixel iterator to the first pixel row.</p>
+
+<p>The format of the PixelSetFirstIteratorRow method is:</p>
+
+<pre class="text">
+void PixelSetFirstIteratorRow(PixelIterator *iterator)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the magick iterator. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="PixelSetIteratorRow">PixelSetIteratorRow</a></h2>
+
+<p>PixelSetIteratorRow() set the pixel iterator row.</p>
+
+<p>The format of the PixelSetIteratorRow method is:</p>
+
+<pre class="text">
+MagickBooleanType PixelSetIteratorRow(PixelIterator *iterator,
+  const ssize_t row)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the pixel iterator. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="PixelSetLastIteratorRow">PixelSetLastIteratorRow</a></h2>
+
+<p>PixelSetLastIteratorRow() sets the pixel iterator to the last pixel row.</p>
+
+<p>The format of the PixelSetLastIteratorRow method is:</p>
+
+<pre class="text">
+void PixelSetLastIteratorRow(PixelIterator *iterator)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the magick iterator. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickWand/pixel-iterator_8c.html" id="PixelSyncIterator">PixelSyncIterator</a></h2>
+
+<p>PixelSyncIterator() syncs the pixel iterator.</p>
+
+<p>The format of the PixelSyncIterator method is:</p>
+
+<pre class="text">
+MagickBooleanType PixelSyncIterator(PixelIterator *iterator)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>iterator</dt>
+<dd>the pixel iterator. </dd>
+
+<dd>  </dd>
+</dl>
+</div>
+    </div>
+  </main><!-- /.container -->
+  <footer class="magick-footer">
+    <p><a href="../www/security-policy.html">Security</a> •
+    <a href="../www/architecture.html">Architecture</a>
+     
+    <a href="pixel-iterator.html#"><img class="d-inline" id="wand" alt="And Now a Touch of Magick" width="16" height="16" src="../images/wand.ico"/></a>
+     
+    <a href="../www/links.html">Related</a> •
+     <a href="../www/sitemap.html">Sitemap</a>
+    <br/>
+    <a href="../www/support.html">Sponsor</a> •
+    <a href="../www/cite.html">Cite</a> •
+    <a href="http://pgp.mit.edu/pks/lookup?op=get&amp;search=0x89AB63D48277377A">Public Key</a> •
+    <a href="../www/contact.html">Contact Us</a> 
+    <br/>
+    <a href="https://github.com/imagemagick/imagemagick" target="_blank" rel="noopener" aria-label="GitHub"><svg xmlns="http://www.w3.org/2000/svg" class="navbar-nav-svg" viewBox="0 0 512 499.36" width="2%" height="2%" role="img" focusable="false"><title>GitHub</title><path fill="currentColor" fill-rule="evenodd" d="M256 0C114.64 0 0 114.61 0 256c0 113.09 73.34 209 175.08 242.9 12.8 2.35 17.47-5.56 17.47-12.34 0-6.08-.22-22.18-.35-43.54-71.2 15.49-86.2-34.34-86.2-34.34-11.64-29.57-28.42-37.45-28.42-37.45-23.27-15.84 1.73-15.55 1.73-15.55 25.69 1.81 39.21 26.38 39.21 26.38 22.84 39.12 59.92 27.82 74.5 21.27 2.33-16.54 8.94-27.82 16.25-34.22-56.84-6.43-116.6-28.43-116.6-126.49 0-27.95 10-50.8 26.35-68.69-2.63-6.48-11.42-32.5 2.51-67.75 0 0 21.49-6.88 70.4 26.24a242.65 242.65 0 0 1 128.18 0c48.87-33.13 70.33-26.24 70.33-26.24 14 35.25 5.18 61.27 2.55 67.75 16.41 17.9 26.31 40.75 26.31 68.69 0 98.35-59.85 120-116.88 126.32 9.19 7.9 17.38 23.53 17.38 47.41 0 34.22-.31 61.83-.31 70.23 0 6.85 4.61 14.81 17.6 12.31C438.72 464.97 512 369.08 512 256.02 512 114.62 397.37 0 256 0z"/></svg></a> •
+        <a href="https://twitter.com/imagemagick" target="_blank" rel="noopener" aria-label="Twitter"><svg xmlns="http://www.w3.org/2000/svg" class="navbar-nav-svg" viewBox="0 0 512 416.32" width="2%" height="2%" role="img" focusable="false"><title>Twitter</title><path fill="currentColor" d="M160.83 416.32c193.2 0 298.92-160.22 298.92-298.92 0-4.51 0-9-.2-13.52A214 214 0 0 0 512 49.38a212.93 212.93 0 0 1-60.44 16.6 105.7 105.7 0 0 0 46.3-58.19 209 209 0 0 1-66.79 25.37 105.09 105.09 0 0 0-181.73 71.91 116.12 116.12 0 0 0 2.66 24c-87.28-4.3-164.73-46.3-216.56-109.82A105.48 105.48 0 0 0 68 159.6a106.27 106.27 0 0 1-47.53-13.11v1.43a105.28 105.28 0 0 0 84.21 103.06 105.67 105.67 0 0 1-47.33 1.84 105.06 105.06 0 0 0 98.14 72.94A210.72 210.72 0 0 1 25 370.84a202.17 202.17 0 0 1-25-1.43 298.85 298.85 0 0 0 160.83 46.92"/></svg></a>
+    <br/>
+    <small>© 1999-2020 ImageMagick Studio LLC</small></p>
+  </footer>
+
+  <!-- Javascript assets -->
+  <script src="assets/magick.js" crossorigin="anonymous"></script>
+  <script>window.jQuery || document.write('<script src="https://localhost/ajax/libs/jquery/3.4.1/jquery.min.js"><\/script>')</script>
+</body>
+</html>
+<!-- Magick Cache 9th June 2020 18:21 -->

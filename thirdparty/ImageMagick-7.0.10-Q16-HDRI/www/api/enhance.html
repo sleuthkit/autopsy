@@ -1,0 +1,846 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"  />
+  <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1,shrink-to-fit=no"  />
+  <title>ImageMagick - MagickCore, C API: Enhance an Image</title>
+  <meta name="application-name" content="ImageMagick" />
+  <meta name="description" content="Use ImageMagick® to create, edit, compose, and convert bitmap images. Resize an image, crop it, change its shades and colors, add captions, and more." />
+  <meta name="application-url" content="https://imagemagick.org" />
+  <meta name="generator" content="PHP" />
+  <meta name="keywords" content="magickcore, c, api:, enhance, an, image, image converter, image resizer, image editor, photo editor, jpg converter, png converter, tiff converter, vector images, online, free, swiss army" />
+  <meta name="rating" content="GENERAL" />
+  <meta name="robots" content="INDEX, FOLLOW" />
+  <meta name="generator" content="ImageMagick Studio LLC" />
+  <meta name="author" content="ImageMagick Studio LLC" />
+  <meta name="revisit-after" content="2 DAYS" />
+  <meta name="resource-type" content="document" />
+  <meta name="copyright" content="Copyright (c) 1999-2020 ImageMagick Studio LLC" />
+  <meta name="distribution" content="Global" />
+  <meta name="magick-serial" content="P131-S030410-R485315270133-P82224-A6668-G1245-1" />
+  <meta property='og:url' content='../../' />
+  <meta property='og:title' content='ImageMagick' />
+  <meta property='og:image' content='../../images/logo.png' />
+  <meta property='og:type' content='website' />
+  <meta property='og:site_name' content='ImageMagick' />
+  <meta property='og:description' content="Create, Edit, Compose, or Convert Bitmap Images" />
+  <meta name="google-site-verification" content="_bMOCDpkx9ZAzBwb2kF3PRHbfUUdFj2uO8Jd1AXArz4" />
+  <link href="enhance.html" rel="canonical" />
+  <link href="../../images/wand.png" rel="icon" />
+  <link href="../../images/wand.ico" rel="shortcut icon" />
+  <link href="assets/magick.css" rel="stylesheet" />
+</head>
+<body>
+  <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    <a class="navbar-brand" href="../../"><img class="d-block" id="icon" alt="ImageMagick" width="32" height="32" src="../../images/wand.ico"/></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsMagick" aria-controls="navbarsMagick" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="navbar-collapse collapse" id="navbarsMagick" style="">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item ">
+        <a class="nav-link" href="../../">Home <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="../../www/download.html">Download</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="../../www/command-line-tools.html">Tools</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="../../www/command-line-processing.html">Command-line</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="../../www/resources.html">Resources</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="../../www/develop.html">Develop</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" target="_blank" href="../https://imagemagick.org/discourse-server//">Community</a>
+      </li>
+    </ul>
+    </div>
+    <form class="form-inline my-2 my-lg-0" action="../../https://imagemagick.org/script/search.php">
+      <input class="form-control mr-sm-2" type="text" name="q" placeholder="Search" aria-label="Search">
+      <button class="btn btn-outline-success my-2 my-sm-0" type="submit" name="sa">Search</button>
+    </form>
+  </nav>
+  <div class="container">
+   <script async="async" src="https://localhost/pagead/js/adsbygoogle.js"></script>    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-3129977114552745"
+         data-ad-slot="6345125851"
+         data-full-width-responsive="true"
+         data-ad-format="horizontal"></ins>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+  </div>
+
+  <main class="container">
+    <div class="magick-template">
+<div class="magick-header">
+<p class="text-center"><a href="enhance.html#AutoGammaImage">AutoGammaImage</a> &#8226; <a href="enhance.html#AutoLevelImage">AutoLevelImage</a> &#8226; <a href="enhance.html#BrightnessContrastImage">BrightnessContrastImage</a> &#8226; <a href="enhance.html#CLAHEImage">CLAHEImage</a> &#8226; <a href="enhance.html#ClutImage">ClutImage</a> &#8226; <a href="enhance.html#ColorDecisionListImage">ColorDecisionListImage</a> &#8226; <a href="enhance.html#ContrastImage">ContrastImage</a> &#8226; <a href="enhance.html#ContrastStretchImage">ContrastStretchImage</a> &#8226; <a href="enhance.html#EnhanceImage">EnhanceImage</a> &#8226; <a href="enhance.html#EqualizeImage">EqualizeImage</a> &#8226; <a href="enhance.html#GammaImage">GammaImage</a> &#8226; <a href="enhance.html#GrayscaleImage">GrayscaleImage</a> &#8226; <a href="enhance.html#HaldClutImage">HaldClutImage</a> &#8226; <a href="enhance.html#LevelImage">LevelImage</a> &#8226; <a href="enhance.html#LevelizeImage">LevelizeImage</a> &#8226; <a href="enhance.html#LevelImageColors">LevelImageColors</a> &#8226; <a href="enhance.html#LinearStretchImage">LinearStretchImage</a> &#8226; <a href="enhance.html#ModulateImage">ModulateImage</a> &#8226; <a href="enhance.html#NegateImage">NegateImage</a> &#8226; <a href="enhance.html#The NormalizeImage">The NormalizeImage</a> &#8226; <a href="enhance.html#SigmoidalContrastImage">SigmoidalContrastImage</a></p>
+
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="AutoGammaImage">AutoGammaImage</a></h2>
+
+<p>AutoGammaImage() extract the 'mean' from the image and adjust the image to try make set its gamma appropriatally.</p>
+
+<p>The format of the AutoGammaImage method is:</p>
+
+<pre class="text">
+MagickBooleanType AutoGammaImage(Image *image,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>The image to auto-level </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="AutoLevelImage">AutoLevelImage</a></h2>
+
+<p>AutoLevelImage() adjusts the levels of a particular image channel by scaling the minimum and maximum values to the full quantum range.</p>
+
+<p>The format of the LevelImage method is:</p>
+
+<pre class="text">
+MagickBooleanType AutoLevelImage(Image *image,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>The image to auto-level </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="BrightnessContrastImage">BrightnessContrastImage</a></h2>
+
+<p>BrightnessContrastImage() changes the brightness and/or contrast of an image.  It converts the brightness and contrast parameters into slope and intercept and calls a polynomical function to apply to the image.</p>
+
+<p>The format of the BrightnessContrastImage method is:</p>
+
+<pre class="text">
+MagickBooleanType BrightnessContrastImage(Image *image,
+  const double brightness,const double contrast,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>brightness</dt>
+<dd>the brightness percent (-100 .. 100). </dd>
+
+<dd> </dd>
+<dt>contrast</dt>
+<dd>the contrast percent (-100 .. 100). </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="CLAHEImage">CLAHEImage</a></h2>
+
+<p>CLAHEImage() is a variant of adaptive histogram equalization in which the contrast amplification is limited, so as to reduce this problem of noise amplification.</p>
+
+<p>Adapted from implementation by Karel Zuiderveld, karel@cv.ruu.nl in "Graphics Gems IV", Academic Press, 1994.</p>
+
+<p>The format of the CLAHEImage method is:</p>
+
+<pre class="text">
+MagickBooleanType CLAHEImage(Image *image,const size_t width,
+  const size_t height,const size_t number_bins,const double clip_limit,
+  ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>width</dt>
+<dd>the width of the tile divisions to use in horizontal direction. </dd>
+
+<dd> </dd>
+<dt>height</dt>
+<dd>the height of the tile divisions to use in vertical direction. </dd>
+
+<dd> </dd>
+<dt>number_bins</dt>
+<dd>number of bins for histogram ("dynamic range"). </dd>
+
+<dd> </dd>
+<dt>clip_limit</dt>
+<dd>contrast limit for localised changes in contrast. A limit less than 1 results in standard non-contrast limited AHE. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="ClutImage">ClutImage</a></h2>
+
+<p>ClutImage() replaces each color value in the given image, by using it as an index to lookup a replacement color value in a Color Look UP Table in the form of an image.  The values are extracted along a diagonal of the CLUT image so either a horizontal or vertial gradient image can be used.</p>
+
+<p>Typically this is used to either re-color a gray-scale image according to a color gradient in the CLUT image, or to perform a freeform histogram (level) adjustment according to the (typically gray-scale) gradient in the CLUT image.</p>
+
+<p>When the 'channel' mask includes the matte/alpha transparency channel but one image has no such channel it is assumed that that image is a simple gray-scale image that will effect the alpha channel values, either for gray-scale coloring (with transparent or semi-transparent colors), or a histogram adjustment of existing alpha channel values.   If both images have matte channels, direct and normal indexing is applied, which is rarely used.</p>
+
+<p>The format of the ClutImage method is:</p>
+
+<pre class="text">
+MagickBooleanType ClutImage(Image *image,Image *clut_image,
+  const PixelInterpolateMethod method,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image, which is replaced by indexed CLUT values </dd>
+
+<dd> </dd>
+<dt>clut_image</dt>
+<dd>the color lookup table image for replacement color values. </dd>
+
+<dd> </dd>
+<dt>method</dt>
+<dd>the pixel interpolation method. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="ColorDecisionListImage">ColorDecisionListImage</a></h2>
+
+<p>ColorDecisionListImage() accepts a lightweight Color Correction Collection (CCC) file which solely contains one or more color corrections and applies the correction to the image.  Here is a sample CCC file:</p>
+
+<pre class="text">
+    &lt;ColorCorrectionCollection xmlns="urn:ASC:CDL:v1.2"&gt;
+    &lt;ColorCorrection id="cc03345"&gt;
+          &lt;SOPNode&gt;
+               &lt;Slope&gt; 0.9 1.2 0.5 &lt;/Slope&gt;
+               &lt;Offset&gt; 0.4 -0.5 0.6 &lt;/Offset&gt;
+               &lt;Power&gt; 1.0 0.8 1.5 &lt;/Power&gt;
+          &lt;/SOPNode&gt;
+          &lt;SATNode&gt;
+               &lt;Saturation&gt; 0.85 &lt;/Saturation&gt;
+          &lt;/SATNode&gt;
+    &lt;/ColorCorrection&gt;
+    &lt;/ColorCorrectionCollection&gt;
+</pre>
+
+<p>which includes the slop, offset, and power for each of the RGB channels as well as the saturation.</p>
+
+<p>The format of the ColorDecisionListImage method is:</p>
+
+<pre class="text">
+MagickBooleanType ColorDecisionListImage(Image *image,
+  const char *color_correction_collection,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>color_correction_collection</dt>
+<dd>the color correction collection in XML. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="ContrastImage">ContrastImage</a></h2>
+
+<p>ContrastImage() enhances the intensity differences between the lighter and darker elements of the image.  Set sharpen to a MagickTrue to increase the image contrast otherwise the contrast is reduced.</p>
+
+<p>The format of the ContrastImage method is:</p>
+
+<pre class="text">
+MagickBooleanType ContrastImage(Image *image,
+  const MagickBooleanType sharpen,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>sharpen</dt>
+<dd>Increase or decrease image contrast. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="ContrastStretchImage">ContrastStretchImage</a></h2>
+
+<p>ContrastStretchImage() is a simple image enhancement technique that attempts to improve the contrast in an image by 'stretching' the range of intensity values it contains to span a desired range of values. It differs from the more sophisticated histogram equalization in that it can only apply a linear scaling function to the image pixel values.  As a result the 'enhancement' is less harsh.</p>
+
+<p>The format of the ContrastStretchImage method is:</p>
+
+<pre class="text">
+MagickBooleanType ContrastStretchImage(Image *image,
+  const char *levels,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>black_point</dt>
+<dd>the black point. </dd>
+
+<dd> </dd>
+<dt>white_point</dt>
+<dd>the white point. </dd>
+
+<dd> </dd>
+<dt>levels</dt>
+<dd>Specify the levels where the black and white points have the range of 0 to number-of-pixels (e.g. 1, 10x90, etc.). </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="EnhanceImage">EnhanceImage</a></h2>
+
+<p>EnhanceImage() applies a digital filter that improves the quality of a noisy image.</p>
+
+<p>The format of the EnhanceImage method is:</p>
+
+<pre class="text">
+Image *EnhanceImage(const Image *image,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="EqualizeImage">EqualizeImage</a></h2>
+
+<p>EqualizeImage() applies a histogram equalization to the image.</p>
+
+<p>The format of the EqualizeImage method is:</p>
+
+<pre class="text">
+MagickBooleanType EqualizeImage(Image *image,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="GammaImage">GammaImage</a></h2>
+
+<p>GammaImage() gamma-corrects a particular image channel.  The same image viewed on different devices will have perceptual differences in the way the image's intensities are represented on the screen.  Specify individual gamma levels for the red, green, and blue channels, or adjust all three with the gamma parameter.  Values typically range from 0.8 to 2.3.</p>
+
+<p>You can also reduce the influence of a particular channel with a gamma value of 0.</p>
+
+<p>The format of the GammaImage method is:</p>
+
+<pre class="text">
+MagickBooleanType GammaImage(Image *image,const double gamma,
+  ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>level</dt>
+<dd>the image gamma as a string (e.g. 1.6,1.2,1.0). </dd>
+
+<dd> </dd>
+<dt>gamma</dt>
+<dd>the image gamma. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="GrayscaleImage">GrayscaleImage</a></h2>
+
+<p>GrayscaleImage() converts the image to grayscale.</p>
+
+<p>The format of the GrayscaleImage method is:</p>
+
+<pre class="text">
+MagickBooleanType GrayscaleImage(Image *image,
+  const PixelIntensityMethod method ,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>method</dt>
+<dd>the pixel intensity method. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="HaldClutImage">HaldClutImage</a></h2>
+
+<p>HaldClutImage() applies a Hald color lookup table to the image.  A Hald color lookup table is a 3-dimensional color cube mapped to 2 dimensions. Create it with the HALD coder.  You can apply any color transformation to the Hald image and then use this method to apply the transform to the image.</p>
+
+<p>The format of the HaldClutImage method is:</p>
+
+<pre class="text">
+MagickBooleanType HaldClutImage(Image *image,Image *hald_image,
+  ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image, which is replaced by indexed CLUT values </dd>
+
+<dd> </dd>
+<dt>hald_image</dt>
+<dd>the color lookup table image for replacement color values. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="LevelImage">LevelImage</a></h2>
+
+<p>LevelImage() adjusts the levels of a particular image channel by scaling the colors falling between specified white and black points to the full available quantum range.</p>
+
+<p>The parameters provided represent the black, and white points.  The black point specifies the darkest color in the image. Colors darker than the black point are set to zero.  White point specifies the lightest color in the image.  Colors brighter than the white point are set to the maximum quantum value.</p>
+
+<p>If a '!' flag is given, map black and white colors to the given levels rather than mapping those levels to black and white.  See LevelizeImage() below.</p>
+
+<p>Gamma specifies a gamma correction to apply to the image.</p>
+
+<p>The format of the LevelImage method is:</p>
+
+<pre class="text">
+MagickBooleanType LevelImage(Image *image,const double black_point,
+  const double white_point,const double gamma,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>black_point</dt>
+<dd>The level to map zero (black) to. </dd>
+
+<dd> </dd>
+<dt>white_point</dt>
+<dd>The level to map QuantumRange (white) to. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="LevelizeImage">LevelizeImage</a></h2>
+
+<p>LevelizeImage() applies the reversed LevelImage() operation to just the specific channels specified.  It compresses the full range of color values, so that they lie between the given black and white points. Gamma is applied before the values are mapped.</p>
+
+<p>LevelizeImage() can be called with by using a +level command line API option, or using a '!' on a -level or LevelImage() geometry string.</p>
+
+<p>It can be used to de-contrast a greyscale image to the exact levels specified.  Or by using specific levels for each channel of an image you can convert a gray-scale image to any linear color gradient, according to those levels.</p>
+
+<p>The format of the LevelizeImage method is:</p>
+
+<pre class="text">
+MagickBooleanType LevelizeImage(Image *image,const double black_point,
+  const double white_point,const double gamma,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>black_point</dt>
+<dd>The level to map zero (black) to. </dd>
+
+<dd> </dd>
+<dt>white_point</dt>
+<dd>The level to map QuantumRange (white) to. </dd>
+
+<dd> </dd>
+<dt>gamma</dt>
+<dd>adjust gamma by this factor before mapping values. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="LevelImageColors">LevelImageColors</a></h2>
+
+<p>LevelImageColors() maps the given color to "black" and "white" values, linearly spreading out the colors, and level values on a channel by channel bases, as per LevelImage().  The given colors allows you to specify different level ranges for each of the color channels separately.</p>
+
+<p>If the boolean 'invert' is set true the image values will modifyed in the reverse direction. That is any existing "black" and "white" colors in the image will become the color values given, with all other values compressed appropriatally.  This effectivally maps a greyscale gradient into the given color gradient.</p>
+
+<p>The format of the LevelImageColors method is:</p>
+
+<pre class="text">
+    MagickBooleanType LevelImageColors(Image *image,
+const PixelInfo *black_color,const PixelInfo *white_color,
+const MagickBooleanType invert,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>black_color</dt>
+<dd>The color to map black to/from </dd>
+
+<dd> </dd>
+<dt>white_point</dt>
+<dd>The color to map white to/from </dd>
+
+<dd> </dd>
+<dt>invert</dt>
+<dd>if true map the colors (levelize), rather than from (level) </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="LinearStretchImage">LinearStretchImage</a></h2>
+
+<p>LinearStretchImage() discards any pixels below the black point and above the white point and levels the remaining pixels.</p>
+
+<p>The format of the LinearStretchImage method is:</p>
+
+<pre class="text">
+MagickBooleanType LinearStretchImage(Image *image,
+  const double black_point,const double white_point,
+  ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>black_point</dt>
+<dd>the black point. </dd>
+
+<dd> </dd>
+<dt>white_point</dt>
+<dd>the white point. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="ModulateImage">ModulateImage</a></h2>
+
+<p>ModulateImage() lets you control the brightness, saturation, and hue of an image.  Modulate represents the brightness, saturation, and hue as one parameter (e.g. 90,150,100).  If the image colorspace is HSL, the modulation is lightness, saturation, and hue.  For HWB, use blackness, whiteness, and hue. And for HCL, use chrome, luma, and hue.</p>
+
+<p>The format of the ModulateImage method is:</p>
+
+<pre class="text">
+MagickBooleanType ModulateImage(Image *image,const char *modulate,
+  ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>modulate</dt>
+<dd>Define the percent change in brightness, saturation, and hue. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="NegateImage">NegateImage</a></h2>
+
+<p>NegateImage() negates the colors in the reference image.  The grayscale option means that only grayscale values within the image are negated.</p>
+
+<p>The format of the NegateImage method is:</p>
+
+<pre class="text">
+MagickBooleanType NegateImage(Image *image,
+  const MagickBooleanType grayscale,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>grayscale</dt>
+<dd>If MagickTrue, only negate grayscale pixels within the image. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="The_NormalizeImage">The NormalizeImage</a></h2>
+
+<p>The NormalizeImage() method enhances the contrast of a color image by mapping the darkest 2 percent of all pixel to black and the brightest 1 percent to white.</p>
+
+<p>The format of the NormalizeImage method is:</p>
+
+<pre class="text">
+MagickBooleanType NormalizeImage(Image *image,ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+<h2><a href="../../api/MagickCore/enhance_8c.html" id="SigmoidalContrastImage">SigmoidalContrastImage</a></h2>
+
+<p>SigmoidalContrastImage() adjusts the contrast of an image with a non-linear sigmoidal contrast algorithm.  Increase the contrast of the image using a sigmoidal transfer function without saturating highlights or shadows. Contrast indicates how much to increase the contrast (0 is none; 3 is typical; 20 is pushing it); mid-point indicates where midtones fall in the resultant image (0 is white; 50 is middle-gray; 100 is black).  Set sharpen to MagickTrue to increase the image contrast otherwise the contrast is reduced.</p>
+
+<p>The format of the SigmoidalContrastImage method is:</p>
+
+<pre class="text">
+MagickBooleanType SigmoidalContrastImage(Image *image,
+  const MagickBooleanType sharpen,const char *levels,
+  ExceptionInfo *exception)
+</pre>
+
+<p>A description of each parameter follows:</p>
+
+<dd>
+</dd>
+
+<dd> </dd>
+<dl class="dl-horizontal">
+<dt>image</dt>
+<dd>the image. </dd>
+
+<dd> </dd>
+<dt>sharpen</dt>
+<dd>Increase or decrease image contrast. </dd>
+
+<dd> </dd>
+<dt>contrast</dt>
+<dd>strength of the contrast, the larger the number the more 'threshold-like' it becomes. </dd>
+
+<dd> </dd>
+<dt>midpoint</dt>
+<dd>midpoint of the function as a color value 0 to QuantumRange. </dd>
+
+<dd> </dd>
+<dt>exception</dt>
+<dd>return any errors or warnings in this structure. </dd>
+
+<dd>  </dd>
+</dl>
+</div>
+    </div>
+  </main><!-- /.container -->
+  <footer class="magick-footer">
+    <p><a href="../../www/security-policy.html">Security</a> •
+    <a href="../../www/architecture.html">Architecture</a>
+     
+    <a href="enhance.html#"><img class="d-inline" id="wand" alt="And Now a Touch of Magick" width="16" height="16" src="../../images/wand.ico"/></a>
+     
+    <a href="../../www/links.html">Related</a> •
+     <a href="../../www/sitemap.html">Sitemap</a>
+    <br/>
+    <a href="../../www/support.html">Donate</a> •
+    <a href="http://pgp.mit.edu/pks/lookup?op=get&amp;search=0x89AB63D48277377A">Public Key</a> •
+    <a href="../../www/contact.html">Contact Us</a> 
+    <br/>
+    <a href="https://github.com/imagemagick/imagemagick" target="_blank" rel="noopener" aria-label="GitHub"><svg xmlns="http://www.w3.org/2000/svg" class="navbar-nav-svg" viewBox="0 0 512 499.36" width="2%" height="2%" role="img" focusable="false"><title>GitHub</title><path fill="currentColor" fill-rule="evenodd" d="M256 0C114.64 0 0 114.61 0 256c0 113.09 73.34 209 175.08 242.9 12.8 2.35 17.47-5.56 17.47-12.34 0-6.08-.22-22.18-.35-43.54-71.2 15.49-86.2-34.34-86.2-34.34-11.64-29.57-28.42-37.45-28.42-37.45-23.27-15.84 1.73-15.55 1.73-15.55 25.69 1.81 39.21 26.38 39.21 26.38 22.84 39.12 59.92 27.82 74.5 21.27 2.33-16.54 8.94-27.82 16.25-34.22-56.84-6.43-116.6-28.43-116.6-126.49 0-27.95 10-50.8 26.35-68.69-2.63-6.48-11.42-32.5 2.51-67.75 0 0 21.49-6.88 70.4 26.24a242.65 242.65 0 0 1 128.18 0c48.87-33.13 70.33-26.24 70.33-26.24 14 35.25 5.18 61.27 2.55 67.75 16.41 17.9 26.31 40.75 26.31 68.69 0 98.35-59.85 120-116.88 126.32 9.19 7.9 17.38 23.53 17.38 47.41 0 34.22-.31 61.83-.31 70.23 0 6.85 4.61 14.81 17.6 12.31C438.72 464.97 512 369.08 512 256.02 512 114.62 397.37 0 256 0z"/></svg></a> •
+        <a href="https://twitter.com/imagemagick" target="_blank" rel="noopener" aria-label="Twitter"><svg xmlns="http://www.w3.org/2000/svg" class="navbar-nav-svg" viewBox="0 0 512 416.32" width="2%" height="2%" role="img" focusable="false"><title>Twitter</title><path fill="currentColor" d="M160.83 416.32c193.2 0 298.92-160.22 298.92-298.92 0-4.51 0-9-.2-13.52A214 214 0 0 0 512 49.38a212.93 212.93 0 0 1-60.44 16.6 105.7 105.7 0 0 0 46.3-58.19 209 209 0 0 1-66.79 25.37 105.09 105.09 0 0 0-181.73 71.91 116.12 116.12 0 0 0 2.66 24c-87.28-4.3-164.73-46.3-216.56-109.82A105.48 105.48 0 0 0 68 159.6a106.27 106.27 0 0 1-47.53-13.11v1.43a105.28 105.28 0 0 0 84.21 103.06 105.67 105.67 0 0 1-47.33 1.84 105.06 105.06 0 0 0 98.14 72.94A210.72 210.72 0 0 1 25 370.84a202.17 202.17 0 0 1-25-1.43 298.85 298.85 0 0 0 160.83 46.92"/></svg></a>
+    <br/>
+    <small>© 1999-2020 ImageMagick Studio LLC</small></p>
+  </footer>
+
+  <!-- Javascript assets -->
+  <script src="assets/magick.js" crossorigin="anonymous"></script>
+  <script>window.jQuery || document.write('<script src="https://localhost/ajax/libs/jquery/3.4.1/jquery.min.js"><\/script>')</script>
+</body>
+</html>
+<!-- Magick Cache 19th March 2020 09:51 -->
