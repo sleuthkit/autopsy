@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,11 +48,14 @@ final class CallLogViewData {
 
     private String dataSourceName = null;
 
+    private List<String> toContactNameList = null;
+    private List<String> fromContactNameList = null;
+
     /**
      * Constructor.
      *
      * @param fromAccount From account identifier, may be null;
-     * @param toAccount To account identifier, may be null;
+     * @param toAccount   To account identifier, may be null;
      */
     CallLogViewData(String fromAccount, String toAccount) {
         this(fromAccount, toAccount, null);
@@ -61,8 +65,8 @@ final class CallLogViewData {
      * Constructor.
      *
      * @param fromAccount From account identifier, may be null;
-     * @param toAccount To account identifier, may be null;
-     * @param direction Direction, may be null.
+     * @param toAccount   To account identifier, may be null;
+     * @param direction   Direction, may be null.
      */
     CallLogViewData(String fromAccount, String toAccount, String direction) {
         this.fromAccount = fromAccount;
@@ -144,6 +148,30 @@ final class CallLogViewData {
 
     public void setLocalAccountId(String localAccountId) {
         this.localAccountId = localAccountId;
+    }
+
+    public void setToContactNameList(List<String> contactNameList) {
+        if (contactNameList != null) {
+            this.toContactNameList = new ArrayList<>(contactNameList);
+        } else {
+            this.toContactNameList = new ArrayList<>();
+        }
+    }
+
+    public List<String> getToContactNameList() {
+        return Collections.unmodifiableList(this.toContactNameList);
+    }
+
+    public void setFromContactNameList(List<String> contactNameList) {
+        if (contactNameList != null) {
+            this.fromContactNameList = new ArrayList<>(contactNameList);
+        } else {
+            this.fromContactNameList = new ArrayList<>();
+        }
+    }
+
+    public List<String> getFromContactNameList() {
+        return Collections.unmodifiableList(this.fromContactNameList);
     }
 
 }
