@@ -26,6 +26,7 @@ CallLogArtifactViewer_label_from=From
 CallLogArtifactViewer_label_to=To
 CallLogArtifactViewer_suffix_local=(Local)
 CallLogArtifactViewer_value_unknown=Unknown
+#{0} - contact name
 CommunicationArtifactViewerHelper_contact_label=Contact: {0}
 CommunicationArtifactViewerHelper_contact_label_unknown=Unknown
 CommunicationArtifactViewerHelper_menuitem_copy=Copy
